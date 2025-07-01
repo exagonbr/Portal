@@ -287,13 +287,6 @@ router.post(
         });
       }
 
-      if (!user.is_active) {
-        return res.status(401).json({
-          success: false,
-          message: 'Usuário inativo'
-        });
-      }
-
       // Cria sessão no Redis (se disponível)
       let sessionId = null;
       let refreshToken = null;

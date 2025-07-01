@@ -41,7 +41,7 @@ export default function UserFormModal({
 }: UserFormModalProps) {
   const { showSuccess, showError } = useToast()
   const [formData, setFormData] = useState<CreateUserDto | UpdateUserDto>({
-    name: '',
+    full_name: '',
     email: '',
     password: '',
     role_id: '',
@@ -54,7 +54,7 @@ export default function UserFormModal({
   useEffect(() => {
     if (user) {
       setFormData({
-        name: user.name,
+        full_name: user.name || user.full_name,
         email: user.email,
         role_id: user.role_id,
         institution_id: user.institution_id || '',
@@ -62,7 +62,7 @@ export default function UserFormModal({
       })
     } else {
       setFormData({
-        name: '',
+        full_name: '',
         email: '',
         password: '',
         role_id: '',
@@ -79,10 +79,25 @@ export default function UserFormModal({
     setLoading(true)
     try {
       if (user) {
-        await userService.updateUser(user.id, formData as UpdateUserDto)
+        const updateData = {
+          full_name: formData.full_name,
+          email: formData.email,
+          roleId: formData.role_id,
+          institutionId: formData.institution_id ? Number(formData.institution_id) : undefined,
+          enabled: formData.is_active
+        }
+        await userService.updateUser(user.id, updateData)
         showSuccess('Usuário atualizado com sucesso!')
       } else {
-        await userService.createUser(formData as CreateUserDto)
+        const createData = {
+          full_name: formData.full_name!,
+          email: formData.email!,
+          password: formData.password!,
+          roleId: formData.role_id!,
+          institutionId: Number(formData.institution_id!),
+          enabled: formData.is_active
+        }
+        await userService.createUser(createData)
         showSuccess('Usuário criado com sucesso!')
       }
       onSuccess?.()
@@ -123,7 +138,7 @@ export default function UserFormModal({
               {user.is_active ? (
                 <Badge variant="success">Ativo</Badge>
               ) : (
-                <Badge variant="destructive">Inativo</Badge>
+                <Badge variant="warning">Inativo</Badge>
               )}
             </div>
           </div>
@@ -219,8 +234,8 @@ export default function UserFormModal({
               <input
                 type="text"
                 required
-                value={formData.name}
-                onChange={(e) => handleInputChange('name', e.target.value)}
+                value={formData.full_name}
+                onChange={(e) => handleInputChange('full_name', e.target.value)}
                 className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
                 placeholder="Digite o nome completo"
               />

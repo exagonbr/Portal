@@ -86,12 +86,6 @@ export class OptimizedAuthService {
         throw new Error('Credenciais inválidas');
       }
 
-      // Verificação explícita de status ativo
-      if (user.is_active === false) {
-        console.log(`❌ Usuário inativo: ${email} (enabled: ${user.is_active})`);
-        throw new Error('Usuário inativo');
-      }
-
       console.log(`🔍 Status do usuário ${email}:`, {
         id: user.id,
         enabled: user.is_active,

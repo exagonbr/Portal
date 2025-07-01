@@ -57,14 +57,6 @@ export async function validateSession(token: string, sessionId?: string) {
       }
     }
 
-    // 3. Check if user is active (handle both boolean and undefined cases)
-    if (user.is_active === false) {
-      return {
-        valid: false,
-        message: 'Usuário inativo'
-      };
-    }
-
     // 4. Return user data without sensitive information
     const userResponse = {
       id: user.id,

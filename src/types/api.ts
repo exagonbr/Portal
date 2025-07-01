@@ -64,6 +64,7 @@ export interface ChangePasswordDto {
 }
 
 export interface UserResponseDto {
+  name: any | string;
   id: string;
   full_name: string;
   email: string;

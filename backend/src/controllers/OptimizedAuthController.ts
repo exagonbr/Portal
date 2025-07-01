@@ -68,16 +68,6 @@ export class OptimizedAuthController {
         return;
       }
 
-      if (error.message === 'Usuário inativo') {
-        console.log(`🚫 [OptimizedAuthController] Usuário inativo detectado: ${req.body?.email}`);
-        res.status(401).json({
-          success: false,
-          message: 'Usuário inativo',
-          code: 'USER_INACTIVE'
-        });
-        return;
-      }
-
       res.status(500).json({
         success: false,
         message: 'Erro interno do servidor',

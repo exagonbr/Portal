@@ -141,105 +141,360 @@ const LicenseValidationModal: React.FC<LicenseValidationModalProps> = ({
   );
 
   // Modal de listagem de certificados
-  const CertificatesListModal = () => (
-    <div className="fixed inset-0 bg-black bg-opacity-60 flex items-center justify-center z-60 p-1 xs:p-2 sm:p-3 lg:p-4 xl:p-6">
-      <div className="bg-white rounded-2xl shadow-2xl w-full max-w-[99vw] xs:max-w-[97vw] sm:max-w-[96vw] md:max-w-[94vw] lg:max-w-[92vw] xl:max-w-[90vw] 2xl:max-w-[88vw] max-h-[99vh] xs:max-h-[97vh] sm:max-h-[96vh] md:max-h-[94vh] lg:max-h-[92vh] xl:max-h-[90vh] overflow-hidden mx-1 xs:mx-2 sm:mx-3 lg:mx-4 xl:mx-6">
-        {/* Header */}
-        <div className="flex items-center justify-between p-4 xs:p-5 sm:p-6 lg:p-8 border-b bg-gradient-to-r from-blue-600 to-purple-600">
-          <div className="flex items-center gap-3 xs:gap-4">
-            <div className="w-8 h-8 xs:w-10 xs:h-10 sm:w-12 sm:h-12 bg-white bg-opacity-20 rounded-full flex items-center justify-center">
-              <FileText className="w-4 h-4 xs:w-5 xs:h-5 sm:w-6 sm:h-6 text-white" />
-            </div>
-            <div>
-              <h2 className="text-base xs:text-lg sm:text-xl md:text-2xl lg:text-3xl font-bold text-white">
-                Certificados Encontrados
-              </h2>
-              <p className="text-xs xs:text-sm sm:text-base text-blue-100 mt-1">
-                {certificates.length} certificado{certificates.length !== 1 ? 's' : ''} encontrado{certificates.length !== 1 ? 's' : ''}
-              </p>
-            </div>
-          </div>
-          <button
-            onClick={() => setShowCertificatesModal(false)}
-            className="text-white hover:text-gray-200 transition-colors p-2 xs:p-2 sm:p-3 flex-shrink-0 rounded-full hover:bg-white hover:bg-opacity-10"
-          >
-            <X size={20} className="xs:w-5 xs:h-5 sm:w-6 sm:h-6 lg:w-7 lg:h-7" />
-          </button>
-        </div>
+  const CertificatesListModal = () => {
+    const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid')
+    const [sortBy, setSortBy] = useState<'date' | 'score' | 'name'>('date')
+    const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>('desc')
+    const [selectedCert, setSelectedCert] = useState<Certificate | null>(null)
+    const [showFullDetails, setShowFullDetails] = useState(false)
 
-        {/* Content */}
-        <div className="p-4 xs:p-5 sm:p-6 lg:p-8 xl:p-10 max-h-[85vh] xs:max-h-[82vh] sm:max-h-[78vh] md:max-h-[75vh] lg:max-h-[72vh] xl:max-h-[70vh] overflow-y-auto scrollbar-thin scrollbar-thumb-gray-300 scrollbar-track-gray-100">
-          <div className="space-y-3 xs:space-y-4 sm:space-y-5 lg:space-y-6">
-            {certificates.map((cert) => (
-              <div
-                key={cert.id}
-                className="border border-gray-200 rounded-xl p-4 xs:p-5 sm:p-6 lg:p-8 hover:shadow-lg hover:shadow-blue-100 transition-all duration-300 bg-gradient-to-br from-white via-gray-50 to-blue-50 hover:from-blue-50 hover:via-white hover:to-purple-50"
-              >
-                {/* Header do certificado - mais espaçoso */}
-                <div className="mb-4 xs:mb-5 sm:mb-6">
-                  <div className="flex items-start gap-3 xs:gap-4 sm:gap-5 mb-3 xs:mb-4">
-                    <div className="w-10 h-10 xs:w-12 xs:h-12 sm:w-14 sm:h-14 lg:w-16 lg:h-16 bg-gradient-to-br from-blue-500 to-purple-600 rounded-xl flex items-center justify-center flex-shrink-0 shadow-lg">
-                      <FileText className="w-5 h-5 xs:w-6 xs:h-6 sm:w-7 sm:h-7 lg:w-8 lg:h-8 text-white" />
-                    </div>
-                    <div className="min-w-0 flex-1">
-                      <h4 className="font-bold text-base xs:text-lg sm:text-xl lg:text-2xl text-gray-900 leading-tight mb-1 xs:mb-2">
-                        {cert.tv_show_name}
-                      </h4>
-                      <div className="flex flex-col xs:flex-row xs:items-center gap-1 xs:gap-3">
-                        <p className="text-xs xs:text-sm sm:text-base text-gray-500 flex items-center gap-1">
-                          <span className="w-2 h-2 bg-green-400 rounded-full"></span>
-                          Emitido em {formatDate(cert.date_created)}
-                        </p>
-                        <div className="bg-gradient-to-r from-green-400 to-emerald-500 text-white px-3 xs:px-4 py-1 xs:py-1.5 rounded-full text-xs xs:text-sm font-semibold shadow-md">
-                          ⭐ Pontuação: {cert.score}
-                        </div>
-                      </div>
-                    </div>
+    const sortedCertificates = [...certificates].sort((a, b) => {
+      let aValue, bValue
+      switch (sortBy) {
+        case 'date':
+          aValue = new Date(a.date_created).getTime()
+          bValue = new Date(b.date_created).getTime()
+          break
+        case 'score':
+          aValue = a.score || 0
+          bValue = b.score || 0
+          break
+        case 'name':
+          aValue = a.tv_show_name?.toLowerCase() || ''
+          bValue = b.tv_show_name?.toLowerCase() || ''
+          break
+        default:
+          return 0
+      }
+      
+      if (sortOrder === 'asc') {
+        return aValue > bValue ? 1 : -1
+      } else {
+        return aValue < bValue ? 1 : -1
+      }
+    })
+
+    const handleCertificateClick = (cert: Certificate) => {
+      setSelectedCert(cert)
+      setShowFullDetails(true)
+    }
+
+    return (
+      <div className="fixed inset-0 bg-black bg-opacity-70 flex items-center justify-center z-60 p-2 sm:p-4 lg:p-6">
+        <div className="bg-white rounded-3xl shadow-2xl w-full max-w-[98vw] sm:max-w-[95vw] lg:max-w-[90vw] xl:max-w-[85vw] 2xl:max-w-[80vw] max-h-[98vh] sm:max-h-[95vh] lg:max-h-[90vh] overflow-hidden flex flex-col">
+          {/* Header Aprimorado */}
+          <div className="flex-shrink-0 bg-gradient-to-r from-blue-600 via-purple-600 to-indigo-700 text-white">
+            <div className="flex items-center justify-between p-4 sm:p-6 lg:p-8">
+              <div className="flex items-center gap-4 sm:gap-6">
+                <div className="w-12 h-12 sm:w-16 sm:h-16 lg:w-20 lg:h-20 bg-white bg-opacity-20 rounded-2xl flex items-center justify-center backdrop-blur-sm border border-white/30">
+                  <FileText className="w-6 h-6 sm:w-8 sm:h-8 lg:w-10 lg:h-10 text-white" />
+                </div>
+                <div>
+                  <h2 className="text-xl sm:text-2xl lg:text-3xl xl:text-4xl font-black text-white mb-1">
+                    🎓 Certificados Encontrados
+                  </h2>
+                  <p className="text-sm sm:text-base lg:text-lg text-blue-100 font-medium">
+                    {certificates.length} certificado{certificates.length !== 1 ? 's' : ''} validado{certificates.length !== 1 ? 's' : ''} com sucesso
+                  </p>
+                  <div className="flex items-center gap-2 mt-2">
+                    <div className="w-2 h-2 bg-green-400 rounded-full animate-pulse"></div>
+                    <span className="text-xs sm:text-sm text-green-200 font-medium">Status: Verificado</span>
                   </div>
                 </div>
-                
-                {/* Informações do certificado - layout expandido e responsivo */}
-                <div className="w-full space-y-6 xs:space-y-8 sm:space-y-10 lg:space-y-12 mb-8 xs:mb-10 sm:mb-12 lg:mb-16">
-                  
-                  {/* SEÇÃO 1 - Banner Principal do Curso */}
-                  <div className="relative bg-gradient-to-br from-indigo-600 via-blue-700 to-purple-800 p-6 xs:p-8 sm:p-10 lg:p-12 xl:p-16 rounded-3xl shadow-2xl border-4 border-white overflow-hidden">
-                    {/* Efeitos visuais de fundo */}
-                    <div className="absolute inset-0 bg-gradient-to-r from-blue-400/20 to-purple-400/20"></div>
-                    <div className="absolute top-0 right-0 w-32 h-32 xs:w-40 xs:h-40 sm:w-48 sm:h-48 bg-white/10 rounded-full -translate-y-16 translate-x-16"></div>
-                    <div className="absolute bottom-0 left-0 w-24 h-24 xs:w-32 xs:h-32 bg-white/5 rounded-full translate-y-12 -translate-x-12"></div>
-                    
-                    <div className="relative z-10 flex flex-col lg:flex-row items-start lg:items-center gap-6 xs:gap-8 sm:gap-10">
-                      <div className="flex-shrink-0">
-                        <div className="w-16 h-16 xs:w-20 xs:h-20 sm:w-24 sm:h-24 lg:w-32 lg:h-32 xl:w-40 xl:h-40 bg-white/20 backdrop-blur-sm rounded-3xl flex items-center justify-center shadow-2xl border-2 border-white/30">
-                          <FileText className="w-8 h-8 xs:w-10 xs:h-10 sm:w-12 sm:h-12 lg:w-16 lg:h-16 xl:w-20 xl:h-20 text-white" />
+              </div>
+              <button
+                onClick={() => setShowCertificatesModal(false)}
+                className="text-white hover:text-red-200 transition-all duration-300 p-3 sm:p-4 flex-shrink-0 rounded-2xl hover:bg-red-500 hover:bg-opacity-20 border border-transparent hover:border-red-300 group"
+              >
+                <X className="w-6 h-6 sm:w-7 sm:h-7 lg:w-8 lg:h-8 group-hover:scale-110 transition-transform" />
+              </button>
+            </div>
+
+            {/* Controles de Visualização */}
+            <div className="px-4 sm:px-6 lg:px-8 pb-4 sm:pb-6">
+              <div className="flex flex-col sm:flex-row gap-4 sm:gap-6 items-start sm:items-center justify-between bg-white/10 backdrop-blur-sm rounded-2xl p-4 border border-white/20">
+                <div className="flex flex-wrap gap-2 sm:gap-3">
+                  {/* Modo de Visualização */}
+                  <div className="flex bg-white/20 rounded-xl p-1 border border-white/30">
+                    <button
+                      onClick={() => setViewMode('grid')}
+                      className={`px-3 sm:px-4 py-2 rounded-lg text-xs sm:text-sm font-semibold transition-all duration-300 ${
+                        viewMode === 'grid'
+                          ? 'bg-white text-blue-600 shadow-lg'
+                          : 'text-white hover:bg-white/20'
+                      }`}
+                    >
+                      <div className="flex items-center gap-2">
+                        <div className="w-3 h-3 grid grid-cols-2 gap-0.5">
+                          <div className="bg-current rounded-sm"></div>
+                          <div className="bg-current rounded-sm"></div>
+                          <div className="bg-current rounded-sm"></div>
+                          <div className="bg-current rounded-sm"></div>
+                        </div>
+                        <span className="hidden sm:inline">Grade</span>
+                      </div>
+                    </button>
+                    <button
+                      onClick={() => setViewMode('list')}
+                      className={`px-3 sm:px-4 py-2 rounded-lg text-xs sm:text-sm font-semibold transition-all duration-300 ${
+                        viewMode === 'list'
+                          ? 'bg-white text-blue-600 shadow-lg'
+                          : 'text-white hover:bg-white/20'
+                      }`}
+                    >
+                      <div className="flex items-center gap-2">
+                        <div className="w-3 h-3 flex flex-col gap-0.5">
+                          <div className="bg-current h-0.5 rounded"></div>
+                          <div className="bg-current h-0.5 rounded"></div>
+                          <div className="bg-current h-0.5 rounded"></div>
+                        </div>
+                        <span className="hidden sm:inline">Lista</span>
+                      </div>
+                    </button>
+                  </div>
+
+                  {/* Ordenação */}
+                  <select
+                    value={`${sortBy}-${sortOrder}`}
+                    onChange={(e) => {
+                      const [sort, order] = e.target.value.split('-')
+                      setSortBy(sort as 'date' | 'score' | 'name')
+                      setSortOrder(order as 'asc' | 'desc')
+                    }}
+                    className="bg-white/20 border border-white/30 text-white rounded-xl px-3 sm:px-4 py-2 text-xs sm:text-sm font-semibold backdrop-blur-sm focus:outline-none focus:ring-2 focus:ring-white/50"
+                  >
+                    <option value="date-desc" className="text-gray-900">📅 Mais Recente</option>
+                    <option value="date-asc" className="text-gray-900">📅 Mais Antigo</option>
+                    <option value="score-desc" className="text-gray-900">⭐ Maior Pontuação</option>
+                    <option value="score-asc" className="text-gray-900">⭐ Menor Pontuação</option>
+                    <option value="name-asc" className="text-gray-900">🔤 Nome A-Z</option>
+                    <option value="name-desc" className="text-gray-900">🔤 Nome Z-A</option>
+                  </select>
+                </div>
+
+                <div className="flex items-center gap-2 text-white/90 text-xs sm:text-sm font-medium">
+                  <div className="w-2 h-2 bg-green-400 rounded-full animate-pulse"></div>
+                  Todos os certificados são válidos
+                </div>
+              </div>
+            </div>
+          </div>
+
+          {/* Content Area */}
+          <div className="flex-1 overflow-hidden">
+            <div className="h-full overflow-y-auto scrollbar-thin scrollbar-thumb-gray-300 scrollbar-track-gray-100 p-4 sm:p-6 lg:p-8">
+              {viewMode === 'grid' ? (
+                // Grid View
+                <div className="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-4 sm:gap-6 lg:gap-8">
+                  {sortedCertificates.map((cert) => (
+                    <div
+                      key={cert.id}
+                      onClick={() => handleCertificateClick(cert)}
+                      className="group bg-gradient-to-br from-white via-blue-50 to-purple-50 border border-gray-200 rounded-2xl p-4 sm:p-6 hover:shadow-2xl hover:shadow-blue-100 transition-all duration-500 cursor-pointer hover:scale-[1.02] hover:border-blue-300"
+                    >
+                      {/* Card Header */}
+                      <div className="flex items-start gap-3 sm:gap-4 mb-4 sm:mb-6">
+                        <div className="w-12 h-12 sm:w-14 sm:h-14 bg-gradient-to-br from-blue-500 to-purple-600 rounded-xl flex items-center justify-center flex-shrink-0 shadow-lg group-hover:scale-110 transition-transform duration-300">
+                          <FileText className="w-6 h-6 sm:w-7 sm:h-7 text-white" />
+                        </div>
+                        <div className="min-w-0 flex-1">
+                          <h4 className="font-bold text-base sm:text-lg text-gray-900 leading-tight mb-2 line-clamp-2">
+                            {cert.tv_show_name}
+                          </h4>
+                          <div className="flex items-center gap-2 mb-2">
+                            <div className="w-2 h-2 bg-green-400 rounded-full"></div>
+                            <span className="text-xs sm:text-sm text-gray-500">
+                              {formatDate(cert.date_created)}
+                            </span>
+                          </div>
+                          <div className="bg-gradient-to-r from-green-400 to-emerald-500 text-white px-3 py-1 rounded-full text-xs font-semibold shadow-md inline-block">
+                            ⭐ {cert.score} pontos
+                          </div>
                         </div>
                       </div>
-                      <div className="flex-1 min-w-0">
-                        <div className="mb-4 xs:mb-6">
-                          <span className="inline-block bg-white/20 backdrop-blur-sm text-white px-4 xs:px-6 py-2 xs:py-3 rounded-full text-sm xs:text-base sm:text-lg font-semibold border border-white/30">
-                            🎓 CERTIFICADO VALIDADO
-                          </span>
+
+                      {/* Quick Info */}
+                      <div className="space-y-3">
+                        <div className="bg-white/80 backdrop-blur-sm rounded-xl p-3 border border-blue-200">
+                          <div className="text-xs text-blue-600 font-medium mb-1">👨‍🎓 Estudante</div>
+                          <div className="text-sm font-bold text-gray-900 truncate">{cert.user.full_name}</div>
                         </div>
-                        <h3 className="text-2xl xs:text-3xl sm:text-4xl lg:text-5xl xl:text-6xl font-black text-white mb-3 xs:mb-4 sm:mb-6 leading-tight">
-                          {cert.tv_show_name}
-                        </h3>
-                        <div className="flex flex-col sm:flex-row gap-4 xs:gap-6 sm:gap-8">
-                          <div className="bg-white/20 backdrop-blur-sm rounded-2xl p-4 xs:p-5 sm:p-6 border border-white/30">
-                            <div className="text-white/80 text-sm xs:text-base sm:text-lg font-medium mb-1 xs:mb-2">Pontuação Final</div>
-                            <div className="flex items-center gap-2 xs:gap-3">
-                              <span className="text-3xl xs:text-4xl sm:text-5xl lg:text-6xl font-black text-white">
-                                {cert.score}
-                              </span>
-                              <div className="text-white/80">
-                                <div className="text-sm xs:text-base sm:text-lg font-medium">pontos</div>
-                                <div className="text-xs xs:text-sm">⭐⭐⭐⭐⭐</div>
+                        <div className="bg-white/80 backdrop-blur-sm rounded-xl p-3 border border-purple-200">
+                          <div className="text-xs text-purple-600 font-medium mb-1">🔑 Código</div>
+                          <div className="text-sm font-mono font-bold text-gray-900 truncate">{cert.license_code}</div>
+                        </div>
+                      </div>
+
+                      {/* Action Hint */}
+                      <div className="mt-4 pt-4 border-t border-gray-200">
+                        <div className="flex items-center justify-center text-xs text-blue-600 font-medium group-hover:text-blue-700 transition-colors">
+                          <span>Clique para ver detalhes completos</span>
+                          <div className="ml-2 w-4 h-4 rounded-full bg-blue-100 group-hover:bg-blue-200 flex items-center justify-center transition-colors">
+                            <span className="text-blue-600 text-xs">→</span>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              ) : (
+                // List View
+                <div className="space-y-4 sm:space-y-6">
+                  {sortedCertificates.map((cert) => (
+                    <div
+                      key={cert.id}
+                      onClick={() => handleCertificateClick(cert)}
+                      className="group bg-gradient-to-r from-white via-blue-50 to-purple-50 border border-gray-200 rounded-2xl p-4 sm:p-6 hover:shadow-xl hover:shadow-blue-100 transition-all duration-300 cursor-pointer hover:border-blue-300"
+                    >
+                      <div className="flex flex-col sm:flex-row gap-4 sm:gap-6">
+                        <div className="flex items-start gap-3 sm:gap-4 flex-1">
+                          <div className="w-12 h-12 sm:w-14 sm:h-14 bg-gradient-to-br from-blue-500 to-purple-600 rounded-xl flex items-center justify-center flex-shrink-0 shadow-lg group-hover:scale-110 transition-transform duration-300">
+                            <FileText className="w-6 h-6 sm:w-7 sm:h-7 text-white" />
+                          </div>
+                          <div className="min-w-0 flex-1">
+                            <h4 className="font-bold text-lg sm:text-xl text-gray-900 leading-tight mb-2">
+                              {cert.tv_show_name}
+                            </h4>
+                            <div className="flex flex-wrap gap-2 sm:gap-4 text-sm text-gray-600 mb-3">
+                              <div className="flex items-center gap-1">
+                                <div className="w-2 h-2 bg-green-400 rounded-full"></div>
+                                <span>{formatDate(cert.date_created)}</span>
+                              </div>
+                              <div className="flex items-center gap-1">
+                                <span>👨‍🎓</span>
+                                <span>{cert.user.full_name}</span>
+                              </div>
+                              <div className="flex items-center gap-1">
+                                <span>📧</span>
+                                <span className="truncate max-w-[200px]">{cert.user.email}</span>
+                              </div>
+                            </div>
+                            <div className="flex flex-wrap gap-2">
+                              <div className="bg-gradient-to-r from-green-400 to-emerald-500 text-white px-3 py-1 rounded-full text-xs font-semibold">
+                                ⭐ {cert.score} pontos
+                              </div>
+                              <div className="bg-gradient-to-r from-purple-400 to-violet-500 text-white px-3 py-1 rounded-full text-xs font-semibold">
+                                🔑 {cert.license_code}
                               </div>
                             </div>
                           </div>
-                          <div className="bg-white/20 backdrop-blur-sm rounded-2xl p-4 xs:p-5 sm:p-6 border border-white/30">
-                            <div className="text-white/80 text-sm xs:text-base sm:text-lg font-medium mb-1 xs:mb-2">Data de Conclusão</div>
-                            <div className="text-lg xs:text-xl sm:text-2xl lg:text-3xl font-bold text-white">
-                              {formatDate(cert.date_created)}
+                        </div>
+                        <div className="flex items-center justify-center sm:justify-end">
+                          <div className="text-sm text-blue-600 font-medium group-hover:text-blue-700 transition-colors flex items-center gap-2">
+                            <span>Ver detalhes</span>
+                            <div className="w-6 h-6 rounded-full bg-blue-100 group-hover:bg-blue-200 flex items-center justify-center transition-colors">
+                              <span className="text-blue-600 text-sm">→</span>
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+          </div>
+
+          {/* Footer Aprimorado */}
+          <div className="flex-shrink-0 px-4 sm:px-6 lg:px-8 py-4 sm:py-6 bg-gradient-to-r from-gray-50 via-blue-50 to-purple-50 border-t border-gray-200">
+            <div className="flex flex-col sm:flex-row gap-4 items-center justify-between">
+              <div className="text-center sm:text-left">
+                <p className="text-sm sm:text-base text-gray-700 font-semibold">
+                  📊 Total: {certificates.length} certificado{certificates.length !== 1 ? 's' : ''} validado{certificates.length !== 1 ? 's' : ''}
+                </p>
+                <p className="text-xs sm:text-sm text-gray-500 mt-1">
+                  ✅ Todos os certificados foram verificados e são autênticos
+                </p>
+              </div>
+              <div className="flex gap-3">
+                <button
+                  onClick={() => window.print()}
+                  className="px-4 sm:px-6 py-2 sm:py-3 bg-gradient-to-r from-blue-500 to-blue-600 hover:from-blue-600 hover:to-blue-700 text-white rounded-xl shadow-lg hover:shadow-xl transition-all duration-300 text-sm font-semibold flex items-center gap-2"
+                >
+                  <span>🖨️</span>
+                  <span className="hidden sm:inline">Imprimir</span>
+                </button>
+                <button
+                  onClick={() => setShowCertificatesModal(false)}
+                  className="px-6 sm:px-8 py-2 sm:py-3 bg-gradient-to-r from-gray-600 to-gray-700 hover:from-gray-700 hover:to-gray-800 text-white rounded-xl shadow-lg hover:shadow-xl transition-all duration-300 text-sm font-semibold group"
+                >
+                  <span className="group-hover:scale-105 transition-transform inline-block">Fechar</span>
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        {/* Modal de Detalhes Completos */}
+        {showFullDetails && selectedCert && (
+          <div className="fixed inset-0 bg-black bg-opacity-80 flex items-center justify-center z-70 p-2 sm:p-4">
+            <div className="bg-white rounded-3xl shadow-2xl w-full max-w-[95vw] sm:max-w-[90vw] lg:max-w-[85vw] xl:max-w-[80vw] max-h-[95vh] overflow-hidden flex flex-col">
+              {/* Header do Modal de Detalhes */}
+              <div className="flex-shrink-0 bg-gradient-to-r from-indigo-600 via-blue-700 to-purple-800 text-white p-4 sm:p-6">
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-4">
+                    <div className="w-12 h-12 sm:w-16 sm:h-16 bg-white/20 rounded-2xl flex items-center justify-center backdrop-blur-sm">
+                      <FileText className="w-6 h-6 sm:w-8 sm:h-8 text-white" />
+                    </div>
+                    <div>
+                      <h3 className="text-xl sm:text-2xl lg:text-3xl font-black mb-1">
+                        Detalhes do Certificado
+                      </h3>
+                      <p className="text-blue-100 text-sm sm:text-base">
+                        {selectedCert.tv_show_name}
+                      </p>
+                    </div>
+                  </div>
+                  <button
+                    onClick={() => setShowFullDetails(false)}
+                    className="text-white hover:text-red-200 transition-all p-2 sm:p-3 rounded-xl hover:bg-red-500/20"
+                  >
+                    <X className="w-6 h-6 sm:w-7 sm:h-7" />
+                  </button>
+                </div>
+              </div>
+
+              {/* Conteúdo dos Detalhes */}
+              <div className="flex-1 overflow-y-auto p-4 sm:p-6 lg:p-8">
+                <div className="space-y-6 sm:space-y-8">
+                  {/* Banner Principal */}
+                  <div className="relative bg-gradient-to-br from-indigo-600 via-blue-700 to-purple-800 p-6 sm:p-8 lg:p-12 rounded-3xl shadow-2xl border-4 border-white overflow-hidden">
+                    <div className="absolute inset-0 bg-gradient-to-r from-blue-400/20 to-purple-400/20"></div>
+                    <div className="absolute top-0 right-0 w-32 h-32 sm:w-48 sm:h-48 bg-white/10 rounded-full -translate-y-16 translate-x-16"></div>
+                    <div className="absolute bottom-0 left-0 w-24 h-24 sm:w-32 sm:h-32 bg-white/5 rounded-full translate-y-12 -translate-x-12"></div>
+                    
+                    <div className="relative z-10 flex flex-col lg:flex-row items-start lg:items-center gap-6 sm:gap-8">
+                      <div className="flex-shrink-0">
+                        <div className="w-16 h-16 sm:w-24 sm:h-24 lg:w-32 lg:h-32 bg-white/20 backdrop-blur-sm rounded-3xl flex items-center justify-center shadow-2xl border-2 border-white/30">
+                          <FileText className="w-8 h-8 sm:w-12 sm:h-12 lg:w-16 lg:h-16 text-white" />
+                        </div>
+                      </div>
+                      <div className="flex-1 min-w-0">
+                        <div className="mb-4">
+                          <span className="inline-block bg-white/20 backdrop-blur-sm text-white px-4 sm:px-6 py-2 sm:py-3 rounded-full text-sm sm:text-base font-semibold border border-white/30">
+                            🎓 CERTIFICADO VALIDADO
+                          </span>
+                        </div>
+                        <h3 className="text-2xl sm:text-3xl lg:text-4xl xl:text-5xl font-black text-white mb-4 sm:mb-6 leading-tight">
+                          {selectedCert.tv_show_name}
+                        </h3>
+                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 sm:gap-6">
+                          <div className="bg-white/20 backdrop-blur-sm rounded-2xl p-4 sm:p-6 border border-white/30">
+                            <div className="text-white/80 text-sm sm:text-base font-medium mb-2">Pontuação Final</div>
+                            <div className="flex items-center gap-2 sm:gap-3">
+                              <span className="text-3xl sm:text-4xl lg:text-5xl font-black text-white">
+                                {selectedCert.score}
+                              </span>
+                              <div className="text-white/80">
+                                <div className="text-sm sm:text-base font-medium">pontos</div>
+                                <div className="text-xs sm:text-sm">⭐⭐⭐⭐⭐</div>
+                              </div>
+                            </div>
+                          </div>
+                          <div className="bg-white/20 backdrop-blur-sm rounded-2xl p-4 sm:p-6 border border-white/30">
+                            <div className="text-white/80 text-sm sm:text-base font-medium mb-2">Data de Conclusão</div>
+                            <div className="text-lg sm:text-xl lg:text-2xl font-bold text-white">
+                              {formatDate(selectedCert.date_created)}
                             </div>
                           </div>
                         </div>
@@ -247,144 +502,135 @@ const LicenseValidationModal: React.FC<LicenseValidationModalProps> = ({
                     </div>
                   </div>
 
-                  {/* SEÇÃO 2 - Informações do Estudante */}
-                  <div className="bg-gradient-to-br from-emerald-50 via-green-50 to-teal-100 p-6 xs:p-8 sm:p-10 lg:p-12 rounded-3xl border-4 border-emerald-200 shadow-2xl">
-                    <div className="flex items-start gap-4 xs:gap-6 sm:gap-8 lg:gap-10 mb-6 xs:mb-8">
-                      <div className="w-12 h-12 xs:w-16 xs:h-16 sm:w-20 sm:h-20 lg:w-24 lg:h-24 bg-gradient-to-br from-emerald-500 to-green-600 rounded-2xl flex items-center justify-center flex-shrink-0 shadow-xl">
-                        <User className="w-6 h-6 xs:w-8 xs:h-8 sm:w-10 sm:h-10 lg:w-12 lg:h-12 text-white" />
+                  {/* Dados do Estudante */}
+                  <div className="bg-gradient-to-br from-emerald-50 via-green-50 to-teal-100 p-6 sm:p-8 lg:p-12 rounded-3xl border-4 border-emerald-200 shadow-2xl">
+                    <div className="flex items-start gap-4 sm:gap-6 mb-6 sm:mb-8">
+                      <div className="w-12 h-12 sm:w-16 sm:h-16 lg:w-20 lg:h-20 bg-gradient-to-br from-emerald-500 to-green-600 rounded-2xl flex items-center justify-center flex-shrink-0 shadow-xl">
+                        <User className="w-6 h-6 sm:w-8 sm:h-8 lg:w-10 lg:h-10 text-white" />
                       </div>
                       <div className="flex-1">
-                        <h4 className="text-xl xs:text-2xl sm:text-3xl lg:text-4xl xl:text-5xl font-black text-emerald-900 mb-2 xs:mb-3 sm:mb-4">
+                        <h4 className="text-xl sm:text-2xl lg:text-3xl xl:text-4xl font-black text-emerald-900 mb-2">
                           👤 Dados do Estudante
                         </h4>
-                        <p className="text-sm xs:text-base sm:text-lg lg:text-xl text-emerald-700 font-medium">
+                        <p className="text-sm sm:text-base lg:text-lg text-emerald-700 font-medium">
                           Informações pessoais do portador do certificado
                         </p>
                       </div>
                     </div>
                     
-                    <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 xs:gap-8 sm:gap-10">
-                      <div className="bg-white/80 backdrop-blur-sm p-5 xs:p-6 sm:p-8 rounded-2xl border-2 border-emerald-300 shadow-lg">
-                        <div className="flex items-center gap-3 xs:gap-4 mb-3 xs:mb-4">
-                          <div className="w-8 h-8 xs:w-10 xs:h-10 bg-emerald-500 rounded-lg flex items-center justify-center">
-                            <span className="text-white font-bold text-sm xs:text-base">👨‍🎓</span>
+                    <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 sm:gap-8">
+                      <div className="bg-white/80 backdrop-blur-sm p-5 sm:p-6 lg:p-8 rounded-2xl border-2 border-emerald-300 shadow-lg">
+                        <div className="flex items-center gap-3 sm:gap-4 mb-3 sm:mb-4">
+                          <div className="w-8 h-8 sm:w-10 sm:h-10 bg-emerald-500 rounded-lg flex items-center justify-center">
+                            <span className="text-white font-bold text-sm sm:text-base">👨‍🎓</span>
                           </div>
-                          <span className="text-sm xs:text-base sm:text-lg lg:text-xl text-emerald-700 font-bold">Nome Completo</span>
+                          <span className="text-sm sm:text-base lg:text-lg text-emerald-700 font-bold">Nome Completo</span>
                         </div>
-                        <p className="text-lg xs:text-xl sm:text-2xl lg:text-3xl font-black text-emerald-900 break-words leading-tight">
-                          {cert.user.full_name}
+                        <p className="text-lg sm:text-xl lg:text-2xl font-black text-emerald-900 break-words leading-tight">
+                          {selectedCert.user.full_name}
                         </p>
                       </div>
                       
-                      <div className="bg-white/80 backdrop-blur-sm p-5 xs:p-6 sm:p-8 rounded-2xl border-2 border-emerald-300 shadow-lg">
-                        <div className="flex items-center gap-3 xs:gap-4 mb-3 xs:mb-4">
-                          <div className="w-8 h-8 xs:w-10 xs:h-10 bg-emerald-500 rounded-lg flex items-center justify-center">
-                            <span className="text-white font-bold text-sm xs:text-base">📧</span>
+                      <div className="bg-white/80 backdrop-blur-sm p-5 sm:p-6 lg:p-8 rounded-2xl border-2 border-emerald-300 shadow-lg">
+                        <div className="flex items-center gap-3 sm:gap-4 mb-3 sm:mb-4">
+                          <div className="w-8 h-8 sm:w-10 sm:h-10 bg-emerald-500 rounded-lg flex items-center justify-center">
+                            <span className="text-white font-bold text-sm sm:text-base">📧</span>
                           </div>
-                          <span className="text-sm xs:text-base sm:text-lg lg:text-xl text-emerald-700 font-bold">Email de Contato</span>
+                          <span className="text-sm sm:text-base lg:text-lg text-emerald-700 font-bold">Email de Contato</span>
                         </div>
-                        <p className="text-base xs:text-lg sm:text-xl lg:text-2xl font-bold text-emerald-900 break-all leading-tight">
-                          {cert.user.email}
+                        <p className="text-base sm:text-lg lg:text-xl font-bold text-emerald-900 break-all leading-tight">
+                          {selectedCert.user.email}
                         </p>
                       </div>
                     </div>
                   </div>
 
-                  {/* SEÇÃO 3 - Dados da Certificação */}
-                  <div className="bg-gradient-to-br from-purple-50 via-violet-50 to-fuchsia-100 p-6 xs:p-8 sm:p-10 lg:p-12 rounded-3xl border-4 border-purple-200 shadow-2xl">
-                    <div className="flex items-start gap-4 xs:gap-6 sm:gap-8 lg:gap-10 mb-6 xs:mb-8">
-                      <div className="w-12 h-12 xs:w-16 xs:h-16 sm:w-20 sm:h-20 lg:w-24 lg:h-24 bg-gradient-to-br from-purple-500 to-violet-600 rounded-2xl flex items-center justify-center flex-shrink-0 shadow-xl">
-                        <Search className="w-6 h-6 xs:w-8 xs:h-8 sm:w-10 sm:h-10 lg:w-12 lg:h-12 text-white" />
+                  {/* Dados da Certificação */}
+                  <div className="bg-gradient-to-br from-purple-50 via-violet-50 to-fuchsia-100 p-6 sm:p-8 lg:p-12 rounded-3xl border-4 border-purple-200 shadow-2xl">
+                    <div className="flex items-start gap-4 sm:gap-6 mb-6 sm:mb-8">
+                      <div className="w-12 h-12 sm:w-16 sm:h-16 lg:w-20 lg:h-20 bg-gradient-to-br from-purple-500 to-violet-600 rounded-2xl flex items-center justify-center flex-shrink-0 shadow-xl">
+                        <Search className="w-6 h-6 sm:w-8 sm:h-8 lg:w-10 lg:h-10 text-white" />
                       </div>
                       <div className="flex-1">
-                        <h4 className="text-xl xs:text-2xl sm:text-3xl lg:text-4xl xl:text-5xl font-black text-purple-900 mb-2 xs:mb-3 sm:mb-4">
+                        <h4 className="text-xl sm:text-2xl lg:text-3xl xl:text-4xl font-black text-purple-900 mb-2">
                           🏆 Dados da Certificação
                         </h4>
-                        <p className="text-sm xs:text-base sm:text-lg lg:text-xl text-purple-700 font-medium">
+                        <p className="text-sm sm:text-base lg:text-lg text-purple-700 font-medium">
                           Informações técnicas e código de validação
                         </p>
                       </div>
                     </div>
                     
-                    <div className="space-y-6 xs:space-y-8">
-                      {/* Código da Licença - Destaque especial */}
-                      <div className="bg-gradient-to-r from-purple-600 to-violet-700 p-6 xs:p-8 sm:p-10 rounded-2xl shadow-xl">
+                    <div className="space-y-6 sm:space-y-8">
+                      {/* Código da Licença */}
+                      <div className="bg-gradient-to-r from-purple-600 to-violet-700 p-6 sm:p-8 lg:p-10 rounded-2xl shadow-xl">
                         <div className="text-center">
-                          <h5 className="text-white/90 text-sm xs:text-base sm:text-lg lg:text-xl font-bold mb-4 xs:mb-6">
+                          <h5 className="text-white/90 text-sm sm:text-base lg:text-lg font-bold mb-4 sm:mb-6">
                             🔑 CÓDIGO DE VALIDAÇÃO OFICIAL
                           </h5>
-                          <div className="bg-white/20 backdrop-blur-sm p-4 xs:p-6 sm:p-8 rounded-xl border-2 border-white/30">
-                            <div className="text-2xl xs:text-3xl sm:text-4xl lg:text-5xl xl:text-6xl font-mono font-black text-white break-all leading-tight tracking-wider">
-                              {cert.license_code}
+                          <div className="bg-white/20 backdrop-blur-sm p-4 sm:p-6 lg:p-8 rounded-xl border-2 border-white/30">
+                            <div className="text-2xl sm:text-3xl lg:text-4xl xl:text-5xl font-mono font-black text-white break-all leading-tight tracking-wider">
+                              {selectedCert.license_code}
                             </div>
                           </div>
-                          <p className="text-white/80 text-xs xs:text-sm sm:text-base mt-3 xs:mt-4">
+                          <p className="text-white/80 text-xs sm:text-sm lg:text-base mt-3 sm:mt-4">
                             Este código garante a autenticidade do certificado
                           </p>
                         </div>
                       </div>
                       
-                      {/* Documento adicional (se existir) */}
-                      {cert.document && (
-                        <div className="bg-white/80 backdrop-blur-sm p-5 xs:p-6 sm:p-8 rounded-2xl border-2 border-purple-300 shadow-lg">
-                          <div className="flex items-center gap-3 xs:gap-4 mb-3 xs:mb-4">
-                            <div className="w-8 h-8 xs:w-10 xs:h-10 bg-purple-500 rounded-lg flex items-center justify-center">
-                              <FileText className="w-4 h-4 xs:w-5 xs:h-5 text-white" />
+                      {/* Documento adicional */}
+                      {selectedCert.document && (
+                        <div className="bg-white/80 backdrop-blur-sm p-5 sm:p-6 lg:p-8 rounded-2xl border-2 border-purple-300 shadow-lg">
+                          <div className="flex items-center gap-3 sm:gap-4 mb-3 sm:mb-4">
+                            <div className="w-8 h-8 sm:w-10 sm:h-10 bg-purple-500 rounded-lg flex items-center justify-center">
+                              <FileText className="w-4 h-4 sm:w-5 sm:h-5 text-white" />
                             </div>
-                            <span className="text-sm xs:text-base sm:text-lg lg:text-xl text-purple-700 font-bold">📄 Documento Adicional</span>
+                            <span className="text-sm sm:text-base lg:text-lg text-purple-700 font-bold">📄 Documento Adicional</span>
                           </div>
-                          <p className="text-base xs:text-lg sm:text-xl lg:text-2xl font-bold text-purple-900 break-words leading-tight">
-                            {cert.document}
+                          <p className="text-base sm:text-lg lg:text-xl font-bold text-purple-900 break-words leading-tight">
+                            {selectedCert.document}
                           </p>
                         </div>
                       )}
                     </div>
                   </div>
+
+                  {/* Botão de visualizar certificado */}
+                  {selectedCert.path && (
+                    <div className="bg-gradient-to-r from-blue-50 to-purple-50 p-6 sm:p-8 rounded-2xl border-2 border-blue-200">
+                      <a
+                        href={selectedCert.path}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="inline-flex items-center justify-center gap-3 bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white px-6 sm:px-8 py-4 sm:py-5 rounded-2xl shadow-lg hover:shadow-xl transition-all duration-300 text-base sm:text-lg font-semibold w-full group"
+                      >
+                        <FileText className="w-5 h-5 sm:w-6 sm:h-6 group-hover:scale-110 transition-transform" />
+                        <span>Visualizar Certificado Original</span>
+                        <div className="w-2 h-2 bg-white rounded-full opacity-0 group-hover:opacity-100 group-hover:animate-ping transition-opacity"></div>
+                      </a>
+                    </div>
+                  )}
                 </div>
-
-                {/* Botão de visualizar certificado - melhorado */}
-                {cert.path && (
-                  <div className="pt-4 xs:pt-5 sm:pt-6 border-t border-gray-200">
-                    <a
-                      href={cert.path}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="inline-flex items-center justify-center gap-2 xs:gap-3 bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white px-4 xs:px-6 sm:px-8 py-3 xs:py-4 rounded-xl shadow-lg hover:shadow-xl transition-all duration-300 text-sm xs:text-base sm:text-lg font-semibold w-full group"
-                    >
-                      <FileText className="w-4 h-4 xs:w-5 xs:h-5 sm:w-6 sm:h-6 group-hover:scale-110 transition-transform" />
-                      <span>Visualizar Certificado</span>
-                      <div className="w-2 h-2 bg-white rounded-full opacity-0 group-hover:opacity-100 group-hover:animate-ping transition-opacity"></div>
-                    </a>
-                  </div>
-                )}
               </div>
-            ))}
-          </div>
-          
-        </div>
 
-        {/* Footer */}
-        <div className="px-4 xs:px-5 sm:px-6 lg:px-8 py-4 xs:py-5 sm:py-6 bg-gradient-to-r from-gray-50 to-gray-100 border-t border-gray-200">
-          <div className="flex flex-col xs:flex-row gap-3 xs:gap-4 items-center justify-between">
-            <div className="text-center xs:text-left">
-              <p className="text-xs xs:text-sm text-gray-600">
-                Total de {certificates.length} certificado{certificates.length !== 1 ? 's' : ''} validado{certificates.length !== 1 ? 's' : ''}
-              </p>
-              <p className="text-xs text-gray-500 mt-1">
-                Validação realizada com sucesso
-              </p>
+              {/* Footer do Modal de Detalhes */}
+              <div className="flex-shrink-0 px-4 sm:px-6 py-4 sm:py-5 bg-gray-50 border-t">
+                <div className="flex flex-col sm:flex-row gap-3 justify-end">
+                  <button
+                    onClick={() => setShowFullDetails(false)}
+                    className="px-6 sm:px-8 py-3 bg-gray-600 hover:bg-gray-700 text-white rounded-xl transition-colors text-sm sm:text-base font-semibold"
+                  >
+                    Voltar à Lista
+                  </button>
+                </div>
+              </div>
             </div>
-            <button
-              onClick={() => setShowCertificatesModal(false)}
-              className="w-full xs:w-auto px-6 xs:px-8 py-3 xs:py-4 bg-gradient-to-r from-gray-600 to-gray-700 hover:from-gray-700 hover:to-gray-800 text-white rounded-xl shadow-lg hover:shadow-xl transition-all duration-300 text-sm xs:text-base font-semibold group"
-            >
-              <span className="group-hover:scale-105 transition-transform inline-block">Fechar</span>
-            </button>
           </div>
-        </div>
+        )}
       </div>
-    </div>
-  );
+    )
+  }
 
   if (!isOpen) return null;
 

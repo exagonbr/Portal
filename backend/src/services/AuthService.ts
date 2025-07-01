@@ -51,14 +51,6 @@ class AuthService {
         };
       }
 
-      // 2. Verificar se usuário está ativo
-      if (!user.is_active) {
-        return {
-          success: false,
-          message: 'Usuário inativo'
-        };
-      }
-
       // 3. Validar senha (implementação básica - substituir por bcrypt em produção)
       if (user.password !== password) {
         return {
