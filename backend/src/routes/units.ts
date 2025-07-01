@@ -1,6 +1,6 @@
 import { Router } from 'express';
 import { UnitsController } from '../controllers/UnitsController';
-import { authMiddleware } from '../middleware/auth';
+import { optimizedAuthMiddleware } from '../middleware/optimizedAuth.middleware';
 
 const router = Router();
 const unitsController = new UnitsController();
@@ -10,55 +10,55 @@ const unitsController = new UnitsController();
  * @desc Get all units
  * @access Private
  */
-router.get('/', authMiddleware, unitsController.getAll.bind(unitsController));
+router.get('/', optimizedAuthMiddleware, unitsController.getAll.bind(unitsController));
 
 /**
  * @route GET /api/units/search
  * @desc Search units
  * @access Private
  */
-router.get('/search', authMiddleware, unitsController.getAll.bind(unitsController));
+router.get('/search', optimizedAuthMiddleware, unitsController.getAll.bind(unitsController));
 
 /**
  * @route GET /api/units/:id
  * @desc Get unit by ID
  * @access Private
  */
-router.get('/:id', authMiddleware, unitsController.getById.bind(unitsController));
+router.get('/:id', optimizedAuthMiddleware, unitsController.getById.bind(unitsController));
 
 /**
  * @route POST /api/units
  * @desc Create a new unit
  * @access Private
  */
-router.post('/', authMiddleware, unitsController.create.bind(unitsController));
+router.post('/', optimizedAuthMiddleware, unitsController.create.bind(unitsController));
 
 /**
  * @route PUT /api/units/:id
  * @desc Update a unit
  * @access Private
  */
-router.put('/:id', authMiddleware, unitsController.update.bind(unitsController));
+router.put('/:id', optimizedAuthMiddleware, unitsController.update.bind(unitsController));
 
 /**
  * @route DELETE /api/units/:id
  * @desc Delete a unit (soft delete)
  * @access Private
  */
-router.delete('/:id', authMiddleware, unitsController.delete.bind(unitsController));
+router.delete('/:id', optimizedAuthMiddleware, unitsController.delete.bind(unitsController));
 
 /**
  * @route POST /api/units/:id/restore
  * @desc Restore a deleted unit
  * @access Private
  */
-router.post('/:id/restore', authMiddleware, unitsController.restore.bind(unitsController));
+router.post('/:id/restore', optimizedAuthMiddleware, unitsController.restore.bind(unitsController));
 
 /**
  * @route GET /api/units/institution/:institutionId
  * @desc Get units by institution
  * @access Private
  */
-router.get('/institution/:institutionId', authMiddleware, unitsController.getByInstitution.bind(unitsController));
+router.get('/institution/:institutionId', optimizedAuthMiddleware, unitsController.getByInstitution.bind(unitsController));
 
 export default router;

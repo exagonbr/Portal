@@ -5,7 +5,7 @@ import { useRouter } from 'next/navigation'
 import { useAuth, useAuthSafe } from '@/contexts/AuthContext'
 import { UserRole, ROLE_PERMISSIONS } from '@/types/roles'
 import { motion } from 'framer-motion'
-import { useTheme } from '@/contexts/ThemeContext'
+import { useThemeOnly } from '@/hooks/useThemeSafe'
 import { clearAllDataForUnauthorized } from '@/utils/clearAllData'
 
 interface ProtectedRouteProps {
@@ -25,7 +25,7 @@ function ProtectedRouteContent({
 }: ProtectedRouteProps) {
   const authContext = useAuthSafe()
   const router = useRouter()
-  const { theme } = useTheme()
+  const theme = useThemeOnly() // Hook seguro que sempre retorna um tema válido
   const [isAuthorized, setIsAuthorized] = useState(false)
   const [hasError, setHasError] = useState(false)
   const [reloadCounter, setReloadCounter] = useState(0)

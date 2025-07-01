@@ -1,28 +1,27 @@
 'use client';
 
 import { useEffect } from 'react';
-import { useSession } from 'next-auth/react';
+import { useAuth } from '@/contexts/AuthContext';
 import { useRouter } from 'next/navigation';
-import type { Metadata } from 'next';
 
 export default function DashboardLayout({
   children,
 }: {
   children: React.ReactNode;
 }) {
-  const { data: session, status } = useSession();
+  const { user, loading, isAuthenticated } = useAuth();
   const router = useRouter();
 
   useEffect(() => {
-    if (status === 'loading') return; // Ainda carregando
+    if (loading) return; // Ainda carregando
 
-    if (!session) {
+    if (!isAuthenticated || !user) {
       router.push('/auth/login');
       return;
     }
-  }, [session, status, router]);
+  }, [user, loading, isAuthenticated, router]);
 
-  if (status === 'loading') {
+  if (loading) {
     return (
       <div className="min-h-screen flex items-center justify-center">
         <div className="animate-spin rounded-full h-32 w-32 border-b-2 border-blue-600"></div>
@@ -30,7 +29,7 @@ export default function DashboardLayout({
     );
   }
 
-  if (!session) {
+  if (!isAuthenticated || !user) {
     return null; // Redirecionando...
   }
 

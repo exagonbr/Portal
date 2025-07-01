@@ -21,6 +21,7 @@ import {
   migrateContactFields,
   ensureLegacyCompatibility
 } from '../utils/validation';
+import { getAuthToken } from '@/services/auth';
 
 // Tipos importados e disponíveis para uso interno
 // Remover re-exports para evitar problemas de dependência circular
@@ -85,86 +86,8 @@ const fetchWithRetry = async (url: string, options: RequestInit = {}, maxRetries
 };
 
 // Função para obter token de autenticação de múltiplas fontes
-const getAuthToken = (): string | null => {
-  if (typeof window === 'undefined') return null;
-  
-  console.log('🔍 InstitutionService: Procurando token de autenticação...');
-  
-  // 1. Tentar obter token de localStorage primeiro
-  let token = localStorage.getItem('auth_token') ||
-              localStorage.getItem('token') ||
-              localStorage.getItem('authToken') ||
-              sessionStorage.getItem('token') ||
-              sessionStorage.getItem('auth_token');
-  
-  if (token && token !== 'null' && token !== 'undefined' && token.length > 10) {
-    console.log('✅ InstitutionService: Token encontrado no localStorage/sessionStorage');
-    return token;
-  }
-  
-  // 2. Se não encontrar no storage, tentar obter dos cookies
-  console.log('🔍 InstitutionService: Procurando token nos cookies...');
-  const cookies = document.cookie.split(';');
-  for (const cookie of cookies) {
-    const [name, value] = cookie.trim().split('=');
-    if (name === 'auth_token' || name === 'token' || name === 'authToken') {
-      const decodedValue = decodeURIComponent(value);
-      if (decodedValue && decodedValue !== 'null' && decodedValue !== 'undefined' && decodedValue.length > 10) {
-        token = decodedValue;
-        console.log('✅ InstitutionService: Token encontrado nos cookies');
-        break;
-      }
-    }
-  }
-  
-  // 3. Tentar obter da sessão de usuário (se houver)
-  if (!token) {
-    console.log('🔍 InstitutionService: Procurando token na sessão do usuário...');
-    try {
-      const userCookie = document.cookie
-        .split(';')
-        .find(cookie => cookie.trim().startsWith('user_session='));
-      
-      if (userCookie) {
-        const userSessionValue = userCookie.split('=')[1];
-        const userData = JSON.parse(decodeURIComponent(userSessionValue));
-        if (userData && userData.token && userData.token.length > 10) {
-          token = userData.token;
-          console.log('✅ InstitutionService: Token encontrado na sessão do usuário');
-        }
-      }
-    } catch (error) {
-      console.warn('⚠️ InstitutionService: Erro ao extrair token da sessão do usuário:', error);
-    }
-  }
-  
-  // 4. Verificar se o token é um JWT válido
-  if (token && token.length > 10) {
-    try {
-      // Verificar se é um JWT (tem 3 partes separadas por ponto)
-      const parts = token.split('.');
-      if (parts.length === 3) {
-        console.log('✅ InstitutionService: Token JWT válido encontrado');
-        return token;
-      } else {
-        console.warn('⚠️ InstitutionService: Token encontrado não é um JWT válido');
-        token = null;
-      }
-    } catch (error) {
-      console.warn('⚠️ InstitutionService: Erro ao validar token JWT:', error);
-      token = null;
-    }
-  }
-  
-  if (!token) {
-    console.warn('❌ InstitutionService: Nenhum token JWT válido encontrado');
-    console.log('🔍 InstitutionService: Cookies disponíveis:', document.cookie);
-  } else {
-    console.log('✅ InstitutionService: Token de autenticação obtido com sucesso');
-  }
-  
-  return token;
-};
+// A função getAuthToken foi movida para o auth.ts para centralizar a lógica.
+// A função antiga foi removida para evitar duplicação e inconsistência.
 
 // Função para criar headers com autenticação
 const createAuthHeaders = (): Record<string, string> => {

@@ -146,11 +146,15 @@ function SimpleProviders({ children }: { children: ReactNode }) {
     };
   }, [])
 
-  // Renderizar uma versão simplificada no servidor
+  // Renderizar uma versão simplificada no servidor com ThemeProvider básico
   if (!mounted) {
     return (
       <div className="min-h-screen w-full">
-        {children}
+        <Suspense fallback={null}>
+          <ThemeProvider>
+            {children}
+          </ThemeProvider>
+        </Suspense>
       </div>
     );
   }

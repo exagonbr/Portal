@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect } from 'react';
-import { useSession } from 'next-auth/react';
+import { useAuth } from '@/contexts/AuthContext';
 import { useRouter } from 'next/navigation';
 
 export default function SystemLayout({
@@ -9,25 +9,25 @@ export default function SystemLayout({
 }: {
   children: React.ReactNode;
 }) {
-  const { data: session, status } = useSession();
+  const { user, loading, isAuthenticated } = useAuth();
   const router = useRouter();
 
   useEffect(() => {
-    if (status === 'loading') return;
+    if (loading) return;
 
-    if (!session) {
+    if (!isAuthenticated || !user) {
       router.push('/auth/login');
       return;
     }
 
     // Apenas SYSTEM_ADMIN pode acessar área de sistema
-    if (session.user?.role !== 'SYSTEM_ADMIN') {
+    if (user.role !== 'SYSTEM_ADMIN') {
       router.push('/dashboard');
       return;
     }
-  }, [session, status, router]);
+  }, [user, loading, isAuthenticated, router]);
 
-  if (status === 'loading') {
+  if (loading) {
     return (
       <div className="min-h-screen flex items-center justify-center">
         <div className="animate-spin rounded-full h-32 w-32 border-b-2 border-red-600"></div>
@@ -35,7 +35,7 @@ export default function SystemLayout({
     );
   }
 
-  if (!session || session.user?.role !== 'SYSTEM_ADMIN') {
+  if (!isAuthenticated || !user || user.role !== 'SYSTEM_ADMIN') {
     return null;
   }
 

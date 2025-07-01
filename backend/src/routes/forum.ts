@@ -1,10 +1,13 @@
 import express from 'express';
-import { authMiddleware, requireRole } from '../middleware/auth';
+import {
+  optimizedAuthMiddleware,
+  requireAnyRole
+} from '../middleware/optimizedAuth.middleware';
 
 const router = express.Router();
 
 // Aplicar middleware de autenticação em todas as rotas
-router.use(authMiddleware);
+router.use(optimizedAuthMiddleware);
 
 /**
  * @swagger
@@ -243,7 +246,7 @@ router.delete('/threads/:id', async (req, res) => {
  *       403:
  *         description: Not authorized to pin threads
  */
-router.post('/threads/:id/pin', requireRole(['admin', 'teacher']), async (req, res) => {
+router.post('/threads/:id/pin', requireAnyRole(['SYSTEM_ADMIN', 'TEACHER']), async (req, res) => {
   // Implementation will be added in the controller
 });
 
@@ -281,7 +284,7 @@ router.post('/threads/:id/pin', requireRole(['admin', 'teacher']), async (req, r
  *       403:
  *         description: Not authorized to lock threads
  */
-router.post('/threads/:id/lock', requireRole(['admin', 'teacher']), async (req, res) => {
+router.post('/threads/:id/lock', requireAnyRole(['SYSTEM_ADMIN', 'TEACHER']), async (req, res) => {
   // Implementation will be added in the controller
 });
 

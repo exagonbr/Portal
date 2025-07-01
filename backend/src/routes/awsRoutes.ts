@@ -25,13 +25,26 @@ export function createAwsRoutes(db: Knex): Router {
   router.use((req, res, next) => {
     if (req.path === '/connection-logs/stats') {
       // Verificação manual de role para stats
-      const userRole = (req.user as any)?.role?.toLowerCase();
+      const user = req.user as any;
+      const userRole = user?.role?.toLowerCase() || user?.role_name?.toLowerCase();
+      
+      console.log('🔍 AWS stats - Verificando role:', {
+        email: user?.email,
+        role: user?.role,
+        role_name: user?.role_name,
+        userRole: userRole
+      });
+      
       if (!userRole || !['admin', 'system_admin'].includes(userRole)) {
+        console.log('❌ Acesso negado para AWS stats. Role:', userRole);
         return res.status(403).json({
           success: false,
-          message: 'Acesso negado. Apenas administradores podem acessar estatísticas AWS.'
+          message: 'Acesso negado. Apenas administradores podem acessar estatísticas AWS.',
+          debug: { userRole, allowedRoles: ['admin', 'system_admin'] }
         });
       }
+      
+      console.log('✅ Acesso permitido para AWS stats. Role:', userRole);
       return next();
     }
     // Usar middleware normal para outras rotas

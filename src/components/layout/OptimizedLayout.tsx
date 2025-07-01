@@ -25,12 +25,6 @@ export function OptimizedLayout({ children, className = '' }: OptimizedLayoutPro
         {children}
       </Suspense>
       
-      {/* Debug components apenas em desenvolvimento */}
-      {isDevelopment() && (
-        <Suspense fallback={null}>
-          <div id="debug-components" />
-        </Suspense>
-      )}
     </div>
   );
 }

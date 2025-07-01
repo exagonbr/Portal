@@ -1,7 +1,7 @@
 'use client';
 
 import React from 'react';
-import { useSession, signOut } from 'next-auth/react';
+import { useAuth } from '@/contexts/AuthContext';
 import { Button } from '@/components/ui/Button';
 
 interface HeaderProps {
@@ -9,14 +9,14 @@ interface HeaderProps {
   showUserMenu?: boolean;
 }
 
-const Header: React.FC<HeaderProps> = ({ 
-  title = 'Portal Educacional', 
-  showUserMenu = true 
+const Header: React.FC<HeaderProps> = ({
+  title = 'Portal Educacional',
+  showUserMenu = true
 }) => {
-  const { data: session } = useSession();
+  const { user, logout } = useAuth();
 
   const handleLogout = async () => {
-    await signOut({ callbackUrl: '/auth/login' });
+    await logout();
   };
 
   return (
@@ -31,10 +31,10 @@ const Header: React.FC<HeaderProps> = ({
           </div>
 
           {/* Menu do Usuário */}
-          {showUserMenu && session && (
+          {showUserMenu && user && (
             <div className="flex items-center space-x-4">
               <span className="text-sm text-gray-700">
-                Olá, {session.user?.name || session.user?.email}
+                Olá, {user.name || user.email}
               </span>
               <Button
                 variant="outline"

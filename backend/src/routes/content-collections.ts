@@ -1,11 +1,13 @@
 import express from 'express';
-import { authMiddleware, requireRole, requireRoleSmart } from '../middleware/auth';
-import { validateJWTSmart } from '../middleware/sessionMiddleware';
+import {
+  optimizedAuthMiddleware,
+  requireAnyRole
+} from '../middleware/optimizedAuth.middleware';
 
 const router = express.Router();
 
 // Aplicar middleware de autenticação em todas as rotas
-router.use(authMiddleware);
+router.use(optimizedAuthMiddleware);
 
 /**
  * @swagger
@@ -44,7 +46,7 @@ router.use(authMiddleware);
  *       401:
  *         description: Unauthorized
  */
-router.get('/', validateJWTSmart, async (req, res) => {
+router.get('/', async (req, res) => {
   // Implementation will be added in the controller
 });
 
@@ -122,7 +124,7 @@ router.get('/:id', async (req, res) => {
  *       400:
  *         description: Invalid input
  */
-router.post('/', validateJWTSmart, requireRoleSmart(['admin', 'teacher']), async (req, res) => {
+router.post('/', requireAnyRole(['SYSTEM_ADMIN', 'TEACHER']), async (req, res) => {
   // Implementation will be added in the controller
 });
 
@@ -176,7 +178,7 @@ router.post('/', validateJWTSmart, requireRoleSmart(['admin', 'teacher']), async
  *       403:
  *         description: Not authorized to edit this collection
  */
-router.put('/:id', requireRole(['admin', 'teacher']), async (req, res) => {
+router.put('/:id', requireAnyRole(['SYSTEM_ADMIN', 'TEACHER']), async (req, res) => {
   // Implementation will be added in the controller
 });
 
@@ -203,7 +205,7 @@ router.put('/:id', requireRole(['admin', 'teacher']), async (req, res) => {
  *       403:
  *         description: Not authorized to delete this collection
  */
-router.delete('/:id', requireRole(['admin', 'teacher']), async (req, res) => {
+router.delete('/:id', requireAnyRole(['SYSTEM_ADMIN', 'TEACHER']), async (req, res) => {
   // Implementation will be added in the controller
 });
 
@@ -289,7 +291,7 @@ router.get('/:id/modules', async (req, res) => {
  *       403:
  *         description: Not authorized to modify this collection
  */
-router.post('/:id/modules', requireRole(['admin', 'teacher']), async (req, res) => {
+router.post('/:id/modules', requireAnyRole(['SYSTEM_ADMIN', 'TEACHER']), async (req, res) => {
   // Implementation will be added in the controller
 });
 
@@ -339,7 +341,7 @@ router.post('/:id/modules', requireRole(['admin', 'teacher']), async (req, res) 
  *       403:
  *         description: Not authorized to modify this module
  */
-router.put('/modules/:moduleId', requireRole(['admin', 'teacher']), async (req, res) => {
+router.put('/modules/:moduleId', requireAnyRole(['SYSTEM_ADMIN', 'TEACHER']), async (req, res) => {
   // Implementation will be added in the controller
 });
 
@@ -366,7 +368,7 @@ router.put('/modules/:moduleId', requireRole(['admin', 'teacher']), async (req, 
  *       403:
  *         description: Not authorized to delete this module
  */
-router.delete('/modules/:moduleId', requireRole(['admin', 'teacher']), async (req, res) => {
+router.delete('/modules/:moduleId', requireAnyRole(['SYSTEM_ADMIN', 'TEACHER']), async (req, res) => {
   // Implementation will be added in the controller
 });
 

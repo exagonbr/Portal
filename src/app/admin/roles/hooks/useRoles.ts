@@ -153,7 +153,7 @@ export const useRoles = (): UseRolesReturn => {
       const response = await userService.getUsers({
         page: 1,
         limit: 1000,
-        sortBy: 'fullName',
+        sortBy: 'full_name',
         sortOrder: 'asc'
       })
       setAllUsers(response.items as unknown as UserResponseDto[])

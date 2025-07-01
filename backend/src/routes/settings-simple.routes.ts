@@ -1,5 +1,5 @@
 import { Router, Request, Response } from 'express';
-import { authMiddleware } from '../middleware/auth';
+import { optimizedAuthMiddleware } from '../middleware/optimizedAuth.middleware';
 
 const router = Router();
 
@@ -64,7 +64,7 @@ router.get('/public', async (req: Request, res: Response) => {
 });
 
 // GET - Buscar todas as configurações (com autenticação)
-router.get('/', authMiddleware, async (req: Request, res: Response) => {
+router.get('/', optimizedAuthMiddleware, async (req: Request, res: Response) => {
   try {
     return res.json({
       success: true,

@@ -56,7 +56,7 @@ export interface UserContact {
 export interface User {
   // Informações básicas (obrigatórias)
   id: string;
-  full_name: string;
+  name: string;
   email: string;
   
   // Informações de acesso e permissões
@@ -95,7 +95,7 @@ export interface User {
 export interface UserEssentials {
   id: string;
   email: string;
-  full_name: string;
+  name: string;
   role: UserRole;
   permissions?: Permission[];
 }
@@ -106,7 +106,7 @@ export interface UserEssentials {
 export interface TokenPayload {
   userId: string;
   email: string;
-  full_name: string;
+  name: string;
   role: UserRole;
   permissions?: Permission[];
   exp?: number; // Timestamp de expiração
@@ -153,7 +153,7 @@ export interface LoginRequest {
  * Interface para requisição de registro
  */
 export interface RegisterRequest {
-  full_name: string;
+  name: string;
   email: string;
   password: string;
   confirmPassword: string;

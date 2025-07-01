@@ -56,26 +56,48 @@ export const authOptionsDebug: NextAuthOptions = {
           return null;
         }
         
-        // Aqui você pode implementar a verificação com seu backend
-        // Por enquanto, vamos simular um usuário admin para debug
-        if (credentials.email === 'admin@sabercon.com.br' && credentials.password === 'admin123') {
-          console.log('✅ [AUTH-DEBUG] Login admin simulado bem-sucedido');
-          return {
-            id: 'debug-admin',
-            email: credentials.email,
-            name: 'Admin Debug',
-            role: 'SYSTEM_ADMIN',
-            permissions: [
-              'system.admin',
-              'units.manage',
-              'institutions.manage',
-              'users.manage'
-            ]
-          };
+        try {
+          // Fazer requisição para o backend de autenticação
+          const backendUrl = process.env.FORCE_PRODUCTION_BACKEND === 'true'
+            ? 'https://portal.sabercon.com.br/api'
+            : 'http://localhost:3001/api';
+          
+          const response = await fetch(`${backendUrl}/auth/optimized/login`, {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({
+              email: credentials.email,
+              password: credentials.password,
+            }),
+          });
+
+          if (!response.ok) {
+            console.log('❌ [AUTH-DEBUG] Resposta do backend não OK:', response.status);
+            return null;
+          }
+
+          const data = await response.json();
+          console.log('🔍 [AUTH-DEBUG] Resposta do backend:', data);
+          
+          if (data.success && data.data && data.data.user) {
+            console.log('✅ [AUTH-DEBUG] Login bem-sucedido:', data.data.user.email);
+            return {
+              id: data.data.user.id,
+              email: data.data.user.email,
+              name: data.data.user.name,
+              role: data.data.user.role,
+              permissions: data.data.user.permissions || [],
+            };
+          }
+          
+          console.log('❌ [AUTH-DEBUG] Dados inválidos na resposta');
+          return null;
+        } catch (error) {
+          console.error('❌ [AUTH-DEBUG] Erro na autenticação:', error);
+          return null;
         }
-        
-        console.log('❌ [AUTH-DEBUG] Credenciais inválidas');
-        return null;
       }
     })
   ],

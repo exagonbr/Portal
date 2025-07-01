@@ -150,6 +150,101 @@ router.get('/', async (req: Request, res: Response) => {
   }
 });
 
+// GET /api/certificates/search - Buscar certificados para validação pública (sem autenticação)
+router.get('/search', async (req: Request, res: Response) => {
+  try {
+    const database = initDB();
+    
+    const { license_code, cpf_last_digits } = req.query;
+
+    if (!license_code && !cpf_last_digits) {
+      return res.status(400).json({
+        success: false,
+        message: 'É necessário informar o número da licença ou os últimos 3 dígitos do CPF'
+      });
+    }
+
+    // Validar formato dos últimos dígitos do CPF
+    if (cpf_last_digits && !/^\d{3}$/.test(cpf_last_digits as string)) {
+      return res.status(400).json({
+        success: false,
+        message: 'Os últimos dígitos do CPF devem conter exatamente 3 números'
+      });
+    }
+
+    // Construir WHERE clause
+    const whereConditions: string[] = [];
+    const queryParams: any[] = [];
+    let paramIndex = 1;
+
+    if (license_code) {
+      whereConditions.push(`c.license_code = $${paramIndex++}`);
+      queryParams.push(license_code);
+    }
+
+    if (cpf_last_digits) {
+      // Buscar por últimos 3 dígitos do CPF no campo document
+      whereConditions.push(`RIGHT(REGEXP_REPLACE(c.document, '[^0-9]', '', 'g'), 3) = $${paramIndex++}`);
+      queryParams.push(cpf_last_digits);
+    }
+
+    const whereClause = whereConditions.length > 0 ? `WHERE ${whereConditions.join(' AND ')}` : '';
+
+    // Query para buscar certificados com informações do usuário
+    const query = `
+      SELECT
+        c.id,
+        c.date_created,
+        c.path,
+        c.score,
+        c.document,
+        c.license_code,
+        c.tv_show_name,
+        u.id as user_id,
+        u.full_name,
+        u.email
+      FROM certificate c
+      LEFT JOIN users u ON c.user_id = u.id
+      ${whereClause}
+      ORDER BY c.date_created DESC
+      LIMIT 50
+    `;
+
+    const result = await database.query(query, queryParams);
+
+    // Mapear resultados para incluir informações do usuário
+    const certificates = result.rows.map(row => ({
+      id: row.id,
+      license_code: row.license_code,
+      document: row.document,
+      tv_show_name: row.tv_show_name,
+      score: row.score,
+      date_created: row.date_created,
+      path: row.path,
+      user: {
+        id: row.user_id,
+        full_name: row.full_name,
+        email: row.email
+      }
+    }));
+
+    return res.json({
+      success: true,
+      data: certificates,
+      message: certificates.length > 0
+        ? `${certificates.length} certificado(s) encontrado(s)`
+        : 'Nenhum certificado encontrado'
+    });
+
+  } catch (error) {
+    console.error('Erro ao buscar certificados:', error);
+    return res.status(500).json({
+      success: false,
+      message: 'Erro interno do servidor'
+    });
+  }
+});
+
 // GET /api/certificates/:id - Buscar certificado por ID
 router.get('/:id', async (req: Request, res: Response) => {
   try {
@@ -183,7 +278,7 @@ router.get('/:id', async (req: Request, res: Response) => {
       });
     }
 
-    res.json({
+    return res.json({
       success: true,
       data: result.rows[0]
     });
@@ -242,7 +337,7 @@ router.post('/', async (req: Request, res: Response) => {
 
     const result = await database.query(query, values);
 
-    res.status(201).json({
+    return res.status(201).json({
       success: true,
       data: result.rows[0],
       message: 'Certificado criado com sucesso'
@@ -337,7 +432,7 @@ router.put('/:id', async (req: Request, res: Response) => {
 
     const result = await database.query(updateQuery, updateValues);
 
-    res.json({
+    return res.json({
       success: true,
       data: result.rows[0],
       message: 'Certificado atualizado com sucesso'
@@ -372,7 +467,7 @@ router.delete('/:id', async (req: Request, res: Response) => {
     const deleteQuery = 'DELETE FROM certificate WHERE id = $1 RETURNING id';
     const result = await database.query(deleteQuery, [Number(id)]);
 
-    res.json({
+    return res.json({
       success: true,
       message: 'Certificado excluído com sucesso',
       data: { id: result.rows[0].id }

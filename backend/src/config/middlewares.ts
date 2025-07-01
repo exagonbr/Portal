@@ -1,5 +1,12 @@
 import express from 'express';
 import cors from 'cors';
+import {
+  corsUsersConfig,
+  isOriginAllowed,
+  allowedHeaders,
+  exposedHeaders,
+  allowedMethods,
+} from './corsUsers.config';
 import helmet from 'helmet';
 import compression from 'compression';
 import morgan from 'morgan';
@@ -32,65 +39,36 @@ export function setupMiddlewares(app: express.Application): void {
     xXssProtection: false
   }));
 
-  // CORS - PERMITIR TODAS AS ORIGENS (*) - CONFIGURAÇÃO MAIS PERMISSIVA
-  app.use(cors({
-    origin: '*', // Permitir TODAS as origens
-    credentials: false, // Deve ser false com origin: '*'
-    methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'OPTIONS', 'HEAD'],
-    allowedHeaders: [
-      'Content-Type', 
-      'Authorization', 
-      'X-Requested-With',
-      'Access-Control-Allow-Origin',
-      'Access-Control-Allow-Headers',
-      'Access-Control-Allow-Methods',
-      'Accept',
-      'Origin',
-      'Cookie',
-      'X-CSRF-Token',
-      'Cache-Control',
-      'Pragma',
-      'User-Agent',
-      'Referer',
-      'Host',
-      'Connection',
-      'Accept-Encoding',
-      'Accept-Language'
-    ],
-    exposedHeaders: [
-      'Access-Control-Allow-Origin',
-      'Access-Control-Allow-Headers',
-      'Access-Control-Allow-Methods',
-      'Allow',
-      'Set-Cookie',
-      'X-Response-Time',
-      'X-Total-Count',
-      'X-Page-Count'
-    ],
-    preflightContinue: false,
-    optionsSuccessStatus: 200 // Mudado de 204 para 200 para melhor compatibilidade
-  }));
+  // Configuração de CORS utilizando a configuração centralizada e dinâmica
+  const corsOptions: cors.CorsOptions = {
+    origin: (origin, callback) => {
+      // A lista de origens permitidas é gerenciada no arquivo de configuração
+      const allowedList = corsUsersConfig.allowedOrigins;
 
-  // Middleware adicional para GARANTIR cabeçalhos CORS em TODAS as respostas
-  app.use((req, res, next) => {
-    // SEMPRE permitir todas as origens
-    res.setHeader('Access-Control-Allow-Origin', '*');
-    res.setHeader('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, PATCH, OPTIONS, HEAD');
-    res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization, X-Requested-With, Cookie, X-CSRF-Token, Cache-Control, Pragma, Accept, Origin, User-Agent, Referer');
-    res.setHeader('Access-Control-Allow-Credentials', 'false'); // Deve ser false com origin: '*'
-    res.setHeader('Access-Control-Max-Age', '86400'); // Cache preflight por 24h
-    res.setHeader('Access-Control-Expose-Headers', 'Set-Cookie, X-Response-Time, X-Total-Count, X-Page-Count');
-    res.setHeader('Allow', 'GET, POST, PUT, DELETE, PATCH, OPTIONS, HEAD'); // HEADER ALLOW ADICIONADO
-    
-    // Para requisições OPTIONS (preflight), responder imediatamente
-    if (req.method === 'OPTIONS') {
-      res.setHeader('Content-Length', '0');
-      res.setHeader('Allow', 'GET, POST, PUT, DELETE, PATCH, OPTIONS, HEAD'); // GARANTIR ALLOW NO OPTIONS
-      return res.status(200).end();
-    }
-    
-    return next();
-  });
+      if (isOriginAllowed(origin, allowedList)) {
+        callback(null, true);
+      } else {
+        // Log para debug de origens bloqueadas
+        if (origin) {
+          console.warn(`CORS: Bloqueada a origem: ${origin}`);
+        }
+        callback(new Error('Origem não permitida pela política de CORS.'));
+      }
+    },
+    credentials: true, // Essencial para autenticação baseada em cookies/tokens
+    methods: allowedMethods,
+    allowedHeaders: allowedHeaders,
+    exposedHeaders: exposedHeaders,
+    maxAge: corsUsersConfig.maxAge,
+    optionsSuccessStatus: 204, // Resposta padrão para preflight (No Content)
+    preflightContinue: false,
+  };
+
+  // Aplica o middleware de CORS com as opções dinâmicas
+  app.use(cors(corsOptions));
+
+  // Garante que as requisições OPTIONS (preflight) sejam tratadas corretamente em todas as rotas
+  app.options('*', cors(corsOptions));
 
   // Compressão
   app.use(compression());

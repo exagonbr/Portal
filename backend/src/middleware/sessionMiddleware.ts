@@ -453,8 +453,12 @@ export const validateJWTSimple = async (
       const secret = process.env.JWT_SECRET || 'ExagonTech';
       const decoded = jwt.verify(token, secret) as any;
       
-      if (typeof decoded === 'string' || !decoded.userId) {
-        console.warn('⚠️ Invalid JWT payload detected:', { decoded: typeof decoded, hasUserId: !!decoded?.userId });
+      if (typeof decoded === 'string' || (!decoded.userId && !decoded.id)) {
+        console.warn('⚠️ Invalid JWT payload detected:', {
+          decoded: typeof decoded,
+          hasUserId: !!decoded?.userId,
+          hasId: !!decoded?.id
+        });
         return res.status(401).json({
           success: false,
           message: 'Payload do token inválido'
@@ -462,10 +466,10 @@ export const validateJWTSimple = async (
       }
       
       userAuth = {
-        id: decoded.id,
+        id: decoded.userId || decoded.id,
         email: decoded.email || '',
         name: decoded.name || '',
-        role: decoded.role || 'user',
+        role: decoded.role || decoded.role_name || 'user',
         permissions: decoded.permissions || [],
         institutionId: decoded.institutionId,
         sessionId: decoded.sessionId,
@@ -704,20 +708,24 @@ export const validateTokenUltraSimple = async (
         const decoded = jwt.verify(token, secret) as any;
         console.log('✅ Token decoded as JWT successfully for user:', decoded.email || decoded.userId);
         
-        if (typeof decoded !== 'object' || !decoded.userId) {
-          console.warn('⚠️ Invalid JWT payload detected:', { decoded: typeof decoded, hasUserId: !!decoded?.userId });
+        if (typeof decoded !== 'object' || (!decoded.userId && !decoded.id)) {
+          console.warn('⚠️ Invalid JWT payload detected:', {
+            decoded: typeof decoded,
+            hasUserId: !!decoded?.userId,
+            hasId: !!decoded?.id
+          });
           return res.status(401).json({
             success: false,
             error: 'Payload do token inválido',
-            debug: 'JWT payload missing userId or is not object'
+            debug: 'JWT payload missing userId/id or is not object'
           });
         }
         
         req.user = {
-          id: decoded.id,
+          id: decoded.userId || decoded.id,
           email: decoded.email || '',
           name: decoded.name || '',
-          role: decoded.role || 'user',
+          role: decoded.role || decoded.role_name || 'user',
           permissions: decoded.permissions || [],
           institutionId: decoded.institutionId,
           sessionId: decoded.sessionId,

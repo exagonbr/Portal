@@ -266,9 +266,6 @@ function SystemAdminDashboardContent() {
       runAllChunkErrorTests().catch(console.error);
     }
     
-    // Executar diagnóstico de autenticação primeiro
-    console.log('🔍 Executando diagnóstico de autenticação...');
-    debugAuth();
 
     if (isAuthenticated) {
       loadDashboardData();

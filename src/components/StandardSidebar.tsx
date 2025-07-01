@@ -56,14 +56,14 @@ const SidebarLogo = memo(({ isCollapsed, theme }: { isCollapsed: boolean, theme:
 ));
 SidebarLogo.displayName = 'SidebarLogo';
 
-const UserProfile = memo(({ user, isCollapsed, theme }: { user: any, isCollapsed: boolean, theme: any }) => (
-  <div className="px-2 py-3 border-b flex-shrink-0" style={{ borderColor: `${theme.colors.border.light}40` }}>
+const UserProfile = memo(({ user, isCollapsed, theme, userRole }: { user: any, isCollapsed: boolean, theme: any, userRole: UserRole }) => (
+  <div className={`px-2 py-3 border-b flex-shrink-0 ${userRole !== UserRole.SYSTEM_ADMIN ? 'py-4' : ''}`} style={{ borderColor: `${theme.colors.border.light}40` }}>
     <div className={`flex items-center ${isCollapsed ? 'justify-center' : 'space-x-3'}`}>
-      <div 
+      <div
         className="w-7 h-7 rounded-full flex items-center justify-center flex-shrink-0"
         style={{ backgroundColor: `${theme.colors.primary.light}30` }}
       >
-        <span 
+        <span
           className={`material-symbols-outlined ${isCollapsed ? 'text-[16px]' : 'text-[14px]'}`}
           style={{ color: theme.colors.primary.DEFAULT }}
         >
@@ -836,7 +836,7 @@ export default function StandardSidebar() {
           </div>
 
           {/* User Info */}
-          <UserProfile user={user} isCollapsed={isCollapsed} theme={theme} />
+          <UserProfile user={user} isCollapsed={isCollapsed} theme={theme} userRole={userRole} />
 
           {/* Navigation */}
           <nav className="flex-1 px-1 py-2 overflow-y-auto overflow-x-hidden scrollbar-thin">

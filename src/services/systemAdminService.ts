@@ -1321,9 +1321,24 @@ class SystemAdminService {
         }
         
         console.warn('⚠️ [ROLE-STATS] Resposta sem sucesso ou dados:', response);
-        throw new Error(response.message || 'Falha ao carregar estatísticas de roles');
+        // Garante que a mensagem de erro seja sempre uma string para evitar erros genéricos.
+        let errorMessage = 'Falha ao carregar estatísticas de roles. O servidor não retornou uma mensagem de erro específica.';
+        if (response.message) {
+          if (typeof response.message === 'string' && response.message.trim()) {
+            errorMessage = response.message;
+          } else {
+            try {
+              errorMessage = `O servidor retornou um erro inesperado: ${JSON.stringify(response.message)}`;
+            } catch {
+              errorMessage = 'O servidor retornou um erro não-serializável.';
+            }
+          }
+        }
+        throw new Error(errorMessage);
       } catch (error: unknown) {
-        console.error('❌ [ROLE-STATS] Erro ao carregar estatísticas de roles:', error);
+        // Melhora o log de erro para extrair a mensagem de forma mais confiável.
+        const message = error instanceof Error ? error.message : String(error);
+        console.error('❌ [ROLE-STATS] Erro ao carregar estatísticas de roles:', message, { originalError: error });
         
         // Verificar se é erro de autenticação
         this.handleAuthError(error, 'ROLE-STATS');

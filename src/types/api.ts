@@ -24,6 +24,7 @@ export interface PaginationParams {
 
 // DTOs de usuário que correspondem ao backend
 export interface CreateUserDto {
+  name: any;
   full_name: string;
   email: string;
   password: string;

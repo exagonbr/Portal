@@ -1,5 +1,6 @@
 import {User, UserRole} from '../types/auth';
-import {getSession, signOut} from 'next-auth/react';
+// NextAuth removido - usando sistema de autenticação customizado
+// import {getSession, signOut} from 'next-auth/react';
 import {MOCK_USERS} from '../constants/mockData';
 
 export interface LoginResponse {
@@ -186,20 +187,7 @@ export const register = async (
 };
 
 export const getCurrentUser = async (): Promise<User | null> => {
-  // First try to get user from NextAuth session
-  const session = await getSession();
-  if (session?.user) {
-    return {
-      id: Math.random().toString(36).substr(2, 9), // Generate random ID for Google users
-      name: session.user.name || '',
-      email: session.user.email || '',
-      role: 'teacher' as UserRole,
-      type: 'teacher', // Default role for Google users
-      courses: []
-    };
-  }
-
-  // If no NextAuth session, try local storage
+  // NextAuth removido - usando apenas localStorage
   const userStr = safeLocalStorage.getItem('user');
   if (userStr) {
     try {
@@ -226,38 +214,29 @@ export const logout = async (): Promise<void> => {
         console.log(`✅ Sessão local removida: ${sessionId}`);
       }
 
-      // Clear NextAuth session
-      signOut({ redirect: false }).then(() => {
-        // Clear local storage
-        safeLocalStorage.removeItem('session_id');
-        safeLocalStorage.removeItem('auth_token');
-        safeLocalStorage.removeItem('user');
-        
-        // Clear all cookies
-        clearAllCookies();
-        
-        setTimeout(() => resolve(), 500);
-      });
+      // Clear local storage
+      safeLocalStorage.removeItem('session_id');
+      safeLocalStorage.removeItem('auth_token');
+      safeLocalStorage.removeItem('user');
+      
+      // Clear all cookies
+      clearAllCookies();
+      
+      setTimeout(() => resolve(), 500);
     } catch (error) {
       console.error('Erro durante logout:', error);
       // Continua com limpeza local mesmo se houver erro
-      signOut({ redirect: false }).then(() => {
-        safeLocalStorage.removeItem('session_id');
-        safeLocalStorage.removeItem('auth_token');
-        safeLocalStorage.removeItem('user');
-        clearAllCookies();
-        setTimeout(() => resolve(), 500);
-      });
+      safeLocalStorage.removeItem('session_id');
+      safeLocalStorage.removeItem('auth_token');
+      safeLocalStorage.removeItem('user');
+      clearAllCookies();
+      setTimeout(() => resolve(), 500);
     }
   });
 };
 
 export const isAuthenticated = async (): Promise<boolean> => {
-  // Verifica NextAuth session
-  const session = await getSession();
-  if (session) return true;
-  
-  // Verifica sessão local
+  // NextAuth removido - verificando apenas sessão local
   const sessionId = safeLocalStorage.getItem('session_id') ||
                    (typeof window !== 'undefined' && document.cookie
                      .split('; ')

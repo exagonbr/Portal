@@ -1,10 +1,26 @@
 import { NextRequest, NextResponse } from 'next/server';
+import { cookies } from 'next/headers';
 
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001';
 
 export async function GET(request: NextRequest) {
   try {
     const { searchParams } = new URL(request.url);
+    
+    // Obter token de autenticação
+    const cookieStore = await cookies();
+    const token = cookieStore.get('token')?.value ||
+                  request.headers.get('authorization')?.replace('Bearer ', '');
+    
+    if (!token) {
+      return NextResponse.json(
+        {
+          success: false,
+          message: 'Token de autenticação não encontrado'
+        },
+        { status: 401 }
+      );
+    }
     
     // Construir URL com parâmetros de query
     const params = new URLSearchParams();
@@ -51,6 +67,7 @@ export async function GET(request: NextRequest) {
       method: 'GET',
       headers: {
         'Content-Type': 'application/json',
+        'Authorization': `Bearer ${token}`,
       },
     });
 
@@ -77,11 +94,27 @@ export async function GET(request: NextRequest) {
 export async function POST(request: NextRequest) {
   try {
     const body = await request.json();
+    
+    // Obter token de autenticação
+    const cookieStore = await cookies();
+    const token = cookieStore.get('token')?.value ||
+                  request.headers.get('authorization')?.replace('Bearer ', '');
+    
+    if (!token) {
+      return NextResponse.json(
+        {
+          success: false,
+          message: 'Token de autenticação não encontrado'
+        },
+        { status: 401 }
+      );
+    }
 
     const response = await fetch(`${API_BASE_URL}/api/certificates`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
+        'Authorization': `Bearer ${token}`,
       },
       body: JSON.stringify(body),
     });

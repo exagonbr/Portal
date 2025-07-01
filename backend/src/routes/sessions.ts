@@ -123,7 +123,7 @@ router.post(
           userId: user.id,
           email: user.email,
           name: user.name,
-          role: user.role?.name,
+          role: user.role?.name.toUpperCase(),
           institutionId: user.institution_id,
           permissions: user.role?.permissions || [],
           sessionId
@@ -141,7 +141,7 @@ router.post(
           id: user.id,
           email: user.email,
           name: user.name,
-          role: user.role?.name,
+          role: user.role?.name.toUpperCase(),
           institutionId: user.institution_id,
           permissions: user.role?.permissions || []
         },

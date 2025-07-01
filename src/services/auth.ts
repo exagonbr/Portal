@@ -261,12 +261,13 @@ export const updateUser = async (id: string, userData: Partial<User>): Promise<U
 export const extractUserEssentials = (user: any): UserEssentials => {
   // Mapear role_slug do backend para role do frontend
   let role: UserRole;
-  const backendRole = user.role_slug || user.role;
+  const backendRole = user.role || user.role_slug;
   
   // Converter role do backend para enum do frontend
   switch (backendRole) {
     case 'SYSTEM_ADMIN':
     case 'system_admin':
+    case 'system-admin':
     case 'Administrador do Sistema':
     case 'ADMINISTRADOR DO SISTEMA':
       role = 'SYSTEM_ADMIN' as UserRole;
@@ -723,6 +724,12 @@ export const setAuthToken = (token: string): void => {
   apiClient.setAuthToken(token);
 };
 
+export const getAuthToken = (): string | null => {
+  if (typeof window === 'undefined') {
+    return null;
+  }
+  return localStorage.getItem('auth_token');
+};
 /**
  * Renovação de sessão simplificada - apenas estende a sessão atual
  */

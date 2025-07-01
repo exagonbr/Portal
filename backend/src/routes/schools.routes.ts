@@ -1,6 +1,6 @@
 import { Router } from 'express';
 import { db } from '../database/connection';
-import { authMiddleware } from '../middleware/auth';
+import { optimizedAuthMiddleware } from '../middleware/optimizedAuth.middleware';
 
 const router = Router();
 
@@ -9,7 +9,7 @@ const router = Router();
  * @desc Get all schools
  * @access Private
  */
-router.get('/', authMiddleware, async (req, res) => {
+router.get('/', optimizedAuthMiddleware, async (req, res) => {
   try {
     const query = db('schools')
       .select('*')
@@ -48,7 +48,7 @@ router.get('/', authMiddleware, async (req, res) => {
  * @desc Get school by ID
  * @access Private
  */
-router.get('/:id', authMiddleware, async (req, res) => {
+router.get('/:id', optimizedAuthMiddleware, async (req, res) => {
   try {
     const query = db('schools').where({ id: req.params.id });
 
@@ -84,7 +84,7 @@ router.get('/:id', authMiddleware, async (req, res) => {
  * @desc Create a new school
  * @access Private
  */
-router.post('/', authMiddleware, async (req, res) => {
+router.post('/', optimizedAuthMiddleware, async (req, res) => {
   try {
     const {
       name,
@@ -141,7 +141,7 @@ router.post('/', authMiddleware, async (req, res) => {
  * @desc Update a school
  * @access Private
  */
-router.put('/:id', authMiddleware, async (req, res) => {
+router.put('/:id', optimizedAuthMiddleware, async (req, res) => {
   try {
     const {
       name,
@@ -207,7 +207,7 @@ router.put('/:id', authMiddleware, async (req, res) => {
  * @desc Delete a school
  * @access Private
  */
-router.delete('/:id', authMiddleware, async (req, res) => {
+router.delete('/:id', optimizedAuthMiddleware, async (req, res) => {
   try {
     const query = db('schools').where({ id: req.params.id });
 

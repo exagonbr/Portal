@@ -4,7 +4,8 @@ import React, { useState, useEffect } from 'react'
 import { X, Users, Key, Shield, Plus, Eye, EyeOff, AlertTriangle } from 'lucide-react'
 import { useToast } from '@/components/ToastManager'
 import { userService } from '@/services/userService'
-import { CreateUserDto, RoleResponseDto, InstitutionResponseDto } from '@/types/api'
+import { CreateUserDto } from '@/types/dto'
+import { RoleResponseDto, InstitutionResponseDto } from '@/types/api'
 import { useAuth } from '@/contexts/AuthContext'
 
 interface CreateUserFormProps {
@@ -150,7 +151,6 @@ export default function CreateUserForm({ onClose, onSuccess, roles, institutions
   const [isLoading, setIsLoading] = useState(false)
   const [showPassword, setShowPassword] = useState(false)
   const [showConfirmPassword, setShowConfirmPassword] = useState(false)
-  const [showDebug, setShowDebug] = useState(false)
   
   const [formData, setFormData] = useState<CreateUserDto>({
     name: '',
@@ -265,7 +265,19 @@ export default function CreateUserForm({ onClose, onSuccess, roles, institutions
         }
       })
       
-      await userService.createUser(formData)
+      // Mapear dados do formulário para o formato esperado pelo serviço
+      const createUserData = {
+        email: formData.email,
+        password: formData.password,
+        full_name: formData.name,
+        roleId: formData.role_id,
+        institutionId: formData.institution_id ? parseInt(formData.institution_id) : 0,
+        address: formData.endereco,
+        phone: formData.telefone,
+        enabled: formData.is_active
+      }
+      
+      await userService.createUser(createUserData)
       
       showSuccess('Usuário criado com sucesso!')
       onSuccess()
@@ -326,49 +338,6 @@ export default function CreateUserForm({ onClose, onSuccess, roles, institutions
         </div>
       </div>
 
-      {/* Debug Panel */}
-      <div className="border-b border-slate-200 bg-yellow-50">
-        <button
-          type="button"
-          onClick={() => setShowDebug(!showDebug)}
-          className="w-full p-3 text-left flex items-center gap-2 text-yellow-800 hover:bg-yellow-100 transition-colors"
-        >
-          <AlertTriangle className="h-4 w-4" />
-          <span className="text-sm font-medium">Debug de Permissões</span>
-          <span className="text-xs ml-auto">{showDebug ? 'Ocultar' : 'Mostrar'}</span>
-        </button>
-        
-        {showDebug && (
-          <div className="p-4 bg-yellow-50 border-t border-yellow-200 text-xs">
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <div>
-                <h4 className="font-semibold text-yellow-800 mb-2">Usuário Autenticado:</h4>
-                <pre className="bg-white p-2 rounded border text-xs overflow-auto">
-                  {JSON.stringify(authUser, null, 2)}
-                </pre>
-              </div>
-              
-              <div>
-                <h4 className="font-semibold text-yellow-800 mb-2">LocalStorage:</h4>
-                <pre className="bg-white p-2 rounded border text-xs overflow-auto">
-                  {JSON.stringify({
-                    auth_token: localStorage.getItem('auth_token') ? `${localStorage.getItem('auth_token')?.substring(0, 20)}...` : null,
-                    user: localStorage.getItem('user') ? JSON.parse(localStorage.getItem('user') || '{}') : null,
-                    auth_expires_at: localStorage.getItem('auth_expires_at')
-                  }, null, 2)}
-                </pre>
-              </div>
-              
-              <div className="md:col-span-2">
-                <h4 className="font-semibold text-yellow-800 mb-2">Cookies:</h4>
-                <pre className="bg-white p-2 rounded border text-xs overflow-auto">
-                  {document.cookie || 'Nenhum cookie encontrado'}
-                </pre>
-              </div>
-            </div>
-          </div>
-        )}
-      </div>
 
       {/* Form */}
       <form onSubmit={handleSubmit} className="p-6 space-y-6">

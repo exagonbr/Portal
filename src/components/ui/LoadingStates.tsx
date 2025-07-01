@@ -366,4 +366,59 @@ export function useLoadingState() {
     setError,
     reset
   };
-} 
+}
+
+// Componente específico para logout com efeito blur sem fundo
+export function LogoutLoadingState({
+  message = 'Fazendo logout e limpando dados...'
+}: {
+  message?: string;
+}) {
+  return (
+    <motion.div
+      initial={{ opacity: 0 }}
+      animate={{ opacity: 1 }}
+      exit={{ opacity: 0 }}
+      className="fixed inset-0 flex items-center justify-center backdrop-blur-md z-50"
+      style={{
+        background: 'transparent'
+      }}
+    >
+      <div className="flex flex-col items-center max-w-md mx-auto p-8">
+        {/* Spinner principal com efeito vidro */}
+        <div className="relative mb-6">
+          <motion.div
+            animate={{ rotate: 360 }}
+            transition={{ duration: 1, repeat: Infinity, ease: "linear" }}
+            className="w-16 h-16 border-4 border-white/30 border-t-white rounded-full backdrop-blur-sm"
+            style={{
+              background: 'rgba(255, 255, 255, 0.1)',
+              boxShadow: '0 8px 32px 0 rgba(31, 38, 135, 0.37)',
+              backdropFilter: 'blur(4px)',
+              WebkitBackdropFilter: 'blur(4px)',
+              borderRadius: '50%',
+              border: '1px solid rgba(255, 255, 255, 0.18)'
+            }}
+          />
+        </div>
+
+        {/* Mensagem com efeito vidro */}
+        <div
+          className="px-6 py-4 rounded-2xl text-center"
+          style={{
+            background: 'rgba(255, 255, 255, 0.15)',
+            boxShadow: '0 8px 32px 0 rgba(31, 38, 135, 0.37)',
+            backdropFilter: 'blur(8px)',
+            WebkitBackdropFilter: 'blur(8px)',
+            borderRadius: '16px',
+            border: '1px solid rgba(255, 255, 255, 0.18)'
+          }}
+        >
+          <h3 className="text-lg font-semibold text-white drop-shadow-lg">
+            {message}
+          </h3>
+        </div>
+      </div>
+    </motion.div>
+  );
+}

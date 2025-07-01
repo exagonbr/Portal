@@ -1541,10 +1541,9 @@ model users {
   institution_id          BigInt?
   subject                 String?       @db.VarChar(255)
   subject_data_id         BigInt?
-  is_institution_manage   Boolean?      @default(false)
+  is_institution_manager  Boolean?      @default(false)
   is_coordinator          Boolean?      @default(false)
   is_guardian             Boolean?      @default(false)
-  is_institution_manager  Boolean?      @default(false)
 
   // Relations
   certificates            certificate[]

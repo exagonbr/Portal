@@ -1,5 +1,9 @@
 import express from 'express';
-import { authMiddleware, requireRole } from '../middleware/auth';
+import {
+  optimizedAuthMiddleware,
+  requireRole,
+  requireAnyRole
+} from '../middleware/optimizedAuth.middleware';
 import { getRedisClient, TTL } from '../config/redis';
 import { RoleService } from '../services/RoleService';
 import { Logger } from '../utils/Logger';
@@ -7,7 +11,7 @@ import { Logger } from '../utils/Logger';
 const router = express.Router();
 
 // Aplicar middleware de autenticação em todas as rotas
-router.use(authMiddleware);
+router.use(optimizedAuthMiddleware);
 const logger = new Logger('CacheRoutes');
 const roleService = new RoleService();
 
@@ -440,7 +444,7 @@ router.post('/invalidate', async (req, res) => {
  *       200:
  *         description: Cache cleared successfully
  */
-router.post('/clear', requireRole(['SYSTEM_ADMIN']), async (req, res) => {
+router.post('/clear', requireRole('SYSTEM_ADMIN'), async (req, res) => {
   try {
     const { pattern } = req.body;
     
@@ -508,7 +512,7 @@ router.post('/clear', requireRole(['SYSTEM_ADMIN']), async (req, res) => {
  *       200:
  *         description: Cache statistics
  */
-router.get('/stats', requireRole(['admin', 'SYSTEM_ADMIN']), async (req, res) => {
+router.get('/stats', requireAnyRole(['admin', 'SYSTEM_ADMIN']), async (req, res) => {
   try {
     const stats = {
       keys: 0,

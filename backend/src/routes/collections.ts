@@ -1,21 +1,24 @@
 import { Router } from 'express';
 import { TVShowController } from '../controllers/TVShowController';
 import { VideoCollectionController } from '../controllers/VideoCollectionController';
-import { authMiddleware, requireRole } from '../middleware/auth';
+import {
+  optimizedAuthMiddleware,
+  requireRole
+} from '../middleware/optimizedAuth.middleware';
 
 const router = Router();
 const videoCollectionController = new VideoCollectionController();
 
 // Aplicar middleware de autenticação em todas as rotas
-router.use(authMiddleware);
+router.use(optimizedAuthMiddleware);
 
 // === ROTAS DE GERENCIAMENTO (NOVO SISTEMA) ===
 // Redirecionar para o novo sistema de video-collections
 
 // Aplicar middleware de role para rotas administrativas
-router.use('/manage', requireRole(['SYSTEM_ADMIN']));
-router.use('/migrate', requireRole(['SYSTEM_ADMIN']));
-router.use('/migration', requireRole(['SYSTEM_ADMIN']));
+router.use('/manage', requireRole('SYSTEM_ADMIN'));
+router.use('/migrate', requireRole('SYSTEM_ADMIN'));
+router.use('/migration', requireRole('SYSTEM_ADMIN'));
 
 // Gerenciamento de coleções (novo sistema)
 router.get('/manage', videoCollectionController.getAllCollections.bind(videoCollectionController));

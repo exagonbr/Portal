@@ -1,10 +1,14 @@
 import express from 'express';
-import { authMiddleware, requireRole, requireInstitution } from '../middleware/auth';
+import {
+  optimizedAuthMiddleware,
+  requireAnyRole,
+  requirePermission
+} from '../middleware/optimizedAuth.middleware';
 
 const router = express.Router();
 
 // Aplicar middleware de autenticação em todas as rotas
-router.use(authMiddleware);
+router.use(optimizedAuthMiddleware);
 
 /**
  * @swagger
@@ -33,7 +37,7 @@ router.use(authMiddleware);
  *       401:
  *         description: Unauthorized
  */
-router.get('/', requireInstitution, async (req, res) => {
+router.get('/', requirePermission('content:read'), async (req, res) => {
   // Implementation will be added in the controller
 });
 
@@ -62,7 +66,7 @@ router.get('/', requireInstitution, async (req, res) => {
  *       404:
  *         description: Book not found
  */
-router.get('/:id', requireInstitution, async (req, res) => {
+router.get('/:id', requirePermission('content:read'), async (req, res) => {
   // Implementation will be added in the controller
 });
 
@@ -109,7 +113,7 @@ router.get('/:id', requireInstitution, async (req, res) => {
  *       400:
  *         description: Invalid input
  */
-router.post('/', requireRole(['admin', 'teacher']), requireInstitution, async (req, res) => {
+router.post('/', requireAnyRole(['SYSTEM_ADMIN', 'TEACHER']), requirePermission('content:create'), async (req, res) => {
   // Implementation will be added in the controller
 });
 
@@ -154,7 +158,7 @@ router.post('/', requireRole(['admin', 'teacher']), requireInstitution, async (r
  *       404:
  *         description: Book not found
  */
-router.put('/:id', requireRole(['admin', 'teacher']), requireInstitution, async (req, res) => {
+router.put('/:id', requireAnyRole(['SYSTEM_ADMIN', 'TEACHER']), requirePermission('content:update'), async (req, res) => {
   // Implementation will be added in the controller
 });
 
@@ -179,7 +183,7 @@ router.put('/:id', requireRole(['admin', 'teacher']), requireInstitution, async 
  *       404:
  *         description: Book not found
  */
-router.delete('/:id', requireRole(['admin', 'teacher']), requireInstitution, async (req, res) => {
+router.delete('/:id', requireAnyRole(['SYSTEM_ADMIN', 'TEACHER']), requirePermission('content:delete'), async (req, res) => {
   // Implementation will be added in the controller
 });
 
@@ -210,7 +214,7 @@ router.delete('/:id', requireRole(['admin', 'teacher']), requireInstitution, asy
  *       404:
  *         description: Book not found
  */
-router.get('/:id/annotations', requireInstitution, async (req, res) => {
+router.get('/:id/annotations', requirePermission('content:read'), async (req, res) => {
   // Implementation will be added in the controller
 });
 
@@ -241,7 +245,7 @@ router.get('/:id/annotations', requireInstitution, async (req, res) => {
  *       404:
  *         description: Book not found
  */
-router.get('/:id/highlights', requireInstitution, async (req, res) => {
+router.get('/:id/highlights', requirePermission('content:read'), async (req, res) => {
   // Implementation will be added in the controller
 });
 

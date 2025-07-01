@@ -1,291 +1,441 @@
 'use client';
 
-import { useState } from 'react';
-import { motion } from 'framer-motion';
-import { useForm } from '../../hooks/useForm';
-import { useTheme } from '@/contexts/ThemeContext';
+import React, { useState } from 'react';
+import { X, FileText, User, Search, Loader2, CheckCircle } from 'lucide-react';
 
-interface SearchFormData {
-  numeroLicenca: string;
-  cpfLastDigits: string;
+interface Certificate {
+  id: number;
+  license_code: string;
+  document: string;
+  tv_show_name: string;
+  score: number;
+  date_created: string;
+  path: string;
+  user: {
+    id: number;
+    full_name: string;
+    email: string;
+  };
 }
-
-const searchInitialValues: SearchFormData = {
-  numeroLicenca: '',
-  cpfLastDigits: ''
-};
-
-const searchValidationRules = {
-  numeroLicenca: (value: string) => {
-    if (!value) return 'O número da licença é obrigatório';
-    return '';
-  },
-  cpfLastDigits: (value: string) => {
-    if (!value) return 'Os 4 últimos dígitos do CPF são obrigatórios';
-    if (!/^\d{4}$/.test(value)) return 'Deve conter exatamente 4 dígitos';
-    return '';
-  }
-};
 
 interface LicenseValidationModalProps {
   isOpen: boolean;
   onClose: () => void;
 }
 
-export function LicenseValidationModal({ isOpen, onClose }: LicenseValidationModalProps) {
-  const { theme } = useTheme();
-  const [searchFormKey, setSearchFormKey] = useState(0);
+type SearchType = 'license' | 'cpf' | null;
 
-  const {
-    values: searchValues,
-    errors: searchErrors,
-    touched: searchTouched,
-    isSubmitting: isSearchSubmitting,
-    handleChange: handleSearchChange,
-    handleBlur: handleSearchBlur,
-    handleSubmit: handleSearchSubmit,
-    resetForm
-  } = useForm<SearchFormData>({
-    initialValues: searchInitialValues,
-    validationRules: searchValidationRules,
-    onSubmit: async (formValues) => {
-      try {
-        console.log('Dados de busca:', formValues);
-        // Lógica de busca da licença aqui
-        alert(`Buscando por Licença: ${formValues.numeroLicenca}, CPF final: ${formValues.cpfLastDigits}`);
-        handleClose();
-      } catch (error) {
-        console.error('Erro durante a busca:', error);
-      }
-    }
-  });
+const LicenseValidationModal: React.FC<LicenseValidationModalProps> = ({
+  isOpen,
+  onClose,
+}) => {
+  const [searchType, setSearchType] = useState<SearchType>(null);
+  const [searchValue, setSearchValue] = useState('');
+  const [certificates, setCertificates] = useState<Certificate[]>([]);
+  const [isLoading, setIsLoading] = useState(false);
+  const [error, setError] = useState('');
+  const [hasSearched, setHasSearched] = useState(false);
+  const [showSuccessAnimation, setShowSuccessAnimation] = useState(false);
+  const [showCertificatesModal, setShowCertificatesModal] = useState(false);
+
+  const resetModal = () => {
+    setSearchType(null);
+    setSearchValue('');
+    setCertificates([]);
+    setError('');
+    setHasSearched(false);
+    setShowSuccessAnimation(false);
+    setShowCertificatesModal(false);
+  };
 
   const handleClose = () => {
-    resetForm();
-    setSearchFormKey(prev => prev + 1);
+    resetModal();
     onClose();
   };
 
-  if (!isOpen) {
-    return null;
-  }
+  const handleBack = () => {
+    setSearchType(null);
+    setSearchValue('');
+    setError('');
+    setHasSearched(false);
+    setShowSuccessAnimation(false);
+    setShowCertificatesModal(false);
+  };
 
-  return (
-    <motion.div
-      initial={{ opacity: 0 }}
-      animate={{ opacity: 1 }}
-      exit={{ opacity: 0 }}
-      className="fixed inset-0 z-[9999] flex items-center justify-center p-4"
-      aria-labelledby="modal-title"
-      role="dialog"
-      aria-modal="true"
-    >
-      <motion.div
-        initial={{ opacity: 0 }}
-        animate={{ opacity: 1 }}
-        exit={{ opacity: 0 }}
-        transition={{ duration: 0.3 }}
-        className="fixed inset-0 bg-black/60 backdrop-blur-sm"
-        aria-hidden="true"
-        onClick={handleClose}
-      />
+  const handleSearch = async () => {
+    if (!searchValue.trim()) {
+      setError('Por favor, digite um valor para buscar');
+      return;
+    }
 
-      <motion.div
-        initial={{ opacity: 0, scale: 0.9, y: 20 }}
-        animate={{ opacity: 1, scale: 1, y: 0 }}
-        exit={{ opacity: 0, scale: 0.9, y: 20 }}
-        transition={{ type: "spring", damping: 25, stiffness: 300 }}
-        className="relative w-full max-w-lg rounded-lg text-left overflow-hidden shadow-xl"
-        style={{
-          backgroundColor: theme.colors.background.card,
-          border: `1px solid ${theme.colors.border.DEFAULT}`
-        }}
-      >
-        <div className="px-4 pt-5 pb-4 sm:p-6 sm:pb-4">
-          <div className="sm:flex sm:items-start">
-            <div className="mt-3 text-center sm:mt-0 sm:text-left w-full">
-              <h3
-                className="text-lg leading-6 font-medium mb-4"
-                id="modal-title"
-                style={{ color: theme.colors.text.primary }}
+    if (searchType === 'cpf' && !/^\d{3}$/.test(searchValue)) {
+      setError('Digite exatamente 3 números');
+      return;
+    }
+
+    setIsLoading(true);
+    setError('');
+    setHasSearched(true);
+
+    try {
+      const params = new URLSearchParams();
+      if (searchType === 'license') {
+        params.set('license_code', searchValue);
+      } else if (searchType === 'cpf') {
+        params.set('cpf_last_digits', searchValue);
+      }
+
+      const response = await fetch(`/api/certificates/search?${params.toString()}`);
+      const data = await response.json();
+
+      if (data.success) {
+        setCertificates(data.data || []);
+        
+        // Se for busca por licença e encontrou certificado, mostrar animação de sucesso
+        if (searchType === 'license' && data.data && data.data.length > 0) {
+          setShowSuccessAnimation(true);
+          // Fechar automaticamente após 3 segundos
+          setTimeout(() => {
+            handleClose();
+          }, 3000);
+        }
+        // Se for busca por CPF e encontrou certificados, mostrar modal de listagem
+        else if (searchType === 'cpf' && data.data && data.data.length > 0) {
+          setShowCertificatesModal(true);
+        }
+      } else {
+        setError(data.message || 'Erro ao buscar certificados');
+        setCertificates([]);
+      }
+    } catch (err) {
+      setError('Erro ao conectar com o servidor');
+      setCertificates([]);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const formatDate = (dateString: string) => {
+    return new Date(dateString).toLocaleDateString('pt-BR');
+  };
+
+  // Componente de animação de sucesso
+  const SuccessAnimation = () => (
+    <div className="flex flex-col items-center justify-center py-12">
+      <div className="relative">
+        <div className="w-24 h-24 bg-green-100 rounded-full flex items-center justify-center mb-6 animate-pulse">
+          <CheckCircle className="w-12 h-12 text-green-600 animate-bounce" />
+        </div>
+        <div className="absolute inset-0 w-24 h-24 bg-green-200 rounded-full animate-ping opacity-20"></div>
+      </div>
+      <h3 className="text-2xl font-bold text-green-600 mb-2 animate-fade-in">
+        Certificado Validado Com Sucesso!
+      </h3>
+      <p className="text-gray-600 text-center animate-fade-in-delay">
+        O certificado foi encontrado e validado com sucesso.
+      </p>
+      <div className="mt-4 w-full bg-gray-200 rounded-full h-1">
+        <div className="bg-green-600 h-1 rounded-full animate-progress"></div>
+      </div>
+    </div>
+  );
+
+  // Modal de listagem de certificados
+  const CertificatesListModal = () => (
+    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-60 p-2 sm:p-4">
+      <div className="bg-white rounded-lg shadow-xl w-full max-w-6xl max-h-[95vh] sm:max-h-[90vh] overflow-hidden mx-2 sm:mx-4">
+        {/* Header */}
+        <div className="flex items-center justify-between p-4 sm:p-6 border-b bg-gradient-to-r from-blue-600 to-purple-600">
+          <h2 className="text-lg sm:text-xl font-semibold text-white">
+            Certificados Encontrados ({certificates.length})
+          </h2>
+          <button
+            onClick={() => setShowCertificatesModal(false)}
+            className="text-white hover:text-gray-200 transition-colors p-1"
+          >
+            <X size={20} className="sm:w-6 sm:h-6" />
+          </button>
+        </div>
+
+        {/* Content */}
+        <div className="p-3 sm:p-6 max-h-[75vh] sm:max-h-[70vh] overflow-y-auto">
+          <div className="space-y-3 sm:space-y-4">
+            {certificates.map((cert) => (
+              <div
+                key={cert.id}
+                className="border border-gray-200 rounded-lg p-3 sm:p-6 hover:shadow-md transition-shadow bg-gradient-to-r from-gray-50 to-white"
               >
-                Validar Licença
-              </h3>
-
-              <form onSubmit={handleSearchSubmit} className="space-y-4" key={searchFormKey}>
-                <motion.div
-                  initial={{ opacity: 0, x: -20 }}
-                  animate={{ opacity: 1, x: 0 }}
-                  transition={{ delay: 0.1 }}
-                >
-                  <label
-                    htmlFor="numeroLicenca"
-                    className="block text-sm font-medium mb-2"
-                    style={{ color: theme.colors.text.secondary }}
-                  >
-                    Número da Licença
-                  </label>
-                  <div className="relative">
-                    <span
-                      className="absolute left-3 top-1/2 transform -translate-y-1/2 material-symbols-outlined text-xl"
-                      style={{ color: theme.colors.text.tertiary }}
-                    >
-                      badge
-                    </span>
-                    <input
-                      id="numeroLicenca"
-                      name="numeroLicenca"
-                      type="text"
-                      required
-                      value={searchValues.numeroLicenca}
-                      onChange={handleSearchChange}
-                      onBlur={handleSearchBlur}
-                      aria-invalid={searchTouched.numeroLicenca && searchErrors.numeroLicenca ? 'true' : 'false'}
-                      aria-describedby={searchTouched.numeroLicenca && searchErrors.numeroLicenca ? 'numeroLicenca-error' : undefined}
-                      className={`appearance-none block w-full pl-10 pr-3 py-3 rounded-lg shadow-sm placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-offset-0 transition-all duration-200 ${searchTouched.numeroLicenca && searchErrors.numeroLicenca
-                          ? 'border-2 border-red-500 focus:ring-red-500 focus:border-red-500'
-                          : 'border-2 focus:ring-2'
-                        }`}
-                      style={{
-                        backgroundColor: theme.colors.background.secondary,
-                        borderColor: searchTouched.numeroLicenca && searchErrors.numeroLicenca ? theme.colors.status.error : theme.colors.border.DEFAULT,
-                        color: theme.colors.text.primary,
-                      }}
-                      placeholder="Digite o número da licença do certificado"
-                    />
-                    {searchTouched.numeroLicenca && searchErrors.numeroLicenca && (
-                      <motion.p
-                        initial={{ opacity: 0, y: -10 }}
-                        animate={{ opacity: 1, y: 0 }}
-                        className="mt-2 text-sm flex items-center gap-1"
-                        style={{ color: theme.colors.status.error }}
-                        id="numeroLicenca-error"
-                        role="alert"
-                      >
-                        <span className="material-symbols-outlined text-base">error</span>
-                        {searchErrors.numeroLicenca}
-                      </motion.p>
+                {/* Header do certificado - responsivo */}
+                <div className="flex flex-col sm:flex-row sm:justify-between sm:items-start gap-3 sm:gap-4 mb-4">
+                  <div className="flex items-center gap-3">
+                    <div className="w-10 h-10 sm:w-12 sm:h-12 bg-blue-100 rounded-full flex items-center justify-center flex-shrink-0">
+                      <FileText className="w-5 h-5 sm:w-6 sm:h-6 text-blue-600" />
+                    </div>
+                    <div className="min-w-0 flex-1">
+                      <h4 className="font-bold text-base sm:text-lg text-gray-900 truncate">
+                        {cert.tv_show_name}
+                      </h4>
+                      <p className="text-xs sm:text-sm text-gray-500">
+                        Emitido em {formatDate(cert.date_created)}
+                      </p>
+                    </div>
+                  </div>
+                  <div className="flex-shrink-0">
+                    <div className="bg-green-100 text-green-800 px-2 sm:px-3 py-1 rounded-full text-xs sm:text-sm font-medium">
+                      Pontuação: {cert.score}
+                    </div>
+                  </div>
+                </div>
+                
+                {/* Informações do certificado - layout responsivo */}
+                <div className="space-y-3 sm:space-y-0 sm:grid sm:grid-cols-1 lg:grid-cols-2 sm:gap-4 mb-4">
+                  <div className="space-y-2">
+                    <div className="flex items-start gap-2">
+                      <User className="w-4 h-4 text-gray-500 mt-0.5 flex-shrink-0" />
+                      <div className="min-w-0 flex-1">
+                        <span className="text-xs sm:text-sm text-gray-600 block">Nome:</span>
+                        <span className="text-xs sm:text-sm font-medium text-gray-900 break-words">{cert.user.full_name}</span>
+                      </div>
+                    </div>
+                    <div className="flex items-start gap-2">
+                      <FileText className="w-4 h-4 text-gray-500 mt-0.5 flex-shrink-0" />
+                      <div className="min-w-0 flex-1">
+                        <span className="text-xs sm:text-sm text-gray-600 block">Email:</span>
+                        <span className="text-xs sm:text-sm font-medium text-gray-900 break-all">{cert.user.email}</span>
+                      </div>
+                    </div>
+                  </div>
+                  <div className="space-y-2">
+                    <div className="flex items-start gap-2">
+                      <Search className="w-4 h-4 text-gray-500 mt-0.5 flex-shrink-0" />
+                      <div className="min-w-0 flex-1">
+                        <span className="text-xs sm:text-sm text-gray-600 block">Licença:</span>
+                        <span className="text-xs sm:text-sm font-medium text-gray-900 font-mono bg-gray-100 px-2 py-1 rounded break-all">
+                          {cert.license_code}
+                        </span>
+                      </div>
+                    </div>
+                    {cert.document && (
+                      <div className="flex items-start gap-2">
+                        <FileText className="w-4 h-4 text-gray-500 mt-0.5 flex-shrink-0" />
+                        <div className="min-w-0 flex-1">
+                          <span className="text-xs sm:text-sm text-gray-600 block">Documento:</span>
+                          <span className="text-xs sm:text-sm font-medium text-gray-900 break-words">{cert.document}</span>
+                        </div>
+                      </div>
                     )}
                   </div>
-                </motion.div>
+                </div>
 
-                <motion.div
-                  initial={{ opacity: 0, x: -20 }}
-                  animate={{ opacity: 1, x: 0 }}
-                  transition={{ delay: 0.2 }}
-                >
-                  <label
-                    htmlFor="cpfLastDigits"
-                    className="block text-sm font-medium mb-2"
-                    style={{ color: theme.colors.text.secondary }}
-                  >
-                    Últimos 4 Dígitos do CPF
-                  </label>
-                  <div className="relative">
-                    <span
-                      className="absolute left-3 top-1/2 transform -translate-y-1/2 material-symbols-outlined text-xl"
-                      style={{ color: theme.colors.text.tertiary }}
+                {/* Botão de visualizar certificado */}
+                {cert.path && (
+                  <div className="pt-3 sm:pt-4 border-t border-gray-200">
+                    <a
+                      href={cert.path}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="inline-flex items-center gap-2 bg-blue-600 text-white px-3 sm:px-4 py-2 rounded-lg hover:bg-blue-700 transition-colors text-xs sm:text-sm font-medium w-full sm:w-auto justify-center sm:justify-start"
                     >
-                      pin
-                    </span>
-                    <input
-                      id="cpfLastDigits"
-                      name="cpfLastDigits"
-                      type="text"
-                      required
-                      value={searchValues.cpfLastDigits}
-                      onChange={handleSearchChange}
-                      onBlur={handleSearchBlur}
-                      aria-invalid={searchTouched.cpfLastDigits && searchErrors.cpfLastDigits ? 'true' : 'false'}
-                      aria-describedby={searchTouched.cpfLastDigits && searchErrors.cpfLastDigits ? 'cpfLastDigits-error' : undefined}
-                      className={`appearance-none block w-full pl-10 pr-3 py-3 rounded-lg shadow-sm placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-offset-0 transition-all duration-200 ${searchTouched.cpfLastDigits && searchErrors.cpfLastDigits
-                          ? 'border-2 border-red-500 focus:ring-red-500 focus:border-red-500'
-                          : 'border-2 focus:ring-2'
-                        }`}
-                      style={{
-                        backgroundColor: theme.colors.background.secondary,
-                        borderColor: searchTouched.cpfLastDigits && searchErrors.cpfLastDigits ? theme.colors.status.error : theme.colors.border.DEFAULT,
-                        color: theme.colors.text.primary,
-                      }}
-                      placeholder="0000"
-                      maxLength={4}
-                    />
-                    {searchTouched.cpfLastDigits && searchErrors.cpfLastDigits && (
-                      <motion.p
-                        initial={{ opacity: 0, y: -10 }}
-                        animate={{ opacity: 1, y: 0 }}
-                        className="mt-2 text-sm flex items-center gap-1"
-                        style={{ color: theme.colors.status.error }}
-                        id="cpfLastDigits-error"
-                        role="alert"
-                      >
-                        <span className="material-symbols-outlined text-base">error</span>
-                        {searchErrors.cpfLastDigits}
-                      </motion.p>
-                    )}
+                      <FileText className="w-4 h-4" />
+                      Visualizar Certificado
+                    </a>
                   </div>
-                </motion.div>
-              </form>
-            </div>
+                )}
+              </div>
+            ))}
           </div>
         </div>
 
-        <div
-          className="px-4 py-3 sm:px-6 sm:flex sm:flex-row-reverse border-t"
-          style={{
-            backgroundColor: theme.colors.background.secondary,
-            borderColor: theme.colors.border.light
-          }}
-        >
-          <motion.button
-            whileHover={{ scale: 1.05 }}
-            whileTap={{ scale: 0.95 }}
-            type="button"
-            onClick={handleSearchSubmit}
-            disabled={isSearchSubmitting}
-            className="w-full inline-flex justify-center rounded-lg shadow-sm px-4 py-2 text-base font-medium focus:outline-none focus:ring-2 focus:ring-offset-2 sm:ml-3 sm:w-auto sm:text-sm disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-200"
-            style={{
-              backgroundColor: theme.colors.primary.DEFAULT,
-              color: theme.colors.primary.contrast,
-              boxShadow: theme.shadows.md
-            }}
+        {/* Footer */}
+        <div className="px-3 sm:px-6 py-3 sm:py-4 bg-gray-50 border-t">
+          <button
+            onClick={() => setShowCertificatesModal(false)}
+            className="w-full px-4 py-2 sm:py-3 bg-gray-600 text-white rounded-md hover:bg-gray-700 transition-colors text-sm sm:text-base"
           >
-            {isSearchSubmitting ? (
-              <>
-                <motion.span
-                  animate={{ rotate: 360 }}
-                  transition={{ duration: 1, repeat: Infinity, ease: "linear" }}
-                  className="material-symbols-outlined mr-2"
-                >
-                  progress_activity
-                </motion.span>
-                Buscando...
-              </>
-            ) : (
-              <>
-                <span className="material-symbols-outlined mr-2">search</span>
-                Buscar
-              </>
-            )}
-          </motion.button>
-          
-          <motion.button
-            whileHover={{ scale: 1.05 }}
-            whileTap={{ scale: 0.95 }}
-            type="button"
-            onClick={handleClose}
-            className="mt-3 w-full inline-flex justify-center rounded-lg shadow-sm px-4 py-2 text-base font-medium focus:outline-none focus:ring-2 focus:ring-offset-2 sm:mt-0 sm:ml-3 sm:w-auto sm:text-sm transition-all duration-200"
-            style={{
-              backgroundColor: theme.colors.background.card,
-              color: theme.colors.text.primary,
-              border: `1px solid ${theme.colors.border.DEFAULT}`
-            }}
-          >
-            <span className="material-symbols-outlined mr-2">close</span>
-            Cancelar
-          </motion.button>
+            Fechar
+          </button>
         </div>
-      </motion.div>
-    </motion.div>
+      </div>
+    </div>
   );
-}
+
+  if (!isOpen) return null;
+
+  return (
+    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+      <div className="bg-white rounded-lg shadow-xl max-w-2xl w-full max-h-[90vh] overflow-hidden">
+        {/* Header */}
+        <div className="flex items-center justify-between p-6 border-b">
+          <h2 className="text-xl font-semibold text-gray-900">
+            Validar Licença
+          </h2>
+          <button
+            onClick={handleClose}
+            className="text-gray-400 hover:text-gray-600 transition-colors"
+          >
+            <X size={24} />
+          </button>
+        </div>
+
+        {/* Content */}
+        <div className="p-6">
+          {!searchType ? (
+            /* Escolha do tipo de busca */
+            <div className="space-y-4">
+              <p className="text-gray-600 text-center mb-6">
+                Escolha como deseja validar o certificado:
+              </p>
+              
+              <div className="space-y-3">
+                <button
+                  onClick={() => setSearchType('license')}
+                  className="w-full flex items-center justify-center gap-3 p-4 border-2 border-gray-200 rounded-lg hover:border-blue-500 hover:bg-blue-50 transition-all duration-200 group"
+                >
+                  <div className="flex items-center justify-center w-12 h-12 bg-blue-100 rounded-full group-hover:bg-blue-200 transition-colors">
+                    <FileText className="w-6 h-6 text-blue-600" />
+                  </div>
+                  <div className="text-left">
+                    <h3 className="font-semibold text-gray-900">Número da Licença</h3>
+                    <p className="text-sm text-gray-600">Digite o código completo da licença</p>
+                  </div>
+                </button>
+
+                <button
+                  onClick={() => setSearchType('cpf')}
+                  className="w-full flex items-center justify-center gap-3 p-4 border-2 border-gray-200 rounded-lg hover:border-green-500 hover:bg-green-50 transition-all duration-200 group"
+                >
+                  <div className="flex items-center justify-center w-12 h-12 bg-green-100 rounded-full group-hover:bg-green-200 transition-colors">
+                    <User className="w-6 h-6 text-green-600" />
+                  </div>
+                  <div className="text-left">
+                    <h3 className="font-semibold text-gray-900">Últimos 3 Dígitos do CPF</h3>
+                    <p className="text-sm text-gray-600">Digite apenas os 3 últimos números</p>
+                  </div>
+                </button>
+              </div>
+            </div>
+          ) : showSuccessAnimation ? (
+            /* Animação de sucesso para busca por licença */
+            <SuccessAnimation />
+          ) : (
+            /* Formulário de busca e resultados */
+            <div className="space-y-6">
+              {/* Botão Voltar */}
+              <button
+                onClick={handleBack}
+                className="text-blue-600 hover:text-blue-800 text-sm font-medium"
+              >
+                ← Voltar
+              </button>
+
+              {/* Campo de busca */}
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  {searchType === 'license' ? 'Número da Licença' : 'Últimos 3 Dígitos do CPF'}
+                </label>
+                <div className="flex gap-2">
+                  <input
+                    type="text"
+                    value={searchValue}
+                    onChange={(e) => setSearchValue(e.target.value)}
+                    placeholder={
+                      searchType === 'license'
+                        ? 'Digite o número da licença'
+                        : 'Digite os 3 últimos dígitos'
+                    }
+                    maxLength={searchType === 'cpf' ? 3 : undefined}
+                    className="flex-1 px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                    onKeyPress={(e) => e.key === 'Enter' && handleSearch()}
+                  />
+                  <button
+                    onClick={handleSearch}
+                    disabled={isLoading}
+                    className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
+                  >
+                    {isLoading ? (
+                      <Loader2 className="w-4 h-4 animate-spin" />
+                    ) : (
+                      <Search className="w-4 h-4" />
+                    )}
+                    Buscar Certificado
+                  </button>
+                </div>
+              </div>
+
+              {/* Erro */}
+              {error && (
+                <div className="p-3 bg-red-50 border border-red-200 rounded-md">
+                  <p className="text-red-700 text-sm">{error}</p>
+                </div>
+              )}
+
+              {/* Resultados apenas para casos de erro ou busca sem resultados */}
+              {hasSearched && !isLoading && !showSuccessAnimation && !showCertificatesModal && (
+                <div className="space-y-4">
+                  {certificates.length === 0 && (
+                    <div className="text-center py-8">
+                      <div className="w-16 h-16 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                        <Search className="w-8 h-8 text-gray-400" />
+                      </div>
+                      <h3 className="font-semibold text-gray-900 mb-2">
+                        Nenhum certificado encontrado
+                      </h3>
+                      <p className="text-gray-600">
+                        Verifique se os dados informados estão corretos e tente novamente.
+                      </p>
+                    </div>
+                  )}
+                </div>
+              )}
+            </div>
+          )}
+        </div>
+
+        {/* Footer */}
+        <div className="px-6 py-4 bg-gray-50 border-t">
+          <button
+            onClick={handleClose}
+            className="w-full px-4 py-2 bg-gray-600 text-white rounded-md hover:bg-gray-700 transition-colors"
+          >
+            Fechar
+          </button>
+        </div>
+      </div>
+
+      {/* Modal de listagem de certificados para busca por CPF */}
+      {showCertificatesModal && <CertificatesListModal />}
+
+      {/* Estilos CSS para animações */}
+      <style jsx>{`
+        @keyframes fade-in {
+          from { opacity: 0; transform: translateY(10px); }
+          to { opacity: 1; transform: translateY(0); }
+        }
+        
+        @keyframes fade-in-delay {
+          from { opacity: 0; transform: translateY(10px); }
+          to { opacity: 1; transform: translateY(0); }
+        }
+        
+        @keyframes progress {
+          from { width: 0%; }
+          to { width: 100%; }
+        }
+        
+        .animate-fade-in {
+          animation: fade-in 0.6s ease-out;
+        }
+        
+        .animate-fade-in-delay {
+          animation: fade-in-delay 0.8s ease-out 0.3s both;
+        }
+        
+        .animate-progress {
+          animation: progress 3s ease-out;
+        }
+      `}</style>
+    </div>
+  );
+};
+
+export { LicenseValidationModal };

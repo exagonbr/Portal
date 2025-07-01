@@ -43,7 +43,7 @@ export default function ClassesPage() {
     try {
       const [coursesResponse, teachersResponse] = await Promise.all([
         courseService.getCourses(),
-        userService.getUsers({ role_id: 'TEACHER_ROLE_ID' }) // Substituir pelo ID correto do role de professor
+        userService.getUsers({ roleId: 'TEACHER' })
       ]);
 
       setCourses(coursesResponse.items.map(course => ({
@@ -52,7 +52,7 @@ export default function ClassesPage() {
       })));
 
       setTeachers(teachersResponse.items.map(teacher => ({
-        id: teacher.id,
+        id: String(teacher.id),
         name: teacher.full_name
       })));
     } catch (error) {

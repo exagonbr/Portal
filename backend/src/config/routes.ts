@@ -3,6 +3,8 @@ import swaggerUi from 'swagger-ui-express';
 import { swaggerSpec } from './swagger';
 import apiRoutes from '../routes';
 import authRoutes from '../routes/auth';
+import publicRoutes from '../routes/public';
+import optimizedAuthRouter from '../routes/optimizedAuth.routes';
 import { authMiddleware } from '../middleware/auth';
 
 /**
@@ -32,8 +34,12 @@ export function setupRoutes(app: express.Application): void {
     res.redirect('/backend/docs');
   });
 
+  // Public routes (no auth required)
+  app.use('/api', publicRoutes);
+
   // Auth routes (now under /api/auth)
   app.use('/api/auth', authRoutes);
+  app.use('/api/auth/optimized', optimizedAuthRouter);
 
   // Mount API Routes with authentication
   app.use('/api', authMiddleware, apiRoutes);

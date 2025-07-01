@@ -44,13 +44,13 @@ export const authOptions: NextAuthOptions = {
 
           const data = await response.json();
           
-          if (data.success && data.user) {
+          if (data.success && data.data && data.data.user) {
             return {
-              id: data.user.id,
-              email: data.user.email,
-              name: data.user.name,
-              role: data.user.role,
-              permissions: data.user.permissions || [],
+              id: data.data.user.id,
+              email: data.data.user.email,
+              name: data.data.user.name,
+              role: data.data.user.role.toUpperCase() || 'STUDENT',
+              permissions: data.data.user.permissions || [],
             };
           }
           
@@ -65,7 +65,7 @@ export const authOptions: NextAuthOptions = {
   callbacks: {
     async jwt({ token, user }: { token: JWT; user: any }) {
       if (user) {
-        token.role = user.role || 'STUDENT';
+        token.role = user.role.toUpperCase() || 'STUDENT';
         token.permissions = user.permissions || [
           'students.communicate',
           'schedule.view.own',

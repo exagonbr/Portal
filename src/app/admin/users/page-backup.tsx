@@ -751,7 +751,7 @@ export default function ManageUsers() {
   console.log('👤 Usuário atual:', {
     user: user ? {
       id: user.id,
-      full_name: user.full_name,
+      full_name: (user as any).fullName,
       email: user.email,
       role: user.role,
       permissions: user.permissions
@@ -823,11 +823,11 @@ export default function ManageUsers() {
       role: user.role_name,
       role_id: user.role_id,
       avatar: user.avatar,
-      is_active: user.is_active,
+      isActive: user.is_active,
       institution_id: user.institution_id,
       institution_name: user.institution_name,
-      created_at: user.created_at,
-      updated_at: user.updated_at
+      createdAt: user.created_at,
+      updatedAt: user.updated_at
     }
   }
 
@@ -960,8 +960,8 @@ export default function ManageUsers() {
         
         const enrichedUser = {
           ...user,
-          role_name: (user as ExtendedUserResponseDto).role_name || role?.name || 'Não definida',
-          institution_name: (user as ExtendedUserResponseDto).institution_name || institution?.name || 'Não vinculada',
+          role_name: role?.name || 'Não definida',
+          institution_name: institution?.name || 'Não vinculada',
         } as unknown as ExtendedUserResponseDto;
 
         return enrichedUser;
@@ -1664,9 +1664,9 @@ export default function ManageUsers() {
           <div className="mb-4 bg-blue-50 border border-blue-200 rounded-lg p-4">
             <div className="flex flex-wrap items-center gap-2">
               <span className="text-sm font-medium text-blue-800">Filtros ativos:</span>
-              {filters.name && (
+              {filters.full_name && (
                 <span className="px-2 py-1 bg-blue-100 text-blue-800 rounded-full text-xs">
-                  Nome: {filters.name}
+                  Nome: {filters.full_name}
                 </span>
               )}
               {filters.email && (
@@ -1754,8 +1754,8 @@ export default function ManageUsers() {
                 <div className="relative">
                   <input
                     type="text"
-                    value={filters.name || ''}
-                    onChange={(e) => updateFilter('name', e.target.value)}
+                    value={filters.full_name || ''}
+                    onChange={(e) => updateFilter('full_name', e.target.value)}
                     placeholder="Buscar por nome (parcial)"
                     className="w-full rounded-lg border border-blue-200 bg-white px-4 py-2.5 text-sm focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 transition-all"
                   />

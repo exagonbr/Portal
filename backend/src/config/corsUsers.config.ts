@@ -25,6 +25,7 @@ export const corsUsersConfig: CorsUsersConfig = {
     'https://portal.sabercon.com.br',
     'https://app.sabercon.com.br',
     'https://admin.sabercon.com.br',
+    'https://portal.sabercon.com.br/api',
     'https://www.sabercon.com.br',
     // Adicionar origens do arquivo .env se existirem
     ...(process.env.ALLOWED_ORIGINS ? process.env.ALLOWED_ORIGINS.split(',').map(o => o.trim()) : [])
@@ -32,7 +33,8 @@ export const corsUsersConfig: CorsUsersConfig = {
 
   // Origens permitidas apenas para operações administrativas
   adminOrigins: [
-    'https://admin.sabercon.com.br',
+    'https://portal.sabercon.com.br',
+    'https://portal.sabercon.com.br/api',
     'http://localhost:3000', // Para desenvolvimento
     'http://localhost:3001', // Para desenvolvimento alternativo
     ...(process.env.ADMIN_ORIGINS ? process.env.ADMIN_ORIGINS.split(',').map(o => o.trim()) : [])
@@ -96,9 +98,10 @@ export const allowedMethods = [
  * Função para verificar se uma origem é permitida
  */
 export function isOriginAllowed(origin: string | undefined, allowedList: string[]): boolean {
-  if (!origin) {
-    // Permitir requisições sem origin em desenvolvimento (ex: mobile apps, Postman)
-    return corsUsersConfig.developmentMode;
+  // Permitir requisições sem 'Origin' (ex: mobile apps, Postman, server-to-server)
+  // ou com origem "unknown" que pode ocorrer em certos cenários (iframes, etc.)
+  if (!origin || origin === 'unknown') {
+    return true;
   }
 
   // Em desenvolvimento, permitir qualquer localhost

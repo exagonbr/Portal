@@ -1,5 +1,5 @@
 import { Router, Request, Response } from 'express';
-import { authMiddleware } from '../middleware/auth';
+import { optimizedAuthMiddleware } from '../middleware/optimizedAuth.middleware';
 import { S3Client, ListBucketsCommand } from '@aws-sdk/client-s3';
 import nodemailer from 'nodemailer';
 import SystemSettingsService from '../services/SystemSettingsService';
@@ -9,11 +9,10 @@ import db from '../config/database';
 const router = Router();
 
 // GET - Buscar todas as configurações
-router.get('/settings', authMiddleware, async (req: Request, res: Response) => {
+router.get('/settings', optimizedAuthMiddleware, async (req: Request, res: Response) => {
   try {
     // Verificar se é admin
-    const adminRoles = ['admin', 'system_admin', 'administrator', 'SYSTEM_ADMIN', 'ADMIN'];
-    if (!req.user?.role || !adminRoles.includes(req.user.role)) {
+    if (req.user?.role !== 'SYSTEM_ADMIN') {
       return res.status(403).json({ error: 'Acesso negado' });
     }
 
@@ -33,7 +32,7 @@ router.get('/settings', authMiddleware, async (req: Request, res: Response) => {
 });
 
 // GET - Buscar configurações por categoria
-router.get('/settings/:category', authMiddleware, async (req: Request, res: Response) => {
+router.get('/settings/:category', optimizedAuthMiddleware, async (req: Request, res: Response) => {
   try {
     // Verificar se é admin
     if (req.user?.role !== 'SYSTEM_ADMIN') {
@@ -57,7 +56,7 @@ router.get('/settings/:category', authMiddleware, async (req: Request, res: Resp
 });
 
 // PUT - Atualizar configurações
-router.put('/settings', authMiddleware, async (req: Request, res: Response) => {
+router.put('/settings', optimizedAuthMiddleware, async (req: Request, res: Response) => {
   try {
     // Verificar se é admin
     if (req.user?.role !== 'SYSTEM_ADMIN') {
@@ -91,7 +90,7 @@ router.put('/settings', authMiddleware, async (req: Request, res: Response) => {
 });
 
 // POST - Resetar configurações para padrão
-router.post('/settings/reset', authMiddleware, async (req: Request, res: Response) => {
+router.post('/settings/reset', optimizedAuthMiddleware, async (req: Request, res: Response) => {
   try {
     // Verificar se é admin
     if (req.user?.role !== 'SYSTEM_ADMIN') {
@@ -114,7 +113,7 @@ router.post('/settings/reset', authMiddleware, async (req: Request, res: Respons
 });
 
 // POST - Testar conexão AWS
-router.post('/settings/test-aws', authMiddleware, async (req: Request, res: Response) => {
+router.post('/settings/test-aws', optimizedAuthMiddleware, async (req: Request, res: Response) => {
   try {
     // Verificar se é admin
     if (req.user?.role !== 'SYSTEM_ADMIN') {
@@ -168,7 +167,7 @@ router.post('/settings/test-aws', authMiddleware, async (req: Request, res: Resp
 });
 
 // POST - Testar conexão de email
-router.post('/settings/test-email', authMiddleware, async (req: Request, res: Response) => {
+router.post('/settings/test-email', optimizedAuthMiddleware, async (req: Request, res: Response) => {
   try {
     // Verificar se é admin
     if (req.user?.role !== 'SYSTEM_ADMIN') {
@@ -234,7 +233,7 @@ router.post('/settings/test-email', authMiddleware, async (req: Request, res: Re
 });
 
 // POST - Reconfigurar serviço de email
-router.post('/settings/reconfigure-email', authMiddleware, async (req: Request, res: Response) => {
+router.post('/settings/reconfigure-email', optimizedAuthMiddleware, async (req: Request, res: Response) => {
   try {
     // Verificar se é admin
     if (req.user?.role !== 'SYSTEM_ADMIN') {
@@ -263,78 +262,5 @@ router.post('/settings/reconfigure-email', authMiddleware, async (req: Request, 
   }
 });
 
-// GET - Buscar configurações públicas (para uso geral do sistema)
-router.get('/settings/public', async (req: Request, res: Response) => {
-  try {
-    console.log('🔍 Buscando configurações públicas...');
-    
-    // Verificar se a tabela system_settings existe
-    const hasTable = await db.schema.hasTable('system_settings');
-    
-    if (!hasTable) {
-      console.warn('⚠️ Tabela system_settings não existe, retornando configurações padrão');
-      
-      // Retornar configurações padrão
-      const defaultSettings = {
-        general: {
-          site_name: 'Portal Sabercon',
-          site_title: 'Portal Educacional Sabercon',
-          site_url: 'https://portal.sabercon.com.br',
-          site_description: 'Sistema completo de gestão educacional',
-          maintenance_mode: false
-        },
-        appearance: {
-          logo_light: '/logo-light.png',
-          logo_dark: '/logo-dark.png',
-          background_type: 'video',
-          main_background: '/back_video.mp4',
-          primary_color: '#1e3a8a',
-          secondary_color: '#3b82f6'
-        }
-      };
-
-      return res.json({
-        success: true,
-        fallback: true,
-        message: 'Usando configurações padrão - tabela não encontrada',
-        data: defaultSettings
-      });
-    }
-
-    const settings = await SystemSettingsService.getAllSettings(false); // Apenas públicas
-    console.log('✅ Configurações públicas carregadas com sucesso');
-
-    return res.json({
-      success: true,
-      data: settings
-    });
-  } catch (error) {
-    console.error('❌ Erro ao buscar configurações públicas:', error);
-    
-    // Fallback com configurações padrão em caso de erro
-    const fallbackSettings = {
-      general: {
-        site_name: 'Portal Educacional',
-        site_title: 'Portal Educacional',
-        site_url: 'https://portal.educacional.com',
-        maintenance_mode: false
-      },
-      appearance: {
-        background_type: 'color',
-        main_background: '#1e3a8a',
-        primary_color: '#1e3a8a',
-        secondary_color: '#3b82f6'
-      }
-    };
-
-    return res.json({ 
-      success: true,
-      fallback: true,
-      error: 'Erro ao acessar banco de dados',
-      message: 'Usando configurações de emergência',
-      data: fallbackSettings
-    });
-  }
-});
 
 export default router; 

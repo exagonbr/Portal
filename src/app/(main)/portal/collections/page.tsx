@@ -355,21 +355,16 @@ export default function TVShowsManagePage() {
       } else {
         console.error('❌ Erro na resposta da API:', response.status, response.statusText);
         
-        // Se for erro de autenticação, tentar dados simulados
+        // Se for erro de autenticação, limpar o token e alertar o usuário
         if (response.status === 401) {
-          console.warn('⚠️ Erro de autenticação - usando dados simulados');
-          const mockData = {
-            success: true,
-            data: {
-              tvShows: [],
-              totalPages: 1,
-              page: 1
-            }
-          };
-          
-          setTvShows(mockData.data.tvShows);
-          setTotalPages(mockData.data.totalPages);
-          setCurrentPage(mockData.data.page);
+          console.error('❌ Erro de autenticação (401). Limpando token e recarregando.');
+          localStorage.removeItem('auth_token');
+          localStorage.removeItem('token');
+          sessionStorage.removeItem('auth_token');
+          sessionStorage.removeItem('token');
+          // Idealmente, redirecionar para a página de login
+          // window.location.href = '/auth/login';
+          alert('Sua sessão expirou. Por favor, faça login novamente.');
         }
       }
     } catch (error) {

@@ -31,7 +31,6 @@ import collectionsRouter from './collections';
 import videoCollectionsRouter from './video-collections';
 import tvShowCompleteRouter from './tvShowComplete';
 import authRouter from './auth';
-import optimizedAuthRouter from './optimizedAuth.routes';
 import sessionsRouter from './sessions';
 import dashboardRouter from './dashboard';
 // import settingsRouter from './settings.routes';
@@ -43,6 +42,8 @@ import studentsRouter from './students';
 import schoolsRouter from './schools.routes';
 import unitsRouter from './units';
 import notificationLogsRouter from './notification-logs';
+import certificatesRouter from './certificates'; // Habilitado novamente com busca implementada
+// import certificatesRouter from './certificates-temp'; // Usando versão temporária com dados mockados
 
 const router = express.Router();
 
@@ -102,7 +103,6 @@ router.use('/collections', collectionsRouter);
 router.use('/video-collections', videoCollectionsRouter);
 router.use('/tv-shows', tvShowCompleteRouter);
 router.use('/auth', authRouter);
-router.use('/auth/optimized', optimizedAuthRouter);
 router.use('/sessions', sessionsRouter);
 router.use('/dashboard', dashboardRouter);
 router.use('/aws', createAwsRoutes(db));
@@ -114,5 +114,6 @@ router.use('/students', studentsRouter);
 router.use('/schools', schoolsRouter);
 router.use('/units', unitsRouter);
 router.use('/notification-logs', notificationLogsRouter);
+router.use('/certificates', certificatesRouter);
 
 export default router;

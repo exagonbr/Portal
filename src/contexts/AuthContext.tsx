@@ -194,7 +194,7 @@ export function AuthProvider({ children, isInitializing = false }: { children: R
       const response = await authService.login(email, password);
       
       if (response.success && response.user) {
-        console.log('🔐 Login bem-sucedido:', response.user.full_name, 'Role:', response.user.role);
+        console.log('🔐 Login bem-sucedido:', response.user.name, 'Role:', response.user.role);
         setUser(response.user);
         setError(null);
         
@@ -202,7 +202,7 @@ export function AuthProvider({ children, isInitializing = false }: { children: R
         await new Promise(resolve => setTimeout(resolve, 100));
         
         // Determinar dashboard baseado na role
-        const normalizedRole = response.user.role?.toLowerCase();
+        const normalizedRole = response.user.role?.toUpperCase();
         const dashboardPath = getDashboardPath(normalizedRole);
         
         if (dashboardPath) {
@@ -252,7 +252,7 @@ export function AuthProvider({ children, isInitializing = false }: { children: R
       const response = await authService.register(name, email, password, type);
       
       if (response.success && response.user) {
-        console.log('🔐 Registro bem-sucedido:', response.user.full_name, 'Role:', response.user.role);
+        console.log('🔐 Registro bem-sucedido:', response.user.name, 'Role:', response.user.role);
         setUser(response.user);
         setError(null);
         
@@ -260,7 +260,7 @@ export function AuthProvider({ children, isInitializing = false }: { children: R
         await new Promise(resolve => setTimeout(resolve, 100));
         
         // Determinar dashboard baseado na role
-        const normalizedRole = response.user.role?.toLowerCase();
+        const normalizedRole = response.user.role?.toUpperCase();
         const dashboardPath = getDashboardPath(normalizedRole);
         
         if (dashboardPath) {
@@ -305,7 +305,7 @@ export function AuthProvider({ children, isInitializing = false }: { children: R
       setError(null);
 
       // 4. Redirecionar
-      const normalizedRole = decodedUser.role?.toLowerCase();
+      const normalizedRole = decodedUser.role?.toUpperCase();
       const dashboardPath = getDashboardPath(normalizedRole);
       safeRedirect(dashboardPath || '/dashboard/student');
 
@@ -564,7 +564,7 @@ export function AuthProvider({ children, isInitializing = false }: { children: R
    */
   const hasRole = useCallback((role: string): boolean => {
     if (!user?.role) return false;
-    return user.role.toLowerCase() === role.toLowerCase();
+    return user.role.toUpperCase() === role.toUpperCase();
   }, [user]);
 
   const value: AuthContextType = {
@@ -664,7 +664,7 @@ export function useRequireRole(allowedRoles: string[], redirectTo = '/dashboard'
       console.log(`🔐 useRequireRole: Usuário não tem role permitida. Role atual: ${user.role}, Permitidas: ${allowedRoles.join(', ')}`);
       
       // Redirecionar para dashboard apropriado baseado na role atual
-      const normalizedRole = user.role?.toLowerCase();
+      const normalizedRole = user.role?.toUpperCase();
       const dashboardPath = getDashboardPath(normalizedRole);
       
       router.replace(dashboardPath || redirectTo);
@@ -705,7 +705,7 @@ export function useRequirePermission(requiredPermissions: string[], redirectTo =
       console.log(`🔐 useRequirePermission: Usuário não tem permissões necessárias. Permissões: ${requiredPermissions.join(', ')}`);
       
       // Redirecionar para dashboard apropriado
-      const normalizedRole = user.role?.toLowerCase();
+      const normalizedRole = user.role?.toUpperCase();
       const dashboardPath = getDashboardPath(normalizedRole);
       
       router.replace(dashboardPath || redirectTo);

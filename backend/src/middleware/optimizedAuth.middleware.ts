@@ -51,10 +51,10 @@ export const optimizedAuthMiddleware = async (
 
     // Adicionar dados do usuário à requisição
     req.user = {
-      id: decoded.userId,
+      id: decoded.userId || decoded.id,
       email: decoded.email,
       name: decoded.name,
-      role: decoded.role,
+      role: decoded.role || decoded.role_name,
       permissions: decoded.permissions || [],
       institutionId: decoded.institutionId,
       sessionId: decoded.sessionId,
@@ -103,13 +103,15 @@ export const optionalAuthMiddleware = async (
 
     if (decoded) {
       req.user = {
-        id: decoded.userId,
+        id: decoded.userId || decoded.id,
         email: decoded.email,
         name: decoded.name,
-        role: decoded.role,
-        permissions: decoded.permissions,
+        role: decoded.role || decoded.role_name,
+        permissions: decoded.permissions || [],
         institutionId: decoded.institutionId,
-        sessionId: decoded.sessionId
+        sessionId: decoded.sessionId,
+        iat: decoded.iat,
+        exp: decoded.exp
       };
     }
 

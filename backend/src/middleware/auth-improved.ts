@@ -62,10 +62,10 @@ export const authMiddlewareImproved = async (
       
       // Convert fallback data to AuthTokenPayload format
       decoded = {
-        userId: fallbackData.userId,
+        id: fallbackData.userId,
         email: fallbackData.email,
         name: fallbackData.name,
-        role: fallbackData.role,
+        role: fallbackData.role.toUpperCase(),
         permissions: fallbackData.permissions || [],
         institutionId: fallbackData.institutionId,
         sessionId: fallbackData.sessionId || `session_${Date.now()}`,
@@ -138,10 +138,10 @@ export const optionalAuthMiddlewareImproved = async (
       
       // Convert fallback data to AuthTokenPayload format
       decoded = {
-        userId: fallbackData.userId,
+        id: fallbackData.userId,
         email: fallbackData.email,
         name: fallbackData.name,
-        role: fallbackData.role,
+        role: fallbackData.role.toUpperCase(),
         permissions: fallbackData.permissions || [],
         institutionId: fallbackData.institutionId,
         sessionId: fallbackData.sessionId || `session_${Date.now()}`,

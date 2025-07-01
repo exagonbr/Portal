@@ -4,7 +4,7 @@ import { UserRole } from '../types/roles';
  * Mapeia roles de usuário para seus respectivos dashboards
  */
 export const ROLE_DASHBOARD_MAP: Record<string, string> = {
-  // Roles em uppercase (padrão do sistema)
+  // Roles em uppercase (padrão do sistema) - CORRIGIDO para usar caminhos reais do Next.js
   'STUDENT': '/dashboard/student',
   'TEACHER': '/dashboard/teacher',
   'ADMIN': '/dashboard/system-admin',
@@ -14,16 +14,17 @@ export const ROLE_DASHBOARD_MAP: Record<string, string> = {
   'GUARDIAN': '/dashboard/guardian',
   'MANAGER': '/dashboard/institution-manager',
   
-  // Compatibilidade com versões anteriores
+  // Roles em lowercase (para compatibilidade com AuthContext que normaliza para lowercase)
   'student': '/dashboard/student',
   'teacher': '/dashboard/teacher',
   'admin': '/dashboard/system-admin',
-  'manager': '/dashboard/institution-manager',
-  'system_admin': '/dashboard/system-admin',
+  'system_admin': '/dashboard/system-admin', // IMPORTANTE: Esta é a chave que o AuthContext usa
+  'system-admin': '/dashboard/system-admin', // IMPORTANTE: Para compatibilidade com role_slug do backend
   'institution_manager': '/dashboard/institution-manager',
-  'academic_coordinator': '/dashboard/coordinator',
   'coordinator': '/dashboard/coordinator',
   'guardian': '/dashboard/guardian',
+  'manager': '/dashboard/institution-manager',
+  'academic_coordinator': '/dashboard/coordinator',
   
   // Roles em português (vindas do backend)
   'aluno': '/dashboard/student',
@@ -60,14 +61,31 @@ export const ROLE_DASHBOARD_MAP: Record<string, string> = {
 export function getDashboardPath(role: string): string | null {
   if (!role) return null;
   
+  console.log(`🔍 [getDashboardPath] Procurando dashboard para role: "${role}"`);
+  
   // Tenta obter o dashboard diretamente com a role original
   let dashboard = ROLE_DASHBOARD_MAP[role];
+  console.log(`🔍 [getDashboardPath] Tentativa 1 (original): ${dashboard}`);
   
   // Se não encontrar, tenta com a versão em uppercase
   if (!dashboard) {
     dashboard = ROLE_DASHBOARD_MAP[role.toUpperCase()];
+    console.log(`🔍 [getDashboardPath] Tentativa 2 (uppercase): ${dashboard}`);
   }
   
+  // Se ainda não encontrar, tenta com a versão em lowercase
+  if (!dashboard) {
+    dashboard = ROLE_DASHBOARD_MAP[role.toLowerCase()];
+    console.log(`🔍 [getDashboardPath] Tentativa 3 (lowercase): ${dashboard}`);
+  }
+  
+  // Para SYSTEM_ADMIN especificamente, garantir que funcione
+  if (!dashboard && (role.toUpperCase() === 'SYSTEM_ADMIN' || role.toLowerCase() === 'system_admin')) {
+    dashboard = '/dashboard/system-admin';
+    console.log(`🔍 [getDashboardPath] Fallback para SYSTEM_ADMIN: ${dashboard}`);
+  }
+  
+  console.log(`🎯 [getDashboardPath] Dashboard final para "${role}": ${dashboard}`);
   return dashboard || null;
 }
 

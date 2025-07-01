@@ -480,16 +480,6 @@ export function LoginForm() {
           </button>
         </MotionDiv>
 
-        {/* Botão de Debug Temporário - REMOVER EM PRODUÇÃO */}
-        {process.env.NODE_ENV === 'development' && (
-          <MotionDiv
-            className="mt-4"
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            transition={{ delay: 0.6 }}
-          >
-          </MotionDiv>
-        )}
       </div>
 
       <LicenseValidationModal

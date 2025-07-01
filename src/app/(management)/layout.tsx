@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect } from 'react';
-import { useSession } from 'next-auth/react';
+import { useAuth } from '@/contexts/AuthContext';
 import { useRouter } from 'next/navigation';
 
 export default function ManagementLayout({
@@ -9,26 +9,26 @@ export default function ManagementLayout({
 }: {
   children: React.ReactNode;
 }) {
-  const { data: session, status } = useSession();
+  const { user, loading, isAuthenticated } = useAuth();
   const router = useRouter();
 
   useEffect(() => {
-    if (status === 'loading') return;
+    if (loading) return;
 
-    if (!session) {
+    if (!isAuthenticated || !user) {
       router.push('/auth/login');
       return;
     }
 
     // Verificar se o usuário tem permissão para acessar área de gestão
     const allowedRoles = ['SYSTEM_ADMIN', 'INSTITUTION_MANAGER', 'COORDINATOR'];
-    if (!allowedRoles.includes(session.user?.role || '')) {
+    if (!allowedRoles.includes(user.role || '')) {
       router.push('/dashboard');
       return;
     }
-  }, [session, status, router]);
+  }, [user, loading, isAuthenticated, router]);
 
-  if (status === 'loading') {
+  if (loading) {
     return (
       <div className="min-h-screen flex items-center justify-center">
         <div className="animate-spin rounded-full h-32 w-32 border-b-2 border-green-600"></div>
@@ -36,7 +36,7 @@ export default function ManagementLayout({
     );
   }
 
-  if (!session || !['SYSTEM_ADMIN', 'INSTITUTION_MANAGER', 'COORDINATOR'].includes(session.user?.role || '')) {
+  if (!isAuthenticated || !user || !['SYSTEM_ADMIN', 'INSTITUTION_MANAGER', 'COORDINATOR'].includes(user.role || '')) {
     return null;
   }
 

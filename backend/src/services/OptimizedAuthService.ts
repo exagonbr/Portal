@@ -2,6 +2,7 @@ import jwt from 'jsonwebtoken';
 import bcrypt from 'bcrypt';
 import { v4 as uuidv4 } from 'uuid';
 import { db } from '../database/connection';
+import { generateSlug } from '../utils/slug';
 
 const JWT_SECRET = process.env.JWT_SECRET || 'ExagonTech';
 const REFRESH_SECRET = process.env.REFRESH_SECRET || 'ExagonTechRefresh';
@@ -19,10 +20,12 @@ interface User {
 }
 
 interface UserWithRole extends Omit<User, 'password'> {
-  role_name: string;
-  role_slug: string;
+  role_name: string | undefined;
+  uuid: string;
   permissions: string[];
   institution_name?: string;
+  role?: string;
+  role_slug?: string;
 }
 
 interface AuthResponse {
@@ -36,11 +39,17 @@ interface AuthResponse {
 
 interface AccessTokenPayload {
   userId: string;
+  id: string;
+  uuid: string;
   email: string;
   name: string;
   role: string;
+  role_id: string;
+  role_name: string;
+  role_slug: string;
   permissions: string[];
   institutionId: string;
+  institutionName: string;
   sessionId: string;
   type: 'access';
   iat: number;
@@ -73,141 +82,50 @@ export class OptimizedAuthService {
     try {
       console.log(`🔐 [${new Date().toISOString()}] Iniciando login para: ${email}`);
 
-      // Usar Knex query builder diretamente para evitar problemas de binding
-      console.log('🔄 Usando Knex query builder...');
-
-      // Buscar usuário básico primeiro
-      console.log('🔍 Buscando usuário por email:', email);
-      const userBasic = await db('users')
-        .select('*')
-        .where('email', email)
-        .where('enabled', true)
+      // Consulta otimizada para buscar usuário com campos booleanos de role
+      const user = await db('users as u')
+        .select(
+          'u.id',
+          'u.id as uuid',
+          'u.email',
+          'u.password',
+          'u.full_name as name',
+          'u.institution_id',
+          'u.enabled as is_active',
+          'u.date_created as created_at',
+          'u.last_updated as updated_at',
+          'u.is_admin',
+          'u.is_institution_manager',
+          'u.is_coordinator',
+          'u.is_guardian',
+          'u.is_teacher',
+          'u.is_student',
+          'u.role_id',
+          'i.name as institution_name'
+        )
+        .leftJoin('institutions as i', 'u.institution_id', 'i.id')
+        .where('u.email', email)
+        .where('u.enabled', true)
         .first();
-        
-      if (!userBasic) {
-        console.log(`❌ Usuário não encontrado ou inativo: ${email}`);
-        throw new Error('Credenciais inválidas');
-      }
-      
-      console.log('✅ Usuário básico encontrado:', { id: userBasic.id, email: userBasic.email });
-      
-      // Determinar role baseado nos campos booleanos (mapeamento para RBAC)
-      let roleInfo = { name: 'Estudante', slug: 'STUDENT', id: 'student' };
-      if (userBasic.is_admin) {
-        roleInfo = { name: 'Administrador do Sistema', slug: 'SYSTEM_ADMIN', id: 'system_admin' };
-      } else if (userBasic.is_institution_manager) {
-        roleInfo = { name: 'Gerente de Instituição', slug: 'INSTITUTION_MANAGER', id: 'institution_manager' };
-      } else if (userBasic.is_coordinator) {
-        roleInfo = { name: 'Coordenador', slug: 'COORDINATOR', id: 'coordinator' };
-      } else if (userBasic.is_guardian) {
-        roleInfo = { name: 'Responsável', slug: 'GUARDIAN', id: 'guardian' };
-      } else if (userBasic.is_teacher) {
-        roleInfo = { name: 'Professor', slug: 'TEACHER', id: 'teacher' };
-      } else if (userBasic.is_student) {
-        roleInfo = { name: 'Estudante', slug: 'STUDENT', id: 'student' };
-      }
-      
-      // Buscar instituição se existir institution_id
-      let institutionName = null;
-      if (userBasic.institution_id) {
-        try {
-          const institution = await db('institutions')
-            .select('name')
-            .where('id', userBasic.institution_id)
-            .first();
-          if (institution) {
-            institutionName = institution.name;
-          }
-        } catch (error: any) {
-          console.log(`⚠️ Erro ao buscar instituição: ${error.message}`);
-        }
-      }
-      
-      // Definir permissões baseadas no role RBAC
-      let permissions: string[] = [];
-      if (userBasic.is_admin) {
-        permissions = [
-          'system:admin',
-          'users:create', 'users:read', 'users:update', 'users:delete',
-          'institutions:create', 'institutions:read', 'institutions:update', 'institutions:delete',
-          'courses:create', 'courses:read', 'courses:update', 'courses:delete',
-          'content:create', 'content:read', 'content:update', 'content:delete',
-          'analytics:read', 'system:settings', 'logs:read'
-        ];
-      } else if (userBasic.is_institution_manager) {
-        permissions = [
-          'institution:admin',
-          'users:create', 'users:read', 'users:update',
-          'courses:create', 'courses:read', 'courses:update',
-          'content:create', 'content:read', 'content:update',
-          'teachers:read', 'teachers:update',
-          'students:read', 'students:update',
-          'analytics:read', 'reports:read',
-          'settings:read', 'settings:update'
-        ];
-      } else if (userBasic.is_coordinator) {
-        permissions = [
-          'courses:read', 'courses:update',
-          'content:read', 'content:update',
-          'students:read', 'students:update',
-          'teachers:read',
-          'assignments:read', 'assignments:update',
-          'grades:read',
-          'reports:read',
-          'analytics:read'
-        ];
-      } else if (userBasic.is_guardian) {
-        permissions = [
-          'students:read',
-          'courses:read',
-          'content:read',
-          'assignments:read',
-          'grades:read',
-          'attendance:read',
-          'reports:read',
-          'profile:read', 'profile:update',
-          'notifications:read'
-        ];
-      } else if (userBasic.is_teacher) {
-        permissions = [
-          'courses:create', 'courses:read', 'courses:update',
-          'content:create', 'content:read', 'content:update',
-          'students:read', 'students:update',
-          'assignments:create', 'assignments:read', 'assignments:update',
-          'grades:create', 'grades:read', 'grades:update'
-        ];
-      } else if (userBasic.is_student) {
-        permissions = [
-          'courses:read',
-          'content:read',
-          'assignments:read', 'assignments:submit',
-          'grades:read',
-          'profile:read', 'profile:update'
-        ];
-      }
-      
-      const user = {
-        ...userBasic,
-        name: userBasic.full_name, // Mapear full_name para name
-        role_name: roleInfo.name,
-        role_slug: roleInfo.slug,
-        institution_name: institutionName,
-        permissions: JSON.stringify(permissions),
-        is_active: userBasic.enabled, // Mapear enabled para is_active
-        role_id: roleInfo.id
-      };
-      
-      console.log('✅ Dados completos do usuário:', { 
-        id: user.id, 
-        email: user.email, 
-        role: user.role_slug, 
-        permissions: permissions.length 
-      });
 
       if (!user) {
         console.log(`❌ Usuário não encontrado ou inativo: ${email}`);
         throw new Error('Credenciais inválidas');
       }
+
+      // Determinar role e permissions baseado nos campos booleanos
+      const { roleName, roleSlug, permissions } = OptimizedAuthService.mapUserRoleAndPermissions(user);
+      
+      console.log('✅ Dados completos do usuário:', {
+        id: user.id,
+        email: user.email,
+        role: roleName,
+        role_slug: roleSlug,
+        permissions: permissions.length,
+        is_admin: user.is_admin,
+        is_teacher: user.is_teacher,
+        is_student: user.is_student
+      });
 
       // Verificar senha
       const isValidPassword = await bcrypt.compare(password, user.password);
@@ -216,19 +134,23 @@ export class OptimizedAuthService {
         throw new Error('Credenciais inválidas');
       }
 
-      // As permissões RBAC já foram definidas acima na variável 'permissions'
-
       // Gerar sessionId único
       const sessionId = uuidv4();
 
       // Gerar tokens JWT padrão
       const accessToken = this.generateAccessToken({
         userId: user.id,
+        id: user.id,
+        uuid: user.uuid,
         email: user.email,
         name: user.name,
-        role: user.role_slug || 'STUDENT', // SEMPRE usar role_slug, nunca role_name
-        permissions: permissions, // Usar as permissões RBAC corretas
+        role: roleName.toUpperCase(),
+        role_id: user.role_id,
+        role_name: roleName.toUpperCase(),
+        role_slug: roleSlug,
+        permissions: permissions,
         institutionId: user.institution_id,
+        institutionName: user.institution_name,
         sessionId
       });
 
@@ -238,27 +160,19 @@ export class OptimizedAuthService {
       });
 
       // Preparar resposta do usuário
-      const userResponse: UserWithRole & { role: string } = {
-        id: user.id,
-        email: user.email,
-        name: user.full_name,
-        role: user.role_slug || 'STUDENT', // ADICIONAR campo role com o slug
-        role_id: user.role_id,
-        institution_id: user.institution_id,
-        is_active: user.enabled,
-        created_at: user.date_created,
-        updated_at: user.last_updated,
-        role_name: user.role_name || 'Estudante',
-        role_slug: user.role_slug || 'STUDENT',
-        permissions: permissions, // Usar as permissões RBAC corretas
-        institution_name: user.institution_name
+      const userResponse: UserWithRole = {
+        ...user,
+        permissions: permissions,
+        role: roleName.toUpperCase(),
+        role_name: roleName.toUpperCase(),
+        role_slug: roleSlug,
       };
 
       const endTime = Date.now();
       const duration = endTime - startTime;
       
       console.log(`✅ [${new Date().toISOString()}] Login bem-sucedido para: ${email} (${duration}ms)`);
-      console.log(`📊 User role: ${userResponse.role_slug}, permissions: ${permissions.length}`);
+      console.log(`📊 User role: ${userResponse.role_name}, permissions: ${permissions.length}`);
 
       return {
         success: true,
@@ -279,15 +193,125 @@ export class OptimizedAuthService {
   }
 
   /**
+   * Mapear role e permissions baseado nos campos booleanos do usuário
+   */
+  private static mapUserRoleAndPermissions(user: any): { roleName: string; roleSlug: string; permissions: string[] } {
+    let roleName = 'STUDENT';
+    let permissions: string[] = [];
+
+    // Determinar role baseado nos campos booleanos (ordem de prioridade)
+    if (user.is_admin) {
+      roleName = 'SYSTEM_ADMIN';
+      permissions = [
+        'system:admin',
+        'users:create', 'users:read', 'users:update', 'users:delete',
+        'institutions:create', 'institutions:read', 'institutions:update', 'institutions:delete',
+        'courses:create', 'courses:read', 'courses:update', 'courses:delete',
+        'content:create', 'content:read', 'content:update', 'content:delete',
+        'analytics:read', 'system:settings', 'logs:read',
+        'teachers:create', 'teachers:read', 'teachers:update', 'teachers:delete',
+        'students:create', 'students:read', 'students:update', 'students:delete',
+        'assignments:create', 'assignments:read', 'assignments:update', 'assignments:delete',
+        'grades:create', 'grades:read', 'grades:update', 'grades:delete',
+        'reports:create', 'reports:read', 'reports:update', 'reports:delete',
+        'settings:create', 'settings:read', 'settings:update', 'settings:delete',
+        'roles:create', 'roles:read', 'roles:update', 'roles:delete',
+        'permissions:create', 'permissions:read', 'permissions:update', 'permissions:delete',
+        'groups:create', 'groups:read', 'groups:update', 'groups:delete',
+        'notifications:create', 'notifications:read', 'notifications:update', 'notifications:delete',
+        'attendance:create', 'attendance:read', 'attendance:update', 'attendance:delete',
+        'profile:read', 'profile:update',
+        'modules:create', 'modules:read', 'modules:update', 'modules:delete',
+        'lessons:create', 'lessons:read', 'lessons:update', 'lessons:delete',
+        'books:create', 'books:read', 'books:update', 'books:delete',
+        'videos:create', 'videos:read', 'videos:update', 'videos:delete',
+        'collections:create', 'collections:read', 'collections:update', 'collections:delete',
+        'forum:create', 'forum:read', 'forum:update', 'forum:delete',
+        'chats:create', 'chats:read', 'chats:update', 'chats:delete',
+        'quizzes:create', 'quizzes:read', 'quizzes:update', 'quizzes:delete',
+        'certificates:create', 'certificates:read', 'certificates:update', 'certificates:delete',
+        'backup:create', 'backup:read', 'backup:restore',
+        'maintenance:read', 'maintenance:update',
+        'monitoring:read', 'security:read', 'security:update'
+      ];
+    } else if (user.is_institution_manager) {
+      roleName = 'INSTITUTION_MANAGER';
+      permissions = [
+        'institution:admin',
+        'users:create', 'users:read', 'users:update',
+        'courses:create', 'courses:read', 'courses:update',
+        'content:create', 'content:read', 'content:update',
+        'teachers:read', 'teachers:update',
+        'students:read', 'students:update',
+        'analytics:read', 'reports:read',
+        'settings:read', 'settings:update'
+      ];
+    } else if (user.is_coordinator) {
+      roleName = 'COORDINATOR';
+      permissions = [
+        'courses:read', 'courses:update',
+        'content:read', 'content:update',
+        'students:read', 'students:update',
+        'teachers:read',
+        'assignments:read', 'assignments:update',
+        'grades:read',
+        'reports:read',
+        'analytics:read'
+      ];
+    } else if (user.is_guardian) {
+      roleName = 'GUARDIAN';
+      permissions = [
+        'students:read',
+        'courses:read',
+        'content:read',
+        'assignments:read',
+        'grades:read',
+        'attendance:read',
+        'reports:read',
+        'profile:read', 'profile:update',
+        'notifications:read'
+      ];
+    } else if (user.is_teacher) {
+      roleName = 'TEACHER';
+      permissions = [
+        'courses:create', 'courses:read', 'courses:update',
+        'content:create', 'content:read', 'content:update',
+        'students:read', 'students:update',
+        'assignments:create', 'assignments:read', 'assignments:update',
+        'grades:create', 'grades:read', 'grades:update'
+      ];
+    } else if (user.is_student) {
+      roleName = 'STUDENT';
+      permissions = [
+        'courses:read',
+        'content:read',
+        'assignments:read', 'assignments:submit',
+        'grades:read',
+        'profile:read', 'profile:update'
+      ];
+    }
+
+    const roleSlug = generateSlug(roleName.toLowerCase());
+
+    return { roleName, roleSlug, permissions };
+  }
+
+  /**
    * Gerar Access Token JWT padrão
    */
   private static generateAccessToken(payload: {
     userId: string;
+    id: string;
+    uuid: string;
     email: string;
     name: string;
     role: string;
+    role_id: string;
+    role_name: string;
+    role_slug: string;
     permissions: string[];
     institutionId: string;
+    institutionName: string;
     sessionId: string;
   }): string {
     const tokenPayload = {
@@ -386,92 +410,26 @@ export class OptimizedAuthService {
         return null;
       }
 
-      // Buscar dados atualizados do usuário
-      const user = await db('users')
-        .select('*')
-        .where('id', decoded.userId)
-        .where('enabled', true)
-        .first();
+      // Buscar dados atualizados do usuário com a consulta otimizada
+      const user = await this.getUserById(decoded.userId);
 
       if (!user) {
         return null;
       }
 
-      // Determinar role e permissões baseado nos campos booleanos (RBAC)
-      let roleSlug = 'STUDENT';
-      let permissions: string[] = [
-        'courses:read',
-        'content:read',
-        'assignments:read', 'assignments:submit',
-        'grades:read',
-        'profile:read', 'profile:update'
-      ];
-      
-      if (user.is_admin) {
-        roleSlug = 'SYSTEM_ADMIN';
-        permissions = [
-          'system:admin',
-          'users:create', 'users:read', 'users:update', 'users:delete',
-          'institutions:create', 'institutions:read', 'institutions:update', 'institutions:delete',
-          'courses:create', 'courses:read', 'courses:update', 'courses:delete',
-          'content:create', 'content:read', 'content:update', 'content:delete',
-          'analytics:read', 'system:settings', 'logs:read'
-        ];
-      } else if (user.is_institution_manager) {
-        roleSlug = 'INSTITUTION_MANAGER';
-        permissions = [
-          'institution:admin',
-          'users:create', 'users:read', 'users:update',
-          'courses:create', 'courses:read', 'courses:update',
-          'content:create', 'content:read', 'content:update',
-          'teachers:read', 'teachers:update',
-          'students:read', 'students:update',
-          'analytics:read', 'reports:read',
-          'settings:read', 'settings:update'
-        ];
-      } else if (user.is_coordinator) {
-        roleSlug = 'COORDINATOR';
-        permissions = [
-          'courses:read', 'courses:update',
-          'content:read', 'content:update',
-          'students:read', 'students:update',
-          'teachers:read',
-          'assignments:read', 'assignments:update',
-          'grades:read',
-          'reports:read',
-          'analytics:read'
-        ];
-      } else if (user.is_guardian) {
-        roleSlug = 'GUARDIAN';
-        permissions = [
-          'students:read',
-          'courses:read',
-          'content:read',
-          'assignments:read',
-          'grades:read',
-          'attendance:read',
-          'reports:read',
-          'profile:read', 'profile:update',
-          'notifications:read'
-        ];
-      } else if (user.is_teacher) {
-        roleSlug = 'TEACHER';
-        permissions = [
-          'courses:create', 'courses:read', 'courses:update',
-          'content:create', 'content:read', 'content:update',
-          'students:read', 'students:update',
-          'assignments:create', 'assignments:read', 'assignments:update',
-          'grades:create', 'grades:read', 'grades:update'
-        ];
-      }
-
       const newAccessToken = this.generateAccessToken({
         userId: user.id,
+        id: user.id,
+        uuid: user.uuid,
         email: user.email,
-        name: user.full_name,
-        role: roleSlug,
-        permissions,
+        name: user.name,
+        role: (user.role_name || 'STUDENT').toUpperCase(),
+        role_id: user.role_id,
+        role_name: (user.role_name || 'STUDENT').toUpperCase(),
+        role_slug: user.role_slug || 'student',
+        permissions: user.permissions,
         institutionId: user.institution_id,
+        institutionName: user.institution_name || '',
         sessionId: decoded.sessionId
       });
 
@@ -488,115 +446,46 @@ export class OptimizedAuthService {
 
   static async getUserById(userId: string): Promise<UserWithRole | null> {
     try {
-      const user = await db('users')
-        .select('*')
-        .where('id', userId)
-        .where('enabled', true)
+      const user = await db('users as u')
+        .select(
+          'u.id',
+          'u.id as uuid',
+          'u.email',
+          'u.full_name as name',
+          'u.institution_id',
+          'u.enabled as is_active',
+          'u.date_created as created_at',
+          'u.last_updated as updated_at',
+          'u.is_admin',
+          'u.is_institution_manager',
+          'u.is_coordinator',
+          'u.is_guardian',
+          'u.is_teacher',
+          'u.is_student',
+          'u.role_id',
+          'i.name as institution_name'
+        )
+        .leftJoin('institutions as i', 'u.institution_id', 'i.id')
+        .where('u.id', userId)
+        .where('u.enabled', true)
         .first();
 
       if (!user) {
         return null;
       }
 
-      // Determinar role e permissões baseado nos campos booleanos (RBAC)
-      let roleInfo = { name: 'Estudante', slug: 'STUDENT', id: 'student' };
-      let permissions: string[] = [
-        'courses:read',
-        'content:read',
-        'assignments:read', 'assignments:submit',
-        'grades:read',
-        'profile:read', 'profile:update'
-      ];
-      
-      if (user.is_admin) {
-        roleInfo = { name: 'Administrador do Sistema', slug: 'SYSTEM_ADMIN', id: 'system_admin' };
-        permissions = [
-          'system:admin',
-          'users:create', 'users:read', 'users:update', 'users:delete',
-          'institutions:create', 'institutions:read', 'institutions:update', 'institutions:delete',
-          'courses:create', 'courses:read', 'courses:update', 'courses:delete',
-          'content:create', 'content:read', 'content:update', 'content:delete',
-          'analytics:read', 'system:settings', 'logs:read'
-        ];
-      } else if (user.is_institution_manager) {
-        roleInfo = { name: 'Gerente de Instituição', slug: 'INSTITUTION_MANAGER', id: 'institution_manager' };
-        permissions = [
-          'institution:admin',
-          'users:create', 'users:read', 'users:update',
-          'courses:create', 'courses:read', 'courses:update',
-          'content:create', 'content:read', 'content:update',
-          'teachers:read', 'teachers:update',
-          'students:read', 'students:update',
-          'analytics:read', 'reports:read',
-          'settings:read', 'settings:update'
-        ];
-      } else if (user.is_coordinator) {
-        roleInfo = { name: 'Coordenador', slug: 'COORDINATOR', id: 'coordinator' };
-        permissions = [
-          'courses:read', 'courses:update',
-          'content:read', 'content:update',
-          'students:read', 'students:update',
-          'teachers:read',
-          'assignments:read', 'assignments:update',
-          'grades:read',
-          'reports:read',
-          'analytics:read'
-        ];
-      } else if (user.is_guardian) {
-        roleInfo = { name: 'Responsável', slug: 'GUARDIAN', id: 'guardian' };
-        permissions = [
-          'students:read',
-          'courses:read',
-          'content:read',
-          'assignments:read',
-          'grades:read',
-          'attendance:read',
-          'reports:read',
-          'profile:read', 'profile:update',
-          'notifications:read'
-        ];
-      } else if (user.is_teacher) {
-        roleInfo = { name: 'Professor', slug: 'TEACHER', id: 'teacher' };
-        permissions = [
-          'courses:create', 'courses:read', 'courses:update',
-          'content:create', 'content:read', 'content:update',
-          'students:read', 'students:update',
-          'assignments:create', 'assignments:read', 'assignments:update',
-          'grades:create', 'grades:read', 'grades:update'
-        ];
-      }
+      // Determinar role e permissions baseado nos campos booleanos
+      const { roleName, roleSlug, permissions } = this.mapUserRoleAndPermissions(user);
 
-      // Buscar instituição se existir
-      let institutionName = null;
-      if (user.institution_id) {
-        try {
-          const institution = await db('institutions')
-            .select('name')
-            .where('id', user.institution_id)
-            .first();
-          if (institution) {
-            institutionName = institution.name;
-          }
-        } catch (error: any) {
-          console.log(`⚠️ Erro ao buscar instituição: ${error.message}`);
-        }
-      }
-
-      return {
-        id: user.id,
-        email: user.email,
-        name: user.full_name,
-        role: roleInfo.slug, // ADICIONAR campo role com o slug
-        role_id: roleInfo.id,
-        institution_id: user.institution_id,
-        is_active: user.enabled,
-        created_at: user.date_created,
-        updated_at: user.last_updated,
-        role_name: roleInfo.name,
-        role_slug: roleInfo.slug,
+      const userResponse: UserWithRole = {
+        ...user,
         permissions,
-        institution_name: institutionName
-      } as UserWithRole & { role: string };
+        role: roleName.toUpperCase(),
+        role_name: roleName.toUpperCase(),
+        role_slug: roleSlug,
+      };
+
+      return userResponse;
 
     } catch (error) {
       console.error('Erro ao buscar usuário por ID:', error);
@@ -610,81 +499,13 @@ export class OptimizedAuthService {
 
   static async hasPermission(userId: string, permission: string): Promise<boolean> {
     try {
-      const user = await db('users')
-        .select('is_admin', 'is_institution_manager', 'is_coordinator', 'is_guardian', 'is_teacher', 'is_student')
-        .where('id', userId)
-        .where('enabled', true)
-        .first();
+      const user = await this.getUserById(userId);
 
-      if (!user) {
+      if (!user || !user.permissions) {
         return false;
       }
 
-      // Verificar permissões baseado no sistema RBAC
-      let userPermissions: string[] = [];
-      
-      if (user.is_admin) {
-        userPermissions = [
-          'system:admin',
-          'users:create', 'users:read', 'users:update', 'users:delete',
-          'institutions:create', 'institutions:read', 'institutions:update', 'institutions:delete',
-          'courses:create', 'courses:read', 'courses:update', 'courses:delete',
-          'content:create', 'content:read', 'content:update', 'content:delete',
-          'analytics:read', 'system:settings', 'logs:read'
-        ];
-      } else if (user.is_institution_manager) {
-        userPermissions = [
-          'institution:admin',
-          'users:create', 'users:read', 'users:update',
-          'courses:create', 'courses:read', 'courses:update',
-          'content:create', 'content:read', 'content:update',
-          'teachers:read', 'teachers:update',
-          'students:read', 'students:update',
-          'analytics:read', 'reports:read',
-          'settings:read', 'settings:update'
-        ];
-      } else if (user.is_coordinator) {
-        userPermissions = [
-          'courses:read', 'courses:update',
-          'content:read', 'content:update',
-          'students:read', 'students:update',
-          'teachers:read',
-          'assignments:read', 'assignments:update',
-          'grades:read',
-          'reports:read',
-          'analytics:read'
-        ];
-      } else if (user.is_guardian) {
-        userPermissions = [
-          'students:read',
-          'courses:read',
-          'content:read',
-          'assignments:read',
-          'grades:read',
-          'attendance:read',
-          'reports:read',
-          'profile:read', 'profile:update',
-          'notifications:read'
-        ];
-      } else if (user.is_teacher) {
-        userPermissions = [
-          'courses:create', 'courses:read', 'courses:update',
-          'content:create', 'content:read', 'content:update',
-          'students:read', 'students:update',
-          'assignments:create', 'assignments:read', 'assignments:update',
-          'grades:create', 'grades:read', 'grades:update'
-        ];
-      } else if (user.is_student) {
-        userPermissions = [
-          'courses:read',
-          'content:read',
-          'assignments:read', 'assignments:submit',
-          'grades:read',
-          'profile:read', 'profile:update'
-        ];
-      }
-
-      return userPermissions.includes(permission);
+      return user.permissions.includes(permission);
 
     } catch (error) {
       console.error('Erro ao verificar permissão:', error);

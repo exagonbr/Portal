@@ -1179,23 +1179,25 @@ function DashboardSidebarComponent() {
         </Link>
       </motion.div>
 
-      {/* Role Selector - Altura fixa */}
-      <div className="flex-shrink-0 h-12">
-        <RoleSelector 
-          userRole={userRole}
-          selectedRole={selectedRole}
-          onRoleChange={handleRoleChange}
-          theme={theme}
-          isSystemAdmin={isSystemAdmin}
-        />
-      </div>
+      {/* Role Selector - Altura fixa - Apenas para SYSTEM_ADMIN */}
+      {userRole === UserRole.SYSTEM_ADMIN && (
+        <div className="flex-shrink-0 h-12">
+          <RoleSelector
+            userRole={userRole}
+            selectedRole={selectedRole}
+            onRoleChange={handleRoleChange}
+            theme={theme}
+            isSystemAdmin={isSystemAdmin}
+          />
+        </div>
+      )}
 
-      {/* User Info - Altura fixa */}
-      <div className="flex-shrink-0 h-16">
-        <UserProfile 
-          user={user} 
-          isCollapsed={isCollapsed} 
-          theme={theme} 
+      {/* User Info - Altura ajustada baseada na role */}
+      <div className={`flex-shrink-0 ${userRole === UserRole.SYSTEM_ADMIN ? 'h-16' : 'h-20'}`}>
+        <UserProfile
+          user={user}
+          isCollapsed={isCollapsed}
+          theme={theme}
           isSystemAdmin={isSystemAdmin}
         />
       </div>

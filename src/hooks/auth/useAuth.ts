@@ -1,6 +1,6 @@
 'use client';
 
-import { useSession } from 'next-auth/react';
+import { useAuth as useAuthContext } from '@/contexts/AuthContext';
 import { useRouter } from 'next/navigation';
 import { useEffect } from 'react';
 
@@ -11,7 +11,7 @@ export interface UseAuthOptions {
 }
 
 export function useAuth(options: UseAuthOptions = {}) {
-  const { data: session, status } = useSession();
+  const { user, loading, isAuthenticated } = useAuthContext();
   const router = useRouter();
   
   const {
@@ -21,31 +21,31 @@ export function useAuth(options: UseAuthOptions = {}) {
   } = options;
 
   useEffect(() => {
-    if (status === 'loading') return; // Ainda carregando
+    if (loading) return; // Ainda carregando
 
-    // Se autenticação é obrigatória e não há sessão
-    if (required && !session) {
+    // Se autenticação é obrigatória e não há usuário
+    if (required && !isAuthenticated) {
       router.push(redirectTo);
       return;
     }
 
     // Se há roles permitidos e o usuário não tem permissão
-    if (session && allowedRoles.length > 0) {
-      const userRole = session.user?.role;
+    if (user && allowedRoles.length > 0) {
+      const userRole = user.role;
       if (!userRole || !allowedRoles.includes(userRole)) {
         router.push('/dashboard'); // Redirecionar para dashboard padrão
         return;
       }
     }
-  }, [session, status, required, redirectTo, allowedRoles, router]);
+  }, [user, loading, isAuthenticated, required, redirectTo, allowedRoles, router]);
 
   return {
-    session,
-    status,
-    isLoading: status === 'loading',
-    isAuthenticated: !!session,
-    user: session?.user,
-    hasRole: (role: string) => session?.user?.role === role,
-    hasAnyRole: (roles: string[]) => roles.includes(session?.user?.role || ''),
+    session: user ? { user } : null, // Compatibilidade com código existente
+    status: loading ? 'loading' : (isAuthenticated ? 'authenticated' : 'unauthenticated'),
+    isLoading: loading,
+    isAuthenticated,
+    user,
+    hasRole: (role: string) => user?.role === role,
+    hasAnyRole: (roles: string[]) => roles.includes(user?.role || ''),
   };
 }
