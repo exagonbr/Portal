@@ -205,7 +205,6 @@ export class AuthController {
 
   static async logout(req: Request, res: Response, next: NextFunction) {
     try {
-      const userId = parseInt((req as any).user?.userId);
       const sessionId = (req as any).sessionId || req.body.sessionId;
 
       if (sessionId) {

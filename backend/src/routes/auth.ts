@@ -390,7 +390,7 @@ router.post('/refresh', async (req: express.Request, res: express.Response) => {
       });
     }
 
-    const result = await AuthService.refreshToken(userId, sessionId);
+    const result = await AuthService.refreshToken(userId, sessionId || undefined);
 
     return res.json({
       success: true,
