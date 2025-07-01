@@ -42,8 +42,8 @@ export async function GET(request: NextRequest) {
       params.set('cpf_last_digits', cpfLastDigits);
     }
 
-    // Buscar certificados no backend
-    const response = await fetch(`${API_BASE_URL}/api/certificates/search?${params.toString()}`, {
+    // Buscar certificados no backend (endpoint público)
+    const response = await fetch(`${API_BASE_URL}/public/certificates/search?${params.toString()}`, {
       method: 'GET',
       headers: {
         'Content-Type': 'application/json',

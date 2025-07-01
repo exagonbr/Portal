@@ -1,23 +1,9 @@
 import { Router, Request, Response } from 'express';
-import { Pool } from 'pg';
 import { CertificateCreateRequest, CertificateUpdateRequest } from '../models/Certificate';
 import { requireAuth } from '../middleware/requireAuth';
+import { db } from '../database/connection';
 
 const router = Router();
-
-// Assumindo que você tem uma conexão com o banco de dados
-// Você deve ajustar isso conforme sua configuração atual
-let db: Pool;
-
-// Inicializar conexão com o banco (ajuste conforme sua configuração)
-const initDB = () => {
-  if (!db) {
-    db = new Pool({
-      connectionString: process.env.DATABASE_URL,
-    });
-  }
-  return db;
-};
 
 // Middleware para verificar role de administrador
 const requireAdmin = (req: any, res: any, next: any) => {
@@ -36,7 +22,6 @@ const requireAdmin = (req: any, res: any, next: any) => {
 // GET /api/certificates - Listar certificados com filtros e paginação (PROTEGIDO)
 router.get('/', requireAuth, requireAdmin, async (req: Request, res: Response) => {
   try {
-    const database = initDB();
     
     const {
       page = 1,
@@ -113,41 +98,55 @@ router.get('/', requireAuth, requireAdmin, async (req: Request, res: Response) =
     const sortField = validSortFields.includes(sort_by as string) ? sort_by : 'date_created';
     const sortDirection = sort_order === 'asc' ? 'ASC' : 'DESC';
 
-    // Query para contar total
-    const countQuery = `SELECT COUNT(*) as total FROM certificate ${whereClause}`;
-    const countResult = await database.query(countQuery, queryParams);
-    const total = parseInt(countResult.rows[0].total);
+    // Construir query usando Knex
+    let query = db('certificate').select('*');
+    
+    // Aplicar filtros
+    if (user_id) {
+      query = query.where('user_id', Number(user_id));
+    }
+    if (tv_show_id) {
+      query = query.where('tv_show_id', Number(tv_show_id));
+    }
+    if (score) {
+      query = query.where('score', Number(score));
+    }
+    if (document) {
+      query = query.where('document', 'ilike', `%${document}%`);
+    }
+    if (license_code) {
+      query = query.where('license_code', 'ilike', `%${license_code}%`);
+    }
+    if (tv_show_name) {
+      query = query.where('tv_show_name', 'ilike', `%${tv_show_name}%`);
+    }
+    if (recreate !== undefined) {
+      query = query.where('recreate', recreate === 'true');
+    }
+    if (search) {
+      query = query.where(function() {
+        this.where('document', 'ilike', `%${search}%`)
+          .orWhere('license_code', 'ilike', `%${search}%`)
+          .orWhere('tv_show_name', 'ilike', `%${search}%`)
+          .orWhere('path', 'ilike', `%${search}%`);
+      });
+    }
 
-    // Query para buscar dados
-    const dataQuery = `
-      SELECT 
-        id,
-        version,
-        date_created,
-        last_updated,
-        path,
-        score,
-        tv_show_id,
-        user_id,
-        document,
-        license_code,
-        tv_show_name,
-        recreate
-      FROM certificate 
-      ${whereClause}
-      ORDER BY ${sortField} ${sortDirection}
-      LIMIT $${paramIndex++} OFFSET $${paramIndex++}
-    `;
-    
-    queryParams.push(Number(limit), offset);
-    
-    const dataResult = await database.query(dataQuery, queryParams);
+    // Contar total
+    const countResult = await query.clone().count('* as total');
+    const total = parseInt(countResult[0].total as string);
+
+    // Buscar dados com paginação e ordenação
+    const dataResult = await query
+      .orderBy(sortField as string, sortDirection.toLowerCase() as 'asc' | 'desc')
+      .limit(Number(limit))
+      .offset(offset);
     
     const totalPages = Math.ceil(total / Number(limit));
 
     res.json({
       success: true,
-      data: dataResult.rows,
+      data: dataResult,
       pagination: {
         page: Number(page),
         limit: Number(limit),
@@ -168,8 +167,6 @@ router.get('/', requireAuth, requireAdmin, async (req: Request, res: Response) =
 // GET /api/certificates/search - Buscar certificados para validação pública (SEM AUTENTICAÇÃO)
 router.get('/search', async (req: Request, res: Response) => {
   try {
-    const database = initDB();
-    
     const { license_code, cpf_last_digits } = req.query;
 
     if (!license_code && !cpf_last_digits) {
@@ -187,46 +184,34 @@ router.get('/search', async (req: Request, res: Response) => {
       });
     }
 
-    // Construir WHERE clause
-    const whereConditions: string[] = [];
-    const queryParams: any[] = [];
-    let paramIndex = 1;
+    // Construir query usando Knex
+    let query = db('certificate as c')
+      .select(
+        'c.id',
+        'c.date_created',
+        'c.score',
+        'c.license_code',
+        'c.tv_show_name',
+        db.raw("CONCAT(LEFT(c.document, 3), '.***.***-**') as document_masked")
+      )
+      .orderBy('c.date_created', 'desc')
+      .limit(10);
 
     if (license_code) {
-      whereConditions.push(`c.license_code = $${paramIndex++}`);
-      queryParams.push(license_code);
+      query = query.where('c.license_code', license_code as string);
     }
 
     if (cpf_last_digits) {
       // Buscar por últimos 3 dígitos do CPF no campo document
-      whereConditions.push(`RIGHT(REGEXP_REPLACE(c.document, '[^0-9]', '', 'g'), 3) = $${paramIndex++}`);
-      queryParams.push(cpf_last_digits);
+      query = query.whereRaw(`RIGHT(REGEXP_REPLACE(c.document, '[^0-9]', '', 'g'), 3) = ?`, [cpf_last_digits]);
     }
 
-    const whereClause = whereConditions.length > 0 ? `WHERE ${whereConditions.join(' AND ')}` : '';
-
-    // Query para buscar certificados com informações do usuário (dados públicos apenas)
-    const query = `
-      SELECT
-        c.id,
-        c.date_created,
-        c.score,
-        c.license_code,
-        c.tv_show_name,
-        -- Mascarar dados sensíveis
-        CONCAT(LEFT(c.document, 3), '.***.***-**') as document_masked
-      FROM certificate c
-      ${whereClause}
-      ORDER BY c.date_created DESC
-      LIMIT 10
-    `;
-
-    const result = await database.query(query, queryParams);
+    const result = await query;
 
     return res.json({
       success: true,
-      data: result.rows,
-      message: result.rows.length > 0 ? 'Certificados encontrados' : 'Nenhum certificado encontrado'
+      data: result,
+      message: result.length > 0 ? 'Certificados encontrados' : 'Nenhum certificado encontrado'
     });
 
   } catch (error) {
@@ -241,7 +226,6 @@ router.get('/search', async (req: Request, res: Response) => {
 // POST /api/certificates - Criar certificado (PROTEGIDO)
 router.post('/', requireAuth, requireAdmin, async (req: Request, res: Response) => {
   try {
-    const database = initDB();
     const data: CertificateCreateRequest = req.body;
 
     // Validações básicas
@@ -257,31 +241,25 @@ router.post('/', requireAuth, requireAdmin, async (req: Request, res: Response) 
       data.license_code = `CERT-${Date.now()}-${Math.random().toString(36).substr(2, 9).toUpperCase()}`;
     }
 
-    const query = `
-      INSERT INTO certificate (
-        user_id, tv_show_id, score, document, license_code, 
-        tv_show_name, path, recreate, date_created, last_updated, version
-      ) VALUES (
-        $1, $2, $3, $4, $5, $6, $7, $8, NOW(), NOW(), 1
-      ) RETURNING *
-    `;
-
-    const values = [
-      data.user_id,
-      data.tv_show_id,
-      data.score,
-      data.document || '',
-      data.license_code,
-      data.tv_show_name || '',
-      data.path || '',
-      data.recreate || false
-    ];
-
-    const result = await database.query(query, values);
+    const result = await db('certificate')
+      .insert({
+        user_id: data.user_id,
+        tv_show_id: data.tv_show_id,
+        score: data.score,
+        document: data.document || '',
+        license_code: data.license_code,
+        tv_show_name: data.tv_show_name || '',
+        path: data.path || '',
+        recreate: data.recreate || false,
+        date_created: db.fn.now(),
+        last_updated: db.fn.now(),
+        version: 1
+      })
+      .returning('*');
 
     return res.status(201).json({
       success: true,
-      data: result.rows[0],
+      data: result[0],
       message: 'Certificado criado com sucesso'
     });
 
@@ -297,26 +275,20 @@ router.post('/', requireAuth, requireAdmin, async (req: Request, res: Response) 
 // GET /api/certificates/:id - Buscar certificado por ID (PROTEGIDO)
 router.get('/:id', requireAuth, async (req: Request, res: Response) => {
   try {
-    const database = initDB();
     const { id } = req.params;
     const user = (req as any).user;
 
-    // Admins podem ver qualquer certificado, usuários normais apenas os próprios
-    let query = `
-      SELECT * FROM certificate WHERE id = $1
-    `;
-    
-    const queryParams = [id];
+    // Construir query usando Knex
+    let query = db('certificate').where('id', id);
 
     // Se não é admin, adicionar filtro por user_id
     if (!['SYSTEM_ADMIN', 'INSTITUTION_MANAGER', 'TEACHER'].includes(user.role)) {
-      query += ` AND user_id = $2`;
-      queryParams.push(user.id);
+      query = query.where('user_id', user.id);
     }
 
-    const result = await database.query(query, queryParams);
+    const result = await query.first();
 
-    if (result.rows.length === 0) {
+    if (!result) {
       return res.status(404).json({
         success: false,
         message: 'Certificado não encontrado'
@@ -325,7 +297,7 @@ router.get('/:id', requireAuth, async (req: Request, res: Response) => {
 
     return res.json({
       success: true,
-      data: result.rows[0]
+      data: result
     });
 
   } catch (error) {
@@ -340,51 +312,43 @@ router.get('/:id', requireAuth, async (req: Request, res: Response) => {
 // PUT /api/certificates/:id - Atualizar certificado (PROTEGIDO)
 router.put('/:id', requireAuth, requireAdmin, async (req: Request, res: Response) => {
   try {
-    const database = initDB();
     const { id } = req.params;
     const data: CertificateUpdateRequest = req.body;
 
     // Verificar se certificado existe
-    const existsResult = await database.query('SELECT id FROM certificate WHERE id = $1', [id]);
+    const existsResult = await db('certificate').where('id', id).first();
     
-    if (existsResult.rows.length === 0) {
+    if (!existsResult) {
       return res.status(404).json({
         success: false,
         message: 'Certificado não encontrado'
       });
     }
 
-    // Construir query de update dinamicamente
-    const updateFields: string[] = [];
-    const queryParams: any[] = [];
-    let paramIndex = 1;
+    // Construir objeto de update dinamicamente
+    const updateData: any = {};
 
     if (data.score !== undefined) {
-      updateFields.push(`score = $${paramIndex++}`);
-      queryParams.push(data.score);
+      updateData.score = data.score;
     }
 
     if (data.document !== undefined) {
-      updateFields.push(`document = $${paramIndex++}`);
-      queryParams.push(data.document);
+      updateData.document = data.document;
     }
 
     if (data.tv_show_name !== undefined) {
-      updateFields.push(`tv_show_name = $${paramIndex++}`);
-      queryParams.push(data.tv_show_name);
+      updateData.tv_show_name = data.tv_show_name;
     }
 
     if (data.path !== undefined) {
-      updateFields.push(`path = $${paramIndex++}`);
-      queryParams.push(data.path);
+      updateData.path = data.path;
     }
 
     if (data.recreate !== undefined) {
-      updateFields.push(`recreate = $${paramIndex++}`);
-      queryParams.push(data.recreate);
+      updateData.recreate = data.recreate;
     }
 
-    if (updateFields.length === 0) {
+    if (Object.keys(updateData).length === 0) {
       return res.status(400).json({
         success: false,
         message: 'Nenhum campo para atualizar'
@@ -392,24 +356,17 @@ router.put('/:id', requireAuth, requireAdmin, async (req: Request, res: Response
     }
 
     // Adicionar campos automáticos
-    updateFields.push(`last_updated = NOW()`);
-    updateFields.push(`version = version + 1`);
+    updateData.last_updated = db.fn.now();
+    updateData.version = db.raw('version + 1');
 
-    // Adicionar ID como último parâmetro
-    queryParams.push(id);
-
-    const query = `
-      UPDATE certificate 
-      SET ${updateFields.join(', ')}
-      WHERE id = $${paramIndex}
-      RETURNING *
-    `;
-
-    const result = await database.query(query, queryParams);
+    const result = await db('certificate')
+      .where('id', id)
+      .update(updateData)
+      .returning('*');
 
     return res.json({
       success: true,
-      data: result.rows[0],
+      data: result[0],
       message: 'Certificado atualizado com sucesso'
     });
 
@@ -425,12 +382,14 @@ router.put('/:id', requireAuth, requireAdmin, async (req: Request, res: Response
 // DELETE /api/certificates/:id - Deletar certificado (PROTEGIDO)
 router.delete('/:id', requireAuth, requireAdmin, async (req: Request, res: Response) => {
   try {
-    const database = initDB();
     const { id } = req.params;
 
-    const result = await database.query('DELETE FROM certificate WHERE id = $1 RETURNING id', [id]);
+    const result = await db('certificate')
+      .where('id', id)
+      .del()
+      .returning('id');
 
-    if (result.rows.length === 0) {
+    if (result.length === 0) {
       return res.status(404).json({
         success: false,
         message: 'Certificado não encontrado'

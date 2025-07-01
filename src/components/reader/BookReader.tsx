@@ -44,10 +44,19 @@ export default function BookReader({ book, onClose, onProgressUpdate }: BookRead
   const [newNote, setNewNote] = useState('');
   const [isFullscreen, setIsFullscreen] = useState(false);
   const [readingProgress, setReadingProgress] = useState(book.reading_progress || 0);
-  const [startTime, setStartTime] = useState(Date.now());
+  const [startTime, setStartTime] = useState<number | null>(null);
+
+  // Inicializar timestamp no cliente
+  useEffect(() => {
+    if (startTime === null) {
+      setStartTime(Date.now());
+    }
+  }, [startTime]);
 
   // Simular progresso baseado no tempo de leitura
   useEffect(() => {
+    if (startTime === null) return;
+
     const interval = setInterval(() => {
       const timeSpent = Date.now() - startTime;
       const minutesSpent = timeSpent / (1000 * 60);

@@ -6,6 +6,7 @@ import { setupGlobalErrorHandler } from '@/utils/errorHandling'
 // import { SessionProvider } from 'next-auth/react' // Desabilitado - usando AuthContext customizado
 import { AuthWrapper } from '../contexts/AuthContext'
 import { isDevelopment } from '@/utils/env'
+import { suppressHydrationWarnings } from '@/utils/suppressHydrationWarnings'
 
 const ThemeProvider = dynamic(() =>
   import('@/contexts/ThemeContext')
@@ -140,16 +141,21 @@ function SimpleProviders({ children }: { children: ReactNode }) {
     
     // Configurar manipulador global de erros para factory/chunk
     const cleanupErrorHandler = setupGlobalErrorHandler();
+    
+    // Suprimir avisos de hidratação em desenvolvimento
+    if (isDevelopment()) {
+      suppressHydrationWarnings();
+    }
 
     return () => {
       cleanupErrorHandler(); // Limpar manipulador de erros
     };
   }, [])
 
-  // Renderizar uma versão simplificada no servidor com ThemeProvider básico
+  // Renderizar uma versão simplificada no servidor
   if (!mounted) {
     return (
-      <div className="min-h-screen w-full">
+      <div className="min-h-screen w-full" suppressHydrationWarning>
         <Suspense fallback={null}>
           <ThemeProvider>
             {children}
@@ -161,7 +167,7 @@ function SimpleProviders({ children }: { children: ReactNode }) {
 
   // Renderizar versão completa no cliente
   return (
-    <div className="min-h-screen w-full">
+    <div className="min-h-screen w-full" suppressHydrationWarning>
       <Suspense fallback={null}>
         <ThemeProvider>
           <Suspense fallback={null}>

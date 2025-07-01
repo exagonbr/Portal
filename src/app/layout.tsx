@@ -64,7 +64,7 @@ export default function RootLayout({
         {/* Service Worker personalizado para limpeza de cache */}
         <script src="/register-sw.js" defer />
       </head>
-      <body className={`${inter.className} m-0 p-0 h-full w-full`}>
+      <body className={`${inter.className} m-0 p-0 h-full w-full`} suppressHydrationWarning>
         <SimpleProviders>
           <div className="flex flex-col min-h-screen w-full">
             {children}

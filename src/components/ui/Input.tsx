@@ -2,6 +2,7 @@
 
 import { forwardRef, useState } from 'react'
 import { useTheme } from '@/contexts/ThemeContext'
+import { useUniqueId } from '@/hooks/useUniqueId'
 
 interface InputProps extends Omit<React.InputHTMLAttributes<HTMLInputElement>, 'size'> {
   label?: string
@@ -37,6 +38,7 @@ const Input = forwardRef<HTMLInputElement, InputProps>(({
 }, ref) => {
   const { theme } = useTheme()
   const [isFocused, setIsFocused] = useState(false)
+  const inputId = useUniqueId('input')
 
   const getVariantStyles = () => {
     const baseStyles = {
@@ -72,13 +74,13 @@ const Input = forwardRef<HTMLInputElement, InputProps>(({
     }
   }
 
-  const inputId = props.id || `input-${Math.random().toString(36).substr(2, 9)}`
+  const finalInputId = props.id || inputId
 
   return (
     <div className="w-full">
       {label && (
         <label 
-          htmlFor={inputId}
+          htmlFor={finalInputId}
           className="block text-sm font-medium mb-2"
           style={{ color: theme.colors.text.primary }}
         >
@@ -98,7 +100,7 @@ const Input = forwardRef<HTMLInputElement, InputProps>(({
         
         <input
           ref={ref}
-          id={inputId}
+          id={finalInputId}
           className={`
             w-full transition-all duration-200 outline-none
             ${sizeClasses[size]}

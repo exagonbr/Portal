@@ -36,7 +36,11 @@ const nextConfig = {
   swcMinify: true, // Habilitar minificação SWC
 
   // Desativar o botão de "dev tools" do Next.js
-  devIndicators: false,
+  devIndicators: {
+    buildActivity: false,
+    buildActivityPosition: false,
+    appIsrStatus: false
+  },
   
   // ESLint
   eslint: {

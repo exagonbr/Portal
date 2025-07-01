@@ -3,6 +3,7 @@
 import { useState, useRef, useEffect } from 'react'
 import { useTheme } from '@/contexts/ThemeContext'
 import { motion, AnimatePresence } from 'framer-motion'
+import { useUniqueId } from '@/hooks/useUniqueId'
 
 interface Option {
   value: string
@@ -52,6 +53,7 @@ export function Select({
   const [searchTerm, setSearchTerm] = useState('')
   const [isFocused, setIsFocused] = useState(false)
   const selectRef = useRef<HTMLDivElement>(null)
+  const selectId = useUniqueId('select')
 
   const filteredOptions = searchable && options
     ? options.filter(option =>
@@ -130,7 +132,7 @@ export function Select({
     return () => document.removeEventListener('mousedown', handleClickOutside)
   }, [])
 
-  const selectId = `select-${Math.random().toString(36).substr(2, 9)}`
+
 
   return (
     <div className={`w-full ${className}`} ref={selectRef}>

@@ -2,6 +2,7 @@
 
 import { forwardRef, useState, useEffect, useRef } from 'react'
 import { useTheme } from '@/contexts/ThemeContext'
+import { useUniqueId } from '@/hooks/useUniqueId'
 
 interface TextareaProps extends Omit<React.TextareaHTMLAttributes<HTMLTextAreaElement>, 'size'> {
   label?: string
@@ -44,6 +45,7 @@ const Textarea = forwardRef<HTMLTextAreaElement, TextareaProps>(({
   const [charCount, setCharCount] = useState(0)
   const textareaRef = useRef<HTMLTextAreaElement>(null)
   const internalRef = ref || textareaRef
+  const textareaId = useUniqueId('textarea')
 
   // Auto resize functionality
   const adjustHeight = () => {
@@ -116,14 +118,14 @@ const Textarea = forwardRef<HTMLTextAreaElement, TextareaProps>(({
     onChange?.(e)
   }
 
-  const textareaId = props.id || `textarea-${Math.random().toString(36).substr(2, 9)}`
+  const finalTextareaId = props.id || textareaId
   const isOverLimit = maxLength && charCount > maxLength
 
   return (
     <div className="w-full">
       {label && (
         <label 
-          htmlFor={textareaId}
+          htmlFor={finalTextareaId}
           className="block text-sm font-medium mb-2"
           style={{ color: theme.colors.text.primary }}
         >
@@ -134,7 +136,7 @@ const Textarea = forwardRef<HTMLTextAreaElement, TextareaProps>(({
       <div className="relative">
         <textarea
           ref={internalRef}
-          id={textareaId}
+          id={finalTextareaId}
           className={`
             w-full transition-all duration-200 outline-none resize-none
             ${sizeClasses[size]}

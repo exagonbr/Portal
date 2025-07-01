@@ -3,6 +3,7 @@
 import { createContext, useContext, useState, useCallback, useEffect } from 'react'
 import { useTheme } from '@/contexts/ThemeContext'
 import { motion, AnimatePresence } from 'framer-motion'
+import { generateUniqueId } from '@/hooks/useUniqueId'
 
 interface Toast {
   id: string
@@ -26,7 +27,7 @@ export function ToastProvider({ children }: { children: React.ReactNode }) {
   }, [])
 
   const showToast = useCallback(({ type, message, duration = 5000 }: Omit<Toast, 'id'>) => {
-    const id = Math.random().toString(36).substr(2, 9)
+    const id = generateUniqueId('toast')
     setToasts(prev => [...prev, { id, type, message, duration }])
   }, [])
 

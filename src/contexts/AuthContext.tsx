@@ -149,6 +149,12 @@ export function AuthProvider({ children, isInitializing = false }: { children: R
    * 👤 Buscar dados do usuário atual
    */
   const fetchCurrentUser = useCallback(async () => {
+    // Verificar se estamos no cliente
+    if (typeof window === 'undefined') {
+      setLoading(false);
+      return;
+    }
+
     const accessToken = localStorage.getItem('accessToken');
     
     if (!accessToken) {
@@ -186,8 +192,10 @@ export function AuthProvider({ children, isInitializing = false }: { children: R
    * 🔄 Inicialização - verificar sessão existente
    */
   useEffect(() => {
-    fetchCurrentUser();
-  }, [fetchCurrentUser]);
+    if (mounted) {
+      fetchCurrentUser();
+    }
+  }, [fetchCurrentUser, mounted]);
 
   /**
    * 🎯 LOGIN
