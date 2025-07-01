@@ -40,59 +40,6 @@ router.get('/', requireAuth, requireAdmin, async (req: Request, res: Response) =
 
     const offset = (Number(page) - 1) * Number(limit);
     
-    // Construir WHERE clause
-    const whereConditions: string[] = [];
-    const queryParams: any[] = [];
-    let paramIndex = 1;
-
-    if (user_id) {
-      whereConditions.push(`user_id = $${paramIndex++}`);
-      queryParams.push(Number(user_id));
-    }
-
-    if (tv_show_id) {
-      whereConditions.push(`tv_show_id = $${paramIndex++}`);
-      queryParams.push(Number(tv_show_id));
-    }
-
-    if (score) {
-      whereConditions.push(`score = $${paramIndex++}`);
-      queryParams.push(Number(score));
-    }
-
-    if (document) {
-      whereConditions.push(`document ILIKE $${paramIndex++}`);
-      queryParams.push(`%${document}%`);
-    }
-
-    if (license_code) {
-      whereConditions.push(`license_code ILIKE $${paramIndex++}`);
-      queryParams.push(`%${license_code}%`);
-    }
-
-    if (tv_show_name) {
-      whereConditions.push(`tv_show_name ILIKE $${paramIndex++}`);
-      queryParams.push(`%${tv_show_name}%`);
-    }
-
-    if (recreate !== undefined) {
-      whereConditions.push(`recreate = $${paramIndex++}`);
-      queryParams.push(recreate === 'true');
-    }
-
-    if (search) {
-      whereConditions.push(`(
-        document ILIKE $${paramIndex} OR 
-        license_code ILIKE $${paramIndex} OR 
-        tv_show_name ILIKE $${paramIndex} OR
-        path ILIKE $${paramIndex}
-      )`);
-      queryParams.push(`%${search}%`);
-      paramIndex++;
-    }
-
-    const whereClause = whereConditions.length > 0 ? `WHERE ${whereConditions.join(' AND ')}` : '';
-    
     // Validar sort_by
     const validSortFields = ['date_created', 'last_updated', 'score', 'tv_show_name'];
     const sortField = validSortFields.includes(sort_by as string) ? sort_by : 'date_created';
