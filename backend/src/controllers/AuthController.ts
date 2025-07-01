@@ -1,41 +1,100 @@
 import { Request, Response } from 'express';
-import AuthService from '../services/AuthService';
+import authService from '../services/AuthService';
 
+
+/**
+ * 🎮 CONTROLLER DE AUTENTICAÇÃO UNIFICADO
+ *
+ * ✅ Endpoints para Login, Refresh, Logout
+ * ✅ Utiliza o AuthService centralizado
+ * ✅ Envia Refresh Token em cookie httpOnly
+ */
 class AuthController {
+  /**
+   * 🎯 POST /login
+   * Autentica o usuário e retorna tokens.
+   */
+  public async login(req: Request, res: Response): Promise<Response> {
+    const { email, password } = req.body;
+
+    if (!email || !password) {
+      return res.status(400).json({ success: false, message: 'Email e senha são obrigatórios.' });
+    }
+
+    const result = await authService.login(email, password);
+
+    if (!result.success || !result.data) {
+      return res.status(401).json({ success: false, message: result.message || 'Credenciais inválidas.' });
+    }
+
+    // Envia o refresh token em um cookie seguro
+    authService.sendRefreshToken(res, result.data.refreshToken);
+
+    // Retorna o access token e os dados do usuário no corpo da resposta
+    return res.json({
+      success: true,
+      data: {
+        accessToken: result.data.accessToken,
+        user: result.data.user,
+      },
+    });
+  }
+
+  /**
+   * 🔄 POST /refresh_token
+   * Gera um novo access token a partir do refresh token.
+   */
+  public async refreshToken(req: Request, res: Response): Promise<Response> {
+    const refreshToken = req.cookies.jid;
+
+    if (!refreshToken) {
+      return res.status(401).json({ success: false, message: 'Refresh token não encontrado.' });
+    }
+
+    const result = await authService.refresh(refreshToken);
+
+    if (!result.success || !result.data) {
+      return res.status(401).json({ success: false, message: result.message || 'Falha ao renovar o token.' });
+    }
+
+    return res.json({
+      success: true,
+      data: {
+        accessToken: result.data.accessToken,
+      },
+    });
+  }
+
+  /**
+   * 🚪 POST /logout
+   * Limpa o cookie do refresh token.
+   */
+  public async logout(req: Request, res: Response): Promise<Response> {
+    authService.clearRefreshToken(res);
+    return res.json({ success: true, message: 'Logout realizado com sucesso.' });
+  }
+
+  /*
+  // TODO: Re-implementar o fluxo do Google OAuth com a nova estrutura
   public async googleCallback(req: Request, res: Response): Promise<void> {
     try {
-      const payload = req.user;
+      const payload = req.user as any; // Payload do Passport.js
       if (!payload || !payload.id) {
-        return res.status(401).redirect(`${process.env.FRONTEND_URL || 'https://portal.sabercon.com.br'}/auth/login?error=auth_failed`);
+        res.redirect('/login?error=auth_failed');
+        return;
       }
 
-      const user = await AuthService.getUserById(payload.id);
-      if (!user) {
-        return res.status(404).redirect(`${process.env.FRONTEND_URL || 'https://portal.sabercon.com.br'}/auth/login?error=user_not_found`);
-      }
+      // Lógica para gerar tokens para o usuário do Google
+      // ...
+      
+      res.redirect('/?token=...');
 
-      // Gerar token para o usuário autenticado via Google OAuth
-      const token = await AuthService.generateTokenForUser(user);
-      if (!token) {
-        return res.status(500).redirect(`${process.env.FRONTEND_URL || 'https://portal.sabercon.com.br'}/auth/login?error=token_generation_failed`);
-      }
-      
-      // Usar URL de produção ou fallback para desenvolvimento
-      const frontendUrl = process.env.FRONTEND_URL || 'https://portal.sabercon.com.br';
-      
-      console.log('🔐 Google OAuth: Redirecionando usuário após autenticação');
-      console.log('👤 Usuário:', user.email);
-      console.log('🌐 Frontend URL:', frontendUrl);
-      
-      res.redirect(`${frontendUrl}/auth/callback?token=${token}`);
     } catch (error) {
-      console.log('❌ Erro durante autenticação Google:', error);
-      
-      // Redirecionar para página de erro em caso de falha
-      const frontendUrl = process.env.FRONTEND_URL || 'https://portal.sabercon.com.br';
-      res.redirect(`${frontendUrl}/auth/login?error=google_auth_failed`);
+      console.error('❌ Erro durante autenticação Google:', error);
+      res.redirect('/login?error=google_auth_failed');
     }
   }
+  */
 }
 
 export default new AuthController();

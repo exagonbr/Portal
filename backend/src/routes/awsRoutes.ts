@@ -7,10 +7,8 @@ export function createAwsRoutes(db: Knex): Router {
   const router = Router();
   const awsController = new AwsSettingsController(db);
 
-  // 🔐 APLICAR MIDDLEWARE UNIFICADO DE AUTENTICAÇÃO
-  router.use(requireAuth);
+  // Aplicar verificação de role para todas as rotas
 
-  // Middleware para verificar role de administrador
   const requireAdmin = (req: any, res: any, next: any) => {
     const user = req.user;
     const userRole = user?.role?.toUpperCase();
@@ -32,8 +30,7 @@ export function createAwsRoutes(db: Knex): Router {
     next();
   };
 
-  // Aplicar verificação de role para todas as rotas
-  router.use(requireAdmin);
+  router.use(requireAuth, requireAdmin);
 
   // Configurações AWS
   router.get('/settings', (req, res) => awsController.getActiveSettings(req, res));
@@ -53,6 +50,7 @@ export function createAwsRoutes(db: Knex): Router {
   
   // Estatísticas de conexão
   router.get('/connection-logs/stats', async (req, res) => {
+
     try {
       console.log('🔍 AWS connection-logs/stats acessado por:', (req.user as any)?.email);
       await awsController.getConnectionStats(req, res);
@@ -79,4 +77,4 @@ export function createAwsRoutes(db: Knex): Router {
   router.get('/connection-logs/trends', (req, res) => awsController.getConnectionTrends(req, res));
 
   return router;
-} 
+}

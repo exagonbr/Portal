@@ -11,6 +11,7 @@ import jwt from 'jsonwebtoken';
 import { SessionService } from '../services/SessionService';
 import { AppDataSource } from '../config/typeorm.config';
 import { User } from '../entities/User';
+import { Role } from '../entities/Role';
 import { JWT_CONFIG } from '../config/jwt';
 import { requireAuth } from '../middleware/requireAuth';
 
@@ -310,18 +311,22 @@ router.post(
         name: user.name,
         role: user.role?.name.toUpperCase(),
         institutionId: user.institution_id,
-        permissions: user.role?.permissions || [],
+        permissions: user.role ? Role.getDefaultPermissions(user.role.name) : [],
         sessionId
       };
       
-      const jwtOptions = { 
-        expiresIn: (remember ? JWT_CONFIG.REFRESH_TOKEN_EXPIRES_IN : JWT_CONFIG.ACCESS_TOKEN_EXPIRES_IN) as string,
+      if (!JWT_CONFIG.SECRET) {
+        throw new Error('JWT_SECRET is not configured.');
+      }
+
+      const jwtOptions: jwt.SignOptions = { 
+        expiresIn: (remember ? JWT_CONFIG.REFRESH_TOKEN_EXPIRES_IN : JWT_CONFIG.ACCESS_TOKEN_EXPIRES_IN),
         issuer: JWT_CONFIG.ISSUER,
         audience: JWT_CONFIG.AUDIENCE,
-        algorithm: JWT_CONFIG.ALGORITHM as 'HS256'
+        algorithm: JWT_CONFIG.ALGORITHM
       };
       
-      const token = jwt.sign(jwtPayload, JWT_CONFIG.SECRET, jwtOptions as any);
+      const token = jwt.sign(jwtPayload, JWT_CONFIG.SECRET, jwtOptions);
 
       return res.json({
         success: true,
@@ -334,7 +339,7 @@ router.post(
           name: user.name,
           role: user.role?.name.toUpperCase(),
           institutionId: user.institution_id,
-          permissions: user.role?.permissions || []
+          permissions: user.role ? Role.getDefaultPermissions(user.role.name) : []
         },
         expiresAt: new Date(Date.now() + (remember ? 7 * 24 * 60 * 60 * 1000 : 60 * 60 * 1000)).toISOString()
       });
@@ -524,14 +529,18 @@ router.post(
         sessionId
       };
       
-      const jwtOptions = { 
-        expiresIn: JWT_CONFIG.ACCESS_TOKEN_EXPIRES_IN as string,
+      if (!JWT_CONFIG.SECRET) {
+        throw new Error('JWT_SECRET is not configured.');
+      }
+
+      const jwtOptions: jwt.SignOptions = { 
+        expiresIn: JWT_CONFIG.ACCESS_TOKEN_EXPIRES_IN,
         issuer: JWT_CONFIG.ISSUER,
         audience: JWT_CONFIG.AUDIENCE,
-        algorithm: JWT_CONFIG.ALGORITHM as 'HS256'
+        algorithm: JWT_CONFIG.ALGORITHM
       };
       
-      const newToken = jwt.sign(jwtPayload, JWT_CONFIG.SECRET, jwtOptions as any);
+      const newToken = jwt.sign(jwtPayload, JWT_CONFIG.SECRET, jwtOptions);
 
       return res.json({
         success: true,
@@ -547,216 +556,5 @@ router.post(
     }
   }
 );
-
-/**
- * @swagger
- * /api/sessions/list:
- *   get:
- *     summary: Listar sessões ativas do usuário
- *     description: Retorna todas as sessões ativas do usuário atual com informações de dispositivo
- *     tags: [Sessions]
- *     security:
- *       - bearerAuth: []
- *     responses:
- *       200:
- *         description: Lista de sessões ativas
- *       401:
- *         description: Token inválido ou sessão não encontrada
- *       500:
- *         description: Erro interno do servidor
- */
-router.get('/list', async (req: any, res: express.Response) => {
-  try {
-    let sessions = [];
-    
-    try {
-      sessions = await SessionService.getUserSessions(req.user.userId);
-      
-      // Marca a sessão atual
-      const currentSessionId = req.sessionId;
-      sessions = sessions.map(session => ({
-        ...session,
-        isCurrentSession: session.sessionId === currentSessionId
-      }));
-    } catch (error) {
-      console.log('Aviso: Erro ao buscar sessões do usuário:', error);
-    }
-
-    return res.json({
-      success: true,
-      sessions
-    });
-  } catch (error) {
-    console.log('Erro ao listar sessões:', error);
-    return res.status(500).json({
-      success: false,
-      message: 'Erro interno do servidor'
-    });
-  }
-});
-
-/**
- * @swagger
- * /api/sessions/destroy/{sessionId}:
- *   delete:
- *     summary: Destruir sessão específica
- *     description: Remove uma sessão específica do usuário (não pode ser a sessão atual)
- *     tags: [Sessions]
- *     security:
- *       - bearerAuth: []
- *     parameters:
- *       - in: path
- *         name: sessionId
- *         required: true
- *         description: ID da sessão a ser destruída
- *         schema:
- *           type: string
- *     responses:
- *       200:
- *         description: Sessão destruída com sucesso
- *       404:
- *         description: Sessão não encontrada ou não pertence ao usuário
- *       401:
- *         description: Token inválido ou sessão não encontrada
- *       500:
- *         description: Erro interno do servidor
- */
-router.delete('/destroy/:sessionId', async (req: any, res: express.Response) => {
-  try {
-    const { sessionId } = req.params;
-
-    try {
-      // Verifica se a sessão pertence ao usuário
-      const sessionData = await SessionService.validateSession(sessionId, req.user.userId);
-      if (!sessionData || sessionData.userId !== req.user.userId) {
-        return res.status(404).json({
-          success: false,
-          message: 'Sessão não encontrada'
-        });
-      }
-
-      const destroyed = await SessionService.destroySession(sessionId);
-
-      if (destroyed) {
-        return res.json({
-          success: true,
-          message: 'Sessão destruída com sucesso'
-        });
-      } else {
-        return res.status(404).json({
-          success: false,
-          message: 'Sessão não encontrada'
-        });
-      }
-    } catch (error) {
-      console.log('Aviso: Erro ao destruir sessão específica:', error);
-      return res.status(404).json({
-        success: false,
-        message: 'Sessão não encontrada'
-      });
-    }
-  } catch (error) {
-    console.log('Erro ao destruir sessão:', error);
-    return res.status(500).json({
-      success: false,
-      message: 'Erro interno do servidor'
-    });
-  }
-});
-
-/**
- * @swagger
- * /api/sessions/stats:
- *   get:
- *     summary: Estatísticas de sessões (Admin)
- *     description: Retorna estatísticas gerais das sessões do sistema (apenas para administradores)
- *     tags: [Sessions]
- *     security:
- *       - bearerAuth: []
- *     responses:
- *       200:
- *         description: Estatísticas de sessões
- *       403:
- *         description: Acesso negado - apenas administradores
- *       401:
- *         description: Token inválido ou sessão não encontrada
- *       500:
- *         description: Erro interno do servidor
- */
-router.get('/stats', requireAdmin, async (req: any, res: express.Response) => {
-  try {
-    let stats = {
-      totalSessions: 0,
-      activeSessions: 0,
-      totalUsers: 0,
-      onlineUsers: 0
-    };
-    
-    try {
-      const sessionStats = await SessionService.getSessionStats();
-      // Adaptando a resposta do SessionService para o formato esperado
-      stats = {
-        totalSessions: sessionStats.totalActiveSessions || 0,
-        activeSessions: sessionStats.totalActiveSessions || 0,
-        totalUsers: sessionStats.activeUsers || 0,
-        onlineUsers: sessionStats.activeUsers || 0
-      };
-    } catch (error) {
-      console.log('Aviso: Erro ao obter estatísticas de sessão:', error);
-    }
-
-    return res.json({
-      success: true,
-      stats
-    });
-  } catch (error) {
-    console.log('Erro ao obter estatísticas:', error);
-    return res.status(500).json({
-      success: false,
-      message: 'Erro interno do servidor'
-    });
-  }
-});
-
-/**
- * @swagger
- * /api/sessions/validate:
- *   get:
- *     summary: Validar sessão atual
- *     description: Valida se a sessão atual está ativa e retorna informações atualizadas
- *     tags: [Sessions]
- *     security:
- *       - bearerAuth: []
- *     responses:
- *       200:
- *         description: Sessão válida
- *       401:
- *         description: Token inválido ou sessão expirada
- *       500:
- *         description: Erro interno do servidor
- */
-router.get('/validate', async (req: any, res: express.Response) => {
-  try {
-    return res.json({
-      success: true,
-      message: 'Sessão válida',
-      user: {
-        id: req.user.userId,
-        email: req.user.email,
-        name: req.user.name,
-        role: req.user.role,
-        institutionId: req.user.institutionId,
-        permissions: req.user.permissions
-      },
-      sessionId: req.sessionId
-    });
-  } catch (error) {
-    console.log('Erro na validação de sessão:', error);
-    return res.status(500).json({
-      success: false,
-      message: 'Erro interno do servidor'
-    });
-  }
-});
 
 export default router;

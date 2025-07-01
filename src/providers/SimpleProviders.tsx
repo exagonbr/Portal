@@ -1,28 +1,21 @@
 'use client'
 
-import React, { ReactNode, useState, useEffect, Suspense } from 'react'
+import React, { ReactNode } from 'react'
 import dynamic from 'next/dynamic'
 import { setupGlobalErrorHandler } from '@/utils/errorHandling'
-// import { SessionProvider } from 'next-auth/react' // Desabilitado - usando AuthContext customizado
-import { AuthWrapper } from '../contexts/AuthContext'
+import { AuthProvider as AuthWrapper } from '../contexts/AuthContext'
 import { isDevelopment } from '@/utils/env'
 import { suppressHydrationWarnings } from '@/utils/suppressHydrationWarnings'
+import { ErrorBoundary } from 'react-error-boundary';
 
 const ThemeProvider = dynamic(() =>
   import('@/contexts/ThemeContext')
-    .then(mod => {
-      if (!mod.ThemeProvider) {
-        console.warn('ThemeProvider não encontrado, usando fallback');
-        return { default: ({ children }: { children: ReactNode }) => <>{children}</> };
-      }
-      return { default: mod.ThemeProvider };
-    })
+    .then(mod => mod.ThemeProvider)
     .catch(error => {
       if (isDevelopment()) {
-        console.log('❌ Erro ao carregar ThemeProvider:', error);
+        console.log('Error loading ThemeProvider:', error);
       }
-      // Retornar um provider vazio em caso de erro
-      return { default: ({ children }: { children: ReactNode }) => <>{children}</> };
+      return ({ children }: { children: ReactNode }) => <>{children}</>;
     }), {
   ssr: false,
   loading: () => null
@@ -30,19 +23,12 @@ const ThemeProvider = dynamic(() =>
 
 const GamificationProvider = dynamic(() =>
   import('@/contexts/GamificationContext')
-    .then(mod => {
-      if (!mod.GamificationProvider) {
-        console.warn('GamificationProvider não encontrado, usando fallback');
-        return { default: ({ children }: { children: ReactNode }) => <>{children}</> };
-      }
-      return { default: mod.GamificationProvider };
-    })
+    .then(mod => mod.GamificationProvider)
     .catch(error => {
       if (isDevelopment()) {
-        console.log('❌ Erro ao carregar GamificationProvider:', error);
+        console.log('Error loading GamificationProvider:', error);
       }
-      // Retornar um provider vazio em caso de erro
-      return { default: ({ children }: { children: ReactNode }) => <>{children}</> };
+      return ({ children }: { children: ReactNode }) => <>{children}</>;
     }), {
   ssr: false,
   loading: () => null
@@ -50,19 +36,12 @@ const GamificationProvider = dynamic(() =>
 
 const NavigationLoadingProvider = dynamic(() =>
   import('@/contexts/NavigationLoadingContext')
-    .then(mod => {
-      if (!mod.NavigationLoadingProvider) {
-        console.warn('NavigationLoadingProvider não encontrado, usando fallback');
-        return { default: ({ children }: { children: ReactNode }) => <>{children}</> };
-      }
-      return { default: mod.NavigationLoadingProvider };
-    })
+    .then(mod => mod.NavigationLoadingProvider)
     .catch(error => {
       if (isDevelopment()) {
-        console.log('❌ Erro ao carregar NavigationLoadingProvider:', error);
+        console.log('Error loading NavigationLoadingProvider:', error);
       }
-      // Retornar um provider vazio em caso de erro
-      return { default: ({ children }: { children: ReactNode }) => <>{children}</> };
+      return ({ children }: { children: ReactNode }) => <>{children}</>;
     }), {
   ssr: false,
   loading: () => null
@@ -70,19 +49,12 @@ const NavigationLoadingProvider = dynamic(() =>
 
 const ToastManager = dynamic(() =>
   import('@/components/ToastManager')
-    .then(mod => {
-      if (!mod.ToastManager) {
-        console.warn('ToastManager não encontrado, usando fallback');
-        return { default: () => null };
-      }
-      return { default: mod.ToastManager };
-    })
+    .then(mod => mod.ToastManager)
     .catch(error => {
       if (isDevelopment()) {
-        console.log('❌ Erro ao carregar ToastManager:', error);
+        console.log('Error loading ToastManager:', error);
       }
-      // Retornar um componente vazio em caso de erro
-      return { default: () => null };
+      return () => null;
     }), {
   ssr: false,
   loading: () => null
@@ -90,115 +62,42 @@ const ToastManager = dynamic(() =>
 
 const UpdateProvider = dynamic(() =>
   import('@/components/PWAUpdateManager')
-    .then(mod => {
-      if (!mod.UpdateProvider) {
-        console.warn('UpdateProvider não encontrado, usando fallback');
-        return { default: ({ children }: { children: ReactNode }) => <>{children}</> };
-      }
-      return { default: mod.UpdateProvider };
-    })
+    .then(mod => mod.UpdateProvider)
     .catch(error => {
       if (isDevelopment()) {
-        console.log('❌ Erro ao carregar UpdateProvider:', error);
+        console.log('Error loading UpdateProvider:', error);
       }
-      // Retornar um provider vazio em caso de erro
-      return { default: ({ children }: { children: ReactNode }) => <>{children}</> };
+      return ({ children }: { children: ReactNode }) => <>{children}</>;
     }), {
   ssr: false,
   loading: () => null
 })
 
-/**
- * Loading fallback minimalista
- */
-function MinimalLoadingFallback() {
-  return null; // Não mostrar nada durante carregamento
-}
-
-/**
- * Error boundary simples para AuthWrapper
- */
-function AuthWrapperWithErrorBoundary({ children }: { children: ReactNode }) {
-  try {
-    return <AuthWrapper>{children}</AuthWrapper>;
-  } catch (error) {
-    if (isDevelopment()) {
-      console.log('❌ Erro no AuthWrapper:', error);
-    }
-    return <>{children}</>;
-  }
-}
-
-/**
- * Providers simplificados SEM telas de erro
- */
-function SimpleProviders({ children }: { children: ReactNode }) {
-  const [mounted, setMounted] = useState(false)
-
-  // Configurar manipulador global de erros apenas no cliente
-  useEffect(() => {
-    setMounted(true);
-    
-    // Configurar manipulador global de erros para factory/chunk
-    const cleanupErrorHandler = setupGlobalErrorHandler();
-    
-    // Suprimir avisos de hidratação em desenvolvimento
-    if (isDevelopment()) {
-      suppressHydrationWarnings();
-    }
-
-    return () => {
-      cleanupErrorHandler(); // Limpar manipulador de erros
-    };
-  }, [])
-
-  // Renderizar uma versão simplificada no servidor que será idêntica no cliente
-  if (!mounted) {
-    return (
-      <div className="min-h-screen w-full" suppressHydrationWarning>
-        <Suspense fallback={<div className="sr-only">Carregando...</div>}>
-          <ThemeProvider>
-            <div suppressHydrationWarning>
-              {children}
-            </div>
-          </ThemeProvider>
-        </Suspense>
-      </div>
-    );
-  }
-
-  // Renderizar versão completa no cliente
+function ErrorBoundaryFallback({ error }: { error: Error }) {
   return (
-    <div className="min-h-screen w-full" suppressHydrationWarning>
-      <Suspense fallback={null}>
-        <ThemeProvider>
-          <Suspense fallback={null}>
-            <NavigationLoadingProvider>
-              <Suspense fallback={null}>
-                {/* SessionProvider desabilitado - usando AuthContext customizado */}
-                <AuthWrapperWithErrorBoundary>
-                  <Suspense fallback={null}>
-                    <UpdateProvider>
-                      <Suspense fallback={null}>
-                        <GamificationProvider>
-                          <Suspense fallback={null}>
-                            <ToastManager>
-                              {children}
-                            </ToastManager>
-                          </Suspense>
-                        </GamificationProvider>
-                      </Suspense>
-                    </UpdateProvider>
-                  </Suspense>
-                </AuthWrapperWithErrorBoundary>
-              </Suspense>
-            </NavigationLoadingProvider>
-          </Suspense>
-        </ThemeProvider>
-      </Suspense>
+    <div role="alert">
+      <p>Something went wrong:</p>
+      <pre>{error.message}</pre>
     </div>
-  )
+  );
 }
 
-// Exportação explícita para evitar problemas com lazy loading
-export default SimpleProviders;
+export default function SimpleProviders({ children }: { children: ReactNode }) {
+  return (
+    <ErrorBoundary FallbackComponent={ErrorBoundaryFallback}>
+      <AuthWrapper>
+        <ThemeProvider>
+          <GamificationProvider>
+            <NavigationLoadingProvider>
+            <UpdateProvider>
+            <ToastManager>
+              {children}
+              </ToastManager>
+              </UpdateProvider>
+            </NavigationLoadingProvider>
+          </GamificationProvider>
+        </ThemeProvider>
+      </AuthWrapper>
+    </ErrorBoundary>
+  );
+}

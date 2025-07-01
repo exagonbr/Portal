@@ -1,24 +1,12 @@
-// Definição do payload do token que é usado em toda a aplicação
-export interface AuthTokenPayload {
-  id: string;
-  email?: string;
-  name?: string;
-  role?: string;
-  permissions?: string[];
-  institutionId?: string;
-  sessionId?: string;
-  iat?: number;
-  exp?: number;
-}
+import { AuthenticatedUser } from './auth.types';
 
 declare global {
   namespace Express {
     interface Request {
-      // Usa o AuthTokenPayload para tipar o usuário na requisição
-      user?: AuthTokenPayload;
+      user?: AuthenticatedUser;
     }
     
     // Sobrescreve a definição do Passport para usar nosso tipo
-    interface User extends AuthTokenPayload {}
+    interface User extends AuthenticatedUser {}
   }
 }

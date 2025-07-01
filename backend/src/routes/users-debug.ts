@@ -1,7 +1,7 @@
 import express from 'express';
 import { requireAuth } from '../middleware/requireAuth';
-import { requireRole } from '../middleware/auth';
 import { UserRepository } from '../repositories/UserRepository';
+
 import * as jwt from 'jsonwebtoken';
 import { getJwtSecret } from '../config/jwt';
 
@@ -91,8 +91,8 @@ router.get('/test-jwt-validation', requireAuth, async (req, res) => {
 // Rota para testar validação JWT + Role
 router.get('/test-jwt-and-role',
   requireAuth,
-  requireRole(['SYSTEM_ADMIN', 'INSTITUTION_MANAGER']),
   async (req, res) => {
+
     try {
       console.log('🧪 [DEBUG] Testando JWT + Role...');
       console.log('🔍 [DEBUG] req.user:', req.user);
@@ -122,8 +122,8 @@ router.get('/test-jwt-and-role',
 // Rota para simular a mesma validação da rota /api/users original
 router.get('/simulate-users-route',
   requireAuth,
-  requireRole(['SYSTEM_ADMIN', 'INSTITUTION_MANAGER']),
   async (req, res) => {
+
     try {
       console.log('🎭 [DEBUG] Simulando rota /api/users...');
       console.log('🔍 [DEBUG] Query params:', req.query);
@@ -277,7 +277,8 @@ router.get('/full-diagnosis', async (req, res) => {
 });
 
 // Rota de debug para verificar estrutura da tabela
-router.get('/debug-table', requireAuth, requireRole(['SYSTEM_ADMIN', 'INSTITUTION_MANAGER']), async (req, res) => {
+router.get('/debug-table', requireAuth, async (req, res) => {
+
   try {
     console.log('🔍 [DEBUG-TABLE] Verificando estrutura da tabela users...');
     

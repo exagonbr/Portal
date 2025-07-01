@@ -38,10 +38,12 @@ export class AuthService {
         };
       }
 
-      const { user, token, expires_at } = response.data;
+      const { user, accessToken } = response.data;
 
       // Salva o token e dados do usuário
-      this.saveAuthData(token, user, expires_at);
+      if (typeof window !== 'undefined') {
+        localStorage.setItem('accessToken', accessToken);
+      }
 
       // Converte UserResponseDto para User (compatibilidade)
       const compatibleUser = this.convertToCompatibleUser(user);
@@ -110,10 +112,12 @@ export class AuthService {
         };
       }
 
-      const { user, token, expires_at } = response.data;
+      const { user, accessToken } = response.data;
 
       // Salva o token e dados do usuário
-      this.saveAuthData(token, user, expires_at);
+      if (typeof window !== 'undefined') {
+        localStorage.setItem('accessToken', accessToken);
+      }
 
       // Converte UserResponseDto para User (compatibilidade)
       const compatibleUser = this.convertToCompatibleUser(user);
@@ -152,33 +156,18 @@ export class AuthService {
    */
   async getCurrentUser(): Promise<User | null> {
     try {
-      // Verifica se há token válido
-      if (!this.isAuthenticated()) {
-        return null;
-      }
-
       const response = await apiClient.get<UserWithRoleDto>('/user/me');
 
       if (!response.success || !response.data) {
-        // Token pode estar expirado, limpa dados
-        this.clearAuthData();
         return null;
       }
 
       const user = this.convertToCompatibleUser(response.data);
       
-      // Atualiza dados do usuário no storage
-      this.saveUserData(user);
-
       return user;
     } catch (error) {
       console.log('Erro ao buscar usuário atual:', error);
       
-      // Se for erro de autenticação, limpa dados
-      if (isAuthError(error)) {
-        this.clearAuthData();
-      }
-
       return null;
     }
   }
@@ -194,8 +183,9 @@ export class AuthService {
       console.log('Erro no logout do servidor:', error);
       // Continua com logout local mesmo se houver erro no servidor
     } finally {
-      // Sempre limpa dados locais
-      this.clearAuthData();
+      if (typeof window !== 'undefined') {
+        localStorage.removeItem('accessToken');
+      }
     }
   }
 
@@ -205,145 +195,10 @@ export class AuthService {
   isAuthenticated(): boolean {
     if (typeof window === 'undefined') return false;
 
-    const token = this.getStoredToken();
-    if (!token) return false;
-
-    // Verifica se token não expirou
-    if (this.isTokenExpired()) {
-      return false;
-    }
-
-    return true;
+    const token = localStorage.getItem('accessToken');
+    return !!token;
   }
   
-  /**
-   * Verifica se o token está expirado
-   */
-  isTokenExpired(): boolean {
-    if (typeof window === 'undefined') return true;
-    
-    const token = this.getStoredToken();
-    if (!token) return true;
-    
-    // Verificar data de expiração no localStorage
-    const expiresAt = localStorage.getItem('auth_expires_at');
-    if (expiresAt) {
-      const expirationDate = new Date(expiresAt);
-      if (expirationDate <= new Date()) {
-        return true;
-      }
-      
-      // Verificar se está próximo de expirar (menos de 5 minutos)
-      const fiveMinutes = 5 * 60 * 1000;
-      if (expirationDate.getTime() - Date.now() < fiveMinutes) {
-        return true; // Considera expirado se faltar menos de 5 minutos
-      }
-    } else {
-      // Se não tiver data de expiração, tenta decodificar o token
-      try {
-        // Decodificar JWT (sem verificação de assinatura)
-        const base64Url = token.split('.')[1];
-        const base64 = base64Url.replace(/-/g, '+').replace(/_/g, '/');
-        const jsonPayload = decodeURIComponent(atob(base64).split('').map(function(c) {
-          return '%' + ('00' + c.charCodeAt(0).toString(16)).slice(-2);
-        }).join(''));
-
-        const { exp } = JSON.parse(jsonPayload);
-        
-        if (exp) {
-          const expDate = new Date(exp * 1000);
-          return expDate <= new Date();
-        }
-      } catch (error) {
-        console.log('Erro ao decodificar token:', error);
-      }
-    }
-    
-    return false;
-  }
-
-  /**
-   * Atualiza token de autenticação
-   */
-  async refreshToken(): Promise<boolean> {
-    try {
-      console.log('Tentando renovar token de autenticação...');
-      
-      // Verifica se temos um refresh token
-      let refreshToken = null;
-      
-      if (typeof window !== 'undefined') {
-        // Tenta obter do cookie
-        refreshToken = document.cookie
-          .split('; ')
-          .find(row => row.startsWith('refresh_token='))
-          ?.split('=')[1];
-      }
-      
-      if (!refreshToken) {
-        console.warn('Refresh token não encontrado, não é possível renovar a sessão');
-        return false;
-      }
-      
-      // Evitar loop infinito - verificar se já tentou refresh recentemente
-      const lastRefreshAttempt = localStorage.getItem('last_refresh_attempt');
-      const now = Date.now();
-      
-      if (lastRefreshAttempt) {
-        const timeSinceLastAttempt = now - parseInt(lastRefreshAttempt);
-        if (timeSinceLastAttempt < 10000) { // 10 segundos
-          console.warn('Muitas tentativas de refresh em curto período, aguardando...');
-          return false;
-        }
-      }
-      
-      // Marcar tentativa de refresh
-      localStorage.setItem('last_refresh_attempt', now.toString());
-      
-      // Chamar endpoint específico para refresh
-      const response = await fetch('/api/auth/refresh', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        cache: 'no-store',
-        credentials: 'include',
-      });
-
-      if (!response.ok) {
-        console.log('Erro na resposta do refresh token:', response.status);
-        if (response.status === 401) {
-          this.clearAuthData();
-        }
-        return false;
-      }
-
-      const data = await response.json();
-      
-      if (!data.success) {
-        console.log('Falha no refresh token:', data.message);
-        this.clearAuthData();
-        return false;
-      }
-
-      // Atualiza token no apiClient para futuras requisições
-      const { token } = data.data;
-      apiClient.setAuthToken(token);
-      
-      console.log('Token renovado com sucesso');
-      return true;
-    } catch (error) {
-      console.log('Erro ao renovar token:', error);
-      // Não limpar dados em caso de erro de rede
-      if (error instanceof Error && error.message.includes('fetch failed')) {
-        console.warn('Erro de rede ao renovar token, tentando manter sessão atual');
-        return true;
-      }
-      this.clearAuthData();
-      return false;
-    }
-  }
-
   /**
    * Altera senha do usuário
    */
@@ -398,69 +253,6 @@ export class AuthService {
     }
   }
 
-  // Métodos privados para gerenciamento de dados
-
-  private saveAuthData(token: string, user: UserResponseDto, expiresAt: string): void {
-    if (typeof window === 'undefined') return;
-
-    // Salva token
-    apiClient.setAuthToken(token);
-    
-    // Salva dados adicionais
-    localStorage.setItem('auth_expires_at', expiresAt);
-    
-    // Salva dados do usuário
-    const compatibleUser = this.convertToCompatibleUser(user);
-    this.saveUserData(compatibleUser);
-  }
-
-  private saveUserData(user: User): void {
-    if (typeof window === 'undefined') return;
-
-    localStorage.setItem('user', JSON.stringify(user));
-    
-    // Também salva em cookie para SSR
-    const expires = new Date();
-    expires.setTime(expires.getTime() + 7 * 24 * 60 * 60 * 1000); // 7 dias
-    document.cookie = `user_data=${encodeURIComponent(JSON.stringify(user))};expires=${expires.toUTCString()};path=/;secure;samesite=strict`;
-  }
-
-  private clearAuthData(): void {
-    if (typeof window === 'undefined') return;
-
-    // Limpa API client
-    apiClient.clearAuth();
-    
-    // Limpa localStorage
-    localStorage.removeItem('auth_expires_at');
-    localStorage.removeItem('user');
-    localStorage.removeItem('session_id');
-    
-    // Limpa cookies
-    const cookiesToClear = ['auth_token', 'user_data', 'session_id'];
-    cookiesToClear.forEach(cookieName => {
-      document.cookie = `${cookieName}=;expires=Thu, 01 Jan 1970 00:00:00 GMT;path=/`;
-      document.cookie = `${cookieName}=;expires=Thu, 01 Jan 1970 00:00:00 GMT;path=/;domain=${window.location.hostname}`;
-      document.cookie = `${cookieName}=;expires=Thu, 01 Jan 1970 00:00:00 GMT;path=/;domain=.${window.location.hostname}`;
-    });
-  }
-
-  private getStoredToken(): string | null {
-    if (typeof window === 'undefined') return null;
-
-    // Tenta localStorage primeiro
-    const token = localStorage.getItem('auth_token');
-    if (token) return token;
-
-    // Fallback para cookies
-    const cookieToken = document.cookie
-      .split('; ')
-      .find(row => row.startsWith('auth_token='))
-      ?.split('=')[1];
-
-    return cookieToken || null;
-  }
-
   private convertToCompatibleUser(apiUser: UserResponseDto): User {
     // Mapear role_id para role baseado no UserWithRoleDto se disponível
     let role: UserRole = 'student'; // default
@@ -503,8 +295,6 @@ export const register = (name: string, email: string, password: string, type: 's
 export const getCurrentUser = () => authService.getCurrentUser();
 export const logout = () => authService.logout();
 export const isAuthenticated = () => authService.isAuthenticated();
-export const isTokenExpired = () => authService.isTokenExpired();
-export const refreshToken = () => authService.refreshToken();
 
 // Funções de gerenciamento de usuários (mantidas para compatibilidade)
 export const listUsers = async (): Promise<User[]> => {
@@ -585,7 +375,7 @@ export const updateUser = async (id: string, userData: Partial<User>): Promise<U
       is_active: userData.is_active
     };
     
-    const result = await userService.updateUser(id, updateData);
+    const result = await userService.updateUser(createData);
     return result ? authService['convertToCompatibleUser'](result) : null;
   } catch (error) {
     console.log('Erro ao atualizar usuário:', error);

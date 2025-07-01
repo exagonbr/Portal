@@ -4,7 +4,7 @@ import { useState, useEffect, useCallback, useRef } from 'react';
 import Image from 'next/image';
 import { useRouter } from 'next/navigation';
 import { useForm } from '../../hooks/useForm';
-import { useAuth } from '../../contexts/AuthContext';
+import { useAuthSafe as useAuth } from '../../contexts/AuthContext';
 import { getDashboardPath, isValidRole } from '../../utils/roleRedirect';
 import { useTheme } from '@/contexts/ThemeContext';
 import { LicenseValidationModal } from './LicenseValidationModal';

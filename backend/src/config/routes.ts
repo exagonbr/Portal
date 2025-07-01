@@ -4,9 +4,8 @@ import { swaggerSpec } from './swagger';
 import apiRoutes from '../routes';
 import authRoutes from '../routes/auth';
 import publicRoutes from '../routes/public';
-import optimizedAuthRouter from '../routes/optimizedAuth.routes';
 import sessionsRouter from '../routes/sessions';
-import { requireAuth } from '../middleware/requireAuth';
+
 
 /**
  * Configura todas as rotas da aplicação
@@ -38,7 +37,7 @@ export function setupRoutes(app: express.Application): void {
   // 🔓 ROTAS PÚBLICAS (SEM AUTENTICAÇÃO NECESSÁRIA)
   // Auth routes (login, refresh, logout - no auth required)
   app.use('/api/auth', authRoutes);
-  app.use('/api/auth/optimized', optimizedAuthRouter);
+
   
   // Public routes (no auth required)
   app.use('/api/public', publicRoutes);
@@ -63,4 +62,4 @@ export function setupRoutes(app: express.Application): void {
       path: req.originalUrl
     });
   });
-} 
+}

@@ -1,327 +1,150 @@
+import { Response } from 'express';
 import jwt from 'jsonwebtoken';
-import { User } from '../models/User';
-import { UserRepository } from '../repositories/UserRepository';
+import { AppDataSource } from '../config/typeorm.config';
 import { JWT_CONFIG, AccessTokenPayload, RefreshTokenPayload } from '../config/jwt';
-import { Role, UserRole } from '../entities/Role';
-import { RoleRepository } from '../repositories/RoleRepository';
+import { Role } from '../entities/Role';
+import { User } from '../entities/User';
 
-/**
- * 🔐 SERVIÇO DE AUTENTICAÇÃO UNIFICADO
- * 
- * ✅ Apenas tokens JWT reais (HS256)
- * ✅ Access token: 1 hora | Refresh token: 7 dias
- * ✅ Respostas padronizadas: { success: boolean, data/message }
- * ✅ Login/Refresh/Logout centralizados
- */
 class AuthService {
-  private userRepository: UserRepository;
-  private roleRepository: RoleRepository;
+  private userRepository = AppDataSource.getRepository(User);
 
-  constructor() {
-    this.userRepository = new UserRepository();
-    this.roleRepository = new RoleRepository();
-  }
+  public async login(email: string, password: string) {
+    const user = await this.userRepository.findOne({ 
+      where: { email },
+      relations: ['role']
+    });
 
-  /**
-   * 🎯 LOGIN - Validar credenciais e gerar tokens
-   */
-  public async login(email: string, password: string): Promise<{
-    success: boolean;
-    data?: {
-      accessToken: string;
-      refreshToken: string;
-      user: {
-        id: string;
-        email: string;
-        name: string;
-        role: string;
-        permissions: string[];
-        institutionId?: string;
-      };
-    };
-    message?: string;
-  }> {
-    try {
-      // 1. Buscar usuário por email
-      const user = await this.userRepository.findByEmail(email);
-      if (!user) {
-        return {
-          success: false,
-          message: 'Credenciais inválidas'
-        };
-      }
-
-      // 3. Validar senha (implementação básica - substituir por bcrypt em produção)
-      if (user.password !== password) {
-        return {
-          success: false,
-          message: 'Credenciais inválidas'
-        };
-      }
-
-      // 4. Buscar role do usuário
-      const role = await this.roleRepository.findById(user.role_id);
-      if (!role) {
-        return {
-          success: false,
-          message: 'Role do usuário não encontrada'
-        };
-      }
-
-      // 5. Gerar tokens JWT
-      const sessionId = `session_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
-      
-      const accessToken = this.generateAccessToken(user, role as any, sessionId);
-      const refreshToken = this.generateRefreshToken(user.id, sessionId);
-
-      // 6. Retornar dados de sucesso
-      return {
-        success: true,
-        data: {
-          accessToken,
-          refreshToken,
-          user: {
-            id: user.id,
-            email: user.email,
-            name: user.full_name,
-            role: role.name,
-            permissions: (role as any).permissions || [],
-            institutionId: user.institution_id
-          }
-        }
-      };
-
-    } catch (error) {
-      console.error('❌ Erro no login:', error);
-      return {
-        success: false,
-        message: 'Erro interno do servidor'
-      };
+    if (!user || !user.is_active) {
+      return { success: false, message: 'Credenciais inválidas ou usuário inativo.' };
     }
+
+    const isPasswordValid = await user.comparePassword(password);
+    if (!isPasswordValid) {
+      return { success: false, message: 'Credenciais inválidas.' };
+    }
+
+    if (!user.role) {
+      return { success: false, message: 'Usuário não possui uma role associada.' };
+    }
+
+    const sessionId = `session_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
+    const accessToken = this.generateAccessToken(user, user.role, sessionId);
+    const refreshToken = this.generateRefreshToken(user.id, sessionId);
+
+    return {
+      success: true,
+      data: {
+        accessToken,
+        refreshToken,
+        user: {
+          id: user.id,
+          email: user.email,
+          name: user.name,
+          role: user.role.name,
+          permissions: Role.getDefaultPermissions(user.role.name),
+          institutionId: user.institution_id,
+        },
+      },
+    };
   }
 
-  /**
-   * 🔄 REFRESH - Renovar access token usando refresh token
-   */
-  public async refresh(refreshToken: string): Promise<{
-    success: boolean;
-    data?: {
-      accessToken: string;
-      refreshToken: string;
-    };
-    message?: string;
-  }> {
-    try {
-      // 1. Validar refresh token
-      const decoded = jwt.verify(refreshToken, JWT_CONFIG.SECRET, {
-        algorithms: [JWT_CONFIG.ALGORITHM]
-      }) as RefreshTokenPayload;
+  public async refresh(refreshToken: string) {
+    const secret = JWT_CONFIG.SECRET;
+    if (!secret) {
+      console.error('JWT_SECRET is not configured.');
+      return { success: false, message: 'Internal server error.' };
+    }
 
-      // 2. Verificar tipo de token
+    try {
+      const decoded = jwt.verify(refreshToken, secret, {
+        algorithms: [JWT_CONFIG.ALGORITHM],
+        issuer: JWT_CONFIG.ISSUER,
+        audience: JWT_CONFIG.AUDIENCE,
+      }) as unknown as RefreshTokenPayload;
+
       if (decoded.type !== 'refresh') {
-        return {
-          success: false,
-          message: 'Tipo de token incorreto'
-        };
+        return { success: false, message: 'Token inválido para refresh.' };
       }
 
-      // 3. Buscar usuário
-      const user = await this.userRepository.findById(decoded.userId);
-      if (!user || !user.is_active) {
-        return {
-          success: false,
-          message: 'Usuário não encontrado ou inativo'
-        };
+      const user = await this.userRepository.findOne({
+        where: { id: decoded.id.toString() },
+        relations: ['role']
+      });
+
+      if (!user || !user.is_active || !user.role) {
+        return { success: false, message: 'Usuário não encontrado, inativo ou sem role.' };
       }
 
-      // 4. Buscar role
-      const role = await this.roleRepository.findById(user.role_id);
-      if (!role) {
-        return {
-          success: false,
-          message: 'Role não encontrada'
-        };
-      }
-
-      // 5. Gerar novos tokens
-      const newAccessToken = this.generateAccessToken(user, role as any, decoded.sessionId);
-      const newRefreshToken = this.generateRefreshToken(user.id, decoded.sessionId);
-
+      const newAccessToken = this.generateAccessToken(user, user.role, decoded.sessionId);
       return {
         success: true,
-        data: {
-          accessToken: newAccessToken,
-          refreshToken: newRefreshToken
-        }
-      };
-
-    } catch (error: any) {
-      if (error.name === 'TokenExpiredError') {
-        return {
-          success: false,
-          message: 'Refresh token expirado'
-        };
-      }
-      
-      if (error.name === 'JsonWebTokenError') {
-        return {
-          success: false,
-          message: 'Refresh token inválido'
-        };
-      }
-
-      console.error('❌ Erro no refresh:', error);
-      return {
-        success: false,
-        message: 'Erro interno do servidor'
-      };
-    }
-  }
-
-  /**
-   * 🚪 LOGOUT - Invalidar tokens (implementação simples)
-   */
-  public async logout(accessToken: string): Promise<{
-    success: boolean;
-    message: string;
-  }> {
-    try {
-      // Em uma implementação completa, aqui você adicionaria o token a uma blacklist
-      // Por simplicidade, apenas retornamos sucesso
-      console.log('🚪 Logout realizado para token:', accessToken.substring(0, 20) + '...');
-      
-      return {
-        success: true,
-        message: 'Logout realizado com sucesso'
+        data: { accessToken: newAccessToken },
       };
     } catch (error) {
-      console.error('❌ Erro no logout:', error);
-      return {
-        success: false,
-        message: 'Erro interno do servidor'
-      };
+      return { success: false, message: 'Refresh token inválido ou expirado.' };
     }
   }
 
-  /**
-   * 🔑 GERAR ACCESS TOKEN
-   */
+  public sendRefreshToken(res: Response, token: string): void {
+    res.cookie('jid', token, {
+      httpOnly: true,
+      secure: process.env.NODE_ENV === 'production',
+      sameSite: 'strict',
+      path: '/api/auth',
+      maxAge: 7 * 24 * 60 * 60 * 1000,
+    });
+  }
+
+  public clearRefreshToken(res: Response): void {
+    res.clearCookie('jid', {
+      httpOnly: true,
+      secure: process.env.NODE_ENV === 'production',
+      sameSite: 'strict',
+      path: '/api/auth',
+    });
+  }
+
   private generateAccessToken(user: User, role: Role, sessionId: string): string {
     const payload: AccessTokenPayload = {
-      userId: user.id,
+      id: user.id,
       email: user.email,
-      name: user.full_name,
+      name: user.name,
       role: role.name,
-      permissions: role.permissions || [],
+      permissions: Role.getDefaultPermissions(role.name),
       institutionId: user.institution_id,
       sessionId,
-      type: 'access'
+      type: 'access',
     };
 
-    return jwt.sign(payload, JWT_CONFIG.SECRET);
+    const secret = JWT_CONFIG.SECRET;
+    if (!secret) {
+      throw new Error('JWT_SECRET is not configured.');
+    }
+    return jwt.sign(payload, secret, {
+      expiresIn: JWT_CONFIG.ACCESS_TOKEN_EXPIRES_IN,
+      algorithm: JWT_CONFIG.ALGORITHM as jwt.Algorithm,
+      issuer: JWT_CONFIG.ISSUER,
+      audience: JWT_CONFIG.AUDIENCE,
+    });
   }
 
-  /**
-   * 🔄 GERAR REFRESH TOKEN
-   */
   private generateRefreshToken(userId: string, sessionId: string): string {
     const payload: RefreshTokenPayload = {
-      userId,
+      id: userId,
       sessionId,
-      type: 'refresh'
+      type: 'refresh',
     };
 
-    return jwt.sign(payload, JWT_CONFIG.SECRET);
-  }
-
-  /**
-   * ✅ VALIDAR ACCESS TOKEN
-   */
-  public async validateAccessToken(token: string): Promise<AccessTokenPayload | null> {
-    try {
-      const decoded = jwt.verify(token, JWT_CONFIG.SECRET, {
-        algorithms: [JWT_CONFIG.ALGORITHM]
-      }) as AccessTokenPayload;
-
-      if (decoded.type !== 'access') {
-        return null;
-      }
-
-      return decoded;
-    } catch (error) {
-      return null;
+    const secret = JWT_CONFIG.SECRET;
+    if (!secret) {
+      throw new Error('JWT_SECRET is not configured.');
     }
-  }
-
-  /**
-   * 👤 BUSCAR USUÁRIO POR ID
-   */
-  public async getUserById(userId: string): Promise<User | null> {
-    return this.userRepository.findById(userId);
-  }
-
-  /**
-   * 🔑 GERAR TOKEN PARA OAUTH (método público)
-   */
-  public async generateTokenForUser(user: User): Promise<string | null> {
-    try {
-      // Buscar role do usuário
-      const role = await this.roleRepository.findById(user.role_id);
-      if (!role) {
-        return null;
-      }
-
-      // Gerar sessionId único
-      const sessionId = `oauth_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
-      
-      // Gerar access token
-      return this.generateAccessToken(user, role as any, sessionId);
-    } catch (error) {
-      console.error('❌ Erro ao gerar token para usuário:', error);
-      return null;
-    }
-  }
-
-  /**
-   * 🛠️ CRIAR ROLES PADRÃO (para setup inicial)
-   */
-  public async createDefaultRoles(): Promise<void> {
-    const defaultRoles = Object.values(UserRole);
-
-    for (const roleName of defaultRoles) {
-      const existingRole = await this.roleRepository.findOne({ name: roleName } as any);
-      if (!existingRole) {
-        await this.roleRepository.createRole({
-          name: roleName,
-          description: `Default ${roleName} role`,
-          permissions: Role.getDefaultPermissions(roleName as UserRole),
-        } as any);
-      }
-    }
-  }
-
-  /**
-   * 👨‍💼 CRIAR USUÁRIO ADMIN PADRÃO (para setup inicial)
-   */
-  public async createDefaultAdminUser(): Promise<void> {
-    const adminEmail = process.env.ADMIN_EMAIL || 'admin@sabercon.com.br';
-    const existingAdmin = await this.userRepository.findByEmail(adminEmail);
-
-    if (!existingAdmin) {
-      const adminRole = await this.roleRepository.findOne({ name: UserRole.SYSTEM_ADMIN } as any);
-
-      if (adminRole) {
-        await this.userRepository.createUser({
-          email: adminEmail,
-          password: process.env.ADMIN_PASSWORD || 'SaberconAdmin2025!',
-          full_name: 'System Administrator',
-          role_id: adminRole.id,
-          institution_id: 'default-institution',
-          is_active: true,
-        });
-        console.log('✅ Usuário admin padrão criado:', adminEmail);
-      }
-    }
+    return jwt.sign(payload, secret, {
+      expiresIn: JWT_CONFIG.REFRESH_TOKEN_EXPIRES_IN,
+      algorithm: JWT_CONFIG.ALGORITHM as jwt.Algorithm,
+      issuer: JWT_CONFIG.ISSUER,
+      audience: JWT_CONFIG.AUDIENCE,
+    });
   }
 }
 

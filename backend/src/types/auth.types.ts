@@ -21,3 +21,19 @@ export type Permission = {
   resource: string;
   action: 'create' | 'read' | 'update' | 'delete';
 };
+
+/**
+ * Interface para o usuário autenticado, que será anexada ao objeto `req`.
+ * Esta é a fonte da verdade para o tipo de usuário em toda a aplicação.
+ */
+export interface AuthenticatedUser {
+  id: number;
+  email: string;
+  name: string;
+  role: string;
+  permissions: string[];
+  institutionId?: number;
+  sessionId?: string;
+  iat?: number;
+  exp?: number;
+}

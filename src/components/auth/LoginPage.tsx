@@ -1,23 +1,23 @@
 'use client';
 
 import { LoginForm } from './LoginForm';
-import Link from 'next/link';
 import Image from 'next/image';
 import { useSearchParams, useRouter } from 'next/navigation';
-import { useEffect, useState, useContext } from 'react';
 import { ThemeSelectorCompact } from '@/components/ui/ThemeSelector';
-import { useAuth, useAuthSafe } from '@/contexts/AuthContext';
+import { useAuthSafe as useAuth } from '@/contexts/AuthContext';
 import { useSystemSettings } from '@/hooks/useSystemSettings';
 import { clearAllDataForUnauthorized } from '@/utils/clearAllData';
 import { getDashboardPath } from '@/utils/roleRedirect';
-import { MotionDiv, MotionH1, MotionP, ClientOnly } from '@/components/ui/MotionWrapper';
+import { MotionDiv, MotionH1, MotionP } from '@/components/ui/MotionWrapper';
 import { getTheme } from '@/config/themes';
+import { useEffect, useState } from 'react';
 
 export function LoginPage() {
   const router = useRouter();
-  const authContext = useAuthSafe(); // Usar versão segura primeira
+  const authContext = useAuth();
   const searchParams = useSearchParams();
   const [showUnauthorizedMessage, setShowUnauthorizedMessage] = useState(false);
+
   const [showExpiredMessage, setShowExpiredMessage] = useState(false);
   const [contextLoading, setContextLoading] = useState(true);
   const [mounted, setMounted] = useState(false);
@@ -510,4 +510,4 @@ export function LoginPage() {
       </MotionDiv>
     </div>
   );
-} 
+}

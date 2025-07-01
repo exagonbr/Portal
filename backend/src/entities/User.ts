@@ -2,8 +2,6 @@ import {
   Entity,
   PrimaryGeneratedColumn,
   Column,
-  CreateDateColumn,
-  UpdateDateColumn,
   ManyToOne,
   OneToMany,
   JoinColumn,
@@ -35,43 +33,11 @@ export class User {
   @Column({ nullable: true, unique: true })
   googleId?: string;
 
-  @Column()
+  @Column({ name: 'full_name' })
   name: string;
 
-  @Column({ nullable: true })
-  cpf?: string;
 
-  @Column({ nullable: true })
-  phone?: string;
-
-  @Column({ type: 'date', nullable: true })
-  birth_date?: Date;
-
-  @Column({ nullable: true })
-  address?: string;
-
-  @Column({ nullable: true })
-  city?: string;
-
-  @Column({ nullable: true })
-  state?: string;
-
-  @Column({ nullable: true })
-  zip_code?: string;
-
-  @Column({ nullable: true })
-  endereco?: string;
-
-  @Column({ nullable: true })
-  telefone?: string;
-
-  @Column({ nullable: true })
-  usuario?: string;
-
-  @Column({ nullable: true })
-  unidade_ensino?: string;
-
-  @Column({ default: true })
+  @Column({ name: 'enabled', default: true })
   is_active: boolean;
 
   @Column({ default: '35f57500-9a89-4318-bc9f-9acad28c2fb6' })
@@ -109,11 +75,6 @@ export class User {
   @OneToMany(() => Notification, notification => notification.sentBy)
   sentNotifications: Notification[];
 
-  @CreateDateColumn()
-  created_at: Date;
-
-  @UpdateDateColumn()
-  updated_at: Date;
 
   // Métodos para hash de senha
   @BeforeInsert()

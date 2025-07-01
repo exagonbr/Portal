@@ -1,227 +1,100 @@
-/**
- * 🌐 SERVIÇO DE FETCH UNIFICADO COM AUTENTICAÇÃO
- * 
- * ✅ Adiciona automaticamente Bearer token
- * ✅ Auto-refresh quando token expira
- * ✅ Tratamento de erros padronizado
- * ✅ Respostas tipadas
- */
+import axios from 'axios';
+import { toast } from 'react-hot-toast';
 
-// URLs da API
-const API_BASE = process.env.NODE_ENV === 'production' 
-  ? 'https://api.sabercon.com.br' 
-  : 'http://localhost:3001';
+// 1. Configuração da Instância Axios
+const apiClient = axios.create({
+  baseURL: process.env.NEXT_PUBLIC_API_URL || '/api',
+  withCredentials: true, 
+});
 
-interface AuthFetchOptions extends RequestInit {
-  skipAuth?: boolean;
-  skipRefresh?: boolean;
-}
 
-interface ApiResponse<T = any> {
-  success: boolean;
-  data?: T;
-  message?: string;
-}
-
-/**
- * 🔐 FETCH COM AUTENTICAÇÃO AUTOMÁTICA
- */
-export async function authFetch<T = any>(
-  url: string, 
-  options: AuthFetchOptions = {}
-): Promise<ApiResponse<T>> {
-  const { skipAuth = false, skipRefresh = false, ...fetchOptions } = options;
-  
-  // Construir URL completa se necessário
-  const fullUrl = url.startsWith('http') ? url : `${API_BASE}${url}`;
-  
-  // Adicionar headers padrão
-  const headers: Record<string, string> = {
-    'Content-Type': 'application/json',
-    ...(fetchOptions.headers as Record<string, string>)
-  };
-
-  // Adicionar Authorization header se não skipAuth
-  if (!skipAuth) {
-    const accessToken = localStorage.getItem('accessToken');
-    if (accessToken) {
-      headers['Authorization'] = `Bearer ${accessToken}`;
+// 2. Interceptor para Adicionar o Access Token
+apiClient.interceptors.request.use(
+  (config) => {
+    if (typeof window !== 'undefined') {
+      const accessToken = localStorage.getItem('accessToken');
+      if (accessToken) {
+        config.headers['Authorization'] = `Bearer ${accessToken}`;
+      }
     }
+    return config;
+  },
+  (error) => {
+    return Promise.reject(error);
   }
+);
 
-  try {
-    // Primeira tentativa
-    let response = await fetch(fullUrl, {
-      ...fetchOptions,
-      headers
-    });
+// 3. Interceptor para Lidar com Token Expirado (401) e Fazer Refresh
+let isRefreshing = false;
+let failedQueue: { resolve: (value: unknown) => void; reject: (reason?: any) => void; }[] = [];
 
-    // Se token expirado (401) e não skipRefresh, tentar refresh
-    if (response.status === 401 && !skipAuth && !skipRefresh) {
-      console.log('🔄 Token expirado, tentando refresh...');
-      
-      const refreshed = await refreshAccessToken();
-      
-      if (refreshed) {
-        // Tentar novamente com novo token
-        const newToken = localStorage.getItem('accessToken');
-        headers['Authorization'] = `Bearer ${newToken}`;
-        
-        response = await fetch(fullUrl, {
-          ...fetchOptions,
-          headers
+const processQueue = (error: any, token: string | null = null) => {
+  failedQueue.forEach(prom => {
+    if (error) {
+      prom.reject(error);
+    } else {
+      prom.resolve(token);
+    }
+  });
+  failedQueue = [];
+};
+
+apiClient.interceptors.response.use(
+  (response) => {
+    return response;
+  },
+  async (error) => {
+    const originalRequest = error.config;
+
+    // Verifica se o erro é 401 e não é uma tentativa de refresh
+    if (error.response?.status === 401 && !originalRequest._retry) {
+      if (isRefreshing) {
+        // Se já estiver fazendo refresh, adiciona a requisição na fila
+        return new Promise(function(resolve, reject) {
+          failedQueue.push({ resolve, reject });
+        }).then(token => {
+          originalRequest.headers['Authorization'] = 'Bearer ' + token;
+          return apiClient(originalRequest);
         });
+      }
+
+      originalRequest._retry = true;
+      isRefreshing = true;
+
+      try {
+        const { data } = await apiClient.post('/auth/refresh_token');
+        const newAccessToken = data.data.accessToken;
+
+        if (typeof window !== 'undefined') {
+          localStorage.setItem('accessToken', newAccessToken);
+        }
         
-        console.log('✅ Requisição refeita com novo token');
-      } else {
-        // Refresh falhou, redirecionar para login
-        localStorage.removeItem('accessToken');
-        window.location.href = '/auth/login';
-        throw new Error('Sessão expirada');
+        apiClient.defaults.headers.common['Authorization'] = `Bearer ${newAccessToken}`;
+        originalRequest.headers['Authorization'] = `Bearer ${newAccessToken}`;
+        
+        processQueue(null, newAccessToken);
+        
+        return apiClient(originalRequest);
+
+      } catch (refreshError) {
+        processQueue(refreshError, null);
+        
+        // Se o refresh falhar, limpa tudo e notifica o usuário
+        if (typeof window !== 'undefined') {
+          localStorage.removeItem('accessToken');
+          // O AuthContext será responsável pelo redirecionamento
+          window.dispatchEvent(new Event('auth-error'));
+        }
+        toast.error('Sua sessão expirou. Por favor, faça login novamente.');
+        return Promise.reject(refreshError);
+
+      } finally {
+        isRefreshing = false;
       }
     }
 
-    // Parse da resposta
-    const data = await response.json();
-    
-    if (!response.ok) {
-      throw new Error(data.message || `HTTP ${response.status}`);
-    }
-
-    return data as ApiResponse<T>;
-
-  } catch (error) {
-    console.error('❌ Erro no authFetch:', error);
-    throw error;
+    return Promise.reject(error);
   }
-}
+);
 
-/**
- * 🔄 RENOVAR ACCESS TOKEN
- */
-async function refreshAccessToken(): Promise<boolean> {
-  try {
-    const response = await fetch(`${API_BASE}/api/auth/refresh`, {
-      method: 'POST',
-      credentials: 'include' // Incluir cookies httpOnly
-    });
-
-    if (response.ok) {
-      const data = await response.json();
-      
-      if (data.success && data.data.accessToken) {
-        localStorage.setItem('accessToken', data.data.accessToken);
-        console.log('✅ Access token renovado');
-        return true;
-      }
-    }
-
-    console.log('❌ Falha no refresh do token');
-    return false;
-  } catch (error) {
-    console.error('❌ Erro no refresh:', error);
-    return false;
-  }
-}
-
-/**
- * 🎯 MÉTODOS HTTP ESPECÍFICOS
- */
-
-export const api = {
-  /**
-   * GET request
-   */
-  get: <T = any>(url: string, options?: AuthFetchOptions) => 
-    authFetch<T>(url, { ...options, method: 'GET' }),
-
-  /**
-   * POST request
-   */
-  post: <T = any>(url: string, data?: any, options?: AuthFetchOptions) => 
-    authFetch<T>(url, {
-      ...options,
-      method: 'POST',
-      body: data ? JSON.stringify(data) : undefined
-    }),
-
-  /**
-   * PUT request
-   */
-  put: <T = any>(url: string, data?: any, options?: AuthFetchOptions) => 
-    authFetch<T>(url, {
-      ...options,
-      method: 'PUT',
-      body: data ? JSON.stringify(data) : undefined
-    }),
-
-  /**
-   * DELETE request
-   */
-  delete: <T = any>(url: string, options?: AuthFetchOptions) => 
-    authFetch<T>(url, { ...options, method: 'DELETE' }),
-
-  /**
-   * PATCH request
-   */
-  patch: <T = any>(url: string, data?: any, options?: AuthFetchOptions) => 
-    authFetch<T>(url, {
-      ...options,
-      method: 'PATCH',
-      body: data ? JSON.stringify(data) : undefined
-    })
-};
-
-/**
- * 🔐 UTILITÁRIOS DE AUTENTICAÇÃO
- */
-
-export const auth = {
-  /**
-   * Verificar se usuário está logado
-   */
-  isAuthenticated: (): boolean => {
-    return !!localStorage.getItem('accessToken');
-  },
-
-  /**
-   * Obter token atual
-   */
-  getToken: (): string | null => {
-    return localStorage.getItem('accessToken');
-  },
-
-  /**
-   * Fazer logout (limpar token local)
-   */
-  logout: (): void => {
-    localStorage.removeItem('accessToken');
-    window.location.href = '/auth/login';
-  },
-
-  /**
-   * Obter dados do usuário atual
-   */
-  getCurrentUser: async () => {
-    try {
-      return await api.get('/api/auth/me');
-    } catch (error) {
-      console.error('❌ Erro ao obter usuário atual:', error);
-      return null;
-    }
-  },
-
-  /**
-   * Validar token atual
-   */
-  validateToken: async (): Promise<boolean> => {
-    try {
-      const response = await api.get('/api/auth/validate');
-      return response.success;
-    } catch (error) {
-      return false;
-    }
-  }
-};
-
-export default authFetch; 
+export default apiClient;

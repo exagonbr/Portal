@@ -2,10 +2,11 @@ import { Request, Response } from 'express';
 import { emailService } from '../services/emailService';
 import { notificationLogService, NotificationType } from '../services/NotificationLogService';
 import { notificationService as notificationManagementService } from '../services/NotificationManagementService';
-import { AuthTokenPayload } from '../types/express';
+import { AuthenticatedUser } from '../types/auth.types';
 import crypto from 'crypto';
 
 class NotificationController {
+
   /**
    * @swagger
    * /api/notifications/email/verify:
@@ -54,10 +55,11 @@ class NotificationController {
   public async verifyEmailConfiguration(req: Request, res: Response): Promise<void> {
     try {
       // Verificar se o usuário está autenticado
-      const authenticatedUser = req.user as AuthTokenPayload;
+      const authenticatedUser = req.user as AuthenticatedUser;
       if (!authenticatedUser) {
         res.status(401).json({
           success: false,
+
           message: 'Usuário não autenticado'
         });
         return;
@@ -138,10 +140,11 @@ class NotificationController {
     
     try {
       // Obter dados do usuário autenticado
-      const authenticatedUser = req.user as AuthTokenPayload;
+      const authenticatedUser = req.user as AuthenticatedUser;
       if (!authenticatedUser) {
         res.status(401).json({
           success: false,
+
           message: 'User not authenticated'
         });
         return;
@@ -164,9 +167,10 @@ class NotificationController {
         subject: 'Verifique seu endereço de email - Portal Sabercon',
         template_name: 'email-verification',
         verification_token: user.verificationToken,
-        user_id: authenticatedUser.id,
+        user_id: String(authenticatedUser.id),
         provider: 'Gmail SMTP',
         metadata: {
+
           userName: user.name,
           userAgent: req.get('User-Agent'),
           ip: req.ip
@@ -316,10 +320,11 @@ class NotificationController {
   public async sendNotification(req: Request, res: Response): Promise<void> {
     try {
       // Verificar autenticação
-      const authenticatedUser = req.user as AuthTokenPayload;
+      const authenticatedUser = req.user as AuthenticatedUser;
       if (!authenticatedUser) {
         res.status(401).json({
           success: false,
+
           message: 'Usuário não autenticado'
         });
         return;
@@ -384,9 +389,10 @@ class NotificationController {
         type,
         category,
         priority,
-        senderId: authenticatedUser.id,
+        senderId: String(authenticatedUser.id),
         recipients: {
           userIds: recipients?.userIds || [],
+
           emails: recipients?.emails || [],
           roles: recipients?.roles || []
         },
@@ -453,10 +459,11 @@ class NotificationController {
    */
   public async getNotifications(req: Request, res: Response): Promise<void> {
     try {
-      const authenticatedUser = req.user as AuthTokenPayload;
+      const authenticatedUser = req.user as AuthenticatedUser;
       if (!authenticatedUser) {
         res.status(401).json({
           success: false,
+
           message: 'Usuário não autenticado'
         });
         return;
@@ -465,9 +472,10 @@ class NotificationController {
       const { page = 1, limit = 10, category, type, status, unread_only } = req.query;
 
       const result = await notificationManagementService.getNotifications(
-        authenticatedUser.id,
+        String(authenticatedUser.id),
         {
           page: parseInt(page as string),
+
           limit: parseInt(limit as string),
           category: category as string,
           type: type as string,
@@ -498,10 +506,11 @@ class NotificationController {
    */
   public async getSentNotifications(req: Request, res: Response): Promise<void> {
     try {
-      const authenticatedUser = req.user as AuthTokenPayload;
+      const authenticatedUser = req.user as AuthenticatedUser;
       if (!authenticatedUser) {
         res.status(401).json({
           success: false,
+
           message: 'Usuário não autenticado'
         });
         return;
@@ -510,9 +519,10 @@ class NotificationController {
       const { page = 1, limit = 10, status } = req.query;
 
       const result = await notificationManagementService.getSentNotifications(
-        authenticatedUser.id,
+        String(authenticatedUser.id),
         {
           page: parseInt(page as string),
+
           limit: parseInt(limit as string),
           status: status as string
         }
@@ -540,10 +550,11 @@ class NotificationController {
    */
   public async getNotificationById(req: Request, res: Response): Promise<void> {
     try {
-      const authenticatedUser = req.user as AuthTokenPayload;
+      const authenticatedUser = req.user as AuthenticatedUser;
       if (!authenticatedUser) {
         res.status(401).json({
           success: false,
+
           message: 'Usuário não autenticado'
         });
         return;
@@ -586,10 +597,11 @@ class NotificationController {
    */
   public async createNotification(req: Request, res: Response): Promise<void> {
     try {
-      const authenticatedUser = req.user as AuthTokenPayload;
+      const authenticatedUser = req.user as AuthenticatedUser;
       if (!authenticatedUser) {
         res.status(401).json({
           success: false,
+
           message: 'Usuário não autenticado'
         });
         return;
@@ -644,10 +656,11 @@ class NotificationController {
    */
   public async updateNotification(req: Request, res: Response): Promise<void> {
     try {
-      const authenticatedUser = req.user as AuthTokenPayload;
+      const authenticatedUser = req.user as AuthenticatedUser;
       if (!authenticatedUser) {
         res.status(401).json({
           success: false,
+
           message: 'Usuário não autenticado'
         });
         return;
@@ -686,10 +699,11 @@ class NotificationController {
    */
   public async deleteNotification(req: Request, res: Response): Promise<void> {
     try {
-      const authenticatedUser = req.user as AuthTokenPayload;
+      const authenticatedUser = req.user as AuthenticatedUser;
       if (!authenticatedUser) {
         res.status(401).json({
           success: false,
+
           message: 'Usuário não autenticado'
         });
         return;
@@ -718,10 +732,11 @@ class NotificationController {
    */
   public async markAsRead(req: Request, res: Response): Promise<void> {
     try {
-      const authenticatedUser = req.user as AuthTokenPayload;
+      const authenticatedUser = req.user as AuthenticatedUser;
       if (!authenticatedUser) {
         res.status(401).json({
           success: false,
+
           message: 'Usuário não autenticado'
         });
         return;
@@ -750,10 +765,11 @@ class NotificationController {
    */
   public async markMultipleAsRead(req: Request, res: Response): Promise<void> {
     try {
-      const authenticatedUser = req.user as AuthTokenPayload;
+      const authenticatedUser = req.user as AuthenticatedUser;
       if (!authenticatedUser) {
         res.status(401).json({
           success: false,
+
           message: 'Usuário não autenticado'
         });
         return;
@@ -792,10 +808,11 @@ class NotificationController {
    */
   public async markAllAsRead(req: Request, res: Response): Promise<void> {
     try {
-      const authenticatedUser = req.user as AuthTokenPayload;
+      const authenticatedUser = req.user as AuthenticatedUser;
       if (!authenticatedUser) {
         res.status(401).json({
           success: false,
+
           message: 'Usuário não autenticado'
         });
         return;
@@ -824,10 +841,11 @@ class NotificationController {
    */
   public async deleteBulkNotifications(req: Request, res: Response): Promise<void> {
     try {
-      const authenticatedUser = req.user as AuthTokenPayload;
+      const authenticatedUser = req.user as AuthenticatedUser;
       if (!authenticatedUser) {
         res.status(401).json({
           success: false,
+
           message: 'Usuário não autenticado'
         });
         return;
@@ -866,10 +884,11 @@ class NotificationController {
    */
   public async getNotificationStats(req: Request, res: Response): Promise<void> {
     try {
-      const authenticatedUser = req.user as AuthTokenPayload;
+      const authenticatedUser = req.user as AuthenticatedUser;
       if (!authenticatedUser) {
         res.status(401).json({
           success: false,
+
           message: 'Usuário não autenticado'
         });
         return;
@@ -920,10 +939,11 @@ class NotificationController {
    */
   public async cancelScheduledNotification(req: Request, res: Response): Promise<void> {
     try {
-      const authenticatedUser = req.user as AuthTokenPayload;
+      const authenticatedUser = req.user as AuthenticatedUser;
       if (!authenticatedUser) {
         res.status(401).json({
           success: false,
+
           message: 'Usuário não autenticado'
         });
         return;
@@ -952,10 +972,11 @@ class NotificationController {
    */
   public async rescheduleNotification(req: Request, res: Response): Promise<void> {
     try {
-      const authenticatedUser = req.user as AuthTokenPayload;
+      const authenticatedUser = req.user as AuthenticatedUser;
       if (!authenticatedUser) {
         res.status(401).json({
           success: false,
+
           message: 'Usuário não autenticado'
         });
         return;
@@ -1000,10 +1021,11 @@ class NotificationController {
    */
   public async sendDraftNotification(req: Request, res: Response): Promise<void> {
     try {
-      const authenticatedUser = req.user as AuthTokenPayload;
+      const authenticatedUser = req.user as AuthenticatedUser;
       if (!authenticatedUser) {
         res.status(401).json({
           success: false,
+
           message: 'Usuário não autenticado'
         });
         return;
@@ -1039,10 +1061,11 @@ class NotificationController {
    */
   public async cleanupOldNotifications(req: Request, res: Response): Promise<void> {
     try {
-      const authenticatedUser = req.user as AuthTokenPayload;
+      const authenticatedUser = req.user as AuthenticatedUser;
       if (!authenticatedUser) {
         res.status(401).json({
           success: false,
+
           message: 'Usuário não autenticado'
         });
         return;

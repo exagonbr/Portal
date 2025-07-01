@@ -18,18 +18,19 @@ export const corsUsersConfig: CorsUsersConfig = {
   // Origens permitidas para APIs gerais de usuários
   allowedOrigins: [
     'https://portal.sabercon.com.br',
-    'https://portal.sabercon.com.br/api', 
+    'http://localhost:3001',
+    'http://localhost:3001/api',
+    'http://localhost:3000',
     'http://localhost:8080',
     'http://localhost:4200', // Angular dev server
     'http://localhost:5173', // Vite dev server
-    'https://portal.sabercon.com.br',
     'https://app.sabercon.com.br',
     'https://admin.sabercon.com.br',
-    'https://portal.sabercon.com.br/api',
     'https://www.sabercon.com.br',
     // Adicionar origens do arquivo .env se existirem
     ...(process.env.ALLOWED_ORIGINS ? process.env.ALLOWED_ORIGINS.split(',').map(o => o.trim()) : [])
   ],
+
 
   // Origens permitidas apenas para operações administrativas
   adminOrigins: [

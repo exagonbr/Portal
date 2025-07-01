@@ -7,27 +7,36 @@
  * ✅ Algoritmo HS256 em todo lugar
  */
 
-export const JWT_CONFIG = {
+import type { SignOptions } from 'jsonwebtoken';
+
+export const JWT_CONFIG: {
+  SECRET: string | undefined;
+  ALGORITHM: 'HS256';
+  ACCESS_TOKEN_EXPIRES_IN: SignOptions['expiresIn'];
+  REFRESH_TOKEN_EXPIRES_IN: SignOptions['expiresIn'];
+  ISSUER: string;
+  AUDIENCE: string;
+} = {
   // Secret único para toda a aplicação
-  SECRET: process.env.JWT_SECRET || 'portal_sabercon_jwt_secret_2025',
-  
+  SECRET: process.env.JWT_SECRET,
+
   // Algoritmo de assinatura
-  ALGORITHM: 'HS256' as const,
-  
+  ALGORITHM: 'HS256',
+
   // Tempos de expiração
   ACCESS_TOKEN_EXPIRES_IN: '1h',
   REFRESH_TOKEN_EXPIRES_IN: '7d',
-  
+
   // Issuer da aplicação
   ISSUER: 'portal.sabercon.com.br',
-  
+
   // Audience
   AUDIENCE: 'portal-users'
 };
 
 // Interface para payload do Access Token
 export interface AccessTokenPayload {
-  userId: string;
+  id: string;
   email: string;
   name: string;
   role: string;
@@ -43,7 +52,7 @@ export interface AccessTokenPayload {
 
 // Interface para payload do Refresh Token
 export interface RefreshTokenPayload {
-  userId: string;
+  id: string;
   sessionId: string;
   type: 'refresh';
   iat?: number;
@@ -74,5 +83,8 @@ export function validateJWTConfig(): void {
 
 // Função para compatibilidade com código existente
 export function getJwtSecret(): string {
+  if (!JWT_CONFIG.SECRET) {
+    throw new Error('JWT_SECRET não está configurado nas variáveis de ambiente');
+  }
   return JWT_CONFIG.SECRET;
 }

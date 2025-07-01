@@ -1,5 +1,7 @@
 import express from 'express';
+import cookieParser from 'cookie-parser';
 import cors from 'cors';
+
 import {
   corsUsersConfig,
   isOriginAllowed,
@@ -13,15 +15,24 @@ import morgan from 'morgan';
 import { responseTimeMiddleware } from '../middleware/logging';
 import passport from 'passport';
 import { setupPassport } from './passport';
+import { authCheckMiddleware } from '../middleware/authCheck';
 
 /**
  * Configura todos os middlewares da aplicação
  */
 export function setupMiddlewares(app: express.Application): void {
+  // Cookie parser - deve vir antes de qualquer middleware que use cookies
+  app.use(cookieParser());
+
+  // Authentication check middleware - sets req.authenticated
+  app.use(authCheckMiddleware);
+
   // Passport
   setupPassport();
   app.use(passport.initialize());
+
   // Middlewares de segurança - Simplificado
+
   app.use(helmet({
     contentSecurityPolicy: false, // Desabilitar CSP que pode causar problemas
     crossOriginEmbedderPolicy: false,
@@ -39,30 +50,39 @@ export function setupMiddlewares(app: express.Application): void {
     xXssProtection: false
   }));
 
-  // Configuração de CORS utilizando a configuração centralizada e dinâmica
-  const corsOptions: cors.CorsOptions = {
-    origin: (origin, callback) => {
-      // A lista de origens permitidas é gerenciada no arquivo de configuração
-      const allowedList = corsUsersConfig.allowedOrigins;
-
-      if (isOriginAllowed(origin, allowedList)) {
-        callback(null, true);
-      } else {
-        // Log para debug de origens bloqueadas
-        if (origin) {
-          console.warn(`CORS: Bloqueada a origem: ${origin}`);
-        }
-        callback(new Error('Origem não permitida pela política de CORS.'));
+  // Configuração de CORS para diferentes ambientes
+  const corsOptions: cors.CorsOptions = corsUsersConfig.developmentMode
+    ? {
+        origin: '*',
+        credentials: true,
+        methods: allowedMethods,
+        allowedHeaders: allowedHeaders,
+        exposedHeaders: exposedHeaders,
+        maxAge: corsUsersConfig.maxAge,
+        optionsSuccessStatus: 204,
+        preflightContinue: false,
       }
-    },
-    credentials: true, // Essencial para autenticação baseada em cookies/tokens
-    methods: allowedMethods,
-    allowedHeaders: allowedHeaders,
-    exposedHeaders: exposedHeaders,
-    maxAge: corsUsersConfig.maxAge,
-    optionsSuccessStatus: 204, // Resposta padrão para preflight (No Content)
-    preflightContinue: false,
-  };
+    : {
+        origin: (origin, callback) => {
+          const allowedList = corsUsersConfig.allowedOrigins;
+          if (isOriginAllowed(origin, allowedList)) {
+            callback(null, true);
+          } else {
+            if (origin) {
+              console.warn(`CORS: Bloqueada a origem: ${origin}`);
+            }
+            callback(new Error('Origem não permitida pela política de CORS.'));
+          }
+        },
+        credentials: true,
+        methods: allowedMethods,
+        allowedHeaders: allowedHeaders,
+        exposedHeaders: exposedHeaders,
+        maxAge: corsUsersConfig.maxAge,
+        optionsSuccessStatus: 204,
+        preflightContinue: false,
+      };
+
 
   // Aplica o middleware de CORS com as opções dinâmicas
   app.use(cors(corsOptions));
@@ -106,4 +126,4 @@ export function setupMiddlewares(app: express.Application): void {
     console.log(`🌐 CORS Request: ${req.method} ${req.url} from ${req.headers.origin || 'unknown'}`);
     next();
   });
-} 
+}
