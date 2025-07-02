@@ -1,16 +1,21 @@
 'use client';
 
-import React, { useState, useEffect, ComponentType, ReactNode } from 'react';
+import React, { useState, useEffect, ComponentType, ReactNode, useRef, useCallback } from 'react';
 
 /**
  * Hook to detect if we're running on the client side
  * Prevents hydration mismatches by returning false during SSR
+ * FIXED: More stable implementation to prevent loops
  */
 export function useIsClient(): boolean {
   const [isClient, setIsClient] = useState(false);
+  const mountedRef = useRef(false);
 
   useEffect(() => {
-    setIsClient(true);
+    if (!mountedRef.current) {
+      mountedRef.current = true;
+      setIsClient(true);
+    }
   }, []);
 
   return isClient;
@@ -19,48 +24,65 @@ export function useIsClient(): boolean {
 /**
  * Hook to safely access localStorage with SSR support
  * Returns null during SSR and actual value on client
+ * FIXED: Improved stability to prevent infinite re-renders
  */
 export function useLocalStorage(key: string, defaultValue: string = ''): {
   value: string | null;
   setValue: (value: string) => void;
   removeValue: () => void;
 } {
-  const isClient = useIsClient();
+  const [isClient, setIsClient] = useState(false);
   const [value, setValue] = useState<string | null>(null);
+  const initializedRef = useRef(false);
+  const keyRef = useRef(key);
 
+  // Update key ref if it changes
   useEffect(() => {
-    if (isClient) {
+    keyRef.current = key;
+  }, [key]);
+
+  // Initialize client detection only once
+  useEffect(() => {
+    if (!initializedRef.current) {
+      initializedRef.current = true;
+      setIsClient(true);
+    }
+  }, []);
+
+  // Initialize value from localStorage only once when client is ready
+  useEffect(() => {
+    if (isClient && value === null) {
       try {
-        const stored = localStorage.getItem(key);
+        const stored = localStorage.getItem(keyRef.current);
         setValue(stored || defaultValue);
       } catch (error) {
-        console.warn(`Error reading localStorage key "${key}":`, error);
+        console.warn(`Error reading localStorage key "${keyRef.current}":`, error);
         setValue(defaultValue);
       }
     }
-  }, [isClient, key, defaultValue]);
+  }, [isClient, defaultValue]); // Removed 'key' from dependencies to prevent loops
 
-  const setStoredValue = (newValue: string) => {
+  const setStoredValue = useCallback((newValue: string) => {
     if (isClient) {
       try {
-        localStorage.setItem(key, newValue);
+        localStorage.setItem(keyRef.current, newValue);
         setValue(newValue);
       } catch (error) {
-        console.warn(`Error setting localStorage key "${key}":`, error);
+        console.warn(`Error setting localStorage key "${keyRef.current}":`, error);
       }
     }
-  };
+  }, [isClient]);
 
-  const removeStoredValue = () => {
+  const removeStoredValue = useCallback(() => {
     if (isClient) {
       try {
-        localStorage.removeItem(key);
+        localStorage.removeItem(keyRef.current);
         setValue(null);
       } catch (error) {
-        console.warn(`Error removing localStorage key "${key}":`, error);
+        console.warn(`Error removing localStorage key "${keyRef.current}":`, error);
       }
     }
-  };
+  }, [isClient]);
 
   return {
     value: isClient ? value : null,
@@ -71,48 +93,65 @@ export function useLocalStorage(key: string, defaultValue: string = ''): {
 
 /**
  * Hook to safely access sessionStorage with SSR support
+ * FIXED: Improved stability similar to localStorage
  */
 export function useSessionStorage(key: string, defaultValue: string = ''): {
   value: string | null;
   setValue: (value: string) => void;
   removeValue: () => void;
 } {
-  const isClient = useIsClient();
+  const [isClient, setIsClient] = useState(false);
   const [value, setValue] = useState<string | null>(null);
+  const initializedRef = useRef(false);
+  const keyRef = useRef(key);
 
+  // Update key ref if it changes
   useEffect(() => {
-    if (isClient) {
+    keyRef.current = key;
+  }, [key]);
+
+  // Initialize client detection only once
+  useEffect(() => {
+    if (!initializedRef.current) {
+      initializedRef.current = true;
+      setIsClient(true);
+    }
+  }, []);
+
+  // Initialize value from sessionStorage only once when client is ready
+  useEffect(() => {
+    if (isClient && value === null) {
       try {
-        const stored = sessionStorage.getItem(key);
+        const stored = sessionStorage.getItem(keyRef.current);
         setValue(stored || defaultValue);
       } catch (error) {
-        console.warn(`Error reading sessionStorage key "${key}":`, error);
+        console.warn(`Error reading sessionStorage key "${keyRef.current}":`, error);
         setValue(defaultValue);
       }
     }
-  }, [isClient, key, defaultValue]);
+  }, [isClient, defaultValue]); // Removed 'key' from dependencies to prevent loops
 
-  const setStoredValue = (newValue: string) => {
+  const setStoredValue = useCallback((newValue: string) => {
     if (isClient) {
       try {
-        sessionStorage.setItem(key, newValue);
+        sessionStorage.setItem(keyRef.current, newValue);
         setValue(newValue);
       } catch (error) {
-        console.warn(`Error setting sessionStorage key "${key}":`, error);
+        console.warn(`Error setting sessionStorage key "${keyRef.current}":`, error);
       }
     }
-  };
+  }, [isClient]);
 
-  const removeStoredValue = () => {
+  const removeStoredValue = useCallback(() => {
     if (isClient) {
       try {
-        sessionStorage.removeItem(key);
+        sessionStorage.removeItem(keyRef.current);
         setValue(null);
       } catch (error) {
-        console.warn(`Error removing sessionStorage key "${key}":`, error);
+        console.warn(`Error removing sessionStorage key "${keyRef.current}":`, error);
       }
     }
-  };
+  }, [isClient]);
 
   return {
     value: isClient ? value : null,
