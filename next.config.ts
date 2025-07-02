@@ -37,8 +37,7 @@ const nextConfig: NextConfig = {
 
   // Desativar o botão de "dev tools" do Next.js
   devIndicators: {
-    buildActivity: true,
-    buildActivityPosition: 'bottom-right'
+    position: 'bottom-right',
   },
   
   // ESLint
@@ -60,7 +59,6 @@ const nextConfig: NextConfig = {
     // Melhorar performance de compilação
     webpackBuildWorker: true,
     // Aumentar timeout para processamento de erros
-    serverComponentsExternalPackages: ['epubjs'],
     // Configuração para melhorar o handling de erros
     workerThreads: false,
     cpus: 1,
