@@ -472,7 +472,7 @@ const nextConfig: NextConfig = {
     return [
       {
         source: '/api/:path*',
-        destination: `${process.env.BACKEND_URL || 'https://portal.sabercon.com.br/api'}/:path*`
+        destination: `${process.env.BACKEND_URL || 'http://localhost:3001'}/:path*`
       }
     ];
   },

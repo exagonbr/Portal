@@ -464,7 +464,7 @@ log_success "Arquivo de configuração do PM2 criado"
 # Iniciar aplicações com PM2
 log "🚀 Iniciando aplicações..."
 pm2 start ecosystem.config.js
-pm2 save
+pm2 save>
 pm2 startup
 log_success "Aplicações iniciadas com PM2"
 
