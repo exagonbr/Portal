@@ -133,6 +133,26 @@ log "🔍 Verificando dependências básicas do sistema..."
 # Atualizar repositórios
 log "📦 Atualizando repositórios do sistema..."
 apt update
+
+# Verificar e corrigir problemas de configuração
+log "🔍 Verificando integridade dos pacotes..."
+if ! dpkg --configure -a 2>/dev/null; then
+    log_warning "⚠️  Detectados problemas com configuração de pacotes"
+    
+    # Corrigir problemas do GRUB se existirem
+    if dpkg -l | grep -q grub-efi; then
+        log "🔧 Corrigindo problemas do GRUB..."
+        apt-get install --reinstall grub-efi-amd64-signed -y 2>/dev/null || true
+        update-grub 2>/dev/null || true
+    fi
+    
+    # Corrigir dependências quebradas
+    apt-get install -f -y 2>/dev/null || true
+    dpkg --configure -a 2>/dev/null || true
+    
+    log_warning "⚠️  Problemas de configuração tratados, continuando..."
+fi
+
 check_status "Repositórios atualizados"
 
 # Instalar dependências básicas

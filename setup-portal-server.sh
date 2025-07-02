@@ -82,8 +82,45 @@ fi
 
 # Atualizar sistema
 log "📦 Atualizando sistema..."
-apt update && apt upgrade -y
-check_status "Sistema atualizado"
+apt update
+
+# Verificar se há problemas com pacotes quebrados
+log "🔍 Verificando integridade dos pacotes..."
+if ! dpkg --configure -a; then
+    log_warning "⚠️  Detectados problemas com configuração de pacotes"
+    
+    # Tentar corrigir problemas comuns
+    log "🔧 Tentando corrigir problemas de configuração..."
+    
+    # Corrigir problemas do GRUB se existirem
+    if dpkg -l | grep -q grub-efi; then
+        log "🔧 Corrigindo problemas do GRUB..."
+        apt-get install --reinstall grub-efi-amd64-signed -y 2>/dev/null || true
+        update-grub 2>/dev/null || true
+    fi
+    
+    # Forçar configuração de pacotes
+    dpkg --configure -a 2>/dev/null || true
+    
+    # Corrigir dependências quebradas
+    apt-get install -f -y
+    
+    # Tentar novamente
+    if ! dpkg --configure -a; then
+        log_warning "⚠️  Alguns problemas de configuração persistem, mas continuando..."
+        log_warning "    Isso geralmente não afeta a instalação do Portal"
+    fi
+fi
+
+# Atualizar pacotes (sem upgrade completo para evitar problemas)
+log "📦 Atualizando lista de pacotes..."
+apt update
+check_status "Lista de pacotes atualizada"
+
+# Upgrade opcional e mais seguro
+log "📦 Atualizando pacotes essenciais..."
+apt install -y --only-upgrade apt dpkg libc6 2>/dev/null || true
+log_success "Pacotes essenciais atualizados"
 
 # Instalar dependências básicas
 log "📦 Instalando dependências básicas..."

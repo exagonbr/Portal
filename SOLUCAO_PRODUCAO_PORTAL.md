@@ -28,6 +28,7 @@ Internet → Nginx (443/80) → Frontend (3000) + Backend API (3001)
 - `backend/env.production.portal` - Variáveis de ambiente do backend
 - `deploy-portal-production.sh` - Script de deploy automatizado
 - `setup-portal-server.sh` - Script de setup inicial do servidor
+- `fix-system-issues.sh` - Script para corrigir problemas do sistema
 
 ### 2. Configurações Atualizadas
 - `next.config.ts` - Desabilitado proxy interno em produção
@@ -261,6 +262,36 @@ sudo netstat -tuln | grep :80    # HTTP
 - Login: 5 req/min
 
 ## 🚨 Troubleshooting
+
+### Problemas durante o setup/deploy:
+
+#### Erro de GRUB/dpkg durante apt update:
+```bash
+# Execute o script de correção primeiro
+sudo bash fix-system-issues.sh
+
+# Depois execute o deploy
+sudo bash deploy-portal-production.sh
+```
+
+#### Diretório do projeto não encontrado:
+```bash
+# Opção 1: Execute no diretório correto
+cd /caminho/para/seu/projeto
+sudo bash deploy-portal-production.sh
+
+# Opção 2: Use o setup automático
+sudo bash setup-portal-server.sh
+```
+
+#### Problemas com locks do apt:
+```bash
+# Remover locks manualmente
+sudo rm -f /var/lib/dpkg/lock-frontend
+sudo rm -f /var/lib/apt/lists/lock
+sudo rm -f /var/cache/apt/archives/lock
+sudo dpkg --configure -a
+```
 
 ### Frontend não carrega:
 ```bash
