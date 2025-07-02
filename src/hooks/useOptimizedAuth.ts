@@ -1,5 +1,6 @@
 import { useState, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
+import { buildLoginUrl, buildUrl } from '../utils/urlBuilder';
 
 interface LoginData {
   email: string;
@@ -41,7 +42,8 @@ export function useOptimizedAuth() {
     try {
       console.log('🔐 Iniciando login otimizado...');
       
-      const response = await fetch('https://portal.sabercon.com.br/api/auth/login', {
+      const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001/api';
+      const response = await fetch(`${apiUrl}/auth/login`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -64,7 +66,7 @@ export function useOptimizedAuth() {
         localStorage.setItem('user', JSON.stringify(result.data.user));
         
         // Redirecionar para dashboard
-        router.push('/dashboard');
+        router.push(buildUrl('/dashboard'));
       }
 
       return result;
@@ -91,7 +93,8 @@ export function useOptimizedAuth() {
       
       const token = localStorage.getItem('accessToken');
       
-      const response = await fetch('https://portal.sabercon.com.br/api/auth/logout', {
+      const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001/api';
+      const response = await fetch(`${apiUrl}/auth/logout`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -109,7 +112,7 @@ export function useOptimizedAuth() {
       console.log('✅ Logout otimizado realizado');
       
       // Redirecionar para login
-      router.push('/auth/login');
+      router.push(buildLoginUrl());
 
       return result;
     } catch (err: any) {
@@ -123,7 +126,7 @@ export function useOptimizedAuth() {
       console.log('❌ Erro no logout otimizado:', errorMessage);
       
       // Ainda assim redirecionar para login
-      router.push('/auth/login');
+      router.push(buildLoginUrl());
       
       return {
         success: false,
@@ -142,7 +145,8 @@ export function useOptimizedAuth() {
         return false;
       }
 
-      const response = await fetch('https://portal.sabercon.com.br/api/auth/validate', {
+      const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001/api';
+      const response = await fetch(`${apiUrl}/auth/validate`, {
         method: 'GET',
         headers: {
           'Authorization': `Bearer ${token}`,
@@ -165,7 +169,8 @@ export function useOptimizedAuth() {
         return false;
       }
 
-      const response = await fetch('https://portal.sabercon.com.br/api/auth/refresh', {
+      const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001/api';
+      const response = await fetch(`${apiUrl}/auth/refresh`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',

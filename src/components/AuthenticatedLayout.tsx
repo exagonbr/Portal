@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation'
 import { useAuth } from '../contexts/AuthContext'
 import { Header } from './Header'
 import { clearAllDataForUnauthorized } from '../utils/clearAllData'
+import { buildLoginUrl, buildDashboardUrl } from '../utils/urlBuilder'
 
 export default function AuthenticatedLayout({
   children,
@@ -13,27 +14,31 @@ export default function AuthenticatedLayout({
   children: React.ReactNode
   requiredRole?: 'student' | 'teacher' | 'admin'
 }) {
-  const { user, loading } = useAuth()
+  const { user, isLoading } = useAuth()
   const router = useRouter()
 
   useEffect(() => {
-    if (!loading) {
+    if (!isLoading) {
       if (!user) {
         // Limpar todos os dados antes de redirecionar para login
+        const loginUrl = buildLoginUrl({ error: 'unauthorized' });
         clearAllDataForUnauthorized().then(() => {
-          router.push('/auth/login?error=unauthorized')
+          router.push(loginUrl)
         }).catch((error) => {
           console.log('❌ Erro durante limpeza de dados:', error);
           // Redirecionar mesmo com erro na limpeza
-          router.push('/auth/login?error=unauthorized')
+          router.push(loginUrl)
         });
       } else if (requiredRole && user.role !== requiredRole) {
-        router.push(user.role === 'student' ? '/dashboard/student' : '/dashboard/teacher')
+        const dashboardUrl = user.role === 'student'
+          ? buildDashboardUrl('STUDENT')
+          : buildDashboardUrl('TEACHER');
+        router.push(dashboardUrl)
       }
     }
-  }, [user, loading, router, requiredRole])
+  }, [user, isLoading, router, requiredRole])
 
-  if (loading) {
+  if (isLoading) {
     return (
       <div className="min-h-screen flex items-center justify-center">
         <div className="loading-spinner h-8 w-8"></div>

@@ -1,6 +1,7 @@
 import { useRouter } from 'next/navigation';
 import { useCallback } from 'react';
 import { clearAllDataForUnauthorized, clearAuthDataOnly } from '@/utils/clearAllData';
+import { buildLoginUrl } from '@/utils/urlBuilder';
 
 /**
  * Hook personalizado para redirecionamentos com limpeza de dados
@@ -15,11 +16,11 @@ export const useRedirectWithClearData = () => {
     try {
       console.log(`🔄 Redirecionando para login com limpeza de dados. Motivo: ${reason}`);
       await clearAllDataForUnauthorized();
-      router.push(`/login?error=${reason}`);
+      router.push(buildLoginUrl({ error: reason }));
     } catch (error) {
       console.log('❌ Erro durante limpeza de dados no redirecionamento:', error);
       // Redirecionar mesmo com erro na limpeza
-      router.push(`/login?error=${reason}`);
+      router.push(buildLoginUrl({ error: reason }));
     }
   }, [router]);
 

@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation';
 import apiClient from '../lib/authFetch';
 import { jwtDecode } from 'jwt-decode';
 import { toast } from 'react-hot-toast';
+import { buildLoginUrl, buildDashboardUrl, buildUrl } from '../utils/urlBuilder';
 
 // Tipagem para o usuário e o contexto
 interface User {
@@ -85,7 +86,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     setUser(null);
     apiClient.defaults.headers.common['Authorization'] = '';
     apiClient.post('/auth/logout').catch(err => console.error("Logout API call failed:", err));
-    router.push('/login');
+    router.push(buildLoginUrl());
     toast.success('Você foi desconectado.');
   }, [router]);
 
@@ -145,8 +146,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
       
       if (setupUserFromToken(accessToken)) {
         toast.success('Login realizado com sucesso!');
-        const baseUrl = process.env.NEXT_PUBLIC_API_URL?.replace('/api', '') || '';
-        router.push(`${baseUrl}/dashboard`);
+        router.push(buildUrl('/dashboard'));
       } else {
         throw new Error('Token inválido recebido do servidor');
       }

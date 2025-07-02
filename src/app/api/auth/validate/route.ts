@@ -17,7 +17,7 @@ export async function GET(request: NextRequest) {
     }
 
     // URL do backend baseada nas variáveis de ambiente
-    const backendUrl =  'https://portal.sabercon.com.br/api';
+    const backendUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001/api';
     const validateUrl = `${backendUrl}/auth/optimized/validate`;
 
     console.log('🔍 [VALIDATE-API] Validando token');

@@ -3,6 +3,7 @@
 import React, { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { EnhancedLoadingState } from './LoadingStates';
+import { buildLoginUrl } from '../../utils/urlBuilder';
 
 interface LogoutHandlerProps {
   onLogout?: () => Promise<void>;
@@ -63,7 +64,8 @@ export function LogoutHandler({ onLogout, children }: LogoutHandlerProps) {
 
       // 3. Chamar API de logout para limpar Redis/Backend
       try {
-        await fetch('https://portal.sabercon.com.br/api/auth/logout', {
+        const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001/api';
+        await fetch(`${apiUrl}/auth/logout`, {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',
@@ -79,7 +81,8 @@ export function LogoutHandler({ onLogout, children }: LogoutHandlerProps) {
       try {
         const sessionId = localStorage.getItem('session_id');
         if (sessionId) {
-          await fetch('https://portal.sabercon.com.br/api/sessions/invalidate', {
+          const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001/api';
+          await fetch(`${apiUrl}/sessions/invalidate`, {
             method: 'POST',
             headers: {
               'Content-Type': 'application/json',
@@ -101,11 +104,12 @@ export function LogoutHandler({ onLogout, children }: LogoutHandlerProps) {
       await new Promise(resolve => setTimeout(resolve, 1000));
 
       // 7. Redirecionar para login
-      router.push('/auth/login');
+      const loginUrl = buildLoginUrl();
+      router.push(loginUrl);
       
       // 8. Recarregar a página para garantir limpeza completa
       setTimeout(() => {
-        window.location.href = '/auth/login';
+        window.location.href = loginUrl;
       }, 100);
 
     } catch (error) {
@@ -117,9 +121,10 @@ export function LogoutHandler({ onLogout, children }: LogoutHandlerProps) {
         sessionStorage.clear();
       }
       
-      router.push('/auth/login');
+      const loginUrl = buildLoginUrl();
+      router.push(loginUrl);
       setTimeout(() => {
-        window.location.href = '/auth/login';
+        window.location.href = loginUrl;
       }, 100);
     } finally {
       setIsLoggingOut(false);

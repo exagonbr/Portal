@@ -17,7 +17,7 @@ export async function POST(request: NextRequest) {
     }
 
     // URL do backend baseada nas variáveis de ambiente
-    const backendUrl = 'https://portal.sabercon.com.br/api';
+    const backendUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001/api';
     const loginUrl = `${backendUrl}/auth/optimized/login`;
 
     console.log('🔐 [LOGIN-API] Tentativa de login para:', email);
