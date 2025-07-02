@@ -50,21 +50,80 @@ fi
 DOMAIN="portal.sabercon.com.br"
 FRONTEND_PORT=3000
 BACKEND_PORT=3001
-PROJECT_DIR="/var/www/portal"
 NGINX_CONFIG="/etc/nginx/nginx.conf"
 SITE_CONFIG="/etc/nginx/sites-available/default"
+
+# Detectar diretório do projeto
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+PROJECT_DIR="$SCRIPT_DIR"
+
+# Se executado de um diretório diferente, perguntar qual usar
+if [ ! -f "$PROJECT_DIR/package.json" ] || [ ! -d "$PROJECT_DIR/backend" ]; then
+    log_error "❌ Estrutura do projeto não encontrada no diretório atual: $PROJECT_DIR"
+    echo ""
+    log "🔍 Procurando estrutura do projeto..."
+    
+    # Verificar diretórios comuns
+    POSSIBLE_DIRS=(
+        "/var/www/portal"
+        "/home/ubuntu/portal"
+        "/home/portal"
+        "/opt/portal"
+        "$HOME/portal"
+        "$(pwd)"
+    )
+    
+    FOUND_DIR=""
+    for dir in "${POSSIBLE_DIRS[@]}"; do
+        if [ -f "$dir/package.json" ] && [ -d "$dir/backend" ]; then
+            FOUND_DIR="$dir"
+            break
+        fi
+    done
+    
+    if [ -n "$FOUND_DIR" ]; then
+        log_success "✅ Projeto encontrado em: $FOUND_DIR"
+        PROJECT_DIR="$FOUND_DIR"
+    else
+        echo ""
+        log_error "❌ Projeto não encontrado automaticamente."
+        echo ""
+        echo "📁 Opções:"
+        echo "   1. Executar o script no diretório do projeto"
+        echo "   2. Clonar o projeto primeiro:"
+        echo "      sudo mkdir -p /var/www/portal"
+        echo "      sudo git clone <seu-repositorio> /var/www/portal"
+        echo "      cd /var/www/portal"
+        echo "      sudo bash deploy-portal-production.sh"
+        echo ""
+        read -p "Digite o caminho completo do diretório do projeto (ou ENTER para sair): " CUSTOM_DIR
+        
+        if [ -z "$CUSTOM_DIR" ]; then
+            log "👋 Deploy cancelado pelo usuário"
+            exit 0
+        fi
+        
+        if [ ! -d "$CUSTOM_DIR" ]; then
+            log_error "Diretório não existe: $CUSTOM_DIR"
+            exit 1
+        fi
+        
+        if [ ! -f "$CUSTOM_DIR/package.json" ] || [ ! -d "$CUSTOM_DIR/backend" ]; then
+            log_error "Estrutura do projeto não encontrada em: $CUSTOM_DIR"
+            log_error "Certifique-se de que o diretório contém package.json e pasta backend/"
+            exit 1
+        fi
+        
+        PROJECT_DIR="$CUSTOM_DIR"
+    fi
+fi
 
 log "🚀 Iniciando deploy do Portal Sabercon para produção..."
 log "📍 Domínio: $DOMAIN"
 log "🖥️  Frontend: https://$DOMAIN (porta $FRONTEND_PORT)"
 log "🔧 Backend API: https://$DOMAIN/api (porta $BACKEND_PORT)"
+log "📁 Diretório do projeto: $PROJECT_DIR"
 echo ""
-
-# Verificar se o diretório do projeto existe
-if [ ! -d "$PROJECT_DIR" ]; then
-    log_error "Diretório do projeto não encontrado: $PROJECT_DIR"
-    exit 1
-fi
 
 cd "$PROJECT_DIR"
 
