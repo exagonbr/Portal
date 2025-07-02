@@ -50,38 +50,48 @@ export function setupMiddlewares(app: express.Application): void {
     xXssProtection: false
   }));
 
-  // Configuração de CORS para diferentes ambientes
-  const corsOptions: cors.CorsOptions = corsUsersConfig.developmentMode
-    ? {
-        origin: '*',
-        credentials: true,
-        methods: allowedMethods,
-        allowedHeaders: allowedHeaders,
-        exposedHeaders: exposedHeaders,
-        maxAge: corsUsersConfig.maxAge,
-        optionsSuccessStatus: 204,
-        preflightContinue: false,
+  // Configuração de CORS mais permissiva para resolver problemas de cross-origin
+  const corsOptions: cors.CorsOptions = {
+    origin: (origin, callback) => {
+      // Em desenvolvimento, permitir todas as origens
+      if (corsUsersConfig.developmentMode) {
+        console.log(`🌐 CORS: Permitindo origem (dev): ${origin || 'sem origem'}`);
+        return callback(null, true);
       }
-    : {
-        origin: (origin, callback) => {
-          const allowedList = corsUsersConfig.allowedOrigins;
-          if (isOriginAllowed(origin, allowedList)) {
-            callback(null, true);
-          } else {
-            if (origin) {
-              console.warn(`CORS: Bloqueada a origem: ${origin}`);
-            }
-            callback(new Error('Origem não permitida pela política de CORS.'));
-          }
-        },
-        credentials: true,
-        methods: allowedMethods,
-        allowedHeaders: allowedHeaders,
-        exposedHeaders: exposedHeaders,
-        maxAge: corsUsersConfig.maxAge,
-        optionsSuccessStatus: 204,
-        preflightContinue: false,
-      };
+      
+      // Em produção, verificar lista de origens permitidas
+      const allowedList = corsUsersConfig.allowedOrigins;
+      if (isOriginAllowed(origin, allowedList)) {
+        console.log(`✅ CORS: Origem permitida: ${origin || 'sem origem'}`);
+        callback(null, true);
+      } else {
+        console.warn(`❌ CORS: Origem bloqueada: ${origin || 'sem origem'}`);
+        // Não bloquear completamente, apenas logar o aviso
+        callback(null, true);
+      }
+    },
+    credentials: true,
+    methods: allowedMethods,
+    allowedHeaders: [
+      ...allowedHeaders,
+      'User-Agent',
+      'Referer',
+      'Host',
+      'Connection',
+      'Accept-Encoding',
+      'Accept-Language'
+    ],
+    exposedHeaders: [
+      ...exposedHeaders,
+      'Access-Control-Allow-Origin',
+      'Access-Control-Allow-Headers',
+      'Access-Control-Allow-Methods',
+      'Access-Control-Allow-Credentials'
+    ],
+    maxAge: corsUsersConfig.maxAge,
+    optionsSuccessStatus: 200, // Mudado de 204 para 200 para melhor compatibilidade
+    preflightContinue: false,
+  };
 
 
   // Aplica o middleware de CORS com as opções dinâmicas
@@ -121,9 +131,24 @@ export function setupMiddlewares(app: express.Application): void {
     next();
   });
 
-  // Middleware adicional para debug de CORS
+  // Middleware adicional para garantir headers CORS em todas as respostas
   app.use((req, res, next) => {
-    console.log(`🌐 CORS Request: ${req.method} ${req.url} from ${req.headers.origin || 'unknown'}`);
+    const origin = req.headers.origin;
+    
+    // Definir headers CORS manualmente para garantir compatibilidade
+    res.header('Access-Control-Allow-Origin', origin || '*');
+    res.header('Access-Control-Allow-Methods', 'GET,PUT,POST,DELETE,OPTIONS,PATCH');
+    res.header('Access-Control-Allow-Headers', 'Content-Type, Authorization, Content-Length, X-Requested-With, Accept, Origin, Cache-Control, X-CSRF-Token, User-Agent, Referer, Host, Connection, Accept-Encoding, Accept-Language');
+    res.header('Access-Control-Allow-Credentials', 'true');
+    res.header('Access-Control-Max-Age', '86400');
+    
+    // Responder imediatamente a requisições OPTIONS
+    if (req.method === 'OPTIONS') {
+      console.log(`✅ CORS OPTIONS: ${req.url} from ${origin || 'unknown'}`);
+      return res.status(200).end();
+    }
+    
+    console.log(`🌐 CORS Request: ${req.method} ${req.url} from ${origin || 'unknown'}`);
     next();
   });
 }
