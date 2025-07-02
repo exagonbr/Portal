@@ -19,7 +19,7 @@ export const corsUsersConfig: CorsUsersConfig = {
   allowedOrigins: [
     'https://portal.sabercon.com.br',
     'http://localhost:3001',
-    'http://localhost:3001/api',
+    'https://portal.sabercon.com.br/api',
     'http://localhost:3000',
     'http://localhost:8080',
     'http://localhost:4200', // Angular dev server

@@ -148,7 +148,7 @@ function checkEnvironmentVariables() {
 NODE_ENV=development
 NEXT_PUBLIC_APP_URL=http://localhost:3000
 NEXT_PUBLIC_API_URL=/api
-API_BASE_URL=http://localhost:3001/api
+API_BASE_URL=https://portal.sabercon.com.br/api
 INTERNAL_API_URL=https://portal.sabercon.com.br/api
 
 # Configurações de segurança

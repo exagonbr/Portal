@@ -34,10 +34,10 @@ const getBaseUrls = () => {
   
   // Desenvolvimento - usar backend local
   return {
-    FRONTEND_URL: 'http://localhost:3001/api',
-    BACKEND_URL: 'http://localhost:3001/api',
-    API_BASE_URL: 'http://localhost:3001/api',
-    INTERNAL_API_URL: 'http://localhost:3001/api'
+    FRONTEND_URL: 'https://portal.sabercon.com.br/',
+    BACKEND_URL: 'https://portal.sabercon.com.br/api',
+    API_BASE_URL: 'https://portal.sabercon.com.br/api',
+    INTERNAL_API_URL: 'https://portal.sabercon.com.br/api'
   };
 };
 
