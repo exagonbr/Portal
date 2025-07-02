@@ -161,6 +161,24 @@ const nextConfig = {
     ];
 
     return [
+      // Headers específicos para arquivos JavaScript
+      {
+        source: '/:path*.js',
+        headers: [
+          {
+            key: 'Content-Type',
+            value: 'application/javascript; charset=utf-8'
+          },
+          {
+            key: 'Cache-Control',
+            value: 'public, max-age=31536000, immutable'
+          },
+          {
+            key: 'X-Content-Type-Options',
+            value: 'nosniff'
+          }
+        ]
+      },
       // Headers para livros EPUB
       {
         source: '/books/:path*',
