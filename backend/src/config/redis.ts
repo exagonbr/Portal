@@ -15,15 +15,16 @@ export const getRedisClient = (): Redis => {
       host: process.env.REDIS_HOST || 'localhost',
       port: parseInt(process.env.REDIS_PORT || '6379'),
       db: parseInt(process.env.REDIS_DB || '0'),
-      maxRetriesPerRequest: null,
+      maxRetriesPerRequest: 3,
       lazyConnect: true,
       keepAlive: 30000,
       connectTimeout: 10000,
       commandTimeout: 5000,
       enableReadyCheck: false,
       retryDelayOnFailover: 100,
-      enableOfflineQueue: false,
+      enableOfflineQueue: true, // Permite enfileiramento offline
       family: 4, // IPv4
+      retryConnect: (times: number) => Math.min(times * 50, 2000), // Retry com backoff exponencial
     };
 
     // Adiciona password apenas se existir
@@ -65,12 +66,14 @@ export const getQueueRedisClient = (): Redis => {
       host: process.env.QUEUE_REDIS_HOST || process.env.REDIS_HOST || 'localhost',
       port: parseInt(process.env.QUEUE_REDIS_PORT || process.env.REDIS_PORT || '6379'),
       db: parseInt(process.env.QUEUE_REDIS_DB || '1'),
-      maxRetriesPerRequest: null,
+      maxRetriesPerRequest: 3,
       lazyConnect: true,
       keepAlive: 30000,
       connectTimeout: 10000,
       commandTimeout: 5000,
       enableReadyCheck: false,
+      enableOfflineQueue: true,
+      retryConnect: (times: number) => Math.min(times * 50, 2000),
     };
 
     // Adiciona password apenas se existir
@@ -108,12 +111,14 @@ export const getStaticCacheRedisClient = (): Redis => {
       host: process.env.REDIS_HOST || 'localhost',
       port: parseInt(process.env.REDIS_PORT || '6379'),
       db: parseInt(process.env.REDIS_STATIC_CACHE_DB || '2'), // DB 2 para cache estático
-      maxRetriesPerRequest: null,
+      maxRetriesPerRequest: 3,
       lazyConnect: true,
       keepAlive: 30000,
       connectTimeout: 10000,
       commandTimeout: 5000,
       enableReadyCheck: false,
+      enableOfflineQueue: true,
+      retryConnect: (times: number) => Math.min(times * 50, 2000),
     };
 
     if (process.env.REDIS_PASSWORD) {
@@ -142,9 +147,27 @@ export const getStaticCacheRedisClient = (): Redis => {
 export const testRedisConnection = async (): Promise<boolean> => {
   try {
     const client = getRedisClient();
-    await client.ping();
-    console.log('✅ Teste de conexão Redis bem-sucedido');
-    return true;
+    
+    // Tenta conectar primeiro se usando lazyConnect
+    if (client.status === 'wait') {
+      await client.connect();
+    }
+    
+    // Verifica se está conectado
+    if (client.status !== 'ready') {
+      console.log('❌ Redis não está no estado "ready". Status atual:', client.status);
+      return false;
+    }
+    
+    // Testa com ping
+    const result = await client.ping();
+    if (result === 'PONG') {
+      console.log('✅ Teste de conexão Redis bem-sucedido');
+      return true;
+    } else {
+      console.log('❌ Redis ping não retornou PONG:', result);
+      return false;
+    }
   } catch (error) {
     console.log('❌ Falha no teste de conexão Redis:', error);
     return false;
@@ -155,9 +178,24 @@ export const testRedisConnection = async (): Promise<boolean> => {
 export const testQueueRedisConnection = async (): Promise<boolean> => {
   try {
     const client = getQueueRedisClient();
-    await client.ping();
-    console.log('✅ Teste de conexão Redis para filas bem-sucedido');
-    return true;
+    
+    if (client.status === 'wait') {
+      await client.connect();
+    }
+    
+    if (client.status !== 'ready') {
+      console.log('❌ Redis para filas não está no estado "ready". Status atual:', client.status);
+      return false;
+    }
+    
+    const result = await client.ping();
+    if (result === 'PONG') {
+      console.log('✅ Teste de conexão Redis para filas bem-sucedido');
+      return true;
+    } else {
+      console.log('❌ Redis para filas ping não retornou PONG:', result);
+      return false;
+    }
   } catch (error) {
     console.log('❌ Falha no teste de conexão Redis para filas:', error);
     return false;
@@ -168,9 +206,24 @@ export const testQueueRedisConnection = async (): Promise<boolean> => {
 export const testStaticCacheRedisConnection = async (): Promise<boolean> => {
   try {
     const client = getStaticCacheRedisClient();
-    await client.ping();
-    console.log('✅ Teste de conexão Redis para cache estático bem-sucedido');
-    return true;
+    
+    if (client.status === 'wait') {
+      await client.connect();
+    }
+    
+    if (client.status !== 'ready') {
+      console.log('❌ Redis para cache estático não está no estado "ready". Status atual:', client.status);
+      return false;
+    }
+    
+    const result = await client.ping();
+    if (result === 'PONG') {
+      console.log('✅ Teste de conexão Redis para cache estático bem-sucedido');
+      return true;
+    } else {
+      console.log('❌ Redis para cache estático ping não retornou PONG:', result);
+      return false;
+    }
   } catch (error) {
     console.log('❌ Falha no teste de conexão Redis para cache estático:', error);
     return false;

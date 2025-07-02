@@ -87,7 +87,7 @@ function fixAuthenticationIssues() {
   return true;
 }
 
-// 3. CORRIGIR PROBLEMAS DO BACKEND (Instituições)
+// 3. CORRIGIR PROBLEMAS DO BACKEND (Banco de Dados e APIs)
 function fixBackendIssues() {
   console.log('\n🔧 3. CORRIGINDO PROBLEMAS DO BACKEND...');
   
@@ -97,20 +97,22 @@ function fixBackendIssues() {
     return false;
   }
 
-  // Verificar se o script de correção existe
-  const fixScriptPath = path.join(backendPath, 'src', 'scripts', 'fix-institutions-error.js');
-  if (fileExists(fixScriptPath)) {
-    console.log('✅ Script de correção de instituições criado');
+  // Verificar se o script de correção do banco existe
+  const dbFixScriptPath = path.join(backendPath, 'src', 'scripts', 'fix-database-schema.js');
+  if (fileExists(dbFixScriptPath)) {
+    console.log('✅ Script de correção do banco de dados criado');
     
-    // Executar o script de correção
-    console.log('🔄 Executando diagnóstico do backend...');
-    const result = runCommand(
-      `cd backend && node src/scripts/fix-institutions-error.js`,
-      'Diagnóstico de instituições'
+    // Executar o script de correção do banco
+    console.log('🔄 Executando correção da estrutura do banco...');
+    const dbResult = runCommand(
+      `cd backend && node src/scripts/fix-database-schema.js`,
+      'Correção da estrutura do banco de dados'
     );
     
-    if (result.success) {
-      console.log('✅ Diagnóstico do backend concluído');
+    if (dbResult.success) {
+      console.log('✅ Estrutura do banco corrigida');
+    } else {
+      console.log('⚠️ Problema na correção do banco - verifique se o backend está rodando');
     }
   }
 

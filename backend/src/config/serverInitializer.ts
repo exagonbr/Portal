@@ -38,10 +38,14 @@ export class ServerInitializer {
       throw new Error('Falha na inicialização do TypeORM');
     }
     
+    // Testar conexão Redis
     const redisConnected = await testRedisConnection();
     if (!redisConnected) {
       this.logger.warn('⚠️  Redis não conectado - algumas funcionalidades podem não funcionar');
+      this.logger.info('💡 Para diagnosticar problemas do Redis, execute: npm run check:redis');
+      this.logger.info('📦 Para instalar Redis rapidamente com Docker: docker run -d -p 6379:6379 redis:alpine');
     } else {
+      this.logger.info('✅ Redis conectado com sucesso');
       await this.performCacheWarmup();
     }
   }
