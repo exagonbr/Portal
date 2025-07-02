@@ -11,6 +11,7 @@ export interface LoginResponse {
   success: boolean;
   user?: User;
   message?: string;
+  token?: string;
 }
 
 export interface RegisterResponse {
@@ -38,11 +39,11 @@ export class AuthService {
         };
       }
 
-      const { user, accessToken } = response.data;
+      const { user, token } = response.data;
 
       // Salva o token e dados do usuário
       if (typeof window !== 'undefined') {
-        localStorage.setItem('accessToken', accessToken);
+        localStorage.setItem('auth_token', token);
       }
 
       // Converte UserResponseDto para User (compatibilidade)
@@ -50,7 +51,8 @@ export class AuthService {
 
       return {
         success: true,
-        user: compatibleUser
+        user: compatibleUser,
+        token: token
       };
     } catch (error) {
       console.log('Erro no login:', error);

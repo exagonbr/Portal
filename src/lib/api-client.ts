@@ -109,18 +109,17 @@ class ApiClient {
     if (typeof window !== 'undefined' && token && token.trim() !== '') {
       const cleanToken = token.trim();
       
-      // Armazenar em localStorage com chave principal
-      localStorage.setItem('auth_token', cleanToken);
-      
-      // Também armazenar com chaves alternativas para compatibilidade
-      localStorage.setItem('token', cleanToken);
-      
       // Limpar possíveis tokens antigos em sessionStorage
       sessionStorage.removeItem('auth_token');
       sessionStorage.removeItem('token');
       sessionStorage.removeItem('authToken');
+
+      // Armazenar em localStorage com chave principal
+      localStorage.setItem('auth_token', cleanToken);
+      // Também armazenar com chaves alternativas para compatibilidade
+      localStorage.setItem('token', cleanToken);
       
-      // Configurar cookie para o middleware com configuração mais robusta
+      // Configurar cookie para o mddleware com configuração mais robusta
       try {
         // Limpar cookies existentes primeiro
         const cookiesToClear = ['auth_token', 'token', 'authToken'];
@@ -155,7 +154,11 @@ class ApiClient {
         
         // Limpar cookie existente primeiro
         document.cookie = 'user_data=; path=/; expires=Thu, 01 Jan 1970 00:00:00 GMT';
-        
+        document.cookie='user_data=;path=/;domain=sabercon.com.br;expires=Thu,01Jan1970 00:00:00 GMT';
+
+        localStorage.setItem('userData', userDataString);
+        localStorage.setItem('user', userDataString);
+
         // Definir novo cookie
         const cookieValue = `user_data=${userDataString}; path=/; max-age=${7 * 24 * 60 * 60}; SameSite=Lax`;
         document.cookie = cookieValue;
@@ -197,6 +200,8 @@ class ApiClient {
   private buildURL(endpoint: string, params?: Record<string, string | number | boolean>): string {
     let url: string;
     
+    endpoint = "http://localhost:3000";
+
     if (endpoint.startsWith('http')) {
       url = endpoint;
     } else {
@@ -258,7 +263,7 @@ class ApiClient {
   /**
    * Refresh do token de autenticação
    */
-  private async refreshAuthToken(): Promise<boolean> {
+  public async refreshAuthToken(): Promise<boolean> {
     if (this.isRefreshing) {
       return this.refreshPromise || Promise.resolve(false);
     }
