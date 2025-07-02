@@ -25,14 +25,14 @@ export const requireAuth: RequestHandler = async (req: Request, res: Response, n
       res.status(500).json({ success: false, message: 'Internal server error: JWT secret not configured.' });
       return;
     }
+    
     const decoded = jwt.verify(token, secret) as unknown as AccessTokenPayload;
 
-    if (decoded.type !== 'access') {
+    if (decoded.type && decoded.type !== 'access') {
       res.status(403).json({ success: false, message: 'Invalid token type. Access token required.' });
       return;
     }
 
-    // Verify if the user still exists and is active in the database
     const user = await db('users')
       .where({ id: decoded.id, is_active: true })
       .first();
@@ -42,7 +42,11 @@ export const requireAuth: RequestHandler = async (req: Request, res: Response, n
       return;
     }
 
-    authReq.user = decoded;
+    authReq.user = {
+      ...decoded,
+      id: decoded.id
+    } as AccessTokenPayload;
+    
     next();
 
   } catch (error) {

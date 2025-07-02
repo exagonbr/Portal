@@ -2,12 +2,11 @@
 
 ## 📋 **Resumo dos Problemas Identificados e Soluções**
 
-### 1. **🔧 Erro de MIME Type - cleanup-extensions.js**
+### 1. **🔧 Configurações de MIME Type**
 
 **Problema:**
 ```
-Refused to execute script from 'https://portal.sabercon.com.br/cleanup-extensions.js' 
-because its MIME type ('text/html') is not executable
+Problemas de MIME type com arquivos JavaScript estáticos
 ```
 
 **Solução Implementada:**
@@ -103,7 +102,7 @@ npm start
 1. Abra o DevTools (F12)
 2. Vá para a aba Network
 3. Recarregue a página
-4. Verifique se `cleanup-extensions.js` carrega com Content-Type correto
+4. Verifique se arquivos JavaScript carregam com Content-Type correto
 
 #### B. **Teste de Autenticação**
 1. Abra o Console do navegador

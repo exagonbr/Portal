@@ -64,9 +64,6 @@ export default function RootLayout({
         
         {/* Service Worker personalizado para limpeza de cache */}
         <script src="/register-sw.js" defer />
-        
-        {/* Script para prevenir problemas de hidratação causados por extensões */}
-        <script src="/cleanup-extensions.js" defer />
       </head>
       <body className={`${inter.className} m-0 p-0 h-full w-full`} suppressHydrationWarning>
         <SimpleProviders>

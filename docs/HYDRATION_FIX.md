@@ -20,10 +20,10 @@ Este erro era causado por uma extensão do navegador (BBAI) que estava injetando
 
 ## Soluções Implementadas
 
-### 1. Script de Limpeza de Extensões (`/public/cleanup-extensions.js`)
+### 1. Configurações de Supressão de Hidratação
 
-- Remove automaticamente atributos injetados por extensões conhecidas
-- Monitora mudanças no DOM e remove novos atributos injetados
+- Configurações para suprimir avisos de hidratação causados por extensões
+- Monitoramento de mudanças no DOM causadas por extensões
 - Lista extensiva de atributos e classes comuns de extensões
 
 ### 2. Supressão de Avisos de Hidratação (`suppressHydrationWarning`)
@@ -57,7 +57,7 @@ Este erro era causado por uma extensão do navegador (BBAI) que estava injetando
 - `src/contexts/AuthContext.tsx` - Adicionado wrapper com supressão
 - `src/utils/suppressHydrationWarnings.ts` - Expandida lista de avisos
 - `src/components/HydrationSafeWrapper.tsx` - Novo componente de segurança
-- `public/cleanup-extensions.js` - Script de limpeza de extensões
+- Configurações de supressão de hidratação otimizadas
 
 ## Extensões Conhecidas que Causam Problemas
 

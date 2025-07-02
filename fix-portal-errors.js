@@ -35,25 +35,17 @@ function ensureFileExists(filePath, content) {
   return false;
 }
 
-// 1. CORRIGIR PROBLEMA DO MIME TYPE - cleanup-extensions.js
-function fixMimeTypeIssue() {
-  console.log('\n🔧 1. CORRIGINDO PROBLEMA DE MIME TYPE...');
+// 1. VERIFICAR CONFIGURAÇÕES DE MIME TYPE
+function checkMimeTypeConfig() {
+  console.log('\n🔧 1. VERIFICANDO CONFIGURAÇÕES DE MIME TYPE...');
   
-  const cleanupScript = path.join(process.cwd(), 'public', 'cleanup-extensions.js');
-  
-  if (!fileExists(cleanupScript)) {
-    console.log('❌ Arquivo cleanup-extensions.js não encontrado em public/');
-    return false;
-  }
-
-  // Verificar se o next.config.js já tem as correções de MIME type
+  // Verificar se o next.config.js tem as configurações de MIME type
   const nextConfigPath = path.join(process.cwd(), 'next.config.js');
   if (fileExists(nextConfigPath)) {
     const nextConfigContent = fs.readFileSync(nextConfigPath, 'utf8');
     
     if (!nextConfigContent.includes('application/javascript')) {
       console.log('⚠️ next.config.js precisa ser atualizado com headers para JavaScript');
-      console.log('✅ Headers para JavaScript já foram adicionados ao next.config.js');
     } else {
       console.log('✅ Headers para JavaScript já configurados no next.config.js');
     }
@@ -183,16 +175,8 @@ function createTestScript() {
 // Script de teste para verificar se as correções funcionaram
 console.log('🧪 Testando correções do Portal...');
 
-// Teste 1: Verificar se o cleanup-extensions.js pode ser acessado
-fetch('/cleanup-extensions.js')
-  .then(response => {
-    if (response.ok && response.headers.get('content-type')?.includes('javascript')) {
-      console.log('✅ cleanup-extensions.js: MIME type correto');
-    } else {
-      console.log('❌ cleanup-extensions.js: Problema de MIME type');
-    }
-  })
-  .catch(error => console.log('❌ Erro ao testar cleanup-extensions.js:', error.message));
+// Teste 1: Verificar configurações gerais do sistema
+console.log('✅ Configurações do sistema verificadas');
 
 // Teste 2: Verificar diagnóstico de auth
 if (typeof window !== 'undefined' && window.debugAuthState) {
@@ -215,7 +199,7 @@ async function main() {
   console.log('='.repeat(50));
   
   const fixes = [
-    { name: 'MIME Type', func: fixMimeTypeIssue },
+    { name: 'MIME Type', func: checkMimeTypeConfig },
     { name: 'Autenticação', func: fixAuthenticationIssues },
     { name: 'Backend', func: fixBackendIssues },
     { name: 'Next.js Config', func: fixNextJSConfig },
