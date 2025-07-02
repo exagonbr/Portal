@@ -90,11 +90,6 @@ log "📦 Instalando dependências básicas..."
 apt install -y curl wget gnupg2 software-properties-common apt-transport-https ca-certificates lsb-release ufw git build-essential
 check_status "Dependências básicas instaladas"
 
-# Criar diretório do projeto
-log "📁 Criando diretório do projeto..."
-mkdir -p "$PROJECT_DIR"
-check_status "Diretório criado: $PROJECT_DIR"
-
 # Clonar repositório
 log "📥 Clonando repositório..."
 if [ -d "$PROJECT_DIR/.git" ]; then
