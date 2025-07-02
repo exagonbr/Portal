@@ -1,13 +1,14 @@
-/** @type {import('next').NextConfig} */
+import type { NextConfig } from 'next';
+import webpack from 'webpack';
 
-const isDev = process.env.NODE_ENV === 'development';
-const isProd = process.env.NODE_ENV === 'production';
+const isDev: boolean = process.env.NODE_ENV === 'development';
+const isProd: boolean = process.env.NODE_ENV === 'production';
 
 // Gerar versão de cache única para cada build
-const cacheVersion = process.env.NEXT_PUBLIC_CACHE_VERSION || `v${Date.now()}`;
+const cacheVersion: string = process.env.NEXT_PUBLIC_CACHE_VERSION || `v${Date.now()}`;
 
 // Configurações de segurança CSP
-const ContentSecurityPolicy = `
+const ContentSecurityPolicy: string = `
   default-src 'self';
   script-src 'self' 'unsafe-eval' 'unsafe-inline' *.youtube.com *.handtalk.me;
   child-src 'self' *.youtube.com;
@@ -23,7 +24,7 @@ const ContentSecurityPolicy = `
   upgrade-insecure-requests;
 `.replace(/\s{2,}/g, ' ').trim();
 
-const nextConfig = {
+const nextConfig: NextConfig = {
   // Configurações básicas do TypeScript
   typescript: {
     ignoreBuildErrors: false,
@@ -36,7 +37,8 @@ const nextConfig = {
 
   // Desativar o botão de "dev tools" do Next.js
   devIndicators: {
-    position: 'bottom-right'
+    buildActivity: true,
+    buildActivityPosition: 'bottom-right'
   },
   
   // ESLint
@@ -231,9 +233,8 @@ const nextConfig = {
     };
     config.performance = {
       hints: isProd ? 'warning' : false,  
-    }
+    };
 
-    fastRefresh = true;
     // Configuração de cache
     config.cache = {
       type: 'filesystem',
@@ -250,7 +251,6 @@ const nextConfig = {
       profile: isProd, // Ativar profiling em produção
       version: cacheVersion,  
     };
-
 
     // Plugin para versão de cache no Service Worker
     if (!isServer) {
@@ -280,100 +280,100 @@ const nextConfig = {
       }
     );
 
-         // Configurações específicas para o cliente
-     if (!isServer) {
-       // Otimizações de bundle splitting (apenas em produção para evitar problemas em dev)
-       if (isProd) {
-         config.optimization = {
-           ...config.optimization,
-           moduleIds: 'deterministic',
-           chunkIds: 'deterministic',
-           minimize: true,
-           usedExports: true,
-           sideEffects: false,
-           splitChunks: {
-             chunks: 'all',
-             minSize: 20000,
-             maxSize: 244000,
-             minChunks: 1,
-             maxAsyncRequests: 30,
-             maxInitialRequests: 30,
-             enforceSizeThreshold: 50000,
-             cacheGroups: {
-               // Framework chunk (React, Next.js)
-               framework: {
-                 chunks: 'all',
-                 name: 'framework',
-                 test: /(?:react|react-dom|scheduler|prop-types|use-subscription)/,
-                 priority: 40,
-                 enforce: true,
-               },
-               // Vendor libraries
-               vendor: {
-                 test: /[\\/]node_modules[\\/]/,
-                 name: 'vendors',
-                 chunks: 'all',
-                 priority: 30,
-                 enforce: true,
-               },
-               // UI components
-               ui: {
-                 test: /[\\/]src[\\/]components[\\/]ui[\\/]/,
-                 name: 'ui-components',
-                 chunks: 'all',
-                 priority: 25,
-                 enforce: true,
-               },
-               // API client
-               apiClient: {
-                 test: /[\\/]src[\\/]lib[\\/]api-client/,
-                 name: 'api-client',
-                 chunks: 'all',
-                 priority: 20,
-                 enforce: true,
-               },
-               // Auth services
-               auth: {
-                 test: /[\\/]src[\\/](services|contexts)[\\/].*auth/i,
-                 name: 'auth-services',
-                 chunks: 'all',
-                 priority: 15,
-                 enforce: true,
-               },
-               // Common utilities
-               common: {
-                 test: /[\\/]src[\\/](utils|lib|hooks)[\\/]/,
-                 name: 'common',
-                 chunks: 'all',
-                 priority: 10,
-                 minChunks: 2,
-               },
-               // Default
-               default: {
-                 minChunks: 2,
-                 priority: 5,
-                 reuseExistingChunk: true,
-               },
-             },
-           },
-         };
-       }
+    // Configurações específicas para o cliente
+    if (!isServer) {
+      // Otimizações de bundle splitting (apenas em produção para evitar problemas em dev)
+      if (isProd) {
+        config.optimization = {
+          ...config.optimization,
+          moduleIds: 'deterministic',
+          chunkIds: 'deterministic',
+          minimize: true,
+          usedExports: true,
+          sideEffects: false,
+          splitChunks: {
+            chunks: 'all',
+            minSize: 20000,
+            maxSize: 244000,
+            minChunks: 1,
+            maxAsyncRequests: 30,
+            maxInitialRequests: 30,
+            enforceSizeThreshold: 50000,
+            cacheGroups: {
+              // Framework chunk (React, Next.js)
+              framework: {
+                chunks: 'all',
+                name: 'framework',
+                test: /(?:react|react-dom|scheduler|prop-types|use-subscription)/,
+                priority: 40,
+                enforce: true,
+              },
+              // Vendor libraries
+              vendor: {
+                test: /[\\/]node_modules[\\/]/,
+                name: 'vendors',
+                chunks: 'all',
+                priority: 30,
+                enforce: true,
+              },
+              // UI components
+              ui: {
+                test: /[\\/]src[\\/]components[\\/]ui[\\/]/,
+                name: 'ui-components',
+                chunks: 'all',
+                priority: 25,
+                enforce: true,
+              },
+              // API client
+              apiClient: {
+                test: /[\\/]src[\\/]lib[\\/]api-client/,
+                name: 'api-client',
+                chunks: 'all',
+                priority: 20,
+                enforce: true,
+              },
+              // Auth services
+              auth: {
+                test: /[\\/]src[\\/](services|contexts)[\\/].*auth/i,
+                name: 'auth-services',
+                chunks: 'all',
+                priority: 15,
+                enforce: true,
+              },
+              // Common utilities
+              common: {
+                test: /[\\/]src[\\/](utils|lib|hooks)[\\/]/,
+                name: 'common',
+                chunks: 'all',
+                priority: 10,
+                minChunks: 2,
+              },
+              // Default
+              default: {
+                minChunks: 2,
+                priority: 5,
+                reuseExistingChunk: true,
+              },
+            },
+          },
+        };
+      }
 
-             // Configurações de output robustas
-       config.output = {
-         ...config.output,
-         crossOriginLoading: 'anonymous',
-         chunkLoadTimeout: 60000, // 60 segundos
-       };
+      // Configurações de output robustas
+      config.output = {
+        ...config.output,
+        crossOriginLoading: 'anonymous',
+        chunkLoadTimeout: 60000, // 60 segundos
+      };
 
-       // Configurar retry automático para chunks falhados (apenas em produção)
-       if (isProd) {
-         config.plugins.push(
-           new webpack.optimize.LimitChunkCountPlugin({
-             maxChunks: 50,
-           })
-         );
-       }
+      // Configurar retry automático para chunks falhados (apenas em produção)
+      if (isProd) {
+        config.plugins.push(
+          new webpack.optimize.LimitChunkCountPlugin({
+            maxChunks: 50,
+          })
+        );
+      }
     }
 
     // Configurações para o servidor
@@ -465,8 +465,8 @@ const nextConfig = {
   env: {
     CUSTOM_KEY: 'my-value',
     CACHE_VERSION: cacheVersion,
-    NEXT_PUBLIC_NODE_ENV: process.env.NODE_ENV,
+    NEXT_PUBLIC_NODE_ENV: process.env.NODE_ENV || 'development',
   },
 };
 
-module.exports = nextConfig;
+export default nextConfig; 
