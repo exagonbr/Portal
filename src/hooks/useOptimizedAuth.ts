@@ -41,7 +41,7 @@ export function useOptimizedAuth() {
     try {
       console.log('🔐 Iniciando login otimizado...');
       
-      const response = await fetch('/api/auth/login', {
+      const response = await fetch('https://portal.sabercon.com.br/api/auth/login', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -91,7 +91,7 @@ export function useOptimizedAuth() {
       
       const token = localStorage.getItem('accessToken');
       
-      const response = await fetch('/api/auth/logout', {
+      const response = await fetch('https://portal.sabercon.com.br/api/auth/logout', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -142,7 +142,7 @@ export function useOptimizedAuth() {
         return false;
       }
 
-      const response = await fetch('/api/auth/validate', {
+      const response = await fetch('https://portal.sabercon.com.br/api/auth/validate', {
         method: 'GET',
         headers: {
           'Authorization': `Bearer ${token}`,
@@ -165,7 +165,7 @@ export function useOptimizedAuth() {
         return false;
       }
 
-      const response = await fetch('/api/auth/refresh', {
+      const response = await fetch('https://portal.sabercon.com.br/api/auth/refresh', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',

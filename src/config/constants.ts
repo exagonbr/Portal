@@ -1,9 +1,6 @@
 // API Configuration - Centralizada (sem dependência circular)
 const getApiConfig = () => {
-  const isProduction = process.env.NODE_ENV === 'production';
-  const apiUrl = isProduction
-    ? '/api'
-    : (process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001');
+  const apiUrl = 'https://portal.sabercon.com.br/api'
     
   return {
     BASE_URL: apiUrl,

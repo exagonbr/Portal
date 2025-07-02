@@ -16,9 +16,7 @@ import { CORS_HEADERS } from '@/config/cors';
 // Configuração otimizada para comunicação direta
 const API_CONFIG = {
   // URL base única - comunicação direta via Nginx
-  baseUrl: process.env.NODE_ENV === 'production'
-    ? 'https://portal.sabercon.com.br/api'
-    : 'http://localhost:3001',
+  baseUrl: 'https://portal.sabercon.com.br/api',
   timeout: 40000, // Reduzido para melhor UX
   retryAttempts: 2, // Reduzido para evitar sobrecarga
   retryDelay: 800,
@@ -26,7 +24,7 @@ const API_CONFIG = {
 
 // Tipos
 export interface RequestOptions {
-  method?: 'GET' | 'POST' | 'PUT' | 'DELETE' | 'PATCH';
+  method?: 'GET' | 'POST' | 'PUT' | 'DELETE' | 'PATCH' | 'OPTIONS';
   headers?: Record<string, string>;
   body?: any;
   params?: Record<string, string | number | boolean>;

@@ -38,7 +38,7 @@ export async function GET(request: NextRequest) {
     // Tentar verificar conexão com o banco de dados
     try {
       // Fazer uma requisição simples para verificar se o backend está respondendo
-      const backendHealthUrl = process.env.BACKEND_URL || 'https://portal.sabercon.com.br/api';
+      const backendHealthUrl = 'https://portal.sabercon.com.br/api';
       const healthResponse = await fetch(`${backendHealthUrl}/health`, {
         method: 'GET',
         signal: AbortSignal.timeout(5000)

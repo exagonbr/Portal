@@ -63,7 +63,7 @@ export function LogoutHandler({ onLogout, children }: LogoutHandlerProps) {
 
       // 3. Chamar API de logout para limpar Redis/Backend
       try {
-        await fetch('/api/auth/logout', {
+        await fetch('https://portal.sabercon.com.br/api/auth/logout', {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',
@@ -79,7 +79,7 @@ export function LogoutHandler({ onLogout, children }: LogoutHandlerProps) {
       try {
         const sessionId = localStorage.getItem('session_id');
         if (sessionId) {
-          await fetch('/api/sessions/invalidate', {
+          await fetch('https://portal.sabercon.com.br/api/sessions/invalidate', {
             method: 'POST',
             headers: {
               'Content-Type': 'application/json',
