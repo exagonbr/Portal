@@ -1,11 +1,10 @@
 'use client';
 
-import React, { createContext, useContext, useState, useEffect, useCallback } from 'react';
+import React, { createContext, useContext, useState, useEffect, useCallback, useRef } from 'react';
 import { useRouter } from 'next/navigation';
 import apiClient from '../lib/authFetch';
 import { jwtDecode } from 'jwt-decode';
 import { toast } from 'react-hot-toast';
-import { useIsClient, useLocalStorage } from '@/utils/ssr';
 
 // Tipagem para o usuário e o contexto
 interface User {
@@ -36,56 +35,101 @@ const decodeToken = (token: string): any | null => {
   }
 };
 
+// Helper para acessar localStorage de forma segura
+const getStoredToken = (): string | null => {
+  if (typeof window === 'undefined') return null;
+  try {
+    return localStorage.getItem('accessToken');
+  } catch (error) {
+    console.error('Error accessing localStorage:', error);
+    return null;
+  }
+};
+
+const setStoredToken = (token: string): void => {
+  if (typeof window === 'undefined') return;
+  try {
+    localStorage.setItem('accessToken', token);
+  } catch (error) {
+    console.error('Error setting localStorage:', error);
+  }
+};
+
+const removeStoredToken = (): void => {
+  if (typeof window === 'undefined') return;
+  try {
+    localStorage.removeItem('accessToken');
+  } catch (error) {
+    console.error('Error removing from localStorage:', error);
+  }
+};
 
 export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   const [user, setUser] = useState<User | null>(null);
   const [isLoading, setIsLoading] = useState(true);
+  const [isClient, setIsClient] = useState(false);
   const router = useRouter();
-  const isClient = useIsClient();
-  const { value: token, setValue: setToken, removeValue: removeToken } = useLocalStorage('accessToken');
+  const initializationRef = useRef(false);
 
   const isAuthenticated = !!user;
+
+  // Detectar se estamos no cliente
+  useEffect(() => {
+    setIsClient(true);
+  }, []);
 
   // Função de logout centralizada
   const logout = useCallback(() => {
     console.log('Logging out: removing token and user');
-    removeToken();
+    removeStoredToken();
     setUser(null);
     apiClient.defaults.headers.common['Authorization'] = '';
     apiClient.post('/auth/logout').catch(err => console.error("Logout API call failed:", err));
     router.push('/login');
     toast.success('Você foi desconectado.');
-  }, [router, removeToken]);
+  }, [router]);
 
-  // Efeito para verificar o token no carregamento inicial
+  // Função para validar e configurar usuário a partir do token
+  const setupUserFromToken = useCallback((token: string): boolean => {
+    const decodedPayload = decodeToken(token);
+    if (decodedPayload && decodedPayload.exp * 1000 > Date.now()) {
+      apiClient.defaults.headers.common['Authorization'] = `Bearer ${token}`;
+      setUser({
+        id: decodedPayload.id,
+        name: decodedPayload.name,
+        email: decodedPayload.email,
+        role: decodedPayload.role,
+        permissions: decodedPayload.permissions || [],
+      });
+      console.log('AuthProvider: User set from token:', decodedPayload);
+      return true;
+    } else {
+      console.log('AuthProvider: Token expired or invalid, removing token');
+      removeStoredToken();
+      return false;
+    }
+  }, []);
+
+  // Efeito de inicialização único - executa apenas uma vez quando o cliente está pronto
   useEffect(() => {
-    if (!isClient) {
-      setIsLoading(false);
+    if (!isClient || initializationRef.current) {
       return;
     }
 
-    console.log('AuthProvider: Checking token on app load:', token ? 'Token found' : 'No token found');
+    initializationRef.current = true;
+    console.log('AuthProvider: Initializing authentication check');
 
+    const token = getStoredToken();
+    
     if (token) {
-      const decodedPayload = decodeToken(token);
-      if (decodedPayload && decodedPayload.exp * 1000 > Date.now()) {
-        apiClient.defaults.headers.common['Authorization'] = `Bearer ${token}`;
-        setUser({
-          id: decodedPayload.id,
-          name: decodedPayload.name,
-          email: decodedPayload.email,
-          role: decodedPayload.role,
-          permissions: decodedPayload.permissions || [],
-        });
-        console.log('AuthProvider: User set from token:', decodedPayload);
-      } else {
-        console.log('AuthProvider: Token expired or invalid, removing token');
-        removeToken();
-      }
+      console.log('AuthProvider: Token found, validating...');
+      setupUserFromToken(token);
+    } else {
+      console.log('AuthProvider: No token found');
     }
+    
     setIsLoading(false);
-  }, [isClient, token, removeToken]);
-
+  }, [isClient, setupUserFromToken]);
 
   // Função de login
   const login = async (email: string, password: string) => {
@@ -96,22 +140,15 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
       const { data } = await apiClient.post('/auth/login', { email, password });
       const { accessToken } = data.data;
       
-      console.log('Login successful, storing token:', accessToken);
-      setToken(accessToken);
-      apiClient.defaults.headers.common['Authorization'] = `Bearer ${accessToken}`;
-      const decodedPayload = decodeToken(accessToken);
-      if (decodedPayload) {
-        setUser({
-          id: decodedPayload.id,
-          name: decodedPayload.name,
-          email: decodedPayload.email,
-          role: decodedPayload.role,
-          permissions: decodedPayload.permissions || [],
-        });
-      }
+      console.log('Login successful, storing token');
+      setStoredToken(accessToken);
       
-      toast.success('Login realizado com sucesso!');
-      router.push('/dashboard'); // Redireciona para uma página padrão
+      if (setupUserFromToken(accessToken)) {
+        toast.success('Login realizado com sucesso!');
+        router.push('/dashboard');
+      } else {
+        throw new Error('Token inválido recebido do servidor');
+      }
 
     } catch (error: any) {
       console.error("Login failed:", error);

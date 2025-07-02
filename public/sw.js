@@ -79,6 +79,26 @@ self.addEventListener('message', (event) => {
   }
 });
 
+// Função para verificar se uma resposta é cacheable
+function isCacheableResponse(response) {
+  // Não cachear respostas parciais (206), redirecionamentos (3xx), ou erros (4xx, 5xx)
+  if (response.status === 206 || response.status >= 300) {
+    return false;
+  }
+  
+  // Não cachear se contém headers de range
+  if (response.headers.get('content-range')) {
+    return false;
+  }
+  
+  // Não cachear se é uma resposta de streaming
+  if (response.headers.get('content-type')?.includes('text/event-stream')) {
+    return false;
+  }
+  
+  return true;
+}
+
 // Interceptar requisições
 self.addEventListener('fetch', (event) => {
   const { request } = event;
@@ -118,8 +138,13 @@ async function networkFirstStrategy(request) {
     if (networkResponse.ok) {
       // Verifica se o método é cacheable (GET, HEAD) antes de armazenar
       if (request.method === 'GET' || request.method === 'HEAD') {
-        const cache = await caches.open(CACHE_NAME);
-        cache.put(request, networkResponse.clone());
+        // Verifica se a resposta é cacheable
+        if (isCacheableResponse(networkResponse)) {
+          const cache = await caches.open(CACHE_NAME);
+          cache.put(request, networkResponse.clone()).catch((error) => {
+            console.log(`❌ Erro ao cachear ${request.url}:`, error);
+          });
+        }
       }
     }
     
@@ -158,8 +183,13 @@ async function cacheFirstStrategy(request) {
     if (networkResponse.ok) {
       // Verifica se o método é cacheable (GET, HEAD) antes de armazenar
       if (request.method === 'GET' || request.method === 'HEAD') {
-        const cache = await caches.open(STATIC_CACHE_NAME);
-        cache.put(request, networkResponse.clone());
+        // Verifica se a resposta é cacheable
+        if (isCacheableResponse(networkResponse)) {
+          const cache = await caches.open(STATIC_CACHE_NAME);
+          cache.put(request, networkResponse.clone()).catch((error) => {
+            console.log(`❌ Erro ao cachear ${request.url}:`, error);
+          });
+        }
       }
     }
     
@@ -203,9 +233,16 @@ async function staleWhileRevalidateStrategy(request, cacheName = CACHE_NAME) {
     if (networkResponse && networkResponse.ok) {
       // Verifica se o método é cacheable (GET, HEAD) antes de armazenar
       if (request.method === 'GET' || request.method === 'HEAD') {
-        // Clona antes de armazenar para evitar problemas de stream
-        cache.put(request, networkResponse.clone());
-        console.log(`🔄 Cache atualizado: ${request.url}`);
+        // Verifica se a resposta é cacheable (não é partial content ou range request)
+        if (isCacheableResponse(networkResponse)) {
+          // Clona antes de armazenar para evitar problemas de stream
+          cache.put(request, networkResponse.clone()).catch((error) => {
+            console.log(`❌ Erro ao cachear ${request.url}:`, error);
+          });
+          console.log(`🔄 Cache atualizado: ${request.url}`);
+        } else {
+          console.log(`⚠️ Resposta não cacheable (status ${networkResponse.status}): ${request.url}`);
+        }
       } else {
         console.log(`⚠️ Método ${request.method} não cacheable: ${request.url}`);
       }
