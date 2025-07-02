@@ -55,15 +55,6 @@ log "📍 Domínio: $DOMAIN"
 log "📁 Diretório do projeto: $PROJECT_DIR"
 echo ""
 
-# Solicitar URL do repositório Git
-echo "📋 Informações necessárias:"
-read -p "Digite a URL do repositório Git (ex: https://github.com/user/portal.git): " GIT_REPO
-
-if [ -z "$GIT_REPO" ]; then
-    log_error "URL do repositório é obrigatória"
-    exit 1
-fi
-
 echo ""
 log "🔍 Verificando sistema..."
 
