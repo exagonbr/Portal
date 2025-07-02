@@ -54,10 +54,10 @@ router.get('/health', async (req: Request, res: Response) => {
       return res.status(200).json(health);
     }
 
-    res.status(200).json(health);
+    return res.status(200).json(health);
   } catch (error) {
     console.error('Health check error:', error);
-    res.status(503).json({
+    return res.status(503).json({
       status: 'error',
       timestamp: new Date().toISOString(),
       error: 'Health check failed'
@@ -70,7 +70,7 @@ router.get('/health', async (req: Request, res: Response) => {
  * GET /api/ping
  */
 router.get('/ping', (req: Request, res: Response) => {
-  res.status(200).json({
+  return res.status(200).json({
     message: 'pong',
     timestamp: new Date().toISOString()
   });

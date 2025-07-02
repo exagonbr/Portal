@@ -4,7 +4,6 @@ import { S3Client, ListBucketsCommand } from '@aws-sdk/client-s3';
 import nodemailer from 'nodemailer';
 import SystemSettingsService from '../services/SystemSettingsService';
 import { emailService } from '../services/emailService';
-import db from '../config/database';
 
 const router = express.Router();
 

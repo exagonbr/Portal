@@ -459,43 +459,6 @@ log_success "Configuração do Nginx verificada"
 # Configurar PM2
 log "⚙️ Configurando PM2..."
 
-# Criar arquivo de configuração do PM2
-cat > ecosystem.config.js << EOF
-module.exports = {
-  apps: [
-    {
-      name: 'portal-frontend',
-      script: 'node_modules/next/dist/bin/next',
-      args: 'start',
-      cwd: '${PROJECT_DIR}',
-      instances: 'max',
-      exec_mode: 'cluster',
-      autorestart: true,
-      watch: false,
-      max_memory_restart: '1G',
-      env: {
-        NODE_ENV: 'production',
-        PORT: ${FRONTEND_PORT}
-      }
-    },
-    {
-      name: 'portal-backend',
-      script: 'dist/index.js',
-      cwd: '${PROJECT_DIR}/backend',
-      instances: 'max',
-      exec_mode: 'cluster',
-      autorestart: true,
-      watch: false,
-      max_memory_restart: '1G',
-      env: {
-        NODE_ENV: 'production',
-        PORT: ${BACKEND_PORT}
-      }
-    }
-  ]
-};
-EOF
-
 log_success "Arquivo de configuração do PM2 criado"
 
 # Iniciar aplicações com PM2
