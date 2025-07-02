@@ -9,10 +9,10 @@ const FORCE_PRODUCTION_BACKEND = process.env.FORCE_PRODUCTION_BACKEND === 'true'
 // URLs do backend - priorizar valores do .env
 export const BACKEND_CONFIG = {
   // URL principal do backend
-  url: process.env.BACKEND_URL || process.env.INTERNAL_API_URL || 'https://portal.sabercon.com.br/api',
+  url: 'https://portal.sabercon.com.br/api',
   
   // URL pública da API
-  publicUrl: process.env.NEXT_PUBLIC_API_URL || 'https://portal.sabercon.com.br/api',
+  publicUrl: 'https://portal.sabercon.com.br/api',
   
   // Forçar uso do backend de produção mesmo com servidor local
   forceProduction: FORCE_PRODUCTION_BACKEND,
@@ -58,7 +58,7 @@ export function shouldUseLocalBackend(): boolean {
   }
   
   // Verificar se há um backend local configurado explicitamente
-  const localUrls = ['https://portal.sabercon.com.br/api'];
+  const localUrls = ['localhost', '127.0.0.1'];
   return localUrls.some(url => 
     process.env.BACKEND_URL?.includes(url) || 
     process.env.INTERNAL_API_URL?.includes(url)
