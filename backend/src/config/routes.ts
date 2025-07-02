@@ -5,6 +5,7 @@ import apiRoutes from '../routes';
 import authRoutes from '../routes/auth';
 import publicRoutes from '../routes/public';
 import sessionsRouter from '../routes/sessions';
+import healthRoutes from '../routes/health';
 import SystemSettingsService from '../services/SystemSettingsService';
 import db from '../config/database';
 
@@ -13,7 +14,10 @@ import db from '../config/database';
  * Configura todas as rotas da aplicação
  */
 export function setupRoutes(app: express.Application): void {
-  // Health check
+  // Health check routes
+  app.use('/api', healthRoutes);
+  
+  // Simple health check for root
   app.get('/health', (_, res) => {
     res.status(200).json({
       status: 'OK',

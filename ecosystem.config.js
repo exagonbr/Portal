@@ -11,13 +11,17 @@ module.exports = {
         NODE_ENV: 'production',
         PORT: 3000,
         NEXTAUTH_URL: 'https://portal.sabercon.com.br',
-        NEXT_PUBLIC_API_URL: 'https://portal.sabercon.com.br/api'
+        NEXT_PUBLIC_API_URL: 'https://portal.sabercon.com.br/api',
+        INTERNAL_API_URL: 'https://portal.sabercon.com.br/api',
+        BACKEND_URL: 'https://portal.sabercon.com.br/api'
       },
       env_production: {
         NODE_ENV: 'production',
         PORT: 3000,
         NEXTAUTH_URL: 'https://portal.sabercon.com.br',
-        NEXT_PUBLIC_API_URL: 'https://portal.sabercon.com.br/api'
+        NEXT_PUBLIC_API_URL: 'https://portal.sabercon.com.br/api',
+        INTERNAL_API_URL: 'https://portal.sabercon.com.br/api',
+        BACKEND_URL: 'https://portal.sabercon.com.br/api'
       },
       // Configurações de restart
       max_restarts: 10,
@@ -53,11 +57,15 @@ module.exports = {
       exec_mode: 'fork',
       env: {
         NODE_ENV: 'production',
-        PORT: 3001
+        PORT: 3001,
+        CORS_ORIGIN: 'https://portal.sabercon.com.br',
+        ALLOWED_ORIGINS: 'https://portal.sabercon.com.br,https://www.portal.sabercon.com.br'
       },
       env_production: {
         NODE_ENV: 'production',
-        PORT: 3001
+        PORT: 3001,
+        CORS_ORIGIN: 'https://portal.sabercon.com.br',
+        ALLOWED_ORIGINS: 'https://portal.sabercon.com.br,https://www.portal.sabercon.com.br'
       },
       // Configurações de restart
       max_restarts: 10,

@@ -48,7 +48,7 @@ server {
     
     # Backend API → portal.sabercon.com.br/api/ (SEM RATE LIMITING)
     location /api/ {
-        proxy_pass http://127.0.0.1:3001/api/;
+        proxy_pass https://portal.sabercon.com.br/api/;
         proxy_http_version 1.1;
         proxy_set_header Host $host;
         proxy_set_header X-Real-IP $remote_addr;

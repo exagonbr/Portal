@@ -461,6 +461,22 @@ const nextConfig: NextConfig = {
     ];
   },
 
+  // Configuração de rewrites - DESABILITADO em produção para evitar loops
+  async rewrites() {
+    // Em produção, o Nginx faz o roteamento - não usar proxy interno
+    if (isProd) {
+      return [];
+    }
+    
+    // Apenas em desenvolvimento usar proxy para backend
+    return [
+      {
+        source: '/api/:path*',
+        destination: `${process.env.BACKEND_URL || 'https://portal.sabercon.com.br/api'}/:path*`
+      }
+    ];
+  },
+
   // Configuração para PWA (se aplicável)
   env: {
     CUSTOM_KEY: 'my-value',

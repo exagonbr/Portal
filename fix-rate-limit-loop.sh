@@ -365,7 +365,7 @@ NEXTAUTH_URL=https://portal.sabercon.com.br
 NEXT_PUBLIC_API_URL=https://portal.sabercon.com.br/api
 
 # Backend interno (usado apenas pelo servidor)
-BACKEND_URL=http://127.0.0.1:3001/api
+BACKEND_URL=https://portal.sabercon.com.br/api
 
 # Configurações de segurança
 NEXTAUTH_SECRET=your-production-secret-here

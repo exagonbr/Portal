@@ -18,7 +18,7 @@ export const corsUsersConfig: CorsUsersConfig = {
   // Origens permitidas para APIs gerais de usuários
   allowedOrigins: [
     'https://portal.sabercon.com.br',
-    'http://localhost:3001',
+    'https://portal.sabercon.com.br/api',
     'https://portal.sabercon.com.br/api',
     'http://localhost:3000',
     'http://localhost:8080',
