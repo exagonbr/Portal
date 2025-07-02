@@ -145,7 +145,8 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
       
       if (setupUserFromToken(accessToken)) {
         toast.success('Login realizado com sucesso!');
-        router.push('/dashboard');
+        const baseUrl = process.env.NEXT_PUBLIC_API_URL?.replace('/api', '') || '';
+        router.push(`${baseUrl}/dashboard`);
       } else {
         throw new Error('Token inválido recebido do servidor');
       }

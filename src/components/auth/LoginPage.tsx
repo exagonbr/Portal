@@ -162,7 +162,8 @@ export function LoginPage() {
       
       // CORREÇÃO: Usar window.location.href para redirecionamento mais confiável
       setTimeout(() => {
-        window.location.href = targetPath!;
+        const baseUrl = process.env.NEXT_PUBLIC_API_URL?.replace('/api', '') || '';
+        window.location.href = `${baseUrl}${targetPath}`;
       }, 300);
     }
   }, [authContext, router, mounted]);
