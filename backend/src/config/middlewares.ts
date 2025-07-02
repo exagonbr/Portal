@@ -63,11 +63,11 @@ export function setupMiddlewares(app: express.Application): void {
       const allowedList = corsUsersConfig.allowedOrigins;
       if (isOriginAllowed(origin, allowedList)) {
         console.log(`✅ CORS: Origem permitida: ${origin || 'sem origem'}`);
-        callback(null, true);
+        return callback(null, true);
       } else {
         console.warn(`❌ CORS: Origem bloqueada: ${origin || 'sem origem'}`);
         // Não bloquear completamente, apenas logar o aviso
-        callback(null, true);
+        return callback(null, true);
       }
     },
     credentials: true,
