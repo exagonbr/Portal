@@ -130,27 +130,69 @@ cd "$PROJECT_DIR"
 # Verificar dependências básicas do sistema
 log "🔍 Verificando dependências básicas do sistema..."
 
-# Atualizar repositórios
-log "📦 Atualizando repositórios do sistema..."
-apt update
+# Verificar e corrigir problemas críticos do sistema
+log "🔍 Verificando integridade do sistema..."
 
-# Verificar e corrigir problemas de configuração
-log "🔍 Verificando integridade dos pacotes..."
-if ! dpkg --configure -a 2>/dev/null; then
-    log_warning "⚠️  Detectados problemas com configuração de pacotes"
+# Primeiro, tentar atualizar repositórios
+if ! apt update 2>/dev/null; then
+    log_warning "⚠️  Problemas detectados no sistema, executando correção automática..."
     
-    # Corrigir problemas do GRUB se existirem
-    if dpkg -l | grep -q grub-efi; then
-        log "🔧 Corrigindo problemas do GRUB..."
-        apt-get install --reinstall grub-efi-amd64-signed -y 2>/dev/null || true
-        update-grub 2>/dev/null || true
+    # Parar processos apt/dpkg travados
+    log "🔧 Parando processos apt/dpkg travados..."
+    killall apt apt-get dpkg 2>/dev/null || true
+    sleep 2
+    
+    # Remover locks
+    log "🔧 Removendo locks do sistema..."
+    rm -f /var/lib/dpkg/lock-frontend 2>/dev/null || true
+    rm -f /var/lib/apt/lists/lock 2>/dev/null || true
+    rm -f /var/cache/apt/archives/lock 2>/dev/null || true
+    rm -f /var/lib/dpkg/lock 2>/dev/null || true
+    
+    # Verificar se há processos dpkg travados
+    if pgrep -f dpkg > /dev/null; then
+        log_warning "🔧 Forçando término de processos dpkg travados..."
+        pkill -9 -f dpkg 2>/dev/null || true
+        sleep 3
+    fi
+    
+    # Tentar configurar pacotes pendentes
+    log "🔧 Configurando pacotes pendentes..."
+    if ! dpkg --configure -a 2>/dev/null; then
+        log_warning "⚠️  Removendo pacotes GRUB problemáticos (seguro em VPS)..."
+        
+        # Remover pacotes GRUB problemáticos (comum em VPS)
+        apt-get remove --purge grub-efi-amd64-signed shim-signed -y 2>/dev/null || true
+        apt-get remove --purge grub-efi-amd64 grub-efi-amd64-bin -y 2>/dev/null || true
+        apt-get remove --purge grub-common grub2-common -y 2>/dev/null || true
+        
+        # Tentar configurar novamente após remoção
+        dpkg --configure -a 2>/dev/null || true
     fi
     
     # Corrigir dependências quebradas
+    log "🔧 Corrigindo dependências quebradas..."
     apt-get install -f -y 2>/dev/null || true
-    dpkg --configure -a 2>/dev/null || true
     
-    log_warning "⚠️  Problemas de configuração tratados, continuando..."
+    # Limpar cache
+    apt-get clean
+    apt-get autoclean
+    
+    log_success "✅ Correção de sistema concluída"
+fi
+
+# Atualizar repositórios após correção
+log "📦 Atualizando repositórios do sistema..."
+apt update
+check_status "Repositórios atualizados"
+
+# Verificação final da integridade
+log "🔍 Verificação final da integridade dos pacotes..."
+if ! apt list --installed > /dev/null 2>&1; then
+    log_error "❌ Sistema APT ainda com problemas críticos"
+    log_error "Execute manualmente o script de correção:"
+    log_error "sudo bash fix-grub-dpkg-error.sh"
+    exit 1
 fi
 
 check_status "Repositórios atualizados"
