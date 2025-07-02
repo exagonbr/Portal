@@ -82,7 +82,7 @@ if [ ! -f "$PROJECT_DIR/package.json" ] || [ ! -d "$PROJECT_DIR/backend" ]; then
         echo "   1. Executar o script no diretório do projeto"
         echo "   2. Clonar o projeto primeiro (se o Git SSH já estiver configurado):"
         echo "      sudo mkdir -p /var/www/portal"
-        echo "      sudo git clone git@github.com:exagonbr/portal.git /var/www/portal"
+        echo "      sudo git clone git@github.com:exagonbr/Portal.git /var/www/portal"
         echo "      cd /var/www/portal"
         echo "      sudo bash deploy-aws-portal.sh"
         echo ""
