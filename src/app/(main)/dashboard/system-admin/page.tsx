@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
-import { runAuthDiagnostic, AuthDiagnosticResult } from '@/utils/auth-diagnostic';
+import { runAuthDiagnostics, AuthDiagnosticResult } from '@/utils/auth-diagnostic';
 import { isDevelopment } from '@/utils/env';
 import {
   Shield,
@@ -243,11 +243,11 @@ function SystemAdminDashboardContent() {
     const runInitialDiagnostic = async () => {
       console.log('🔍 [DASHBOARD] Executando diagnóstico inicial de autenticação...');
       try {
-        const diagnostic = await runAuthDiagnostic();
+        const diagnostic = await runAuthDiagnostics();
         setAuthDiagnostic(diagnostic);
         
-        if (!diagnostic.success) {
-          console.warn('⚠️ [DASHBOARD] Problemas de autenticação detectados:', diagnostic.issues);
+        if (!diagnostic.tokenValid || diagnostic.errors.length > 0) {
+          console.warn('⚠️ [DASHBOARD] Problemas de autenticação detectados:', diagnostic.errors);
         } else {
           console.log('✅ [DASHBOARD] Autenticação funcionando corretamente');
         }
@@ -469,7 +469,7 @@ function SystemAdminDashboardContent() {
     }
 
     // Verificar AWS se disponível
-    if (awsStats && awsStats.success_rate < 95) {
+    if (awsStats && typeof awsStats.success_rate === 'number' && awsStats.success_rate < 95) {
       systemAlerts.push({
         id: 'aws-degraded',
         type: awsStats.success_rate < 80 ? 'critical' : 'warning',
@@ -952,10 +952,10 @@ function SystemAdminDashboardContent() {
         <StatCard
           icon={Cloud}
           title="Infraestrutura AWS"
-          value={dashboardData?.infrastructure?.aws ? `${dashboardData.infrastructure.aws.performance.uptime}%` : (awsStats ? `${awsStats.success_rate.toFixed(1)}%` : 'N/A')}
+          value={dashboardData?.infrastructure?.aws ? `${dashboardData.infrastructure.aws.performance.uptime}%` : (awsStats && typeof awsStats.success_rate === 'number' ? `${awsStats.success_rate.toFixed(1)}%` : 'N/A')}
           subtitle={dashboardData?.infrastructure?.aws ? 
             `${dashboardData.infrastructure.aws.services.length} serviços • ${dashboardData.infrastructure.aws.performance.responseTime}ms` :
-            (awsStats ? `${awsStats.total_connections} conexões • ${awsStats.average_response_time.toFixed(0)}ms` : 'Conectado via .env')
+            (awsStats && typeof awsStats.total_connections === 'number' && typeof awsStats.average_response_time === 'number' ? `${awsStats.total_connections} conexões • ${awsStats.average_response_time.toFixed(0)}ms` : 'Conectado via .env')
           }
           color="amber"
         />
@@ -1557,15 +1557,15 @@ function SystemAdminDashboardContent() {
                     <div className="flex justify-between items-center">
                       <span className="text-xs text-gray-600">Taxa de Sucesso:</span>
                       <span className={`font-semibold text-xs sm:text-sm ${
-                        awsStats.success_rate >= 95 ? 'text-accent-green' : 
-                        awsStats.success_rate >= 80 ? 'text-accent-yellow' : 'text-red-600'
+                        (typeof awsStats.success_rate === 'number' && awsStats.success_rate >= 95) ? 'text-accent-green' : 
+                        (typeof awsStats.success_rate === 'number' && awsStats.success_rate >= 80) ? 'text-accent-yellow' : 'text-red-600'
                       }`}>
-                        {awsStats.success_rate.toFixed(1)}%
+                        {typeof awsStats.success_rate === 'number' ? awsStats.success_rate.toFixed(1) : '0.0'}%
                       </span>
                     </div>
                     <div className="flex justify-between items-center">
                       <span className="text-xs text-gray-600">Conexões:</span>
-                      <span className="font-semibold text-xs sm:text-sm">{awsStats.total_connections}</span>
+                      <span className="font-semibold text-xs sm:text-sm">{typeof awsStats.total_connections === 'number' ? awsStats.total_connections : 0}</span>
                     </div>
                   </>
                 )}
