@@ -24,8 +24,8 @@ export const getApiUrl = (path: string = '') => {
 export const getInternalApiUrl = (path: string = '') => {
   const isProduction = process.env.NODE_ENV === 'production';
   const baseUrl = isProduction
-    ? (process.env.INTERNAL_API_URL || 'http://localhost:3001')
-    : (process.env.INTERNAL_API_URL || 'http://localhost:3001');
+    ? (process.env.INTERNAL_API_URL || 'https://portal.sabercon.com.br/api')
+    : (process.env.INTERNAL_API_URL || 'https://portal.sabercon.com.br/api');
   const cleanPath = path.startsWith('/') ? path : `/${path}`;
   return `${baseUrl}${cleanPath}`;
 };

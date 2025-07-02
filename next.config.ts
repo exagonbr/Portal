@@ -472,7 +472,7 @@ const nextConfig: NextConfig = {
     return [
       {
         source: '/api/:path*',
-        destination: `${process.env.BACKEND_URL || 'http://localhost:3001'}/:path*`
+        destination: 'https://portal.sabercon.com.br/api/:path*'
       }
     ];
   },
@@ -481,7 +481,7 @@ const nextConfig: NextConfig = {
   env: {
     CUSTOM_KEY: 'my-value',
     CACHE_VERSION: cacheVersion,
-    NEXT_PUBLIC_NODE_ENV: process.env.NODE_ENV || 'development',
+    NEXT_PUBLIC_NODE_ENV: 'production'
   },
 };
 
