@@ -149,6 +149,6 @@ export function setupMiddlewares(app: express.Application): void {
     }
     
     console.log(`🌐 CORS Request: ${req.method} ${req.url} from ${origin || 'unknown'}`);
-    next();
+    return next();
   });
 }
