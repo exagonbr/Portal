@@ -2,6 +2,7 @@ import { useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { useAuth } from '../contexts/AuthContext';
 import { getDashboardPath, isValidRole } from '../utils/roleRedirect';
+import { buildUrl, buildDashboardUrl } from '../utils/urlBuilder';
 
 /**
  * Hook para gerenciar redirecionamentos baseados na role do usuário
@@ -24,7 +25,7 @@ export function useRoleRedirect(
     if (!isValidRole(userRole)) {
       console.log(`Role inválida detectada no redirecionamento: ${userRole}`);
       logout();
-      router.push(fallbackPath);
+      router.push(buildUrl(fallbackPath));
       return;
     }
 
@@ -33,10 +34,10 @@ export function useRoleRedirect(
 
     if (dashboardPath) {
       console.log(`Redirecionando usuário ${user.name} (${userRole}) para: ${dashboardPath}`);
-      router.push(dashboardPath);
+      router.push(buildUrl(dashboardPath));
     } else {
       console.log(`Caminho do dashboard não encontrado para a role: ${userRole}`);
-      router.push(fallbackPath);
+      router.push(buildUrl(fallbackPath));
     }
   }, [user, redirectOnLogin, fallbackPath, router, logout]);
 
@@ -45,7 +46,7 @@ export function useRoleRedirect(
    */
   const redirectToDashboard = () => {
     if (!user) {
-      router.push(fallbackPath);
+      router.push(buildUrl(fallbackPath));
       return;
     }
 
@@ -54,16 +55,16 @@ export function useRoleRedirect(
     if (!isValidRole(userRole)) {
       console.log(`Role inválida para redirecionamento manual: ${userRole}`);
       logout();
-      router.push(fallbackPath);
+      router.push(buildUrl(fallbackPath));
       return;
     }
 
     const dashboardPath = getDashboardPath(userRole);
 
     if (dashboardPath) {
-      router.push(dashboardPath);
+      router.push(buildUrl(dashboardPath));
     } else {
-      router.push(fallbackPath);
+      router.push(buildUrl(fallbackPath));
     }
   };
 

@@ -21,7 +21,7 @@ import {
   migrateContactFields,
   ensureLegacyCompatibility
 } from '../utils/validation';
-import { getAuthToken } from './authService';
+import { fetchWithAuth } from '@/lib/api-client';
 
 // Tipos importados e disponíveis para uso interno
 // Remover re-exports para evitar problemas de dependência circular
@@ -30,7 +30,7 @@ const API_BASE = `/api/institutions`;
 
 // Configuração de timeout para requisições
 const REQUEST_TIMEOUT = 30000; // 30 segundos
-const MAX_RETRIES = 3;
+const MAX_RETRIES = 5;
 
 // Função para criar fetch com timeout
 const fetchWithTimeout = async (url: string, options: RequestInit = {}, timeout: number = REQUEST_TIMEOUT): Promise<Response> => {
@@ -38,7 +38,7 @@ const fetchWithTimeout = async (url: string, options: RequestInit = {}, timeout:
   const timeoutId = setTimeout(() => controller.abort(), timeout);
   
   try {
-    const response = await fetch(url, {
+    const response = await fetchWithAuth(url, {
       ...options,
       signal: controller.signal,
     });
@@ -89,22 +89,6 @@ const fetchWithRetry = async (url: string, options: RequestInit = {}, maxRetries
 // A função getAuthToken foi movida para o auth.ts para centralizar a lógica.
 // A função antiga foi removida para evitar duplicação e inconsistência.
 
-// Função para criar headers com autenticação
-const createAuthHeaders = (): Record<string, string> => {
-  const headers: Record<string, string> = {
-    'Content-Type': 'application/json',
-  };
-  
-  const token = getAuthToken();
-  
-  if (token) {
-    headers.Authorization = `Bearer ${token}`;
-  } else {
-    console.warn('⚠️ InstitutionService: Nenhum token de autenticação encontrado');
-  }
-  
-  return headers;
-};
 
 export class InstitutionService {
   // Listar instituições com filtros e paginação
@@ -125,12 +109,8 @@ export class InstitutionService {
       const url = `${API_BASE}?${params.toString()}`;
       console.log('🔗 Fetching institutions from:', url);
       
-      const headers = createAuthHeaders();
-      console.log('📋 Request headers:', headers);
-      
       const response = await fetchWithRetry(url, {
         method: 'GET',
-        headers,
       });
       
       console.log('📡 Response status:', response.status, response.statusText);
@@ -139,9 +119,12 @@ export class InstitutionService {
         const errorText = await response.text();
         console.log('❌ Response error:', errorText);
         
-        // Se for erro de autenticação (401), retornar dados simulados
+        // Se for erro de autenticação (401), logar detalhes e retornar dados simulados
         if (response.status === 401) {
-          console.warn('⚠️ Erro de autenticação, retornando dados simulados');
+          console.warn('⚠️ Erro de autenticação (401):', {
+            token: 'Token handling is now centralized',
+            errorText
+          });
           return this.getFallbackInstitutions(options);
         }
         
@@ -332,7 +315,6 @@ export class InstitutionService {
     try {
       const response = await fetchWithRetry(`${API_BASE}/${id}`, {
         method: 'GET',
-        headers: createAuthHeaders(),
       });
       
       if (!response.ok) {
@@ -377,7 +359,6 @@ export class InstitutionService {
 
       const response = await fetchWithRetry(API_BASE, {
         method: 'POST',
-        headers: createAuthHeaders(),
         body: JSON.stringify(processedData),
       });
 
@@ -427,7 +408,6 @@ export class InstitutionService {
 
       const response = await fetchWithRetry(`${API_BASE}/${id}`, {
         method: 'PUT',
-        headers: createAuthHeaders(),
         body: JSON.stringify(processedData),
       });
 
@@ -489,7 +469,6 @@ export class InstitutionService {
     try {
       const response = await fetchWithRetry(`${API_BASE}/${id}`, {
         method: 'DELETE',
-        headers: createAuthHeaders(),
       });
 
       if (!response.ok) {
@@ -516,7 +495,6 @@ export class InstitutionService {
       // Por exemplo, verificar se há usuários, escolas ou cursos vinculados
       const response = await fetchWithRetry(`${API_BASE}/${id}/stats`, {
         method: 'GET',
-        headers: createAuthHeaders(),
       });
 
       if (!response.ok) {
@@ -590,7 +568,6 @@ export class InstitutionService {
     try {
       const response = await fetchWithRetry(`${API_BASE}/export?format=${format}`, {
         method: 'GET',
-        headers: createAuthHeaders(),
       });
 
       if (!response.ok) {
@@ -610,12 +587,8 @@ export class InstitutionService {
       const formData = new FormData();
       formData.append('file', file);
 
-      const headers = createAuthHeaders();
-      delete headers['Content-Type']; // Deixar o browser definir o Content-Type para FormData
-
       const response = await fetchWithRetry(`${API_BASE}/import`, {
         method: 'POST',
-        headers,
         body: formData,
       });
 

@@ -46,8 +46,12 @@ export const PRODUCTION_CONFIG = {
   
   // URLs de API
   API: {
-    BACKEND_URL: 'https://portal.sabercon.com.br/api',
-    FRONTEND_URL:'https://portal.sabercon.com.br'
+    BACKEND_URL: process.env.NODE_ENV === 'production' 
+      ? 'https://portal.sabercon.com.br/api'
+      : 'https://portal.sabercon.com.br/api',
+    FRONTEND_URL: process.env.NODE_ENV === 'production'
+      ? 'https://portal.sabercon.com.br'
+      : 'https://portal.sabercon.com.br'
   }
 } as const;
 

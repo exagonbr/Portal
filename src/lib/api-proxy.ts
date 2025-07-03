@@ -5,6 +5,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getServerSession } from 'next-auth';
 import { authOptions } from '@/lib/auth';
+import { getInternalApiUrl } from '@/config/urls';
 import { API_CONFIG } from '@/config/constants';
 import { getCurrentToken } from '@/utils/token-validator';
 
@@ -72,7 +73,7 @@ async function handleProxyRequest(
 
     // Constrói URL do backend
     const { searchParams } = new URL(request.url);
-    const backendUrl = `${API_CONFIG.BASE_URL}${endpoint}${searchParams.toString() ? `?${searchParams.toString()}` : ''}`;
+    const backendUrl = `${getInternalApiUrl(endpoint)}${searchParams.toString() ? `?${searchParams.toString()}` : ''}`;
 
     // Prepara headers
     const headers: Record<string, string> = {
@@ -151,7 +152,9 @@ export async function backendRequest<T = any>(
 
   try {
     // Constrói URL
-    const url = new URL(endpoint.startsWith('/') ? endpoint.slice(1) : endpoint, API_CONFIG.BASE_URL);
+    const baseUrl = getInternalApiUrl();
+    const cleanEndpoint = endpoint.startsWith('/') ? endpoint : `/${endpoint}`;
+    const url = new URL(`${baseUrl}${cleanEndpoint}`);
     
     if (params) {
       Object.entries(params).forEach(([key, value]) => {

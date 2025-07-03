@@ -6,10 +6,12 @@
 export const JWT_CONFIG = {
   // Secret único para toda aplicação
   JWT_SECRET: 'SaberconPortal2025_SuperSecretKey_ProductionReady_XYZ789',
+  SECRET: 'SaberconPortal2025_SuperSecretKey_ProductionReady_XYZ789', // Alias para compatibilidade
   
   // Tempos de expiração
   TOKEN_EXPIRY: '1h',        // Access token: 1 hora
   REFRESH_TOKEN_EXPIRY: '7d', // Refresh token: 7 dias
+  ACCESS_TOKEN_EXPIRES_IN: '1h', // Alias para compatibilidade
   
   // Algoritmo padrão
   ALGORITHM: 'HS256' as const,

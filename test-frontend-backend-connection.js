@@ -49,7 +49,7 @@ async function testFrontendBackendConnection() {
     console.log('\n🔄 Frontend não disponível, testando backend diretamente...');
     
     try {
-      const backendResponse = await makeRequest('http://localhost:3001/apisettings/public', 'http');
+      const backendResponse = await makeRequest('https://portal.sabercon.com.br/apisettings/public', 'http');
       console.log(`📊 Backend Status: ${backendResponse.statusCode}`);
       
       if (backendResponse.statusCode === 200) {

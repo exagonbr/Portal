@@ -1,8 +1,8 @@
 'use client';
 
-import { useAuth as useAuthContext } from '@/contexts/AuthContext';
-import { useRouter } from 'next/navigation';
-import { useEffect } from 'react';
+import { useAuthSafe as useAuthContext } from '@/contexts/AuthContext';
+import { useRouter, usePathname } from 'next/navigation';
+import { useEffect, useMemo, useRef } from 'react';
 
 export interface UseAuthOptions {
   required?: boolean;
@@ -10,34 +10,44 @@ export interface UseAuthOptions {
   allowedRoles?: string[];
 }
 
-export function useAuth(options: UseAuthOptions = {}) {
-  const { user, loading, isAuthenticated } = useAuthContext();
+export function useAuthHook(options: UseAuthOptions = {}) {
+  const { user, isLoading: loading, isAuthenticated } = useAuthContext();
   const router = useRouter();
+  const pathname = usePathname();
+  const hasRedirected = useRef(false);
   
-  const {
-    required = false,
-    redirectTo = '/auth/login',
-    allowedRoles = []
-  } = options;
+  const memoizedOptions = useMemo(() => ({
+    required: options.required ?? false,
+    redirectTo: options.redirectTo ?? '/auth/login',
+    allowedRoles: options.allowedRoles ?? []
+  }), [options.required, options.redirectTo, options.allowedRoles]);
+
+  const userRole = user?.role;
 
   useEffect(() => {
-    if (loading) return; // Ainda carregando
+    if (loading || hasRedirected.current) return;
 
-    // Se autenticação é obrigatória e não há usuário
-    if (required && !isAuthenticated) {
-      router.push(redirectTo);
+    const shouldRedirectToLogin = memoizedOptions.required && !isAuthenticated && pathname !== memoizedOptions.redirectTo;
+    const shouldRedirectToDashboard = user && memoizedOptions.allowedRoles.length > 0 && 
+      (!userRole || !memoizedOptions.allowedRoles.includes(userRole)) && pathname !== '/dashboard';
+
+    if (shouldRedirectToLogin) {
+      hasRedirected.current = true;
+      router.push(memoizedOptions.redirectTo);
       return;
     }
 
-    // Se há roles permitidos e o usuário não tem permissão
-    if (user && allowedRoles.length > 0) {
-      const userRole = user.role;
-      if (!userRole || !allowedRoles.includes(userRole)) {
-        router.push('/dashboard'); // Redirecionar para dashboard padrão
-        return;
-      }
+    if (shouldRedirectToDashboard) {
+      hasRedirected.current = true;
+      router.push('/dashboard');
+      return;
     }
-  }, [user, loading, isAuthenticated, required, redirectTo, allowedRoles, router]);
+  }, [loading, isAuthenticated, userRole, pathname, router, memoizedOptions]);
+
+  // Reset redirect flag when pathname changes
+  useEffect(() => {
+    hasRedirected.current = false;
+  }, [pathname]);
 
   return {
     session: user ? { user } : null, // Compatibilidade com código existente
@@ -45,7 +55,7 @@ export function useAuth(options: UseAuthOptions = {}) {
     isLoading: loading,
     isAuthenticated,
     user,
-    hasRole: (role: string) => user?.role === role,
-    hasAnyRole: (roles: string[]) => roles.includes(user?.role || ''),
+    hasRole: (role: string) => userRole === role,
+    hasAnyRole: (roles: string[]) => roles.includes(userRole || ''),
   };
 }

@@ -23,16 +23,17 @@ class LoopPreventionSystem {
     consecutiveErrors: new Map()
   };
 
-  private readonly MAX_REQUESTS_PER_SECOND = 50;
-  private readonly MAX_REQUESTS_PER_MINUTE = 500;
-  private readonly BLOCK_DURATION_MS = 5000;
-  private readonly ERROR_THRESHOLD = 15;
-  private readonly DISABLED = true;
+  private readonly MAX_REQUESTS_PER_SECOND = 20;
+  private readonly MAX_REQUESTS_PER_MINUTE = 200;
+  private readonly BLOCK_DURATION_MS = 3000;
+  private readonly ERROR_THRESHOLD = 10;
+  private readonly DISABLED = false; // Changed to false to enable by default
 
   constructor() {
     if (!this.DISABLED) {
       this.setupInterceptor();
       this.startCleanupInterval();
+      console.log('✅ Sistema de Prevenção de Loops ativado');
     } else {
       console.log('🚫 Sistema de Prevenção de Loops DESABILITADO');
     }
@@ -114,8 +115,6 @@ class LoopPreventionSystem {
         throw error;
       }
     };
-
-    console.log('✅ Sistema de Prevenção de Loops ativado');
   }
 
   private getUrlString(input: RequestInfo | URL): string {
@@ -143,6 +142,19 @@ class LoopPreventionSystem {
 
   private shouldIgnoreUrl(url: string): boolean {
     const ignorePatterns = [
+      // FIXED: Extended Next.js internal routes
+      '/__nextjs_original-stack-frame',
+      '/_next/static/',
+      '/_next/image',
+      '/_next/webpack-hmr',
+      '/_vercel/insights',
+      '/__webpack_hmr',
+      
+      // FIXED: Development and debug routes
+      '/debug-',
+      '/test-',
+      
+      // API routes that shouldn't be blocked
       '/api/cache/',
       '/api/users/by-role',
       '/api/roles',
@@ -153,6 +165,26 @@ class LoopPreventionSystem {
       '/api/tv-shows',
       '/api/auth/validate',
       '/api/auth/me',
+      
+      // Health check and monitoring
+      '/api/health',
+      '/favicon.ico',
+      '/robots.txt',
+      '/sitemap.xml',
+      
+      // Static assets
+      '/static/',
+      '.css',
+      '.js',
+      '.png',
+      '.jpg',
+      '.svg',
+      '.ico',
+      '.map',
+      '.woff',
+      '.woff2',
+      '.ttf',
+      '.eot'
     ];
 
     return ignorePatterns.some(pattern => url.includes(pattern));
@@ -169,39 +201,44 @@ class LoopPreventionSystem {
 
     const now = Date.now();
     
+    // Clean up old requests
     this.detector.requests = this.detector.requests.filter(
       req => now - req.timestamp < 60000
     );
 
     const sameUrlRequests = this.detector.requests.filter(req => req.url === url);
     
+    // FIXED: More lenient check for rapid requests
     const lastSecondRequests = sameUrlRequests.filter(
       req => now - req.timestamp < 1000
     );
     
     if (lastSecondRequests.length >= this.MAX_REQUESTS_PER_SECOND) {
-      console.warn(`⚠️ Muitas requisições por segundo: ${lastSecondRequests.length} para ${url}`);
+      console.warn(`🚨 Muitas requisições por segundo para ${url}: ${lastSecondRequests.length}`);
       return true;
     }
 
-    if (sameUrlRequests.length >= this.MAX_REQUESTS_PER_MINUTE) {
-      console.warn(`⚠️ Muitas requisições por minuto: ${sameUrlRequests.length} para ${url}`);
+    // Check for requests in the last minute
+    const lastMinuteRequests = sameUrlRequests.filter(
+      req => now - req.timestamp < 60000
+    );
+    
+    if (lastMinuteRequests.length >= this.MAX_REQUESTS_PER_MINUTE) {
+      console.warn(`🚨 Muitas requisições por minuto para ${url}: ${lastMinuteRequests.length}`);
       return true;
     }
 
-    const consecutiveErrors = this.detector.consecutiveErrors.get(url) || 0;
-    if (consecutiveErrors >= this.ERROR_THRESHOLD) {
-      console.warn(`⚠️ Muitos erros consecutivos: ${consecutiveErrors} para ${url}`);
-      return true;
-    }
-
-    if (url.includes('/api/auth/login')) {
-      const loginRequests = this.detector.requests.filter(
-        req => req.url.includes('/api/auth/login') && now - req.timestamp < 5000
-      );
+    // FIXED: Check for rapid consecutive requests (pattern detection)
+    if (lastSecondRequests.length >= 5) {
+      const intervals = [];
+      for (let i = 1; i < lastSecondRequests.length; i++) {
+        intervals.push(lastSecondRequests[i].timestamp - lastSecondRequests[i-1].timestamp);
+      }
       
-      if (loginRequests.length >= 5) {
-        console.warn(`⚠️ Muitas tentativas de login: ${loginRequests.length} em 5 segundos`);
+      // If all intervals are very short (< 50ms), it's likely a loop
+      const avgInterval = intervals.reduce((a, b) => a + b, 0) / intervals.length;
+      if (avgInterval < 50) {
+        console.warn(`🚨 Padrão de loop detectado para ${url}: intervalo médio ${avgInterval}ms`);
         return true;
       }
     }
@@ -216,6 +253,7 @@ class LoopPreventionSystem {
       timestamp: Date.now()
     });
 
+    // Keep only the last 200 requests to prevent memory issues
     if (this.detector.requests.length > 200) {
       this.detector.requests = this.detector.requests.slice(-200);
     }
@@ -273,19 +311,22 @@ class LoopPreventionSystem {
       const now = Date.now();
       const oneHourAgo = now - (60 * 60 * 1000);
       
+      // Clean up old requests
       this.detector.requests = this.detector.requests.filter(
         req => req.timestamp > oneHourAgo
       );
       
+      // Remove expired blocks
       for (const [url, blockedUntil] of Array.from(this.detector.blockedUntil.entries())) {
         if (now >= blockedUntil) {
           this.detector.blockedUntil.delete(url);
         }
       }
       
+      // Reset error counters
       this.detector.consecutiveErrors.clear();
       
-    }, 5 * 60 * 1000);
+    }, 5 * 60 * 1000); // Run cleanup every 5 minutes
   }
 
   public forceReset(): void {
@@ -368,4 +409,4 @@ export function clearLoopBlocks(): void {
 // Auto-inicializar se estiver no navegador
 if (typeof window !== 'undefined') {
   initializeLoopPrevention();
-} 
+}

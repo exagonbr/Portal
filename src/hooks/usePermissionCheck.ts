@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { useAuth } from '@/contexts/AuthContext'
+import { buildLoginUrl, buildUrl } from '@/utils/urlBuilder'
 
 interface UsePermissionCheckOptions {
   restrictedRoles?: string[]
@@ -27,13 +28,13 @@ export function usePermissionCheck(options: UsePermissionCheckOptions = {}) {
       
       if (requireAuth && !user) {
         console.log('🔐 [usePermissionCheck] Nenhum usuário encontrado, redirecionando para login')
-        router.push('/auth/login')
+        router.push(buildLoginUrl())
         return
       }
 
       if (user && restrictedRoles.includes(user.role)) {
         console.log('🚫 [usePermissionCheck] Usuário sem permissão, redirecionando')
-        router.push(redirectTo)
+        router.push(buildUrl(redirectTo))
         return
       }
       

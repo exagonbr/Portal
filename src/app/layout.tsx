@@ -8,7 +8,7 @@ import { Inter } from 'next/font/google';
 import './globals.css';
 import SimpleProviders from '@/providers/SimpleProviders';
 import { isDevelopment } from '@/utils/env';
-import { headers } from 'next/headers';
+import { LoopPreventionInit } from '@/components/LoopPreventionInit';
 
 const inter = Inter({
   subsets: ['latin'],
@@ -121,12 +121,10 @@ export default function RootLayout({
         
         {/* Service Worker para controle de cache */}
         <script src="/register-sw.js" defer />
-        
-        {/* Script para limpeza de extensões */}
-        <script src="/cleanup-extensions.js" defer />
       </head>
       <body className={`${inter.className} m-0 p-0 h-full w-full`} suppressHydrationWarning>
         <SimpleProviders>
+          <LoopPreventionInit />
           <div className="flex flex-col min-h-screen w-full">
             {children}
           </div>

@@ -11,8 +11,13 @@ import { getDashboardPath } from '@/utils/roleRedirect';
 import { MotionDiv, MotionH1, MotionP } from '@/components/ui/MotionWrapper';
 import { getTheme } from '@/config/themes';
 import { useEffect, useState } from 'react';
+import { useAutoCacheCleaner } from '@/hooks/useCacheCleaner';
+import { buildUrl } from '@/config/urls';
 
 export function LoginPage() {
+  // Hook para limpeza automática de cache
+  useAutoCacheCleaner();
+  
   const router = useRouter();
   const authContext = useAuth();
   const searchParams = useSearchParams();
@@ -160,9 +165,11 @@ export function LoginPage() {
       
       console.log(`🎯 Redirecionando usuário autenticado para: ${targetPath}`);
       
-      // CORREÇÃO: Usar window.location.href para redirecionamento mais confiável
+      // CORREÇÃO: Usar FRONTEND_URL para redirecionamento mais confiável
       setTimeout(() => {
-        window.location.href = targetPath!;
+        const fullUrl = buildUrl(targetPath!);
+        console.log(`🌐 Redirecionando para URL completa: ${fullUrl}`);
+        window.location.href = fullUrl;
       }, 300);
     }
   }, [authContext, router, mounted]);

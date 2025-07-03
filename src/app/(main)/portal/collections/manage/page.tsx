@@ -173,7 +173,7 @@ export default function TVShowsManagePage() {
         formData.append('backdrop_image', tvShowForm.backdrop_image_file)
       }
 
-      const response = await fetch('/api/tv-shows', {
+      const response = await fetch('https://portal.sabercon.com.br/api/tv-shows', {
         method: 'POST',
         headers: { 'Authorization': `Bearer ${token}` },
         body: formData
@@ -226,7 +226,7 @@ export default function TVShowsManagePage() {
         formData.append('backdrop_image', tvShowForm.backdrop_image_file)
       }
 
-      const response = await fetch(`/api/tv-shows/${selectedTvShow.id}`, {
+      const response = await fetch(`https://portal.sabercon.com.br/api/tv-shows/${selectedTvShow.id}`, {
         method: 'PUT',
         headers: { 'Authorization': `Bearer ${token}` },
         body: formData
@@ -267,7 +267,7 @@ export default function TVShowsManagePage() {
         return false
       }
 
-      const response = await fetch(`/api/tv-shows/${id}`, {
+      const response = await fetch(`https://portal.sabercon.com.br/api/tv-shows/${id}`, {
         method: 'DELETE',
         headers: { 
           'Authorization': `Bearer ${token}`,
@@ -348,7 +348,7 @@ export default function TVShowsManagePage() {
       formData.append('file', file)
       formData.append('folder', folder)
 
-      const response = await fetch('/api/aws/upload', {
+      const response = await fetch('https://portal.sabercon.com.br/api/aws/upload', {
         method: 'POST',
         body: formData
       })
@@ -446,7 +446,7 @@ export default function TVShowsManagePage() {
         headers['Authorization'] = `Bearer ${token}`
       }
 
-      const response = await fetch(`/api/tv-shows?${params}`, {
+      const response = await fetch(`https://portal.sabercon.com.br/api/tv-shows?${params}`, {
         headers
       })
 
@@ -495,7 +495,7 @@ export default function TVShowsManagePage() {
       }
 
       // Buscar TODAS as coleções para calcular estatísticas corretas
-      const response = await fetch('/api/tv-shows?page=1&limit=10000', { headers })
+      const response = await fetch('https://portal.sabercon.com.br/api/tv-shows?page=1&limit=10000', { headers })
       
       if (response.ok) {
         const data = await response.json()
@@ -619,7 +619,7 @@ export default function TVShowsManagePage() {
         headers['Authorization'] = `Bearer ${token}`
       }
 
-      const response = await fetch(`/api/tv-shows/${id}`, { headers })
+      const response = await fetch(`https://portal.sabercon.com.br/api/tv-shows/${id}`, { headers })
       if (response.ok) {
         const data = await response.json()
         if (data.success) {

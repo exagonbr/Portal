@@ -1,0 +1,3314 @@
+
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Relatório de Testes de API - Portal</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            line-height: 1.6;
+            color: #333;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+        }
+        
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+        
+        .header {
+            background: white;
+            border-radius: 10px;
+            padding: 30px;
+            margin-bottom: 30px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.1);
+            text-align: center;
+        }
+        
+        .header h1 {
+            color: #2c3e50;
+            margin-bottom: 10px;
+            font-size: 2.5em;
+        }
+        
+        .header .subtitle {
+            color: #7f8c8d;
+            font-size: 1.2em;
+            margin-bottom: 20px;
+        }
+        
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 20px;
+            margin-bottom: 30px;
+        }
+        
+        .stat-card {
+            background: white;
+            border-radius: 10px;
+            padding: 20px;
+            text-align: center;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+            transition: transform 0.3s ease;
+        }
+        
+        .stat-card:hover {
+            transform: translateY(-5px);
+        }
+        
+        .stat-number {
+            font-size: 2.5em;
+            font-weight: bold;
+            margin-bottom: 10px;
+        }
+        
+        .stat-label {
+            color: #7f8c8d;
+            font-size: 0.9em;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+        
+        .success { color: #27ae60; }
+        .error { color: #e74c3c; }
+        .warning { color: #f39c12; }
+        .info { color: #3498db; }
+        
+        .section {
+            background: white;
+            border-radius: 10px;
+            padding: 30px;
+            margin-bottom: 30px;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+        }
+        
+        .section h2 {
+            color: #2c3e50;
+            margin-bottom: 20px;
+            padding-bottom: 10px;
+            border-bottom: 2px solid #ecf0f1;
+        }
+        
+        .routes-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 20px;
+        }
+        
+        .routes-table th,
+        .routes-table td {
+            padding: 12px;
+            text-align: left;
+            border-bottom: 1px solid #ecf0f1;
+        }
+        
+        .routes-table th {
+            background: #f8f9fa;
+            font-weight: 600;
+            color: #2c3e50;
+        }
+        
+        .routes-table tr:hover {
+            background: #f8f9fa;
+        }
+        
+        .method-badge {
+            display: inline-block;
+            padding: 4px 8px;
+            border-radius: 4px;
+            font-size: 0.8em;
+            font-weight: bold;
+            margin: 2px;
+        }
+        
+        .method-get { background: #e8f5e8; color: #27ae60; }
+        .method-post { background: #fff3cd; color: #856404; }
+        .method-put { background: #d1ecf1; color: #0c5460; }
+        .method-delete { background: #f8d7da; color: #721c24; }
+        .method-patch { background: #e2e3e5; color: #383d41; }
+        .method-options { background: #f4f4f5; color: #6c757d; }
+        
+        .status-badge {
+            display: inline-block;
+            padding: 4px 8px;
+            border-radius: 4px;
+            font-size: 0.8em;
+            font-weight: bold;
+            color: white;
+        }
+        
+        .status-200 { background: #27ae60; }
+        .status-404 { background: #e74c3c; }
+        .status-401 { background: #f39c12; }
+        .status-500 { background: #8e44ad; }
+        
+        .auth-required {
+            color: #e74c3c;
+            font-size: 0.9em;
+        }
+        
+        .filter-controls {
+            margin-bottom: 20px;
+            display: flex;
+            gap: 10px;
+            flex-wrap: wrap;
+        }
+        
+        .filter-btn {
+            padding: 8px 16px;
+            border: 1px solid #ddd;
+            background: white;
+            border-radius: 5px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+        
+        .filter-btn:hover,
+        .filter-btn.active {
+            background: #3498db;
+            color: white;
+            border-color: #3498db;
+        }
+        
+        .search-box {
+            padding: 8px 12px;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+            width: 300px;
+        }
+        
+        .footer {
+            text-align: center;
+            color: white;
+            margin-top: 30px;
+            opacity: 0.8;
+        }
+        
+        @media (max-width: 768px) {
+            .container {
+                padding: 10px;
+            }
+            
+            .header h1 {
+                font-size: 2em;
+            }
+            
+            .stats-grid {
+                grid-template-columns: repeat(2, 1fr);
+            }
+            
+            .routes-table {
+                font-size: 0.9em;
+            }
+            
+            .filter-controls {
+                flex-direction: column;
+            }
+            
+            .search-box {
+                width: 100%;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>🚀 Relatório de Testes de API</h1>
+            <div class="subtitle">Portal - Sistema de Gestão Educacional</div>
+            <div style="color: #7f8c8d; margin-top: 10px;">
+                📅 Gerado em: 02/07/2025, 21:21:14<br>
+                🌐 Base URL: http://localhost:3000
+            </div>
+        </div>
+        
+        <div class="stats-grid">
+            <div class="stat-card">
+                <div class="stat-number info">140</div>
+                <div class="stat-label">Total de Rotas</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-number info">390</div>
+                <div class="stat-label">Total de Testes</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-number success">0</div>
+                <div class="stat-label">Sucessos</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-number error">390</div>
+                <div class="stat-label">Falhas</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-number warning">114</div>
+                <div class="stat-label">Requer Auth</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-number error">❌</div>
+                <div class="stat-label">Autenticação</div>
+            </div>
+        </div>
+        
+        <div class="section">
+            <h2>📊 Distribuição por Status HTTP</h2>
+            <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 15px;">
+                
+                    <div style="text-align: center; padding: 15px; background: #f8f9fa; border-radius: 8px;">
+                        <div style="font-size: 1.5em; font-weight: bold; color: #e74c3c;">390</div>
+                        <div style="color: #7f8c8d; font-size: 0.9em;">Status 404</div>
+                    </div>
+                
+            </div>
+        </div>
+        
+        <div class="section">
+            <h2>🔍 Rotas Descobertas</h2>
+            <div class="filter-controls">
+                <input type="text" class="search-box" placeholder="🔍 Buscar rotas..." id="searchBox">
+                <button class="filter-btn active" onclick="filterRoutes('all')">Todas</button>
+                <button class="filter-btn" onclick="filterRoutes('auth')">Com Auth</button>
+                <button class="filter-btn" onclick="filterRoutes('no-auth')">Sem Auth</button>
+                <button class="filter-btn" onclick="filterRoutes('failed')">Com Falhas</button>
+            </div>
+            
+            <table class="routes-table" id="routesTable">
+                <thead>
+                    <tr>
+                        <th>Rota</th>
+                        <th>Métodos</th>
+                        <th>Auth</th>
+                        <th>Testes</th>
+                        <th>Status</th>
+                        <th>Tempo Médio</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    
+                            <tr class="route-row" data-auth="true" data-success="false">
+                                <td>
+                                    <strong>/apiactivity/track</strong>
+                                    
+                                </td>
+                                <td>
+                                    <span class="method-badge method-get">GET</span><span class="method-badge method-post">POST</span><span class="method-badge method-options">OPTIONS</span>
+                                </td>
+                                <td>
+                                    <span class="auth-required">🔒 Sim</span>
+                                </td>
+                                <td>
+                                    <strong>0/3</strong>
+                                    (0%)
+                                </td>
+                                <td>
+                                    <span class="status-badge status-404">404</span> <span class="status-badge status-404">404</span> <span class="status-badge status-404">404</span>
+                                </td>
+                                <td>35ms</td>
+                            </tr>
+                        
+                            <tr class="route-row" data-auth="true" data-success="false">
+                                <td>
+                                    <strong>/apiactivity/viewing-status</strong>
+                                    
+                                </td>
+                                <td>
+                                    <span class="method-badge method-get">GET</span><span class="method-badge method-post">POST</span><span class="method-badge method-options">OPTIONS</span>
+                                </td>
+                                <td>
+                                    <span class="auth-required">🔒 Sim</span>
+                                </td>
+                                <td>
+                                    <strong>0/3</strong>
+                                    (0%)
+                                </td>
+                                <td>
+                                    <span class="status-badge status-404">404</span> <span class="status-badge status-404">404</span> <span class="status-badge status-404">404</span>
+                                </td>
+                                <td>35ms</td>
+                            </tr>
+                        
+                            <tr class="route-row" data-auth="true" data-success="false">
+                                <td>
+                                    <strong>/apiactivity/watchlist</strong>
+                                    
+                                </td>
+                                <td>
+                                    <span class="method-badge method-post">POST</span><span class="method-badge method-delete">DELETE</span><span class="method-badge method-options">OPTIONS</span>
+                                </td>
+                                <td>
+                                    <span class="auth-required">🔒 Sim</span>
+                                </td>
+                                <td>
+                                    <strong>0/3</strong>
+                                    (0%)
+                                </td>
+                                <td>
+                                    <span class="status-badge status-404">404</span> <span class="status-badge status-404">404</span> <span class="status-badge status-404">404</span>
+                                </td>
+                                <td>34ms</td>
+                            </tr>
+                        
+                            <tr class="route-row" data-auth="true" data-success="false">
+                                <td>
+                                    <strong>/apiadmin/audit</strong>
+                                    
+                                </td>
+                                <td>
+                                    <span class="method-badge method-get">GET</span><span class="method-badge method-post">POST</span><span class="method-badge method-options">OPTIONS</span>
+                                </td>
+                                <td>
+                                    <span class="auth-required">🔒 Sim</span>
+                                </td>
+                                <td>
+                                    <strong>0/3</strong>
+                                    (0%)
+                                </td>
+                                <td>
+                                    <span class="status-badge status-404">404</span> <span class="status-badge status-404">404</span> <span class="status-badge status-404">404</span>
+                                </td>
+                                <td>33ms</td>
+                            </tr>
+                        
+                            <tr class="route-row" data-auth="true" data-success="false">
+                                <td>
+                                    <strong>/apiadmin/create-default-users</strong>
+                                    
+                                </td>
+                                <td>
+                                    <span class="method-badge method-post">POST</span><span class="method-badge method-options">OPTIONS</span>
+                                </td>
+                                <td>
+                                    <span class="auth-required">🔒 Sim</span>
+                                </td>
+                                <td>
+                                    <strong>0/2</strong>
+                                    (0%)
+                                </td>
+                                <td>
+                                    <span class="status-badge status-404">404</span> <span class="status-badge status-404">404</span>
+                                </td>
+                                <td>35ms</td>
+                            </tr>
+                        
+                            <tr class="route-row" data-auth="true" data-success="false">
+                                <td>
+                                    <strong>/apiadmin/system/activities</strong>
+                                    
+                                </td>
+                                <td>
+                                    <span class="method-badge method-get">GET</span><span class="method-badge method-options">OPTIONS</span>
+                                </td>
+                                <td>
+                                    <span class="auth-required">🔒 Sim</span>
+                                </td>
+                                <td>
+                                    <strong>0/2</strong>
+                                    (0%)
+                                </td>
+                                <td>
+                                    <span class="status-badge status-404">404</span> <span class="status-badge status-404">404</span>
+                                </td>
+                                <td>35ms</td>
+                            </tr>
+                        
+                            <tr class="route-row" data-auth="true" data-success="false">
+                                <td>
+                                    <strong>/apiadmin/system/info</strong>
+                                    
+                                </td>
+                                <td>
+                                    <span class="method-badge method-get">GET</span><span class="method-badge method-options">OPTIONS</span>
+                                </td>
+                                <td>
+                                    <span class="auth-required">🔒 Sim</span>
+                                </td>
+                                <td>
+                                    <strong>0/2</strong>
+                                    (0%)
+                                </td>
+                                <td>
+                                    <span class="status-badge status-404">404</span> <span class="status-badge status-404">404</span>
+                                </td>
+                                <td>35ms</td>
+                            </tr>
+                        
+                            <tr class="route-row" data-auth="true" data-success="false">
+                                <td>
+                                    <strong>/apiassignments</strong>
+                                    
+                                </td>
+                                <td>
+                                    <span class="method-badge method-get">GET</span><span class="method-badge method-post">POST</span><span class="method-badge method-options">OPTIONS</span>
+                                </td>
+                                <td>
+                                    <span class="auth-required">🔒 Sim</span>
+                                </td>
+                                <td>
+                                    <strong>0/3</strong>
+                                    (0%)
+                                </td>
+                                <td>
+                                    <span class="status-badge status-404">404</span> <span class="status-badge status-404">404</span> <span class="status-badge status-404">404</span>
+                                </td>
+                                <td>34ms</td>
+                            </tr>
+                        
+                            <tr class="route-row" data-auth="true" data-success="false">
+                                <td>
+                                    <strong>/apiassignments/:id</strong>
+                                    
+                                </td>
+                                <td>
+                                    <span class="method-badge method-get">GET</span><span class="method-badge method-put">PUT</span><span class="method-badge method-delete">DELETE</span><span class="method-badge method-options">OPTIONS</span>
+                                </td>
+                                <td>
+                                    <span class="auth-required">🔒 Sim</span>
+                                </td>
+                                <td>
+                                    <strong>0/4</strong>
+                                    (0%)
+                                </td>
+                                <td>
+                                    <span class="status-badge status-404">404</span> <span class="status-badge status-404">404</span> <span class="status-badge status-404">404</span> <span class="status-badge status-404">404</span>
+                                </td>
+                                <td>35ms</td>
+                            </tr>
+                        
+                            <tr class="route-row" data-auth="true" data-success="false">
+                                <td>
+                                    <strong>/apiauth/login</strong>
+                                    
+                                </td>
+                                <td>
+                                    <span class="method-badge method-get">GET</span><span class="method-badge method-post">POST</span>
+                                </td>
+                                <td>
+                                    <span class="auth-required">🔒 Sim</span>
+                                </td>
+                                <td>
+                                    <strong>0/2</strong>
+                                    (0%)
+                                </td>
+                                <td>
+                                    <span class="status-badge status-404">404</span> <span class="status-badge status-404">404</span>
+                                </td>
+                                <td>36ms</td>
+                            </tr>
+                        
+                            <tr class="route-row" data-auth="true" data-success="false">
+                                <td>
+                                    <strong>/apiauth/logout</strong>
+                                    
+                                </td>
+                                <td>
+                                    <span class="method-badge method-post">POST</span><span class="method-badge method-options">OPTIONS</span>
+                                </td>
+                                <td>
+                                    <span class="auth-required">🔒 Sim</span>
+                                </td>
+                                <td>
+                                    <strong>0/2</strong>
+                                    (0%)
+                                </td>
+                                <td>
+                                    <span class="status-badge status-404">404</span> <span class="status-badge status-404">404</span>
+                                </td>
+                                <td>36ms</td>
+                            </tr>
+                        
+                            <tr class="route-row" data-auth="true" data-success="false">
+                                <td>
+                                    <strong>/apiauth/refresh</strong>
+                                    <br><small style="color: #7f8c8d;">Endpoint para renovar o token de autenticação</small>
+                                </td>
+                                <td>
+                                    <span class="method-badge method-post">POST</span><span class="method-badge method-options">OPTIONS</span>
+                                </td>
+                                <td>
+                                    <span class="auth-required">🔒 Sim</span>
+                                </td>
+                                <td>
+                                    <strong>0/2</strong>
+                                    (0%)
+                                </td>
+                                <td>
+                                    <span class="status-badge status-404">404</span> <span class="status-badge status-404">404</span>
+                                </td>
+                                <td>34ms</td>
+                            </tr>
+                        
+                            <tr class="route-row" data-auth="true" data-success="false">
+                                <td>
+                                    <strong>/apiauth/register</strong>
+                                    
+                                </td>
+                                <td>
+                                    <span class="method-badge method-post">POST</span><span class="method-badge method-options">OPTIONS</span>
+                                </td>
+                                <td>
+                                    <span class="auth-required">🔒 Sim</span>
+                                </td>
+                                <td>
+                                    <strong>0/2</strong>
+                                    (0%)
+                                </td>
+                                <td>
+                                    <span class="status-badge status-404">404</span> <span class="status-badge status-404">404</span>
+                                </td>
+                                <td>34ms</td>
+                            </tr>
+                        
+                            <tr class="route-row" data-auth="true" data-success="false">
+                                <td>
+                                    <strong>/apiauth/session</strong>
+                                    
+                                </td>
+                                <td>
+                                    <span class="method-badge method-get">GET</span><span class="method-badge method-post">POST</span><span class="method-badge method-put">PUT</span><span class="method-badge method-delete">DELETE</span><span class="method-badge method-options">OPTIONS</span>
+                                </td>
+                                <td>
+                                    <span class="auth-required">🔒 Sim</span>
+                                </td>
+                                <td>
+                                    <strong>0/5</strong>
+                                    (0%)
+                                </td>
+                                <td>
+                                    <span class="status-badge status-404">404</span> <span class="status-badge status-404">404</span> <span class="status-badge status-404">404</span> <span class="status-badge status-404">404</span> <span class="status-badge status-404">404</span>
+                                </td>
+                                <td>36ms</td>
+                            </tr>
+                        
+                            <tr class="route-row" data-auth="true" data-success="false">
+                                <td>
+                                    <strong>/apiauth/validate</strong>
+                                    
+                                </td>
+                                <td>
+                                    <span class="method-badge method-get">GET</span><span class="method-badge method-post">POST</span>
+                                </td>
+                                <td>
+                                    <span class="auth-required">🔒 Sim</span>
+                                </td>
+                                <td>
+                                    <strong>0/2</strong>
+                                    (0%)
+                                </td>
+                                <td>
+                                    <span class="status-badge status-404">404</span> <span class="status-badge status-404">404</span>
+                                </td>
+                                <td>35ms</td>
+                            </tr>
+                        
+                            <tr class="route-row" data-auth="true" data-success="true">
+                                <td>
+                                    <strong>/apiauth/*</strong>
+                                    
+                                </td>
+                                <td>
+                                    
+                                </td>
+                                <td>
+                                    <span class="auth-required">🔒 Sim</span>
+                                </td>
+                                <td>
+                                    <strong>0/0</strong>
+                                    
+                                </td>
+                                <td>
+                                    
+                                </td>
+                                <td>0ms</td>
+                            </tr>
+                        
+                            <tr class="route-row" data-auth="true" data-success="false">
+                                <td>
+                                    <strong>/apiauth/_log</strong>
+                                    
+                                </td>
+                                <td>
+                                    <span class="method-badge method-get">GET</span><span class="method-badge method-post">POST</span><span class="method-badge method-put">PUT</span><span class="method-badge method-delete">DELETE</span><span class="method-badge method-options">OPTIONS</span>
+                                </td>
+                                <td>
+                                    <span class="auth-required">🔒 Sim</span>
+                                </td>
+                                <td>
+                                    <strong>0/5</strong>
+                                    (0%)
+                                </td>
+                                <td>
+                                    <span class="status-badge status-404">404</span> <span class="status-badge status-404">404</span> <span class="status-badge status-404">404</span> <span class="status-badge status-404">404</span> <span class="status-badge status-404">404</span>
+                                </td>
+                                <td>34ms</td>
+                            </tr>
+                        
+                            <tr class="route-row" data-auth="true" data-success="false">
+                                <td>
+                                    <strong>/apiaws/connection-logs</strong>
+                                    
+                                </td>
+                                <td>
+                                    <span class="method-badge method-get">GET</span><span class="method-badge method-options">OPTIONS</span>
+                                </td>
+                                <td>
+                                    <span class="auth-required">🔒 Sim</span>
+                                </td>
+                                <td>
+                                    <strong>0/2</strong>
+                                    (0%)
+                                </td>
+                                <td>
+                                    <span class="status-badge status-404">404</span> <span class="status-badge status-404">404</span>
+                                </td>
+                                <td>34ms</td>
+                            </tr>
+                        
+                            <tr class="route-row" data-auth="true" data-success="false">
+                                <td>
+                                    <strong>/apiaws/connection-logs/stats</strong>
+                                    
+                                </td>
+                                <td>
+                                    <span class="method-badge method-get">GET</span><span class="method-badge method-options">OPTIONS</span>
+                                </td>
+                                <td>
+                                    <span class="auth-required">🔒 Sim</span>
+                                </td>
+                                <td>
+                                    <strong>0/2</strong>
+                                    (0%)
+                                </td>
+                                <td>
+                                    <span class="status-badge status-404">404</span> <span class="status-badge status-404">404</span>
+                                </td>
+                                <td>35ms</td>
+                            </tr>
+                        
+                            <tr class="route-row" data-auth="true" data-success="false">
+                                <td>
+                                    <strong>/apiaws/settings</strong>
+                                    
+                                </td>
+                                <td>
+                                    <span class="method-badge method-get">GET</span><span class="method-badge method-post">POST</span><span class="method-badge method-delete">DELETE</span><span class="method-badge method-options">OPTIONS</span>
+                                </td>
+                                <td>
+                                    <span class="auth-required">🔒 Sim</span>
+                                </td>
+                                <td>
+                                    <strong>0/4</strong>
+                                    (0%)
+                                </td>
+                                <td>
+                                    <span class="status-badge status-404">404</span> <span class="status-badge status-404">404</span> <span class="status-badge status-404">404</span> <span class="status-badge status-404">404</span>
+                                </td>
+                                <td>34ms</td>
+                            </tr>
+                        
+                            <tr class="route-row" data-auth="true" data-success="false">
+                                <td>
+                                    <strong>/apiaws/settings/:id</strong>
+                                    
+                                </td>
+                                <td>
+                                    <span class="method-badge method-get">GET</span><span class="method-badge method-put">PUT</span><span class="method-badge method-delete">DELETE</span><span class="method-badge method-options">OPTIONS</span>
+                                </td>
+                                <td>
+                                    <span class="auth-required">🔒 Sim</span>
+                                </td>
+                                <td>
+                                    <strong>0/4</strong>
+                                    (0%)
+                                </td>
+                                <td>
+                                    <span class="status-badge status-404">404</span> <span class="status-badge status-404">404</span> <span class="status-badge status-404">404</span> <span class="status-badge status-404">404</span>
+                                </td>
+                                <td>34ms</td>
+                            </tr>
+                        
+                            <tr class="route-row" data-auth="true" data-success="false">
+                                <td>
+                                    <strong>/apiaws/settings/:id/test-connection</strong>
+                                    
+                                </td>
+                                <td>
+                                    <span class="method-badge method-post">POST</span><span class="method-badge method-options">OPTIONS</span>
+                                </td>
+                                <td>
+                                    <span class="auth-required">🔒 Sim</span>
+                                </td>
+                                <td>
+                                    <strong>0/2</strong>
+                                    (0%)
+                                </td>
+                                <td>
+                                    <span class="status-badge status-404">404</span> <span class="status-badge status-404">404</span>
+                                </td>
+                                <td>35ms</td>
+                            </tr>
+                        
+                            <tr class="route-row" data-auth="true" data-success="false">
+                                <td>
+                                    <strong>/apiaws/test</strong>
+                                    
+                                </td>
+                                <td>
+                                    <span class="method-badge method-get">GET</span><span class="method-badge method-options">OPTIONS</span>
+                                </td>
+                                <td>
+                                    <span class="auth-required">🔒 Sim</span>
+                                </td>
+                                <td>
+                                    <strong>0/2</strong>
+                                    (0%)
+                                </td>
+                                <td>
+                                    <span class="status-badge status-404">404</span> <span class="status-badge status-404">404</span>
+                                </td>
+                                <td>33ms</td>
+                            </tr>
+                        
+                            <tr class="route-row" data-auth="true" data-success="false">
+                                <td>
+                                    <strong>/apibooks</strong>
+                                    
+                                </td>
+                                <td>
+                                    <span class="method-badge method-get">GET</span><span class="method-badge method-post">POST</span><span class="method-badge method-options">OPTIONS</span>
+                                </td>
+                                <td>
+                                    <span class="auth-required">🔒 Sim</span>
+                                </td>
+                                <td>
+                                    <strong>0/3</strong>
+                                    (0%)
+                                </td>
+                                <td>
+                                    <span class="status-badge status-404">404</span> <span class="status-badge status-404">404</span> <span class="status-badge status-404">404</span>
+                                </td>
+                                <td>37ms</td>
+                            </tr>
+                        
+                            <tr class="route-row" data-auth="true" data-success="false">
+                                <td>
+                                    <strong>/apibooks/:id</strong>
+                                    
+                                </td>
+                                <td>
+                                    <span class="method-badge method-get">GET</span><span class="method-badge method-put">PUT</span><span class="method-badge method-delete">DELETE</span><span class="method-badge method-options">OPTIONS</span>
+                                </td>
+                                <td>
+                                    <span class="auth-required">🔒 Sim</span>
+                                </td>
+                                <td>
+                                    <strong>0/4</strong>
+                                    (0%)
+                                </td>
+                                <td>
+                                    <span class="status-badge status-404">404</span> <span class="status-badge status-404">404</span> <span class="status-badge status-404">404</span> <span class="status-badge status-404">404</span>
+                                </td>
+                                <td>34ms</td>
+                            </tr>
+                        
+                            <tr class="route-row" data-auth="true" data-success="false">
+                                <td>
+                                    <strong>/apicache/get</strong>
+                                    
+                                </td>
+                                <td>
+                                    <span class="method-badge method-get">GET</span><span class="method-badge method-post">POST</span><span class="method-badge method-options">OPTIONS</span>
+                                </td>
+                                <td>
+                                    <span class="auth-required">🔒 Sim</span>
+                                </td>
+                                <td>
+                                    <strong>0/3</strong>
+                                    (0%)
+                                </td>
+                                <td>
+                                    <span class="status-badge status-404">404</span> <span class="status-badge status-404">404</span> <span class="status-badge status-404">404</span>
+                                </td>
+                                <td>35ms</td>
+                            </tr>
+                        
+                            <tr class="route-row" data-auth="true" data-success="false">
+                                <td>
+                                    <strong>/apicache/set</strong>
+                                    
+                                </td>
+                                <td>
+                                    <span class="method-badge method-post">POST</span><span class="method-badge method-put">PUT</span><span class="method-badge method-patch">PATCH</span><span class="method-badge method-options">OPTIONS</span>
+                                </td>
+                                <td>
+                                    <span class="auth-required">🔒 Sim</span>
+                                </td>
+                                <td>
+                                    <strong>0/4</strong>
+                                    (0%)
+                                </td>
+                                <td>
+                                    <span class="status-badge status-404">404</span> <span class="status-badge status-404">404</span> <span class="status-badge status-404">404</span> <span class="status-badge status-404">404</span>
+                                </td>
+                                <td>38ms</td>
+                            </tr>
+                        
+                            <tr class="route-row" data-auth="true" data-success="false">
+                                <td>
+                                    <strong>/apicertificates</strong>
+                                    
+                                </td>
+                                <td>
+                                    <span class="method-badge method-get">GET</span><span class="method-badge method-post">POST</span>
+                                </td>
+                                <td>
+                                    <span class="auth-required">🔒 Sim</span>
+                                </td>
+                                <td>
+                                    <strong>0/2</strong>
+                                    (0%)
+                                </td>
+                                <td>
+                                    <span class="status-badge status-404">404</span> <span class="status-badge status-404">404</span>
+                                </td>
+                                <td>35ms</td>
+                            </tr>
+                        
+                            <tr class="route-row" data-auth="false" data-success="false">
+                                <td>
+                                    <strong>/apicertificates/search</strong>
+                                    
+                                </td>
+                                <td>
+                                    <span class="method-badge method-get">GET</span>
+                                </td>
+                                <td>
+                                    🔓 Não
+                                </td>
+                                <td>
+                                    <strong>0/1</strong>
+                                    (0%)
+                                </td>
+                                <td>
+                                    <span class="status-badge status-404">404</span>
+                                </td>
+                                <td>41ms</td>
+                            </tr>
+                        
+                            <tr class="route-row" data-auth="true" data-success="false">
+                                <td>
+                                    <strong>/apicertificates/:id</strong>
+                                    
+                                </td>
+                                <td>
+                                    <span class="method-badge method-get">GET</span><span class="method-badge method-put">PUT</span><span class="method-badge method-delete">DELETE</span>
+                                </td>
+                                <td>
+                                    <span class="auth-required">🔒 Sim</span>
+                                </td>
+                                <td>
+                                    <strong>0/3</strong>
+                                    (0%)
+                                </td>
+                                <td>
+                                    <span class="status-badge status-404">404</span> <span class="status-badge status-404">404</span> <span class="status-badge status-404">404</span>
+                                </td>
+                                <td>34ms</td>
+                            </tr>
+                        
+                            <tr class="route-row" data-auth="true" data-success="false">
+                                <td>
+                                    <strong>/apiclasses</strong>
+                                    
+                                </td>
+                                <td>
+                                    <span class="method-badge method-get">GET</span><span class="method-badge method-post">POST</span><span class="method-badge method-options">OPTIONS</span>
+                                </td>
+                                <td>
+                                    <span class="auth-required">🔒 Sim</span>
+                                </td>
+                                <td>
+                                    <strong>0/3</strong>
+                                    (0%)
+                                </td>
+                                <td>
+                                    <span class="status-badge status-404">404</span> <span class="status-badge status-404">404</span> <span class="status-badge status-404">404</span>
+                                </td>
+                                <td>37ms</td>
+                            </tr>
+                        
+                            <tr class="route-row" data-auth="true" data-success="false">
+                                <td>
+                                    <strong>/apiclasses/:id</strong>
+                                    
+                                </td>
+                                <td>
+                                    <span class="method-badge method-get">GET</span><span class="method-badge method-put">PUT</span><span class="method-badge method-delete">DELETE</span><span class="method-badge method-options">OPTIONS</span>
+                                </td>
+                                <td>
+                                    <span class="auth-required">🔒 Sim</span>
+                                </td>
+                                <td>
+                                    <strong>0/4</strong>
+                                    (0%)
+                                </td>
+                                <td>
+                                    <span class="status-badge status-404">404</span> <span class="status-badge status-404">404</span> <span class="status-badge status-404">404</span> <span class="status-badge status-404">404</span>
+                                </td>
+                                <td>34ms</td>
+                            </tr>
+                        
+                            <tr class="route-row" data-auth="true" data-success="false">
+                                <td>
+                                    <strong>/apicollections/manage</strong>
+                                    
+                                </td>
+                                <td>
+                                    <span class="method-badge method-get">GET</span><span class="method-badge method-post">POST</span><span class="method-badge method-options">OPTIONS</span>
+                                </td>
+                                <td>
+                                    <span class="auth-required">🔒 Sim</span>
+                                </td>
+                                <td>
+                                    <strong>0/3</strong>
+                                    (0%)
+                                </td>
+                                <td>
+                                    <span class="status-badge status-404">404</span> <span class="status-badge status-404">404</span> <span class="status-badge status-404">404</span>
+                                </td>
+                                <td>36ms</td>
+                            </tr>
+                        
+                            <tr class="route-row" data-auth="true" data-success="false">
+                                <td>
+                                    <strong>/apicollections/popular</strong>
+                                    
+                                </td>
+                                <td>
+                                    <span class="method-badge method-get">GET</span><span class="method-badge method-options">OPTIONS</span>
+                                </td>
+                                <td>
+                                    <span class="auth-required">🔒 Sim</span>
+                                </td>
+                                <td>
+                                    <strong>0/2</strong>
+                                    (0%)
+                                </td>
+                                <td>
+                                    <span class="status-badge status-404">404</span> <span class="status-badge status-404">404</span>
+                                </td>
+                                <td>34ms</td>
+                            </tr>
+                        
+                            <tr class="route-row" data-auth="true" data-success="false">
+                                <td>
+                                    <strong>/apicollections/recent</strong>
+                                    
+                                </td>
+                                <td>
+                                    <span class="method-badge method-get">GET</span><span class="method-badge method-options">OPTIONS</span>
+                                </td>
+                                <td>
+                                    <span class="auth-required">🔒 Sim</span>
+                                </td>
+                                <td>
+                                    <strong>0/2</strong>
+                                    (0%)
+                                </td>
+                                <td>
+                                    <span class="status-badge status-404">404</span> <span class="status-badge status-404">404</span>
+                                </td>
+                                <td>36ms</td>
+                            </tr>
+                        
+                            <tr class="route-row" data-auth="true" data-success="false">
+                                <td>
+                                    <strong>/apicollections</strong>
+                                    
+                                </td>
+                                <td>
+                                    <span class="method-badge method-get">GET</span><span class="method-badge method-post">POST</span><span class="method-badge method-options">OPTIONS</span>
+                                </td>
+                                <td>
+                                    <span class="auth-required">🔒 Sim</span>
+                                </td>
+                                <td>
+                                    <strong>0/3</strong>
+                                    (0%)
+                                </td>
+                                <td>
+                                    <span class="status-badge status-404">404</span> <span class="status-badge status-404">404</span> <span class="status-badge status-404">404</span>
+                                </td>
+                                <td>34ms</td>
+                            </tr>
+                        
+                            <tr class="route-row" data-auth="true" data-success="false">
+                                <td>
+                                    <strong>/apicollections/search</strong>
+                                    
+                                </td>
+                                <td>
+                                    <span class="method-badge method-get">GET</span><span class="method-badge method-options">OPTIONS</span>
+                                </td>
+                                <td>
+                                    <span class="auth-required">🔒 Sim</span>
+                                </td>
+                                <td>
+                                    <strong>0/2</strong>
+                                    (0%)
+                                </td>
+                                <td>
+                                    <span class="status-badge status-404">404</span> <span class="status-badge status-404">404</span>
+                                </td>
+                                <td>37ms</td>
+                            </tr>
+                        
+                            <tr class="route-row" data-auth="true" data-success="false">
+                                <td>
+                                    <strong>/apicollections/top-rated</strong>
+                                    
+                                </td>
+                                <td>
+                                    <span class="method-badge method-get">GET</span><span class="method-badge method-options">OPTIONS</span>
+                                </td>
+                                <td>
+                                    <span class="auth-required">🔒 Sim</span>
+                                </td>
+                                <td>
+                                    <strong>0/2</strong>
+                                    (0%)
+                                </td>
+                                <td>
+                                    <span class="status-badge status-404">404</span> <span class="status-badge status-404">404</span>
+                                </td>
+                                <td>36ms</td>
+                            </tr>
+                        
+                            <tr class="route-row" data-auth="false" data-success="false">
+                                <td>
+                                    <strong>/apicontent/buckets</strong>
+                                    
+                                </td>
+                                <td>
+                                    <span class="method-badge method-get">GET</span><span class="method-badge method-post">POST</span><span class="method-badge method-options">OPTIONS</span>
+                                </td>
+                                <td>
+                                    🔓 Não
+                                </td>
+                                <td>
+                                    <strong>0/3</strong>
+                                    (0%)
+                                </td>
+                                <td>
+                                    <span class="status-badge status-404">404</span> <span class="status-badge status-404">404</span> <span class="status-badge status-404">404</span>
+                                </td>
+                                <td>34ms</td>
+                            </tr>
+                        
+                            <tr class="route-row" data-auth="false" data-success="false">
+                                <td>
+                                    <strong>/apicontent/files/all</strong>
+                                    
+                                </td>
+                                <td>
+                                    <span class="method-badge method-get">GET</span><span class="method-badge method-options">OPTIONS</span>
+                                </td>
+                                <td>
+                                    🔓 Não
+                                </td>
+                                <td>
+                                    <strong>0/2</strong>
+                                    (0%)
+                                </td>
+                                <td>
+                                    <span class="status-badge status-404">404</span> <span class="status-badge status-404">404</span>
+                                </td>
+                                <td>34ms</td>
+                            </tr>
+                        
+                            <tr class="route-row" data-auth="false" data-success="false">
+                                <td>
+                                    <strong>/apicontent/files/bucket-files</strong>
+                                    
+                                </td>
+                                <td>
+                                    <span class="method-badge method-get">GET</span><span class="method-badge method-options">OPTIONS</span>
+                                </td>
+                                <td>
+                                    🔓 Não
+                                </td>
+                                <td>
+                                    <strong>0/2</strong>
+                                    (0%)
+                                </td>
+                                <td>
+                                    <span class="status-badge status-404">404</span> <span class="status-badge status-404">404</span>
+                                </td>
+                                <td>39ms</td>
+                            </tr>
+                        
+                            <tr class="route-row" data-auth="true" data-success="false">
+                                <td>
+                                    <strong>/apicontent/files/check-references</strong>
+                                    
+                                </td>
+                                <td>
+                                    <span class="method-badge method-get">GET</span><span class="method-badge method-post">POST</span><span class="method-badge method-options">OPTIONS</span>
+                                </td>
+                                <td>
+                                    <span class="auth-required">🔒 Sim</span>
+                                </td>
+                                <td>
+                                    <strong>0/3</strong>
+                                    (0%)
+                                </td>
+                                <td>
+                                    <span class="status-badge status-404">404</span> <span class="status-badge status-404">404</span> <span class="status-badge status-404">404</span>
+                                </td>
+                                <td>34ms</td>
+                            </tr>
+                        
+                            <tr class="route-row" data-auth="false" data-success="false">
+                                <td>
+                                    <strong>/apicontent/files</strong>
+                                    
+                                </td>
+                                <td>
+                                    <span class="method-badge method-get">GET</span><span class="method-badge method-post">POST</span><span class="method-badge method-delete">DELETE</span><span class="method-badge method-patch">PATCH</span><span class="method-badge method-options">OPTIONS</span>
+                                </td>
+                                <td>
+                                    🔓 Não
+                                </td>
+                                <td>
+                                    <strong>0/5</strong>
+                                    (0%)
+                                </td>
+                                <td>
+                                    <span class="status-badge status-404">404</span> <span class="status-badge status-404">404</span> <span class="status-badge status-404">404</span> <span class="status-badge status-404">404</span> <span class="status-badge status-404">404</span>
+                                </td>
+                                <td>35ms</td>
+                            </tr>
+                        
+                            <tr class="route-row" data-auth="true" data-success="false">
+                                <td>
+                                    <strong>/apicontent/files/:id/add-book</strong>
+                                    
+                                </td>
+                                <td>
+                                    <span class="method-badge method-post">POST</span><span class="method-badge method-options">OPTIONS</span>
+                                </td>
+                                <td>
+                                    <span class="auth-required">🔒 Sim</span>
+                                </td>
+                                <td>
+                                    <strong>0/2</strong>
+                                    (0%)
+                                </td>
+                                <td>
+                                    <span class="status-badge status-404">404</span> <span class="status-badge status-404">404</span>
+                                </td>
+                                <td>35ms</td>
+                            </tr>
+                        
+                            <tr class="route-row" data-auth="true" data-success="false">
+                                <td>
+                                    <strong>/apicontent/files/:id/add-library</strong>
+                                    
+                                </td>
+                                <td>
+                                    <span class="method-badge method-post">POST</span><span class="method-badge method-options">OPTIONS</span>
+                                </td>
+                                <td>
+                                    <span class="auth-required">🔒 Sim</span>
+                                </td>
+                                <td>
+                                    <strong>0/2</strong>
+                                    (0%)
+                                </td>
+                                <td>
+                                    <span class="status-badge status-404">404</span> <span class="status-badge status-404">404</span>
+                                </td>
+                                <td>35ms</td>
+                            </tr>
+                        
+                            <tr class="route-row" data-auth="false" data-success="false">
+                                <td>
+                                    <strong>/apicontent/files/:id/link-collection</strong>
+                                    
+                                </td>
+                                <td>
+                                    <span class="method-badge method-post">POST</span><span class="method-badge method-options">OPTIONS</span>
+                                </td>
+                                <td>
+                                    🔓 Não
+                                </td>
+                                <td>
+                                    <strong>0/2</strong>
+                                    (0%)
+                                </td>
+                                <td>
+                                    <span class="status-badge status-404">404</span> <span class="status-badge status-404">404</span>
+                                </td>
+                                <td>34ms</td>
+                            </tr>
+                        
+                            <tr class="route-row" data-auth="false" data-success="false">
+                                <td>
+                                    <strong>/apicontent/files/:id/rename</strong>
+                                    
+                                </td>
+                                <td>
+                                    <span class="method-badge method-patch">PATCH</span><span class="method-badge method-options">OPTIONS</span>
+                                </td>
+                                <td>
+                                    🔓 Não
+                                </td>
+                                <td>
+                                    <strong>0/2</strong>
+                                    (0%)
+                                </td>
+                                <td>
+                                    <span class="status-badge status-404">404</span> <span class="status-badge status-404">404</span>
+                                </td>
+                                <td>34ms</td>
+                            </tr>
+                        
+                            <tr class="route-row" data-auth="false" data-success="false">
+                                <td>
+                                    <strong>/apicontent/files/:id/unlink</strong>
+                                    
+                                </td>
+                                <td>
+                                    <span class="method-badge method-post">POST</span><span class="method-badge method-options">OPTIONS</span>
+                                </td>
+                                <td>
+                                    🔓 Não
+                                </td>
+                                <td>
+                                    <strong>0/2</strong>
+                                    (0%)
+                                </td>
+                                <td>
+                                    <span class="status-badge status-404">404</span> <span class="status-badge status-404">404</span>
+                                </td>
+                                <td>34ms</td>
+                            </tr>
+                        
+                            <tr class="route-row" data-auth="false" data-success="false">
+                                <td>
+                                    <strong>/apicontent/search</strong>
+                                    
+                                </td>
+                                <td>
+                                    <span class="method-badge method-post">POST</span><span class="method-badge method-options">OPTIONS</span>
+                                </td>
+                                <td>
+                                    🔓 Não
+                                </td>
+                                <td>
+                                    <strong>0/2</strong>
+                                    (0%)
+                                </td>
+                                <td>
+                                    <span class="status-badge status-404">404</span> <span class="status-badge status-404">404</span>
+                                </td>
+                                <td>35ms</td>
+                            </tr>
+                        
+                            <tr class="route-row" data-auth="true" data-success="false">
+                                <td>
+                                    <strong>/apicontent/upload</strong>
+                                    
+                                </td>
+                                <td>
+                                    <span class="method-badge method-post">POST</span><span class="method-badge method-options">OPTIONS</span>
+                                </td>
+                                <td>
+                                    <span class="auth-required">🔒 Sim</span>
+                                </td>
+                                <td>
+                                    <strong>0/2</strong>
+                                    (0%)
+                                </td>
+                                <td>
+                                    <span class="status-badge status-404">404</span> <span class="status-badge status-404">404</span>
+                                </td>
+                                <td>35ms</td>
+                            </tr>
+                        
+                            <tr class="route-row" data-auth="false" data-success="false">
+                                <td>
+                                    <strong>/apicourses</strong>
+                                    
+                                </td>
+                                <td>
+                                    <span class="method-badge method-get">GET</span><span class="method-badge method-options">OPTIONS</span>
+                                </td>
+                                <td>
+                                    🔓 Não
+                                </td>
+                                <td>
+                                    <strong>0/2</strong>
+                                    (0%)
+                                </td>
+                                <td>
+                                    <span class="status-badge status-404">404</span> <span class="status-badge status-404">404</span>
+                                </td>
+                                <td>38ms</td>
+                            </tr>
+                        
+                            <tr class="route-row" data-auth="true" data-success="false">
+                                <td>
+                                    <strong>/apicourses/:id</strong>
+                                    
+                                </td>
+                                <td>
+                                    <span class="method-badge method-get">GET</span><span class="method-badge method-put">PUT</span><span class="method-badge method-delete">DELETE</span><span class="method-badge method-options">OPTIONS</span>
+                                </td>
+                                <td>
+                                    <span class="auth-required">🔒 Sim</span>
+                                </td>
+                                <td>
+                                    <strong>0/4</strong>
+                                    (0%)
+                                </td>
+                                <td>
+                                    <span class="status-badge status-404">404</span> <span class="status-badge status-404">404</span> <span class="status-badge status-404">404</span> <span class="status-badge status-404">404</span>
+                                </td>
+                                <td>39ms</td>
+                            </tr>
+                        
+                            <tr class="route-row" data-auth="true" data-success="false">
+                                <td>
+                                    <strong>/apicourses/:id/students</strong>
+                                    
+                                </td>
+                                <td>
+                                    <span class="method-badge method-get">GET</span><span class="method-badge method-post">POST</span><span class="method-badge method-options">OPTIONS</span>
+                                </td>
+                                <td>
+                                    <span class="auth-required">🔒 Sim</span>
+                                </td>
+                                <td>
+                                    <strong>0/3</strong>
+                                    (0%)
+                                </td>
+                                <td>
+                                    <span class="status-badge status-404">404</span> <span class="status-badge status-404">404</span> <span class="status-badge status-404">404</span>
+                                </td>
+                                <td>38ms</td>
+                            </tr>
+                        
+                            <tr class="route-row" data-auth="true" data-success="false">
+                                <td>
+                                    <strong>/apicustom-auth/login</strong>
+                                    
+                                </td>
+                                <td>
+                                    <span class="method-badge method-get">GET</span><span class="method-badge method-post">POST</span>
+                                </td>
+                                <td>
+                                    <span class="auth-required">🔒 Sim</span>
+                                </td>
+                                <td>
+                                    <strong>0/2</strong>
+                                    (0%)
+                                </td>
+                                <td>
+                                    <span class="status-badge status-404">404</span> <span class="status-badge status-404">404</span>
+                                </td>
+                                <td>34ms</td>
+                            </tr>
+                        
+                            <tr class="route-row" data-auth="true" data-success="false">
+                                <td>
+                                    <strong>/apidashboard/analytics</strong>
+                                    
+                                </td>
+                                <td>
+                                    <span class="method-badge method-get">GET</span><span class="method-badge method-options">OPTIONS</span>
+                                </td>
+                                <td>
+                                    <span class="auth-required">🔒 Sim</span>
+                                </td>
+                                <td>
+                                    <strong>0/2</strong>
+                                    (0%)
+                                </td>
+                                <td>
+                                    <span class="status-badge status-404">404</span> <span class="status-badge status-404">404</span>
+                                </td>
+                                <td>34ms</td>
+                            </tr>
+                        
+                            <tr class="route-row" data-auth="true" data-success="false">
+                                <td>
+                                    <strong>/apidashboard/engagement</strong>
+                                    
+                                </td>
+                                <td>
+                                    <span class="method-badge method-get">GET</span><span class="method-badge method-options">OPTIONS</span>
+                                </td>
+                                <td>
+                                    <span class="auth-required">🔒 Sim</span>
+                                </td>
+                                <td>
+                                    <strong>0/2</strong>
+                                    (0%)
+                                </td>
+                                <td>
+                                    <span class="status-badge status-404">404</span> <span class="status-badge status-404">404</span>
+                                </td>
+                                <td>36ms</td>
+                            </tr>
+                        
+                            <tr class="route-row" data-auth="true" data-success="false">
+                                <td>
+                                    <strong>/apidashboard/health</strong>
+                                    
+                                </td>
+                                <td>
+                                    <span class="method-badge method-get">GET</span><span class="method-badge method-options">OPTIONS</span>
+                                </td>
+                                <td>
+                                    <span class="auth-required">🔒 Sim</span>
+                                </td>
+                                <td>
+                                    <strong>0/2</strong>
+                                    (0%)
+                                </td>
+                                <td>
+                                    <span class="status-badge status-404">404</span> <span class="status-badge status-404">404</span>
+                                </td>
+                                <td>33ms</td>
+                            </tr>
+                        
+                            <tr class="route-row" data-auth="true" data-success="false">
+                                <td>
+                                    <strong>/apidashboard/metrics/realtime</strong>
+                                    
+                                </td>
+                                <td>
+                                    <span class="method-badge method-get">GET</span><span class="method-badge method-options">OPTIONS</span>
+                                </td>
+                                <td>
+                                    <span class="auth-required">🔒 Sim</span>
+                                </td>
+                                <td>
+                                    <strong>0/2</strong>
+                                    (0%)
+                                </td>
+                                <td>
+                                    <span class="status-badge status-404">404</span> <span class="status-badge status-404">404</span>
+                                </td>
+                                <td>33ms</td>
+                            </tr>
+                        
+                            <tr class="route-row" data-auth="true" data-success="false">
+                                <td>
+                                    <strong>/apidashboard/summary</strong>
+                                    
+                                </td>
+                                <td>
+                                    <span class="method-badge method-get">GET</span><span class="method-badge method-options">OPTIONS</span>
+                                </td>
+                                <td>
+                                    <span class="auth-required">🔒 Sim</span>
+                                </td>
+                                <td>
+                                    <strong>0/2</strong>
+                                    (0%)
+                                </td>
+                                <td>
+                                    <span class="status-badge status-404">404</span> <span class="status-badge status-404">404</span>
+                                </td>
+                                <td>38ms</td>
+                            </tr>
+                        
+                            <tr class="route-row" data-auth="true" data-success="false">
+                                <td>
+                                    <strong>/apidashboard/system</strong>
+                                    
+                                </td>
+                                <td>
+                                    <span class="method-badge method-get">GET</span><span class="method-badge method-options">OPTIONS</span>
+                                </td>
+                                <td>
+                                    <span class="auth-required">🔒 Sim</span>
+                                </td>
+                                <td>
+                                    <strong>0/2</strong>
+                                    (0%)
+                                </td>
+                                <td>
+                                    <span class="status-badge status-404">404</span> <span class="status-badge status-404">404</span>
+                                </td>
+                                <td>34ms</td>
+                            </tr>
+                        
+                            <tr class="route-row" data-auth="true" data-success="false">
+                                <td>
+                                    <strong>/apidebug/auth</strong>
+                                    
+                                </td>
+                                <td>
+                                    <span class="method-badge method-get">GET</span><span class="method-badge method-options">OPTIONS</span>
+                                </td>
+                                <td>
+                                    <span class="auth-required">🔒 Sim</span>
+                                </td>
+                                <td>
+                                    <strong>0/2</strong>
+                                    (0%)
+                                </td>
+                                <td>
+                                    <span class="status-badge status-404">404</span> <span class="status-badge status-404">404</span>
+                                </td>
+                                <td>35ms</td>
+                            </tr>
+                        
+                            <tr class="route-row" data-auth="true" data-success="false">
+                                <td>
+                                    <strong>/apiforum/topics</strong>
+                                    
+                                </td>
+                                <td>
+                                    <span class="method-badge method-get">GET</span><span class="method-badge method-post">POST</span><span class="method-badge method-options">OPTIONS</span>
+                                </td>
+                                <td>
+                                    <span class="auth-required">🔒 Sim</span>
+                                </td>
+                                <td>
+                                    <strong>0/3</strong>
+                                    (0%)
+                                </td>
+                                <td>
+                                    <span class="status-badge status-404">404</span> <span class="status-badge status-404">404</span> <span class="status-badge status-404">404</span>
+                                </td>
+                                <td>34ms</td>
+                            </tr>
+                        
+                            <tr class="route-row" data-auth="true" data-success="false">
+                                <td>
+                                    <strong>/apiforum/topics/:id</strong>
+                                    
+                                </td>
+                                <td>
+                                    <span class="method-badge method-get">GET</span><span class="method-badge method-put">PUT</span><span class="method-badge method-delete">DELETE</span><span class="method-badge method-options">OPTIONS</span>
+                                </td>
+                                <td>
+                                    <span class="auth-required">🔒 Sim</span>
+                                </td>
+                                <td>
+                                    <strong>0/4</strong>
+                                    (0%)
+                                </td>
+                                <td>
+                                    <span class="status-badge status-404">404</span> <span class="status-badge status-404">404</span> <span class="status-badge status-404">404</span> <span class="status-badge status-404">404</span>
+                                </td>
+                                <td>38ms</td>
+                            </tr>
+                        
+                            <tr class="route-row" data-auth="false" data-success="false">
+                                <td>
+                                    <strong>/apigamification/badges</strong>
+                                    
+                                </td>
+                                <td>
+                                    <span class="method-badge method-get">GET</span><span class="method-badge method-post">POST</span><span class="method-badge method-put">PUT</span><span class="method-badge method-options">OPTIONS</span>
+                                </td>
+                                <td>
+                                    🔓 Não
+                                </td>
+                                <td>
+                                    <strong>0/4</strong>
+                                    (0%)
+                                </td>
+                                <td>
+                                    <span class="status-badge status-404">404</span> <span class="status-badge status-404">404</span> <span class="status-badge status-404">404</span> <span class="status-badge status-404">404</span>
+                                </td>
+                                <td>34ms</td>
+                            </tr>
+                        
+                            <tr class="route-row" data-auth="false" data-success="false">
+                                <td>
+                                    <strong>/apigamification/leaderboard</strong>
+                                    
+                                </td>
+                                <td>
+                                    <span class="method-badge method-get">GET</span><span class="method-badge method-post">POST</span><span class="method-badge method-put">PUT</span><span class="method-badge method-options">OPTIONS</span>
+                                </td>
+                                <td>
+                                    🔓 Não
+                                </td>
+                                <td>
+                                    <strong>0/4</strong>
+                                    (0%)
+                                </td>
+                                <td>
+                                    <span class="status-badge status-404">404</span> <span class="status-badge status-404">404</span> <span class="status-badge status-404">404</span> <span class="status-badge status-404">404</span>
+                                </td>
+                                <td>35ms</td>
+                            </tr>
+                        
+                            <tr class="route-row" data-auth="true" data-success="false">
+                                <td>
+                                    <strong>/apigamification/rewards</strong>
+                                    
+                                </td>
+                                <td>
+                                    <span class="method-badge method-get">GET</span><span class="method-badge method-post">POST</span><span class="method-badge method-put">PUT</span><span class="method-badge method-delete">DELETE</span><span class="method-badge method-options">OPTIONS</span>
+                                </td>
+                                <td>
+                                    <span class="auth-required">🔒 Sim</span>
+                                </td>
+                                <td>
+                                    <strong>0/5</strong>
+                                    (0%)
+                                </td>
+                                <td>
+                                    <span class="status-badge status-404">404</span> <span class="status-badge status-404">404</span> <span class="status-badge status-404">404</span> <span class="status-badge status-404">404</span> <span class="status-badge status-404">404</span>
+                                </td>
+                                <td>34ms</td>
+                            </tr>
+                        
+                            <tr class="route-row" data-auth="false" data-success="false">
+                                <td>
+                                    <strong>/apigamification/xp</strong>
+                                    
+                                </td>
+                                <td>
+                                    <span class="method-badge method-get">GET</span><span class="method-badge method-post">POST</span><span class="method-badge method-options">OPTIONS</span>
+                                </td>
+                                <td>
+                                    🔓 Não
+                                </td>
+                                <td>
+                                    <strong>0/3</strong>
+                                    (0%)
+                                </td>
+                                <td>
+                                    <span class="status-badge status-404">404</span> <span class="status-badge status-404">404</span> <span class="status-badge status-404">404</span>
+                                </td>
+                                <td>36ms</td>
+                            </tr>
+                        
+                            <tr class="route-row" data-auth="true" data-success="false">
+                                <td>
+                                    <strong>/apigroups</strong>
+                                    
+                                </td>
+                                <td>
+                                    <span class="method-badge method-get">GET</span><span class="method-badge method-post">POST</span><span class="method-badge method-options">OPTIONS</span>
+                                </td>
+                                <td>
+                                    <span class="auth-required">🔒 Sim</span>
+                                </td>
+                                <td>
+                                    <strong>0/3</strong>
+                                    (0%)
+                                </td>
+                                <td>
+                                    <span class="status-badge status-404">404</span> <span class="status-badge status-404">404</span> <span class="status-badge status-404">404</span>
+                                </td>
+                                <td>34ms</td>
+                            </tr>
+                        
+                            <tr class="route-row" data-auth="true" data-success="false">
+                                <td>
+                                    <strong>/apigroups/stats</strong>
+                                    
+                                </td>
+                                <td>
+                                    <span class="method-badge method-get">GET</span><span class="method-badge method-options">OPTIONS</span>
+                                </td>
+                                <td>
+                                    <span class="auth-required">🔒 Sim</span>
+                                </td>
+                                <td>
+                                    <strong>0/2</strong>
+                                    (0%)
+                                </td>
+                                <td>
+                                    <span class="status-badge status-404">404</span> <span class="status-badge status-404">404</span>
+                                </td>
+                                <td>38ms</td>
+                            </tr>
+                        
+                            <tr class="route-row" data-auth="true" data-success="false">
+                                <td>
+                                    <strong>/apigroups/:id/members</strong>
+                                    
+                                </td>
+                                <td>
+                                    <span class="method-badge method-get">GET</span><span class="method-badge method-post">POST</span><span class="method-badge method-options">OPTIONS</span>
+                                </td>
+                                <td>
+                                    <span class="auth-required">🔒 Sim</span>
+                                </td>
+                                <td>
+                                    <strong>0/3</strong>
+                                    (0%)
+                                </td>
+                                <td>
+                                    <span class="status-badge status-404">404</span> <span class="status-badge status-404">404</span> <span class="status-badge status-404">404</span>
+                                </td>
+                                <td>35ms</td>
+                            </tr>
+                        
+                            <tr class="route-row" data-auth="true" data-success="false">
+                                <td>
+                                    <strong>/apigroups/:id/permissions</strong>
+                                    
+                                </td>
+                                <td>
+                                    <span class="method-badge method-get">GET</span><span class="method-badge method-put">PUT</span><span class="method-badge method-delete">DELETE</span><span class="method-badge method-options">OPTIONS</span>
+                                </td>
+                                <td>
+                                    <span class="auth-required">🔒 Sim</span>
+                                </td>
+                                <td>
+                                    <strong>0/4</strong>
+                                    (0%)
+                                </td>
+                                <td>
+                                    <span class="status-badge status-404">404</span> <span class="status-badge status-404">404</span> <span class="status-badge status-404">404</span> <span class="status-badge status-404">404</span>
+                                </td>
+                                <td>35ms</td>
+                            </tr>
+                        
+                            <tr class="route-row" data-auth="true" data-success="false">
+                                <td>
+                                    <strong>/apigroups/:id</strong>
+                                    
+                                </td>
+                                <td>
+                                    <span class="method-badge method-get">GET</span><span class="method-badge method-put">PUT</span><span class="method-badge method-delete">DELETE</span><span class="method-badge method-options">OPTIONS</span>
+                                </td>
+                                <td>
+                                    <span class="auth-required">🔒 Sim</span>
+                                </td>
+                                <td>
+                                    <strong>0/4</strong>
+                                    (0%)
+                                </td>
+                                <td>
+                                    <span class="status-badge status-404">404</span> <span class="status-badge status-404">404</span> <span class="status-badge status-404">404</span> <span class="status-badge status-404">404</span>
+                                </td>
+                                <td>35ms</td>
+                            </tr>
+                        
+                            <tr class="route-row" data-auth="false" data-success="false">
+                                <td>
+                                    <strong>/apihealth</strong>
+                                    
+                                </td>
+                                <td>
+                                    <span class="method-badge method-get">GET</span><span class="method-badge method-options">OPTIONS</span>
+                                </td>
+                                <td>
+                                    🔓 Não
+                                </td>
+                                <td>
+                                    <strong>0/2</strong>
+                                    (0%)
+                                </td>
+                                <td>
+                                    <span class="status-badge status-404">404</span> <span class="status-badge status-404">404</span>
+                                </td>
+                                <td>40ms</td>
+                            </tr>
+                        
+                            <tr class="route-row" data-auth="false" data-success="false">
+                                <td>
+                                    <strong>/apihealth-check</strong>
+                                    
+                                </td>
+                                <td>
+                                    <span class="method-badge method-get">GET</span><span class="method-badge method-post">POST</span><span class="method-badge method-options">OPTIONS</span>
+                                </td>
+                                <td>
+                                    🔓 Não
+                                </td>
+                                <td>
+                                    <strong>0/3</strong>
+                                    (0%)
+                                </td>
+                                <td>
+                                    <span class="status-badge status-404">404</span> <span class="status-badge status-404">404</span> <span class="status-badge status-404">404</span>
+                                </td>
+                                <td>34ms</td>
+                            </tr>
+                        
+                            <tr class="route-row" data-auth="true" data-success="false">
+                                <td>
+                                    <strong>/apiinstitutions</strong>
+                                    
+                                </td>
+                                <td>
+                                    <span class="method-badge method-get">GET</span><span class="method-badge method-post">POST</span><span class="method-badge method-options">OPTIONS</span>
+                                </td>
+                                <td>
+                                    <span class="auth-required">🔒 Sim</span>
+                                </td>
+                                <td>
+                                    <strong>0/3</strong>
+                                    (0%)
+                                </td>
+                                <td>
+                                    <span class="status-badge status-404">404</span> <span class="status-badge status-404">404</span> <span class="status-badge status-404">404</span>
+                                </td>
+                                <td>36ms</td>
+                            </tr>
+                        
+                            <tr class="route-row" data-auth="true" data-success="false">
+                                <td>
+                                    <strong>/apiinstitutions/:id</strong>
+                                    
+                                </td>
+                                <td>
+                                    <span class="method-badge method-get">GET</span><span class="method-badge method-put">PUT</span><span class="method-badge method-delete">DELETE</span><span class="method-badge method-options">OPTIONS</span>
+                                </td>
+                                <td>
+                                    <span class="auth-required">🔒 Sim</span>
+                                </td>
+                                <td>
+                                    <strong>0/4</strong>
+                                    (0%)
+                                </td>
+                                <td>
+                                    <span class="status-badge status-404">404</span> <span class="status-badge status-404">404</span> <span class="status-badge status-404">404</span> <span class="status-badge status-404">404</span>
+                                </td>
+                                <td>35ms</td>
+                            </tr>
+                        
+                            <tr class="route-row" data-auth="true" data-success="false">
+                                <td>
+                                    <strong>/apilessons</strong>
+                                    
+                                </td>
+                                <td>
+                                    <span class="method-badge method-get">GET</span><span class="method-badge method-post">POST</span><span class="method-badge method-options">OPTIONS</span>
+                                </td>
+                                <td>
+                                    <span class="auth-required">🔒 Sim</span>
+                                </td>
+                                <td>
+                                    <strong>0/3</strong>
+                                    (0%)
+                                </td>
+                                <td>
+                                    <span class="status-badge status-404">404</span> <span class="status-badge status-404">404</span> <span class="status-badge status-404">404</span>
+                                </td>
+                                <td>35ms</td>
+                            </tr>
+                        
+                            <tr class="route-row" data-auth="true" data-success="false">
+                                <td>
+                                    <strong>/apilessons/:id</strong>
+                                    
+                                </td>
+                                <td>
+                                    <span class="method-badge method-get">GET</span><span class="method-badge method-put">PUT</span><span class="method-badge method-delete">DELETE</span><span class="method-badge method-options">OPTIONS</span>
+                                </td>
+                                <td>
+                                    <span class="auth-required">🔒 Sim</span>
+                                </td>
+                                <td>
+                                    <strong>0/4</strong>
+                                    (0%)
+                                </td>
+                                <td>
+                                    <span class="status-badge status-404">404</span> <span class="status-badge status-404">404</span> <span class="status-badge status-404">404</span> <span class="status-badge status-404">404</span>
+                                </td>
+                                <td>35ms</td>
+                            </tr>
+                        
+                            <tr class="route-row" data-auth="true" data-success="false">
+                                <td>
+                                    <strong>/apimigration/execute</strong>
+                                    
+                                </td>
+                                <td>
+                                    <span class="method-badge method-post">POST</span><span class="method-badge method-options">OPTIONS</span>
+                                </td>
+                                <td>
+                                    <span class="auth-required">🔒 Sim</span>
+                                </td>
+                                <td>
+                                    <strong>0/2</strong>
+                                    (0%)
+                                </td>
+                                <td>
+                                    <span class="status-badge status-404">404</span> <span class="status-badge status-404">404</span>
+                                </td>
+                                <td>37ms</td>
+                            </tr>
+                        
+                            <tr class="route-row" data-auth="true" data-success="false">
+                                <td>
+                                    <strong>/apimigration/generate-seed</strong>
+                                    
+                                </td>
+                                <td>
+                                    <span class="method-badge method-post">POST</span><span class="method-badge method-options">OPTIONS</span>
+                                </td>
+                                <td>
+                                    <span class="auth-required">🔒 Sim</span>
+                                </td>
+                                <td>
+                                    <strong>0/2</strong>
+                                    (0%)
+                                </td>
+                                <td>
+                                    <span class="status-badge status-404">404</span> <span class="status-badge status-404">404</span>
+                                </td>
+                                <td>36ms</td>
+                            </tr>
+                        
+                            <tr class="route-row" data-auth="false" data-success="false">
+                                <td>
+                                    <strong>/apimigration/get-env-config</strong>
+                                    
+                                </td>
+                                <td>
+                                    <span class="method-badge method-get">GET</span><span class="method-badge method-options">OPTIONS</span>
+                                </td>
+                                <td>
+                                    🔓 Não
+                                </td>
+                                <td>
+                                    <strong>0/2</strong>
+                                    (0%)
+                                </td>
+                                <td>
+                                    <span class="status-badge status-404">404</span> <span class="status-badge status-404">404</span>
+                                </td>
+                                <td>35ms</td>
+                            </tr>
+                        
+                            <tr class="route-row" data-auth="false" data-success="false">
+                                <td>
+                                    <strong>/apimigration/get-postgres-roles</strong>
+                                    
+                                </td>
+                                <td>
+                                    <span class="method-badge method-get">GET</span><span class="method-badge method-options">OPTIONS</span>
+                                </td>
+                                <td>
+                                    🔓 Não
+                                </td>
+                                <td>
+                                    <strong>0/2</strong>
+                                    (0%)
+                                </td>
+                                <td>
+                                    <span class="status-badge status-404">404</span> <span class="status-badge status-404">404</span>
+                                </td>
+                                <td>38ms</td>
+                            </tr>
+                        
+                            <tr class="route-row" data-auth="false" data-success="false">
+                                <td>
+                                    <strong>/apimigration/mysql-columns</strong>
+                                    
+                                </td>
+                                <td>
+                                    <span class="method-badge method-post">POST</span><span class="method-badge method-options">OPTIONS</span>
+                                </td>
+                                <td>
+                                    🔓 Não
+                                </td>
+                                <td>
+                                    <strong>0/2</strong>
+                                    (0%)
+                                </td>
+                                <td>
+                                    <span class="status-badge status-404">404</span> <span class="status-badge status-404">404</span>
+                                </td>
+                                <td>35ms</td>
+                            </tr>
+                        
+                            <tr class="route-row" data-auth="false" data-success="false">
+                                <td>
+                                    <strong>/apimigration/mysql-tables</strong>
+                                    
+                                </td>
+                                <td>
+                                    <span class="method-badge method-post">POST</span><span class="method-badge method-options">OPTIONS</span>
+                                </td>
+                                <td>
+                                    🔓 Não
+                                </td>
+                                <td>
+                                    <strong>0/2</strong>
+                                    (0%)
+                                </td>
+                                <td>
+                                    <span class="status-badge status-404">404</span> <span class="status-badge status-404">404</span>
+                                </td>
+                                <td>36ms</td>
+                            </tr>
+                        
+                            <tr class="route-row" data-auth="false" data-success="false">
+                                <td>
+                                    <strong>/apimigration/test-mysql-connection</strong>
+                                    
+                                </td>
+                                <td>
+                                    <span class="method-badge method-post">POST</span><span class="method-badge method-options">OPTIONS</span>
+                                </td>
+                                <td>
+                                    🔓 Não
+                                </td>
+                                <td>
+                                    <strong>0/2</strong>
+                                    (0%)
+                                </td>
+                                <td>
+                                    <span class="status-badge status-404">404</span> <span class="status-badge status-404">404</span>
+                                </td>
+                                <td>35ms</td>
+                            </tr>
+                        
+                            <tr class="route-row" data-auth="true" data-success="false">
+                                <td>
+                                    <strong>/apinotifications</strong>
+                                    
+                                </td>
+                                <td>
+                                    <span class="method-badge method-get">GET</span><span class="method-badge method-post">POST</span><span class="method-badge method-options">OPTIONS</span>
+                                </td>
+                                <td>
+                                    <span class="auth-required">🔒 Sim</span>
+                                </td>
+                                <td>
+                                    <strong>0/3</strong>
+                                    (0%)
+                                </td>
+                                <td>
+                                    <span class="status-badge status-404">404</span> <span class="status-badge status-404">404</span> <span class="status-badge status-404">404</span>
+                                </td>
+                                <td>35ms</td>
+                            </tr>
+                        
+                            <tr class="route-row" data-auth="true" data-success="false">
+                                <td>
+                                    <strong>/apinotifications/send</strong>
+                                    
+                                </td>
+                                <td>
+                                    <span class="method-badge method-post">POST</span><span class="method-badge method-options">OPTIONS</span>
+                                </td>
+                                <td>
+                                    <span class="auth-required">🔒 Sim</span>
+                                </td>
+                                <td>
+                                    <strong>0/2</strong>
+                                    (0%)
+                                </td>
+                                <td>
+                                    <span class="status-badge status-404">404</span> <span class="status-badge status-404">404</span>
+                                </td>
+                                <td>36ms</td>
+                            </tr>
+                        
+                            <tr class="route-row" data-auth="true" data-success="false">
+                                <td>
+                                    <strong>/apinotifications/templates</strong>
+                                    
+                                </td>
+                                <td>
+                                    <span class="method-badge method-get">GET</span><span class="method-badge method-post">POST</span><span class="method-badge method-options">OPTIONS</span>
+                                </td>
+                                <td>
+                                    <span class="auth-required">🔒 Sim</span>
+                                </td>
+                                <td>
+                                    <strong>0/3</strong>
+                                    (0%)
+                                </td>
+                                <td>
+                                    <span class="status-badge status-404">404</span> <span class="status-badge status-404">404</span> <span class="status-badge status-404">404</span>
+                                </td>
+                                <td>35ms</td>
+                            </tr>
+                        
+                            <tr class="route-row" data-auth="true" data-success="false">
+                                <td>
+                                    <strong>/apinotifications/templates/:id</strong>
+                                    
+                                </td>
+                                <td>
+                                    <span class="method-badge method-get">GET</span><span class="method-badge method-put">PUT</span><span class="method-badge method-delete">DELETE</span><span class="method-badge method-options">OPTIONS</span>
+                                </td>
+                                <td>
+                                    <span class="auth-required">🔒 Sim</span>
+                                </td>
+                                <td>
+                                    <strong>0/4</strong>
+                                    (0%)
+                                </td>
+                                <td>
+                                    <span class="status-badge status-404">404</span> <span class="status-badge status-404">404</span> <span class="status-badge status-404">404</span> <span class="status-badge status-404">404</span>
+                                </td>
+                                <td>34ms</td>
+                            </tr>
+                        
+                            <tr class="route-row" data-auth="true" data-success="false">
+                                <td>
+                                    <strong>/apinotifications/:id</strong>
+                                    
+                                </td>
+                                <td>
+                                    <span class="method-badge method-get">GET</span><span class="method-badge method-put">PUT</span><span class="method-badge method-delete">DELETE</span><span class="method-badge method-options">OPTIONS</span>
+                                </td>
+                                <td>
+                                    <span class="auth-required">🔒 Sim</span>
+                                </td>
+                                <td>
+                                    <strong>0/4</strong>
+                                    (0%)
+                                </td>
+                                <td>
+                                    <span class="status-badge status-404">404</span> <span class="status-badge status-404">404</span> <span class="status-badge status-404">404</span> <span class="status-badge status-404">404</span>
+                                </td>
+                                <td>35ms</td>
+                            </tr>
+                        
+                            <tr class="route-row" data-auth="false" data-success="false">
+                                <td>
+                                    <strong>/apiproxy-pdf</strong>
+                                    <br><small style="color: #7f8c8d;">Este endpoint atua como um proxy para carregar PDFs de fontes externas,   evitando problemas de COR</small>
+                                </td>
+                                <td>
+                                    <span class="method-badge method-get">GET</span><span class="method-badge method-options">OPTIONS</span>
+                                </td>
+                                <td>
+                                    🔓 Não
+                                </td>
+                                <td>
+                                    <strong>0/2</strong>
+                                    (0%)
+                                </td>
+                                <td>
+                                    <span class="status-badge status-404">404</span> <span class="status-badge status-404">404</span>
+                                </td>
+                                <td>39ms</td>
+                            </tr>
+                        
+                            <tr class="route-row" data-auth="true" data-success="false">
+                                <td>
+                                    <strong>/apiqueue/pause</strong>
+                                    
+                                </td>
+                                <td>
+                                    <span class="method-badge method-post">POST</span><span class="method-badge method-options">OPTIONS</span>
+                                </td>
+                                <td>
+                                    <span class="auth-required">🔒 Sim</span>
+                                </td>
+                                <td>
+                                    <strong>0/2</strong>
+                                    (0%)
+                                </td>
+                                <td>
+                                    <span class="status-badge status-404">404</span> <span class="status-badge status-404">404</span>
+                                </td>
+                                <td>36ms</td>
+                            </tr>
+                        
+                            <tr class="route-row" data-auth="true" data-success="false">
+                                <td>
+                                    <strong>/apiqueue/resume</strong>
+                                    
+                                </td>
+                                <td>
+                                    <span class="method-badge method-post">POST</span><span class="method-badge method-options">OPTIONS</span>
+                                </td>
+                                <td>
+                                    <span class="auth-required">🔒 Sim</span>
+                                </td>
+                                <td>
+                                    <strong>0/2</strong>
+                                    (0%)
+                                </td>
+                                <td>
+                                    <span class="status-badge status-404">404</span> <span class="status-badge status-404">404</span>
+                                </td>
+                                <td>34ms</td>
+                            </tr>
+                        
+                            <tr class="route-row" data-auth="true" data-success="false">
+                                <td>
+                                    <strong>/apiqueue</strong>
+                                    
+                                </td>
+                                <td>
+                                    <span class="method-badge method-get">GET</span><span class="method-badge method-post">POST</span><span class="method-badge method-options">OPTIONS</span>
+                                </td>
+                                <td>
+                                    <span class="auth-required">🔒 Sim</span>
+                                </td>
+                                <td>
+                                    <strong>0/3</strong>
+                                    (0%)
+                                </td>
+                                <td>
+                                    <span class="status-badge status-404">404</span> <span class="status-badge status-404">404</span> <span class="status-badge status-404">404</span>
+                                </td>
+                                <td>36ms</td>
+                            </tr>
+                        
+                            <tr class="route-row" data-auth="true" data-success="true">
+                                <td>
+                                    <strong>/apiqueue-simple</strong>
+                                    <br><small style="color: #7f8c8d;">Rotas simplificadas para queue usando o utilitário de proxy</small>
+                                </td>
+                                <td>
+                                    
+                                </td>
+                                <td>
+                                    <span class="auth-required">🔒 Sim</span>
+                                </td>
+                                <td>
+                                    <strong>0/0</strong>
+                                    
+                                </td>
+                                <td>
+                                    
+                                </td>
+                                <td>0ms</td>
+                            </tr>
+                        
+                            <tr class="route-row" data-auth="true" data-success="false">
+                                <td>
+                                    <strong>/apiquizzes</strong>
+                                    
+                                </td>
+                                <td>
+                                    <span class="method-badge method-get">GET</span><span class="method-badge method-post">POST</span><span class="method-badge method-options">OPTIONS</span>
+                                </td>
+                                <td>
+                                    <span class="auth-required">🔒 Sim</span>
+                                </td>
+                                <td>
+                                    <strong>0/3</strong>
+                                    (0%)
+                                </td>
+                                <td>
+                                    <span class="status-badge status-404">404</span> <span class="status-badge status-404">404</span> <span class="status-badge status-404">404</span>
+                                </td>
+                                <td>35ms</td>
+                            </tr>
+                        
+                            <tr class="route-row" data-auth="true" data-success="false">
+                                <td>
+                                    <strong>/apiquizzes/:id</strong>
+                                    
+                                </td>
+                                <td>
+                                    <span class="method-badge method-get">GET</span><span class="method-badge method-put">PUT</span><span class="method-badge method-delete">DELETE</span><span class="method-badge method-options">OPTIONS</span>
+                                </td>
+                                <td>
+                                    <span class="auth-required">🔒 Sim</span>
+                                </td>
+                                <td>
+                                    <strong>0/4</strong>
+                                    (0%)
+                                </td>
+                                <td>
+                                    <span class="status-badge status-404">404</span> <span class="status-badge status-404">404</span> <span class="status-badge status-404">404</span> <span class="status-badge status-404">404</span>
+                                </td>
+                                <td>35ms</td>
+                            </tr>
+                        
+                            <tr class="route-row" data-auth="true" data-success="false">
+                                <td>
+                                    <strong>/apireports</strong>
+                                    
+                                </td>
+                                <td>
+                                    <span class="method-badge method-get">GET</span><span class="method-badge method-post">POST</span><span class="method-badge method-options">OPTIONS</span>
+                                </td>
+                                <td>
+                                    <span class="auth-required">🔒 Sim</span>
+                                </td>
+                                <td>
+                                    <strong>0/3</strong>
+                                    (0%)
+                                </td>
+                                <td>
+                                    <span class="status-badge status-404">404</span> <span class="status-badge status-404">404</span> <span class="status-badge status-404">404</span>
+                                </td>
+                                <td>35ms</td>
+                            </tr>
+                        
+                            <tr class="route-row" data-auth="true" data-success="false">
+                                <td>
+                                    <strong>/apireports/usage</strong>
+                                    
+                                </td>
+                                <td>
+                                    <span class="method-badge method-get">GET</span><span class="method-badge method-post">POST</span><span class="method-badge method-options">OPTIONS</span>
+                                </td>
+                                <td>
+                                    <span class="auth-required">🔒 Sim</span>
+                                </td>
+                                <td>
+                                    <strong>0/3</strong>
+                                    (0%)
+                                </td>
+                                <td>
+                                    <span class="status-badge status-404">404</span> <span class="status-badge status-404">404</span> <span class="status-badge status-404">404</span>
+                                </td>
+                                <td>37ms</td>
+                            </tr>
+                        
+                            <tr class="route-row" data-auth="true" data-success="false">
+                                <td>
+                                    <strong>/apireports/:id</strong>
+                                    
+                                </td>
+                                <td>
+                                    <span class="method-badge method-get">GET</span><span class="method-badge method-put">PUT</span><span class="method-badge method-delete">DELETE</span><span class="method-badge method-options">OPTIONS</span>
+                                </td>
+                                <td>
+                                    <span class="auth-required">🔒 Sim</span>
+                                </td>
+                                <td>
+                                    <strong>0/4</strong>
+                                    (0%)
+                                </td>
+                                <td>
+                                    <span class="status-badge status-404">404</span> <span class="status-badge status-404">404</span> <span class="status-badge status-404">404</span> <span class="status-badge status-404">404</span>
+                                </td>
+                                <td>33ms</td>
+                            </tr>
+                        
+                            <tr class="route-row" data-auth="true" data-success="false">
+                                <td>
+                                    <strong>/apiroles</strong>
+                                    
+                                </td>
+                                <td>
+                                    <span class="method-badge method-get">GET</span><span class="method-badge method-post">POST</span><span class="method-badge method-put">PUT</span><span class="method-badge method-options">OPTIONS</span>
+                                </td>
+                                <td>
+                                    <span class="auth-required">🔒 Sim</span>
+                                </td>
+                                <td>
+                                    <strong>0/4</strong>
+                                    (0%)
+                                </td>
+                                <td>
+                                    <span class="status-badge status-404">404</span> <span class="status-badge status-404">404</span> <span class="status-badge status-404">404</span> <span class="status-badge status-404">404</span>
+                                </td>
+                                <td>39ms</td>
+                            </tr>
+                        
+                            <tr class="route-row" data-auth="true" data-success="false">
+                                <td>
+                                    <strong>/apiroles/search</strong>
+                                    
+                                </td>
+                                <td>
+                                    <span class="method-badge method-get">GET</span><span class="method-badge method-post">POST</span><span class="method-badge method-options">OPTIONS</span>
+                                </td>
+                                <td>
+                                    <span class="auth-required">🔒 Sim</span>
+                                </td>
+                                <td>
+                                    <strong>0/3</strong>
+                                    (0%)
+                                </td>
+                                <td>
+                                    <span class="status-badge status-404">404</span> <span class="status-badge status-404">404</span> <span class="status-badge status-404">404</span>
+                                </td>
+                                <td>36ms</td>
+                            </tr>
+                        
+                            <tr class="route-row" data-auth="true" data-success="false">
+                                <td>
+                                    <strong>/apiroles/stats</strong>
+                                    
+                                </td>
+                                <td>
+                                    <span class="method-badge method-get">GET</span><span class="method-badge method-options">OPTIONS</span>
+                                </td>
+                                <td>
+                                    <span class="auth-required">🔒 Sim</span>
+                                </td>
+                                <td>
+                                    <strong>0/2</strong>
+                                    (0%)
+                                </td>
+                                <td>
+                                    <span class="status-badge status-404">404</span> <span class="status-badge status-404">404</span>
+                                </td>
+                                <td>37ms</td>
+                            </tr>
+                        
+                            <tr class="route-row" data-auth="true" data-success="false">
+                                <td>
+                                    <strong>/apiroles/:id/can-delete</strong>
+                                    
+                                </td>
+                                <td>
+                                    <span class="method-badge method-get">GET</span><span class="method-badge method-options">OPTIONS</span>
+                                </td>
+                                <td>
+                                    <span class="auth-required">🔒 Sim</span>
+                                </td>
+                                <td>
+                                    <strong>0/2</strong>
+                                    (0%)
+                                </td>
+                                <td>
+                                    <span class="status-badge status-404">404</span> <span class="status-badge status-404">404</span>
+                                </td>
+                                <td>39ms</td>
+                            </tr>
+                        
+                            <tr class="route-row" data-auth="true" data-success="false">
+                                <td>
+                                    <strong>/apiroles/:id/duplicate</strong>
+                                    
+                                </td>
+                                <td>
+                                    <span class="method-badge method-post">POST</span><span class="method-badge method-options">OPTIONS</span>
+                                </td>
+                                <td>
+                                    <span class="auth-required">🔒 Sim</span>
+                                </td>
+                                <td>
+                                    <strong>0/2</strong>
+                                    (0%)
+                                </td>
+                                <td>
+                                    <span class="status-badge status-404">404</span> <span class="status-badge status-404">404</span>
+                                </td>
+                                <td>37ms</td>
+                            </tr>
+                        
+                            <tr class="route-row" data-auth="true" data-success="false">
+                                <td>
+                                    <strong>/apiroles/:id/permissions</strong>
+                                    
+                                </td>
+                                <td>
+                                    <span class="method-badge method-get">GET</span><span class="method-badge method-options">OPTIONS</span>
+                                </td>
+                                <td>
+                                    <span class="auth-required">🔒 Sim</span>
+                                </td>
+                                <td>
+                                    <strong>0/2</strong>
+                                    (0%)
+                                </td>
+                                <td>
+                                    <span class="status-badge status-404">404</span> <span class="status-badge status-404">404</span>
+                                </td>
+                                <td>36ms</td>
+                            </tr>
+                        
+                            <tr class="route-row" data-auth="true" data-success="false">
+                                <td>
+                                    <strong>/apiroles/:id</strong>
+                                    
+                                </td>
+                                <td>
+                                    <span class="method-badge method-get">GET</span><span class="method-badge method-put">PUT</span><span class="method-badge method-delete">DELETE</span><span class="method-badge method-options">OPTIONS</span>
+                                </td>
+                                <td>
+                                    <span class="auth-required">🔒 Sim</span>
+                                </td>
+                                <td>
+                                    <strong>0/4</strong>
+                                    (0%)
+                                </td>
+                                <td>
+                                    <span class="status-badge status-404">404</span> <span class="status-badge status-404">404</span> <span class="status-badge status-404">404</span> <span class="status-badge status-404">404</span>
+                                </td>
+                                <td>38ms</td>
+                            </tr>
+                        
+                            <tr class="route-row" data-auth="true" data-success="false">
+                                <td>
+                                    <strong>/apiroles/:id/status</strong>
+                                    
+                                </td>
+                                <td>
+                                    <span class="method-badge method-patch">PATCH</span><span class="method-badge method-options">OPTIONS</span>
+                                </td>
+                                <td>
+                                    <span class="auth-required">🔒 Sim</span>
+                                </td>
+                                <td>
+                                    <strong>0/2</strong>
+                                    (0%)
+                                </td>
+                                <td>
+                                    <span class="status-badge status-404">404</span> <span class="status-badge status-404">404</span>
+                                </td>
+                                <td>36ms</td>
+                            </tr>
+                        
+                            <tr class="route-row" data-auth="true" data-success="false">
+                                <td>
+                                    <strong>/apischools</strong>
+                                    
+                                </td>
+                                <td>
+                                    <span class="method-badge method-get">GET</span><span class="method-badge method-post">POST</span><span class="method-badge method-options">OPTIONS</span>
+                                </td>
+                                <td>
+                                    <span class="auth-required">🔒 Sim</span>
+                                </td>
+                                <td>
+                                    <strong>0/3</strong>
+                                    (0%)
+                                </td>
+                                <td>
+                                    <span class="status-badge status-404">404</span> <span class="status-badge status-404">404</span> <span class="status-badge status-404">404</span>
+                                </td>
+                                <td>38ms</td>
+                            </tr>
+                        
+                            <tr class="route-row" data-auth="true" data-success="false">
+                                <td>
+                                    <strong>/apischools/:id</strong>
+                                    
+                                </td>
+                                <td>
+                                    <span class="method-badge method-get">GET</span><span class="method-badge method-put">PUT</span><span class="method-badge method-delete">DELETE</span><span class="method-badge method-options">OPTIONS</span>
+                                </td>
+                                <td>
+                                    <span class="auth-required">🔒 Sim</span>
+                                </td>
+                                <td>
+                                    <strong>0/4</strong>
+                                    (0%)
+                                </td>
+                                <td>
+                                    <span class="status-badge status-404">404</span> <span class="status-badge status-404">404</span> <span class="status-badge status-404">404</span> <span class="status-badge status-404">404</span>
+                                </td>
+                                <td>38ms</td>
+                            </tr>
+                        
+                            <tr class="route-row" data-auth="false" data-success="false">
+                                <td>
+                                    <strong>/apiscreenshots/*</strong>
+                                    
+                                </td>
+                                <td>
+                                    <span class="method-badge method-get">GET</span><span class="method-badge method-options">OPTIONS</span>
+                                </td>
+                                <td>
+                                    🔓 Não
+                                </td>
+                                <td>
+                                    <strong>0/2</strong>
+                                    (0%)
+                                </td>
+                                <td>
+                                    <span class="status-badge status-404">404</span> <span class="status-badge status-404">404</span>
+                                </td>
+                                <td>35ms</td>
+                            </tr>
+                        
+                            <tr class="route-row" data-auth="true" data-success="false">
+                                <td>
+                                    <strong>/apisessions/validate</strong>
+                                    
+                                </td>
+                                <td>
+                                    <span class="method-badge method-post">POST</span><span class="method-badge method-put">PUT</span><span class="method-badge method-options">OPTIONS</span>
+                                </td>
+                                <td>
+                                    <span class="auth-required">🔒 Sim</span>
+                                </td>
+                                <td>
+                                    <strong>0/3</strong>
+                                    (0%)
+                                </td>
+                                <td>
+                                    <span class="status-badge status-404">404</span> <span class="status-badge status-404">404</span> <span class="status-badge status-404">404</span>
+                                </td>
+                                <td>36ms</td>
+                            </tr>
+                        
+                            <tr class="route-row" data-auth="true" data-success="false">
+                                <td>
+                                    <strong>/apisettings/admin</strong>
+                                    
+                                </td>
+                                <td>
+                                    <span class="method-badge method-get">GET</span><span class="method-badge method-post">POST</span><span class="method-badge method-put">PUT</span><span class="method-badge method-options">OPTIONS</span>
+                                </td>
+                                <td>
+                                    <span class="auth-required">🔒 Sim</span>
+                                </td>
+                                <td>
+                                    <strong>0/4</strong>
+                                    (0%)
+                                </td>
+                                <td>
+                                    <span class="status-badge status-404">404</span> <span class="status-badge status-404">404</span> <span class="status-badge status-404">404</span> <span class="status-badge status-404">404</span>
+                                </td>
+                                <td>37ms</td>
+                            </tr>
+                        
+                            <tr class="route-row" data-auth="true" data-success="false">
+                                <td>
+                                    <strong>/apisettings/aws</strong>
+                                    
+                                </td>
+                                <td>
+                                    <span class="method-badge method-get">GET</span><span class="method-badge method-post">POST</span><span class="method-badge method-put">PUT</span><span class="method-badge method-delete">DELETE</span><span class="method-badge method-options">OPTIONS</span>
+                                </td>
+                                <td>
+                                    <span class="auth-required">🔒 Sim</span>
+                                </td>
+                                <td>
+                                    <strong>0/5</strong>
+                                    (0%)
+                                </td>
+                                <td>
+                                    <span class="status-badge status-404">404</span> <span class="status-badge status-404">404</span> <span class="status-badge status-404">404</span> <span class="status-badge status-404">404</span> <span class="status-badge status-404">404</span>
+                                </td>
+                                <td>37ms</td>
+                            </tr>
+                        
+                            <tr class="route-row" data-auth="true" data-success="false">
+                                <td>
+                                    <strong>/apisettings/background</strong>
+                                    
+                                </td>
+                                <td>
+                                    <span class="method-badge method-get">GET</span><span class="method-badge method-post">POST</span><span class="method-badge method-put">PUT</span><span class="method-badge method-delete">DELETE</span><span class="method-badge method-options">OPTIONS</span>
+                                </td>
+                                <td>
+                                    <span class="auth-required">🔒 Sim</span>
+                                </td>
+                                <td>
+                                    <strong>0/5</strong>
+                                    (0%)
+                                </td>
+                                <td>
+                                    <span class="status-badge status-404">404</span> <span class="status-badge status-404">404</span> <span class="status-badge status-404">404</span> <span class="status-badge status-404">404</span> <span class="status-badge status-404">404</span>
+                                </td>
+                                <td>38ms</td>
+                            </tr>
+                        
+                            <tr class="route-row" data-auth="true" data-success="false">
+                                <td>
+                                    <strong>/apisettings/email</strong>
+                                    
+                                </td>
+                                <td>
+                                    <span class="method-badge method-get">GET</span><span class="method-badge method-post">POST</span><span class="method-badge method-put">PUT</span><span class="method-badge method-delete">DELETE</span><span class="method-badge method-options">OPTIONS</span>
+                                </td>
+                                <td>
+                                    <span class="auth-required">🔒 Sim</span>
+                                </td>
+                                <td>
+                                    <strong>0/5</strong>
+                                    (0%)
+                                </td>
+                                <td>
+                                    <span class="status-badge status-404">404</span> <span class="status-badge status-404">404</span> <span class="status-badge status-404">404</span> <span class="status-badge status-404">404</span> <span class="status-badge status-404">404</span>
+                                </td>
+                                <td>38ms</td>
+                            </tr>
+                        
+                            <tr class="route-row" data-auth="true" data-success="false">
+                                <td>
+                                    <strong>/apisettings/general</strong>
+                                    
+                                </td>
+                                <td>
+                                    <span class="method-badge method-get">GET</span><span class="method-badge method-post">POST</span><span class="method-badge method-put">PUT</span><span class="method-badge method-delete">DELETE</span><span class="method-badge method-options">OPTIONS</span>
+                                </td>
+                                <td>
+                                    <span class="auth-required">🔒 Sim</span>
+                                </td>
+                                <td>
+                                    <strong>0/5</strong>
+                                    (0%)
+                                </td>
+                                <td>
+                                    <span class="status-badge status-404">404</span> <span class="status-badge status-404">404</span> <span class="status-badge status-404">404</span> <span class="status-badge status-404">404</span> <span class="status-badge status-404">404</span>
+                                </td>
+                                <td>37ms</td>
+                            </tr>
+                        
+                            <tr class="route-row" data-auth="false" data-success="false">
+                                <td>
+                                    <strong>/apisettings/public</strong>
+                                    
+                                </td>
+                                <td>
+                                    <span class="method-badge method-get">GET</span><span class="method-badge method-options">OPTIONS</span>
+                                </td>
+                                <td>
+                                    🔓 Não
+                                </td>
+                                <td>
+                                    <strong>0/2</strong>
+                                    (0%)
+                                </td>
+                                <td>
+                                    <span class="status-badge status-404">404</span> <span class="status-badge status-404">404</span>
+                                </td>
+                                <td>36ms</td>
+                            </tr>
+                        
+                            <tr class="route-row" data-auth="true" data-success="false">
+                                <td>
+                                    <strong>/apisettings/reconfigure-email</strong>
+                                    
+                                </td>
+                                <td>
+                                    <span class="method-badge method-post">POST</span><span class="method-badge method-options">OPTIONS</span>
+                                </td>
+                                <td>
+                                    <span class="auth-required">🔒 Sim</span>
+                                </td>
+                                <td>
+                                    <strong>0/2</strong>
+                                    (0%)
+                                </td>
+                                <td>
+                                    <span class="status-badge status-404">404</span> <span class="status-badge status-404">404</span>
+                                </td>
+                                <td>35ms</td>
+                            </tr>
+                        
+                            <tr class="route-row" data-auth="true" data-success="false">
+                                <td>
+                                    <strong>/apisettings</strong>
+                                    
+                                </td>
+                                <td>
+                                    <span class="method-badge method-get">GET</span><span class="method-badge method-post">POST</span><span class="method-badge method-put">PUT</span><span class="method-badge method-options">OPTIONS</span>
+                                </td>
+                                <td>
+                                    <span class="auth-required">🔒 Sim</span>
+                                </td>
+                                <td>
+                                    <strong>0/4</strong>
+                                    (0%)
+                                </td>
+                                <td>
+                                    <span class="status-badge status-404">404</span> <span class="status-badge status-404">404</span> <span class="status-badge status-404">404</span> <span class="status-badge status-404">404</span>
+                                </td>
+                                <td>37ms</td>
+                            </tr>
+                        
+                            <tr class="route-row" data-auth="true" data-success="false">
+                                <td>
+                                    <strong>/apisettings/s3-buckets</strong>
+                                    
+                                </td>
+                                <td>
+                                    <span class="method-badge method-get">GET</span><span class="method-badge method-options">OPTIONS</span>
+                                </td>
+                                <td>
+                                    <span class="auth-required">🔒 Sim</span>
+                                </td>
+                                <td>
+                                    <strong>0/2</strong>
+                                    (0%)
+                                </td>
+                                <td>
+                                    <span class="status-badge status-404">404</span> <span class="status-badge status-404">404</span>
+                                </td>
+                                <td>36ms</td>
+                            </tr>
+                        
+                            <tr class="route-row" data-auth="true" data-success="false">
+                                <td>
+                                    <strong>/apisettings/security</strong>
+                                    
+                                </td>
+                                <td>
+                                    <span class="method-badge method-get">GET</span><span class="method-badge method-post">POST</span><span class="method-badge method-put">PUT</span><span class="method-badge method-delete">DELETE</span><span class="method-badge method-options">OPTIONS</span>
+                                </td>
+                                <td>
+                                    <span class="auth-required">🔒 Sim</span>
+                                </td>
+                                <td>
+                                    <strong>0/5</strong>
+                                    (0%)
+                                </td>
+                                <td>
+                                    <span class="status-badge status-404">404</span> <span class="status-badge status-404">404</span> <span class="status-badge status-404">404</span> <span class="status-badge status-404">404</span> <span class="status-badge status-404">404</span>
+                                </td>
+                                <td>37ms</td>
+                            </tr>
+                        
+                            <tr class="route-row" data-auth="true" data-success="false">
+                                <td>
+                                    <strong>/apisettings/test-aws</strong>
+                                    
+                                </td>
+                                <td>
+                                    <span class="method-badge method-post">POST</span><span class="method-badge method-options">OPTIONS</span>
+                                </td>
+                                <td>
+                                    <span class="auth-required">🔒 Sim</span>
+                                </td>
+                                <td>
+                                    <strong>0/2</strong>
+                                    (0%)
+                                </td>
+                                <td>
+                                    <span class="status-badge status-404">404</span> <span class="status-badge status-404">404</span>
+                                </td>
+                                <td>36ms</td>
+                            </tr>
+                        
+                            <tr class="route-row" data-auth="true" data-success="false">
+                                <td>
+                                    <strong>/apisettings/test-email</strong>
+                                    
+                                </td>
+                                <td>
+                                    <span class="method-badge method-post">POST</span><span class="method-badge method-options">OPTIONS</span>
+                                </td>
+                                <td>
+                                    <span class="auth-required">🔒 Sim</span>
+                                </td>
+                                <td>
+                                    <strong>0/2</strong>
+                                    (0%)
+                                </td>
+                                <td>
+                                    <span class="status-badge status-404">404</span> <span class="status-badge status-404">404</span>
+                                </td>
+                                <td>37ms</td>
+                            </tr>
+                        
+                            <tr class="route-row" data-auth="true" data-success="false">
+                                <td>
+                                    <strong>/apisettings/test-s3</strong>
+                                    
+                                </td>
+                                <td>
+                                    <span class="method-badge method-post">POST</span><span class="method-badge method-options">OPTIONS</span>
+                                </td>
+                                <td>
+                                    <span class="auth-required">🔒 Sim</span>
+                                </td>
+                                <td>
+                                    <strong>0/2</strong>
+                                    (0%)
+                                </td>
+                                <td>
+                                    <span class="status-badge status-404">404</span> <span class="status-badge status-404">404</span>
+                                </td>
+                                <td>35ms</td>
+                            </tr>
+                        
+                            <tr class="route-row" data-auth="false" data-success="false">
+                                <td>
+                                    <strong>/apistatus</strong>
+                                    
+                                </td>
+                                <td>
+                                    <span class="method-badge method-get">GET</span><span class="method-badge method-options">OPTIONS</span>
+                                </td>
+                                <td>
+                                    🔓 Não
+                                </td>
+                                <td>
+                                    <strong>0/2</strong>
+                                    (0%)
+                                </td>
+                                <td>
+                                    <span class="status-badge status-404">404</span> <span class="status-badge status-404">404</span>
+                                </td>
+                                <td>36ms</td>
+                            </tr>
+                        
+                            <tr class="route-row" data-auth="true" data-success="false">
+                                <td>
+                                    <strong>/apistudy-groups</strong>
+                                    
+                                </td>
+                                <td>
+                                    <span class="method-badge method-get">GET</span><span class="method-badge method-post">POST</span><span class="method-badge method-options">OPTIONS</span>
+                                </td>
+                                <td>
+                                    <span class="auth-required">🔒 Sim</span>
+                                </td>
+                                <td>
+                                    <strong>0/3</strong>
+                                    (0%)
+                                </td>
+                                <td>
+                                    <span class="status-badge status-404">404</span> <span class="status-badge status-404">404</span> <span class="status-badge status-404">404</span>
+                                </td>
+                                <td>36ms</td>
+                            </tr>
+                        
+                            <tr class="route-row" data-auth="true" data-success="false">
+                                <td>
+                                    <strong>/apistudy-groups/:id</strong>
+                                    
+                                </td>
+                                <td>
+                                    <span class="method-badge method-get">GET</span><span class="method-badge method-put">PUT</span><span class="method-badge method-delete">DELETE</span><span class="method-badge method-options">OPTIONS</span>
+                                </td>
+                                <td>
+                                    <span class="auth-required">🔒 Sim</span>
+                                </td>
+                                <td>
+                                    <strong>0/4</strong>
+                                    (0%)
+                                </td>
+                                <td>
+                                    <span class="status-badge status-404">404</span> <span class="status-badge status-404">404</span> <span class="status-badge status-404">404</span> <span class="status-badge status-404">404</span>
+                                </td>
+                                <td>36ms</td>
+                            </tr>
+                        
+                            <tr class="route-row" data-auth="true" data-success="false">
+                                <td>
+                                    <strong>/apitest-auth</strong>
+                                    
+                                </td>
+                                <td>
+                                    <span class="method-badge method-get">GET</span><span class="method-badge method-options">OPTIONS</span>
+                                </td>
+                                <td>
+                                    <span class="auth-required">🔒 Sim</span>
+                                </td>
+                                <td>
+                                    <strong>0/2</strong>
+                                    (0%)
+                                </td>
+                                <td>
+                                    <span class="status-badge status-404">404</span> <span class="status-badge status-404">404</span>
+                                </td>
+                                <td>39ms</td>
+                            </tr>
+                        
+                            <tr class="route-row" data-auth="true" data-success="false">
+                                <td>
+                                    <strong>/apitv-shows</strong>
+                                    
+                                </td>
+                                <td>
+                                    <span class="method-badge method-get">GET</span><span class="method-badge method-post">POST</span><span class="method-badge method-options">OPTIONS</span>
+                                </td>
+                                <td>
+                                    <span class="auth-required">🔒 Sim</span>
+                                </td>
+                                <td>
+                                    <strong>0/3</strong>
+                                    (0%)
+                                </td>
+                                <td>
+                                    <span class="status-badge status-404">404</span> <span class="status-badge status-404">404</span> <span class="status-badge status-404">404</span>
+                                </td>
+                                <td>36ms</td>
+                            </tr>
+                        
+                            <tr class="route-row" data-auth="true" data-success="false">
+                                <td>
+                                    <strong>/apitv-shows/:id/modules</strong>
+                                    
+                                </td>
+                                <td>
+                                    <span class="method-badge method-get">GET</span><span class="method-badge method-options">OPTIONS</span>
+                                </td>
+                                <td>
+                                    <span class="auth-required">🔒 Sim</span>
+                                </td>
+                                <td>
+                                    <strong>0/2</strong>
+                                    (0%)
+                                </td>
+                                <td>
+                                    <span class="status-badge status-404">404</span> <span class="status-badge status-404">404</span>
+                                </td>
+                                <td>35ms</td>
+                            </tr>
+                        
+                            <tr class="route-row" data-auth="true" data-success="false">
+                                <td>
+                                    <strong>/apitv-shows/:id</strong>
+                                    
+                                </td>
+                                <td>
+                                    <span class="method-badge method-get">GET</span><span class="method-badge method-put">PUT</span><span class="method-badge method-delete">DELETE</span><span class="method-badge method-options">OPTIONS</span>
+                                </td>
+                                <td>
+                                    <span class="auth-required">🔒 Sim</span>
+                                </td>
+                                <td>
+                                    <strong>0/4</strong>
+                                    (0%)
+                                </td>
+                                <td>
+                                    <span class="status-badge status-404">404</span> <span class="status-badge status-404">404</span> <span class="status-badge status-404">404</span> <span class="status-badge status-404">404</span>
+                                </td>
+                                <td>38ms</td>
+                            </tr>
+                        
+                            <tr class="route-row" data-auth="true" data-success="false">
+                                <td>
+                                    <strong>/apiunits</strong>
+                                    
+                                </td>
+                                <td>
+                                    <span class="method-badge method-get">GET</span><span class="method-badge method-post">POST</span><span class="method-badge method-options">OPTIONS</span>
+                                </td>
+                                <td>
+                                    <span class="auth-required">🔒 Sim</span>
+                                </td>
+                                <td>
+                                    <strong>0/3</strong>
+                                    (0%)
+                                </td>
+                                <td>
+                                    <span class="status-badge status-404">404</span> <span class="status-badge status-404">404</span> <span class="status-badge status-404">404</span>
+                                </td>
+                                <td>35ms</td>
+                            </tr>
+                        
+                            <tr class="route-row" data-auth="true" data-success="false">
+                                <td>
+                                    <strong>/apiunits/:id</strong>
+                                    
+                                </td>
+                                <td>
+                                    <span class="method-badge method-get">GET</span><span class="method-badge method-put">PUT</span><span class="method-badge method-delete">DELETE</span><span class="method-badge method-options">OPTIONS</span>
+                                </td>
+                                <td>
+                                    <span class="auth-required">🔒 Sim</span>
+                                </td>
+                                <td>
+                                    <strong>0/4</strong>
+                                    (0%)
+                                </td>
+                                <td>
+                                    <span class="status-badge status-404">404</span> <span class="status-badge status-404">404</span> <span class="status-badge status-404">404</span> <span class="status-badge status-404">404</span>
+                                </td>
+                                <td>35ms</td>
+                            </tr>
+                        
+                            <tr class="route-row" data-auth="true" data-success="false">
+                                <td>
+                                    <strong>/apiunits-debug</strong>
+                                    
+                                </td>
+                                <td>
+                                    <span class="method-badge method-get">GET</span><span class="method-badge method-post">POST</span><span class="method-badge method-options">OPTIONS</span>
+                                </td>
+                                <td>
+                                    <span class="auth-required">🔒 Sim</span>
+                                </td>
+                                <td>
+                                    <strong>0/3</strong>
+                                    (0%)
+                                </td>
+                                <td>
+                                    <span class="status-badge status-404">404</span> <span class="status-badge status-404">404</span> <span class="status-badge status-404">404</span>
+                                </td>
+                                <td>39ms</td>
+                            </tr>
+                        
+                            <tr class="route-row" data-auth="true" data-success="false">
+                                <td>
+                                    <strong>/apiusers/by-role/:roleId</strong>
+                                    
+                                </td>
+                                <td>
+                                    <span class="method-badge method-get">GET</span><span class="method-badge method-options">OPTIONS</span>
+                                </td>
+                                <td>
+                                    <span class="auth-required">🔒 Sim</span>
+                                </td>
+                                <td>
+                                    <strong>0/2</strong>
+                                    (0%)
+                                </td>
+                                <td>
+                                    <span class="status-badge status-404">404</span> <span class="status-badge status-404">404</span>
+                                </td>
+                                <td>39ms</td>
+                            </tr>
+                        
+                            <tr class="route-row" data-auth="false" data-success="false">
+                                <td>
+                                    <strong>/apiusers</strong>
+                                    
+                                </td>
+                                <td>
+                                    <span class="method-badge method-get">GET</span><span class="method-badge method-options">OPTIONS</span>
+                                </td>
+                                <td>
+                                    🔓 Não
+                                </td>
+                                <td>
+                                    <strong>0/2</strong>
+                                    (0%)
+                                </td>
+                                <td>
+                                    <span class="status-badge status-404">404</span> <span class="status-badge status-404">404</span>
+                                </td>
+                                <td>38ms</td>
+                            </tr>
+                        
+                            <tr class="route-row" data-auth="true" data-success="false">
+                                <td>
+                                    <strong>/apiusers/stats</strong>
+                                    
+                                </td>
+                                <td>
+                                    <span class="method-badge method-get">GET</span><span class="method-badge method-options">OPTIONS</span>
+                                </td>
+                                <td>
+                                    <span class="auth-required">🔒 Sim</span>
+                                </td>
+                                <td>
+                                    <strong>0/2</strong>
+                                    (0%)
+                                </td>
+                                <td>
+                                    <span class="status-badge status-404">404</span> <span class="status-badge status-404">404</span>
+                                </td>
+                                <td>39ms</td>
+                            </tr>
+                        
+                            <tr class="route-row" data-auth="true" data-success="false">
+                                <td>
+                                    <strong>/apiusers/:id</strong>
+                                    
+                                </td>
+                                <td>
+                                    <span class="method-badge method-get">GET</span><span class="method-badge method-put">PUT</span><span class="method-badge method-delete">DELETE</span><span class="method-badge method-options">OPTIONS</span>
+                                </td>
+                                <td>
+                                    <span class="auth-required">🔒 Sim</span>
+                                </td>
+                                <td>
+                                    <strong>0/4</strong>
+                                    (0%)
+                                </td>
+                                <td>
+                                    <span class="status-badge status-404">404</span> <span class="status-badge status-404">404</span> <span class="status-badge status-404">404</span> <span class="status-badge status-404">404</span>
+                                </td>
+                                <td>38ms</td>
+                            </tr>
+                        
+                            <tr class="route-row" data-auth="false" data-success="false">
+                                <td>
+                                    <strong>/apivideo-file/:videoId</strong>
+                                    
+                                </td>
+                                <td>
+                                    <span class="method-badge method-get">GET</span><span class="method-badge method-options">OPTIONS</span>
+                                </td>
+                                <td>
+                                    🔓 Não
+                                </td>
+                                <td>
+                                    <strong>0/2</strong>
+                                    (0%)
+                                </td>
+                                <td>
+                                    <span class="status-badge status-404">404</span> <span class="status-badge status-404">404</span>
+                                </td>
+                                <td>37ms</td>
+                            </tr>
+                        
+                </tbody>
+            </table>
+        </div>
+        
+        <div class="footer">
+            <p>🛠️ Gerado pelo Script de Mapeamento de API - Portal</p>
+            <p>📧 Desenvolvido por Kilo Code</p>
+        </div>
+    </div>
+    
+    <script>
+        // Função de busca
+        document.getElementById('searchBox').addEventListener('input', function(e) {
+            const searchTerm = e.target.value.toLowerCase();
+            const rows = document.querySelectorAll('.route-row');
+            
+            rows.forEach(row => {
+                const routePath = row.cells[0].textContent.toLowerCase();
+                const methods = row.cells[1].textContent.toLowerCase();
+                
+                if (routePath.includes(searchTerm) || methods.includes(searchTerm)) {
+                    row.style.display = '';
+                } else {
+                    row.style.display = 'none';
+                }
+            });
+        });
+        
+        // Função de filtro
+        function filterRoutes(filter) {
+            const rows = document.querySelectorAll('.route-row');
+            const buttons = document.querySelectorAll('.filter-btn');
+            
+            // Atualizar botões ativos
+            buttons.forEach(btn => btn.classList.remove('active'));
+            event.target.classList.add('active');
+            
+            rows.forEach(row => {
+                const hasAuth = row.dataset.auth === 'true';
+                const isSuccess = row.dataset.success === 'true';
+                
+                let show = true;
+                
+                switch(filter) {
+                    case 'auth':
+                        show = hasAuth;
+                        break;
+                    case 'no-auth':
+                        show = !hasAuth;
+                        break;
+                    case 'failed':
+                        show = !isSuccess;
+                        break;
+                    case 'all':
+                    default:
+                        show = true;
+                        break;
+                }
+                
+                row.style.display = show ? '' : 'none';
+            });
+        }
+        
+        // Adicionar efeitos de hover
+        document.querySelectorAll('.stat-card').forEach(card => {
+            card.addEventListener('mouseenter', function() {
+                this.style.transform = 'translateY(-5px) scale(1.02)';
+            });
+            
+            card.addEventListener('mouseleave', function() {
+                this.style.transform = 'translateY(0) scale(1)';
+            });
+        });
+    </script>
+</body>
+</html>
+  

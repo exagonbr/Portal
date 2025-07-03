@@ -3,6 +3,8 @@
 import React, { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { EnhancedLoadingState } from './LoadingStates';
+import { buildLoginUrl } from '../../utils/urlBuilder';
+import { getApiUrl } from '@/config/urls';
 
 interface LogoutHandlerProps {
   onLogout?: () => Promise<void>;
@@ -63,7 +65,7 @@ export function LogoutHandler({ onLogout, children }: LogoutHandlerProps) {
 
       // 3. Chamar API de logout para limpar Redis/Backend
       try {
-        await fetch('/api/auth/logout', {
+        await fetch(`${getApiUrl()}/auth/logout`, {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',
@@ -79,7 +81,7 @@ export function LogoutHandler({ onLogout, children }: LogoutHandlerProps) {
       try {
         const sessionId = localStorage.getItem('session_id');
         if (sessionId) {
-          await fetch('/api/sessions/invalidate', {
+          await fetch(`${getApiUrl()}/sessions/invalidate`, {
             method: 'POST',
             headers: {
               'Content-Type': 'application/json',
@@ -101,11 +103,12 @@ export function LogoutHandler({ onLogout, children }: LogoutHandlerProps) {
       await new Promise(resolve => setTimeout(resolve, 1000));
 
       // 7. Redirecionar para login
-      router.push('/auth/login');
+      const loginUrl = buildLoginUrl();
+      router.push(loginUrl);
       
       // 8. Recarregar a página para garantir limpeza completa
       setTimeout(() => {
-        window.location.href = '/auth/login';
+        window.location.href = loginUrl;
       }, 100);
 
     } catch (error) {
@@ -117,9 +120,10 @@ export function LogoutHandler({ onLogout, children }: LogoutHandlerProps) {
         sessionStorage.clear();
       }
       
-      router.push('/auth/login');
+      const loginUrl = buildLoginUrl();
+      router.push(loginUrl);
       setTimeout(() => {
-        window.location.href = '/auth/login';
+        window.location.href = loginUrl;
       }, 100);
     } finally {
       setIsLoggingOut(false);

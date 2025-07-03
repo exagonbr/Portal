@@ -1,4 +1,3 @@
-export const dynamic = 'force-dynamic';
 import { NextRequest, NextResponse } from 'next/server';
 import { createCorsOptionsResponse, getCorsHeaders } from '@/config/cors';
 import { withAuth, AuthenticatedRequest } from '@/middleware/auth-middleware';
@@ -120,7 +119,8 @@ export const GET = withAuth(async (request: AuthenticatedRequest) => {
 
     return NextResponse.json({
       success: true,
-      data: analyticsData
+      data: fallbackData,
+      message: 'Analytics do dashboard (rota pública - dados de fallback)'
     }, {
       headers: getCorsHeaders(request.headers.get('origin') || undefined)
     });

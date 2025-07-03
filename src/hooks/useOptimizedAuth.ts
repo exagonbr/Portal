@@ -1,5 +1,7 @@
 import { useState, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
+import { buildLoginUrl, buildUrl } from '../utils/urlBuilder';
+import { getApiUrl } from '@/config/urls';
 
 interface LoginData {
   email: string;
@@ -41,7 +43,7 @@ export function useOptimizedAuth() {
     try {
       console.log('🔐 Iniciando login otimizado...');
       
-      const response = await fetch('/api/auth/login', {
+      const response = await fetch(`${getApiUrl()}/auth/login`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -64,7 +66,7 @@ export function useOptimizedAuth() {
         localStorage.setItem('user', JSON.stringify(result.data.user));
         
         // Redirecionar para dashboard
-        router.push('/dashboard');
+        router.push(buildUrl('/dashboard'));
       }
 
       return result;
@@ -91,7 +93,7 @@ export function useOptimizedAuth() {
       
       const token = localStorage.getItem('accessToken');
       
-      const response = await fetch('/api/auth/logout', {
+      const response = await fetch(`${getApiUrl()}/auth/logout`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -109,7 +111,7 @@ export function useOptimizedAuth() {
       console.log('✅ Logout otimizado realizado');
       
       // Redirecionar para login
-      router.push('/auth/login');
+      router.push(buildLoginUrl());
 
       return result;
     } catch (err: any) {
@@ -123,7 +125,7 @@ export function useOptimizedAuth() {
       console.log('❌ Erro no logout otimizado:', errorMessage);
       
       // Ainda assim redirecionar para login
-      router.push('/auth/login');
+      router.push(buildLoginUrl());
       
       return {
         success: false,
@@ -142,7 +144,7 @@ export function useOptimizedAuth() {
         return false;
       }
 
-      const response = await fetch('/api/auth/validate', {
+      const response = await fetch(`${getApiUrl()}/auth/validate`, {
         method: 'GET',
         headers: {
           'Authorization': `Bearer ${token}`,
@@ -165,7 +167,7 @@ export function useOptimizedAuth() {
         return false;
       }
 
-      const response = await fetch('/api/auth/refresh', {
+      const response = await fetch(`${getApiUrl()}/auth/refresh`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',

@@ -2,6 +2,7 @@
 
 import React, { createContext, useContext, useState, useEffect } from 'react';
 import { Theme, ThemeType, getTheme, applyTheme, getCurrentTheme } from '@/config/themes';
+import { useIsClient } from '@/utils/ssr';
 
 interface ThemeContextType {
   theme: Theme;

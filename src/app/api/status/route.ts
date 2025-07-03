@@ -1,92 +1,80 @@
 import { NextRequest, NextResponse } from 'next/server';
+import { createCorsOptionsResponse, getCorsHeaders } from '@/config/cors'
 
-/**
- * Status do sistema (endpoint público)
- * GET /api/status
- */
+
+// Handler para requisições OPTIONS (preflight)
+export async function OPTIONS(request: NextRequest) {
+  const origin = request.headers.get('origin') || undefined;
+  return createCorsOptionsResponse(origin);
+}
+
 export async function GET(request: NextRequest) {
   try {
-    const startTime = Date.now();
-
-    // Simular verificações de saúde do sistema
-    const healthChecks = {
-      database: {
-        status: 'healthy',
-        responseTime: Math.floor(Math.random() * 20) + 5, // 5-25ms
-        lastCheck: new Date().toISOString()
-      },
-      cache: {
-        status: 'healthy',
-        responseTime: Math.floor(Math.random() * 5) + 1, // 1-6ms
-        lastCheck: new Date().toISOString()
-      },
-      storage: {
-        status: 'healthy',
-        responseTime: Math.floor(Math.random() * 100) + 50, // 50-150ms
-        lastCheck: new Date().toISOString()
-      },
-      email: {
-        status: 'healthy',
-        responseTime: Math.floor(Math.random() * 200) + 100, // 100-300ms
-        lastCheck: new Date().toISOString()
-      }
-    };
-
-    // Calcular status geral
-    const allHealthy = Object.values(healthChecks).every(check => check.status === 'healthy');
-    const overallStatus = allHealthy ? 'healthy' : 'degraded';
-
-    const systemStatus = {
-      status: overallStatus,
-      timestamp: new Date().toISOString(),
-      version: '1.0.0',
-      environment: process.env.NODE_ENV || 'development',
-      uptime: process.uptime(),
-      responseTime: Date.now() - startTime,
-      services: healthChecks,
-      system: {
-        nodeVersion: process.version,
-        platform: process.platform,
-        arch: process.arch,
-        memory: {
-          used: Math.round(process.memoryUsage().heapUsed / 1024 / 1024),
-          total: Math.round(process.memoryUsage().heapTotal / 1024 / 1024)
+    const timestamp = new Date().toISOString();
+    
+    // Verificar status básico do sistema
+    const status = {
+      status: 'ok',
+      message: 'Sistema funcionando normalmente',
+      timestamp,
+      services: {
+        api: {
+          status: 'healthy',
+          uptime: process.uptime(),
+          memory: {
+            used: Math.round(process.memoryUsage().heapUsed / 1024 / 1024),
+            total: Math.round(process.memoryUsage().heapTotal / 1024 / 1024)
+          }
         },
-        cpu: {
-          usage: Math.random() * 100,
-          loadAverage: require('os').loadavg()
+        database: {
+          status: 'checking',
+          message: 'Verificando conexão...'
         }
       },
-      metrics: {
-        activeConnections: Math.floor(Math.random() * 100) + 50,
-        requestsPerMinute: Math.floor(Math.random() * 1000) + 500,
-        errorRate: Math.random() * 2, // 0-2%
-        avgResponseTime: Math.floor(Math.random() * 200) + 100
-      }
+      version: process.env.npm_package_version || '2.3.1',
+      environment: process.env.NODE_ENV || 'production'
     };
 
-    // Retornar status apropriado baseado na saúde do sistema
-    const statusCode = overallStatus === 'healthy' ? 200 : 503;
+    // Tentar verificar conexão com o banco de dados
+    try {
+      // Fazer uma requisição simples para verificar se o backend está respondendo
+      const backendHealthUrl = 'https://portal.sabercon.com.br/api';
+      const healthResponse = await fetch(`${backendHealthUrl}/health`, {
+        method: 'GET',
+        signal: AbortSignal.timeout(5000)
+      });
 
-    return NextResponse.json({
-      success: true,
-      data: systemStatus
-    }, { status: statusCode });
+      if (healthResponse.ok) {
+        status.services.database = {
+          status: 'healthy',
+          message: 'Conexão com backend estabelecida'
+        };
+      } else {
+        status.services.database = {
+          status: 'warning',
+          message: `Backend respondeu com status ${healthResponse.status}`
+        };
+      }
+    } catch (dbError) {
+      status.services.database = {
+        status: 'error',
+        message: 'Erro ao conectar com o backend'
+      };
+    }
 
+    return NextResponse.json(status, { 
+      status: 200,
+      headers: getCorsHeaders(request.headers.get('origin') || undefined)
+    });
+    
   } catch (error) {
-    console.error('Erro ao obter status do sistema:', error);
+    console.log('Erro na rota /api/status:', error);
+    
     return NextResponse.json({
-      success: false,
       status: 'error',
       message: 'Erro interno do servidor',
-      timestamp: new Date().toISOString()
+      timestamp: new Date().toISOString(),
+      error: error instanceof Error ? error.message : 'Erro desconhecido'
     }, { status: 500 });
   }
-}
-
-/**
- * OPTIONS para CORS
- */
-export async function OPTIONS() {
-  return NextResponse.json({}, { status: 204 });
-}
+} 

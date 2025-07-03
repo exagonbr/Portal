@@ -1,6 +1,6 @@
 /**
- * Configuração centralizada de ambiente - OTIMIZADA
- * Comunicação direta frontend-backend sem proxy
+ * Configuração centralizada de ambiente
+ * Suporta desenvolvimento local e produção
  */
 
 // Detectar ambiente de forma segura
@@ -14,30 +14,32 @@ const getNodeEnv = () => {
 const NODE_ENV = getNodeEnv();
 const isProduction = NODE_ENV === 'production';
 const isDevelopment = NODE_ENV === 'development';
+const isServer = typeof window === 'undefined';
 
-// URLs otimizadas para comunicação direta
+// URLs otimizadas para cada ambiente
 const getBaseUrls = () => {
-  if (isProduction) {
+  // Em desenvolvimento, usar URLs locais
+  if (isDevelopment) {
+    const frontendUrl = process.env.NEXT_PUBLIC_FRONTEND_URL || 'http://localhost:3000';
+    const backendUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001';
+    
     return {
-      // Frontend público
-      FRONTEND_URL: 'https://portal.sabercon.com.br',
-      
-      // Backend - comunicação direta via Nginx (sem proxy Next.js)
-      // Cliente (browser): usa URL pública do Nginx
-      BACKEND_URL: 'https://portal.sabercon.com.br/api',
-      API_BASE_URL: 'https://portal.sabercon.com.br/api',
-      
-      // Servidor (SSR): usa URL interna direta
-      INTERNAL_API_URL: 'https://portal.sabercon.com.br/api'
+      FRONTEND_URL: frontendUrl,
+      BACKEND_URL: backendUrl,
+      API_BASE_URL: backendUrl,
+      INTERNAL_API_URL: backendUrl
     };
   }
   
-  // Desenvolvimento - usar backend local
+  // Em produção, usar URLs de produção
+  const frontendUrl = process.env.FRONTEND_URL || 'https://portal.sabercon.com.br';
+  
   return {
-    FRONTEND_URL: 'http://localhost:3001',
-    BACKEND_URL: 'http://localhost:3001/api',
-    API_BASE_URL: 'http://localhost:3001/api',
-    INTERNAL_API_URL: 'http://localhost:3001/api'
+    FRONTEND_URL: frontendUrl,
+    // Em produção, o backend está no mesmo domínio sob /api
+    BACKEND_URL: `${frontendUrl}/api`,
+    API_BASE_URL: `${frontendUrl}/api`,
+    INTERNAL_API_URL: `${frontendUrl}/api`
   };
 };
 
@@ -48,10 +50,10 @@ try {
 } catch (error) {
   console.warn('Erro ao inicializar URLs base, usando fallback:', error);
   BASE_URLS = {
-    FRONTEND_URL: 'https://portal.sabercon.com.br',
-    BACKEND_URL: 'https://portal.sabercon.com.br/api',
-    API_BASE_URL: 'https://portal.sabercon.com.br/api',
-    INTERNAL_API_URL: 'https://portal.sabercon.com.br/api'
+    FRONTEND_URL: 'http://localhost:3000',
+    BACKEND_URL: 'http://localhost:3001',
+    API_BASE_URL: 'http://localhost:3001',
+    INTERNAL_API_URL: 'http://localhost:3001'
   };
 }
 
@@ -60,22 +62,25 @@ export const ENV_CONFIG = {
   NODE_ENV,
   IS_PRODUCTION: isProduction,
   IS_DEVELOPMENT: isDevelopment,
+  IS_SERVER: isServer,
   
   // URLs
   ...BASE_URLS,
   
-  // Configurações de API otimizadas
+  // Configurações de API
   API_TIMEOUT: 30000,
-  API_RETRY_ATTEMPTS: 2, // Reduzido para evitar sobrecarga
+  API_RETRY_ATTEMPTS: 2,
   
-  // CORS simplificado
-  CORS_ORIGINS: ['https://portal.sabercon.com.br'],
+  // CORS
+  CORS_ORIGINS: isDevelopment 
+    ? ['http://localhost:3000', 'http://localhost:3001']
+    : ['https://portal.sabercon.com.br'],
     
   // Configurações de segurança
   SECURE_COOKIES: isProduction,
   SAME_SITE: isProduction ? 'strict' as const : 'lax' as const,
   
-  // Cache otimizado
+  // Cache
   CACHE_ENABLED: true,
   CACHE_TTL: isProduction ? 1800 : 300, // 30min prod, 5min dev
   
@@ -88,10 +93,16 @@ export const getApiUrl = (path: string = '') => {
   try {
     const baseUrl = ENV_CONFIG.API_BASE_URL;
     const cleanPath = path.startsWith('/') ? path : `/${path}`;
+    
+    // Se a baseUrl já termina com /api e o path começa com /api, evitar duplicação
+    if (baseUrl.endsWith('/api') && cleanPath.startsWith('/api')) {
+      return `${baseUrl}${cleanPath.substring(4)}`;
+    }
+    
     return `${baseUrl}${cleanPath}`;
   } catch (error) {
     console.warn('Erro ao obter API URL, usando fallback:', error);
-    return `https://portal.sabercon.com.br/api${path.startsWith('/') ? path : `/${path}`}`;
+    return `http://localhost:3001${path.startsWith('/') ? path : `/${path}`}`;
   }
 };
 
@@ -100,32 +111,27 @@ export const getInternalApiUrl = (path: string = '') => {
   try {
     const baseUrl = ENV_CONFIG.INTERNAL_API_URL;
     const cleanPath = path.startsWith('/') ? path : `/${path}`;
+    
+    // Se a baseUrl já termina com /api e o path começa com /api, evitar duplicação
+    if (baseUrl.endsWith('/api') && cleanPath.startsWith('/api')) {
+      return `${baseUrl}${cleanPath.substring(4)}`;
+    }
+    
     return `${baseUrl}${cleanPath}`;
   } catch (error) {
     console.warn('Erro ao obter Internal API URL, usando fallback:', error);
-    return `https://portal.sabercon.com.br/api${path.startsWith('/') ? path : `/${path}`}`;
+    return `http://localhost:3001${path.startsWith('/') ? path : `/${path}`}`;
   }
 };
 
 // Função helper para log de configuração (apenas em desenvolvimento)
 export const logEnvironmentConfig = () => {
   if (typeof console !== 'undefined' && ENV_CONFIG.DEBUG_MODE) {
-    console.log('🚀 Configuração Otimizada (Comunicação Direta):');
+    console.log('🚀 Configuração de Ambiente:');
     console.log(`   NODE_ENV: ${ENV_CONFIG.NODE_ENV}`);
     console.log(`   FRONTEND_URL: ${ENV_CONFIG.FRONTEND_URL}`);
-    console.log(`   API_BASE_URL (Cliente): ${ENV_CONFIG.API_BASE_URL}`);
-    console.log(`   INTERNAL_API_URL (Servidor): ${ENV_CONFIG.INTERNAL_API_URL}`);
-    console.log(`   🔥 Proxy Next.js: DESABILITADO`);
-    console.log(`   ⚡ Comunicação: DIRETA via Nginx`);
+    console.log(`   API_BASE_URL: ${ENV_CONFIG.API_BASE_URL}`);
   }
 };
 
-// Exportar URLs para compatibilidade
-export const {
-  FRONTEND_URL,
-  BACKEND_URL,
-  API_BASE_URL,
-  INTERNAL_API_URL
-} = BASE_URLS;
-
-export default ENV_CONFIG; 
+export default ENV_CONFIG;

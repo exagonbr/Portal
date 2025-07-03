@@ -9,6 +9,7 @@ import { getDashboardPath, isValidRole } from '../../utils/roleRedirect';
 import { useTheme } from '@/contexts/ThemeContext';
 import { LicenseValidationModal } from './LicenseValidationModal';
 import { MotionDiv, MotionSpan, MotionP, ClientOnly } from '@/components/ui/MotionWrapper';
+import { FRONTEND_URL } from '@/config/urls';
 
 interface LoginFormData {
   email: string;
@@ -452,7 +453,7 @@ export function LoginForm() {
         >
           {/* Google Login Button */}
           <a
-            href="/api/auth/signin/google"
+            href={`${FRONTEND_URL}/api/auth/signin/google`}
             className="w-full flex items-center justify-center px-4 py-2 border border-gray-300 rounded-md shadow-sm text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 transition-all duration-200 transform hover:scale-105 active:scale-95"
             style={{
               color: theme.colors.text.primary,

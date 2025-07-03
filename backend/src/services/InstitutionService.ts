@@ -85,7 +85,7 @@ export class InstitutionService extends BaseService<Institution, CreateInstituti
           };
         },
         // Tempo de cache: 5 minutos para consultas normais, 15 minutos para listas de instituições ativas
-        is_active === true ? 900 : 300
+        { ttl: is_active === true ? 900 : 300 }
       );
     } catch (error) {
       this.logger.error('Error finding institutions with filters', { filters }, error as Error);
