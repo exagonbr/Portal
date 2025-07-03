@@ -130,11 +130,10 @@ export class AuthService {
     // Find user
     const user = await db('users')
       .where('email', email)
-      .andWhere('is_active', true)
       .first();
 
-    if (!user) {
-      throw new Error('Invalid credentials');
+    if (!user || !user.is_active) {
+      throw new Error('Usuário não encontrado ou inativo');
     }
 
     // Verify password
