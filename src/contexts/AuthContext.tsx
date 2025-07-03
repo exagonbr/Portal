@@ -106,7 +106,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     removeStoredToken();
     setUser(null);
     apiClient.defaults.headers.common['Authorization'] = '';
-    apiClient.post('/auth/logout').catch(err => console.error("Logout API call failed:", err));
+    apiClient.post('/api/auth/logout').catch(err => console.error("Logout API call failed:", err));
     
     // Limpar cache de autenticação após logout
     clearAuthCache();
@@ -166,7 +166,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
       // Limpar cache antes do login
       await performCacheCleanup('login attempt');
       
-      const { data } = await apiClient.post('/auth/login', { email, password });
+      const { data } = await apiClient.post('/api/auth/login', { email, password });
       const { accessToken } = data.data;
       
       console.log('Login successful, storing token');
@@ -205,7 +205,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     try {
       await performCacheCleanup('google-login');
       
-      const { data } = await apiClient.post('/auth/google-login', { token });
+      const { data } = await apiClient.post('/api/auth/google-login', { token });
       const { accessToken } = data.data;
       
       setStoredToken(accessToken);

@@ -94,21 +94,39 @@ export const usersCorsMiddleware = (req: Request, res: Response, next: NextFunct
   console.log(`🔒 [USERS-CORS] ${method} ${path} from origin: ${origin || 'no-origin'}`);
   console.log(`🔒 [USERS-CORS] User-Agent: ${userAgent?.substring(0, 100) || 'unknown'}`);
   
-  // Aplicar CORS e deixar a lib tratar o erro
-  cors(usersCorsOptions)(req, res, next);
+  cors(usersCorsOptions)(req, res, (err: any) => {
+    if (err) {
+      return next(err);
+    }
+    
+    // Headers adicionais de segurança para APIs de usuários
+    res.setHeader('X-Content-Type-Options', 'nosniff');
+    res.setHeader('X-Frame-Options', 'DENY');
+    res.setHeader('X-XSS-Protection', '1; mode=block');
+    res.setHeader('Referrer-Policy', 'strict-origin-when-cross-origin');
+    res.setHeader('X-API-Version', '1.0');
+    res.setHeader('X-Service', 'users-api');
+    
+    return next();
+  });
 };
 
 export const corsErrorHandler = (err: any, req: Request, res: Response, next: NextFunction) => {
-  if (err && err.code === 'CORS_ORIGIN_NOT_ALLOWED') {
-    console.log(`❌ [USERS-CORS] Erro CORS: ${err.message} para origem: ${req.headers.origin}`);
+  if (err && err.message && err.message.includes('CORS')) {
+    const isAdmin = err.message.includes('administrativo');
+    console.log(`❌ [CORS-ERROR] ${err.message} for origin: ${req.headers.origin}`);
+    
+    const code = isAdmin ? 'CORS_ADMIN_ACCESS_DENIED' : 'CORS_ORIGIN_NOT_ALLOWED';
+    const error = isAdmin ? 'Origem não autorizada para operações administrativas' : 'Origem não autorizada para acessar APIs de usuários';
+
     return res.status(403).json({
       success: false,
-      message: 'Acesso negado pelo CORS',
-      error: 'Origem não autorizada para acessar APIs de usuários',
-      code: 'CORS_ORIGIN_NOT_ALLOWED'
+      message: err.message,
+      error,
+      code
     });
   }
-  // Outros erros
+  
   return next(err);
 };
 
@@ -122,18 +140,12 @@ export const usersPublicCorsMiddleware = (req: Request, res: Response, next: Nex
   
   console.log(`🌐 [USERS-PUBLIC-CORS] ${method} ${path} from origin: ${origin || 'no-origin'}`);
   
-  cors(usersPublicCorsOptions)(req, res, (err) => {
+  cors(usersPublicCorsOptions)(req, res, (err: any) => {
     if (err) {
-      console.log(`❌ [USERS-PUBLIC-CORS] Erro: ${err.message}`);
-      return res.status(403).json({
-        success: false,
-        message: 'Acesso negado pelo CORS',
-        error: 'Erro na configuração de CORS público'
-      });
+      return next(err);
     }
     
     res.setHeader('X-Public-API', 'true');
-    console.log(`✅ [USERS-PUBLIC-CORS] Acesso público aprovado para ${method} ${path}`);
     return next();
   });
 };
@@ -148,15 +160,9 @@ export const usersAdminCorsMiddleware = (req: Request, res: Response, next: Next
   
   console.log(`🛡️ [USERS-ADMIN-CORS] ${method} ${path} from origin: ${origin || 'no-origin'}`);
   
-  cors(usersAdminCorsOptions)(req, res, (err) => {
+  cors(usersAdminCorsOptions)(req, res, (err: any) => {
     if (err) {
-      console.log(`❌ [USERS-ADMIN-CORS] Acesso administrativo negado: ${err.message} para origem: ${origin}`);
-      return res.status(403).json({
-        success: false,
-        message: 'Acesso administrativo negado pelo CORS',
-        error: 'Origem não autorizada para operações administrativas',
-        code: 'CORS_ADMIN_ACCESS_DENIED'
-      });
+      return next(err);
     }
     
     // Headers de segurança extras para operações administrativas
@@ -168,7 +174,6 @@ export const usersAdminCorsMiddleware = (req: Request, res: Response, next: Next
     res.setHeader('X-Admin-API', 'true');
     res.setHeader('X-Security-Level', 'high');
     
-    console.log(`✅ [USERS-ADMIN-CORS] Acesso administrativo aprovado para ${method} ${path}`);
     return next();
   });
 };
