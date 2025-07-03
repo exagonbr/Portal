@@ -239,8 +239,30 @@ router.get('/:id', async (req, res) => {
         message: 'Usuário não encontrado'
       });
     }
+    
+    // Aplicar filtros
+    if (role) {
+      query = query.where('roles.name', role);
+    }
 
-    return res.json({
+    if (institution_id) {
+      query = query.where('users.institution_id', institution_id);
+    }
+
+    // Contar total
+    const totalQuery = query.clone();
+    const [{ count }] = await totalQuery.count('* as count');
+    const total = Number(count);
+
+    // Aplicar paginação
+    const users = await query
+      .orderBy('users.name')
+      .limit(Number(limit))
+      .offset(offset);
+
+    const totalPages = Math.ceil(total / Number(limit));
+
+    res.json({
       success: true,
       data: user
     });
@@ -673,6 +695,494 @@ router.put('/me', requireAdmin, async (req: any, res) => {
     });
   } catch (error: any) {
     console.log('❌ [USERS/ME] Erro ao atualizar perfil:', error);
+    return res.status(500).json({
+      success: false,
+      message: 'Erro interno do servidor',
+      error: process.env.NODE_ENV === 'development' ? error.message : undefined
+    });
+  }
+});
+
+/**
+ * @swagger
+ * /api/users/{id}:
+ *   get:
+ *     summary: Get user by ID
+ *     tags: [Users]
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema:
+ *           type: string
+ *     responses:
+ *       200:
+ *         description: User found
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/Users'
+ *       404:
+ *         description: User not found
+ */
+router.get('/:id', requireAdmin, async (req: any, res) => {
+  try {
+    const { id } = req.params;
+    
+    if (!id) {
+      return res.status(400).json({
+        success: false,
+        message: 'ID do usuário é obrigatório'
+      });
+    }
+
+    console.log('🔍 [USERS/GET] Buscando usuário por ID:', id);
+    
+    const user = await usersService.getUserById(id);
+    
+    if (!user) {
+      return res.status(404).json({
+        success: false,
+        message: 'Usuário não encontrado'
+      });
+    }
+
+    console.log('✅ [USERS/GET] Usuário encontrado:', user.fullName);
+
+    return res.json({
+      success: true,
+      data: user,
+      message: 'Usuário encontrado com sucesso'
+    });
+  } catch (error: any) {
+    console.log('❌ [USERS/GET] Erro ao buscar usuário:', error);
+    return res.status(500).json({
+      success: false,
+      message: 'Erro interno do servidor',
+      error: process.env.NODE_ENV === 'development' ? error.message : undefined
+    });
+  }
+});
+
+/**
+ * @swagger
+ * /api/users:
+ *   post:
+ *     summary: Create a new user
+ *     tags: [Users]
+ *     security:
+ *       - bearerAuth: []
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required:
+ *               - name
+ *               - email
+ *               - password
+ *               - fullName
+ *               - roleId
+ *               - institutionId
+ *             properties:
+ *               name:
+ *                 type: string
+ *               email:
+ *                 type: string
+ *                 format: email
+ *               password:
+ *                 type: string
+ *                 format: password
+ *                 minLength: 8
+ *               fullName:
+ *                 type: string
+ *               roleId:
+ *                 type: string
+ *               institutionId:
+ *                 type: integer
+ *               address:
+ *                 type: string
+ *               phone:
+ *                 type: string
+ *               isAdmin:
+ *                 type: boolean
+ *               isManager:
+ *                 type: boolean
+ *               isStudent:
+ *                 type: boolean
+ *               isTeacher:
+ *                 type: boolean
+ *               isCoordinator:
+ *                 type: boolean
+ *               isGuardian:
+ *                 type: boolean
+ *               isInstitutionManager:
+ *                 type: boolean
+ *               enabled:
+ *                 type: boolean
+ *     responses:
+ *       201:
+ *         description: User created
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/Users'
+ *       400:
+ *         description: Invalid input
+ */
+router.post('/', requireAdmin, async (req, res) => {
+  try {
+    const userData = req.body;
+
+    console.log('🆕 [USERS/CREATE] Criando usuário:', userData.email);
+
+    // Validar campos obrigatórios
+    if (!userData.email || !userData.password || !userData.fullName || !userData.roleId || !userData.institutionId) {
+      return res.status(400).json({
+        success: false,
+        message: 'Campos obrigatórios: email, password, fullName, roleId, institutionId'
+      });
+    }
+
+    const newUser = await usersService.createUser(userData);
+
+    console.log('✅ [USERS/CREATE] Usuário criado:', newUser.fullName);
+
+    return res.status(201).json({
+      success: true,
+      data: newUser,
+      message: 'Usuário criado com sucesso'
+    });
+  } catch (error: any) {
+    console.log('❌ [USERS/CREATE] Erro ao criar usuário:', error);
+    
+    if (error.message === 'Email já está em uso') {
+      return res.status(409).json({
+        success: false,
+        message: error.message
+      });
+    }
+    
+    return res.status(500).json({
+      success: false,
+      message: 'Erro interno do servidor',
+      error: process.env.NODE_ENV === 'development' ? error.message : undefined
+    });
+  }
+});
+
+/**
+ * @swagger
+ * /api/users/{id}:
+ *   put:
+ *     summary: Update a user
+ *     tags: [Users]
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema:
+ *           type: string
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             properties:
+ *               name:
+ *                 type: string
+ *               email:
+ *                 type: string
+ *                 format: email
+ *               fullName:
+ *                 type: string
+ *               roleId:
+ *                 type: string
+ *               institutionId:
+ *                 type: integer
+ *               address:
+ *                 type: string
+ *               phone:
+ *                 type: string
+ *               password:
+ *                 type: string
+ *               enabled:
+ *                 type: boolean
+ *     responses:
+ *       200:
+ *         description: User updated
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/Users'
+ *       404:
+ *         description: User not found
+ */
+router.put('/:id', requireAdmin, async (req, res) => {
+  try {
+    const { id } = req.params;
+    const updateData = req.body;
+
+    if (!id) {
+      return res.status(400).json({
+        success: false,
+        message: 'ID do usuário é obrigatório'
+      });
+    }
+
+    console.log('📝 [USERS/UPDATE] Atualizando usuário:', id);
+
+    const updatedUser = await usersService.updateUser(id, updateData);
+
+    if (!updatedUser) {
+      return res.status(404).json({
+        success: false,
+        message: 'Usuário não encontrado'
+      });
+    }
+
+    console.log('✅ [USERS/UPDATE] Usuário atualizado:', updatedUser.fullName);
+
+    return res.json({
+      success: true,
+      data: updatedUser,
+      message: 'Usuário atualizado com sucesso'
+    });
+  } catch (error: any) {
+    console.log('❌ [USERS/UPDATE] Erro ao atualizar usuário:', error);
+    
+    if (error.message === 'Email já está em uso') {
+      return res.status(409).json({
+        success: false,
+        message: error.message
+      });
+    }
+    
+    return res.status(500).json({
+      success: false,
+      message: 'Erro interno do servidor',
+      error: process.env.NODE_ENV === 'development' ? error.message : undefined
+    });
+  }
+});
+
+/**
+ * @swagger
+ * /api/users/{id}:
+ *   delete:
+ *     summary: Delete a user
+ *     tags: [Users]
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema:
+ *           type: string
+ *     responses:
+ *       200:
+ *         description: User deleted
+ *       404:
+ *         description: User not found
+ */
+router.delete('/:id', requireAdmin, async (req, res) => {
+  try {
+    const { id } = req.params;
+
+    if (!id) {
+      return res.status(400).json({
+        success: false,
+        message: 'ID do usuário é obrigatório'
+      });
+    }
+
+    // Não permitir que o admin delete a si mesmo
+    if ((req.user as any)?.id === id) {
+      return res.status(400).json({
+        success: false,
+        message: 'Não é possível deletar seu próprio usuário'
+      });
+    }
+
+    console.log('🗑️ [USERS/DELETE] Removendo usuário:', id);
+
+    const deleted = await usersService.deleteUser(id);
+    
+    if (!deleted) {
+      return res.status(404).json({
+        success: false,
+        message: 'Usuário não encontrado'
+      });
+    }
+
+    console.log('✅ [USERS/DELETE] Usuário removido com sucesso');
+
+    return res.json({
+      success: true,
+      message: 'Usuário removido com sucesso'
+    });
+  } catch (error: any) {
+    console.log('❌ [USERS/DELETE] Erro ao deletar usuário:', error);
+    return res.status(500).json({
+      success: false,
+      message: 'Erro interno do servidor',
+      error: process.env.NODE_ENV === 'development' ? error.message : undefined
+    });
+  }
+});
+
+/**
+ * @swagger
+ * /api/users/{id}/activate:
+ *   post:
+ *     summary: Activate a user
+ *     tags: [Users]
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema:
+ *           type: string
+ *     responses:
+ *       200:
+ *         description: User activated
+ *       404:
+ *         description: User not found
+ */
+router.post('/:id/activate', requireAdmin, async (req, res) => {
+  try {
+    const { id } = req.params;
+
+    console.log('🔓 [USERS/ACTIVATE] Ativando usuário:', id);
+
+    const activated = await usersService.activateUser(id);
+
+    if (!activated) {
+      return res.status(404).json({
+        success: false,
+        message: 'Usuário não encontrado'
+      });
+    }
+
+    console.log('✅ [USERS/ACTIVATE] Usuário ativado com sucesso');
+
+    return res.json({
+      success: true,
+      message: 'Usuário ativado com sucesso'
+    });
+  } catch (error: any) {
+    console.log('❌ [USERS/ACTIVATE] Erro ao ativar usuário:', error);
+    return res.status(500).json({
+      success: false,
+      message: 'Erro interno do servidor',
+      error: process.env.NODE_ENV === 'development' ? error.message : undefined
+    });
+  }
+});
+
+/**
+ * @swagger
+ * /api/users/{id}/deactivate:
+ *   post:
+ *     summary: Deactivate a user
+ *     tags: [Users]
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema:
+ *           type: string
+ *     responses:
+ *       200:
+ *         description: User deactivated
+ *       404:
+ *         description: User not found
+ */
+router.post('/:id/deactivate', requireAdmin, async (req, res) => {
+  try {
+    const { id } = req.params;
+
+    console.log('🔒 [USERS/DEACTIVATE] Desativando usuário:', id);
+
+    const deactivated = await usersService.deactivateUser(id);
+
+    if (!deactivated) {
+      return res.status(404).json({
+        success: false,
+        message: 'Usuário não encontrado'
+      });
+    }
+
+    console.log('✅ [USERS/DEACTIVATE] Usuário desativado com sucesso');
+
+    return res.json({
+      success: true,
+      message: 'Usuário desativado com sucesso'
+    });
+  } catch (error: any) {
+    console.log('❌ [USERS/DEACTIVATE] Erro ao desativar usuário:', error);
+    return res.status(500).json({
+      success: false,
+      message: 'Erro interno do servidor',
+      error: process.env.NODE_ENV === 'development' ? error.message : undefined
+    });
+  }
+});
+
+/**
+ * @swagger
+ * /api/users/{id}/reset-password:
+ *   post:
+ *     summary: Reset user password
+ *     tags: [Users]
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema:
+ *           type: string
+ *     responses:
+ *       200:
+ *         description: Password reset
+ *       404:
+ *         description: User not found
+ */
+router.post('/:id/reset-password', requireAdmin, async (req, res) => {
+  try {
+    const { id } = req.params;
+
+    console.log('🔑 [USERS/RESET-PASSWORD] Resetando senha do usuário:', id);
+
+    const reset = await usersService.resetPassword(id);
+
+    if (!reset) {
+      return res.status(404).json({
+        success: false,
+        message: 'Usuário não encontrado'
+      });
+    }
+
+    console.log('✅ [USERS/RESET-PASSWORD] Senha resetada com sucesso');
+
+    return res.json({
+      success: true,
+      message: 'Senha resetada com sucesso'
+    });
+  } catch (error: any) {
+    console.log('❌ [USERS/RESET-PASSWORD] Erro ao resetar senha:', error);
     return res.status(500).json({
       success: false,
       message: 'Erro interno do servidor',

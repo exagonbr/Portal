@@ -15,8 +15,8 @@ export const Navigation = () => {
 
   const isActive = (path: string) => pathname === path;
 
-  const commonNavItems = [
-    { href: '/', label: '' }, // Assuming this is for the logo or home, label can be empty
+  const commonNavItems: NavItem[] = [
+    { href: '/', label: '' },
   ];
 
   const handleLogout = () => {

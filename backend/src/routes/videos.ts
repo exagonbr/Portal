@@ -45,22 +45,35 @@ const requireInstitution = (req: any, res: any, next: any) => {
  *       - bearerAuth: []
  *     parameters:
  *       - in: query
- *         name: course_id
+ *         name: module
  *         schema:
  *           type: string
  *           format: uuid
- *         description: Filter videos by course ID
+ *         description: Filter by module ID
+ *       - in: query
+ *         name: course
+ *         schema:
+ *           type: string
+ *           format: uuid
+ *         description: Filter by course ID
+ *       - in: query
+ *         name: search
+ *         schema:
+ *           type: string
+ *         description: Search by title or description
+ *       - in: query
+ *         name: page
+ *         schema:
+ *           type: integer
+ *           default: 1
+ *       - in: query
+ *         name: limit
+ *         schema:
+ *           type: integer
+ *           default: 20
  *     responses:
  *       200:
  *         description: List of videos
- *         content:
- *           application/json:
- *             schema:
- *               type: array
- *               items:
- *                 $ref: '#/components/schemas/Video'
- *       401:
- *         description: Unauthorized
  */
 router.get('/', requireInstitution, async (req, res) => {
   // Implementation will be added in the controller
@@ -89,10 +102,6 @@ router.get('/', requireInstitution, async (req, res) => {
  *     responses:
  *       200:
  *         description: Video found
- *         content:
- *           application/json:
- *             schema:
- *               $ref: '#/components/schemas/Video'
  *       404:
  *         description: Video not found
  */
@@ -116,31 +125,32 @@ router.get('/:id', requireInstitution, async (req, res) => {
  *     requestBody:
  *       required: true
  *       content:
- *         multipart/form-data:
+ *         application/json:
  *           schema:
  *             type: object
  *             required:
  *               - title
- *               - course_id
- *               - file
+ *               - module_id
+ *               - video_url
  *             properties:
  *               title:
  *                 type: string
  *               description:
  *                 type: string
- *               course_id:
+ *               module_id:
  *                 type: string
  *                 format: uuid
- *               file:
+ *               video_url:
  *                 type: string
- *                 format: binary
+ *               duration:
+ *                 type: integer
+ *               thumbnail_url:
+ *                 type: string
+ *               order_index:
+ *                 type: integer
  *     responses:
  *       201:
  *         description: Video created
- *         content:
- *           application/json:
- *             schema:
- *               $ref: '#/components/schemas/Video'
  *       400:
  *         description: Invalid input
  */
@@ -171,7 +181,7 @@ router.post('/', requireTeacherOrAdmin, requireInstitution, async (req, res) => 
  *     requestBody:
  *       required: true
  *       content:
- *         multipart/form-data:
+ *         application/json:
  *           schema:
  *             type: object
  *             properties:
@@ -179,16 +189,20 @@ router.post('/', requireTeacherOrAdmin, requireInstitution, async (req, res) => 
  *                 type: string
  *               description:
  *                 type: string
- *               file:
+ *               video_url:
  *                 type: string
- *                 format: binary
+ *               duration:
+ *                 type: integer
+ *               thumbnail_url:
+ *                 type: string
+ *               order_index:
+ *                 type: integer
+ *               status:
+ *                 type: string
+ *                 enum: [active, inactive]
  *     responses:
  *       200:
  *         description: Video updated
- *         content:
- *           application/json:
- *             schema:
- *               $ref: '#/components/schemas/Video'
  *       404:
  *         description: Video not found
  */
@@ -232,7 +246,41 @@ router.delete('/:id', requireTeacherOrAdmin, requireInstitution, async (req, res
 
 /**
  * @swagger
- * /api/videos/{id}/stream:
+ * /api/videos/upload:
+ *   post:
+ *     summary: Upload a video file
+ *     tags: [Videos]
+ *     security:
+ *       - bearerAuth: []
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         multipart/form-data:
+ *           schema:
+ *             type: object
+ *             required:
+ *               - file
+ *             properties:
+ *               file:
+ *                 type: string
+ *                 format: binary
+ *     responses:
+ *       200:
+ *         description: Video uploaded successfully
+ *       400:
+ *         description: Invalid file
+ */
+router.post('/upload', validateJWT, requireRole(['admin', 'teacher']), async (req, res) => {
+  // Upload implementation would go here
+  return res.status(501).json({
+    success: false,
+    message: 'Upload não implementado ainda'
+  });
+});
+
+/**
+ * @swagger
+ * /api/videos/stream/{id}:
  *   get:
  *     summary: Stream video content
  *     tags: [Videos]
@@ -245,11 +293,6 @@ router.delete('/:id', requireTeacherOrAdmin, requireInstitution, async (req, res
  *         schema:
  *           type: string
  *           format: uuid
- *       - in: header
- *         name: Range
- *         schema:
- *           type: string
- *         description: Bytes range header for partial content
  *     responses:
  *       206:
  *         description: Partial content (video stream)

@@ -6,8 +6,8 @@ import {
   UpdateDateColumn,
   OneToMany
 } from 'typeorm';
-import { User } from './User';
 import { School } from './School';
+import { TvShow } from './TvShow';
 
 export enum InstitutionType {
   PUBLIC = 'PUBLIC',
@@ -63,11 +63,11 @@ export class Institution {
   @Column({ default: true })
   is_active: boolean;
 
-  @OneToMany(() => User, user => user.institution)
-  users: User[];
-
   @OneToMany(() => School, school => school.institution)
   schools: School[];
+
+  @OneToMany(() => TvShow, tvShow => tvShow.institution)
+  tvShows: TvShow[];
 
   @CreateDateColumn()
   created_at: Date;

@@ -16,22 +16,47 @@ router.use(requireAuth);
  *       - bearerAuth: []
  *     parameters:
  *       - in: query
- *         name: course_id
+ *         name: search
  *         schema:
  *           type: string
- *           format: uuid
- *         description: Filter books by course ID
+ *         description: Search by title, author or ISBN
+ *       - in: query
+ *         name: category
+ *         schema:
+ *           type: string
+ *         description: Filter by category
+ *       - in: query
+ *         name: page
+ *         schema:
+ *           type: integer
+ *           default: 1
+ *         description: Page number
+ *       - in: query
+ *         name: limit
+ *         schema:
+ *           type: integer
+ *           default: 20
+ *         description: Number of items per page
  *     responses:
  *       200:
  *         description: List of books
  *         content:
  *           application/json:
  *             schema:
- *               type: array
- *               items:
- *                 $ref: '#/components/schemas/Book'
- *       401:
- *         description: Unauthorized
+ *               type: object
+ *               properties:
+ *                 success:
+ *                   type: boolean
+ *                 data:
+ *                   type: array
+ *                   items:
+ *                     $ref: '#/components/schemas/Book'
+ *                 total:
+ *                   type: integer
+ *                 page:
+ *                   type: integer
+ *                 totalPages:
+ *                   type: integer
  */
 router.get('/', async (req, res) => {
   // Implementation will be added in the controller
@@ -87,15 +112,13 @@ router.get('/:id', async (req, res) => {
  *     requestBody:
  *       required: true
  *       content:
- *         multipart/form-data:
+ *         application/json:
  *           schema:
  *             type: object
  *             required:
  *               - title
  *               - author
- *               - isbn
- *               - course_id
- *               - file
+ *               - institution_id
  *             properties:
  *               title:
  *                 type: string
@@ -103,19 +126,30 @@ router.get('/:id', async (req, res) => {
  *                 type: string
  *               isbn:
  *                 type: string
- *               course_id:
+ *               description:
+ *                 type: string
+ *               publisher:
+ *                 type: string
+ *               publication_year:
+ *                 type: integer
+ *               language:
+ *                 type: string
+ *               pages:
+ *                 type: integer
+ *               category:
+ *                 type: string
+ *               cover_url:
+ *                 type: string
+ *               file_url:
+ *                 type: string
+ *               file_type:
+ *                 type: string
+ *               institution_id:
  *                 type: string
  *                 format: uuid
- *               file:
- *                 type: string
- *                 format: binary
  *     responses:
  *       201:
  *         description: Book created
- *         content:
- *           application/json:
- *             schema:
- *               $ref: '#/components/schemas/Book'
  *       400:
  *         description: Invalid input
  */
@@ -156,7 +190,7 @@ router.post('/', async (req, res) => {
  *     requestBody:
  *       required: true
  *       content:
- *         multipart/form-data:
+ *         application/json:
  *           schema:
  *             type: object
  *             properties:
@@ -164,18 +198,16 @@ router.post('/', async (req, res) => {
  *                 type: string
  *               author:
  *                 type: string
- *               isbn:
+ *               description:
  *                 type: string
- *               file:
+ *               category:
  *                 type: string
- *                 format: binary
+ *               status:
+ *                 type: string
+ *                 enum: [available, unavailable]
  *     responses:
  *       200:
  *         description: Book updated
- *         content:
- *           application/json:
- *             schema:
- *               $ref: '#/components/schemas/Book'
  *       404:
  *         description: Book not found
  */

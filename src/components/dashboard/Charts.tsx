@@ -33,10 +33,31 @@ ChartJS.register(
 // Configurar Chart.js para otimizar o ResizeObserver
 ChartJS.defaults.responsive = true;
 ChartJS.defaults.maintainAspectRatio = false;
-ChartJS.defaults.resizeDelay = 200; // Delay para resize
+ChartJS.defaults.resizeDelay = 300; // Delay maior para resize
 ChartJS.defaults.animation = {
-  ...ChartJS.defaults.animation,
-  duration: 750, // Reduzir duração da animação
+  duration: 500, // Animação mais rápida
+  easing: 'easeOutQuart',
+};
+
+// Configurações adicionais para estabilidade
+ChartJS.defaults.plugins = {
+  ...ChartJS.defaults.plugins,
+  legend: {
+    ...ChartJS.defaults.plugins?.legend,
+    display: true,
+  },
+  tooltip: {
+    ...ChartJS.defaults.plugins?.tooltip,
+    enabled: true,
+    animation: {
+      duration: 200, // Tooltip mais rápido
+    },
+  },
+};
+
+ChartJS.defaults.interaction = {
+  intersect: false,
+  mode: 'index',
 };
 
 interface ChartDataDetails {

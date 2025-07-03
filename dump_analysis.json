@@ -1,0 +1,1746 @@
+{
+  "answer": {
+    "tableName": "answer",
+    "columns": [
+      {
+        "name": "id",
+        "type": "bigint NOT NULL AUTO_INCREMENT"
+      },
+      {
+        "name": "version",
+        "type": "bigint DEFAULT NULL"
+      },
+      {
+        "name": "date_created",
+        "type": "datetime NOT NULL"
+      },
+      {
+        "name": "deleted",
+        "type": "bit(1) DEFAULT NULL"
+      },
+      {
+        "name": "is_correct",
+        "type": "bit(1) DEFAULT NULL"
+      },
+      {
+        "name": "last_updated",
+        "type": "datetime DEFAULT NULL"
+      },
+      {
+        "name": "question_id",
+        "type": "bigint DEFAULT NULL"
+      },
+      {
+        "name": "reply",
+        "type": "text"
+      }
+    ],
+    "file": "sabercon_answer.sql"
+  },
+  "author": {
+    "tableName": "author",
+    "columns": [
+      {
+        "name": "id",
+        "type": "bigint NOT NULL AUTO_INCREMENT"
+      },
+      {
+        "name": "version",
+        "type": "bigint DEFAULT NULL"
+      },
+      {
+        "name": "description",
+        "type": "text NOT NULL"
+      },
+      {
+        "name": "email",
+        "type": "varchar(255) DEFAULT NULL"
+      },
+      {
+        "name": "is_active",
+        "type": "bit(1) DEFAULT b"
+      },
+      {
+        "name": "name",
+        "type": "varchar(255) NOT NULL"
+      }
+    ],
+    "file": "sabercon_author.sql"
+  },
+  "certificate": {
+    "tableName": "certificate",
+    "columns": [
+      {
+        "name": "id",
+        "type": "bigint NOT NULL AUTO_INCREMENT"
+      },
+      {
+        "name": "version",
+        "type": "bigint DEFAULT NULL"
+      },
+      {
+        "name": "date_created",
+        "type": "datetime NOT NULL"
+      },
+      {
+        "name": "last_updated",
+        "type": "datetime DEFAULT NULL"
+      },
+      {
+        "name": "path",
+        "type": "varchar(255) DEFAULT NULL"
+      },
+      {
+        "name": "score",
+        "type": "bigint DEFAULT NULL"
+      },
+      {
+        "name": "tv_show_id",
+        "type": "bigint DEFAULT NULL"
+      },
+      {
+        "name": "user_id",
+        "type": "bigint DEFAULT NULL"
+      },
+      {
+        "name": "document",
+        "type": "varchar(255) DEFAULT NULL"
+      },
+      {
+        "name": "license_code",
+        "type": "varchar(255) DEFAULT NULL"
+      },
+      {
+        "name": "tv_show_name",
+        "type": "varchar(255) DEFAULT NULL"
+      },
+      {
+        "name": "recreate",
+        "type": "bit(1) DEFAULT b"
+      }
+    ],
+    "file": "sabercon_certificate.sql"
+  },
+  "cookie_signed": {
+    "tableName": "cookie_signed",
+    "columns": [
+      {
+        "name": "id",
+        "type": "bigint NOT NULL AUTO_INCREMENT"
+      },
+      {
+        "name": "cookie",
+        "type": "varchar(1000) DEFAULT NULL"
+      }
+    ],
+    "file": "sabercon_cookie_signed.sql"
+  },
+  "educational_stage": {
+    "tableName": "educational_stage",
+    "columns": [
+      {
+        "name": "id",
+        "type": "bigint NOT NULL AUTO_INCREMENT"
+      },
+      {
+        "name": "version",
+        "type": "bigint DEFAULT NULL"
+      },
+      {
+        "name": "date_created",
+        "type": "datetime DEFAULT NULL"
+      },
+      {
+        "name": "deleted",
+        "type": "bit(1) NOT NULL"
+      },
+      {
+        "name": "grade_1",
+        "type": "bit(1) DEFAULT NULL"
+      },
+      {
+        "name": "grade_2",
+        "type": "bit(1) DEFAULT NULL"
+      },
+      {
+        "name": "grade_3",
+        "type": "bit(1) DEFAULT NULL"
+      },
+      {
+        "name": "grade_4",
+        "type": "bit(1) DEFAULT NULL"
+      },
+      {
+        "name": "grade_5",
+        "type": "bit(1) DEFAULT NULL"
+      },
+      {
+        "name": "grade_6",
+        "type": "bit(1) DEFAULT NULL"
+      },
+      {
+        "name": "grade_7",
+        "type": "bit(1) DEFAULT NULL"
+      },
+      {
+        "name": "grade_8",
+        "type": "bit(1) DEFAULT NULL"
+      },
+      {
+        "name": "grade_9",
+        "type": "bit(1) DEFAULT NULL"
+      },
+      {
+        "name": "last_updated",
+        "type": "datetime DEFAULT NULL"
+      },
+      {
+        "name": "name",
+        "type": "varchar(255) NOT NULL"
+      },
+      {
+        "name": "uuid",
+        "type": "varchar(255) DEFAULT NULL"
+      }
+    ],
+    "file": "sabercon_educational_stage.sql"
+  },
+  "educational_stage_institution": {
+    "tableName": "educational_stage_institution",
+    "columns": [
+      {
+        "name": "educational_stage_institions_id",
+        "type": "bigint NOT NULL"
+      },
+      {
+        "name": "institution_id",
+        "type": "bigint DEFAULT NULL"
+      }
+    ],
+    "file": "sabercon_educational_stage_institution.sql"
+  },
+  "educational_stage_unit": {
+    "tableName": "educational_stage_unit",
+    "columns": [
+      {
+        "name": "educational_stage_units_id",
+        "type": "bigint NOT NULL"
+      },
+      {
+        "name": "unit_id",
+        "type": "bigint DEFAULT NULL"
+      }
+    ],
+    "file": "sabercon_educational_stage_unit.sql"
+  },
+  "educational_stage_user": {
+    "tableName": "educational_stage_user",
+    "columns": [
+      {
+        "name": "educational_stage_users_id",
+        "type": "bigint NOT NULL"
+      },
+      {
+        "name": "user_id",
+        "type": "bigint DEFAULT NULL"
+      }
+    ],
+    "file": "sabercon_educational_stage_user.sql"
+  },
+  "education_period": {
+    "tableName": "education_period",
+    "columns": [
+      {
+        "name": "id",
+        "type": "bigint NOT NULL AUTO_INCREMENT"
+      },
+      {
+        "name": "version",
+        "type": "bigint DEFAULT NULL"
+      },
+      {
+        "name": "description",
+        "type": "varchar(255) NOT NULL"
+      },
+      {
+        "name": "is_active",
+        "type": "bit(1) DEFAULT b"
+      }
+    ],
+    "file": "sabercon_education_period.sql"
+  },
+  "file": {
+    "tableName": "file",
+    "columns": [
+      {
+        "name": "id",
+        "type": "bigint NOT NULL AUTO_INCREMENT"
+      },
+      {
+        "name": "version",
+        "type": "bigint DEFAULT NULL"
+      },
+      {
+        "name": "content_type",
+        "type": "varchar(255) DEFAULT NULL"
+      },
+      {
+        "name": "date_created",
+        "type": "datetime NOT NULL"
+      },
+      {
+        "name": "extension",
+        "type": "varchar(255) DEFAULT NULL"
+      },
+      {
+        "name": "external_link",
+        "type": "varchar(255) DEFAULT NULL"
+      },
+      {
+        "name": "is_default",
+        "type": "bit(1) DEFAULT NULL"
+      },
+      {
+        "name": "is_public",
+        "type": "bit(1) DEFAULT NULL"
+      },
+      {
+        "name": "label",
+        "type": "varchar(255) DEFAULT NULL"
+      },
+      {
+        "name": "last_updated",
+        "type": "datetime NOT NULL"
+      },
+      {
+        "name": "local_file",
+        "type": "varchar(255) DEFAULT NULL"
+      },
+      {
+        "name": "name",
+        "type": "varchar(255) DEFAULT NULL"
+      },
+      {
+        "name": "original_filename",
+        "type": "varchar(255) DEFAULT NULL"
+      },
+      {
+        "name": "quality",
+        "type": "varchar(4) DEFAULT NULL"
+      },
+      {
+        "name": "sha256hex",
+        "type": "varchar(64) DEFAULT NULL"
+      },
+      {
+        "name": "size",
+        "type": "bigint DEFAULT NULL"
+      },
+      {
+        "name": "subtitle_label",
+        "type": "varchar(255) DEFAULT NULL"
+      },
+      {
+        "name": "subtitle_src_lang",
+        "type": "varchar(255) DEFAULT NULL"
+      },
+      {
+        "name": "is_subtitled",
+        "type": "bit(1) DEFAULT NULL"
+      }
+    ],
+    "file": "sabercon_file.sql"
+  },
+  "forgot_password": {
+    "tableName": "forgot_password",
+    "columns": [
+      {
+        "name": "id",
+        "type": "bigint NOT NULL AUTO_INCREMENT"
+      },
+      {
+        "name": "version",
+        "type": "bigint DEFAULT NULL"
+      },
+      {
+        "name": "email",
+        "type": "varchar(255) DEFAULT NULL"
+      }
+    ],
+    "file": "sabercon_forgot_password.sql"
+  },
+  "generic_video_genre": {
+    "tableName": "generic_video_genre",
+    "columns": [
+      {
+        "name": "generic_video_genre_id",
+        "type": "bigint NOT NULL"
+      },
+      {
+        "name": "genre_id",
+        "type": "bigint DEFAULT NULL"
+      }
+    ],
+    "file": "sabercon_generic_video_genre.sql"
+  },
+  "generic_video_tag": {
+    "tableName": "generic_video_tag",
+    "columns": [
+      {
+        "name": "generic_video_tags_id",
+        "type": "bigint NOT NULL"
+      },
+      {
+        "name": "tag_id",
+        "type": "bigint DEFAULT NULL"
+      }
+    ],
+    "file": "sabercon_generic_video_tag.sql"
+  },
+  "genre": {
+    "tableName": "genre",
+    "columns": [
+      {
+        "name": "id",
+        "type": "bigint NOT NULL AUTO_INCREMENT"
+      },
+      {
+        "name": "version",
+        "type": "bigint DEFAULT NULL"
+      },
+      {
+        "name": "api_id",
+        "type": "int NOT NULL"
+      },
+      {
+        "name": "name",
+        "type": "varchar(255) NOT NULL"
+      }
+    ],
+    "file": "sabercon_genre.sql"
+  },
+  "genre_movie": {
+    "tableName": "genre_movie",
+    "columns": [
+      {
+        "name": "genre_movies_id",
+        "type": "bigint NOT NULL"
+      },
+      {
+        "name": "movie_id",
+        "type": "bigint DEFAULT NULL"
+      }
+    ],
+    "file": "sabercon_genre_movie.sql"
+  },
+  "genre_tv_show": {
+    "tableName": "genre_tv_show",
+    "columns": [
+      {
+        "name": "genre_tv_show_id",
+        "type": "bigint NOT NULL"
+      },
+      {
+        "name": "tv_show_id",
+        "type": "bigint DEFAULT NULL"
+      }
+    ],
+    "file": "sabercon_genre_tv_show.sql"
+  },
+  "institution": {
+    "tableName": "institution",
+    "columns": [
+      {
+        "name": "id",
+        "type": "bigint NOT NULL AUTO_INCREMENT"
+      },
+      {
+        "name": "version",
+        "type": "bigint DEFAULT NULL"
+      },
+      {
+        "name": "accountable_contact",
+        "type": "varchar(255) NOT NULL"
+      },
+      {
+        "name": "accountable_name",
+        "type": "varchar(255) NOT NULL"
+      },
+      {
+        "name": "company_name",
+        "type": "varchar(255) NOT NULL"
+      },
+      {
+        "name": "complement",
+        "type": "varchar(255) DEFAULT NULL"
+      },
+      {
+        "name": "contract_disabled",
+        "type": "bit(1) NOT NULL"
+      },
+      {
+        "name": "contract_invoice_num",
+        "type": "varchar(255) DEFAULT NULL"
+      },
+      {
+        "name": "contract_num",
+        "type": "bigint DEFAULT NULL"
+      },
+      {
+        "name": "contract_term_end",
+        "type": "datetime NOT NULL"
+      },
+      {
+        "name": "contract_term_start",
+        "type": "datetime NOT NULL"
+      },
+      {
+        "name": "date_created",
+        "type": "datetime DEFAULT NULL"
+      },
+      {
+        "name": "deleted",
+        "type": "bit(1) NOT NULL"
+      },
+      {
+        "name": "district",
+        "type": "varchar(255) NOT NULL"
+      },
+      {
+        "name": "document",
+        "type": "varchar(255) NOT NULL"
+      },
+      {
+        "name": "invoice_date",
+        "type": "datetime DEFAULT NULL"
+      },
+      {
+        "name": "last_updated",
+        "type": "datetime DEFAULT NULL"
+      },
+      {
+        "name": "name",
+        "type": "varchar(255) NOT NULL"
+      },
+      {
+        "name": "postal_code",
+        "type": "varchar(255) NOT NULL"
+      },
+      {
+        "name": "state",
+        "type": "varchar(255) NOT NULL"
+      },
+      {
+        "name": "street",
+        "type": "varchar(255) NOT NULL"
+      },
+      {
+        "name": "score",
+        "type": "bigint DEFAULT NULL"
+      },
+      {
+        "name": "has_library_platform",
+        "type": "bit(1) NOT NULL"
+      },
+      {
+        "name": "has_principal_platform",
+        "type": "bit(1) NOT NULL"
+      },
+      {
+        "name": "has_student_platform",
+        "type": "bit(1) NOT NULL"
+      }
+    ],
+    "file": "sabercon_institution.sql"
+  },
+  "institution_tv_show": {
+    "tableName": "institution_tv_show",
+    "columns": [
+      {
+        "name": "tv_show_id",
+        "type": "bigint NOT NULL"
+      },
+      {
+        "name": "institution_id",
+        "type": "bigint NOT NULL"
+      }
+    ],
+    "file": "sabercon_institution_tv_show.sql"
+  },
+  "institution_user": {
+    "tableName": "institution_user",
+    "columns": [
+      {
+        "name": "institution_users_id",
+        "type": "bigint NOT NULL"
+      },
+      {
+        "name": "user_id",
+        "type": "bigint DEFAULT NULL"
+      }
+    ],
+    "file": "sabercon_institution_user.sql"
+  },
+  "movie_tag": {
+    "tableName": "movie_tag",
+    "columns": [
+      {
+        "name": "movie_tags_id",
+        "type": "bigint NOT NULL"
+      },
+      {
+        "name": "tag_id",
+        "type": "bigint DEFAULT NULL"
+      }
+    ],
+    "file": "sabercon_movie_tag.sql"
+  },
+  "notification_queue": {
+    "tableName": "notification_queue",
+    "columns": [
+      {
+        "name": "id",
+        "type": "bigint NOT NULL AUTO_INCREMENT"
+      },
+      {
+        "name": "version",
+        "type": "bigint DEFAULT NULL"
+      },
+      {
+        "name": "date_created",
+        "type": "datetime NOT NULL"
+      },
+      {
+        "name": "description",
+        "type": "varchar(255) DEFAULT NULL"
+      },
+      {
+        "name": "is_completed",
+        "type": "bit(1) DEFAULT NULL"
+      },
+      {
+        "name": "last_updated",
+        "type": "datetime NOT NULL"
+      },
+      {
+        "name": "movie_id",
+        "type": "bigint DEFAULT NULL"
+      },
+      {
+        "name": "tv_show_id",
+        "type": "bigint DEFAULT NULL"
+      },
+      {
+        "name": "type",
+        "type": "varchar(255) DEFAULT NULL"
+      },
+      {
+        "name": "video_to_play_id",
+        "type": "bigint DEFAULT NULL"
+      }
+    ],
+    "file": "sabercon_notification_queue.sql"
+  },
+  "profile": {
+    "tableName": "profile",
+    "columns": [
+      {
+        "name": "id",
+        "type": "bigint NOT NULL AUTO_INCREMENT"
+      },
+      {
+        "name": "version",
+        "type": "bigint DEFAULT NULL"
+      },
+      {
+        "name": "avatar_color",
+        "type": "varchar(255) DEFAULT NULL"
+      },
+      {
+        "name": "is_child",
+        "type": "bit(1) DEFAULT NULL"
+      },
+      {
+        "name": "is_deleted",
+        "type": "bit(1) DEFAULT NULL"
+      },
+      {
+        "name": "profile_language",
+        "type": "varchar(255) DEFAULT NULL"
+      },
+      {
+        "name": "profile_name",
+        "type": "varchar(255) DEFAULT NULL"
+      },
+      {
+        "name": "user_id",
+        "type": "bigint DEFAULT NULL"
+      }
+    ],
+    "file": "sabercon_profile.sql"
+  },
+  "profile_target_audience": {
+    "tableName": "profile_target_audience",
+    "columns": [
+      {
+        "name": "profile_target_audiences_id",
+        "type": "bigint DEFAULT NULL"
+      },
+      {
+        "name": "target_audience_id",
+        "type": "bigint DEFAULT NULL"
+      }
+    ],
+    "file": "sabercon_profile_target_audience.sql"
+  },
+  "public": {
+    "tableName": "public",
+    "columns": [
+      {
+        "name": "id",
+        "type": "bigint NOT NULL AUTO_INCREMENT"
+      },
+      {
+        "name": "version",
+        "type": "bigint DEFAULT NULL"
+      },
+      {
+        "name": "api_id",
+        "type": "int NOT NULL"
+      },
+      {
+        "name": "name",
+        "type": "varchar(255) NOT NULL"
+      }
+    ],
+    "file": "sabercon_public.sql"
+  },
+  "public_tv_show": {
+    "tableName": "public_tv_show",
+    "columns": [
+      {
+        "name": "public_tv_show_id",
+        "type": "bigint NOT NULL"
+      },
+      {
+        "name": "tv_show_id",
+        "type": "bigint DEFAULT NULL"
+      }
+    ],
+    "file": "sabercon_public_tv_show.sql"
+  },
+  "question": {
+    "tableName": "question",
+    "columns": [
+      {
+        "name": "id",
+        "type": "bigint NOT NULL AUTO_INCREMENT"
+      },
+      {
+        "name": "version",
+        "type": "bigint DEFAULT NULL"
+      },
+      {
+        "name": "date_created",
+        "type": "datetime NOT NULL"
+      },
+      {
+        "name": "deleted",
+        "type": "bit(1) DEFAULT NULL"
+      },
+      {
+        "name": "file_id",
+        "type": "bigint DEFAULT NULL"
+      },
+      {
+        "name": "last_updated",
+        "type": "datetime DEFAULT NULL"
+      },
+      {
+        "name": "test",
+        "type": "text"
+      },
+      {
+        "name": "tv_show_id",
+        "type": "bigint DEFAULT NULL"
+      },
+      {
+        "name": "episode_id",
+        "type": "bigint DEFAULT NULL"
+      }
+    ],
+    "file": "sabercon_question.sql"
+  },
+  "report": {
+    "tableName": "report",
+    "columns": [
+      {
+        "name": "id",
+        "type": "bigint NOT NULL AUTO_INCREMENT"
+      },
+      {
+        "name": "version",
+        "type": "bigint DEFAULT NULL"
+      },
+      {
+        "name": "created_by_id",
+        "type": "bigint DEFAULT NULL"
+      },
+      {
+        "name": "date_created",
+        "type": "datetime NOT NULL"
+      },
+      {
+        "name": "error_code",
+        "type": "varchar(255) DEFAULT NULL"
+      },
+      {
+        "name": "last_updated",
+        "type": "datetime NOT NULL"
+      },
+      {
+        "name": "resolved",
+        "type": "bit(1) DEFAULT NULL"
+      },
+      {
+        "name": "video_id",
+        "type": "bigint DEFAULT NULL"
+      }
+    ],
+    "file": "sabercon_report.sql"
+  },
+  "role": {
+    "tableName": "role",
+    "columns": [
+      {
+        "name": "id",
+        "type": "bigint NOT NULL AUTO_INCREMENT"
+      },
+      {
+        "name": "version",
+        "type": "bigint DEFAULT NULL"
+      },
+      {
+        "name": "authority",
+        "type": "varchar(255) DEFAULT NULL"
+      },
+      {
+        "name": "display_name",
+        "type": "varchar(255) DEFAULT NULL"
+      }
+    ],
+    "file": "sabercon_role.sql"
+  },
+  "settings": {
+    "tableName": "settings",
+    "columns": [
+      {
+        "name": "id",
+        "type": "bigint NOT NULL AUTO_INCREMENT"
+      },
+      {
+        "name": "version",
+        "type": "bigint DEFAULT NULL"
+      },
+      {
+        "name": "default_value",
+        "type": "varchar(255) DEFAULT NULL"
+      },
+      {
+        "name": "description",
+        "type": "text"
+      },
+      {
+        "name": "name",
+        "type": "varchar(255) DEFAULT NULL"
+      },
+      {
+        "name": "required",
+        "type": "bit(1) DEFAULT NULL"
+      },
+      {
+        "name": "settings_key",
+        "type": "varchar(255) NOT NULL"
+      },
+      {
+        "name": "settings_type",
+        "type": "varchar(255) DEFAULT NULL"
+      },
+      {
+        "name": "validation_required",
+        "type": "bit(1) DEFAULT NULL"
+      },
+      {
+        "name": "value",
+        "type": "varchar(255) DEFAULT NULL"
+      }
+    ],
+    "file": "sabercon_settings.sql"
+  },
+  "tag": {
+    "tableName": "tag",
+    "columns": [
+      {
+        "name": "id",
+        "type": "bigint NOT NULL AUTO_INCREMENT"
+      },
+      {
+        "name": "version",
+        "type": "bigint DEFAULT NULL"
+      },
+      {
+        "name": "date_created",
+        "type": "datetime NOT NULL"
+      },
+      {
+        "name": "deleted",
+        "type": "bit(1) DEFAULT NULL"
+      },
+      {
+        "name": "last_updated",
+        "type": "datetime NOT NULL"
+      },
+      {
+        "name": "name",
+        "type": "varchar(255) DEFAULT NULL"
+      }
+    ],
+    "file": "sabercon_tag.sql"
+  },
+  "target_audience": {
+    "tableName": "target_audience",
+    "columns": [
+      {
+        "name": "id",
+        "type": "bigint NOT NULL AUTO_INCREMENT"
+      },
+      {
+        "name": "version",
+        "type": "bigint DEFAULT NULL"
+      },
+      {
+        "name": "description",
+        "type": "varchar(255) NOT NULL"
+      },
+      {
+        "name": "is_active",
+        "type": "bit(1) DEFAULT b"
+      },
+      {
+        "name": "name",
+        "type": "varchar(255) NOT NULL"
+      }
+    ],
+    "file": "sabercon_target_audience.sql"
+  },
+  "teacher_subject": {
+    "tableName": "teacher_subject",
+    "columns": [
+      {
+        "name": "id",
+        "type": "bigint NOT NULL AUTO_INCREMENT"
+      },
+      {
+        "name": "version",
+        "type": "bigint DEFAULT NULL"
+      },
+      {
+        "name": "is_child",
+        "type": "bit(1) DEFAULT NULL"
+      },
+      {
+        "name": "is_deleted",
+        "type": "bit(1) DEFAULT NULL"
+      },
+      {
+        "name": "name",
+        "type": "varchar(255) DEFAULT NULL"
+      },
+      {
+        "name": "uuid",
+        "type": "varchar(255) DEFAULT NULL"
+      }
+    ],
+    "file": "sabercon_teacher_subject.sql"
+  },
+  "theme": {
+    "tableName": "theme",
+    "columns": [
+      {
+        "name": "id",
+        "type": "bigint NOT NULL AUTO_INCREMENT"
+      },
+      {
+        "name": "version",
+        "type": "bigint DEFAULT NULL"
+      },
+      {
+        "name": "description",
+        "type": "varchar(255) NOT NULL"
+      },
+      {
+        "name": "is_active",
+        "type": "bit(1) DEFAULT b"
+      },
+      {
+        "name": "name",
+        "type": "varchar(255) NOT NULL"
+      }
+    ],
+    "file": "sabercon_theme.sql"
+  },
+  "tv_show": {
+    "tableName": "tv_show",
+    "columns": [
+      {
+        "name": "id",
+        "type": "bigint NOT NULL AUTO_INCREMENT"
+      },
+      {
+        "name": "version",
+        "type": "bigint DEFAULT NULL"
+      },
+      {
+        "name": "api_id",
+        "type": "varchar(255) DEFAULT NULL"
+      },
+      {
+        "name": "backdrop_image_id",
+        "type": "bigint DEFAULT NULL"
+      },
+      {
+        "name": "backdrop_path",
+        "type": "varchar(255) DEFAULT NULL"
+      },
+      {
+        "name": "contract_term_end",
+        "type": "datetime NOT NULL"
+      },
+      {
+        "name": "date_created",
+        "type": "datetime NOT NULL"
+      },
+      {
+        "name": "deleted",
+        "type": "bit(1) DEFAULT NULL"
+      },
+      {
+        "name": "first_air_date",
+        "type": "datetime NOT NULL"
+      },
+      {
+        "name": "imdb_id",
+        "type": "varchar(255) DEFAULT NULL"
+      },
+      {
+        "name": "last_updated",
+        "type": "datetime NOT NULL"
+      },
+      {
+        "name": "manual_input",
+        "type": "bit(1) DEFAULT NULL"
+      },
+      {
+        "name": "manual_support_id",
+        "type": "bigint DEFAULT NULL"
+      },
+      {
+        "name": "manual_support_path",
+        "type": "varchar(255) DEFAULT NULL"
+      },
+      {
+        "name": "name",
+        "type": "varchar(255) NOT NULL"
+      },
+      {
+        "name": "original_language",
+        "type": "varchar(255) DEFAULT NULL"
+      },
+      {
+        "name": "overview",
+        "type": "longtext"
+      },
+      {
+        "name": "popularity",
+        "type": "double DEFAULT NULL"
+      },
+      {
+        "name": "poster_image_id",
+        "type": "bigint DEFAULT NULL"
+      },
+      {
+        "name": "poster_path",
+        "type": "varchar(255) DEFAULT NULL"
+      },
+      {
+        "name": "producer",
+        "type": "longtext"
+      },
+      {
+        "name": "vote_average",
+        "type": "double DEFAULT NULL"
+      },
+      {
+        "name": "vote_count",
+        "type": "int DEFAULT NULL"
+      },
+      {
+        "name": "total_load",
+        "type": "varchar(255) DEFAULT NULL"
+      }
+    ],
+    "file": "sabercon_tv_show.sql"
+  },
+  "tv_show_author": {
+    "tableName": "tv_show_author",
+    "columns": [
+      {
+        "name": "tv_show_authors_id",
+        "type": "bigint NOT NULL"
+      },
+      {
+        "name": "author_id",
+        "type": "bigint DEFAULT NULL"
+      },
+      {
+        "name": "id",
+        "type": "int NOT NULL AUTO_INCREMENT"
+      }
+    ],
+    "file": "sabercon_tv_show_author.sql"
+  },
+  "tv_show_target_audience": {
+    "tableName": "tv_show_target_audience",
+    "columns": [
+      {
+        "name": "tv_show_target_audiences_id",
+        "type": "bigint DEFAULT NULL"
+      },
+      {
+        "name": "target_audience_id",
+        "type": "bigint DEFAULT NULL"
+      }
+    ],
+    "file": "sabercon_tv_show_target_audience.sql"
+  },
+  "unit": {
+    "tableName": "unit",
+    "columns": [
+      {
+        "name": "id",
+        "type": "bigint NOT NULL AUTO_INCREMENT"
+      },
+      {
+        "name": "version",
+        "type": "bigint DEFAULT NULL"
+      },
+      {
+        "name": "date_created",
+        "type": "datetime DEFAULT NULL"
+      },
+      {
+        "name": "deleted",
+        "type": "bit(1) DEFAULT NULL"
+      },
+      {
+        "name": "institution_id",
+        "type": "bigint NOT NULL"
+      },
+      {
+        "name": "last_updated",
+        "type": "datetime DEFAULT NULL"
+      },
+      {
+        "name": "name",
+        "type": "varchar(255) NOT NULL"
+      },
+      {
+        "name": "institution_name",
+        "type": "varchar(255) DEFAULT NULL"
+      }
+    ],
+    "file": "sabercon_unit.sql"
+  },
+  "unit_class": {
+    "tableName": "unit_class",
+    "columns": [
+      {
+        "name": "id",
+        "type": "bigint NOT NULL AUTO_INCREMENT"
+      },
+      {
+        "name": "version",
+        "type": "bigint DEFAULT NULL"
+      },
+      {
+        "name": "date_created",
+        "type": "datetime DEFAULT NULL"
+      },
+      {
+        "name": "deleted",
+        "type": "bit(1) NOT NULL"
+      },
+      {
+        "name": "institution_id",
+        "type": "bigint NOT NULL"
+      },
+      {
+        "name": "last_updated",
+        "type": "datetime DEFAULT NULL"
+      },
+      {
+        "name": "name",
+        "type": "varchar(255) NOT NULL"
+      },
+      {
+        "name": "unit_id",
+        "type": "bigint NOT NULL"
+      },
+      {
+        "name": "institution_name",
+        "type": "varchar(255) DEFAULT NULL"
+      },
+      {
+        "name": "unit_name",
+        "type": "varchar(255) DEFAULT NULL"
+      }
+    ],
+    "file": "sabercon_unit_class.sql"
+  },
+  "user": {
+    "tableName": "user",
+    "columns": [
+      {
+        "name": "id",
+        "type": "bigint NOT NULL AUTO_INCREMENT"
+      },
+      {
+        "name": "version",
+        "type": "bigint DEFAULT NULL"
+      },
+      {
+        "name": "account_expired",
+        "type": "bit(1) DEFAULT NULL"
+      },
+      {
+        "name": "account_locked",
+        "type": "bit(1) DEFAULT NULL"
+      },
+      {
+        "name": "address",
+        "type": "varchar(255) DEFAULT NULL"
+      },
+      {
+        "name": "amount_of_media_entries",
+        "type": "int DEFAULT NULL"
+      },
+      {
+        "name": "date_created",
+        "type": "datetime DEFAULT NULL"
+      },
+      {
+        "name": "deleted",
+        "type": "bit(1) DEFAULT NULL"
+      },
+      {
+        "name": "email",
+        "type": "varchar(255) NOT NULL"
+      },
+      {
+        "name": "enabled",
+        "type": "bit(1) DEFAULT NULL"
+      },
+      {
+        "name": "full_name",
+        "type": "varchar(255) NOT NULL"
+      },
+      {
+        "name": "invitation_sent",
+        "type": "bit(1) DEFAULT NULL"
+      },
+      {
+        "name": "is_admin",
+        "type": "bit(1) NOT NULL"
+      },
+      {
+        "name": "language",
+        "type": "varchar(255) DEFAULT NULL"
+      },
+      {
+        "name": "last_updated",
+        "type": "datetime DEFAULT NULL"
+      },
+      {
+        "name": "password",
+        "type": "varchar(255) DEFAULT NULL"
+      },
+      {
+        "name": "password_expired",
+        "type": "bit(1) DEFAULT NULL"
+      },
+      {
+        "name": "pause_video_on_click",
+        "type": "bit(1) DEFAULT NULL"
+      },
+      {
+        "name": "phone",
+        "type": "varchar(255) DEFAULT NULL"
+      },
+      {
+        "name": "reset_password",
+        "type": "bit(1) NOT NULL DEFAULT b"
+      },
+      {
+        "name": "username",
+        "type": "varchar(255) DEFAULT NULL"
+      },
+      {
+        "name": "uuid",
+        "type": "varchar(255) DEFAULT NULL"
+      },
+      {
+        "name": "is_manager",
+        "type": "bit(1) NOT NULL"
+      },
+      {
+        "name": "type",
+        "type": "int DEFAULT NULL"
+      },
+      {
+        "name": "certificate_path",
+        "type": "varchar(255) DEFAULT NULL"
+      },
+      {
+        "name": "is_certified",
+        "type": "bit(1) DEFAULT b"
+      },
+      {
+        "name": "is_student",
+        "type": "bit(1) NOT NULL"
+      },
+      {
+        "name": "is_teacher",
+        "type": "bit(1) NOT NULL"
+      },
+      {
+        "name": "institution_id",
+        "type": "bigint DEFAULT NULL"
+      },
+      {
+        "name": "subject",
+        "type": "varchar(255) DEFAULT NULL"
+      },
+      {
+        "name": "subject_data_id",
+        "type": "bigint DEFAULT NULL"
+      }
+    ],
+    "file": "sabercon_user.sql"
+  },
+  "user_answer": {
+    "tableName": "user_answer",
+    "columns": [
+      {
+        "name": "answer_id",
+        "type": "bigint NOT NULL"
+      },
+      {
+        "name": "question_id",
+        "type": "bigint NOT NULL"
+      },
+      {
+        "name": "version",
+        "type": "bigint DEFAULT NULL"
+      },
+      {
+        "name": "date_created",
+        "type": "datetime NOT NULL"
+      },
+      {
+        "name": "is_correct",
+        "type": "bit(1) DEFAULT NULL"
+      },
+      {
+        "name": "last_updated",
+        "type": "datetime DEFAULT NULL"
+      },
+      {
+        "name": "score",
+        "type": "bigint DEFAULT NULL"
+      },
+      {
+        "name": "user_id",
+        "type": "bigint DEFAULT NULL"
+      },
+      {
+        "name": "id",
+        "type": "int NOT NULL AUTO_INCREMENT"
+      }
+    ],
+    "file": "sabercon_user_answer.sql"
+  },
+  "user_genre": {
+    "tableName": "user_genre",
+    "columns": [
+      {
+        "name": "user_favorite_genres_id",
+        "type": "bigint NOT NULL"
+      },
+      {
+        "name": "genre_id",
+        "type": "bigint DEFAULT NULL"
+      }
+    ],
+    "file": "sabercon_user_genre.sql"
+  },
+  "user_role": {
+    "tableName": "user_role",
+    "columns": [
+      {
+        "name": "role_id",
+        "type": "bigint NOT NULL"
+      },
+      {
+        "name": "user_id",
+        "type": "bigint NOT NULL"
+      }
+    ],
+    "file": "sabercon_user_role.sql"
+  },
+  "user_unit": {
+    "tableName": "user_unit",
+    "columns": [
+      {
+        "name": "unit_id",
+        "type": "bigint NOT NULL"
+      },
+      {
+        "name": "user_id",
+        "type": "bigint NOT NULL"
+      }
+    ],
+    "file": "sabercon_user_unit.sql"
+  },
+  "user_unit_class": {
+    "tableName": "user_unit_class",
+    "columns": [
+      {
+        "name": "unit_class_id",
+        "type": "bigint NOT NULL"
+      },
+      {
+        "name": "user_id",
+        "type": "bigint NOT NULL"
+      }
+    ],
+    "file": "sabercon_user_unit_class.sql"
+  },
+  "video": {
+    "tableName": "video",
+    "columns": [
+      {
+        "name": "id",
+        "type": "bigint NOT NULL AUTO_INCREMENT"
+      },
+      {
+        "name": "version",
+        "type": "bigint DEFAULT NULL"
+      },
+      {
+        "name": "api_id",
+        "type": "varchar(255) DEFAULT NULL"
+      },
+      {
+        "name": "date_created",
+        "type": "datetime DEFAULT NULL"
+      },
+      {
+        "name": "deleted",
+        "type": "bit(1) DEFAULT NULL"
+      },
+      {
+        "name": "imdb_id",
+        "type": "varchar(255) DEFAULT NULL"
+      },
+      {
+        "name": "intro_end",
+        "type": "int DEFAULT NULL"
+      },
+      {
+        "name": "intro_start",
+        "type": "int DEFAULT NULL"
+      },
+      {
+        "name": "last_updated",
+        "type": "datetime DEFAULT NULL"
+      },
+      {
+        "name": "original_language",
+        "type": "varchar(255) DEFAULT NULL"
+      },
+      {
+        "name": "outro_start",
+        "type": "int DEFAULT NULL"
+      },
+      {
+        "name": "overview",
+        "type": "longtext"
+      },
+      {
+        "name": "popularity",
+        "type": "double DEFAULT NULL"
+      },
+      {
+        "name": "report_count",
+        "type": "int DEFAULT NULL"
+      },
+      {
+        "name": "vote_average",
+        "type": "double DEFAULT NULL"
+      },
+      {
+        "name": "vote_count",
+        "type": "int DEFAULT NULL"
+      },
+      {
+        "name": "class",
+        "type": "varchar(255) NOT NULL"
+      },
+      {
+        "name": "backdrop_path",
+        "type": "varchar(255) DEFAULT NULL"
+      },
+      {
+        "name": "poster_image_id",
+        "type": "bigint DEFAULT NULL"
+      },
+      {
+        "name": "poster_path",
+        "type": "varchar(255) DEFAULT NULL"
+      },
+      {
+        "name": "release_date",
+        "type": "varchar(255) DEFAULT NULL"
+      },
+      {
+        "name": "title",
+        "type": "varchar(255) DEFAULT NULL"
+      },
+      {
+        "name": "trailer_key",
+        "type": "varchar(255) DEFAULT NULL"
+      },
+      {
+        "name": "backdrop_image_id",
+        "type": "bigint DEFAULT NULL"
+      },
+      {
+        "name": "air_date",
+        "type": "varchar(255) DEFAULT NULL"
+      },
+      {
+        "name": "episode_string",
+        "type": "varchar(255) DEFAULT NULL"
+      },
+      {
+        "name": "episode_number",
+        "type": "int DEFAULT NULL"
+      },
+      {
+        "name": "name",
+        "type": "varchar(255) DEFAULT NULL"
+      },
+      {
+        "name": "season_episode_merged",
+        "type": "int DEFAULT NULL"
+      },
+      {
+        "name": "season_number",
+        "type": "int DEFAULT NULL"
+      },
+      {
+        "name": "show_id",
+        "type": "bigint DEFAULT NULL"
+      },
+      {
+        "name": "still_image_id",
+        "type": "bigint DEFAULT NULL"
+      },
+      {
+        "name": "still_path",
+        "type": "varchar(255) DEFAULT NULL"
+      },
+      {
+        "name": "duration",
+        "type": "varchar(255) DEFAULT NULL"
+      }
+    ],
+    "file": "sabercon_video.sql"
+  },
+  "video_author": {
+    "tableName": "video_author",
+    "columns": [
+      {
+        "name": "video_authors_id",
+        "type": "bigint NOT NULL"
+      },
+      {
+        "name": "author_id",
+        "type": "bigint DEFAULT NULL"
+      }
+    ],
+    "file": "sabercon_video_author.sql"
+  },
+  "video_educational_stage": {
+    "tableName": "video_educational_stage",
+    "columns": [
+      {
+        "name": "video_stages_id",
+        "type": "bigint NOT NULL"
+      },
+      {
+        "name": "educational_stage_id",
+        "type": "bigint DEFAULT NULL"
+      }
+    ],
+    "file": "sabercon_video_educational_stage.sql"
+  },
+  "video_education_period": {
+    "tableName": "video_education_period",
+    "columns": [
+      {
+        "name": "video_periods_id",
+        "type": "bigint NOT NULL"
+      },
+      {
+        "name": "education_period_id",
+        "type": "bigint DEFAULT NULL"
+      }
+    ],
+    "file": "sabercon_video_education_period.sql"
+  },
+  "video_file": {
+    "tableName": "video_file",
+    "columns": [
+      {
+        "name": "video_files_id",
+        "type": "bigint NOT NULL"
+      },
+      {
+        "name": "file_id",
+        "type": "bigint DEFAULT NULL"
+      },
+      {
+        "name": "id",
+        "type": "int NOT NULL AUTO_INCREMENT"
+      }
+    ],
+    "file": "sabercon_video_file.sql"
+  },
+  "video_theme": {
+    "tableName": "video_theme",
+    "columns": [
+      {
+        "name": "video_themes_id",
+        "type": "bigint NOT NULL"
+      },
+      {
+        "name": "theme_id",
+        "type": "bigint DEFAULT NULL"
+      }
+    ],
+    "file": "sabercon_video_theme.sql"
+  },
+  "viewing_status": {
+    "tableName": "viewing_status",
+    "columns": [
+      {
+        "name": "id",
+        "type": "bigint NOT NULL AUTO_INCREMENT"
+      },
+      {
+        "name": "version",
+        "type": "bigint DEFAULT NULL"
+      },
+      {
+        "name": "completed",
+        "type": "bit(1) DEFAULT NULL"
+      },
+      {
+        "name": "current_play_time",
+        "type": "int NOT NULL"
+      },
+      {
+        "name": "date_created",
+        "type": "datetime DEFAULT NULL"
+      },
+      {
+        "name": "last_updated",
+        "type": "datetime DEFAULT NULL"
+      },
+      {
+        "name": "profile_id",
+        "type": "bigint DEFAULT NULL"
+      },
+      {
+        "name": "runtime",
+        "type": "int DEFAULT NULL"
+      },
+      {
+        "name": "tv_show_id",
+        "type": "bigint DEFAULT NULL"
+      },
+      {
+        "name": "user_id",
+        "type": "bigint DEFAULT NULL"
+      },
+      {
+        "name": "video_id",
+        "type": "bigint NOT NULL"
+      }
+    ],
+    "file": "sabercon_viewing_status.sql"
+  },
+  "watchlist_entry": {
+    "tableName": "watchlist_entry",
+    "columns": [
+      {
+        "name": "id",
+        "type": "bigint NOT NULL AUTO_INCREMENT"
+      },
+      {
+        "name": "version",
+        "type": "bigint DEFAULT NULL"
+      },
+      {
+        "name": "date_created",
+        "type": "datetime DEFAULT NULL"
+      },
+      {
+        "name": "is_deleted",
+        "type": "bit(1) NOT NULL"
+      },
+      {
+        "name": "last_updated",
+        "type": "datetime DEFAULT NULL"
+      },
+      {
+        "name": "profile_id",
+        "type": "bigint NOT NULL"
+      },
+      {
+        "name": "tv_show_id",
+        "type": "bigint DEFAULT NULL"
+      },
+      {
+        "name": "user_id",
+        "type": "bigint NOT NULL"
+      },
+      {
+        "name": "video_id",
+        "type": "bigint DEFAULT NULL"
+      }
+    ],
+    "file": "sabercon_watchlist_entry.sql"
+  }
+}

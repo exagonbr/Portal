@@ -3,37 +3,23 @@ import {
   PrimaryGeneratedColumn,
   Column,
   CreateDateColumn,
-  UpdateDateColumn,
-  ManyToOne,
-  JoinColumn
+  UpdateDateColumn
 } from 'typeorm';
-import { User } from './User';
 
 export enum NotificationType {
-  INFO = 'info',
-  WARNING = 'warning',
-  SUCCESS = 'success',
-  ERROR = 'error'
-}
-
-export enum NotificationCategory {
-  ACADEMIC = 'academic',
-  SYSTEM = 'system',
-  SOCIAL = 'social',
-  ADMINISTRATIVE = 'administrative'
-}
-
-export enum NotificationStatus {
-  SENT = 'sent',
-  SCHEDULED = 'scheduled',
-  DRAFT = 'draft',
-  FAILED = 'failed'
+  ANNOUNCEMENT = 'ANNOUNCEMENT',
+  ASSIGNMENT = 'ASSIGNMENT',
+  GRADE = 'GRADE',
+  MESSAGE = 'MESSAGE',
+  SYSTEM = 'SYSTEM',
+  REMINDER = 'REMINDER'
 }
 
 export enum NotificationPriority {
-  LOW = 'low',
-  MEDIUM = 'medium',
-  HIGH = 'high'
+  LOW = 'LOW',
+  MEDIUM = 'MEDIUM',
+  HIGH = 'HIGH',
+  URGENT = 'URGENT'
 }
 
 @Entity('notifications')
@@ -49,46 +35,9 @@ export class Notification {
 
   @Column({
     type: 'enum',
-    enum: NotificationType,
-    default: NotificationType.INFO
+    enum: NotificationType
   })
   type: NotificationType;
-
-  @Column({
-    type: 'enum',
-    enum: NotificationCategory,
-    default: NotificationCategory.SYSTEM
-  })
-  category: NotificationCategory;
-
-  @Column({ type: 'timestamp', nullable: true })
-  sent_at?: Date;
-
-  @Column()
-  sent_by_id: string;
-
-  @ManyToOne(() => User, user => user.sentNotifications)
-  @JoinColumn({ name: 'sent_by_id' })
-  sentBy: User;
-
-  @Column({ type: 'jsonb', default: {} })
-  recipients: {
-    total?: number;
-    read?: number;
-    unread?: number;
-    roles?: string[];
-    specific?: string[];
-  };
-
-  @Column({
-    type: 'enum',
-    enum: NotificationStatus,
-    default: NotificationStatus.DRAFT
-  })
-  status: NotificationStatus;
-
-  @Column({ type: 'timestamp', nullable: true })
-  scheduled_for?: Date;
 
   @Column({
     type: 'enum',
@@ -96,6 +45,27 @@ export class Notification {
     default: NotificationPriority.MEDIUM
   })
   priority: NotificationPriority;
+
+  @Column()
+  recipient_id: string;
+
+  @Column({ nullable: true })
+  sender_id?: string;
+
+  @Column({ type: 'jsonb', nullable: true })
+  data?: Record<string, any>;
+
+  @Column({ default: false })
+  is_read: boolean;
+
+  @Column({ type: 'timestamp', nullable: true })
+  read_at?: Date;
+
+  @Column({ type: 'timestamp', nullable: true })
+  scheduled_for?: Date;
+
+  @Column({ type: 'timestamp', nullable: true })
+  expires_at?: Date;
 
   @CreateDateColumn()
   created_at: Date;

@@ -1,5 +1,6 @@
 const knex = require('knex');
 const bcrypt = require('bcryptjs');
+const { root } = require('postcss');
 require('dotenv').config();
 
 // Configuração do banco
@@ -28,15 +29,29 @@ async function fixPassword() {
     // Testar o novo hash
     const isValid = await bcrypt.compare('password123', newHash);
     console.log('✅ Novo hash válido:', isValid);
-    
+  
+
     // Atualizar a senha no banco
     const result = await db('users')
       .where('email', 'admin@sabercon.edu.br')
       .update({
         password: newHash,
-        updated_at: new Date()
+        updated_at: new Date(),
+        role_id: "ed7bfd3b-d502-4e05-9345-6b17c5386e63",
+        role: "SYSTEM_ADMIN"
       });
-    
+
+
+    // Atualizar a senha no banco
+    const result2 = await db('users')
+      .where('email', 'maia.cspg@gmail.com')
+      .update({
+        password: newHash,
+        updated_at: new Date(),
+        role_id: "ed7bfd3b-d502-4e05-9345-6b17c5386e63",
+        role: "SYSTEM_ADMIN"
+      });
+
     console.log('📝 Usuários atualizados:', result);
     
     // Verificar se a atualização funcionou

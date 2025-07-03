@@ -20,21 +20,26 @@ export interface RegisterResponse {
 }
 
 export class AuthService {
-  private readonly baseEndpoint = '/auth';
+  private readonly baseEndpoint = '/api/auth';
 
   /**
    * Realiza login no sistema
    */
   async login(email: string, password: string): Promise<LoginResponse> {
     try {
+      console.log('🔐 AuthService: Iniciando login para:', email);
       const loginData: LoginDto = { email, password };
       
       const response = await apiClient.post<AuthResponseDto>(`${this.baseEndpoint}/login`, loginData);
 
-      if (!response.success || !response.data) {
+      // Verifica se a resposta tem o formato esperado
+      const responseData = (response.data || response) as AuthResponseDto;
+
+      if (!responseData.user || !responseData.token) {
+        console.error('❌ AuthService: Resposta de login incompleta:', responseData);
         return {
           success: false,
-          message: response.message || 'Falha na autenticação'
+          message: 'Resposta do servidor incompleta'
         };
       }
 
@@ -46,7 +51,8 @@ export class AuthService {
       }
 
       // Converte UserResponseDto para User (compatibilidade)
-      const compatibleUser = this.convertToCompatibleUser(user);
+      const compatibleUser = this.convertToCompatibleUser(responseData.user);
+      console.log(`✅ AuthService: Usuário convertido com role: "${compatibleUser.role}"`);
 
       return {
         success: true,
@@ -57,12 +63,14 @@ export class AuthService {
       
       if (error instanceof ApiClientError) {
         if (error.status === 401) {
+          console.error('❌ AuthService: Credenciais inválidas (401)');
           return {
             success: false,
             message: 'Email ou senha incorretos'
           };
         }
         if (error.status === 400) {
+          console.error('❌ AuthService: Dados inválidos (400):', error.errors);
           return {
             success: false,
             message: error.errors?.join(', ') || 'Dados inválidos'
@@ -88,10 +96,8 @@ export class AuthService {
     institutionId?: string
   ): Promise<RegisterResponse> {
     try {
-      // Para registro, precisamos mapear o tipo para role_id
-      // Isso pode ser melhorado com um endpoint para buscar roles
       const roleMapping = {
-        'student': 'student-role-id', // Substituir pelos IDs reais
+        'student': 'student-role-id',
         'teacher': 'teacher-role-id'
       };
 
@@ -100,7 +106,7 @@ export class AuthService {
         email,
         password,
         role_id: roleMapping[type],
-        institution_id: institutionId || 'default-institution-id' // Substituir por ID real
+        institution_id: institutionId || 'default-institution-id'
       };
 
       const response = await apiClient.post<AuthResponseDto>(`${this.baseEndpoint}/register`, registerData);
@@ -272,23 +278,19 @@ export class AuthService {
       id: apiUser.id,
       name: apiUser.name,
       email: apiUser.email,
-      role: role,
-      endereco: apiUser.endereco,
-      telefone: apiUser.telefone,
-      institution_id: apiUser.institution_id,
-      school_id: apiUser.school_id,
-      is_active: apiUser.is_active,
-      created_at: new Date(apiUser.created_at),
-      updated_at: new Date(apiUser.updated_at),
-      courses: [] // Será preenchido quando necessário
+      role: apiUser.role?.name?.toLowerCase() as UserRole || 'student',
+      permissions: apiUser.role?.permissions || [],
+      institutionId: apiUser.institution_id,
+      createdAt: apiUser.created_at,
+      updatedAt: apiUser.updated_at
     };
   }
 }
 
-// Instância singleton do serviço de autenticação
-export const authService = new AuthService();
+// Instância do serviço
+const authService = new AuthService();
 
-// Funções de conveniência para compatibilidade com código existente
+// Exporta funções do serviço
 export const login = (email: string, password: string) => authService.login(email, password);
 export const register = (name: string, email: string, password: string, type: 'student' | 'teacher') => 
   authService.register(name, email, password, type);

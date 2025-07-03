@@ -180,6 +180,21 @@ class AuthService {
       audience: JWT_CONFIG.AUDIENCE,
     });
   }
+
+  static formatUserResponse(user: UserWithRelations): any {
+    return {
+      id: user.id,
+      email: user.email,
+      name: user.name,
+      role: {
+        name: user.role?.name || 'user',
+        permissions: user.role?.permissions || []
+      },
+      is_active: user.is_active,
+      created_at: user.created_at,
+      updated_at: user.updated_at
+    };
+  }
 }
 
 export default new AuthService();

@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
-import { X, Search, UserPlus, UserMinus } from 'lucide-react';
+import { X, Search, UserPlus, UserMinus, Users, GraduationCap } from 'lucide-react';
 import { UserClass, CreateUserClassData, UserClassRole, USER_CLASS_ROLE_LABELS, UserClassWithDetails } from '@/types/userClass';
 import { userClassService } from '@/services/userClassService';
 import { classService } from '@/services/classService';
@@ -136,6 +136,7 @@ export default function UserClassModal({ isOpen, onClose, onSuccess, classId, us
           </button>
         </div>
 
+        {/* Error Alert modernizado */}
         {error && (
           <div className="mb-4 p-3 bg-error-light border border-error-dark text-error-text rounded">
             {error}
@@ -144,33 +145,37 @@ export default function UserClassModal({ isOpen, onClose, onSuccess, classId, us
 
         <div className="flex space-x-1 mb-4 flex-shrink-0">
           <button
-            className={`px-4 py-2 font-medium ${
+            className={`flex-1 px-6 py-4 font-medium transition-all duration-200 flex items-center justify-center gap-2 ${
               activeTab === 'enroll'
                 ? 'text-accent-blue border-b-2 border-accent-blue'
                 : 'text-text-secondary hover:text-text-primary'
             }`}
             onClick={() => setActiveTab('enroll')}
           >
+            <UserPlus className="w-4 h-4" />
             Matricular Usuário
           </button>
           <button
-            className={`px-4 py-2 font-medium ${
+            className={`flex-1 px-6 py-4 font-medium transition-all duration-200 flex items-center justify-center gap-2 ${
               activeTab === 'manage'
                 ? 'text-accent-blue border-b-2 border-accent-blue'
                 : 'text-text-secondary hover:text-text-primary'
             }`}
             onClick={() => setActiveTab('manage')}
           >
-            Usuários Matriculados ({enrolledUsers.length})
+            <Users className="w-4 h-4" />
+            Matriculados ({enrolledUsers.length})
           </button>
         </div>
 
         <div className="flex-1 overflow-hidden">
           {activeTab === 'enroll' ? (
-            <form onSubmit={handleEnroll}>
+            <form onSubmit={handleEnroll} className="space-y-6">
               {!classId && (
-                <div className="mb-4">
-                  <label className="block text-sm font-medium mb-2">Turma</label>
+                <div>
+                  <label className="block text-sm font-semibold text-text-primary mb-3">
+                    Selecionar Turma
+                  </label>
                   <select
                     value={formData.class_id}
                     onChange={(e) => {
@@ -192,12 +197,15 @@ export default function UserClassModal({ isOpen, onClose, onSuccess, classId, us
                 </div>
               )}
 
-              <div className="mb-4">
-                <label className="block text-sm font-medium mb-2">Buscar Usuário</label>
+              <div>
+                <label className="block text-sm font-semibold text-text-primary mb-3">
+                  Buscar Usuário
+                </label>
                 <div className="relative">
                   <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-text-tertiary w-5 h-5" />
                   <input
                     type="text"
+                    placeholder="Digite o nome ou email do usuário..."
                     value={searchTerm}
                     onChange={(e) => setSearchTerm(e.target.value)}
                     placeholder="Buscar por nome ou email..."
@@ -227,9 +235,11 @@ export default function UserClassModal({ isOpen, onClose, onSuccess, classId, us
                 </div>
               )}
 
-              <div className="grid grid-cols-2 gap-4 mb-4">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <div>
-                  <label className="block text-sm font-medium mb-2">Função na Turma</label>
+                  <label className="block text-sm font-semibold text-text-primary mb-3">
+                    Função na Turma
+                  </label>
                   <select
                     value={formData.role}
                     onChange={(e) => setFormData({ ...formData, role: e.target.value as UserClassRole })}
@@ -245,7 +255,9 @@ export default function UserClassModal({ isOpen, onClose, onSuccess, classId, us
                 </div>
 
                 <div>
-                  <label className="block text-sm font-medium mb-2">Data de Matrícula</label>
+                  <label className="block text-sm font-semibold text-text-primary mb-3">
+                    Data de Matrícula
+                  </label>
                   <input
                     type="date"
                     value={enrollmentDateStr}
@@ -256,14 +268,25 @@ export default function UserClassModal({ isOpen, onClose, onSuccess, classId, us
                 </div>
               </div>
 
-              <div className="flex justify-end gap-2">
+              <div className="flex gap-4 pt-6 border-t border-border-light">
                 <button
                   type="submit"
                   disabled={loading || !formData.user_id || !formData.class_id}
                   className="px-4 py-2 bg-accent-blue text-white rounded-lg hover:bg-accent-blue-dark disabled:opacity-50 flex items-center gap-2"
                 >
-                  <UserPlus className="w-4 h-4" />
-                  {loading ? 'Matriculando...' : 'Matricular'}
+                  {loading ? (
+                    <div className="loading-spinner w-4 h-4 border-white/30 border-t-white mr-2"></div>
+                  ) : (
+                    <UserPlus className="w-4 h-4 mr-2 group-hover:scale-110 transition-transform duration-200" />
+                  )}
+                  {loading ? 'Matriculando...' : 'Matricular Usuário'}
+                </button>
+                <button
+                  type="button"
+                  onClick={onClose}
+                  className="button-outline flex-1"
+                >
+                  Cancelar
                 </button>
               </div>
             </form>
@@ -295,9 +318,95 @@ export default function UserClassModal({ isOpen, onClose, onSuccess, classId, us
                         Remover
                       </button>
                     </div>
-                  ))}
+                    <div className="w-12 h-12 bg-primary/10 rounded-xl flex items-center justify-center">
+                      <GraduationCap className="w-6 h-6 text-primary" />
+                    </div>
+                  </div>
                 </div>
-              )}
+                
+                <div className="stat-card">
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <p className="stat-label">Professores</p>
+                      <p className="stat-value text-secondary">
+                        {enrolledUsers.filter(u => u.role === 'TEACHER').length}
+                      </p>
+                    </div>
+                    <div className="w-12 h-12 bg-secondary/10 rounded-xl flex items-center justify-center">
+                      <Users className="w-6 h-6 text-secondary" />
+                    </div>
+                  </div>
+                </div>
+                
+                <div className="stat-card">
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <p className="stat-label">Total Geral</p>
+                      <p className="stat-value text-accent-green">{enrolledUsers.length}</p>
+                    </div>
+                    <div className="w-12 h-12 bg-accent-green/10 rounded-xl flex items-center justify-center">
+                      <Users className="w-6 h-6 text-accent-green" />
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              {/* Lista de usuários matriculados */}
+              <div className="space-y-4">
+                {enrolledUsers.length > 0 ? (
+                  enrolledUsers.map((userClass) => (
+                    <div key={userClass.id} className="card hover-lift p-4">
+                      <div className="flex items-center justify-between">
+                        <div className="flex items-center gap-4">
+                          <div className="w-12 h-12 bg-gradient-to-r from-primary to-secondary rounded-xl flex items-center justify-center">
+                            <span className="text-white font-bold text-sm">
+                              {userClass.user_name?.charAt(0).toUpperCase()}
+                            </span>
+                          </div>
+                          <div>
+                            <h3 className="font-semibold text-text-primary">
+                              {userClass.user_name}
+                            </h3>
+                            <p className="text-sm text-text-tertiary">
+                              {userClass.user_email}
+                            </p>
+                            <div className="flex items-center gap-2 mt-1">
+                              <span className={`badge ${
+                                userClass.role === 'TEACHER' ? 'badge-primary' : 
+                                userClass.role === 'STUDENT' ? 'badge-info' : 'badge-success'
+                              }`}>
+                                {USER_CLASS_ROLE_LABELS[userClass.role]}
+                              </span>
+                              <span className="text-xs text-text-muted">
+                                Desde {new Date(userClass.enrollment_date).toLocaleDateString()}
+                              </span>
+                            </div>
+                          </div>
+                        </div>
+                        <button
+                          onClick={() => handleUnenroll(userClass.id)}
+                          className="button-icon hover:bg-error/10 hover:text-error group"
+                          title="Remover usuário"
+                        >
+                          <UserMinus className="w-4 h-4 group-hover:scale-110 transition-transform duration-200" />
+                        </button>
+                      </div>
+                    </div>
+                  ))
+                ) : (
+                  <div className="text-center py-12">
+                    <div className="w-20 h-20 bg-background-tertiary rounded-2xl flex items-center justify-center mx-auto mb-4">
+                      <Users className="w-10 h-10 text-text-muted" />
+                    </div>
+                    <h3 className="text-lg font-semibold text-text-primary mb-2">
+                      Nenhum usuário matriculado
+                    </h3>
+                    <p className="text-text-tertiary">
+                      Use a aba "Matricular Usuário" para adicionar pessoas à turma.
+                    </p>
+                  </div>
+                )}
+              </div>
             </div>
           )}
         </div>

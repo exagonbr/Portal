@@ -8,8 +8,8 @@ import {
 } from '@/types/userClass';
 import { PaginatedResponseDto } from '@/types/common';
 
-class UserClassService {
-  private baseUrl = '/user-classes';
+export class UserClassService {
+  private baseUrl = '/api/user-classes';
 
   async list(filter?: UserClassFilter): Promise<PaginatedResponseDto<UserClass>> {
     const response = await apiClient.get<PaginatedResponseDto<UserClass>>(this.baseUrl, filter as any);

@@ -1,16 +1,19 @@
 'use client'
 
-import { useAuth } from '@/contexts/AuthContext'
+import { useAuth, useRequireAuth } from '@/contexts/AuthContext'
 import { useRouter } from 'next/navigation'
 import { useEffect, useState } from 'react'
 import DashboardLayout from './DashboardLayout'
+import { getDashboardPath, convertBackendRole } from '@/utils/roleRedirect'
 
 export default function AuthenticatedDashboardLayout({
   children,
+  requiredPermissions = [],
 }: {
   children: React.ReactNode
+  requiredPermissions?: string[]
 }) {
-  const { user, loading } = useAuth()
+  const { user, loading, hasAllPermissions } = useAuth()
   const router = useRouter()
   const [redirecting, setRedirecting] = useState(false)
 

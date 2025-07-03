@@ -5,11 +5,13 @@ import { useTheme } from '@/contexts/ThemeContext'
 import { motion, AnimatePresence } from 'framer-motion'
 import { generateUniqueId } from '@/hooks/useUniqueId'
 
-interface Toast {
+export interface Toast {
   id: string
   type: 'success' | 'error' | 'info' | 'warning'
-  message: string
+  title: string
+  message?: string
   duration?: number
+  visible?: boolean
 }
 
 interface ToastContextType {
@@ -23,7 +25,15 @@ export function ToastProvider({ children }: { children: React.ReactNode }) {
   const { theme } = useTheme()
 
   const removeToast = useCallback((id: string) => {
-    setToasts(prev => prev.filter(toast => toast.id !== id))
+    setToasts(prev => 
+      prev.map(toast => 
+        toast.id === id ? { ...toast, visible: false } : toast
+      )
+    )
+    
+    setTimeout(() => {
+      setToasts(prev => prev.filter(toast => toast.id !== id))
+    }, 300)
   }, [])
 
   const showToast = useCallback(({ type, message, duration = 5000 }: Omit<Toast, 'id'>) => {
@@ -33,7 +43,7 @@ export function ToastProvider({ children }: { children: React.ReactNode }) {
 
   useEffect(() => {
     toasts.forEach(toast => {
-      if (toast.duration) {
+      if (toast.duration && toast.visible) {
         const timer = setTimeout(() => {
           removeToast(toast.id)
         }, toast.duration)
@@ -79,6 +89,7 @@ export function ToastProvider({ children }: { children: React.ReactNode }) {
   return (
     <ToastContext.Provider value={{ showToast }}>
       {children}
+      <ToastListener />
       {/* Toast Container */}
       <div className="fixed bottom-0 right-0 p-4 z-[100000] space-y-4">
         <AnimatePresence>

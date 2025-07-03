@@ -1,4 +1,4 @@
-import type { Knex } from 'knex';
+ import type { Knex } from 'knex';
 
 export async function seed(knex: Knex): Promise<void> {
   console.log('🚀 Iniciando seed de dados completos...');

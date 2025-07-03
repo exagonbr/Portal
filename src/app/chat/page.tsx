@@ -213,13 +213,6 @@ export default function ChatPage() {
         content: 'Pode deixar! Já estou estudando.',
         timestamp: new Date(Date.now() - 1800000),
         status: 'delivered'
-      },
-      {
-        id: '6',
-        senderId: '1',
-        content: 'Não esqueça da prova amanhã!',
-        timestamp: new Date(),
-        status: 'sent'
       }
     ];
 
@@ -228,32 +221,25 @@ export default function ChatPage() {
 
   const handleSendMessage = (e: React.FormEvent) => {
     e.preventDefault();
-    
     if (!newMessage.trim() || !selectedConversation) return;
 
     const message: ChatMessage = {
       id: Date.now().toString(),
       senderId: 'current',
-      content: newMessage,
+      content: newMessage.trim(),
       timestamp: new Date(),
       status: 'sent'
     };
 
-    setMessages([...messages, message]);
+    setMessages(prev => [...prev, message]);
     setNewMessage('');
 
-    // Simular mudança de status da mensagem
+    // Simular entrega e leitura
     setTimeout(() => {
       setMessages(prev => prev.map(msg => 
         msg.id === message.id ? { ...msg, status: 'delivered' } : msg
       ));
     }, 1000);
-
-    setTimeout(() => {
-      setMessages(prev => prev.map(msg => 
-        msg.id === message.id ? { ...msg, status: 'read' } : msg
-      ));
-    }, 2000);
   };
 
   const formatTime = (date: Date) => {
@@ -276,24 +262,21 @@ export default function ChatPage() {
 
   const getStatusColor = (status: ChatUser['status']) => {
     switch (status) {
-      case 'online': return 'bg-emerald-500';
-      case 'away': return 'bg-amber-500';
-      case 'busy': return 'bg-rose-500';
-      default: return 'bg-gray-400';
+      case 'online': return 'bg-accent-green';
+      case 'away': return 'bg-accent-yellow';
+      case 'busy': return 'bg-error';
+      default: return 'bg-text-muted';
     }
   };
 
   const getStatusIcon = (status: ChatMessage['status']) => {
     switch (status) {
-      case 'sent': return <Check className="w-4 h-4" />;
-      case 'delivered': return <CheckCheck className="w-4 h-4" />;
-      case 'read': return <CheckCheck className="w-4 h-4 text-blue-600" />;
+      case 'sent': return <Check className="w-4 h-4 text-text-tertiary" />;
+      case 'delivered': return <CheckCheck className="w-4 h-4 text-text-tertiary" />;
+      case 'read': return <CheckCheck className="w-4 h-4 text-secondary" />;
+      default: return null;
     }
   };
-
-  const filteredConversations = conversations.filter(conv =>
-    conv.name.toLowerCase().includes(searchTerm.toLowerCase())
-  );
 
   return (
     <div className="flex w-full h-full overflow-hidden" >
@@ -311,15 +294,15 @@ export default function ChatPage() {
             </button>
           </div>
           
-          {/* Busca */}
+          {/* Barra de Pesquisa */}
           <div className="relative">
-            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4 lg:w-5 lg:h-5" />
+            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-text-tertiary w-5 h-5" />
             <input
               type="text"
+              placeholder="Buscar conversas..."
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
-              placeholder="Buscar..."
-              className="w-full pl-9 lg:pl-10 pr-3 lg:pr-4 py-1.5 lg:py-2 bg-gray-100 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary text-gray-700 text-sm"
+              className="input-field-modern pl-10"
             />
           </div>
         </div>
@@ -350,12 +333,6 @@ export default function ChatPage() {
                       </span>
                     )}
                   </div>
-                  {conversation.type === 'direct' && (
-                    <div className={`absolute bottom-0 right-0 w-2 h-2 lg:w-2.5 lg:h-2.5 rounded-full border-2 border-white ${
-                      getStatusColor(conversation.participants[0]?.status || 'offline')
-                    }`} />
-                  )}
-                </div>
 
                 {/* Conteúdo */}
                 <div className="flex-1 min-w-0">
@@ -375,7 +352,7 @@ export default function ChatPage() {
                     <div className="flex items-center gap-2 flex-shrink-0 ml-2">
                       {conversation.isMuted && <BellOff className="w-3 h-3 text-gray-400" />}
                       {conversation.unreadCount > 0 && (
-                        <span className="px-1.5 py-0.5 text-xs bg-primary text-white rounded-full font-medium min-w-[20px] text-center">
+                        <span className="bg-secondary text-white text-xs rounded-full px-2 py-1 min-w-[20px] text-center">
                           {conversation.unreadCount}
                         </span>
                       )}
@@ -383,8 +360,7 @@ export default function ChatPage() {
                   </div>
                 </div>
               </div>
-            </div>
-          ))}
+            ))}
         </div>
       </div>
 
@@ -407,11 +383,18 @@ export default function ChatPage() {
                       </span>
                     )}
                   </div>
-                  {selectedConversation.type === 'direct' && (
-                    <div className={`absolute bottom-0 right-0 w-2 h-2 rounded-full border-2 border-white ${
-                      getStatusColor(selectedConversation.participants[0]?.status || 'offline')
-                    }`} />
-                  )}
+
+                  <div>
+                    <h2 className="text-xl font-bold text-text-primary">
+                      {selectedConversation.name}
+                    </h2>
+                    <p className="text-sm text-text-tertiary">
+                      {selectedConversation.type === 'group' 
+                        ? `${selectedConversation.participants.length} participantes`
+                        : selectedConversation.participants[0]?.status || 'Offline'
+                      }
+                    </p>
+                  </div>
                 </div>
                 <div className="min-w-0">
                   <h3 className="text-sm font-medium text-gray-700 truncate">{selectedConversation.name}</h3>
@@ -425,23 +408,7 @@ export default function ChatPage() {
                   </p>
                 </div>
               </div>
-              
-              <div className="flex items-center gap-2">
-                <button className="p-2 hover:bg-gray-100 rounded-lg transition-colors">
-                  <Phone className="w-5 h-5 text-gray-600" />
-                </button>
-                <button className="p-2 hover:bg-gray-100 rounded-lg transition-colors">
-                  <Video className="w-5 h-5 text-gray-600" />
-                </button>
-                <button 
-                  onClick={() => setShowUserInfo(!showUserInfo)}
-                  className="p-2 hover:bg-gray-100 rounded-lg transition-colors"
-                >
-                  <MoreVertical className="w-5 h-5 text-gray-600" />
-                </button>
-              </div>
             </div>
-          </div>
 
           {/* Mensagens */}
           <div className="flex-1 overflow-y-auto p-4 space-y-4 bg-gray-50">
@@ -470,22 +437,27 @@ export default function ChatPage() {
                       <div className={`flex items-center justify-end gap-1 mt-1 ${
                         isCurrentUser ? 'text-blue-100' : 'text-gray-500'
                       }`}>
-                        <span className="text-xs">{formatTime(message.timestamp)}</span>
-                        {isCurrentUser && getStatusIcon(message.status)}
+                        <p className="text-sm">{message.content}</p>
+                        <div className="flex items-center justify-end gap-1 mt-1">
+                          <span className={`text-xs ${isCurrentUser ? 'text-white/70' : 'text-text-tertiary'}`}>
+                            {formatTime(message.timestamp)}
+                          </span>
+                          {isCurrentUser && getStatusIcon(message.status)}
+                        </div>
                       </div>
                     </div>
                   </div>
-                </React.Fragment>
-              );
-            })}
-            
-            {isTyping && (
-              <div className="flex justify-start">
-                <div className="bg-white rounded-2xl px-4 py-2 shadow-sm">
-                  <div className="flex gap-1">
-                    <Circle className="w-2 h-2 fill-gray-400 animate-bounce" />
-                    <Circle className="w-2 h-2 fill-gray-400 animate-bounce delay-100" />
-                    <Circle className="w-2 h-2 fill-gray-400 animate-bounce delay-200" />
+                );
+              })}
+              
+              {isTyping && (
+                <div className="flex justify-start">
+                  <div className="bg-background-card border border-border-light rounded-2xl px-4 py-2">
+                    <div className="flex items-center gap-1">
+                      <div className="w-2 h-2 bg-text-muted rounded-full animate-bounce"></div>
+                      <div className="w-2 h-2 bg-text-muted rounded-full animate-bounce" style={{ animationDelay: '0.1s' }}></div>
+                      <div className="w-2 h-2 bg-text-muted rounded-full animate-bounce" style={{ animationDelay: '0.2s' }}></div>
+                    </div>
                   </div>
                 </div>
               </div>
@@ -504,30 +476,7 @@ export default function ChatPage() {
                 <Paperclip className="w-5 h-5 text-gray-600" />
               </button>
               
-              <div className="flex-1">
-                <input
-                  type="text"
-                  value={newMessage}
-                  onChange={(e) => setNewMessage(e.target.value)}
-                  placeholder="Digite uma mensagem..."
-                  className="w-full px-4 py-2 bg-gray-100 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent text-gray-700"
-                />
-              </div>
-              
-              <button
-                type="button"
-                className="p-2 hover:bg-gray-100 rounded-lg transition-colors"
-              >
-                <Smile className="w-5 h-5 text-gray-600" />
-              </button>
-              
-              <button
-                type="submit"
-                disabled={!newMessage.trim()}
-                className="p-2 bg-primary text-white rounded-lg hover:bg-primary-dark transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-              >
-                <Send className="w-5 h-5" />
-              </button>
+              <div ref={messagesEndRef} />
             </div>
           </form>
         </div>
@@ -541,7 +490,55 @@ export default function ChatPage() {
         </div>
       )}
 
-      {/* Painel de Informações */}
+            {/* Input de Nova Mensagem */}
+            <div className="p-6 border-t border-border-light bg-background-card">
+              <form onSubmit={handleSendMessage} className="flex items-center gap-3">
+                <button type="button" className="button-icon">
+                  <Paperclip className="w-5 h-5" />
+                </button>
+                
+                <div className="flex-1 relative">
+                  <input
+                    type="text"
+                    placeholder="Digite sua mensagem..."
+                    value={newMessage}
+                    onChange={(e) => setNewMessage(e.target.value)}
+                    className="input-field-modern pr-12"
+                  />
+                  <button type="button" className="absolute right-3 top-1/2 transform -translate-y-1/2 button-icon">
+                    <Smile className="w-5 h-5" />
+                  </button>
+                </div>
+                
+                <button 
+                  type="submit" 
+                  disabled={!newMessage.trim()}
+                  className="button-primary p-3 rounded-xl disabled:opacity-50 disabled:cursor-not-allowed"
+                >
+                  <Send className="w-5 h-5" />
+                </button>
+              </form>
+            </div>
+          </>
+        ) : (
+          // Estado Vazio
+          <div className="flex-1 flex items-center justify-center">
+            <div className="text-center max-w-md">
+              <div className="w-24 h-24 bg-gradient-to-r from-primary/20 to-secondary/20 rounded-2xl flex items-center justify-center mx-auto mb-6">
+                <MessageSquare className="w-12 h-12 text-primary" />
+              </div>
+              <h2 className="text-2xl font-bold text-text-primary mb-2">
+                Bem-vindo ao Chat
+              </h2>
+              <p className="text-text-secondary">
+                Selecione uma conversa para começar a enviar mensagens
+              </p>
+            </div>
+          </div>
+        )}
+      </div>
+
+      {/* Painel de Informações do Usuário */}
       {showUserInfo && selectedConversation && (
         <div className="w-64 lg:w-80 max-w-[320px] bg-white flex flex-col h-full border-l border-gray-200 overflow-hidden">
           <div className="p-3 lg:p-4 overflow-y-auto h-full">
@@ -550,9 +547,9 @@ export default function ChatPage() {
                 selectedConversation.type === 'group' ? 'bg-purple-500' : 'bg-blue-500'
               }`}>
                 {selectedConversation.type === 'group' ? (
-                  <Users className="w-7 h-7 lg:w-8 lg:h-8" />
+                  <Users className="w-10 h-10 text-white" />
                 ) : (
-                  <span className="text-lg lg:text-xl">
+                  <span className="text-white font-bold text-xl">
                     {selectedConversation.name.charAt(0).toUpperCase()}
                   </span>
                 )}
@@ -565,25 +562,25 @@ export default function ChatPage() {
               )}
             </div>
 
-            <div className="space-y-1 lg:space-y-2">
-              <button className="w-full p-2 lg:p-3 hover:bg-gray-50 rounded-lg flex items-center gap-2 lg:gap-3 transition-colors text-gray-700">
-                {selectedConversation.isMuted ? <Bell className="w-4 h-4" /> : <BellOff className="w-4 h-4" />}
-                <span className="text-xs lg:text-sm">{selectedConversation.isMuted ? 'Ativar notificações' : 'Silenciar'}</span>
+            <div className="space-y-4">
+              <button className="flex items-center gap-3 w-full p-3 rounded-xl hover:bg-background-hover transition-colors text-left">
+                <Bell className="w-5 h-5 text-text-secondary" />
+                <span className="text-text-primary">Notificações</span>
               </button>
               
-              <button className="w-full p-2 lg:p-3 hover:bg-gray-50 rounded-lg flex items-center gap-2 lg:gap-3 transition-colors text-gray-700">
-                <Star className="w-4 h-4" />
-                <span className="text-xs lg:text-sm">{selectedConversation.isPinned ? 'Desafixar' : 'Fixar'} conversa</span>
+              <button className="flex items-center gap-3 w-full p-3 rounded-xl hover:bg-background-hover transition-colors text-left">
+                <Star className="w-5 h-5 text-text-secondary" />
+                <span className="text-text-primary">Mensagens Importantes</span>
               </button>
               
-              <button className="w-full p-2 lg:p-3 hover:bg-gray-50 rounded-lg flex items-center gap-2 lg:gap-3 transition-colors text-gray-700">
-                <Archive className="w-4 h-4" />
-                <span className="text-xs lg:text-sm">Arquivar conversa</span>
+              <button className="flex items-center gap-3 w-full p-3 rounded-xl hover:bg-background-hover transition-colors text-left">
+                <Archive className="w-5 h-5 text-text-secondary" />
+                <span className="text-text-primary">Arquivar Conversa</span>
               </button>
               
-              <button className="w-full p-2 lg:p-3 hover:bg-red-50 rounded-lg flex items-center gap-2 lg:gap-3 transition-colors text-red-600">
-                <Trash2 className="w-4 h-4" />
-                <span className="text-xs lg:text-sm">Apagar conversa</span>
+              <button className="flex items-center gap-3 w-full p-3 rounded-xl hover:bg-error/10 hover:text-error transition-colors text-left">
+                <Trash2 className="w-5 h-5" />
+                <span>Excluir Conversa</span>
               </button>
             </div>
 

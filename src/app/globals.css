@@ -211,27 +211,41 @@
   --primary: #3b82f6;
   --primary-dark: #2563eb;
   --primary-light: #60a5fa;
-  --secondary: #10b981;
+  
+  --secondary: #22d3ee;
+  --secondary-light: #67e8f9;
+  --secondary-dark: #0891b2;
+  
   --accent-blue: #60a5fa;
+  --accent-cyan: #22d3ee;
   --accent-green: #34d399;
   --accent-orange: #fbbf24;
   --accent-purple: #a78bfa;
   --accent-yellow: #fbbf24;
+  
   --success: #34d399;
   --warning: #fbbf24;
   --error: #f87171;
-  --info: #60a5fa;
+  --info: #22d3ee;
+  
   --background-primary: #0f172a;
   --background-secondary: #1e293b;
   --background-tertiary: #334155;
+  --background-card: #1e293b;
+  --background-hover: #334155;
+  
   --text-primary: #f8fafc;
   --text-secondary: #cbd5e1;
   --text-tertiary: #94a3b8;
+  --text-muted: #64748b;
+  
   --border: #334155;
   --border-light: #475569;
   --border-dark: #1e293b;
+  
   --sidebar-bg: #1e293b;
-  --sidebar-hover: #334155;
+  --sidebar-bg-light: #334155;
+  --sidebar-hover: #475569;
   --sidebar-active: #3b82f6;
   --sidebar-text: #cbd5e1;
   --sidebar-text-active: #f8fafc;
@@ -260,7 +274,7 @@
     color: #1e293b;
   }
 
-  /* Tipografia Padronizada */
+  /* Tipografia moderna CRM */
   h1 {
     @apply text-3xl sm:text-4xl lg:text-5xl font-bold tracking-tight;
     color: #1e293b;
@@ -531,9 +545,8 @@
   .text-xl-responsive {
     @apply text-xl sm:text-2xl;
   }
-}
 
-@layer utilities {
+  /* Loading spinner moderno */
   .loading-spinner {
     @apply animate-spin rounded-full border-2 border-gray-300 border-t-blue-600;
   }
@@ -575,11 +588,11 @@
   }
 
   .hide-mobile {
-    @apply hidden sm:block;
+    @apply hidden md:block;
   }
 
   .hide-desktop {
-    @apply block sm:hidden;
+    @apply block md:hidden;
   }
 
   .animate-fade-in {
@@ -587,11 +600,20 @@
   }
 
   .animate-slide-up {
-    animation: slideUp 0.3s ease-out;
+    @apply animate-[slideUp_0.3s_ease-out];
   }
 
   .animate-slide-down {
-    animation: slideDown 0.3s ease-out;
+    @apply animate-[slideDown_0.3s_ease-out];
+  }
+
+  /* Hover effects modernos */
+  .hover-lift {
+    @apply hover:-translate-y-1 hover:shadow-xl transition-all duration-300;
+  }
+
+  .hover-glow {
+    @apply hover:shadow-2xl hover:shadow-blue-500/20 transition-all duration-300;
   }
 
   .hide-scrollbar {

@@ -3,11 +3,8 @@ import {
   PrimaryGeneratedColumn,
   Column,
   CreateDateColumn,
-  UpdateDateColumn,
-  ManyToOne,
-  JoinColumn
+  UpdateDateColumn
 } from 'typeorm';
-import { User } from './User';
 
 @Entity('announcements')
 export class Announcement {
@@ -22,10 +19,6 @@ export class Announcement {
 
   @Column()
   author_id: string;
-
-  @ManyToOne(() => User)
-  @JoinColumn({ name: 'author_id' })
-  author: User;
 
   @Column({ type: 'timestamp', nullable: true })
   expires_at?: Date;

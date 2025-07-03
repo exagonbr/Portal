@@ -45,22 +45,24 @@ const requireInstitution = (req: any, res: any, next: any) => {
  *       - bearerAuth: []
  *     parameters:
  *       - in: query
- *         name: course_id
+ *         name: course
  *         schema:
  *           type: string
  *           format: uuid
- *         description: Filter modules by course ID
+ *         description: Filter by course ID
+ *       - in: query
+ *         name: page
+ *         schema:
+ *           type: integer
+ *           default: 1
+ *       - in: query
+ *         name: limit
+ *         schema:
+ *           type: integer
+ *           default: 20
  *     responses:
  *       200:
  *         description: List of modules
- *         content:
- *           application/json:
- *             schema:
- *               type: array
- *               items:
- *                 $ref: '#/components/schemas/Module'
- *       401:
- *         description: Unauthorized
  */
 router.get('/', requireInstitution, async (req, res) => {
   // Implementation will be added in the controller
@@ -89,10 +91,6 @@ router.get('/', requireInstitution, async (req, res) => {
  *     responses:
  *       200:
  *         description: Module found
- *         content:
- *           application/json:
- *             schema:
- *               $ref: '#/components/schemas/Module'
  *       404:
  *         description: Module not found
  */
@@ -123,7 +121,6 @@ router.get('/:id', requireInstitution, async (req, res) => {
  *               - title
  *               - description
  *               - course_id
- *               - order
  *             properties:
  *               title:
  *                 type: string
@@ -132,16 +129,13 @@ router.get('/:id', requireInstitution, async (req, res) => {
  *               course_id:
  *                 type: string
  *                 format: uuid
- *               order:
+ *               objectives:
+ *                 type: string
+ *               order_index:
  *                 type: integer
- *                 minimum: 0
  *     responses:
  *       201:
  *         description: Module created
- *         content:
- *           application/json:
- *             schema:
- *               $ref: '#/components/schemas/Module'
  *       400:
  *         description: Invalid input
  */
@@ -180,16 +174,16 @@ router.post('/', requireTeacherOrAdmin, requireInstitution, async (req, res) => 
  *                 type: string
  *               description:
  *                 type: string
- *               order:
+ *               objectives:
+ *                 type: string
+ *               order_index:
  *                 type: integer
- *                 minimum: 0
+ *               status:
+ *                 type: string
+ *                 enum: [active, inactive]
  *     responses:
  *       200:
  *         description: Module updated
- *         content:
- *           application/json:
- *             schema:
- *               $ref: '#/components/schemas/Module'
  *       404:
  *         description: Module not found
  */

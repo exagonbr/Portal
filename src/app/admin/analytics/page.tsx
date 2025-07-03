@@ -84,9 +84,9 @@ export default function AdminAnalyticsPage() {
 
   const getTrendIcon = (value: number, baseline: number) => {
     const diff = ((value - baseline) / baseline) * 100
-    if (diff > 5) return '↑'
-    if (diff < -5) return '↓'
-    return '='
+    if (diff > 5) return <TrendingUp className="w-4 h-4" />
+    if (diff < -5) return <TrendingDown className="w-4 h-4" />
+    return <Activity className="w-4 h-4" />
   }
 
   const getTrendColor = (value: number, baseline: number) => {

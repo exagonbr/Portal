@@ -1,0 +1,595 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// Enums
+enum UserRole {
+  SYSTEM_ADMIN
+  INSTITUTION_ADMIN
+  SCHOOL_MANAGER
+  TEACHER
+  STUDENT
+  GUARDIAN
+}
+
+enum CourseStatus {
+  DRAFT
+  PUBLISHED
+  ARCHIVED
+}
+
+enum LessonType {
+  LIVE
+  RECORDED
+  HYBRID
+  SELF_PACED
+}
+
+enum AssignmentType {
+  HOMEWORK
+  PROJECT
+  ESSAY
+  PRESENTATION
+  EXAM
+  QUIZ
+  RESEARCH
+}
+
+enum QuizType {
+  PRACTICE
+  GRADED
+  SURVEY
+  DIAGNOSTIC
+  COMPETITIVE
+}
+
+enum NotificationType {
+  INFO
+  SUCCESS
+  WARNING
+  ERROR
+  ANNOUNCEMENT
+  REMINDER
+  ASSIGNMENT
+  GRADE
+  MESSAGE
+}
+
+// Models
+model User {
+  id                Int       @id @default(autoincrement())
+  email             String    @unique
+  name              String
+  password          String
+  role              UserRole
+  avatar            String?
+  phone             String?
+  is_active         Boolean   @default(true)
+  email_verified    DateTime?
+  last_login        DateTime?
+  created_at        DateTime  @default(now())
+  updated_at        DateTime  @updatedAt
+
+  // Relations
+  institution_id    Int?
+  institution       Institution? @relation(fields: [institution_id], references: [id])
+  school_id         Int?
+  school            School?      @relation(fields: [school_id], references: [id])
+  
+  // Created content
+  created_courses   Course[]     @relation("CourseCreator")
+  created_lessons   Lesson[]     @relation("LessonCreator")
+  created_assignments Assignment[] @relation("AssignmentCreator")
+  created_quizzes   Quiz[]       @relation("QuizCreator")
+  created_topics    ForumTopic[] @relation("TopicAuthor")
+  
+  // Participations
+  enrollments       Enrollment[]
+  submissions       Submission[]
+  quiz_attempts     QuizAttempt[]
+  notifications     UserNotification[]
+  group_memberships GroupMember[]
+  certificates      Certificate[]
+  
+  @@index([email])
+  @@index([role])
+  @@map("user")
+}
+
+model Institution {
+  id          Int      @id @default(autoincrement())
+  name        String
+  slug        String   @unique
+  description String?
+  logo        String?
+  website     String?
+  phone       String?
+  email       String?
+  address     Json?
+  settings    Json?
+  is_active   Boolean  @default(true)
+  created_at  DateTime @default(now())
+  updated_at  DateTime @updatedAt
+  
+  // Relations
+  users       User[]
+  schools     School[]
+  courses     Course[]
+  
+  @@index([slug])
+}
+
+model School {
+  id             Int         @id @default(autoincrement())
+  institution_id Int
+  institution    Institution @relation(fields: [institution_id], references: [id])
+  name           String
+  slug           String      @unique
+  description    String?
+  logo           String?
+  phone          String?
+  email          String?
+  address        Json?
+  settings       Json?
+  is_active      Boolean     @default(true)
+  created_at     DateTime    @default(now())
+  updated_at     DateTime    @updatedAt
+  
+  // Relations
+  users          User[]
+  classes        Class[]
+  
+  @@index([slug])
+  @@index([institution_id])
+}
+
+model Course {
+  id             Int          @id @default(autoincrement())
+  institution_id Int
+  institution    Institution  @relation(fields: [institution_id], references: [id])
+  title          String
+  slug           String       @unique
+  description    String
+  thumbnail      String?
+  status         CourseStatus @default(DRAFT)
+  price          Decimal?     @db.Decimal(10, 2)
+  duration_hours Int?
+  level          String?
+  prerequisites  String[]
+  objectives     String[]
+  tags           String[]
+  settings       Json?
+  created_by     Int
+  creator        User         @relation("CourseCreator", fields: [created_by], references: [id])
+  created_at     DateTime     @default(now())
+  updated_at     DateTime     @updatedAt
+  
+  // Relations
+  units          Unit[]
+  enrollments    Enrollment[]
+  classes        Class[]
+  certificates   Certificate[]
+  
+  @@index([slug])
+  @@index([status])
+  @@index([institution_id])
+}
+
+model Unit {
+  id          Int      @id @default(autoincrement())
+  course_id   Int
+  course      Course   @relation(fields: [course_id], references: [id])
+  title       String
+  description String?
+  order       Int
+  is_active   Boolean  @default(true)
+  created_at  DateTime @default(now())
+  updated_at  DateTime @updatedAt
+  
+  // Relations
+  lessons     Lesson[]
+  books       Book[]
+  
+  @@unique([course_id, order])
+  @@index([course_id])
+}
+
+model Lesson {
+  id               Int        @id @default(autoincrement())
+  unit_id          Int
+  unit             Unit       @relation(fields: [unit_id], references: [id])
+  title            String
+  description      String?
+  order            Int
+  type             LessonType
+  duration_minutes Int?
+  scheduled_date   DateTime?
+  meeting_url      String?
+  recording_url    String?
+  content          Json?
+  attachments      Json?
+  is_active        Boolean    @default(true)
+  is_published     Boolean    @default(false)
+  created_by       Int
+  creator          User       @relation("LessonCreator", fields: [created_by], references: [id])
+  created_at       DateTime   @default(now())
+  updated_at       DateTime   @updatedAt
+  
+  // Relations
+  assignments      Assignment[]
+  quizzes          Quiz[]
+  
+  @@unique([unit_id, order])
+  @@index([unit_id])
+  @@index([type])
+}
+
+model Class {
+  id          Int      @id @default(autoincrement())
+  school_id   Int
+  school      School   @relation(fields: [school_id], references: [id])
+  course_id   Int
+  course      Course   @relation(fields: [course_id], references: [id])
+  name        String
+  code        String   @unique
+  start_date  DateTime
+  end_date    DateTime
+  schedule    Json?
+  max_students Int     @default(30)
+  is_active   Boolean  @default(true)
+  created_at  DateTime @default(now())
+  updated_at  DateTime @updatedAt
+  
+  // Relations
+  enrollments Enrollment[]
+  assignments Assignment[]
+  
+  @@index([code])
+  @@index([school_id])
+  @@index([course_id])
+}
+
+model Enrollment {
+  id           Int       @id @default(autoincrement())
+  student_id   Int
+  student      User      @relation(fields: [student_id], references: [id])
+  course_id    Int
+  course       Course    @relation(fields: [course_id], references: [id])
+  class_id     Int?
+  class        Class?    @relation(fields: [class_id], references: [id])
+  status       String    @default("ACTIVE") // ACTIVE, COMPLETED, DROPPED
+  enrolled_at  DateTime  @default(now())
+  completed_at DateTime?
+  grade        Decimal?  @db.Decimal(5, 2)
+  progress     Int       @default(0)
+  
+  @@unique([student_id, course_id])
+  @@index([student_id])
+  @@index([course_id])
+  @@index([class_id])
+}
+
+model Assignment {
+  id             Int            @id @default(autoincrement())
+  lesson_id      Int?
+  lesson         Lesson?        @relation(fields: [lesson_id], references: [id])
+  class_id       Int?
+  class          Class?         @relation(fields: [class_id], references: [id])
+  title          String
+  description    String
+  type           AssignmentType
+  points         Int
+  due_date       DateTime
+  available_from DateTime?
+  instructions   String?
+  rubric         Json?
+  attachments    Json?
+  settings       Json?
+  is_published   Boolean        @default(false)
+  created_by     Int
+  creator        User           @relation("AssignmentCreator", fields: [created_by], references: [id])
+  created_at     DateTime       @default(now())
+  updated_at     DateTime       @updatedAt
+  
+  // Relations
+  submissions    Submission[]
+  
+  @@index([lesson_id])
+  @@index([class_id])
+  @@index([due_date])
+}
+
+model Submission {
+  id            Int        @id @default(autoincrement())
+  assignment_id Int
+  assignment    Assignment @relation(fields: [assignment_id], references: [id])
+  student_id    Int
+  student       User       @relation(fields: [student_id], references: [id])
+  content       Json?
+  attachments   Json?
+  grade         Decimal?   @db.Decimal(5, 2)
+  feedback      String?
+  status        String     @default("SUBMITTED") // DRAFT, SUBMITTED, GRADED, RETURNED
+  submitted_at  DateTime   @default(now())
+  graded_at     DateTime?
+  graded_by     String?
+  
+  @@unique([assignment_id, student_id])
+  @@index([assignment_id])
+  @@index([student_id])
+  @@index([status])
+}
+
+model Quiz {
+  id               Int      @id @default(autoincrement())
+  lesson_id        Int?
+  lesson           Lesson?  @relation(fields: [lesson_id], references: [id])
+  title            String
+  description      String
+  type             QuizType
+  difficulty       String   @default("MEDIUM")
+  time_limit_minutes Int?
+  passing_score    Int      @default(60)
+  max_attempts     Int      @default(1)
+  questions        Json
+  settings         Json?
+  availability     Json?
+  is_published     Boolean  @default(false)
+  created_by       Int
+  creator          User     @relation("QuizCreator", fields: [created_by], references: [id])
+  created_at       DateTime @default(now())
+  updated_at       DateTime @updatedAt
+  
+  // Relations
+  attempts         QuizAttempt[]
+  
+  @@index([lesson_id])
+  @@index([type])
+}
+
+model QuizAttempt {
+  id              Int      @id @default(autoincrement())
+  quiz_id         Int
+  quiz            Quiz     @relation(fields: [quiz_id], references: [id])
+  student_id      Int
+  student         User     @relation(fields: [student_id], references: [id])
+  answers         Json
+  score           Decimal  @db.Decimal(5, 2)
+  percentage      Decimal  @db.Decimal(5, 2)
+  time_spent      Int      // em segundos
+  started_at      DateTime @default(now())
+  completed_at    DateTime?
+  
+  @@index([quiz_id])
+  @@index([student_id])
+}
+
+model Book {
+  id          Int      @id @default(autoincrement())
+  unit_id     Int
+  unit        Unit     @relation(fields: [unit_id], references: [id])
+  title       String
+  description String?
+  author      String?
+  isbn        String?
+  cover_url   String?
+  file_url    String?
+  pages       Int?
+  is_required Boolean  @default(false)
+  created_at  DateTime @default(now())
+  updated_at  DateTime @updatedAt
+  
+  @@index([unit_id])
+}
+
+model StudyGroup {
+  id              Int      @id @default(autoincrement())
+  name            String
+  description     String
+  subject         String
+  type            String   // STUDY, PROJECT, RESEARCH, DISCUSSION, TUTORING
+  visibility      String   // PUBLIC, PRIVATE, CLASS_ONLY, INVITE_ONLY
+  max_members     Int      @default(10)
+  meeting_schedule Json?
+  goals           String[]
+  rules           String[]
+  resources       Json?
+  tags            String[]
+  settings        Json?
+  creator_id      Int
+  is_active       Boolean  @default(true)
+  created_at      DateTime @default(now())
+  updated_at      DateTime @updatedAt
+  
+  // Relations
+  members         GroupMember[]
+  
+  @@index([visibility])
+  @@index([creator_id])
+}
+
+model GroupMember {
+  id          Int        @id @default(autoincrement())
+  group_id    Int
+  group       StudyGroup @relation(fields: [group_id], references: [id])
+  user_id     Int
+  user        User       @relation(fields: [user_id], references: [id])
+  role        String     @default("MEMBER") // LEADER, MODERATOR, MEMBER
+  status      String     @default("ACTIVE") // PENDING, ACTIVE, INACTIVE
+  joined_at   DateTime   @default(now())
+  
+  @@unique([group_id, user_id])
+  @@index([group_id])
+  @@index([user_id])
+}
+
+model ForumCategory {
+  id          Int      @id @default(autoincrement())
+  name        String
+  slug        String   @unique
+  description String?
+  icon        String?
+  order       Int      @default(0)
+  is_active   Boolean  @default(true)
+  created_at  DateTime @default(now())
+  updated_at  DateTime @updatedAt
+  
+  // Relations
+  topics      ForumTopic[]
+  
+  @@index([slug])
+}
+
+model ForumTopic {
+  id          Int           @id @default(autoincrement())
+  category_id Int
+  category    ForumCategory @relation(fields: [category_id], references: [id])
+  author_id   Int
+  author      User          @relation("TopicAuthor", fields: [author_id], references: [id])
+  title       String
+  content     String
+  type        String        @default("DISCUSSION") // QUESTION, DISCUSSION, ANNOUNCEMENT, TUTORIAL, RESOURCE
+  visibility  String        @default("PUBLIC") // PUBLIC, MEMBERS_ONLY, CLASS_ONLY, PRIVATE
+  tags        String[]
+  view_count  Int           @default(0)
+  is_pinned   Boolean       @default(false)
+  is_locked   Boolean       @default(false)
+  is_solved   Boolean       @default(false)
+  created_at  DateTime      @default(now())
+  updated_at  DateTime      @updatedAt
+  
+  // Relations
+  replies     ForumReply[]
+  
+  @@index([category_id])
+  @@index([author_id])
+  @@index([type])
+}
+
+model ForumReply {
+  id         Int        @id @default(autoincrement())
+  topic_id   Int
+  topic      ForumTopic @relation(fields: [topic_id], references: [id])
+  author_id  Int
+  content    String
+  is_answer  Boolean    @default(false)
+  created_at DateTime   @default(now())
+  updated_at DateTime   @updatedAt
+  
+  @@index([topic_id])
+  @@index([author_id])
+}
+
+model Notification {
+  id            Int      @id @default(autoincrement())
+  title         String
+  message       String
+  type          NotificationType
+  priority      String   @default("MEDIUM") // LOW, MEDIUM, HIGH, URGENT
+  sender_id     String?
+  sender_type   String   @default("USER") // SYSTEM, USER, AUTOMATED
+  action_url    String?
+  action_text   String?
+  icon          String?
+  metadata      Json?
+  expires_at    DateTime?
+  created_at    DateTime @default(now())
+  
+  // Relations
+  user_notifications UserNotification[]
+}
+
+model UserNotification {
+  id              Int          @id @default(autoincrement())
+  notification_id Int
+  notification    Notification @relation(fields: [notification_id], references: [id])
+  user_id         Int
+  user            User         @relation(fields: [user_id], references: [id])
+  read            Boolean      @default(false)
+  read_at         DateTime?
+  archived        Boolean      @default(false)
+  archived_at     DateTime?
+  
+  @@unique([notification_id, user_id])
+  @@index([user_id])
+  @@index([read])
+}
+
+model Report {
+  id          Int      @id @default(autoincrement())
+  type        String   // STUDENT_PERFORMANCE, CLASS_OVERVIEW, etc
+  title       String
+  description String?
+  filters     Json
+  format      String   @default("PDF")
+  status      String   @default("PENDING") // PENDING, PROCESSING, COMPLETED, FAILED
+  progress    Int      @default(0)
+  file_url    String?
+  file_size   Int?
+  visibility  String   @default("PRIVATE") // PRIVATE, SHARED, PUBLIC
+  share_with  String[]
+  created_by  Int
+  created_at  DateTime @default(now())
+  completed_at DateTime?
+  expires_at  DateTime?
+  
+  @@index([type])
+  @@index([status])
+  @@index([created_by])
+}
+
+model TVShow {
+  id                   Int      @id @default(autoincrement())
+  name                 String
+  overview             String?
+  poster_path          String?
+  backdrop_path        String?
+  first_air_date       DateTime
+  popularity           Float?
+  vote_average         Float?
+  vote_count           Int?
+  producer             String?
+  total_load           String?
+  manual_support_path  String?
+  contract_term_end    DateTime
+  created_at           DateTime @default(now())
+  updated_at           DateTime @default(now()) @updatedAt
+
+  @@map("tv_show")
+  @@index([popularity])
+  @@index([vote_average])
+  @@index([first_air_date])
+}
+
+model Certificate {
+  id                Int      @id @default(autoincrement())
+  user_id           Int
+  user              User     @relation(fields: [user_id], references: [id])
+  course_id         Int?
+  course            Course?  @relation(fields: [course_id], references: [id])
+  title             String
+  description       String?
+  certificate_type  String   @default("COURSE_COMPLETION") // COURSE_COMPLETION, SKILL_CERTIFICATION, PARTICIPATION, ACHIEVEMENT
+  issued_date       DateTime @default(now())
+  expiry_date       DateTime?
+  certificate_url   String?  // URL para o arquivo PDF do certificado
+  verification_code String   @unique
+  metadata          Json?    // Dados adicionais como notas, horas de curso, etc.
+  is_active         Boolean  @default(true)
+  created_at        DateTime @default(now())
+  updated_at        DateTime @updatedAt
+
+  @@index([user_id])
+  @@index([course_id])
+  @@index([verification_code])
+  @@index([certificate_type])
+  @@index([issued_date])
+}

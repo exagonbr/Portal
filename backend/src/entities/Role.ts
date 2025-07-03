@@ -3,10 +3,8 @@ import {
   PrimaryGeneratedColumn,
   Column,
   CreateDateColumn,
-  UpdateDateColumn,
-  OneToMany
+  UpdateDateColumn
 } from 'typeorm';
-import { User } from './User';
 
 export enum UserRole {
   SYSTEM_ADMIN = 'SYSTEM_ADMIN',
@@ -37,9 +35,6 @@ export class Role {
 
   @Column({ default: true })
   active: boolean;
-
-  @OneToMany(() => User, user => user.role)
-  users: User[];
 
   @CreateDateColumn()
   created_at: Date;

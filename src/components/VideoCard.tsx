@@ -2,7 +2,7 @@
 
 import React, { useState } from 'react';
 import { PlayIcon } from '@heroicons/react/24/solid';
-import VideoPlayer from './VideoPlayer';
+import CustomVideoPlayer from './CustomVideoPlayer';
 
 interface VideoCardProps {
   id: string;
@@ -15,10 +15,27 @@ interface VideoCardProps {
 export default function VideoCard({ id, thumbnail, title, duration, progress }: VideoCardProps) {
   const [isPlaying, setIsPlaying] = useState(false);
 
-  // Extract video ID from thumbnail URL
-  const getVideoId = () => {
+  // Extract video ID from thumbnail URL and create video sources
+  const getVideoSources = () => {
     const match = thumbnail.match(/\/vi\/([^/]+)\/maxresdefault\.jpg/);
-    return match ? match[1] : '';
+    const videoId = match ? match[1] : '';
+    
+    // For YouTube videos, we'll use the YouTube embed URL
+    // For other videos, you can add different source types here
+    return [
+      {
+        src: `https://www.youtube.com/embed/${videoId}?autoplay=1&rel=0&modestbranding=1&playsinline=1`,
+        type: 'youtube' as const,
+        quality: '720p' as const,
+        label: 'YouTube HD'
+      }
+    ];
+  };
+
+  // Convert duration string to seconds for the player
+  const getDurationInSeconds = () => {
+    const [minutes, seconds] = duration.split(':').map(Number);
+    return minutes * 60 + seconds;
   };
 
   return (
@@ -73,11 +90,40 @@ export default function VideoCard({ id, thumbnail, title, duration, progress }: 
         </div>
       </div>
 
-      {/* Video Player Modal */}
+      {/* Custom Video Player Modal */}
       {isPlaying && (
-        <VideoPlayer
-          videoId={getVideoId()}
+        <CustomVideoPlayer
+          videoId={id}
+          title={title}
+          sources={getVideoSources()}
+          autoplay={true}
+          thumbnail={thumbnail}
+          duration={getDurationInSeconds()}
+          currentProgress={progress}
+          onProgress={(newProgress) => {
+            // Here you can save progress to localStorage, database, etc.
+            console.log('Video progress:', newProgress);
+          }}
+          onComplete={() => {
+            // Handle video completion
+            console.log('Video completed');
+            setIsPlaying(false);
+          }}
           onClose={() => setIsPlaying(false)}
+          allowNotes={true}
+          allowBookmarks={true}
+          allowRating={true}
+          allowSharing={true}
+          customControls={true}
+          subtitles={[
+            // Add subtitle sources here if available
+            // {
+            //   language: 'pt-BR',
+            //   label: 'Português',
+            //   src: '/subtitles/video-pt.vtt',
+            //   default: true
+            // }
+          ]}
         />
       )}
     </>

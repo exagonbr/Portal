@@ -62,6 +62,42 @@ router.get('/health', (req, res) => {
   res.json({ status: 'OK', timestamp: new Date().toISOString() });
 });
 
+// Setup endpoint (development only)
+router.post('/setup', async (req, res) => {
+  try {
+    // Temporarily allow in any environment for initial setup
+    // if (process.env.NODE_ENV === 'production') {
+    //   return res.status(403).json({
+    //     success: false,
+    //     message: 'Setup não permitido em produção'
+    //   });
+    // }
+
+    // Import AuthService here to avoid circular dependencies
+    const { AuthService } = await import('../services/AuthService');
+    
+    // Create default roles and admin user
+    await AuthService.createDefaultRoles();
+    await AuthService.createDefaultAdminUser();
+
+    return res.json({
+      success: true,
+      message: 'Setup concluído com sucesso',
+      credentials: {
+        email: 'admin@portal.com',
+        password: 'admin123'
+      }
+    });
+  } catch (error: any) {
+    console.error('Erro no setup:', error);
+    return res.status(500).json({
+      success: false,
+      message: 'Erro no setup',
+      error: error.message
+    });
+  }
+});
+
 // API Documentation in JSON format
 router.get('/docs.json', (req, res) => {
   res.setHeader('Content-Type', 'application/json');

@@ -85,7 +85,7 @@ export interface UserResponseDto {
 
 export interface UserWithRoleDto extends UserResponseDto {
   role_name: string;
-  institution_name: string;
+  role_permissions: string[];
 }
 
 export interface UserFilterDto {
@@ -124,6 +124,7 @@ export interface LoginDto {
 export interface AuthResponseDto {
   user: UserResponseDto;
   token: string;
+  sessionId: string;
   expires_at: string;
 }
 

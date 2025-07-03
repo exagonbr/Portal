@@ -18,20 +18,20 @@ interface LoginFormData {
 
 const initialValues: LoginFormData = {
   email: '',
-  password: ''
+  password: '',
 };
 
 const validationRules = {
   email: (value: string) => {
-    if (!value) return 'O email é obrigatório';
-    if (!/\S+@\S+\.\S+/.test(value)) return 'Formato de email inválido';
+    if (!value) return 'Email é obrigatório';
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value)) return 'Email inválido';
     return '';
   },
   password: (value: string) => {
-    if (!value) return 'A senha é obrigatória';
-    if (value.length < 6) return 'A senha deve ter pelo menos 6 caracteres';
+    if (!value) return 'Senha é obrigatória';
+    if (value.length < 6) return 'Senha deve ter pelo menos 6 caracteres';
     return '';
-  }
+  },
 };
 
 export function LoginForm() {

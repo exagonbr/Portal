@@ -7,7 +7,6 @@ import {
   ManyToOne,
   JoinColumn
 } from 'typeorm';
-import { User } from './User';
 import { School } from './School';
 
 export enum ManagerPosition {
@@ -24,10 +23,6 @@ export class SchoolManager {
 
   @Column()
   user_id: string;
-
-  @ManyToOne(() => User, user => user.schoolManagers)
-  @JoinColumn({ name: 'user_id' })
-  user: User;
 
   @Column()
   school_id: string;

@@ -4,10 +4,8 @@ import { User, UserRole } from '../types/auth';
 import { Annotation, Highlight } from '../components/books/BookViewer/types';
 import { Collection } from '../types/collection';
 
-// Interfaces
 export interface Book {
   id: string;
-  thumbnail: string;
   title: string;
   author: string;
   publisher: string;

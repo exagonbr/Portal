@@ -275,13 +275,19 @@ router.post(
       const { email, password, remember = false } = req.body;
 
       // Busca e valida o usuário
-      const userRepository = AppDataSource.getRepository(User);
-      const user = await userRepository.findOne({
-        where: { email },
-        relations: ['role', 'institution']
-      });
+      const user = await UserRepository.findByEmail(email);
 
-      if (!user || !(await user.comparePassword(password))) {
+      if (!user) {
+        return res.status(401).json({
+          success: false,
+          message: 'Credenciais inválidas'
+        });
+      }
+
+      // Verifica a senha
+      const isPasswordValid = await UserRepository.comparePassword(password, user.password);
+      
+      if (!isPasswordValid) {
         return res.status(401).json({
           success: false,
           message: 'Credenciais inválidas'
