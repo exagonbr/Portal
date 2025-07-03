@@ -1,7 +1,9 @@
+
 import { precacheAndRoute } from 'workbox-precaching';
 import { registerRoute } from 'workbox-routing';
 import { NetworkFirst, CacheFirst, StaleWhileRevalidate } from 'workbox-strategies';
 import { ExpirationPlugin } from 'workbox-expiration';
+
 
 // Pré-cache dos recursos gerados pelo Workbox
 precacheAndRoute(self.__WB_MANIFEST);

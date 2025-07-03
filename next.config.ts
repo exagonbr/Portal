@@ -137,27 +137,27 @@ const nextConfig: NextConfig = {
     ];
 
     return [
-      // Headers para API
-      {
-        source: '/api/:path*',
-        headers: [
-          { 
-            key: 'Cache-Control', 
-            value: isDev 
-              ? 'no-store, no-cache, must-revalidate' 
-              : 'public, s-maxage=300, max-age=60, stale-while-revalidate=3600' 
-          },
-          { key: 'Vary', value: 'Accept-Encoding, Authorization' },
-        ],
+  // Headers para API
+  {
+    source: '/api/:path*',
+    headers: [
+      { 
+        key: 'Cache-Control', 
+        value: isDev 
+          ? 'no-store, no-cache, must-revalidate' 
+          : 'no-store, no-cache, must-revalidate' 
       },
-      // Headers para uploads
-      {
-        source: '/uploads/:path*',
-        headers: [
-          { key: 'Cache-Control', value: 'public, max-age=31536000, immutable' },
-          { key: 'X-Content-Type-Options', value: 'nosniff' },
-        ],
-      },
+      { key: 'Vary', value: 'Accept-Encoding, Authorization' },
+    ],
+  },
+  // Headers para uploads
+  {
+    source: '/uploads/:path*',
+    headers: [
+      { key: 'Cache-Control', value: 'no-store, no-cache, must-revalidate' },
+      { key: 'X-Content-Type-Options', value: 'nosniff' },
+    ],
+  },
       // Headers gerais
       {
         source: '/((?!api/).*)',
@@ -181,13 +181,7 @@ const nextConfig: NextConfig = {
     };
 
     // Configuração de cache
-    config.cache = {
-      type: 'filesystem',
-      buildDependencies: {
-        config: [__filename],
-      },
-      version: cacheVersion,  
-    };
+    config.cache = false;
 
     // Plugin para versão de cache
     if (!isServer) {

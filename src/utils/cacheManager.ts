@@ -18,10 +18,10 @@ export class CacheManager {
 
   constructor(config: CacheManagerConfig = {}) {
     this.config = {
-      enableServiceWorker: true,
-      enableMemoryCache: true,
-      defaultTTL: 300, // 5 minutos
-      staleWhileRevalidate: true,
+      enableServiceWorker: false,
+      enableMemoryCache: false,
+      defaultTTL: 60, // 1 minuto
+      staleWhileRevalidate: false,
       ...config
     };
   }
