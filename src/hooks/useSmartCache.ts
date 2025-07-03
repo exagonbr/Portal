@@ -26,27 +26,42 @@ export interface UseSmartCacheReturn<T> {
 }
 
 /**
- * Detecta se a chave está relacionada a menus, roles ou permissions
- * Essas funcionalidades devem sempre buscar dados frescos para garantir segurança
+ * Detecta se a chave é cacheável (apenas itens básicos, imagens e menus)
  */
-function shouldBypassCache(key: string): boolean {
-  const sensitiveKeys = [
-    'menu',
-    'nav',
-    'sidebar',
-    'role',
-    'permission',
-    'auth',
-    'user-role',
-    'user-permissions',
-    'navigation',
-    'access-control',
-    'system-admin-menu',
-    'dashboard-menu'
+function shouldCache(key: string): boolean {
+  const lowerKey = key.toLowerCase();
+  
+  // Padrões que PODEM ser cacheados
+  const cacheablePatterns = [
+    // Imagens
+    'image', 'img', 'photo', 'picture', 'avatar', 'icon', 'logo',
+    // Menus e navegação
+    'menu', 'nav', 'sidebar', 'navigation', 'breadcrumb',
+    // Recursos básicos
+    'font', 'style', 'theme', 'config', 'manifest', 'favicon'
   ];
   
+  return cacheablePatterns.some(pattern => lowerKey.includes(pattern));
+}
+
+/**
+ * Detecta se deve sempre buscar dados frescos (dados dinâmicos/sensíveis)
+ */
+function shouldBypassCache(key: string): boolean {
   const lowerKey = key.toLowerCase();
-  return sensitiveKeys.some(sensitiveKey => lowerKey.includes(sensitiveKey));
+  
+  // Se não é cacheável, sempre fazer bypass
+  if (!shouldCache(key)) {
+    return true;
+  }
+  
+  // Dados sensíveis que mesmo sendo de menu/nav devem ser sempre frescos
+  const alwaysFreshPatterns = [
+    'role', 'permission', 'auth', 'user-role', 'user-permissions',
+    'access-control', 'security', 'session', 'token'
+  ];
+  
+  return alwaysFreshPatterns.some(pattern => lowerKey.includes(pattern));
 }
 
 /**
@@ -84,13 +99,18 @@ export function useSmartCache<T>({
 
   // Detectar se deve fazer bypass do cache
   const shouldBypass = bypassCache || shouldBypassCache(key);
+  const isCacheable = shouldCache(key);
   
-  // Log para debug quando cache é desabilitado para dados sensíveis
+  // Log para debug sobre estratégia de cache
   useEffect(() => {
-    if (shouldBypassCache(key)) {
-      console.log(`🔒 [useSmartCache] Cache desabilitado para chave sensível: "${key}"`);
+    if (shouldBypass) {
+      console.log(`🔒 [useSmartCache] Cache desabilitado para: "${key}"`);
+    } else if (isCacheable) {
+      console.log(`💾 [useSmartCache] Cache habilitado para: "${key}"`);
+    } else {
+      console.log(`🚫 [useSmartCache] Não cacheável: "${key}"`);
     }
-  }, [key]);
+  }, [key, shouldBypass, isCacheable]);
 
   // Função para buscar dados
   const fetchData = useCallback(async (forceRefresh = false): Promise<T | null> => {
@@ -305,8 +325,9 @@ export function useCacheInvalidation() {
 }
 
 /**
- * Hook especializado para dados de menu/permissões que sempre busca dados frescos
- * Não utiliza cache para garantir que mudanças de role sejam refletidas imediatamente
+ * Hook especializado para dados de menu básicos que podem ser cacheados
+ * Usa cache com stale-while-revalidate para melhor performance
+ * Para dados sensíveis de permissões, use o hook normal com bypassCache: true
  */
 export function useMenuCache<T>({
   key,
@@ -318,6 +339,9 @@ export function useMenuCache<T>({
   retryDelay = 1000,
   maxRetries = 3
 }: Omit<UseSmartCacheOptions<T>, 'ttl' | 'staleWhileRevalidate' | 'bypassCache'>): UseSmartCacheReturn<T> {
+  // Verificar se é um menu básico (cacheável) ou dados sensíveis
+  const isBasicMenu = shouldCache(key) && !shouldBypassCache(key);
+  
   return useSmartCache({
     key,
     fetcher,
@@ -327,8 +351,8 @@ export function useMenuCache<T>({
     retryOnError,
     retryDelay,
     maxRetries,
-    bypassCache: true, // Sempre bypass cache para dados de menu/permissões
-    ttl: 0, // TTL zero para garantir que não seja cacheado
-    staleWhileRevalidate: false // Não usar stale-while-revalidate
+    bypassCache: !isBasicMenu, // Bypass apenas para dados sensíveis
+    ttl: isBasicMenu ? 300 : 0, // 5 minutos para menus básicos, 0 para sensíveis
+    staleWhileRevalidate: isBasicMenu // Usar SWR apenas para menus básicos
   });
 }

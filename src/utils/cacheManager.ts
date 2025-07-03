@@ -1,6 +1,6 @@
 /**
  * Gerenciador centralizado de cache para o Portal Sabercon
- * Coordena cache do Service Worker, memória e invalidação inteligente
+ * Coordena cache seletivo: apenas itens básicos, imagens e menus
  */
 
 import { cacheService } from '@/services/cacheService';
@@ -10,6 +10,25 @@ export interface CacheManagerConfig {
   enableMemoryCache?: boolean;
   defaultTTL?: number;
   staleWhileRevalidate?: boolean;
+  selectiveMode?: boolean; // Novo: modo seletivo
+}
+
+/**
+ * Verifica se uma chave deve ser cacheada (apenas básicos, imagens e menus)
+ */
+function isKeyCacheable(key: string): boolean {
+  const lowerKey = key.toLowerCase();
+  
+  const cacheablePatterns = [
+    // Imagens
+    'image', 'img', 'photo', 'picture', 'avatar', 'icon', 'logo',
+    // Menus e navegação básicos
+    'menu', 'nav', 'sidebar', 'navigation', 'breadcrumb',
+    // Recursos básicos
+    'font', 'style', 'theme', 'config', 'manifest', 'favicon'
+  ];
+  
+  return cacheablePatterns.some(pattern => lowerKey.includes(pattern));
 }
 
 export class CacheManager {
@@ -22,12 +41,13 @@ export class CacheManager {
       enableMemoryCache: true,
       defaultTTL: 300, // 5 minutos
       staleWhileRevalidate: true,
+      selectiveMode: true, // Ativar modo seletivo por padrão
       ...config
     };
   }
 
   /**
-   * Busca dados com estratégia stale-while-revalidate
+   * Busca dados com estratégia seletiva (apenas básicos, imagens e menus)
    */
   async get<T>(
     key: string,
@@ -40,16 +60,20 @@ export class CacheManager {
   ): Promise<T> {
     const { ttl = this.config.defaultTTL, forceRefresh = false, skipCache = false } = options;
 
-    // Se forçar refresh ou pular cache, busca direto
-    if (forceRefresh || skipCache || !this.config.enableMemoryCache) {
+    // Verificar se deve cachear esta chave no modo seletivo
+    const shouldCacheKey = !this.config.selectiveMode || isKeyCacheable(key);
+    
+    // Se não deve cachear, sempre buscar da rede
+    if (!shouldCacheKey || forceRefresh || skipCache || !this.config.enableMemoryCache) {
       const data = await fetcher();
-      if (!skipCache) {
+      // Só salvar no cache se for cacheável
+      if (!skipCache && shouldCacheKey) {
         await cacheService.set(key, data, ttl);
       }
       return data;
     }
 
-    // Tentar buscar do cache primeiro
+    // Tentar buscar do cache primeiro (apenas para chaves cacheáveis)
     const cached = await cacheService.get<T>(key);
     
     if (cached !== null && this.config.staleWhileRevalidate) {
@@ -108,28 +132,46 @@ export class CacheManager {
   }
 
   /**
-   * Invalida cache por padrão
+   * Invalida cache por padrão (apenas chaves cacheáveis no modo seletivo)
    */
   async invalidate(pattern: string): Promise<void> {
-    console.log(`🗑️ Invalidando cache: ${pattern}`);
+    console.log(`🗑️ Invalidando cache seletivo: ${pattern}`);
+    
+    // No modo seletivo, só invalidar se o padrão for cacheável
+    if (this.config.selectiveMode && !isKeyCacheable(pattern)) {
+      console.log(`⚠️ Padrão "${pattern}" não é cacheável no modo seletivo`);
+      return;
+    }
+    
     await cacheService.invalidatePattern(pattern);
     
     // Limpar revalidações pendentes relacionadas
-    for (const key of this.pendingRevalidations) {
+    const keysToDelete: string[] = [];
+    this.pendingRevalidations.forEach(key => {
       if (key.includes(pattern)) {
-        this.pendingRevalidations.delete(key);
+        keysToDelete.push(key);
       }
-    }
+    });
+    
+    keysToDelete.forEach(key => {
+      this.pendingRevalidations.delete(key);
+    });
   }
 
   /**
-   * Limpa todo o cache
+   * Limpa cache seletivo (apenas itens cacheáveis)
    */
   async clearAll(): Promise<void> {
-    console.log('🧹 Limpando todo o cache...');
+    console.log('🧹 Limpando cache seletivo...');
     
-    // Limpar cache em memória
-    await cacheService.clear();
+    if (this.config.selectiveMode) {
+      // No modo seletivo, limpar apenas chaves cacheáveis
+      console.log('📋 Modo seletivo: limpando apenas itens básicos, imagens e menus');
+      await this.clearSelectiveCache();
+    } else {
+      // Limpar todo o cache (modo legado)
+      await cacheService.clear();
+    }
     
     // Limpar cache do Service Worker
     if (this.config.enableServiceWorker && 'serviceWorker' in navigator) {
@@ -143,7 +185,29 @@ export class CacheManager {
     // Limpar revalidações pendentes
     this.pendingRevalidations.clear();
     
-    console.log('✅ Cache limpo completamente');
+    console.log('✅ Cache seletivo limpo');
+  }
+
+  /**
+   * Limpa apenas cache de itens cacheáveis (básicos, imagens e menus)
+   */
+  private async clearSelectiveCache(): Promise<void> {
+    // Como não temos getAllKeys, vamos invalidar por padrões conhecidos
+    const cacheablePatterns = [
+      'image', 'img', 'photo', 'picture', 'avatar', 'icon', 'logo',
+      'menu', 'nav', 'sidebar', 'navigation', 'breadcrumb',
+      'font', 'style', 'theme', 'config', 'manifest', 'favicon'
+    ];
+    
+    console.log(`🎯 Limpando cache por padrões cacheáveis: ${cacheablePatterns.join(', ')}`);
+    
+    for (const pattern of cacheablePatterns) {
+      try {
+        await cacheService.invalidatePattern(pattern);
+      } catch (error) {
+        console.warn(`⚠️ Erro ao limpar padrão "${pattern}":`, error);
+      }
+    }
   }
 
   /**
@@ -152,6 +216,11 @@ export class CacheManager {
   async clearServiceWorkerCache(): Promise<void> {
     if (!('serviceWorker' in navigator) || !navigator.serviceWorker.controller) {
       throw new Error('Service Worker não disponível');
+    }
+
+    const controller = navigator.serviceWorker.controller;
+    if (!controller) {
+      throw new Error('Service Worker controller não disponível');
     }
 
     return new Promise((resolve, reject) => {
@@ -170,7 +239,7 @@ export class CacheManager {
         reject(new Error('Timeout na limpeza de cache do Service Worker'));
       }, 10000);
       
-      navigator.serviceWorker.controller.postMessage(
+      controller.postMessage(
         {
           type: 'CLEAR_CACHE',
           payload: { reason: 'manual_clear_all' }
@@ -181,16 +250,23 @@ export class CacheManager {
   }
 
   /**
-   * Obtém informações sobre o cache
+   * Obtém informações sobre o cache seletivo
    */
   async getStats(): Promise<{
     memory: ReturnType<typeof cacheService.getStats>;
     serviceWorker?: any;
     pendingRevalidations: number;
+    selectiveMode: boolean;
   }> {
-    const stats = {
+    const stats: {
+      memory: ReturnType<typeof cacheService.getStats>;
+      serviceWorker?: any;
+      pendingRevalidations: number;
+      selectiveMode: boolean;
+    } = {
       memory: cacheService.getStats(),
-      pendingRevalidations: this.pendingRevalidations.size
+      pendingRevalidations: this.pendingRevalidations.size,
+      selectiveMode: this.config.selectiveMode
     };
 
     // Tentar obter stats do Service Worker
@@ -237,21 +313,24 @@ export class CacheManager {
   configure(newConfig: Partial<CacheManagerConfig>): void {
     this.config = { ...this.config, ...newConfig };
     
-    // Aplicar configurações ao cacheService
-    if (newConfig.enableMemoryCache !== undefined) {
-      cacheService.setEnabled(newConfig.enableMemoryCache);
-    }
-    
-    if (newConfig.defaultTTL !== undefined) {
-      cacheService.setDefaultTTL(newConfig.defaultTTL);
-    }
+    console.log('⚙️ Cache Manager configurado:', {
+      selectiveMode: this.config.selectiveMode,
+      enableMemoryCache: this.config.enableMemoryCache,
+      defaultTTL: this.config.defaultTTL
+    });
   }
 }
 
-// Instância singleton
-export const cacheManager = new CacheManager();
+// Instância singleton com modo seletivo ativado
+export const cacheManager = new CacheManager({
+  selectiveMode: true, // Apenas básicos, imagens e menus
+  enableServiceWorker: true,
+  enableMemoryCache: true,
+  defaultTTL: 300,
+  staleWhileRevalidate: true
+});
 
-// Funções utilitárias para uso direto
+// Funções utilitárias para uso direto com cache seletivo
 export const withSmartCache = async <T>(
   key: string,
   fetcher: () => Promise<T>,
@@ -282,4 +361,9 @@ export const clearAllCache = async (): Promise<void> => {
 
 export const getCacheStats = async () => {
   return cacheManager.getStats();
+};
+
+// Função utilitária para verificar se uma chave é cacheável
+export const checkIfKeyCacheable = (key: string): boolean => {
+  return isKeyCacheable(key);
 };
