@@ -4,20 +4,14 @@ import {
   Column,
   CreateDateColumn,
   UpdateDateColumn,
-  ManyToOne,
-  OneToMany,
-  JoinColumn
+  OneToMany
 } from 'typeorm';
-import { User } from './User';
 import { ForumReply } from './ForumReply';
 
 @Entity('forum_threads')
 export class ForumThread {
   @PrimaryGeneratedColumn('uuid')
   id: string;
-
-  @Column()
-  class_id: string;
 
   @Column()
   title: string;
@@ -28,24 +22,20 @@ export class ForumThread {
   @Column()
   author_id: string;
 
-  @ManyToOne(() => User, user => user.forumThreads)
-  @JoinColumn({ name: 'author_id' })
-  author: User;
-
-  @Column({ type: 'jsonb', default: [] })
-  tags: string[];
+  @Column()
+  class_id: string;
 
   @Column({ type: 'jsonb', nullable: true })
   attachments?: any[];
 
   @Column({ default: false })
-  pinned: boolean;
+  is_pinned: boolean;
 
   @Column({ default: false })
-  locked: boolean;
+  is_locked: boolean;
 
   @Column({ type: 'int', default: 0 })
-  views: number;
+  views_count: number;
 
   @OneToMany(() => ForumReply, reply => reply.thread)
   replies: ForumReply[];

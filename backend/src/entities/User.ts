@@ -1,4 +1,4 @@
-import {
+  import {
   Entity,
   PrimaryGeneratedColumn,
   Column,
@@ -93,9 +93,14 @@ export class User {
     return bcrypt.compare(password, this.password);
   }
 
-  // Método para remover senha do objeto
-  toJSON() {
-    const { password, ...user } = this;
-    return user;
-  }
+export interface UserWithRelations extends User {
+  role?: {
+    id: number;
+    name: string;
+    permissions?: string[];
+  };
+  institution?: {
+    id: number;
+    name: string;
+  };
 }

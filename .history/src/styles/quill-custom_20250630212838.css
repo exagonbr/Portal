@@ -1,0 +1,284 @@
+/* Estilos customizados para o Quill Editor - compatível com React 18 */
+
+.quill-container {
+  position: relative;
+  width: 100%;
+}
+
+.quill-container .ql-editor {
+  min-height: 150px;
+  font-size: 14px;
+  line-height: 1.5;
+}
+
+.quill-container .ql-toolbar {
+  border-top: 1px solid #e5e7eb;
+  border-left: 1px solid #e5e7eb;
+  border-right: 1px solid #e5e7eb;
+  border-bottom: none;
+  border-radius: 8px 8px 0 0;
+  padding: 6px 8px;
+  background-color: #f9fafb;
+  min-height: 36px;
+}
+
+/* Botões da toolbar - tamanhos menores */
+.quill-container .ql-toolbar .ql-formats {
+  margin-right: 8px;
+}
+
+.quill-container .ql-toolbar button {
+  width: 24px !important;
+  height: 24px !important;
+  padding: 2px !important;
+  margin: 1px !important;
+  border-radius: 4px;
+  border: 1px solid transparent;
+  background-color: transparent;
+  transition: all 0.2s ease;
+}
+
+.quill-container .ql-toolbar button:hover {
+  background-color: #e5e7eb;
+  border-color: #d1d5db;
+}
+
+.quill-container .ql-toolbar button.ql-active {
+  background-color: #3b82f6;
+  color: white;
+  border-color: #2563eb;
+}
+
+.quill-container .ql-toolbar button svg {
+  width: 14px !important;
+  height: 14px !important;
+}
+
+/* Dropdowns menores */
+.quill-container .ql-toolbar .ql-picker {
+  font-size: 12px;
+}
+
+.quill-container .ql-toolbar .ql-picker-label {
+  padding: 2px 6px;
+  border-radius: 4px;
+  border: 1px solid transparent;
+  min-width: auto;
+  height: 24px;
+  line-height: 20px;
+}
+
+.quill-container .ql-toolbar .ql-picker-label:hover {
+  background-color: #e5e7eb;
+  border-color: #d1d5db;
+}
+
+.quill-container .ql-toolbar .ql-picker.ql-expanded .ql-picker-label {
+  background-color: #3b82f6;
+  color: white;
+  border-color: #2563eb;
+}
+
+.quill-container .ql-toolbar .ql-picker-options {
+  font-size: 12px;
+  border-radius: 6px;
+  border: 1px solid #e5e7eb;
+  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+}
+
+.quill-container .ql-toolbar .ql-picker-item {
+  padding: 4px 8px;
+}
+
+.quill-container .ql-toolbar .ql-picker-item:hover {
+  background-color: #f3f4f6;
+}
+
+.quill-container .ql-container {
+  border-bottom: 1px solid #e5e7eb;
+  border-left: 1px solid #e5e7eb;
+  border-right: 1px solid #e5e7eb;
+  border-top: none;
+  border-radius: 0 0 8px 8px;
+  background-color: white;
+}
+
+.quill-container .ql-editor.ql-blank::before {
+  font-style: italic;
+  color: #999;
+}
+
+/* Correções para React 18 - evitar problemas de layout */
+.quill-container .ql-editor p {
+  margin-bottom: 0.5em;
+}
+
+.quill-container .ql-editor:focus {
+  outline: none;
+  box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.5);
+}
+
+/* Loading state */
+.quill-loading {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 200px;
+  background-color: #f9fafb;
+  border-radius: 8px;
+  border: 1px solid #e5e7eb;
+}
+
+/* Responsividade */
+@media (max-width: 1024px) {
+  .quill-container .ql-toolbar {
+    padding: 4px 6px;
+  }
+  
+  .quill-container .ql-toolbar button {
+    width: 22px !important;
+    height: 22px !important;
+    margin: 0.5px !important;
+  }
+  
+  .quill-container .ql-toolbar button svg {
+    width: 12px !important;
+    height: 12px !important;
+  }
+  
+  .quill-container .ql-toolbar .ql-picker-label {
+    font-size: 11px;
+    padding: 1px 4px;
+    height: 22px;
+    line-height: 20px;
+  }
+}
+
+@media (max-width: 768px) {
+  .quill-container .ql-toolbar {
+    padding: 4px;
+    flex-wrap: wrap;
+    min-height: 32px;
+  }
+  
+  .quill-container .ql-toolbar .ql-formats {
+    margin-right: 4px;
+    margin-bottom: 2px;
+  }
+  
+  .quill-container .ql-toolbar button {
+    width: 20px !important;
+    height: 20px !important;
+    margin: 0.5px !important;
+  }
+  
+  .quill-container .ql-toolbar button svg {
+    width: 10px !important;
+    height: 10px !important;
+  }
+  
+  .quill-container .ql-toolbar .ql-picker-label {
+    font-size: 10px;
+    padding: 1px 3px;
+    height: 20px;
+    line-height: 18px;
+    min-width: 20px;
+  }
+  
+  .quill-container .ql-editor {
+    min-height: 120px;
+    font-size: 16px; /* Evitar zoom no iOS */
+    padding: 8px;
+  }
+}
+
+@media (max-width: 480px) {
+  .quill-container .ql-toolbar {
+    padding: 2px;
+  }
+  
+  .quill-container .ql-toolbar .ql-formats {
+    margin-right: 2px;
+    margin-bottom: 1px;
+  }
+  
+  .quill-container .ql-toolbar button {
+    width: 18px !important;
+    height: 18px !important;
+    margin: 0.5px !important;
+  }
+  
+  .quill-container .ql-toolbar button svg {
+    width: 9px !important;
+    height: 9px !important;
+  }
+  
+  .quill-container .ql-toolbar .ql-picker-label {
+    font-size: 9px;
+    padding: 1px 2px;
+    height: 18px;
+    line-height: 16px;
+    min-width: 18px;
+  }
+  
+  .quill-container .ql-editor {
+    min-height: 100px;
+    font-size: 16px;
+    padding: 6px;
+  }
+}
+
+/* Melhorias para acessibilidade e UX */
+.quill-container .ql-toolbar button:focus {
+  outline: 2px solid #3b82f6;
+  outline-offset: 1px;
+}
+
+.quill-container .ql-toolbar .ql-picker-label:focus {
+  outline: 2px solid #3b82f6;
+  outline-offset: 1px;
+}
+
+/* Otimizações para telas de alta densidade */
+@media (-webkit-min-device-pixel-ratio: 2), (min-resolution: 192dpi) {
+  .quill-container .ql-toolbar button svg {
+    image-rendering: -webkit-optimize-contrast;
+    image-rendering: crisp-edges;
+  }
+}
+
+/* Tema escuro (opcional) */
+@media (prefers-color-scheme: dark) {
+  .quill-container .ql-toolbar {
+    background-color: #374151;
+    border-color: #4b5563;
+  }
+  
+  .quill-container .ql-container {
+    background-color: #1f2937;
+    border-color: #4b5563;
+  }
+  
+  .quill-container .ql-editor {
+    color: #f9fafb;
+  }
+  
+  .quill-container .ql-toolbar button:hover {
+    background-color: #4b5563;
+    border-color: #6b7280;
+  }
+  
+  .quill-container .ql-toolbar .ql-picker-label:hover {
+    background-color: #4b5563;
+    border-color: #6b7280;
+  }
+  
+  .quill-container .ql-toolbar .ql-picker-options {
+    background-color: #374151;
+    border-color: #4b5563;
+  }
+  
+  .quill-container .ql-toolbar .ql-picker-item:hover {
+    background-color: #4b5563;
+  }
+}

@@ -67,6 +67,18 @@ const requireInstitution = (req: any, res: any, next: any) => {
  *           type: string
  *           format: uuid
  *         description: Filter courses by institution ID
+ *       - in: query
+ *         name: teacher
+ *         schema:
+ *           type: string
+ *           format: uuid
+ *         description: Filter courses by teacher ID
+ *       - in: query
+ *         name: student
+ *         schema:
+ *           type: string
+ *           format: uuid
+ *         description: Filter courses by student ID
  *     responses:
  *       200:
  *         description: List of courses
@@ -127,17 +139,27 @@ router.get('/:id', requireInstitution, async (req, res) => {
  *           schema:
  *             type: object
  *             required:
- *               - name
+ *               - title
  *               - description
  *               - institution_id
  *             properties:
- *               name:
+ *               title:
  *                 type: string
  *               description:
  *                 type: string
  *               institution_id:
  *                 type: string
  *                 format: uuid
+ *               code:
+ *                 type: string
+ *               objectives:
+ *                 type: string
+ *               duration_hours:
+ *                 type: integer
+ *               difficulty_level:
+ *                 type: string
+ *               category:
+ *                 type: string
  *     responses:
  *       201:
  *         description: Course created
@@ -174,10 +196,21 @@ router.post('/', requireTeacherOrAdmin, requireInstitution, async (req, res) => 
  *           schema:
  *             type: object
  *             properties:
- *               name:
+ *               title:
  *                 type: string
  *               description:
  *                 type: string
+ *               objectives:
+ *                 type: string
+ *               duration_hours:
+ *                 type: integer
+ *               difficulty_level:
+ *                 type: string
+ *               category:
+ *                 type: string
+ *               status:
+ *                 type: string
+ *                 enum: [draft, published, archived]
  *     responses:
  *       200:
  *         description: Course updated

@@ -36,7 +36,98 @@ const EPUBViewer: React.FC<EPUBViewerProps> = ({
 
   // Carregar EPUB.js dinamicamente
   useEffect(() => {
+<<<<<<< HEAD
     const loadEPUBJS = async () => {
+=======
+    if (!containerRef.current) return;
+
+    let timeoutId: NodeJS.Timeout;
+    let isObserving = false;
+
+    // Função de atualização de dimensões simplificada
+    const updateDimensions = () => {
+      if (isObserving || !containerRef.current) return;
+      
+      isObserving = true;
+      clearTimeout(timeoutId);
+      
+      timeoutId = setTimeout(() => {
+        try {
+          if (!containerRef.current) return;
+          
+          const container = containerRef.current;
+          const rect = container.getBoundingClientRect();
+          
+          const newDimensions = {
+            width: Math.max(300, rect.width - 40), // Mínimo 300px com padding
+            height: Math.max(400, rect.height - 40) // Mínimo 400px com padding
+          };
+
+          setDimensions(prevDimensions => {
+            const widthDiff = Math.abs(newDimensions.width - prevDimensions.width);
+            const heightDiff = Math.abs(newDimensions.height - prevDimensions.height);
+            
+            // Só atualizar se a diferença for significativa (mais que 10px)
+            if (widthDiff > 10 || heightDiff > 10) {
+              return newDimensions;
+            }
+            return prevDimensions;
+          });
+        } catch (error) {
+          // Ignorar erros silenciosamente
+        } finally {
+          isObserving = false;
+        }
+      }, 250); // Delay maior para evitar loops
+    };
+
+    // Atualização inicial
+    updateDimensions();
+    
+    // Usar o ResizeObserver global otimizado
+    let resizeObserver: ResizeObserver | null = null;
+    
+    try {
+      resizeObserver = new ResizeObserver(() => {
+        updateDimensions();
+      });
+      
+      resizeObserver.observe(containerRef.current);
+    } catch (error) {
+      // Fallback para window resize se necessário
+      const handleWindowResize = () => updateDimensions();
+      window.addEventListener('resize', handleWindowResize, { passive: true });
+      
+      return () => {
+        clearTimeout(timeoutId);
+        window.removeEventListener('resize', handleWindowResize);
+      };
+    }
+
+    return () => {
+      clearTimeout(timeoutId);
+      if (resizeObserver) {
+        try {
+          resizeObserver.disconnect();
+        } catch (error) {
+          // Ignorar erros ao desconectar
+        }
+      }
+    };
+  }, []); // Sem dependências para evitar recriações desnecessárias
+
+  const initializeEPUB = useCallback(async () => {
+    if (!viewerRef.current) return;
+    
+    setLoading(true);
+    setError(null);
+
+    try {
+      const absoluteUrl = getFileUrl(fileUrl);
+      console.log('Carregando EPUB:', absoluteUrl);
+
+      // Verificar se o arquivo existe
+>>>>>>> master
       try {
         // Verificar se EPUB.js já está carregado
         if (typeof window !== 'undefined' && (window as any).ePub) {

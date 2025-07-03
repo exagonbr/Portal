@@ -1,0 +1,31 @@
+{
+  "name": "api-route-mapper",
+  "version": "1.0.0",
+  "description": "Script para mapear e testar todas as rotas de API do projeto Portal",
+  "scripts": {
+    "setup": "node setup.js",
+    "quick-test": "node quick-test.js",
+    "test-api": "node api-route-mapper.js",
+    "test-api-ts": "tsx api-route-mapper.ts",
+    "test-api-dev": "NEXT_PUBLIC_API_URL=http://localhost:3000 tsx api-route-mapper.ts",
+    "test-api-prod": "NEXT_PUBLIC_API_URL=https://portal.sabercon.edu.br tsx api-route-mapper.ts",
+    "test-all": "npm run quick-test && npm run test-api-ts",
+    "install-deps": "npm install tsx @types/node typescript --save-dev"
+  },
+  "dependencies": {
+    "tsx": "^4.7.0"
+  },
+  "devDependencies": {
+    "@types/node": "^20.10.0",
+    "typescript": "^5.3.0"
+  },
+  "keywords": [
+    "api",
+    "testing",
+    "routes",
+    "mapping",
+    "next.js"
+  ],
+  "author": "Kilo Code",
+  "license": "MIT"
+}

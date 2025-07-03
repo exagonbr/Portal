@@ -1,4 +1,4 @@
-import express from 'express';
+ import express from 'express';
 import * as dotenv from 'dotenv';
 import { Logger } from './utils/Logger';
 import { setupMiddlewares } from './config/middlewares';

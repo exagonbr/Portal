@@ -5,11 +5,9 @@ import {
   CreateDateColumn,
   UpdateDateColumn,
   ManyToOne,
-  OneToMany,
   JoinColumn
 } from 'typeorm';
 import { Collection } from './Collection';
-import { Video } from './Video';
 
 @Entity('modules')
 export class Module {
@@ -34,9 +32,6 @@ export class Module {
   @ManyToOne(() => Collection, collection => collection.modules)
   @JoinColumn({ name: 'collection_id' })
   collection: Collection;
-
-  @OneToMany(() => Video, video => video.module)
-  videos: Video[];
 
   @CreateDateColumn()
   created_at: Date;

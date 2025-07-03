@@ -1,0 +1,315 @@
+{
+  "inicio": "2025-06-01T12:09:43.608Z",
+  "testes": [
+    {
+      "timestamp": "01/06/2025, 09:09:43",
+      "tipo": "test",
+      "mensagem": "🎯 INICIANDO TESTES COMPLETOS PÓS-MIGRAÇÃO"
+    },
+    {
+      "timestamp": "01/06/2025, 09:09:43",
+      "tipo": "info",
+      "mensagem": "================================================================"
+    },
+    {
+      "timestamp": "01/06/2025, 09:09:43",
+      "tipo": "test",
+      "mensagem": "🔐 TESTANDO LOGIN DE USUÁRIOS MIGRADOS"
+    },
+    {
+      "timestamp": "01/06/2025, 09:09:43",
+      "tipo": "info",
+      "mensagem": "Testando login: Admin Principal (admin@portal.com)"
+    },
+    {
+      "timestamp": "01/06/2025, 09:09:43",
+      "tipo": "error",
+      "mensagem": "❌ Login Admin Principal: FALHOU (500)"
+    },
+    {
+      "timestamp": "01/06/2025, 09:09:43",
+      "tipo": "info",
+      "mensagem": "Testando login: Professor (professor@escola.com)"
+    },
+    {
+      "timestamp": "01/06/2025, 09:09:43",
+      "tipo": "error",
+      "mensagem": "❌ Login Professor: FALHOU (500)"
+    },
+    {
+      "timestamp": "01/06/2025, 09:09:43",
+      "tipo": "info",
+      "mensagem": "Testando login: Aluno (aluno@escola.com)"
+    },
+    {
+      "timestamp": "01/06/2025, 09:09:43",
+      "tipo": "error",
+      "mensagem": "❌ Login Aluno: FALHOU (500)"
+    },
+    {
+      "timestamp": "01/06/2025, 09:09:43",
+      "tipo": "test",
+      "mensagem": "🚀 TESTANDO FUNCIONALIDADES DA APLICAÇÃO"
+    },
+    {
+      "timestamp": "01/06/2025, 09:09:43",
+      "tipo": "error",
+      "mensagem": "❌ Listar Usuários: FALHOU (401)"
+    },
+    {
+      "timestamp": "01/06/2025, 09:09:43",
+      "tipo": "error",
+      "mensagem": "❌ Listar Vídeos: FALHOU (401)"
+    },
+    {
+      "timestamp": "01/06/2025, 09:09:43",
+      "tipo": "error",
+      "mensagem": "❌ Listar TV Shows: FALHOU (404)"
+    },
+    {
+      "timestamp": "01/06/2025, 09:09:43",
+      "tipo": "error",
+      "mensagem": "❌ Listar Instituições: FALHOU (401)"
+    },
+    {
+      "timestamp": "01/06/2025, 09:09:43",
+      "tipo": "error",
+      "mensagem": "❌ Listar Autores: FALHOU (404)"
+    },
+    {
+      "timestamp": "01/06/2025, 09:09:43",
+      "tipo": "error",
+      "mensagem": "❌ Listar Perfis de Usuário: FALHOU (404)"
+    },
+    {
+      "timestamp": "01/06/2025, 09:09:43",
+      "tipo": "error",
+      "mensagem": "❌ Listar Arquivos: FALHOU (404)"
+    },
+    {
+      "timestamp": "01/06/2025, 09:09:43",
+      "tipo": "error",
+      "mensagem": "❌ Dashboard Stats: FALHOU (404)"
+    },
+    {
+      "timestamp": "01/06/2025, 09:09:43",
+      "tipo": "test",
+      "mensagem": "🎬 VERIFICANDO REPRODUÇÃO DE VÍDEOS"
+    },
+    {
+      "timestamp": "01/06/2025, 09:09:43",
+      "tipo": "error",
+      "mensagem": "❌ Não foi possível obter lista de vídeos"
+    },
+    {
+      "timestamp": "01/06/2025, 09:09:43",
+      "tipo": "test",
+      "mensagem": "💾 CONFIGURANDO BACKUP DO POSTGRESQL"
+    },
+    {
+      "timestamp": "01/06/2025, 09:09:46",
+      "tipo": "success",
+      "mensagem": "✅ Página de backup acessível"
+    },
+    {
+      "timestamp": "01/06/2025, 09:09:46",
+      "tipo": "warn",
+      "mensagem": "⚠️ API de backup não implementada ou inacessível"
+    },
+    {
+      "timestamp": "01/06/2025, 09:09:46",
+      "tipo": "info",
+      "mensagem": "📋 Comandos de backup manual PostgreSQL:"
+    },
+    {
+      "timestamp": "01/06/2025, 09:09:46",
+      "tipo": "info",
+      "mensagem": "  pg_dump -h localhost -p 5432 -U postgres portal_db > backup.sql"
+    },
+    {
+      "timestamp": "01/06/2025, 09:09:46",
+      "tipo": "info",
+      "mensagem": "  pg_dump -Fc -h localhost -p 5432 -U postgres portal_db > backup.dump"
+    },
+    {
+      "timestamp": "01/06/2025, 09:09:46",
+      "tipo": "info",
+      "mensagem": "⚙️ Configurações recomendadas de backup automático:"
+    },
+    {
+      "timestamp": "01/06/2025, 09:09:46",
+      "tipo": "info",
+      "mensagem": "  - Backup diário às 02:00"
+    },
+    {
+      "timestamp": "01/06/2025, 09:09:46",
+      "tipo": "info",
+      "mensagem": "  - Retenção de 30 dias"
+    },
+    {
+      "timestamp": "01/06/2025, 09:09:46",
+      "tipo": "info",
+      "mensagem": "  - Backup incremental a cada 6 horas"
+    },
+    {
+      "timestamp": "01/06/2025, 09:09:46",
+      "tipo": "info",
+      "mensagem": "  - Notificação por email em caso de falha"
+    },
+    {
+      "timestamp": "01/06/2025, 09:09:46",
+      "tipo": "test",
+      "mensagem": "📚 DOCUMENTANDO CUSTOMIZAÇÕES ESPECÍFICAS"
+    },
+    {
+      "timestamp": "01/06/2025, 09:09:46",
+      "tipo": "success",
+      "mensagem": "✅ Sistema de Migração SaberCon: Implementado"
+    },
+    {
+      "timestamp": "01/06/2025, 09:09:46",
+      "tipo": "info",
+      "mensagem": "  - Migração completa de dados MySQL para PostgreSQL"
+    },
+    {
+      "timestamp": "01/06/2025, 09:09:46",
+      "tipo": "info",
+      "mensagem": "  - backend/scripts/migrar-dados-legados.ts: FALTANDO"
+    },
+    {
+      "timestamp": "01/06/2025, 09:09:46",
+      "tipo": "info",
+      "mensagem": "  - backend/seeds/006_sabercon_data_import.ts: FALTANDO"
+    },
+    {
+      "timestamp": "01/06/2025, 09:09:46",
+      "tipo": "info",
+      "mensagem": "  - backend/seeds/007_sabercon_videos_import.ts: FALTANDO"
+    },
+    {
+      "timestamp": "01/06/2025, 09:09:46",
+      "tipo": "info",
+      "mensagem": "  - backend/seeds/008_sabercon_complete_import.ts: FALTANDO"
+    },
+    {
+      "timestamp": "01/06/2025, 09:09:46",
+      "tipo": "success",
+      "mensagem": "✅ Player de Vídeo Avançado: Implementado"
+    },
+    {
+      "timestamp": "01/06/2025, 09:09:46",
+      "tipo": "info",
+      "mensagem": "  - Player customizável com anotações, marcadores e controles avançados"
+    },
+    {
+      "timestamp": "01/06/2025, 09:09:46",
+      "tipo": "info",
+      "mensagem": "  - src/components/CustomVideoPlayer.tsx: FALTANDO"
+    },
+    {
+      "timestamp": "01/06/2025, 09:09:46",
+      "tipo": "info",
+      "mensagem": "  - src/hooks/useVideoPlayer.ts: FALTANDO"
+    },
+    {
+      "timestamp": "01/06/2025, 09:09:46",
+      "tipo": "info",
+      "mensagem": "  - README_VideoPlayer.md: FALTANDO"
+    },
+    {
+      "timestamp": "01/06/2025, 09:09:46",
+      "tipo": "success",
+      "mensagem": "✅ Sistema de Mapeamento de IDs: Implementado"
+    },
+    {
+      "timestamp": "01/06/2025, 09:09:46",
+      "tipo": "info",
+      "mensagem": "  - Tabela de mapeamento para rastrear IDs originais do SaberCon"
+    },
+    {
+      "timestamp": "01/06/2025, 09:09:46",
+      "tipo": "info",
+      "mensagem": "  - backend/migrations/*migrate_sabercon_data.ts: Múltiplos arquivos/estrutura"
+    },
+    {
+      "timestamp": "01/06/2025, 09:09:46",
+      "tipo": "info",
+      "mensagem": "  - sabercon_migration_mapping (tabela): Múltiplos arquivos/estrutura"
+    },
+    {
+      "timestamp": "01/06/2025, 09:09:46",
+      "tipo": "success",
+      "mensagem": "✅ Interface de Backup: Implementado"
+    },
+    {
+      "timestamp": "01/06/2025, 09:09:46",
+      "tipo": "info",
+      "mensagem": "  - Página administrativa para gerenciar backups do PostgreSQL"
+    },
+    {
+      "timestamp": "01/06/2025, 09:09:46",
+      "tipo": "info",
+      "mensagem": "  - src/app/admin/backup/page.tsx: FALTANDO"
+    },
+    {
+      "timestamp": "01/06/2025, 09:09:46",
+      "tipo": "success",
+      "mensagem": "✅ Estrutura Educacional Completa: Migrado"
+    },
+    {
+      "timestamp": "01/06/2025, 09:09:46",
+      "tipo": "info",
+      "mensagem": "  - Hierarquia completa: Instituições → Unidades → Turmas → Usuários"
+    },
+    {
+      "timestamp": "01/06/2025, 09:09:46",
+      "tipo": "info",
+      "mensagem": "  - backend/src/entities/*.ts: Múltiplos arquivos/estrutura"
+    },
+    {
+      "timestamp": "01/06/2025, 09:09:46",
+      "tipo": "info",
+      "mensagem": "  - Todas as migrations de estrutura: FALTANDO"
+    },
+    {
+      "timestamp": "01/06/2025, 09:09:46",
+      "tipo": "test",
+      "mensagem": "📊 RELATÓRIO FINAL DOS TESTES"
+    },
+    {
+      "timestamp": "01/06/2025, 09:09:46",
+      "tipo": "info",
+      "mensagem": "================================================================"
+    },
+    {
+      "timestamp": "01/06/2025, 09:09:46",
+      "tipo": "info",
+      "mensagem": "⏱️ Duração total: 3 segundos"
+    },
+    {
+      "timestamp": "01/06/2025, 09:09:46",
+      "tipo": "info",
+      "mensagem": "✅ Sucessos: 6"
+    },
+    {
+      "timestamp": "01/06/2025, 09:09:46",
+      "tipo": "info",
+      "mensagem": "❌ Falhas: 12"
+    },
+    {
+      "timestamp": "01/06/2025, 09:09:46",
+      "tipo": "info",
+      "mensagem": "⚠️ Avisos: 1"
+    },
+    {
+      "timestamp": "01/06/2025, 09:09:46",
+      "tipo": "error",
+      "mensagem": "⚠️ ATENÇÃO! Vários problemas detectados"
+    }
+  ],
+  "sucessos": 6,
+  "falhas": 13,
+  "avisos": 1,
+  "fim": "2025-06-01T12:09:46.906Z",
+  "duracao": 3
+}

@@ -1,0 +1,24 @@
+{
+  "version": "0.2",
+  "language": "en,pt-BR",
+  "words": [
+    "endereco",
+    "telefone",
+    "cpf",
+    "cnpj"
+  ],
+  "dictionaries": ["portuguese"],
+  "dictionaryDefinitions": [
+    {
+      "name": "portuguese",
+      "path": "./dictionaries/portuguese.txt"
+    }
+  ],
+  "ignorePaths": [
+    "node_modules/**",
+    "dist/**",
+    "build/**",
+    ".next/**",
+    "*.min.js"
+  ]
+}

@@ -5,11 +5,8 @@ import {
   CreateDateColumn,
   UpdateDateColumn,
   ManyToOne,
-  ManyToMany,
-  JoinColumn,
-  JoinTable
+  JoinColumn
 } from 'typeorm';
-import { User } from './User';
 import { Institution } from './Institution';
 
 @Entity('courses')
@@ -38,18 +35,6 @@ export class Course {
 
   @Column({ nullable: true })
   teacher_id?: string;
-
-  @ManyToOne(() => User, user => user.teachingCourses, { nullable: true })
-  @JoinColumn({ name: 'teacher_id' })
-  teacher?: User;
-
-  @ManyToMany(() => User)
-  @JoinTable({
-    name: 'course_students',
-    joinColumn: { name: 'course_id', referencedColumnName: 'id' },
-    inverseJoinColumn: { name: 'user_id', referencedColumnName: 'id' }
-  })
-  students: User[];
 
   @Column({ default: true })
   is_active: boolean;

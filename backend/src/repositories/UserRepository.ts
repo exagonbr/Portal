@@ -1,4 +1,4 @@
-import { BaseRepository } from './BaseRepository';
+ import { BaseRepository } from './BaseRepository';
 import { User, CreateUserData, UpdateUserData } from '../models/User';
 import db from '../config/database';
 
@@ -39,16 +39,71 @@ export class UserRepository extends BaseRepository<User> {
     return user as User;
   }
 
-  async createUser(data: CreateUserData): Promise<User> {
-    return this.create(data);
+  static async delete(id: number): Promise<boolean> {
+    try {
+      const deletedRows = await db(this.TABLE_NAME)
+        .where('id', id)
+        .del();
+
+      return deletedRows > 0;
+    } catch (error) {
+      console.error('Erro ao deletar usuário:', error);
+      throw error;
+    }
   }
 
-  async updateUser(id: string, data: UpdateUserData): Promise<User | null> {
-    return this.update(id, data);
+  static async findAll(limit?: number, offset?: number): Promise<UserWithRelations[]> {
+    try {
+      let query = db(this.TABLE_NAME)
+        .leftJoin('roles', 'users.role_id', 'roles.id')
+        .leftJoin('institutions', 'users.institution_id', 'institutions.id')
+        .select(
+          'users.*',
+          'roles.id as role_id',
+          'roles.name as role_name',
+          db.raw('roles.permissions as role_permissions'),
+          'institutions.id as institution_id',
+          'institutions.name as institution_name'
+        )
+        .orderBy('users.created_at', 'desc');
+
+      if (limit) {
+        query = query.limit(limit);
+      }
+
+      if (offset) {
+        query = query.offset(offset);
+      }
+
+      const users = await query;
+      return users.map(user => this.mapUserWithRelations(user));
+    } catch (error) {
+      console.error('Erro ao buscar todos os usuários:', error);
+      throw error;
+    }
   }
 
-  async deleteUser(id: string): Promise<boolean> {
-    return this.delete(id);
+  static async findByInstitution(institutionId: number): Promise<UserWithRelations[]> {
+    try {
+      const users = await db(this.TABLE_NAME)
+        .leftJoin('roles', 'users.role_id', 'roles.id')
+        .leftJoin('institutions', 'users.institution_id', 'institutions.id')
+        .select(
+          'users.*',
+          'roles.id as role_id',
+          'roles.name as role_name',
+          db.raw('roles.permissions as role_permissions'),
+          'institutions.id as institution_id',
+          'institutions.name as institution_name'
+        )
+        .where('users.institution_id', institutionId)
+        .orderBy('users.created_at', 'desc');
+
+      return users.map(user => this.mapUserWithRelations(user));
+    } catch (error) {
+      console.error('Erro ao buscar usuários por instituição:', error);
+      throw error;
+    }
   }
 
   async findById(id: string): Promise<User | null> {

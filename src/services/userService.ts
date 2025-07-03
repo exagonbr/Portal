@@ -1,5 +1,6 @@
 import { ApiResponse, PaginatedResponseDto } from '@/types/api';
 
+<<<<<<< HEAD
 // Definir interface local para compatibilidade
 export interface PaginatedResponse<T> {
   items: T[];
@@ -105,6 +106,10 @@ export interface UserStats {
 
 class UserService {
   private baseUrl = '/api/users';
+=======
+export class UserService {
+  private readonly baseEndpoint = '/api/users';
+>>>>>>> master
 
   /**
    * Obtém estatísticas de usuários
