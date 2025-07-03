@@ -1,8 +1,11 @@
 import {
   Entity,
   PrimaryGeneratedColumn,
-  Column
+  Column,
+  ManyToOne,
+  JoinColumn
 } from 'typeorm';
+import { Institution } from './Institution';
 
 @Entity('tv_show')
 export class TVShow {
@@ -77,4 +80,8 @@ export class TVShow {
 
   @Column({ type: 'varchar', length: 255, nullable: true })
   total_load?: string;
-} 
+
+  @ManyToOne(() => Institution, institution => institution.tvShows)
+  @JoinColumn({ name: 'institution_id' })
+  institution: Institution;
+}
