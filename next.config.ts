@@ -38,6 +38,9 @@ const nextConfig: NextConfig = {
   // Desativar o ícone de "dev tools" do Next.js
   devIndicators: false,
   
+  // Allowed development origins for cross-origin requests to /_next/*
+  allowedDevOrigins: isDev ? ['https://portal.sabercon.com.br'] : [],
+
   // ESLint
   eslint: {
     ignoreDuringBuilds: true,
