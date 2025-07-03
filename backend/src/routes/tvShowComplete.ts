@@ -1,10 +1,13 @@
 import express from 'express';
 import { requireAuth } from '../middleware/requireAuth';
+import { TvShowCompleteController } from '../controllers/TvShowCompleteController';
 
 const router = express.Router();
+const tvShowCompleteController = new TvShowCompleteController();
 
 // 🔐 APLICAR MIDDLEWARE UNIFICADO DE AUTENTICAÇÃO
 router.use(requireAuth);
+
 
 // Middleware para verificar role de administrador
 const requireAdmin = (req: any, res: any, next: any) => {
@@ -20,160 +23,50 @@ const requireAdmin = (req: any, res: any, next: any) => {
   next();
 };
 
-/**
- * @swagger
- * /api/tv-show-complete:
- *   get:
- *     summary: Get all TV show completion data
- *     tags: [TVShows]
- *     security:
- *       - bearerAuth: []
- *     responses:
- *       200:
- *         description: List of TV show completion data
- *         content:
- *           application/json:
- *             schema:
- *               type: object
- *               properties:
- *                 success:
- *                   type: boolean
- *                 data:
- *                   type: array
- *                   items:
- *                     $ref: '#/components/schemas/TVShowComplete'
- *       401:
- *         description: Unauthorized
- */
-router.get('/', async (req, res) => {
-  // Implementation will be added in the controller
-  res.json({
-    success: true,
-    message: 'TV show completion data - implementação pendente',
-    data: []
-  });
-});
+// ===================== TV SHOW ROUTES =====================
+// IMPORTANT: More specific routes must come before less specific ones.
 
-/**
- * @swagger
- * /api/tv-show-complete/user/{userId}:
- *   get:
- *     summary: Get TV show completion data for a specific user
- *     tags: [TVShows]
- *     security:
- *       - bearerAuth: []
- *     parameters:
- *       - in: path
- *         name: userId
- *         required: true
- *         schema:
- *           type: string
- *           format: uuid
- *     responses:
- *       200:
- *         description: User TV show completion data
- *         content:
- *           application/json:
- *             schema:
- *               type: array
- *               items:
- *                 $ref: '#/components/schemas/TVShowComplete'
- */
-router.get('/user/:userId', async (req, res) => {
-  // Implementation will be added in the controller
-  res.json({
-    success: true,
-    message: 'User TV show completion - implementação pendente',
-    data: []
-  });
-});
+// --- Search ---
+router.get('/search', tvShowCompleteController.searchTvShows.bind(tvShowCompleteController));
 
-/**
- * @swagger
- * /api/tv-show-complete/mark-complete:
- *   post:
- *     summary: Mark a TV show as complete for the current user
- *     tags: [TVShows]
- *     security:
- *       - bearerAuth: []
- *     requestBody:
- *       required: true
- *       content:
- *         application/json:
- *           schema:
- *             type: object
- *             required:
- *               - showId
- *               - seasonNumber
- *               - episodeNumber
- *             properties:
- *               showId:
- *                 type: string
- *                 format: uuid
- *               seasonNumber:
- *                 type: integer
- *               episodeNumber:
- *                 type: integer
- *               rating:
- *                 type: integer
- *                 minimum: 1
- *                 maximum: 5
- *               notes:
- *                 type: string
- *     responses:
- *       201:
- *         description: TV show marked as complete
- */
-router.post('/mark-complete', async (req, res) => {
-  // Implementation will be added in the controller
-  res.status(201).json({
-    success: true,
-    message: 'Mark TV show complete - implementação pendente'
-  });
-});
+// --- Standalone resource GETTERS (must come before general /:id) ---
+router.get('/videos/:id', tvShowCompleteController.getVideoById.bind(tvShowCompleteController));
+router.get('/questions/:id', tvShowCompleteController.getQuestionById.bind(tvShowCompleteController));
 
-/**
- * @swagger
- * /api/tv-show-complete/stats:
- *   get:
- *     summary: Get TV show completion statistics (admin only)
- *     tags: [TVShows]
- *     security:
- *       - bearerAuth: []
- *     responses:
- *       200:
- *         description: TV show completion statistics
- *         content:
- *           application/json:
- *             schema:
- *               type: object
- *               properties:
- *                 success:
- *                   type: boolean
- *                 data:
- *                   type: object
- *                   properties:
- *                     totalShows:
- *                       type: integer
- *                     completedShows:
- *                       type: integer
- *                     averageRating:
- *                       type: number
- *                     topRatedShows:
- *                       type: array
- */
-router.get('/stats', requireAdmin, async (req, res) => {
-  // Implementation will be added in the controller
-  res.json({
-    success: true,
-    message: 'TV show stats - implementação pendente',
-    data: {
-      totalShows: 0,
-      completedShows: 0,
-      averageRating: 0,
-      topRatedShows: []
-    }
-  });
-});
+// --- Standalone resource CUD (admin only) ---
+router.post('/videos', requireAdmin, tvShowCompleteController.createVideo.bind(tvShowCompleteController));
+router.put('/videos/:id', requireAdmin, tvShowCompleteController.updateVideo.bind(tvShowCompleteController));
+router.delete('/videos/:id', requireAdmin, tvShowCompleteController.deleteVideo.bind(tvShowCompleteController));
 
-export default router; 
+router.post('/questions', requireAdmin, tvShowCompleteController.createQuestion.bind(tvShowCompleteController));
+router.put('/questions/:id', requireAdmin, tvShowCompleteController.updateQuestion.bind(tvShowCompleteController));
+router.delete('/questions/:id', requireAdmin, tvShowCompleteController.deleteQuestion.bind(tvShowCompleteController));
+
+router.post('/answers', requireAdmin, tvShowCompleteController.createAnswer.bind(tvShowCompleteController));
+router.put('/answers/:id', requireAdmin, tvShowCompleteController.updateAnswer.bind(tvShowCompleteController));
+router.delete('/answers/:id', requireAdmin, tvShowCompleteController.deleteAnswer.bind(tvShowCompleteController));
+
+router.post('/files', requireAdmin, tvShowCompleteController.createFile.bind(tvShowCompleteController));
+router.put('/files/:id', requireAdmin, tvShowCompleteController.updateFile.bind(tvShowCompleteController));
+router.delete('/files/:id', requireAdmin, tvShowCompleteController.deleteFile.bind(tvShowCompleteController));
+
+// --- Nested resource routes ---
+router.get('/:tvShowId/stats', requireAdmin, tvShowCompleteController.getTvShowStats.bind(tvShowCompleteController));
+router.get('/:tvShowId/videos/grouped', tvShowCompleteController.getVideosByTvShowGrouped.bind(tvShowCompleteController));
+router.get('/:tvShowId/videos', tvShowCompleteController.getVideosByTvShow.bind(tvShowCompleteController));
+router.get('/:tvShowId/questions', tvShowCompleteController.getQuestionsByTvShow.bind(tvShowCompleteController));
+router.get('/:tvShowId/files', tvShowCompleteController.getFilesByTvShow.bind(tvShowCompleteController));
+router.get('/questions/:questionId/answers', tvShowCompleteController.getAnswersByQuestion.bind(tvShowCompleteController));
+
+
+// --- Main TV Show CRUD (least specific, so last) ---
+router.get('/', tvShowCompleteController.getAllTvShows.bind(tvShowCompleteController));
+router.post('/', requireAdmin, tvShowCompleteController.createTvShow.bind(tvShowCompleteController));
+
+// This MUST be last for the GET routes with one parameter
+router.get('/:id', tvShowCompleteController.getTvShowById.bind(tvShowCompleteController));
+
+router.put('/:id', requireAdmin, tvShowCompleteController.updateTvShow.bind(tvShowCompleteController));
+router.delete('/:id', requireAdmin, tvShowCompleteController.deleteTvShow.bind(tvShowCompleteController));
+
+export default router;

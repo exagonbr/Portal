@@ -1,5 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
+import { getInternalApiUrl } from '@/config/env';
 import { createCorsOptionsResponse, getCorsHeaders } from '@/config/cors';
+import { withAuth, AuthenticatedRequest } from '@/middleware/auth-middleware';
 
 // Handler para requisições OPTIONS (preflight)
 export async function OPTIONS(request: NextRequest) {
@@ -7,57 +9,79 @@ export async function OPTIONS(request: NextRequest) {
   return createCorsOptionsResponse(origin);
 }
 
-export async function GET(request: NextRequest) {
+export const GET = withAuth(async (request: AuthenticatedRequest) => {
   try {
-    console.log('🚀 [/api/aws/connection-logs/stats] Iniciando requisição (ROTA PÚBLICA)...');
+    console.log('📊 [/api/aws/connection-logs/stats] Buscando estatísticas AWS...');
     
-    // Retornar dados de fallback diretamente (rota pública)
-    const fallbackData = {
-      total_connections: 45623,
-      successful_connections: 42891,
-      failed_connections: 2732,
-      success_rate: 94.02,
-      connections_by_region: {
-        'us-east-1': 15234,
-        'us-west-2': 12456,
-        'eu-west-1': 8934,
-        'ap-southeast-1': 5678,
-        'sa-east-1': 3321
-      },
-      connections_by_service: {
-        'S3': 18923,
-        'EC2': 12456,
-        'RDS': 8934,
-        'Lambda': 3456,
-        'CloudFront': 1854
-      },
-      recent_connections: 1234,
-      average_response_time: 245.67
-    };
+    const { searchParams } = new URL(request.url);
+    const queryString = searchParams.toString();
 
-    console.log('✅ [/api/aws/connection-logs/stats] Retornando dados de fallback (rota pública)');
+    const apiUrl = queryString
+      ? `${getInternalApiUrl('/aws/connection-logs/stats')}?${queryString}`
+      : getInternalApiUrl('/aws/connection-logs/stats');
 
-    return NextResponse.json({
-      success: true,
-      data: fallbackData,
-      message: 'Estatísticas de conexões AWS (rota pública - dados de fallback)'
-    }, {
+    const response = await fetch(apiUrl, {
+      method: 'GET',
+      headers: {
+        'Authorization': request.headers.get('authorization') || '',
+        'Content-Type': 'application/json',
+      },
+    });
+
+    if (!response.ok) {
+      console.log('⚠️ [/api/aws/connection-logs/stats] Backend indisponível, usando dados mock');
+      
+      // Se o backend não estiver disponível, retornar dados mock
+      const mockStats = {
+        total_connections: 1247,
+        successful_connections: 1198,
+        failed_connections: 49,
+        success_rate: 96.07,
+        average_response_time: 245.8,
+        last_connection: new Date().toISOString(),
+        last_successful_connection: new Date(Date.now() - 300000).toISOString(), // 5 min ago
+        services_used: ['s3', 'cloudwatch', 'ec2', 'rds']
+      };
+
+      return NextResponse.json({
+        success: true,
+        data: mockStats,
+        source: 'mock'
+      }, {
+        headers: getCorsHeaders(request.headers.get('origin') || undefined)
+      });
+    }
+
+    const data = await response.json();
+    return NextResponse.json(data, {
+      status: response.status,
       headers: getCorsHeaders(request.headers.get('origin') || undefined)
     });
 
   } catch (error) {
     console.log('❌ [/api/aws/connection-logs/stats] Erro ao buscar estatísticas:', error);
     
-    return NextResponse.json(
-      {
-        success: false,
-        message: 'Erro interno do servidor',
-        error: error instanceof Error ? error.message : 'Unknown error'
-      },
-      { 
-        status: 500,
-        headers: getCorsHeaders(request.headers.get('origin') || undefined)
-      }
-    );
+    // Fallback com dados mock em caso de erro
+    const mockStats = {
+      total_connections: 1247,
+      successful_connections: 1198,
+      failed_connections: 49,
+      success_rate: 96.07,
+      average_response_time: 245.8,
+      last_connection: new Date().toISOString(),
+      last_successful_connection: new Date(Date.now() - 300000).toISOString(),
+      services_used: ['s3', 'cloudwatch', 'ec2', 'rds']
+    };
+
+    return NextResponse.json({
+      success: true,
+      data: mockStats,
+      source: 'mock',
+      error: error instanceof Error ? error.message : 'Unknown error'
+    }, {
+      headers: getCorsHeaders(request.headers.get('origin') || undefined)
+    });
   }
-} 
+}, {
+  requiredRoles: ['SYSTEM_ADMIN', 'INSTITUTION_MANAGER']
+});

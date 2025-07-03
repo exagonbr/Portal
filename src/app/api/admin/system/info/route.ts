@@ -1,62 +1,140 @@
-import { NextRequest, NextResponse } from 'next/server'
-import { createCorsOptionsResponse, getCorsHeaders } from '@/config/cors'
+import { NextRequest, NextResponse } from 'next/server';
+import { requireRole } from '@/middleware/auth';
 
-// Função para criar headers CORS
-function getCorsHeaders(origin?: string) {
-  return {
-    'Access-Control-Allow-Origin': origin || '*',
-    'Access-Control-Allow-Methods': 'GET, POST, PUT, DELETE, OPTIONS',
-    'Access-Control-Allow-Headers': 'Content-Type, Authorization',
-    'Access-Control-Allow-Credentials': 'true',
+/**
+ * Obter informações do sistema
+ * GET /api/admin/system/info
+ */
+export const GET = requireRole(['SYSTEM_ADMIN', 'ADMIN'])(async (request: NextRequest) => {
+  try {
+    // Simular informações do sistema
+    const systemInfo = {
+      application: {
+        name: 'Portal Sabercon',
+        version: '1.0.0',
+        environment: process.env.NODE_ENV || 'development',
+        buildDate: '2025-01-07T00:00:00Z',
+        uptime: process.uptime(),
+        nodeVersion: process.version
+      },
+      server: {
+        platform: process.platform,
+        arch: process.arch,
+        memory: {
+          used: Math.round(process.memoryUsage().heapUsed / 1024 / 1024),
+          total: Math.round(process.memoryUsage().heapTotal / 1024 / 1024),
+          external: Math.round(process.memoryUsage().external / 1024 / 1024),
+          rss: Math.round(process.memoryUsage().rss / 1024 / 1024)
+        },
+        cpu: {
+          usage: Math.random() * 100, // Simular uso de CPU
+          cores: require('os').cpus().length
+        }
+      },
+      database: {
+        status: 'connected',
+        type: 'PostgreSQL',
+        version: '14.0',
+        connections: {
+          active: 5,
+          idle: 10,
+          total: 15
+        },
+        lastBackup: new Date(Date.now() - 1000 * 60 * 60 * 6).toISOString() // 6 horas atrás
+      },
+      cache: {
+        status: 'connected',
+        type: 'Redis',
+        version: '6.2.0',
+        memory: {
+          used: '45MB',
+          peak: '67MB'
+        },
+        keys: 1247,
+        hitRate: 94.5
+      },
+      storage: {
+        type: 'AWS S3',
+        status: 'connected',
+        buckets: [
+          {
+            name: 'portal-uploads',
+            size: '2.3GB',
+            objects: 15420
+          },
+          {
+            name: 'portal-backups',
+            size: '890MB',
+            objects: 45
+          }
+        ]
+      },
+      statistics: {
+        users: {
+          total: 1250,
+          active: 890,
+          online: 45,
+          newToday: 12
+        },
+        content: {
+          courses: 89,
+          books: 234,
+          videos: 567,
+          assignments: 123
+        },
+        activity: {
+          logins24h: 234,
+          pageViews24h: 5670,
+          errors24h: 12,
+          avgResponseTime: 145
+        }
+      },
+      health: {
+        status: 'healthy',
+        checks: [
+          {
+            name: 'Database Connection',
+            status: 'pass',
+            responseTime: 12
+          },
+          {
+            name: 'Redis Connection',
+            status: 'pass',
+            responseTime: 3
+          },
+          {
+            name: 'AWS S3 Connection',
+            status: 'pass',
+            responseTime: 89
+          },
+          {
+            name: 'Email Service',
+            status: 'pass',
+            responseTime: 156
+          }
+        ],
+        lastCheck: new Date().toISOString()
+      }
+    };
+
+    return NextResponse.json({
+      success: true,
+      message: 'Informações do sistema obtidas com sucesso',
+      data: systemInfo
+    });
+
+  } catch (error) {
+    console.error('Erro ao obter informações do sistema:', error);
+    return NextResponse.json({
+      success: false,
+      message: 'Erro interno do servidor'
+    }, { status: 500 });
   }
-}
+});
 
-// Função para resposta OPTIONS
-function createCorsOptionsResponse(origin?: string) {
-  return new NextResponse(null, {
-    status: 200,
-    headers: getCorsHeaders(origin)
-  })
-}
-
-// Em um cenário real, esses dados viriam de um serviço de monitoramento
-const SYSTEM_INFO = {
-  version: '2.1.4',
-  buildDate: '2024-03-20',
-  environment: 'Production',
-  uptime: '15 dias, 8 horas',
-  lastRestart: '2024-03-05 14:30:00',
-  database: {
-    type: 'PostgreSQL',
-    version: '15.2',
-    size: '2.8 GB',
-    connections: 45,
-    maxConnections: 100
-  },
-  server: {
-    cpu: 35,
-    memory: 68,
-    disk: 42,
-    network: 15
-  },
-  services: [
-    { name: 'API Gateway', status: 'online', uptime: '99.9%', lastCheck: '2024-03-20 11:45:00' },
-    { name: 'Database', status: 'online', uptime: '99.8%', lastCheck: '2024-03-20 11:45:00' },
-    { name: 'File Storage', status: 'online', uptime: '99.7%', lastCheck: '2024-03-20 11:45:00' },
-    { name: 'Email Service', status: 'warning', uptime: '98.5%', lastCheck: '2024-03-20 11:44:00' },
-    { name: 'Backup Service', status: 'online', uptime: '99.9%', lastCheck: '2024-03-20 11:45:00' },
-    { name: 'Cache Redis', status: 'online', uptime: '99.6%', lastCheck: '2024-03-20 11:45:00' }
-  ]
-}
-
-// Handler para requisições OPTIONS (preflight)
-export async function OPTIONS(request: NextRequest) {
-  const origin = request.headers.get('origin') || undefined;
-  return createCorsOptionsResponse(origin);
-}
-
-export async function GET(request: NextRequest) {
-  return NextResponse.json(SYSTEM_INFO, {
-      headers: getCorsHeaders(request.headers.get('origin') || undefined)
-    })
+/**
+ * OPTIONS para CORS
+ */
+export async function OPTIONS() {
+  return NextResponse.json({}, { status: 204 });
 }

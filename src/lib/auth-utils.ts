@@ -51,32 +51,34 @@ export async function validateJWTToken(token: string) {
     tokenPreview: token ? token.substring(0, 20) + '...' : 'N/A',
     tokenType: typeof token,
     isNullString: token === 'null' || token === 'undefined'
-  });
+  })
 
   // Check for null/undefined strings first
   if (token === 'null' || token === 'undefined' || token === 'false' || token === 'true') {
-    console.warn('🚫 Token é string de null/undefined/boolean:', token);
+    console.warn('🚫 Token is a string representation of null/undefined/boolean:', token);
     return null;
   }
 
   // Early validation: check if token is not empty and has reasonable length
   if (!token || token.length < 10) {
-    console.warn('🚫 Token vazio ou muito curto:', { 
+    console.warn('🚫 Token is empty or too short:', { 
       length: token ? token.length : 0,
-      actualValue: token
+      actualValue: token,
+      isEmpty: !token,
+      isWhitespace: token && token.trim().length === 0
     });
     return null;
   }
 
-  // Check for obviously malformed tokens
+  // Check for obviously malformed tokens (containing special characters that shouldn't be there)
   if (token.includes('\0') || token.includes('\x00')) {
-    console.warn('🚫 Token contém caracteres inválidos');
+    console.warn('🚫 Token contains invalid characters');
     return null;
   }
 
   // Check for common invalid token patterns
   if (token.startsWith('Bearer ') || token.includes(' ')) {
-    console.warn('🚫 Token contém prefixo Bearer ou espaços - malformado');
+    console.warn('🚫 Token contains Bearer prefix or spaces - malformed');
     return null;
   }
 
@@ -93,11 +95,11 @@ export async function validateJWTToken(token: string) {
     }
   }
 
-  // Use the JWT secret from JWT_CONFIG
+  // Use only the primary JWT secret from JWT_CONFIG - no multiple attempts to avoid loops
   const jwtSecret = JWT_CONFIG.JWT_SECRET;
 
   try {
-    console.log('🔑 Tentando validação JWT...');
+    console.log('🔑 Tentando validação JWT com secret principal...');
     
     // Check if it's a JWT token (3 parts)
     const parts = token.split('.');
@@ -135,6 +137,7 @@ export async function validateJWTToken(token: string) {
       
       if (!isValidBase64(token)) {
         console.log('❌ Token não é base64 válido');
+        // Cache failed validation
         tokenValidationCache.set(cacheKey, {
           valid: false,
           timestamp: Date.now()
@@ -146,6 +149,7 @@ export async function validateJWTToken(token: string) {
       
       if (!isValidJSON(decoded)) {
         console.log('❌ Token base64 decodificado não é JSON válido');
+        // Cache failed validation
         tokenValidationCache.set(cacheKey, {
           valid: false,
           timestamp: Date.now()
@@ -157,7 +161,8 @@ export async function validateJWTToken(token: string) {
       
       // Check if it's a valid fallback token structure
       if (!obj.userId || !obj.email || !obj.role) {
-        console.warn('❌ Fallback token sem campos obrigatórios');
+        console.warn('❌ Fallback token missing required fields');
+        // Cache failed validation
         tokenValidationCache.set(cacheKey, {
           valid: false,
           timestamp: Date.now()
@@ -167,7 +172,8 @@ export async function validateJWTToken(token: string) {
       
       // Check if token is expired
       if (obj.exp && obj.exp < Math.floor(Date.now() / 1000)) {
-        console.warn('❌ Fallback token expirado');
+        console.warn('❌ Fallback token expired');
+        // Cache failed validation
         tokenValidationCache.set(cacheKey, {
           valid: false,
           timestamp: Date.now()
@@ -197,7 +203,7 @@ export async function validateJWTToken(token: string) {
     }
   } catch (error) {
     const errorMsg = error instanceof Error ? error.message : String(error);
-    console.warn('❌ Falha na validação do token:', { 
+    console.warn('❌ Token validation failed:', { 
       error: errorMsg,
       tokenPreview: token.substring(0, 20) + '...'
     });
@@ -212,16 +218,43 @@ export async function validateJWTToken(token: string) {
   }
 }
 
-// FUNÇÃO MELHORADA getAuthentication
+// Helper function to refresh authentication token
+export async function refreshAuthToken(refreshToken: string): Promise<string | null> {
+  try {
+    console.log('🔄 Tentando renovar token com refresh token...');
+    
+    const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL || ''}/api/auth/refresh`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({ refreshToken }),
+    });
+
+    if (response.ok) {
+      const data = await response.json();
+      console.log('✅ Token renovado com sucesso');
+      return data.accessToken || data.token;
+    }
+    
+    console.log('❌ Falha ao renovar token:', response.status);
+    return null;
+  } catch (error) {
+    console.error('❌ Erro ao renovar token:', error);
+    return null;
+  }
+}
+
+// Helper function to get authentication from JWT or cookies
 export async function getAuthentication(request: NextRequest) {
-  console.log('🔐 Iniciando processo de autenticação...');
+  console.log('🔐 Iniciando processo de autenticação...')
   
-  // 1. Tentar Authorization header primeiro
+  // Try JWT token from Authorization header first
   const authHeader = request.headers.get('authorization');
-  console.log('🔐 Authorization header:', authHeader ? 'Presente' : 'Ausente');
+  console.log('🔐 Authorization header:', authHeader ? 'Presente' : 'Ausente')
   
   if (authHeader) {
-    console.log('🔐 Authorization header completo:', authHeader.substring(0, 50) + '...');
+    console.log('🔐 Authorization header completo:', authHeader.substring(0, 50) + '...')
     
     if (authHeader.startsWith('Bearer ')) {
       const token = authHeader.substring(7).trim();
@@ -230,85 +263,61 @@ export async function getAuthentication(request: NextRequest) {
         preview: token.substring(0, 20) + '...',
         isNull: token === 'null',
         isEmpty: !token
-      });
+      })
       
-      if (token && token !== 'null' && token !== 'undefined') {
-        const jwtSession = await validateJWTToken(token);
-        if (jwtSession) {
-          console.log('✅ Autenticação via Authorization header bem-sucedida');
-          return jwtSession;
-        }
-        console.log('❌ Token do Authorization header inválido');
-      }
-    } else {
-      console.log('❌ Authorization header não começa com "Bearer ":', authHeader.substring(0, 20));
-    }
-  }
-
-  // 2. Tentar cookies como fallback
-  const cookieTokens = [
-    request.cookies.get('auth_token')?.value,
-    request.cookies.get('token')?.value,
-    request.cookies.get('authToken')?.value,
-    request.cookies.get('accessToken')?.value
-  ];
-  
-  console.log('🔐 Verificando cookies:', cookieTokens.map(t => t ? 'Encontrado' : 'Vazio'));
-  
-  for (const tokenFromCookie of cookieTokens) {
-    if (tokenFromCookie && tokenFromCookie !== 'null' && tokenFromCookie !== 'undefined') {
-      console.log('🔐 Testando token do cookie:', {
-        length: tokenFromCookie.length,
-        preview: tokenFromCookie.substring(0, 20) + '...'
-      });
-      
-      const jwtSession = await validateJWTToken(tokenFromCookie);
+      const jwtSession = await validateJWTToken(token);
       if (jwtSession) {
-        console.log('✅ Autenticação via cookies bem-sucedida');
+        console.log('✅ Autenticação via Authorization header bem-sucedida')
         return jwtSession;
       }
-      console.log('❌ Token do cookie inválido');
+      console.log('❌ Token do Authorization header inválido')
+    } else {
+      console.log('❌ Authorization header não começa com "Bearer ":', authHeader.substring(0, 20))
     }
   }
 
-  // 3. Tentar extrair do header Cookie manualmente
-  const cookieHeader = request.headers.get('cookie');
-  if (cookieHeader) {
-    console.log('🔐 Analisando header Cookie manualmente...');
+  // Try token from cookies as fallback
+  const tokenFromCookie = request.cookies.get('auth_token')?.value ||
+                         request.cookies.get('token')?.value;
+  
+  console.log('🔐 Token dos cookies:', tokenFromCookie ? 'Encontrado' : 'Não encontrado')
+  
+  if (tokenFromCookie) {
+    console.log('🔐 Token dos cookies detalhes:', {
+      length: tokenFromCookie.length,
+      preview: tokenFromCookie.substring(0, 20) + '...',
+      isNull: tokenFromCookie === 'null'
+    })
     
-    const cookies = cookieHeader.split(';').reduce((acc: Record<string, string>, cookie) => {
-      const [name, value] = cookie.trim().split('=');
-      if (name && value) {
-        acc[name] = decodeURIComponent(value);
-      }
-      return acc;
-    }, {});
+    const jwtSession = await validateJWTToken(tokenFromCookie);
+    if (jwtSession) {
+      console.log('✅ Autenticação via cookies bem-sucedida')
+      return jwtSession;
+    }
+    console.log('❌ Token dos cookies inválido')
+  }
+
+  // Try refresh token if no valid access token found
+  const refreshToken = request.cookies.get('refresh_token')?.value;
+  if (refreshToken && refreshToken !== 'null' && refreshToken !== 'undefined') {
+    console.log('🔄 Nenhum token válido encontrado, tentando refresh token...');
+    const newToken = await refreshAuthToken(refreshToken);
     
-    const manualTokens = [
-      cookies.auth_token,
-      cookies.token,
-      cookies.authToken,
-      cookies.accessToken
-    ];
-    
-    for (const manualToken of manualTokens) {
-      if (manualToken && manualToken !== 'null' && manualToken !== 'undefined' && manualToken.length > 10) {
-        console.log('🔐 Testando token manual do cookie:', {
-          length: manualToken.length,
-          preview: manualToken.substring(0, 20) + '...'
-        });
+    if (newToken) {
+      const jwtSession = await validateJWTToken(newToken);
+      if (jwtSession) {
+        console.log('✅ Autenticação via refresh token bem-sucedida');
         
-        const jwtSession = await validateJWTToken(manualToken);
-        if (jwtSession) {
-          console.log('✅ Autenticação via cookie manual bem-sucedida');
-          return jwtSession;
-        }
-        console.log('❌ Token manual do cookie inválido');
+        // Opcionalmente, definir o novo token nos cookies da resposta
+        // Isso precisaria ser feito no endpoint que chama esta função
+        (jwtSession as any).newToken = newToken;
+        
+        return jwtSession;
       }
     }
   }
 
-  console.log('❌ Nenhum token válido encontrado em nenhum método');
+  console.log('❌ Nenhum token válido encontrado (incluindo refresh token)')
   return null;
 }
 

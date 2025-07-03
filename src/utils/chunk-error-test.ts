@@ -3,7 +3,8 @@
  */
 
 import { isChunkLoadError, retryDynamicImport, importApiClient } from './chunk-retry';
-import { syncTokenWithApiClient } from './token-validator';
+import { getCurrentToken } from '@/utils/token-validator';
+import { syncTokenWithApiClient } from '@/utils/token-validator';
 
 /**
  * Testa se a detecção de ChunkLoadError está funcionando
@@ -92,10 +93,11 @@ export async function testTokenSync(): Promise<boolean> {
   
   try {
     // Criar um token de teste
-    const testToken = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VySWQiOiJ0ZXN0IiwiZXhwIjo5OTk5OTk5OTk5fQ.test';
+    const testToken = getCurrentToken();
     
     // Testar sincronização
-    const result = await syncTokenWithApiClient(testToken);
+    // Converter null para undefined para compatibilidade de tipos
+    const result = await syncTokenWithApiClient(testToken || undefined);
     
     if (result) {
       console.log('✅ Sincronização de token funcionou');

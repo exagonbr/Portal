@@ -1,12 +1,11 @@
-import { AuthenticatedUser } from './auth.types';
+import { AccessTokenPayload } from '../config/jwt';
 
 declare global {
   namespace Express {
     interface Request {
-      user?: AuthenticatedUser;
+      user?: AccessTokenPayload;
     }
-    
-    // Sobrescreve a definição do Passport para usar nosso tipo
-    interface User extends AuthenticatedUser {}
   }
 }
+
+export {};

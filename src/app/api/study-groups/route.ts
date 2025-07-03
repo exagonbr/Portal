@@ -1,283 +1,260 @@
-import { NextRequest, NextResponse } from 'next/server'
-import { getServerSession } from 'next-auth'
-import { authOptions } from '@/lib/auth'
-import { z } from 'zod'
-import { createCorsOptionsResponse, getCorsHeaders } from '@/config/cors'
+import { NextRequest, NextResponse } from 'next/server';
+import { extractToken, verifyToken, MOCK_USERS } from '@/middleware/auth';
 
-// Schema de validação para criação de grupo de estudo
-const createStudyGroupSchema = z.object({
-  name: z.string().min(3, 'Nome deve ter pelo menos 3 caracteres'),
-  description: z.string().min(10, 'Descrição deve ter pelo menos 10 caracteres'),
-  subject: z.string().min(2, 'Assunto deve ter pelo menos 2 caracteres'),
-  class_id: z.string().uuid('ID de turma inválido').optional(),
-  course_id: z.string().uuid('ID de curso inválido').optional(),
-  type: z.enum(['STUDY', 'PROJECT', 'RESEARCH', 'DISCUSSION', 'TUTORING']),
-  visibility: z.enum(['PUBLIC', 'PRIVATE', 'CLASS_ONLY', 'INVITE_ONLY']).default('PUBLIC'),
-  max_members: z.number().int().min(2).max(50).default(10),
-  meeting_schedule: z.object({
-    frequency: z.enum(['DAILY', 'WEEKLY', 'BIWEEKLY', 'MONTHLY', 'AS_NEEDED']),
-    day_of_week: z.number().int().min(0).max(6).optional(),
-    time: z.string().regex(/^([0-1]?[0-9]|2[0-3]):[0-5][0-9]$/).optional(),
-    duration_minutes: z.number().int().positive().optional(),
-    location: z.string().optional(),
-    online_meeting_url: z.string().url().optional()
-  }).optional(),
-  goals: z.array(z.string()).optional(),
-  rules: z.array(z.string()).optional(),
-  resources: z.array(z.object({
-    title: z.string(),
-    type: z.enum(['DOCUMENT', 'LINK', 'VIDEO', 'BOOK', 'ARTICLE']),
-    url: z.string().url().optional(),
-    description: z.string().optional()
-  })).optional(),
-  tags: z.array(z.string()).optional(),
-  settings: z.object({
-    auto_accept_members: z.boolean().default(false),
-    require_approval: z.boolean().default(true),
-    allow_member_invites: z.boolean().default(true),
-    enable_chat: z.boolean().default(true),
-    enable_forum: z.boolean().default(true),
-    enable_file_sharing: z.boolean().default(true),
-    notify_new_content: z.boolean().default(true)
-  }).optional()
-})
-
-// Mock database - substituir por Prisma/banco real
-const mockStudyGroups = new Map()
-const mockGroupMembers = new Map() // Relação grupo-membros
-
-// GET - Listar grupos de estudo
-
-// Handler para requisições OPTIONS (preflight)
-export async function OPTIONS(request: NextRequest) {
-  const origin = request.headers.get('origin') || undefined;
-  return createCorsOptionsResponse(origin);
-}
-
+/**
+ * Obter grupos de estudo
+ * GET /api/study-groups
+ */
 export async function GET(request: NextRequest) {
   try {
-    const session = await getServerSession(authOptions)
-    
-    if (!session) {
-      return NextResponse.json({ error: 'Não autorizado' }, { 
-      status: 401,
-      headers: getCorsHeaders(request.headers.get('origin') || undefined)
-    })
+    // Verificar autenticação
+    const token = extractToken(request);
+    if (!token) {
+      return NextResponse.json(
+        { success: false, message: 'Token de acesso requerido' },
+        { status: 401 }
+      );
     }
 
-    // Parâmetros de query
-    const { searchParams } = new URL(request.url)
-    const page = parseInt(searchParams.get('page') || '1')
-    const limit = parseInt(searchParams.get('limit') || '10')
-    const search = searchParams.get('search') || ''
-    const type = searchParams.get('type')
-    const visibility = searchParams.get('visibility')
-    const class_id = searchParams.get('class_id')
-    const course_id = searchParams.get('course_id')
-    const my_groups = searchParams.get('my_groups') === 'true'
-    const status = searchParams.get('status') // active, archived
-
-    // Buscar grupos (substituir por query real)
-    let groups = Array.from(mockStudyGroups.values())
-
-    // Filtrar por grupos do usuário
-    if (my_groups) {
-      groups = groups.filter(group => {
-        const members = mockGroupMembers.get(group.id) || []
-        return members.some((m: any) => m.user_id === session.user?.id)
-      })
+    const decoded = verifyToken(token);
+    if (!decoded) {
+      return NextResponse.json(
+        { success: false, message: 'Token inválido' },
+        { status: 401 }
+      );
     }
 
-    // Aplicar filtros de visibilidade baseados no role
-    const userRole = session.user?.role
-    if (userRole === 'STUDENT') {
-      groups = groups.filter(group => {
-        // Aluno vê grupos públicos, da turma dele, ou que é membro
-        if (group.visibility === 'PUBLIC') return true
-        if (group.visibility === 'CLASS_ONLY' && group.class_id) {
-          // Verificar se está na mesma turma
-          return true // Implementar verificação real
-        }
-        const members = mockGroupMembers.get(group.id) || []
-        return members.some((m: any) => m.user_id === session.user?.id)
-      })
+    const user = MOCK_USERS[decoded.email];
+    if (!user) {
+      return NextResponse.json(
+        { success: false, message: 'Usuário não encontrado' },
+        { status: 401 }
+      );
     }
 
-    // Aplicar filtros de busca
-    if (search) {
-      const searchLower = search.toLowerCase()
-      groups = groups.filter(group => 
-        group.name.toLowerCase().includes(searchLower) ||
-        group.description.toLowerCase().includes(searchLower) ||
-        group.subject.toLowerCase().includes(searchLower) ||
-        group.tags?.some((tag: string) => tag.toLowerCase().includes(searchLower))
-      )
-    }
+    const url = new URL(request.url);
+    const limit = parseInt(url.searchParams.get('limit') || '20');
+    const offset = parseInt(url.searchParams.get('offset') || '0');
+    const status = url.searchParams.get('status');
+    const courseId = url.searchParams.get('courseId');
 
-    if (type) {
-      groups = groups.filter(group => group.type === type)
-    }
+    // Mock de grupos de estudo
+    const mockStudyGroups = [
+      {
+        id: '1',
+        name: 'Grupo de Matemática Avançada',
+        description: 'Estudo colaborativo de cálculo diferencial e integral',
+        courseId: '1',
+        courseName: 'Matemática Avançada',
+        createdBy: '2',
+        createdByName: 'Prof. João Silva',
+        status: 'ACTIVE',
+        privacy: 'PUBLIC',
+        maxMembers: 15,
+        currentMembers: 8,
+        members: [
+          { id: '3', name: 'Maria Santos', role: 'MEMBER', joinedAt: '2025-01-01T10:00:00Z' },
+          { id: '4', name: 'Pedro Costa', role: 'MODERATOR', joinedAt: '2025-01-02T14:30:00Z' },
+          { id: '5', name: 'Ana Silva', role: 'MEMBER', joinedAt: '2025-01-03T09:15:00Z' }
+        ],
+        schedule: {
+          meetingDay: 'WEDNESDAY',
+          meetingTime: '19:00',
+          duration: 120, // minutes
+          location: 'Sala Virtual 1'
+        },
+        tags: ['matemática', 'cálculo', 'estudo-grupo'],
+        createdAt: '2024-12-15T10:00:00Z',
+        updatedAt: '2025-01-07T15:30:00Z'
+      },
+      {
+        id: '2',
+        name: 'Física Quântica - Discussões',
+        description: 'Debates e resolução de exercícios de física quântica',
+        courseId: '2',
+        courseName: 'Física Quântica',
+        createdBy: '6',
+        createdByName: 'Prof. Carlos Mendes',
+        status: 'ACTIVE',
+        privacy: 'PRIVATE',
+        maxMembers: 10,
+        currentMembers: 6,
+        members: [
+          { id: '7', name: 'Lucas Oliveira', role: 'MEMBER', joinedAt: '2025-01-05T11:00:00Z' },
+          { id: '8', name: 'Fernanda Lima', role: 'MEMBER', joinedAt: '2025-01-06T16:45:00Z' }
+        ],
+        schedule: {
+          meetingDay: 'FRIDAY',
+          meetingTime: '20:00',
+          duration: 90,
+          location: 'Laboratório de Física'
+        },
+        tags: ['física', 'quântica', 'laboratório'],
+        createdAt: '2024-12-20T14:00:00Z',
+        updatedAt: '2025-01-06T18:20:00Z'
+      },
+      {
+        id: '3',
+        name: 'Programação Web - Projetos',
+        description: 'Desenvolvimento colaborativo de projetos web',
+        courseId: '3',
+        courseName: 'Desenvolvimento Web',
+        createdBy: '9',
+        createdByName: 'Prof. Tech Master',
+        status: 'RECRUITING',
+        privacy: 'PUBLIC',
+        maxMembers: 20,
+        currentMembers: 12,
+        members: [],
+        schedule: {
+          meetingDay: 'SATURDAY',
+          meetingTime: '14:00',
+          duration: 180,
+          location: 'Lab de Informática'
+        },
+        tags: ['programação', 'web', 'projetos', 'javascript'],
+        createdAt: '2025-01-01T09:00:00Z',
+        updatedAt: '2025-01-07T12:00:00Z'
+      }
+    ];
 
-    if (visibility) {
-      groups = groups.filter(group => group.visibility === visibility)
-    }
-
-    if (class_id) {
-      groups = groups.filter(group => group.class_id === class_id)
-    }
-
-    if (course_id) {
-      groups = groups.filter(group => group.course_id === course_id)
-    }
+    let filteredGroups = mockStudyGroups;
 
     if (status) {
-      groups = groups.filter(group => 
-        status === 'active' ? group.is_active : !group.is_active
-      )
+      filteredGroups = filteredGroups.filter(group => group.status === status);
     }
 
-    // Adicionar informações de membros e status do usuário
-    const groupsWithInfo = groups.map(group => {
-      const members = mockGroupMembers.get(group.id) || []
-      const userMembership = members.find((m: any) => m.user_id === session.user?.id)
-      
-      return {
-        ...group,
-        member_count: members.length,
-        is_member: !!userMembership,
-        user_role: userMembership?.role || null,
-        user_joined_at: userMembership?.joined_at || null,
-        is_full: members.length >= group.max_members,
-        active_members: members.filter((m: any) => m.is_active).length,
-        pending_requests: members.filter((m: any) => m.status === 'pending').length
-      }
-    })
+    if (courseId) {
+      filteredGroups = filteredGroups.filter(group => group.courseId === courseId);
+    }
 
-    // Ordenar por atividade recente
-    groupsWithInfo.sort((a, b) => 
-      new Date(b.last_activity_at || b.created_at).getTime() - 
-      new Date(a.last_activity_at || a.created_at).getTime()
-    )
-
-    // Paginação
-    const startIndex = (page - 1) * limit
-    const endIndex = page * limit
-    const paginatedGroups = groupsWithInfo.slice(startIndex, endIndex)
+    const paginatedGroups = filteredGroups.slice(offset, offset + limit);
 
     return NextResponse.json({
       success: true,
+      message: 'Grupos de estudo obtidos com sucesso',
       data: {
-        items: paginatedGroups,
+        groups: paginatedGroups,
         pagination: {
-          page,
+          total: filteredGroups.length,
           limit,
-          total: groupsWithInfo.length,
-          totalPages: Math.ceil(groupsWithInfo.length / limit)
+          offset,
+          hasMore: offset + limit < filteredGroups.length
+        },
+        summary: {
+          total: mockStudyGroups.length,
+          active: mockStudyGroups.filter(g => g.status === 'ACTIVE').length,
+          recruiting: mockStudyGroups.filter(g => g.status === 'RECRUITING').length,
+          totalMembers: mockStudyGroups.reduce((sum, g) => sum + g.currentMembers, 0)
         }
       }
-    }, {
-      headers: getCorsHeaders(request.headers.get('origin') || undefined)
-    })
+    });
 
   } catch (error) {
-    console.log('Erro ao listar grupos de estudo:', error)
-    return NextResponse.json({ error: 'Erro interno do servidor' }, { 
-      status: 500,
-      headers: getCorsHeaders(request.headers.get('origin') || undefined)
-    })
+    console.error('Erro ao obter grupos de estudo:', error);
+    return NextResponse.json(
+      { success: false, message: 'Erro interno do servidor' },
+      { status: 500 }
+    );
   }
 }
 
-// POST - Criar grupo de estudo
+/**
+ * Criar novo grupo de estudo
+ * POST /api/study-groups
+ */
 export async function POST(request: NextRequest) {
   try {
-    const session = await getServerSession(authOptions)
-    
-    if (!session) {
-      return NextResponse.json({ error: 'Não autorizado' }, { 
-      status: 401,
-      headers: getCorsHeaders(request.headers.get('origin') || undefined)
-    })
+    // Verificar autenticação
+    const token = extractToken(request);
+    if (!token) {
+      return NextResponse.json(
+        { success: false, message: 'Token de acesso requerido' },
+        { status: 401 }
+      );
     }
 
-    const body = await request.json()
-
-    // Validar dados
-    const validationResult = createStudyGroupSchema.safeParse(body)
-    if (!validationResult.success) {
-      return NextResponse.json({
-          error: 'Dados inválidos',
-          errors: validationResult.error.flatten().fieldErrors
-        },
-        {
-          status: 400,
-          headers: getCorsHeaders(request.headers.get('origin') || undefined)
-        }
-      )
+    const decoded = verifyToken(token);
+    if (!decoded) {
+      return NextResponse.json(
+        { success: false, message: 'Token inválido' },
+        { status: 401 }
+      );
     }
 
-    const groupData = validationResult.data
-
-    // Verificar permissões baseadas no tipo e visibilidade
-    const userRole = session.user?.role
-    
-    // Estudantes só podem criar grupos públicos ou privados
-    if (userRole === 'STUDENT' && ['CLASS_ONLY', 'INVITE_ONLY'].includes(groupData.visibility)) {
-      return NextResponse.json({ error: 'Estudantes não podem criar grupos com esta visibilidade' }, { 
-      status: 403,
-      headers: getCorsHeaders(request.headers.get('origin') || undefined)
-    })
+    const user = MOCK_USERS[decoded.email];
+    if (!user || !user.permissions.includes('study-groups.create')) {
+      return NextResponse.json(
+        { success: false, message: 'Permissão insuficiente' },
+        { status: 403 }
+      );
     }
 
-    // Se for grupo de turma, verificar se o usuário tem acesso à turma
-    if (groupData.class_id) {
-      // Implementar verificação se o usuário pertence à turma
-      // Por enquanto, permitir
+    const body = await request.json();
+    const { 
+      name, 
+      description, 
+      courseId, 
+      privacy, 
+      maxMembers, 
+      schedule, 
+      tags 
+    } = body;
+
+    if (!name || !description || !courseId) {
+      return NextResponse.json(
+        { success: false, message: 'Nome, descrição e curso são obrigatórios' },
+        { status: 400 }
+      );
     }
 
-    // Criar grupo
+    // Mock de criação de grupo
     const newGroup = {
-      id: `group_${Date.now()}`,
-      ...groupData,
-      creator_id: session.user?.id,
-      creator_name: session.user?.name,
-      is_active: true,
-      created_at: new Date().toISOString(),
-      updated_at: new Date().toISOString(),
-      last_activity_at: new Date().toISOString()
-    }
-
-    mockStudyGroups.set(newGroup.id, newGroup)
-
-    // Adicionar criador como líder do grupo
-    const creatorMember = {
-      user_id: session.user?.id,
-      user_name: session.user?.name,
-      role: 'LEADER',
-      status: 'active',
-      is_active: true,
-      joined_at: new Date().toISOString(),
-      contribution_points: 0
-    }
-
-    mockGroupMembers.set(newGroup.id, [creatorMember])
+      id: Date.now().toString(),
+      name,
+      description,
+      courseId,
+      courseName: 'Curso Exemplo',
+      createdBy: user.id,
+      createdByName: user.name,
+      status: 'RECRUITING',
+      privacy: privacy || 'PUBLIC',
+      maxMembers: maxMembers || 15,
+      currentMembers: 1,
+      members: [
+        {
+          id: user.id,
+          name: user.name,
+          role: 'OWNER',
+          joinedAt: new Date().toISOString()
+        }
+      ],
+      schedule: schedule || {
+        meetingDay: 'SATURDAY',
+        meetingTime: '14:00',
+        duration: 120,
+        location: 'A definir'
+      },
+      tags: tags || [],
+      createdAt: new Date().toISOString(),
+      updatedAt: new Date().toISOString()
+    };
 
     return NextResponse.json({
       success: true,
-      data: {
-        ...newGroup,
-        member_count: 1,
-        is_member: true,
-        user_role: 'LEADER'
-      },
-      message: 'Grupo de estudo criado com sucesso'
-    }, { status: 201 })
+      message: 'Grupo de estudo criado com sucesso',
+      data: newGroup
+    }, { status: 201 });
 
   } catch (error) {
-    console.log('Erro ao criar grupo de estudo:', error)
-    return NextResponse.json({ error: 'Erro interno do servidor' }, { 
-      status: 500,
-      headers: getCorsHeaders(request.headers.get('origin') || undefined)
-    })
+    console.error('Erro ao criar grupo de estudo:', error);
+    return NextResponse.json(
+      { success: false, message: 'Erro interno do servidor' },
+      { status: 500 }
+    );
   }
-} 
+}
+
+export async function OPTIONS() {
+  return new NextResponse(null, { status: 204 });
+}

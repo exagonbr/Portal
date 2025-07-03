@@ -4,19 +4,20 @@ import Image from 'next/image'
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
 import { useAuth } from '@/contexts/AuthContext'
-import { useState, useEffect, useCallback, memo } from 'react'
-import { UserRole, ROLE_PERMISSIONS, ROLE_LABELS, hasPermission, getAccessibleRoutes } from '@/types/roles'
+import { useState, useEffect, useCallback, memo, useMemo, useRef } from 'react'
+import { UserRole, ROLE_PERMISSIONS, ROLE_LABELS, hasPermission, getAccessibleRoutes, RolePermissions } from '@/types/roles'
 import { useTheme } from '@/contexts/ThemeContext'
-import { motion } from 'framer-motion'
+import { motion, AnimatePresence } from 'framer-motion'
 import { getSystemAdminMenuItems } from '@/components/admin/SystemAdminMenu'
 import { EnhancedLoadingState } from './ui/LoadingStates'
 import { useNavigationWithLoading } from '@/hooks/useNavigationWithLoading'
+import { useMenuPermissions, useMenuSectionPermissions } from '@/hooks/useMenuPermissions'
 
 interface NavItem {
   href: string
   icon: string
   label: string
-  permission?: keyof typeof ROLE_PERMISSIONS[UserRole.SYSTEM_ADMIN]
+  permission?: keyof RolePermissions
 }
 
 interface NavSection {
@@ -91,8 +92,9 @@ const NavItem = memo(({ item, isActive, isCollapsed, onClick, theme }: {
   theme: any
 }) => {
   const { navigateWithLoading } = useNavigationWithLoading()
+  const [isHovered, setIsHovered] = useState(false)
 
-  const handleClick = (e: React.MouseEvent) => {
+  const handleClick = useCallback((e: React.MouseEvent) => {
     e.preventDefault()
     
     // Se já estiver na página atual, não fazer nada
@@ -104,84 +106,122 @@ const NavItem = memo(({ item, isActive, isCollapsed, onClick, theme }: {
     // Navegar com loading
     navigateWithLoading(item.href, {
       message: 'Estamos preparando tudo para você',
-      delay: 600
+      delay: 100 // Reduzido para resposta mais rápida
     })
-  }
+  }, [isActive, onClick, navigateWithLoading, item.href])
+
+  const buttonStyle = useMemo(() => ({
+    backgroundColor: isActive
+      ? theme.colors.primary.DEFAULT
+      : isHovered
+        ? `${theme.colors.primary.light}20`
+        : 'transparent',
+    color: isActive
+      ? 'white'
+      : isHovered
+        ? theme.colors.primary.DEFAULT
+        : theme.colors.text.secondary,
+    transform: isHovered ? 'translateX(2px)' : 'translateX(0)',
+    transition: 'all 150ms cubic-bezier(0.4, 0, 0.2, 1)'
+  }), [isActive, isHovered, theme])
 
   return (
-    <button
+    <motion.button
       onClick={handleClick}
-      className={`flex items-center gap-2 px-2 py-2 transition-all duration-200 rounded-md mx-1 text-xs font-medium group relative outline-none w-full text-left
+      className={`flex items-center gap-2 px-2 py-2 rounded-md mx-1 text-xs font-medium group relative outline-none w-full text-left
         ${isCollapsed ? 'justify-center' : ''}`}
-      style={{
-        backgroundColor: isActive ? theme.colors.primary.DEFAULT : 'transparent',
-        color: isActive ? 'white' : theme.colors.text.secondary
-      }}
+      style={buttonStyle}
       aria-current={isActive ? 'page' : undefined}
-      onMouseEnter={(e) => {
-        if (!isActive) {
-          e.currentTarget.style.backgroundColor = `${theme.colors.primary.light}20`;
-          e.currentTarget.style.color = theme.colors.primary.DEFAULT;
-        }
-      }}
-      onMouseLeave={(e) => {
-        if (!isActive) {
-          e.currentTarget.style.backgroundColor = 'transparent';
-          e.currentTarget.style.color = theme.colors.text.secondary;
-        }
-      }}
+      onMouseEnter={() => setIsHovered(true)}
+      onMouseLeave={() => setIsHovered(false)}
+      whileHover={{ scale: 1.02 }}
+      whileTap={{ scale: 0.98 }}
+      transition={{ duration: 0.1 }}
     >
-    <span
-      className={`material-symbols-outlined transition-transform duration-300 flex-shrink-0 ${isCollapsed ? 'text-[18px]' : 'text-[16px]'}`}
-      aria-hidden="true"
-    >
-      {item.icon}
-    </span>
-    
-    {!isCollapsed && (
-      <span className="text-xs font-medium truncate leading-tight">{item.label}</span>
-    )}
-    
-    {/* Tooltip for collapsed state */}
-    {isCollapsed && (
-      <div
-        className="absolute left-full ml-2 px-2 py-1 text-xs rounded-md opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-opacity duration-300 whitespace-nowrap z-50 shadow-lg font-medium"
-        style={{ 
-          backgroundColor: theme.colors.background.card,
-          color: theme.colors.text.primary,
-          borderColor: theme.colors.border.DEFAULT
+      <span
+        className={`material-symbols-outlined flex-shrink-0 ${isCollapsed ? 'text-[18px]' : 'text-[16px]'}`}
+        style={{
+          transition: 'transform 150ms ease',
+          transform: isHovered ? 'scale(1.1)' : 'scale(1)'
         }}
-        role="tooltip"
+        aria-hidden="true"
       >
-        {item.label}
-      </div>
-    )}
-  </button>
+        {item.icon}
+      </span>
+      
+      {!isCollapsed && (
+        <span className="text-xs font-medium truncate leading-tight">{item.label}</span>
+      )}
+      
+      {/* Tooltip for collapsed state */}
+      <AnimatePresence>
+        {isCollapsed && isHovered && (
+          <motion.div
+            initial={{ opacity: 0, x: -10 }}
+            animate={{ opacity: 1, x: 0 }}
+            exit={{ opacity: 0, x: -10 }}
+            transition={{ duration: 0.15 }}
+            className="absolute left-full ml-2 px-2 py-1 text-xs rounded-md whitespace-nowrap z-50 shadow-lg font-medium pointer-events-none"
+            style={{
+              backgroundColor: theme.colors.background.card,
+              color: theme.colors.text.primary,
+              borderColor: theme.colors.border.DEFAULT,
+              border: '1px solid'
+            }}
+            role="tooltip"
+          >
+            {item.label}
+          </motion.div>
+        )}
+      </AnimatePresence>
+    </motion.button>
+  )
+}, (prevProps, nextProps) => {
+  // Comparação customizada para evitar re-renders desnecessários
+  return (
+    prevProps.item.href === nextProps.item.href &&
+    prevProps.isActive === nextProps.isActive &&
+    prevProps.isCollapsed === nextProps.isCollapsed &&
+    prevProps.theme === nextProps.theme
   )
 });
 NavItem.displayName = 'NavItem';
 
-const NavSection = memo(({ section, items, pathname, isCollapsed, onItemClick, userRole, theme }: { 
-  section: string, 
-  items: NavItem[], 
+const NavSection = memo(({ section, items, pathname, isCollapsed, onItemClick, userRole, theme }: {
+  section: string,
+  items: NavItem[],
   pathname: string | null,
   isCollapsed: boolean,
   onItemClick?: () => void,
   userRole: UserRole,
   theme: any
 }) => {
-  // Filter items based on user permissions
-  const filteredItems = items.filter(item => {
-    if (!item.permission) return true;
-    return hasPermission(userRole, item.permission);
-  });
+  // Usar o hook de permissões com cache inteligente (sem cache para dados sensíveis)
+  const { filteredMenuItems } = useMenuPermissions(
+    items.map(item => ({
+      href: item.href,
+      label: item.label,
+      permission: item.permission
+    })),
+    {
+      autoRevalidate: true,
+      onPermissionsUpdate: (permissions) => {
+        console.log(`🔐 [NavSection] Permissões atualizadas para seção "${section}":`, permissions);
+      }
+    }
+  );
 
-  if (filteredItems.length === 0) return null;
+  if (filteredMenuItems.length === 0) return null;
+
+  // Mapear de volta para NavItem
+  const filteredNavItems = items.filter(item =>
+    filteredMenuItems.some(filtered => filtered.href === item.href)
+  );
 
   return (
     <div className="mb-3">
       {!isCollapsed && (
-        <p 
+        <p
           className="px-2 py-1 text-[10px] font-bold uppercase tracking-wider opacity-75"
           style={{ color: theme.colors.text.tertiary }}
         >
@@ -189,7 +229,7 @@ const NavSection = memo(({ section, items, pathname, isCollapsed, onItemClick, u
         </p>
       )}
       <div className="space-y-0.5">
-        {filteredItems.map((item) => (
+        {filteredNavItems.map((item) => (
           <NavItem
             key={item.href}
             item={item}
@@ -248,32 +288,65 @@ const LogoutButton = memo(({ isCollapsed, onLogout, theme }: { isCollapsed: bool
 ));
 LogoutButton.displayName = 'LogoutButton';
 
+// Função de debounce otimizada
+function useDebounce<T extends (...args: any[]) => any>(
+  callback: T,
+  delay: number
+): T {
+  const timeoutRef = useRef<NodeJS.Timeout | null>(null)
+  
+  return useCallback((...args: Parameters<T>) => {
+    if (timeoutRef.current) {
+      clearTimeout(timeoutRef.current)
+    }
+    
+    timeoutRef.current = setTimeout(() => {
+      callback(...args)
+    }, delay)
+  }, [callback, delay]) as T
+}
+
 export default function StandardSidebar() {
   const pathname = usePathname()
   const { user, logout } = useAuth()
   const { theme } = useTheme()
   const [isCollapsed, setIsCollapsed] = useState(false)
   const [isMobileOpen, setIsMobileOpen] = useState(false)
+  const resizeTimeoutRef = useRef<NodeJS.Timeout | null>(null)
   
   // Get user role with fallback to STUDENT - garantindo que sempre será uppercase
-  const normalizedRole = user?.role ? user.role.toUpperCase() : 'STUDENT';
+  const normalizedRole = useMemo(() =>
+    user?.role ? user.role.toUpperCase() : 'STUDENT',
+    [user?.role]
+  )
   const userRole: UserRole = (normalizedRole as UserRole) || UserRole.STUDENT;
 
-  // Handle window resize
+  // Handle window resize com debounce
   useEffect(() => {
     const handleResize = () => {
-      if (window.innerWidth <= MOBILE_BREAKPOINT) {
-        setIsMobileOpen(false)
+      if (resizeTimeoutRef.current) {
+        clearTimeout(resizeTimeoutRef.current)
       }
+      
+      resizeTimeoutRef.current = setTimeout(() => {
+        if (window.innerWidth <= MOBILE_BREAKPOINT) {
+          setIsMobileOpen(false)
+        }
+      }, 150) // Debounce de 150ms
     }
 
-    window.addEventListener('resize', handleResize)
-    return () => window.removeEventListener('resize', handleResize)
+    window.addEventListener('resize', handleResize, { passive: true })
+    return () => {
+      window.removeEventListener('resize', handleResize)
+      if (resizeTimeoutRef.current) {
+        clearTimeout(resizeTimeoutRef.current)
+      }
+    }
   }, [])
 
   const [isLoggingOut, setIsLoggingOut] = useState(false);
 
-  const handleLogout = async () => {
+  const handleLogout = useCallback(async () => {
     try {
       setIsLoggingOut(true);
       await logout();
@@ -282,15 +355,15 @@ export default function StandardSidebar() {
     } finally {
       setIsLoggingOut(false);
     }
-  }
+  }, [logout])
 
   const toggleSidebar = useCallback(() => {
     if (window.innerWidth <= MOBILE_BREAKPOINT) {
-      setIsMobileOpen(!isMobileOpen)
+      setIsMobileOpen(prev => !prev)
     } else {
-      setIsCollapsed(!isCollapsed)
+      setIsCollapsed(prev => !prev)
     }
-  }, [isMobileOpen, isCollapsed])
+  }, [])
 
   const closeMobileSidebar = useCallback(() => {
     if (window.innerWidth <= MOBILE_BREAKPOINT) {
@@ -298,439 +371,197 @@ export default function StandardSidebar() {
     }
   }, [])
 
-  const getNavItems = useCallback((): NavSection[] => {
-    // Get dashboard route based on role
+  const navItems = useMemo(() => {
     const getDashboardRoute = (role: UserRole): string => {
-      const dashboardMap = {
+      const dashboardMap: Record<UserRole, string> = {
         [UserRole.SYSTEM_ADMIN]: '/dashboard/system-admin',
         [UserRole.INSTITUTION_MANAGER]: '/dashboard/institution-manager',
         [UserRole.COORDINATOR]: '/dashboard/coordinator',
         [UserRole.TEACHER]: '/dashboard/teacher',
         [UserRole.STUDENT]: '/dashboard/student',
-        [UserRole.GUARDIAN]: '/dashboard/guardian'
+        [UserRole.GUARDIAN]: '/dashboard/guardian',
       };
       return dashboardMap[role] || '/dashboard';
     };
 
     const dashboardRoute = getDashboardRoute(userRole);
 
-    // Common items for all users
     const commonItems: NavSection[] = [
       {
         section: 'Principal',
-        items: [
-          {
-            href: dashboardRoute,
-            icon: 'dashboard',
-            label: 'Painel Principal'
-          }
-        ]
-      }
+        items: [{ href: dashboardRoute, icon: 'dashboard', label: 'Painel Principal' }],
+      },
     ];
 
-    // Role-specific sections
-    let roleSpecificItems: NavSection[] = [];
+    const roleSpecificItemsMap: Record<UserRole, NavSection[]> = {
+      [UserRole.SYSTEM_ADMIN]: getSystemAdminMenuItems(),
+      [UserRole.INSTITUTION_MANAGER]: [
+        {
+          section: 'Gestão Institucional',
+          items: [
+            { href: '/institution/schools', icon: 'school', label: 'Escolas', permission: 'canManageSchools' },
+            { href: '/institution/classes', icon: 'class', label: 'Turmas', permission: 'canManageClasses' },
+            { href: '/institution/teachers', icon: 'groups', label: 'Professores', permission: 'canManageInstitutionUsers' },
+            { href: '/institution/students', icon: 'group', label: 'Alunos', permission: 'canManageInstitutionUsers' },
+          ],
+        },
+        {
+          section: 'Acadêmico',
+          items: [
+            { href: '/institution/courses', icon: 'menu_book', label: 'Cursos', permission: 'canManageCurriculum' },
+            { href: '/institution/curriculum', icon: 'assignment', label: 'Currículo', permission: 'canManageCurriculum' },
+            { href: '/institution/calendar', icon: 'calendar_month', label: 'Calendário', permission: 'canManageSchedules' },
+          ],
+        },
+        {
+          section: 'Relatórios',
+          items: [
+            { href: '/institution/reports', icon: 'analytics', label: 'Relatórios Institucionais', permission: 'canViewInstitutionAnalytics' },
+            { href: '/institution/performance', icon: 'assessment', label: 'Desempenho Acadêmico', permission: 'canViewAcademicAnalytics' },
+            { href: '/institution/financial', icon: 'payments', label: 'Financeiro', permission: 'canViewInstitutionAnalytics' },
+          ],
+        },
+      ],
+      [UserRole.COORDINATOR]: [
+        {
+          section: 'Coordenação Acadêmica',
+          items: [
+            { href: '/coordinator/cycles', icon: 'school', label: 'Ciclos Educacionais', permission: 'canManageCycles' },
+            { href: '/coordinator/curriculum', icon: 'menu_book', label: 'Gestão Curricular', permission: 'canManageCurriculum' },
+            { href: '/coordinator/teachers', icon: 'groups', label: 'Corpo Docente', permission: 'canMonitorTeachers' },
+            { href: '/coordinator/evaluations', icon: 'grade', label: 'Avaliações', permission: 'canViewAcademicAnalytics' },
+          ],
+        },
+        {
+          section: 'Acompanhamento',
+          items: [
+            { href: '/coordinator/performance', icon: 'trending_up', label: 'Desempenho', permission: 'canViewAcademicAnalytics' },
+            { href: '/coordinator/planning', icon: 'event_note', label: 'Planejamento', permission: 'canManageCurriculum' },
+            { href: '/coordinator/meetings', icon: 'groups_2', label: 'Reuniões', permission: 'canCoordinateDepartments' },
+          ],
+        },
+        {
+          section: 'Qualidade',
+          items: [
+            { href: '/coordinator/indicators', icon: 'analytics', label: 'Indicadores', permission: 'canViewAcademicAnalytics' },
+            { href: '/coordinator/reports', icon: 'assessment', label: 'Relatórios', permission: 'canViewAcademicAnalytics' },
+            { href: '/coordinator/improvements', icon: 'tips_and_updates', label: 'Melhorias', permission: 'canCoordinateDepartments' },
+          ],
+        },
+      ],
+      [UserRole.TEACHER]: [
+        {
+          section: 'Área do Professor',
+          items: [
+            { href: '/teacher/courses', icon: 'school', label: 'Gestão de Cursos', permission: 'canManageLessonPlans' },
+            { href: '/teacher/assignments', icon: 'assignment', label: 'Gestão de Atividades', permission: 'canManageLessonPlans' },
+            { href: '/teacher/live-classes', icon: 'video_camera_front', label: 'Gestão de Aulas ao Vivo', permission: 'canManageLessonPlans' },
+            { href: '/teacher/lessons', icon: 'menu_book', label: 'Gestão de Aulas', permission: 'canManageLessonPlans' },
+          ],
+        },
+        {
+          section: 'Gestão da Turma',
+          items: [
+            { href: '/teacher/students', icon: 'group', label: 'Alunos', permission: 'canCommunicateWithStudents' },
+            { href: '/teacher/grades', icon: 'grade', label: 'Avaliações', permission: 'canManageGrades' },
+            { href: '/teacher/reports', icon: 'analytics', label: 'Relatórios', permission: 'canManageGrades' },
+            { href: '/teacher/forum', icon: 'forum', label: 'Fórum', permission: 'canCommunicateWithStudents' },
+          ],
+        },
+        {
+          section: 'Portais',
+          items: [
+            { href: '/portal/videos', icon: 'play_circle', label: 'Portal de Vídeos', permission: 'canUploadResources' },
+            { href: '/portal/books', icon: 'auto_stories', label: 'Portal de Literatura', permission: 'canUploadResources' },
+          ],
+        },
+      ],
+      [UserRole.STUDENT]: [
+        {
+          section: 'Área Acadêmica',
+          items: [
+            { href: '/student/courses', icon: 'school', label: 'Meus Cursos', permission: 'canAccessLearningMaterials' },
+            { href: '/student/assignments', icon: 'assignment', label: 'Atividades', permission: 'canSubmitAssignments' },
+            { href: '/student/live-classes', icon: 'video_camera_front', label: 'Aulas ao Vivo', permission: 'canViewOwnSchedule' },
+            { href: '/student/lessons', icon: 'school', label: 'Aulas', permission: 'canAccessLearningMaterials' },
+            { href: '/student/forum', icon: 'forum', label: 'Fórum', permission: 'canCommunicateWithStudents' },
+          ],
+        },
+        {
+          section: 'Portais',
+          items: [
+            { href: '/portal/books', icon: 'auto_stories', label: 'Portal de Literatura', permission: 'canAccessLearningMaterials' },
+            { href: '/portal/student', icon: 'person_outline', label: 'Portal do Aluno', permission: 'canAccessLearningMaterials' },
+          ],
+        },
+      ],
+      [UserRole.GUARDIAN]: [
+        {
+          section: 'Acompanhamento',
+          items: [
+            { href: '/guardian/children', icon: 'child_care', label: 'Meus Filhos', permission: 'canViewChildrenInfo' },
+            { href: '/guardian/grades', icon: 'grade', label: 'Notas', permission: 'canViewChildrenGrades' },
+            { href: '/guardian/attendance', icon: 'fact_check', label: 'Frequência', permission: 'canViewChildrenAttendance' },
+            { href: '/guardian/assignments', icon: 'assignment', label: 'Atividades', permission: 'canViewChildrenAssignments' },
+            { href: '/dashboard/guardian/momentos', icon: 'photo_camera', label: 'Momentos', permission: 'canViewChildrenInfo' },
+          ],
+        },
+        {
+          section: 'Comunicação',
+          items: [
+            { href: '/guardian/messages', icon: 'mail', label: 'Mensagens', permission: 'canCommunicateWithSchool' },
+            { href: '/guardian/meetings', icon: 'video_call', label: 'Reuniões', permission: 'canScheduleMeetings' },
+            { href: '/guardian/announcements', icon: 'campaign', label: 'Comunicados', permission: 'canReceiveAnnouncements' },
+          ],
+        },
+        {
+          section: 'Financeiro',
+          items: [
+            { href: '/guardian/payments', icon: 'payments', label: 'Pagamentos', permission: 'canViewPayments' },
+            { href: '/guardian/boletos', icon: 'receipt', label: 'Boletos', permission: 'canViewBoletos' },
+            { href: '/guardian/financial-history', icon: 'history', label: 'Histórico', permission: 'canViewFinancialHistory' },
+          ],
+        },
+      ],
+    };
 
-    switch (userRole) {
-      case UserRole.SYSTEM_ADMIN:
-        // Usa o menu completo do SystemAdminMenu
-        roleSpecificItems = getSystemAdminMenuItems();
-        break;
+    const roleSpecificItems = roleSpecificItemsMap[userRole] || [];
 
-      case UserRole.INSTITUTION_MANAGER:
-        roleSpecificItems = [
-          {
-            section: 'Gestão Institucional',
-            items: [
-              {
-                href: '/institution/schools',
-                icon: 'school',
-                label: 'Escolas',
-                permission: 'canManageSchools'
-              },
-              {
-                href: '/institution/classes',
-                icon: 'class',
-                label: 'Turmas',
-                permission: 'canManageClasses'
-              },
-              {
-                href: '/institution/teachers',
-                icon: 'groups',
-                label: 'Professores',
-                permission: 'canManageInstitutionUsers'
-              },
-              {
-                href: '/institution/students',
-                icon: 'group',
-                label: 'Alunos',
-                permission: 'canManageInstitutionUsers'
-              }
-            ]
-          },
-          {
-            section: 'Acadêmico',
-            items: [
-              {
-                href: '/institution/courses',
-                icon: 'menu_book',
-                label: 'Cursos',
-                permission: 'canManageCurriculum'
-              },
-              {
-                href: '/institution/curriculum',
-                icon: 'assignment',
-                label: 'Currículo',
-                permission: 'canManageCurriculum'
-              },
-              {
-                href: '/institution/calendar',
-                icon: 'calendar_month',
-                label: 'Calendário',
-                permission: 'canManageSchedules'
-              }
-            ]
-          },
-          {
-            section: 'Relatórios',
-            items: [
-              {
-                href: '/institution/reports',
-                icon: 'analytics',
-                label: 'Relatórios Institucionais',
-                permission: 'canViewInstitutionAnalytics'
-              },
-              {
-                href: '/institution/performance',
-                icon: 'assessment',
-                label: 'Desempenho Acadêmico',
-                permission: 'canViewAcademicAnalytics'
-              },
-              {
-                href: '/institution/financial',
-                icon: 'payments',
-                label: 'Financeiro',
-                permission: 'canViewInstitutionAnalytics'
-              }
-            ]
-          }
-        ];
-        break;
-
-      case UserRole.COORDINATOR:
-        roleSpecificItems = [
-          {
-            section: 'Coordenação Acadêmica',
-            items: [
-              {
-                href: '/coordinator/cycles',
-                icon: 'school',
-                label: 'Ciclos Educacionais',
-                permission: 'canManageCycles'
-              },
-              {
-                href: '/coordinator/curriculum',
-                icon: 'menu_book',
-                label: 'Gestão Curricular',
-                permission: 'canManageCurriculum'
-              },
-              {
-                href: '/coordinator/teachers',
-                icon: 'groups',
-                label: 'Corpo Docente',
-                permission: 'canMonitorTeachers'
-              },
-              {
-                href: '/coordinator/evaluations',
-                icon: 'grade',
-                label: 'Avaliações',
-                permission: 'canViewAcademicAnalytics'
-              }
-            ]
-          },
-          {
-            section: 'Acompanhamento',
-            items: [
-              {
-                href: '/coordinator/performance',
-                icon: 'trending_up',
-                label: 'Desempenho',
-                permission: 'canViewAcademicAnalytics'
-              },
-              {
-                href: '/coordinator/planning',
-                icon: 'event_note',
-                label: 'Planejamento',
-                permission: 'canManageCurriculum'
-              },
-              {
-                href: '/coordinator/meetings',
-                icon: 'groups_2',
-                label: 'Reuniões',
-                permission: 'canCoordinateDepartments'
-              }
-            ]
-          },
-          {
-            section: 'Qualidade',
-            items: [
-              {
-                href: '/coordinator/indicators',
-                icon: 'analytics',
-                label: 'Indicadores',
-                permission: 'canViewAcademicAnalytics'
-              },
-              {
-                href: '/coordinator/reports',
-                icon: 'assessment',
-                label: 'Relatórios',
-                permission: 'canViewAcademicAnalytics'
-              },
-              {
-                href: '/coordinator/improvements',
-                icon: 'tips_and_updates',
-                label: 'Melhorias',
-                permission: 'canCoordinateDepartments'
-              }
-            ]
-          }
-        ];
-        break;
-
-      case UserRole.TEACHER:
-        roleSpecificItems = [
-          {
-            section: 'Área do Professor',
-            items: [
-              {
-                href: '/teacher/courses',
-                icon: 'school',
-                label: 'Gestão de Cursos',
-                permission: 'canManageLessonPlans'
-              },
-              {
-                href: '/teacher/assignments',
-                icon: 'assignment',
-                label: 'Gestão de Atividades',
-                permission: 'canManageLessonPlans'
-              },
-              {
-                href: '/teacher/live-classes',
-                icon: 'video_camera_front',
-                label: 'Gestão de Aulas ao Vivo',
-                permission: 'canManageLessonPlans'
-              },
-              {
-                href: '/teacher/lessons',
-                icon: 'menu_book',
-                label: 'Gestão de Aulas',
-                permission: 'canManageLessonPlans'
-              }
-            ]
-          },
-          {
-            section: 'Gestão da Turma',
-            items: [
-              {
-                href: '/teacher/students',
-                icon: 'group',
-                label: 'Alunos',
-                permission: 'canCommunicateWithStudents'
-              },
-              {
-                href: '/teacher/grades',
-                icon: 'grade',
-                label: 'Avaliações',
-                permission: 'canManageGrades'
-              },
-              {
-                href: '/teacher/reports',
-                icon: 'analytics',
-                label: 'Relatórios',
-                permission: 'canManageGrades'
-              },
-              {
-                href: '/teacher/forum',
-                icon: 'forum',
-                label: 'Fórum',
-                permission: 'canCommunicateWithStudents'
-              }
-            ]
-          },
-          {
-            section: 'Portais',
-            items: [
-              {
-                href: '/portal/videos',
-                icon: 'play_circle',
-                label: 'Portal de Vídeos',
-                permission: 'canUploadResources'
-              },
-              {
-                href: '/portal/books',
-                icon: 'auto_stories',
-                label: 'Portal de Literatura',
-                permission: 'canUploadResources'
-              }
-            ]
-          }
-        ];
-        break;
-
-      case UserRole.STUDENT:
-        roleSpecificItems = [
-          {
-            section: 'Área Acadêmica',
-            items: [
-              {
-                href: '/student/courses',
-                icon: 'school',
-                label: 'Meus Cursos',
-                permission: 'canAccessLearningMaterials'
-              },
-              {
-                href: '/student/assignments',
-                icon: 'assignment',
-                label: 'Atividades',
-                permission: 'canSubmitAssignments'
-              },
-              {
-                href: '/student/live-classes',
-                icon: 'video_camera_front',
-                label: 'Aulas ao Vivo',
-                permission: 'canViewOwnSchedule'
-              },
-              {
-                href: '/student/lessons',
-                icon: 'school',
-                label: 'Aulas',
-                permission: 'canAccessLearningMaterials'
-              },
-              {
-                href: '/student/forum',
-                icon: 'forum',
-                label: 'Fórum',
-                permission: 'canCommunicateWithStudents'
-              }
-            ]
-          },
-          {
-            section: 'Portais',
-            items: [
-              {
-                href: '/portal/books',
-                icon: 'auto_stories',
-                label: 'Portal de Literatura',
-                permission: 'canAccessLearningMaterials'
-              },
-              {
-                href: '/portal/student',
-                icon: 'person_outline',
-                label: 'Portal do Aluno',
-                permission: 'canAccessLearningMaterials'
-              }
-            ]
-          }
-        ];
-        break;
-
-      case UserRole.GUARDIAN:
-        roleSpecificItems = [
-          {
-            section: 'Acompanhamento',
-            items: [
-              {
-                href: '/guardian/children',
-                icon: 'child_care',
-                label: 'Meus Filhos',
-                permission: 'canViewChildrenInfo'
-              },
-              {
-                href: '/guardian/grades',
-                icon: 'grade',
-                label: 'Notas',
-                permission: 'canViewChildrenGrades'
-              },
-              {
-                href: '/guardian/attendance',
-                icon: 'fact_check',
-                label: 'Frequência',
-                permission: 'canViewChildrenAttendance'
-              },
-              {
-                href: '/guardian/assignments',
-                icon: 'assignment',
-                label: 'Atividades',
-                permission: 'canViewChildrenAssignments'
-              },
-              {
-                href: '/dashboard/guardian/momentos',
-                icon: 'photo_camera',
-                label: 'Momentos',
-                permission: 'canViewChildrenInfo'
-              }
-            ]
-          },
-          {
-            section: 'Comunicação',
-            items: [
-              {
-                href: '/guardian/messages',
-                icon: 'mail',
-                label: 'Mensagens',
-                permission: 'canCommunicateWithSchool'
-              },
-              {
-                href: '/guardian/meetings',
-                icon: 'video_call',
-                label: 'Reuniões',
-                permission: 'canScheduleMeetings'
-              },
-              {
-                href: '/guardian/announcements',
-                icon: 'campaign',
-                label: 'Comunicados',
-                permission: 'canReceiveAnnouncements'
-              }
-            ]
-          },
-          {
-            section: 'Financeiro',
-            items: [
-              {
-                href: '/guardian/payments',
-                icon: 'payments',
-                label: 'Pagamentos',
-                permission: 'canViewPayments'
-              },
-              {
-                href: '/guardian/boletos',
-                icon: 'receipt',
-                label: 'Boletos',
-                permission: 'canViewBoletos'
-              },
-              {
-                href: '/guardian/financial-history',
-                icon: 'history',
-                label: 'Histórico',
-                permission: 'canViewFinancialHistory'
-              }
-            ]
-          }
-        ];
-        break;
-
-      default:
-        roleSpecificItems = [];
+    if (userRole === UserRole.SYSTEM_ADMIN) {
+      return roleSpecificItems;
     }
 
     return [...commonItems, ...roleSpecificItems];
   }, [userRole]);
 
-  // Para o SYSTEM_ADMIN, apenas usamos os itens específicos do papel, sem adicionar os itens comuns
-  const navItems = userRole === UserRole.SYSTEM_ADMIN 
-    ? getSystemAdminMenuItems() 
-    : getNavItems();
+  // Usar o hook de permissões de seções para filtrar todo o menu
+  const { filteredSections, stats } = useMenuSectionPermissions(
+    navItems.map(section => ({
+      section: section.section,
+      items: section.items.map(item => ({
+        href: item.href,
+        label: item.label,
+        permission: item.permission
+      }))
+    })),
+    {
+      autoRevalidate: true,
+      onPermissionsUpdate: (permissions) => {
+        console.log(`🔐 [StandardSidebar] Permissões de menu atualizadas:`, permissions);
+        console.log(`📊 [StandardSidebar] Estatísticas: ${stats.allowed}/${stats.total} itens permitidos (${stats.percentage}%)`);
+      }
+    }
+  );
+
+  // Mapear de volta para NavSection
+  const finalNavItems = useMemo(() => {
+    return filteredSections.map(section => ({
+      section: section.section,
+      items: navItems
+        .find(nav => nav.section === section.section)?.items
+        .filter(item => section.items.some(filtered => filtered.href === item.href)) || []
+    }));
+  }, [filteredSections, navItems]);
 
   return (
     <>
@@ -772,25 +603,35 @@ export default function StandardSidebar() {
       </motion.button>
 
       {/* Backdrop for mobile */}
-      {isMobileOpen && (
-        <motion.div
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          exit={{ opacity: 0 }}
-          className="fixed inset-0 bg-black bg-opacity-50 z-[9997] md:hidden"
-          onClick={closeMobileSidebar}
-          aria-hidden="true"
-        />
-      )}
+      <AnimatePresence>
+        {isMobileOpen && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            transition={{ duration: 0.2 }}
+            className="fixed inset-0 bg-black bg-opacity-50 z-[9997] md:hidden"
+            onClick={closeMobileSidebar}
+            aria-hidden="true"
+          />
+        )}
+      </AnimatePresence>
 
       {/* Main Sidebar Container */}
       <motion.div
-        initial={{ x: -300 }}
-        animate={{ x: 0 }}
+        initial={false}
+        animate={{
+          width: isCollapsed ? COLLAPSED_WIDTH : SIDEBAR_WIDTH,
+          x: isMobileOpen ? 0 : (window.innerWidth <= MOBILE_BREAKPOINT ? -300 : 0)
+        }}
+        transition={{
+          type: "spring",
+          stiffness: 300,
+          damping: 30,
+          mass: 0.8
+        }}
         id="sidebar-menu"
-        className={`fixed md:sticky top-0 h-screen transition-all duration-300 ease-in-out z-[9999] overflow-hidden
-          ${isMobileOpen ? 'translate-x-0' : '-translate-x-full md:translate-x-0'}`}
-        style={{ width: isCollapsed ? COLLAPSED_WIDTH : SIDEBAR_WIDTH }}
+        className={`fixed md:sticky top-0 h-screen z-[9999] overflow-hidden`}
         role="navigation"
         aria-label="Menu principal"
       >
@@ -839,11 +680,17 @@ export default function StandardSidebar() {
           <UserProfile user={user} isCollapsed={isCollapsed} theme={theme} userRole={userRole} />
 
           {/* Navigation */}
-          <nav className="flex-1 px-1 py-2 overflow-y-auto overflow-x-hidden scrollbar-thin">
+          <nav
+            className="flex-1 px-1 py-2 overflow-y-auto overflow-x-hidden scrollbar-thin"
+            style={{
+              scrollBehavior: 'smooth',
+              overscrollBehavior: 'contain'
+            }}
+          >
             <div className="space-y-1">
-              {navItems.map((section, idx) => (
+              {finalNavItems.map((section: NavSection, idx: number) => (
                 <NavSection
-                  key={idx}
+                  key={`${section.section}-${idx}`}
                   section={section.section}
                   items={section.items}
                   pathname={pathname}

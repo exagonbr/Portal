@@ -7,6 +7,7 @@ import { formatDate, formatYear } from '@/utils/date'
 // Importar o UniversalVideoPlayer em vez dos players customizados
 import UniversalVideoPlayer from '@/components/UniversalVideoPlayer'
 import DashboardLayout from '@/components/dashboard/DashboardLayout'
+import { getCurrentToken } from '@/utils/token-validator'
 
 interface TVShowListItem {
   id: number
@@ -319,6 +320,7 @@ export default function TVShowsManagePage() {
 
       const token = getAuthToken()
       const headers: Record<string, string> = {
+        Authorization: 'Bearer ' + getCurrentToken(),
         'Content-Type': 'application/json',
       }
       
@@ -334,7 +336,7 @@ export default function TVShowsManagePage() {
       if (response.ok) {
         const data = await response.json()
         if (data.success) {
-          const tvShowsData = data.data?.tvShows || []
+          const tvShowsData = data.data?.data || []
           
           // Log para debug
           console.log('✅ TV Shows carregados:', tvShowsData.length)
@@ -344,8 +346,8 @@ export default function TVShowsManagePage() {
           })))
           
           setTvShows(tvShowsData)
-          setTotalPages(data.data?.totalPages || 1)
-          setCurrentPage(data.data?.page || 1)
+          setTotalPages(data.data?.meta?.totalPages || 1)
+          setCurrentPage(data.data?.meta?.page || 1)
           
           // Recalcular estatísticas após carregar os dados
           if (page === 1) {
@@ -382,6 +384,7 @@ export default function TVShowsManagePage() {
     try {
       const token = getAuthToken()
       const headers: Record<string, string> = {
+        Authorization: 'Bearer ' + getCurrentToken(),
         'Content-Type': 'application/json',
       }
       
@@ -397,8 +400,8 @@ export default function TVShowsManagePage() {
       
       if (response.ok) {
         const data = await response.json()
-        if (data.success && data.data?.tvShows) {
-          const allCollections = data.data.tvShows
+        if (data.success && data.data?.data) {
+          const allCollections = data.data.data
           
           const totalCollections = allCollections.length
           
@@ -512,6 +515,7 @@ export default function TVShowsManagePage() {
       
       const token = getAuthToken()
       const headers: Record<string, string> = {
+        Authorization: 'Bearer ' + getCurrentToken(),
         'Content-Type': 'application/json',
       }
       

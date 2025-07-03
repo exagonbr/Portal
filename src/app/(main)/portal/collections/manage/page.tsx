@@ -9,6 +9,7 @@ import {
 } from 'lucide-react'
 import { formatDate, formatYear } from '@/utils/date'
 import DashboardLayout from '@/components/dashboard/DashboardLayout'
+import { getCurrentToken } from '@/utils/token-validator'
 
 interface TVShowListItem {
   id: number
@@ -437,6 +438,7 @@ export default function TVShowsManagePage() {
 
       const token = getAuthToken()
       const headers: Record<string, string> = {
+        Authorization: 'Bearer ' + getCurrentToken(),
         'Content-Type': 'application/json',
       }
       
@@ -484,6 +486,7 @@ export default function TVShowsManagePage() {
     try {
       const token = getAuthToken()
       const headers: Record<string, string> = {
+        Authorization: 'Bearer ' + getCurrentToken(),
         'Content-Type': 'application/json',
       }
       
@@ -608,6 +611,7 @@ export default function TVShowsManagePage() {
       
       const token = getAuthToken()
       const headers: Record<string, string> = {
+        Authorization: 'Bearer ' + getCurrentToken(),
         'Content-Type': 'application/json',
       }
       

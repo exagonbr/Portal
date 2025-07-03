@@ -7,7 +7,7 @@
 const jwt = require('jsonwebtoken');
 const fetch = require('node-fetch');
 
-const JWT_SECRET = 'ExagonTech';
+const JWT_SECRET = 'SaberconPortal2025_SuperSecretKey_ProductionReady_XYZ789';
 const BACKEND_URL = 'https://portal.sabercon.com.br/api';
 const FRONTEND_URL = 'https://portal.sabercon.com.br/api';
 

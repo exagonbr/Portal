@@ -13,6 +13,7 @@ declare global {
 
 export const requireAuth: RequestHandler = async (req: Request, res: Response, next: NextFunction) => {
   const authHeader = req.headers.authorization;
+  const authHeader = req.headers.authorization;
 
   if (!authHeader || !authHeader.startsWith('Bearer ')) {
     res.status(401).json({ success: false, message: 'No token provided or invalid format.' });
@@ -37,7 +38,7 @@ export const requireAuth: RequestHandler = async (req: Request, res: Response, n
     }
 
     const user = await db('users')
-      .where({ id: decoded.id, is_active: true })
+      .where({ id: parseInt(decoded.id), is_active: true })
       .first();
 
     if (!user) {

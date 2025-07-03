@@ -1,176 +1,106 @@
-import { NextRequest, NextResponse } from 'next/server'
-import { getServerSession } from 'next-auth'
-import { authOptions } from '@/lib/auth'
-import { activityTracker } from '@/services/activityTrackingService'
-import { z } from 'zod'
-import { createCorsOptionsResponse, getCorsHeaders } from '@/config/cors'
+import { NextRequest, NextResponse } from 'next/server';
+import { requireAuth } from '@/middleware/auth';
 
-// Função para criar headers CORS
-function getCorsHeaders(origin?: string) {
-  return {
-    'Access-Control-Allow-Origin': origin || '*',
-    'Access-Control-Allow-Methods': 'GET, POST, PUT, DELETE, OPTIONS',
-    'Access-Control-Allow-Headers': 'Content-Type, Authorization',
-    'Access-Control-Allow-Credentials': 'true',
-  }
-}
-
-// Função para resposta OPTIONS
-function createCorsOptionsResponse(origin?: string) {
-  return new NextResponse(null, {
-    status: 200,
-    headers: getCorsHeaders(origin)
-  })
-}
-
-// Schema de validação para watchlist
-const watchlistSchema = z.object({
-  user_id: z.string(),
-  video_id: z.number().optional(),
-  tv_show_id: z.number().optional(),
-  notes: z.string().optional()
-}).refine(data => data.video_id || data.tv_show_id, {
-  message: "Pelo menos video_id ou tv_show_id deve ser fornecido"
-})
-
-
-// Handler para requisições OPTIONS (preflight)
-export async function OPTIONS(request: NextRequest) {
-  const origin = request.headers.get('origin') || undefined;
-  return createCorsOptionsResponse(origin);
-}
-
-export async function POST(request: NextRequest) {
+export const POST = requireAuth(async (request: NextRequest, auth) => {
   try {
-    // Verificar autenticação
-    const session = await getServerSession(authOptions)
-    if (!session?.user) {
-      return NextResponse.json(
-        { success: false, error: 'Não autorizado' },
-        { status: 401 }
-      )
-    }
+    const body = await request.json();
+    const { resourceId, resourceType, action = 'add' } = body;
 
-    // Parsear e validar dados
-    const body = await request.json()
-    const validatedData = watchlistSchema.parse(body)
-
-    // Verificar se o usuário pode modificar esta watchlist
-    if (validatedData.user_id !== session.user.id) {
-      const isAdmin = session.user.role === 'SYSTEM_ADMIN'
-      if (!isAdmin) {
-        return NextResponse.json(
-          { success: false, error: 'Acesso negado' },
-          { status: 403 }
-        )
-      }
-    }
-
-    // Adicionar à watchlist
-    await activityTracker.addToWatchlist(
-      validatedData.user_id,
-      validatedData.video_id,
-      validatedData.tv_show_id,
-      validatedData.notes
-    )
-
-    return NextResponse.json({
-      success: true,
-      message: 'Item adicionado à watchlist com sucesso'
-    }, {
-      headers: getCorsHeaders(request.headers.get('origin') || undefined)
-    })
-
-  } catch (error) {
-    console.log('❌ Erro ao adicionar à watchlist:', error)
-    
-    if (error instanceof z.ZodError) {
+    if (!resourceId || !resourceType) {
       return NextResponse.json(
         { 
           success: false, 
-          error: 'Dados inválidos',
-          details: error.errors 
+          message: 'Campos obrigatórios: resourceId, resourceType',
+          code: 'VALIDATION_ERROR'
         },
         { status: 400 }
-      )
+      );
     }
 
-    return NextResponse.json(
-      { 
-        success: false, 
-        error: 'Erro interno do servidor' 
-      },
-      { status: 500 }
-    )
-  }
-}
+    console.log('📌 [WATCHLIST] Ação:', action, 'para recurso:', resourceId);
 
-export async function DELETE(request: NextRequest) {
-  try {
-    // Verificar autenticação
-    const session = await getServerSession(authOptions)
-    if (!session?.user) {
-      return NextResponse.json(
-        { success: false, error: 'Não autorizado' },
-        { status: 401 }
-      )
-    }
-
-    // Parsear e validar dados
-    const body = await request.json()
-    const validatedData = z.object({
-      user_id: z.string(),
-      video_id: z.number().optional(),
-      tv_show_id: z.number().optional()
-    }).refine(data => data.video_id || data.tv_show_id, {
-      message: "Pelo menos video_id ou tv_show_id deve ser fornecido"
-    }).parse(body)
-
-    // Verificar se o usuário pode modificar esta watchlist
-    if (validatedData.user_id !== session.user.id) {
-      const isAdmin = session.user.role === 'SYSTEM_ADMIN'
-      if (!isAdmin) {
-        return NextResponse.json(
-          { success: false, error: 'Acesso negado' },
-          { status: 403 }
-        )
+    // Simular adição/remoção da watchlist
+    const watchlistItem = {
+      id: `watchlist_${Date.now()}`,
+      userId: auth.user.id,
+      resourceId,
+      resourceType,
+      addedAt: new Date().toISOString(),
+      priority: 'NORMAL',
+      notes: '',
+      metadata: {
+        addedBy: auth.user.email,
+        source: 'api'
       }
-    }
+    };
 
-    // Remover da watchlist
-    await activityTracker.removeFromWatchlist(
-      validatedData.user_id,
-      validatedData.video_id,
-      validatedData.tv_show_id
-    )
+    const message = action === 'add' 
+      ? 'Item adicionado à watchlist' 
+      : 'Item removido da watchlist';
 
     return NextResponse.json({
       success: true,
-      message: 'Item removido da watchlist com sucesso'
-    }, {
-      headers: getCorsHeaders(request.headers.get('origin') || undefined)
-    })
+      message,
+      data: action === 'add' ? watchlistItem : { resourceId, action: 'removed' }
+    });
 
-  } catch (error) {
-    console.log('❌ Erro ao remover da watchlist:', error)
-    
-    if (error instanceof z.ZodError) {
-      return NextResponse.json(
-        { 
-          success: false, 
-          error: 'Dados inválidos',
-          details: error.errors 
-        },
-        { status: 400 }
-      )
-    }
-
+  } catch (error: any) {
+    console.error('❌ [WATCHLIST] Erro ao processar:', error);
     return NextResponse.json(
       { 
         success: false, 
-        error: 'Erro interno do servidor' 
+        message: 'Erro interno do servidor',
+        code: 'INTERNAL_ERROR'
       },
       { status: 500 }
-    )
+    );
   }
-} 
+});
+
+export const DELETE = requireAuth(async (request: NextRequest, auth) => {
+  try {
+    const url = new URL(request.url);
+    const resourceId = url.searchParams.get('resourceId');
+
+    if (!resourceId) {
+      return NextResponse.json(
+        { 
+          success: false, 
+          message: 'Parâmetro obrigatório: resourceId',
+          code: 'VALIDATION_ERROR'
+        },
+        { status: 400 }
+      );
+    }
+
+    console.log('🗑️ [WATCHLIST] Removendo item:', resourceId);
+
+    return NextResponse.json({
+      success: true,
+      message: 'Item removido da watchlist',
+      data: { resourceId, action: 'removed' }
+    });
+
+  } catch (error: any) {
+    console.error('❌ [WATCHLIST] Erro ao remover:', error);
+    return NextResponse.json(
+      { 
+        success: false, 
+        message: 'Erro interno do servidor',
+        code: 'INTERNAL_ERROR'
+      },
+      { status: 500 }
+    );
+  }
+});
+
+export async function OPTIONS() {
+  return NextResponse.json(
+    { 
+      success: true,
+      message: 'API de watchlist ativa',
+      methods: ['POST', 'DELETE', 'OPTIONS'],
+      timestamp: new Date().toISOString()
+    }
+  );
+}

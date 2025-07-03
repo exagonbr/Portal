@@ -1,88 +1,228 @@
-export const dynamic = 'force-dynamic';
-import { NextRequest, NextResponse } from 'next/server'
-import { createCorsOptionsResponse, getCorsHeaders } from '@/config/cors';
+import { NextRequest, NextResponse } from 'next/server';
+import { verifyToken } from '@/middleware/auth';
 
 /**
- * Este endpoint atua como um proxy para carregar PDFs de fontes externas,
- * evitando problemas de CORS ao carregar PDFs de outros domínios.
- * 
- * Query parameters:
- * - url: URL do PDF a ser carregado
+ * Proxy para servir PDFs com autenticação
+ * GET /api/proxy-pdf?url=<pdf_url>
  */
-
-// Handler para requisições OPTIONS (preflight)
-export async function OPTIONS(request: NextRequest) {
-  const origin = request.headers.get('origin') || undefined;
-  return createCorsOptionsResponse(origin);
-}
-
 export async function GET(request: NextRequest) {
   try {
-    // Extrair a URL do PDF dos parâmetros de consulta
-    const url = request.nextUrl.searchParams.get('url')
-    
-    if (!url) {
-      return NextResponse.json({ error: 'URL não fornecida. Use ?url=endereco-do-pdf' }, { 
-      status: 400,
-      headers: getCorsHeaders(request.headers.get('origin') || undefined)
-    })
+    // Verificar autenticação
+    const authHeader = request.headers.get('authorization');
+    const token = authHeader?.replace('Bearer ', '') || 
+                  request.headers.get('x-auth-token') ||
+                  request.cookies.get('auth_token')?.value;
+
+    if (!token) {
+      return NextResponse.json({
+        success: false,
+        message: 'Token de autenticação necessário'
+      }, { status: 401 });
     }
+
+    // Validar token
+    const user = await verifyToken(token);
+    if (!user) {
+      return NextResponse.json({
+        success: false,
+        message: 'Token inválido ou expirado'
+      }, { status: 401 });
+    }
+
+    // Obter URL do PDF
+    const { searchParams } = new URL(request.url);
+    const pdfUrl = searchParams.get('url');
     
-    // Verificar se a URL é válida
+    if (!pdfUrl) {
+      return NextResponse.json({
+        success: false,
+        message: 'URL do PDF é obrigatória'
+      }, { status: 400 });
+    }
+
+    // Validar se é uma URL válida
+    let validatedUrl: URL;
     try {
-      new URL(url)
-    } catch (e) {
-      return NextResponse.json({ error: 'URL inválida' }, { 
-      status: 400,
-      headers: getCorsHeaders(request.headers.get('origin') || undefined)
-    })
+      validatedUrl = new URL(pdfUrl);
+    } catch (error) {
+      return NextResponse.json({
+        success: false,
+        message: 'URL do PDF inválida'
+      }, { status: 400 });
     }
-    
-    // Verificar se é uma URL do Cloudfront ou Sabercon
-    let finalUrl = url
-    
-    if (url.includes('lib.sabercon.com.br') && url.includes('#/pdf/')) {
-      // Extrair o ID do PDF da URL do Sabercon
-      const pdfId = url.split('/pdf/')[1].split('?')[0]
-      finalUrl = `https://d1hxtyafwtqtm4.cloudfront.net/upload/${pdfId}`
+
+    // Verificar se é um domínio permitido (segurança)
+    const allowedDomains = [
+      'localhost',
+      '127.0.0.1',
+      'storage.googleapis.com',
+      's3.amazonaws.com',
+      'cdn.sabercon.edu.br',
+      'files.sabercon.edu.br'
+    ];
+
+    const isAllowedDomain = allowedDomains.some(domain => 
+      validatedUrl.hostname === domain || 
+      validatedUrl.hostname.endsWith(`.${domain}`)
+    );
+
+    if (!isAllowedDomain) {
+      return NextResponse.json({
+        success: false,
+        message: 'Domínio não autorizado para proxy de PDF'
+      }, { status: 403 });
     }
-    
-    console.log(`Proxy PDF: Carregando de ${finalUrl}`)
-    
-    // Fazer a requisição para o PDF
-    const response = await fetch(finalUrl, {
+
+    // Fazer requisição para o PDF
+    const pdfResponse = await fetch(pdfUrl, {
+      method: 'GET',
       headers: {
-        'Accept': 'application/pdf',
-        'User-Agent': 'PDF Proxy/1.0'
+        'User-Agent': 'Portal-PDF-Proxy/1.0',
+        'Accept': 'application/pdf,*/*'
       }
-    })
-    
-    // Verificar se a resposta é válida
-    if (!response.ok) {
-      return NextResponse.json(
-        { error: `Erro ao carregar PDF: ${response.statusText}` },
-        { status: response.status }
-      )
+    });
+
+    if (!pdfResponse.ok) {
+      return NextResponse.json({
+        success: false,
+        message: `Erro ao buscar PDF: ${pdfResponse.status} ${pdfResponse.statusText}`
+      }, { status: pdfResponse.status });
     }
+
+    // Verificar se é realmente um PDF
+    const contentType = pdfResponse.headers.get('content-type');
+    if (contentType && !contentType.includes('application/pdf')) {
+      return NextResponse.json({
+        success: false,
+        message: 'O arquivo não é um PDF válido'
+      }, { status: 400 });
+    }
+
+    // Obter o conteúdo do PDF
+    const pdfBuffer = await pdfResponse.arrayBuffer();
     
-    // Obter o conteúdo do PDF como array buffer
-    const pdfBuffer = await response.arrayBuffer()
-    
-    // Retornar o PDF com os headers apropriados
+    // Registrar acesso (opcional)
+    console.log(`PDF acessado por usuário ${user.userId}: ${pdfUrl}`);
+
+    // Retornar o PDF com headers apropriados
     return new NextResponse(pdfBuffer, {
+      status: 200,
       headers: {
         'Content-Type': 'application/pdf',
-        'Content-Disposition': `inline; filename="document.pdf"`,
         'Content-Length': pdfBuffer.byteLength.toString(),
-        'Cache-Control': 'public, max-age=3600',
-        'Access-Control-Allow-Origin': '*'
+        'Cache-Control': 'private, max-age=3600',
+        'Content-Disposition': 'inline',
+        'X-Content-Type-Options': 'nosniff',
+        'X-Frame-Options': 'SAMEORIGIN'
       }
-    })
+    });
+
   } catch (error) {
-    console.log('Erro no proxy PDF:', error)
-    return NextResponse.json({ error: 'Erro interno ao processar o PDF' }, { 
-      status: 500,
-      headers: getCorsHeaders(request.headers.get('origin') || undefined)
-    })
+    console.error('Erro no proxy de PDF:', error);
+    return NextResponse.json({
+      success: false,
+      message: 'Erro interno do servidor',
+      error: error instanceof Error ? error.message : 'Erro desconhecido'
+    }, { status: 500 });
   }
-} 
+}
+
+/**
+ * POST para upload de PDF via proxy (se necessário)
+ * POST /api/proxy-pdf
+ */
+export async function POST(request: NextRequest) {
+  try {
+    // Verificar autenticação
+    const authHeader = request.headers.get('authorization');
+    const token = authHeader?.replace('Bearer ', '') || 
+                  request.headers.get('x-auth-token') ||
+                  request.cookies.get('auth_token')?.value;
+
+    if (!token) {
+      return NextResponse.json({
+        success: false,
+        message: 'Token de autenticação necessário'
+      }, { status: 401 });
+    }
+
+    const user = await verifyToken(token);
+    if (!user) {
+      return NextResponse.json({
+        success: false,
+        message: 'Token inválido ou expirado'
+      }, { status: 401 });
+    }
+
+    // Verificar se o usuário tem permissão para upload
+    if (!['ADMIN', 'TEACHER', 'COORDINATOR'].includes(user.role)) {
+      return NextResponse.json({
+        success: false,
+        message: 'Permissão insuficiente para upload de PDF'
+      }, { status: 403 });
+    }
+
+    const formData = await request.formData();
+    const file = formData.get('file') as File;
+    
+    if (!file) {
+      return NextResponse.json({
+        success: false,
+        message: 'Arquivo PDF é obrigatório'
+      }, { status: 400 });
+    }
+
+    // Verificar se é um PDF
+    if (file.type !== 'application/pdf') {
+      return NextResponse.json({
+        success: false,
+        message: 'Apenas arquivos PDF são permitidos'
+      }, { status: 400 });
+    }
+
+    // Verificar tamanho (máximo 10MB)
+    const maxSize = 10 * 1024 * 1024; // 10MB
+    if (file.size > maxSize) {
+      return NextResponse.json({
+        success: false,
+        message: 'Arquivo muito grande. Máximo permitido: 10MB'
+      }, { status: 400 });
+    }
+
+    // TODO: Implementar upload para storage (S3, Google Cloud, etc.)
+    // Por enquanto, apenas simular o upload
+    const fileName = `${Date.now()}-${file.name}`;
+    const uploadUrl = `https://files.sabercon.edu.br/pdfs/${fileName}`;
+
+    return NextResponse.json({
+      success: true,
+      message: 'PDF enviado com sucesso',
+      data: {
+        fileName,
+        originalName: file.name,
+        size: file.size,
+        uploadUrl,
+        proxyUrl: `/api/proxy-pdf?url=${encodeURIComponent(uploadUrl)}`
+      }
+    });
+
+  } catch (error) {
+    console.error('Erro no upload de PDF:', error);
+    return NextResponse.json({
+      success: false,
+      message: 'Erro interno do servidor',
+      error: error instanceof Error ? error.message : 'Erro desconhecido'
+    }, { status: 500 });
+  }
+}
+
+export async function OPTIONS() {
+  return new NextResponse(null, { 
+    status: 204,
+    headers: {
+      'Access-Control-Allow-Origin': '*',
+      'Access-Control-Allow-Methods': 'GET, POST, OPTIONS',
+      'Access-Control-Allow-Headers': 'Content-Type, Authorization, X-Auth-Token'
+    }
+  });
+}

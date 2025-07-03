@@ -4,7 +4,7 @@
 
 import { authService } from '../services/authService';
 
-const JWT_SECRET = process.env.JWT_SECRET || 'ExagonTech';
+const JWT_SECRET = 'SaberconPortal2025_SuperSecretKey_ProductionReady_XYZ789';
 
 interface TokenPayload {
   userId: string;

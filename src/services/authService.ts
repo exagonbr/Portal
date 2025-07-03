@@ -11,7 +11,6 @@ export interface LoginResponse {
   success: boolean;
   user?: User;
   message?: string;
-  token?: string;
 }
 
 export interface RegisterResponse {
@@ -43,7 +42,7 @@ export class AuthService {
 
       // Salva o token e dados do usuário
       if (typeof window !== 'undefined') {
-        localStorage.setItem('auth_token', token);
+        localStorage.setItem('accessToken', token);
       }
 
       // Converte UserResponseDto para User (compatibilidade)
@@ -51,8 +50,7 @@ export class AuthService {
 
       return {
         success: true,
-        user: compatibleUser,
-        token: token
+        user: compatibleUser
       };
     } catch (error) {
       console.log('Erro no login:', error);
@@ -114,11 +112,11 @@ export class AuthService {
         };
       }
 
-      const { user, accessToken } = response.data;
+      const { user, token } = response.data;
 
       // Salva o token e dados do usuário
       if (typeof window !== 'undefined') {
-        localStorage.setItem('accessToken', accessToken);
+        localStorage.setItem('accessToken', token);
       }
 
       // Converte UserResponseDto para User (compatibilidade)
@@ -257,15 +255,15 @@ export class AuthService {
 
   private convertToCompatibleUser(apiUser: UserResponseDto): User {
     // Mapear role_id para role baseado no UserWithRoleDto se disponível
-    let role: UserRole = 'student'; // default
+    let role: UserRole = UserRole.STUDENT; // default
     if ('role_name' in apiUser) {
       const roleMapping: Record<string, UserRole> = {
-        'Aluno': 'student',
-        'Professor': 'teacher',
-        'Gestor': 'manager',
-        'Administrador': 'admin',
-        'Coordenador Acadêmico': 'academic_coordinator',
-        'Responsável': 'guardian'
+        'Aluno': UserRole.STUDENT,
+        'Professor': UserRole.TEACHER,
+        'Gestor': UserRole.INSTITUTION_MANAGER,
+        'Administrador': UserRole.SYSTEM_ADMIN,
+        'Coordenador Acadêmico': UserRole.COORDINATOR,
+        'Responsável': UserRole.GUARDIAN
       };
       role = roleMapping[(apiUser as UserWithRoleDto).role_name] || 'student';
     }
@@ -298,12 +296,21 @@ export const getCurrentUser = () => authService.getCurrentUser();
 export const logout = () => authService.logout();
 export const isAuthenticated = () => authService.isAuthenticated();
 
+/**
+ * Obtém o token de autenticação do localStorage
+ * Função utilitária para compatibilidade com outros serviços
+ */
+export const getAuthToken = (): string | null => {
+  if (typeof window === 'undefined') return null;
+  return localStorage.getItem('accessToken');
+};
+
 // Funções de gerenciamento de usuários (mantidas para compatibilidade)
 export const listUsers = async (): Promise<User[]> => {
   try {
     const { userService } = await import('./userService');
     const result = await userService.getUsers();
-    return result.items.map(user => authService['convertToCompatibleUser'](user));
+    return result.items.map(user => authService['convertToCompatibleUser'](user as any));
   } catch (error) {
     console.log('Erro ao listar usuários:', error);
     return [];
@@ -316,21 +323,19 @@ export const createUser = async (userData: Omit<User, 'id'>): Promise<User> => {
     
     // Mapear role para role_id - seria melhor buscar roles reais da API
     const roleMapping: Record<UserRole, string> = {
-      'student': 'student-role-id',
-      'teacher': 'teacher-role-id', 
-      'admin': 'admin-role-id',
-      'manager': 'manager-role-id',
-      'system_admin': 'system-admin-role-id',
-      'institution_manager': 'institution-manager-role-id',
-      'academic_coordinator': 'academic-coordinator-role-id',
-      'guardian': 'guardian-role-id'
+      'STUDENT': 'student-role-id',
+      'TEACHER': 'teacher-role-id', 
+      'SYSTEM_ADMIN': 'admin-role-id',
+      'INSTITUTION_MANAGER': 'manager-role-id',
+      'COORDINATOR': 'academic-coordinator-role-id',
+      'GUARDIAN': 'guardian-role-id'
     };
 
     const createData = {
       email: userData.email,
       password: 'temp123', // Senha temporária
       name: userData.name,
-      role_id: (userData.role && roleMapping[userData.role as UserRole]) || roleMapping['student'],
+      role_id: (userData.role && roleMapping[userData.role as UserRole]) || roleMapping[UserRole.STUDENT],
       institution_id: userData.institution_id,
       endereco: userData.endereco,
       telefone: userData.telefone,
@@ -338,8 +343,8 @@ export const createUser = async (userData: Omit<User, 'id'>): Promise<User> => {
       is_active: userData.is_active ?? true
     };
     
-    const result = await userService.createUser(createData);
-    return authService['convertToCompatibleUser'](result);
+    const result = await userService.createUser(createData as any);
+    return authService['convertToCompatibleUser'](result as any);
   } catch (error) {
     console.log('Erro ao criar usuário:', error);
     throw error;
@@ -354,14 +359,12 @@ export const updateUser = async (id: string, userData: Partial<User>): Promise<U
     let role_id: string | undefined;
     if (userData.role) {
       const roleMapping: Record<UserRole, string> = {
-        'student': 'student-role-id',
-        'teacher': 'teacher-role-id', 
-        'admin': 'admin-role-id',
-        'manager': 'manager-role-id',
-        'system_admin': 'system-admin-role-id',
-        'institution_manager': 'institution-manager-role-id',
-        'academic_coordinator': 'academic-coordinator-role-id',
-        'guardian': 'guardian-role-id'
+        'STUDENT': 'student-role-id',
+        'TEACHER': 'teacher-role-id', 
+        'INSTITUTION_MANAGER': 'manager-role-id',
+        'SYSTEM_ADMIN': 'system-admin-role-id',
+        'COORDINATOR': 'academic-coordinator-role-id',
+        'GUARDIAN': 'guardian-role-id'
       };
       role_id = roleMapping[userData.role];
     }
@@ -377,8 +380,8 @@ export const updateUser = async (id: string, userData: Partial<User>): Promise<U
       is_active: userData.is_active
     };
     
-    const result = await userService.updateUser(createData);
-    return result ? authService['convertToCompatibleUser'](result) : null;
+    const result = await userService.updateUser(id, updateData as any);
+    return result ? authService['convertToCompatibleUser'](result as any) : null;
   } catch (error) {
     console.log('Erro ao atualizar usuário:', error);
     return null;

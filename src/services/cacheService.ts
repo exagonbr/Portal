@@ -20,8 +20,8 @@ interface CacheStats {
 }
 
 /**
- * Serviço de cache em memória local
- * - Cache apenas em memória para acesso rápido
+ * Serviço de cache em memória local - RESTRITO APENAS PARA SESSÃO/AUTH
+ * - Cache APENAS para dados de sessão, token, user, userData, refreshToken, roles, permissions
  * - Sem dependência do Redis
  * - Cleanup automático de itens expirados
  */
@@ -47,6 +47,20 @@ export class CacheService {
   private keyPrefix = 'portal_sabercon:';
   private enabled = true;
   
+  // Lista de chaves permitidas para cache (APENAS DADOS DE SESSÃO/AUTH)
+  private allowedKeys = [
+    'session',
+    'token',
+    'accessToken',
+    'refreshToken',
+    'user',
+    'userData',
+    'roles',
+    'permissions',
+    'auth',
+    'login'
+  ];
+  
   // Estatísticas de cache
   private stats: CacheStats = {
     hits: 0,
@@ -57,22 +71,32 @@ export class CacheService {
   };
 
   // Cleanup automático a cada 5 minutos
-  private cleanupInterval: NodeJS.Timeout;
+  private cleanupInterval: NodeJS.Timeout | null = null;
 
   constructor(config?: CacheConfig) {
     if (config?.ttl) this.defaultTTL = config.ttl;
     if (config?.prefix) this.keyPrefix = config.prefix;
     if (config?.enabled !== undefined) this.enabled = config.enabled;
 
-    // Limpeza automática do cache em memória a cada 5 minutos
-    this.cleanupInterval = setInterval(() => this.cleanupMemoryCache(), 5 * 60 * 1000);
-
-    // Cleanup quando a página for fechada
+    // Só configurar cleanup automático no cliente
     if (typeof window !== 'undefined') {
+      // Limpeza automática do cache em memória a cada 5 minutos
+      this.cleanupInterval = setInterval(() => this.cleanupMemoryCache(), 5 * 60 * 1000);
+
+      // Cleanup quando a página for fechada
       window.addEventListener('beforeunload', () => {
         this.cleanup();
       });
     }
+  }
+
+  /**
+   * Verifica se a chave é permitida para cache (apenas dados de sessão/auth)
+   */
+  private isKeyAllowed(key: string): boolean {
+    return this.allowedKeys.some(allowedKey =>
+      key.toLowerCase().includes(allowedKey.toLowerCase())
+    );
   }
 
   /**
@@ -138,10 +162,16 @@ export class CacheService {
   }
 
   /**
-   * Obtém valor do cache (apenas memória)
+   * Obtém valor do cache (apenas memória) - RESTRITO A DADOS DE SESSÃO/AUTH
    */
   async get<T>(key: string): Promise<T | null> {
     if (!this.enabled) return null;
+    
+    // VALIDAÇÃO: Só permite cache de dados de sessão/auth
+    if (!this.isKeyAllowed(key)) {
+      console.warn(`🚫 Cache negado para chave não autorizada: ${key}`);
+      return null;
+    }
 
     const cacheKey = this.generateKey(key);
 
@@ -157,10 +187,16 @@ export class CacheService {
   }
 
   /**
-   * Define valor no cache (apenas memória)
+   * Define valor no cache (apenas memória) - RESTRITO A DADOS DE SESSÃO/AUTH
    */
   async set<T>(key: string, value: T, ttl?: number): Promise<void> {
     if (!this.enabled) return;
+    
+    // VALIDAÇÃO: Só permite cache de dados de sessão/auth
+    if (!this.isKeyAllowed(key)) {
+      console.warn(`🚫 Cache negado para chave não autorizada: ${key}`);
+      return;
+    }
 
     const cacheKey = this.generateKey(key);
     const cacheTTL = ttl || this.defaultTTL;
@@ -193,13 +229,20 @@ export class CacheService {
   }
 
   /**
-   * Obtém ou define valor no cache (cache-aside pattern)
+   * Obtém ou define valor no cache (cache-aside pattern) - RESTRITO A DADOS DE SESSÃO/AUTH
    */
   async getOrSet<T>(
-    key: string, 
-    fetcher: () => Promise<T>, 
+    key: string,
+    fetcher: () => Promise<T>,
     ttl?: number
   ): Promise<T> {
+    // VALIDAÇÃO: Só permite cache de dados de sessão/auth
+    if (!this.isKeyAllowed(key)) {
+      console.warn(`🚫 Cache negado para chave não autorizada: ${key}`);
+      // Se não é permitido cache, apenas executa a função
+      return await fetcher();
+    }
+
     // Tenta buscar no cache primeiro
     const cached = await this.get<T>(key);
     if (cached !== null) {
@@ -310,6 +353,7 @@ export class CacheService {
   cleanup(): void {
     if (this.cleanupInterval) {
       clearInterval(this.cleanupInterval);
+      this.cleanupInterval = null;
     }
     this.memoryCache.clear();
     this.resetStats();

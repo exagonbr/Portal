@@ -42,7 +42,6 @@ import { toast } from 'react-hot-toast';
 import { systemAdminService, SystemDashboardData as ServiceSystemDashboardData } from '@/services/systemAdminService';
 import { InstitutionService } from '@/services/institutionService';
 import { InstitutionType, InstitutionNature } from '@/types/institution';
-import { debugAuth } from '@/utils/auth-debug';
 import { StatCard, ContentCard, SimpleCard } from '@/components/ui/StandardCard';
 import { initializeGlobalErrorHandler } from '@/utils/global-error-handler';
 import { runAllChunkErrorTests } from '@/utils/chunk-error-test';

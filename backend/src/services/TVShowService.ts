@@ -153,8 +153,11 @@ export class TVShowService {
     const connection = await this.getConnection();
     
     try {
+      // Garantir que limit seja um número válido
+      const validLimit = Number.isInteger(limit) && limit > 0 ? limit : 10;
+      
       const [rows] = await connection.execute(`
-        SELECT 
+        SELECT
           id,
           name,
           overview,
@@ -170,12 +173,12 @@ export class TVShowService {
           contract_term_end,
           date_created as created_at,
           last_updated as updated_at
-        FROM tv_show 
+        FROM tv_show
         WHERE (deleted IS NULL OR deleted = 0)
           AND popularity IS NOT NULL
         ORDER BY popularity DESC, vote_average DESC
         LIMIT ?
-      `, [limit]);
+      `, [validLimit]);
       
       return rows as TVShowCollection[];
     } catch (error) {
@@ -193,8 +196,11 @@ export class TVShowService {
     const connection = await this.getConnection();
     
     try {
+      // Garantir que limit seja um número válido
+      const validLimit = Number.isInteger(limit) && limit > 0 ? limit : 10;
+      
       const [rows] = await connection.execute(`
-        SELECT 
+        SELECT
           id,
           name,
           overview,
@@ -210,13 +216,13 @@ export class TVShowService {
           contract_term_end,
           date_created as created_at,
           last_updated as updated_at
-        FROM tv_show 
+        FROM tv_show
         WHERE (deleted IS NULL OR deleted = 0)
           AND vote_average IS NOT NULL
           AND vote_count > 0
         ORDER BY vote_average DESC, vote_count DESC
         LIMIT ?
-      `, [limit]);
+      `, [validLimit]);
       
       return rows as TVShowCollection[];
     } catch (error) {
@@ -234,8 +240,11 @@ export class TVShowService {
     const connection = await this.getConnection();
     
     try {
+      // Garantir que limit seja um número válido
+      const validLimit = Number.isInteger(limit) && limit > 0 ? limit : 10;
+      
       const [rows] = await connection.execute(`
-        SELECT 
+        SELECT
           id,
           name,
           overview,
@@ -251,11 +260,11 @@ export class TVShowService {
           contract_term_end,
           date_created as created_at,
           last_updated as updated_at
-        FROM tv_show 
+        FROM tv_show
         WHERE (deleted IS NULL OR deleted = 0)
         ORDER BY date_created DESC, last_updated DESC
         LIMIT ?
-      `, [limit]);
+      `, [validLimit]);
       
       return rows as TVShowCollection[];
     } catch (error) {

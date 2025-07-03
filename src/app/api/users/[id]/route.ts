@@ -16,6 +16,7 @@ export async function GET(
   { params }: { params: Promise<{ id: string }> }
 ) {
   try {
+    const resolvedParams = await params;
     const response = await fetch(getInternalApiUrl(`/users/${resolvedParams.id}`), {
       method: 'GET',
       headers: prepareAuthHeaders(request),
@@ -38,6 +39,7 @@ export async function PUT(
   { params }: { params: Promise<{ id: string }> }
 ) {
   try {
+    const resolvedParams = await params;
     const body = await request.json();
 
     const response = await fetch(getInternalApiUrl(`/users/${resolvedParams.id}`), {
@@ -63,6 +65,7 @@ export async function DELETE(
   { params }: { params: Promise<{ id: string }> }
 ) {
   try {
+    const resolvedParams = await params;
     const response = await fetch(getInternalApiUrl(`/users/${resolvedParams.id}`), {
       method: 'DELETE',
       headers: prepareAuthHeaders(request),
