@@ -98,12 +98,16 @@ const isDev = process.env.NODE_ENV === 'development';
 export function middleware(request: NextRequest) {
   const response = NextResponse.next();
 
-  // Desabilitar cache em desenvolvimento
-  if (isDev) {
-    response.headers.set('Cache-Control', 'no-store, no-cache, must-revalidate, proxy-revalidate');
-    response.headers.set('Pragma', 'no-cache');
-    response.headers.set('Expires', '0');
-  }
+  // Desabilitar cache sempre
+  response.headers.set('Cache-Control', 'no-store, no-cache, must-revalidate, proxy-revalidate');
+  response.headers.set('Pragma', 'no-cache');
+  response.headers.set('Expires', '0');
+
+  // Permitir todas as origens
+  response.headers.set('Access-Control-Allow-Origin', '*');
+  response.headers.set('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, OPTIONS');
+  response.headers.set('Access-Control-Allow-Headers', 'Content-Type, Authorization, X-Requested-With, X-CSRF-Token, Cache-Control, Pragma, Accept, Origin, Cookie');
+  response.headers.set('Access-Control-Allow-Credentials', 'true');
 
   return response;
 }
@@ -113,7 +117,12 @@ export function middleware(request: NextRequest) {
  */
 export const config = {
   matcher: [
-    // Não aplicar middleware para assets estáticos
-    '/((?!_next/static|_next/image|favicon.ico|icons|manifest.json).*)',
+    /*
+     * Match all request paths except for the ones starting with:
+     * - _next/static (static files)
+     * - _next/image (image optimization files)
+     * - favicon.ico (favicon file)
+     */
+    '/((?!_next/static|_next/image|favicon.ico).*)',
   ],
 }; 

@@ -12,7 +12,7 @@ import { MotionDiv, MotionH1, MotionP } from '@/components/ui/MotionWrapper';
 import { getTheme } from '@/config/themes';
 import { useEffect, useState } from 'react';
 import { useAutoCacheCleaner } from '@/hooks/useCacheCleaner';
-import { buildUrl } from '@/utils/urlBuilder';
+import { buildUrl } from '@/config/urls';
 
 export function LoginPage() {
   // Hook para limpeza automática de cache

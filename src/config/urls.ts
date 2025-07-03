@@ -11,6 +11,12 @@ export { getApiUrl, getInternalApiUrl };
 
 export const FRONTEND_URL = ENV_CONFIG.FRONTEND_URL;
 
+// Função para construir URLs completas
+export function buildUrl(path: string): string {
+  const baseUrl = FRONTEND_URL || '';
+  return `${baseUrl}${path}`;
+}
+
 // --- Constantes de Rotas da API ---
 
 export const API_ROUTES = {
