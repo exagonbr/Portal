@@ -37,6 +37,11 @@ export class ServerInitializer {
       this.logger.error('❌ Erro ao inicializar TypeORM:', error);
       throw new Error('Falha na inicialização do TypeORM');
     }
+
+    if (process.env.REDIS_DISABLED === 'true') {
+      this.logger.warn('🔴 Redis está desabilitado. Funcionalidades de cache e sessão não estarão disponíveis.');
+      return;
+    }
     
     // Testar conexão Redis
     const redisConnected = await testRedisConnection();
