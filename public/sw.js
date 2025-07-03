@@ -1,363 +1,240 @@
-// Portal Sabercon Service Worker
-// Versão compatível com Next.js 15 com versionamento dinâmico
+// sw.js - Service Worker com NO-CACHE ABSOLUTO
+const CACHE_VERSION = `no-cache-${Date.now()}`;
 
-// Versão dinâmica baseada no build (injetada durante o build)
-const CACHE_VERSION = self.__CACHE_VERSION__ || 'dev-' + Date.now();
-const CACHE_NAME = `portal-sabercon-${CACHE_VERSION}`;
-const STATIC_CACHE_NAME = `portal-sabercon-static-${CACHE_VERSION}`;
-
-console.log(`🚀 Service Worker iniciado - Versão: ${CACHE_VERSION}`);
-
-// Assets para cache estático
-const STATIC_ASSETS = [
+// NUNCA CACHEAR NADA - Lista expandida
+const ALWAYS_NETWORK = [
   '/',
-  '/manifest.json',
-  '/icons/icon-192x192.png',
-  '/icons/icon-512x512.png',
+  '/dashboard',
+  '/api/',
+  '/_next/',
+  '.html',
+  '.json',
+  '.js',
+  '.css',
+  '.tsx',
+  '.ts',
+  '/portal/',
+  '/admin/',
+  '/student/',
+  '/teacher/',
+  '/coordinator/',
+  '/guardian/'
 ];
 
-// Instalar service worker
+// Instalar Service Worker
 self.addEventListener('install', (event) => {
-  console.log('Service Worker: Installing...');
-  
-  event.waitUntil(
-    caches.open(STATIC_CACHE_NAME)
-      .then((cache) => {
-        console.log('Service Worker: Caching static assets');
-        return cache.addAll(STATIC_ASSETS);
-      })
-      .catch((error) => {
-        console.log('Service Worker: Failed to cache static assets', error);
-      })
-  );
-  
-  // Força a ativação imediata
+  console.log('Service Worker: Instalando com NO-CACHE...');
+  // Forçar ativação imediata
   self.skipWaiting();
-});
-
-// Ativar service worker
-self.addEventListener('activate', (event) => {
-  console.log('Service Worker: Activating...');
   
+  // Limpar TODOS os caches na instalação
   event.waitUntil(
-    caches.keys().then((cacheNames) => {
+    caches.keys().then(cacheNames => {
       return Promise.all(
-        cacheNames.map((cacheName) => {
-          if (cacheName !== CACHE_NAME && cacheName !== STATIC_CACHE_NAME) {
-            console.log('Service Worker: Deleting old cache', cacheName);
-            return caches.delete(cacheName);
-          }
+        cacheNames.map(cacheName => {
+          console.log('Removendo cache:', cacheName);
+          return caches.delete(cacheName);
         })
       );
     })
   );
-  
-  // Assume controle de todas as páginas
-  self.clients.claim();
 });
 
-// Escutar mensagens do cliente
-self.addEventListener('message', (event) => {
-  const { type, payload } = event.data || {};
+// Ativar Service Worker
+self.addEventListener('activate', (event) => {
+  console.log('Service Worker: Ativando com NO-CACHE...');
   
-  switch (type) {
-    case 'SKIP_WAITING':
-      console.log('🔄 Forçando ativação do novo Service Worker');
-      self.skipWaiting();
-      break;
-      
-    case 'CLEAR_CACHE':
-      handleClearCache(event, payload);
-      break;
-      
-    case 'GET_CACHE_INFO':
-      handleGetCacheInfo(event);
-      break;
-      
-    default:
-      console.log('📨 Mensagem recebida:', event.data);
-  }
+  event.waitUntil(
+    Promise.all([
+      // Limpar TODOS os caches existentes
+      caches.keys().then(cacheNames => {
+        return Promise.all(
+          cacheNames.map(cacheName => {
+            console.log('Deletando cache:', cacheName);
+            return caches.delete(cacheName);
+          })
+        );
+      }),
+      // Tomar controle imediato de todas as páginas
+      self.clients.claim(),
+      // Notificar todos os clientes para recarregar
+      self.clients.matchAll().then(clients => {
+        clients.forEach(client => {
+          client.postMessage({ type: 'CACHE_CLEARED', reload: true });
+        });
+      })
+    ])
+  );
 });
 
-// Interceptar requisições
+// Interceptar TODAS as requisições
 self.addEventListener('fetch', (event) => {
   const { request } = event;
   const url = new URL(request.url);
-  
-  // Ignorar requisições de extensões do Chrome
-  if (url.protocol === 'chrome-extension:') {
-    return;
-  }
-  
-  // Ignorar requisições não HTTP/HTTPS
-  if (!url.protocol.startsWith('http')) {
-    return;
-  }
-  
-  // Estratégia para diferentes tipos de recursos
-  if (request.destination === 'document') {
-    // Páginas HTML - Network First
-    event.respondWith(networkFirstStrategy(request));
-  } else if (request.url.includes('/_next/static/')) {
-    // Assets estáticos do Next.js - Stale While Revalidate para atualizações rápidas
-    event.respondWith(staleWhileRevalidateStrategy(request, STATIC_CACHE_NAME));
-  } else if (request.url.includes('/api/')) {
-    // APIs - Network Only (sem cache para dados dinâmicos)
-    event.respondWith(networkOnlyStrategy(request));
-  } else {
-    // Outros recursos - Stale While Revalidate
-    event.respondWith(staleWhileRevalidateStrategy(request, CACHE_NAME));
-  }
-});
 
-// Estratégia Network First
-async function networkFirstStrategy(request) {
-  try {
-    const networkResponse = await fetch(request);
-    
-    if (networkResponse.ok) {
-      // Verifica se o método é cacheable (GET, HEAD) antes de armazenar
-      if (request.method === 'GET' || request.method === 'HEAD') {
-        const cache = await caches.open(CACHE_NAME);
-        cache.put(request, networkResponse.clone());
-      }
-    }
-    
-    return networkResponse;
-  } catch (error) {
-    console.log('Service Worker: Network failed, trying cache', error);
-    const cachedResponse = await caches.match(request);
-    
-    if (cachedResponse) {
-      return cachedResponse;
-    }
-    
-    // Fallback para página offline se houver
-    if (request.destination === 'document') {
-      const offlinePage = await caches.match('/');
-      if (offlinePage) {
-        return offlinePage;
-      }
-    }
-    
-    throw error;
-  }
-}
-
-// Estratégia Cache First
-async function cacheFirstStrategy(request) {
-  const cachedResponse = await caches.match(request);
-  
-  if (cachedResponse) {
-    return cachedResponse;
-  }
-  
-  try {
-    const networkResponse = await fetch(request);
-    
-    if (networkResponse.ok) {
-      // Verifica se o método é cacheable (GET, HEAD) antes de armazenar
-      if (request.method === 'GET' || request.method === 'HEAD') {
-        const cache = await caches.open(STATIC_CACHE_NAME);
-        cache.put(request, networkResponse.clone());
-      }
-    }
-    
-    return networkResponse;
-  } catch (error) {
-    console.log('Service Worker: Failed to fetch and cache', error);
-    throw error;
-  }
-}
-
-// Estratégia Network Only (para APIs)
-async function networkOnlyStrategy(request) {
-  try {
-    const response = await fetch(request);
-    return response;
-  } catch (error) {
-    console.log('Service Worker: API request failed', error);
-    // Retornar uma Response válida em caso de erro
-    return new Response(
-      JSON.stringify({ 
-        success: false, 
-        message: 'Network error', 
-        error: error.message 
-      }), 
-      { 
-        status: 503, 
-        statusText: 'Service Unavailable',
-        headers: { 'Content-Type': 'application/json' }
-      }
-    );
-  }
-}
-
-// Estratégia Stale While Revalidate melhorada
-async function staleWhileRevalidateStrategy(request, cacheName = CACHE_NAME) {
-  const cache = await caches.open(cacheName);
-  const cachedResponse = await cache.match(request);
-  
-  // Busca em background (não bloqueia retorno do cache)
-  const fetchPromise = fetch(request).then((networkResponse) => {
-    if (networkResponse && networkResponse.ok) {
-      // Verifica se o método é cacheable (GET, HEAD) antes de armazenar
-      if (request.method === 'GET' || request.method === 'HEAD') {
-        // Clona antes de armazenar para evitar problemas de stream
-        cache.put(request, networkResponse.clone());
-        console.log(`🔄 Cache atualizado: ${request.url}`);
-      } else {
-        console.log(`⚠️ Método ${request.method} não cacheable: ${request.url}`);
-      }
-    }
-    return networkResponse;
-  }).catch((error) => {
-    console.log('Service Worker: Background fetch failed', error);
-    return null;
+  // Headers agressivos de no-cache
+  const noCacheHeaders = new Headers({
+    'Cache-Control': 'no-cache, no-store, max-age=0, must-revalidate, private',
+    'Pragma': 'no-cache',
+    'Expires': '0',
+    'Surrogate-Control': 'no-store',
+    'X-Accel-Expires': '0',
+    'Clear-Site-Data': '"cache"'
   });
-  
-  // Se tem cache, retorna imediatamente e atualiza em background
-  if (cachedResponse) {
-    console.log(`📦 Servindo do cache: ${request.url}`);
-    // Não aguarda o fetchPromise - atualização em background
-    fetchPromise.catch(() => {}); // Evita unhandled promise rejection
-    return cachedResponse;
-  }
-  
-  // Se não tem cache, aguarda a rede
-  console.log(`🌐 Buscando da rede: ${request.url}`);
-  const networkResponse = await fetchPromise;
-  if (networkResponse) {
-    return networkResponse;
-  }
-  
-  // Fallback final
-  return new Response(
-    JSON.stringify({ 
-      success: false, 
-      message: 'Resource unavailable', 
-      cached: false,
-      timestamp: new Date().toISOString()
-    }), 
-    { 
-      status: 503, 
-      statusText: 'Service Unavailable',
-      headers: { 'Content-Type': 'application/json' }
-    }
-  );
-}
 
-// Handler para limpeza de cache
-async function handleClearCache(event, payload) {
-  try {
-    const cacheNames = await caches.keys();
-    const deletedCaches = [];
-    
-    for (const cacheName of cacheNames) {
-      if (cacheName.startsWith('portal-sabercon-')) {
-        await caches.delete(cacheName);
-        deletedCaches.push(cacheName);
-      }
-    }
-    
-    const response = {
-      success: true,
-      message: 'Cache limpo com sucesso',
-      deletedCaches,
-      reason: payload?.reason || 'manual'
-    };
-    
-    // Responder via MessageChannel se disponível
-    if (event.ports && event.ports[0]) {
-      event.ports[0].postMessage(response);
-    }
-    
-    console.log('✅ Cache limpo:', response);
-  } catch (error) {
-    const errorResponse = {
-      success: false,
-      error: error.message
-    };
-    
-    if (event.ports && event.ports[0]) {
-      event.ports[0].postMessage(errorResponse);
-    }
-    
-    console.log('❌ Erro ao limpar cache:', error);
-  }
-}
+  // Adicionar timestamp para forçar bypass de cache
+  const urlWithTimestamp = new URL(request.url);
+  urlWithTimestamp.searchParams.set('_t', Date.now().toString());
 
-// Handler para informações do cache
-async function handleGetCacheInfo(event) {
-  try {
-    const cacheNames = await caches.keys();
-    const portalCaches = cacheNames.filter(name => name.startsWith('portal-sabercon-'));
-    
-    const cacheInfo = {
-      success: true,
-      currentVersion: CACHE_VERSION,
-      activeCaches: portalCaches,
-      totalCaches: cacheNames.length
-    };
-    
-    if (event.ports && event.ports[0]) {
-      event.ports[0].postMessage(cacheInfo);
-    }
-    
-    console.log('📊 Informações do cache:', cacheInfo);
-  } catch (error) {
-    const errorResponse = {
-      success: false,
-      error: error.message
-    };
-    
-    if (event.ports && event.ports[0]) {
-      event.ports[0].postMessage(errorResponse);
-    }
-    
-    console.log('❌ Erro ao obter informações do cache:', error);
-  }
-}
-
-// Gerenciar notificações push (se necessário)
-self.addEventListener('push', (event) => {
-  if (!event.data) return;
-  
-  const options = {
-    body: event.data.text(),
-    icon: '/icons/icon-192x192.png',
-    badge: '/icons/icon-192x192.png',
-    vibrate: [100, 50, 100],
-    data: {
-      dateOfArrival: Date.now(),
-      primaryKey: 1
-    },
-    actions: [
-      {
-        action: 'explore',
-        title: 'Ver no Portal',
-        icon: '/icons/icon-192x192.png'
+  // SEMPRE buscar da rede, NUNCA do cache
+  event.respondWith(
+    fetch(urlWithTimestamp.toString(), {
+      method: request.method,
+      headers: {
+        ...Object.fromEntries(request.headers.entries()),
+        ...Object.fromEntries(noCacheHeaders.entries())
       },
-      {
-        action: 'close',
-        title: 'Fechar',
-        icon: '/icons/icon-192x192.png'
-      }
-    ]
-  };
-  
-  event.waitUntil(
-    self.registration.showNotification('Portal Sabercon', options)
+      body: request.body,
+      mode: request.mode,
+      credentials: request.credentials,
+      cache: 'no-store',
+      redirect: 'follow',
+      referrer: request.referrer,
+      referrerPolicy: request.referrerPolicy,
+      integrity: request.integrity,
+      keepalive: request.keepalive,
+      signal: request.signal
+    }).then(response => {
+      // Clonar resposta para modificar headers
+      const modifiedHeaders = new Headers(response.headers);
+      
+      // Forçar headers de no-cache na resposta
+      modifiedHeaders.set('Cache-Control', 'no-cache, no-store, max-age=0, must-revalidate, private');
+      modifiedHeaders.set('Pragma', 'no-cache');
+      modifiedHeaders.set('Expires', '0');
+      modifiedHeaders.set('X-Content-Type-Options', 'nosniff');
+      modifiedHeaders.set('X-Frame-Options', 'DENY');
+      modifiedHeaders.set('X-XSS-Protection', '1; mode=block');
+      
+      // Retornar resposta modificada
+      return new Response(response.body, {
+        status: response.status,
+        statusText: response.statusText,
+        headers: modifiedHeaders
+      });
+    }).catch(error => {
+      console.error('Service Worker: Erro na requisição:', error);
+      
+      // Resposta de erro sem cache
+      return new Response(
+        JSON.stringify({ 
+          error: 'Network error', 
+          message: error.message,
+          timestamp: Date.now()
+        }), 
+        {
+          status: 503,
+          statusText: 'Service Unavailable',
+          headers: {
+            'Content-Type': 'application/json',
+            'Cache-Control': 'no-cache, no-store, must-revalidate',
+            'X-Error': 'true'
+          }
+        }
+      );
+    })
   );
 });
 
-// Gerenciar cliques em notificações
-self.addEventListener('notificationclick', (event) => {
-  event.notification.close();
+// Listener para mensagens do cliente
+self.addEventListener('message', (event) => {
+  console.log('Service Worker: Mensagem recebida:', event.data);
   
-  if (event.action === 'explore') {
+  if (event.data && event.data.type === 'SKIP_WAITING') {
+    self.skipWaiting();
+  }
+  
+  if (event.data && event.data.type === 'CLEAR_ALL_CACHE') {
     event.waitUntil(
-      clients.openWindow('/dashboard')
+      Promise.all([
+        // Limpar cache do Service Worker
+        caches.keys().then(cacheNames => {
+          return Promise.all(
+            cacheNames.map(cacheName => {
+              console.log('Limpando cache:', cacheName);
+              return caches.delete(cacheName);
+            })
+          );
+        }),
+        // Limpar cache do navegador se possível
+        self.clients.matchAll().then(clients => {
+          clients.forEach(client => {
+            client.postMessage({ 
+              type: 'CLEAR_BROWSER_CACHE',
+              timestamp: Date.now()
+            });
+          });
+        })
+      ]).then(() => {
+        if (event.ports && event.ports[0]) {
+          event.ports[0].postMessage({ 
+            type: 'ALL_CACHE_CLEARED',
+            timestamp: Date.now()
+          });
+        }
+      })
+    );
+  }
+  
+  // Forçar reload de todas as páginas
+  if (event.data && event.data.type === 'FORCE_RELOAD_ALL') {
+    self.clients.matchAll().then(clients => {
+      clients.forEach(client => {
+        client.postMessage({ type: 'RELOAD_PAGE' });
+      });
+    });
+  }
+});
+
+// Sincronização em background - limpar cache a cada minuto
+self.addEventListener('sync', (event) => {
+  if (event.tag === 'periodic-cache-clear') {
+    console.log('Service Worker: Limpeza periódica de cache');
+    event.waitUntil(
+      caches.keys().then(cacheNames => {
+        return Promise.all(
+          cacheNames.map(cacheName => caches.delete(cacheName))
+        );
+      })
     );
   }
 });
+
+// Periodic Background Sync (se disponível)
+self.addEventListener('periodicsync', (event) => {
+  if (event.tag === 'clear-cache-periodic') {
+    console.log('Service Worker: Sync periódico - limpando cache');
+    event.waitUntil(
+      caches.keys().then(cacheNames => {
+        return Promise.all(
+          cacheNames.map(cacheName => caches.delete(cacheName))
+        );
+      })
+    );
+  }
+});
+
+// Push event para limpar cache
+self.addEventListener('push', (event) => {
+  if (event.data && event.data.text() === 'clear-cache') {
+    event.waitUntil(
+      caches.keys().then(cacheNames => {
+        return Promise.all(
+          cacheNames.map(cacheName => caches.delete(cacheName))
+        );
+      })
+    );
+  }
+});
+
+console.log('Service Worker: Script carregado com NO-CACHE ABSOLUTO');

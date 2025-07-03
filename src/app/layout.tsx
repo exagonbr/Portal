@@ -1,10 +1,21 @@
+// Forçar renderização dinâmica para evitar cache
+export const dynamic = 'force-dynamic';
+export const revalidate = 0;
+export const fetchCache = 'force-no-store';
+
 import type { Metadata, Viewport } from 'next';
 import { Inter } from 'next/font/google';
 import './globals.css';
 import SimpleProviders from '@/providers/SimpleProviders';
 import { isDevelopment } from '@/utils/env';
+import { headers } from 'next/headers';
 
-const inter = Inter({ subsets: ['latin'] });
+const inter = Inter({
+  subsets: ['latin'],
+  display: 'swap',
+  preload: true,
+  adjustFontFallback: true,
+});
 
 export const metadata: Metadata = {
   title: 'Portal Educacional',
@@ -27,6 +38,11 @@ export const metadata: Metadata = {
       { url: '/icons/icon-192x192.png' },
     ],
   },
+  other: {
+    'Cache-Control': 'no-cache, no-store, must-revalidate',
+    'Pragma': 'no-cache',
+    'Expires': '0',
+  },
 };
 
 export const viewport: Viewport = {
@@ -43,9 +59,20 @@ export default function RootLayout({
 }: {
   children: React.ReactNode;
 }) {
+  // Forçar headers no-cache no servidor
+  const headersList = headers();
+  
   return (
     <html lang="pt-BR" className="h-full antialiased" suppressHydrationWarning>
       <head>
+        {/* Headers de no-cache agressivos */}
+        <meta httpEquiv="Cache-Control" content="no-cache, no-store, must-revalidate, max-age=0, s-maxage=0" />
+        <meta httpEquiv="Pragma" content="no-cache" />
+        <meta httpEquiv="Expires" content="0" />
+        <meta httpEquiv="Surrogate-Control" content="no-store" />
+        <meta name="robots" content="noarchive" />
+        
+        {/* PWA e Mobile */}
         <meta name="apple-mobile-web-app-capable" content="yes" />
         <meta name="apple-mobile-web-app-status-bar-style" content="default" />
         <meta name="apple-mobile-web-app-title" content="Portal Edu" />
@@ -53,18 +80,49 @@ export default function RootLayout({
         <meta name="theme-color" content="#0f3460" media="(prefers-color-scheme: light)" />
         <meta name="theme-color" content="#1e293b" media="(prefers-color-scheme: dark)" />
         <meta name="referrer" content="no-referrer-when-downgrade" />
+        
+        {/* Links */}
         <link rel="apple-touch-icon" href="/icons/icon-192x192.png" />
         <link rel="manifest" href="/manifest.json" />
+        
+        {/* Preconnect para melhorar performance */}
+        <link rel="preconnect" href="https://fonts.googleapis.com" />
+        <link rel="dns-prefetch" href="https://fonts.googleapis.com" />
+        
+        {/* Material Icons com display swap para melhor performance */}
         <link
           href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200&display=swap"
           rel="stylesheet"
         />
-        {/* Remover preload de fontes específicas para evitar avisos */}
         
-        {/* Service Worker personalizado para limpeza de cache */}
+        {/* Script inline para desabilitar cache do navegador */}
+        <script
+          dangerouslySetInnerHTML={{
+            __html: `
+              // Desabilitar cache do navegador
+              if ('caches' in window) {
+                caches.keys().then(function(names) {
+                  for (let name of names) caches.delete(name);
+                });
+              }
+              
+              // Forçar reload se a página foi carregada do cache
+              window.addEventListener('pageshow', function(event) {
+                if (event.persisted) {
+                  window.location.reload();
+                }
+              });
+              
+              // Adicionar timestamp para evitar cache
+              window.__NO_CACHE__ = Date.now();
+            `,
+          }}
+        />
+        
+        {/* Service Worker para controle de cache */}
         <script src="/register-sw.js" defer />
         
-        {/* Script para prevenir problemas de hidratação causados por extensões */}
+        {/* Script para limpeza de extensões */}
         <script src="/cleanup-extensions.js" defer />
       </head>
       <body className={`${inter.className} m-0 p-0 h-full w-full`} suppressHydrationWarning>

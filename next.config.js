@@ -42,6 +42,18 @@ const nextConfig = {
     dirs: ['src', 'pages', 'components', 'lib', 'utils'],
   },
 
+  // Desabilitar cache de páginas completamente
+  generateBuildId: async () => {
+    // Gerar ID único para cada build forçando revalidação
+    return `build-${Date.now()}-${Math.random().toString(36).substring(7)}`;
+  },
+  
+  // Desabilitar cache estático
+  onDemandEntries: {
+    maxInactiveAge: 0,
+    pagesBufferLength: 0,
+  },
+
   // Configurações experimentais
   experimental: {
     // Otimizações modernas
@@ -60,6 +72,9 @@ const nextConfig = {
     webpackBuildWorker: true,
     cpus: 10, // Usar 10 cores para compilação
     workerThreads: true, // Habilitar worker threads
+    
+    // Desabilitar cache ISR completamente
+    isrMemoryCacheSize: 0,
     
     // Pacotes externos para componentes do servidor
     serverExternalPackages: [
@@ -95,15 +110,23 @@ const nextConfig = {
   distDir: '.next',
   trailingSlash: false,
   poweredByHeader: false,
+  
+  // Desabilitar geração estática e cache de páginas
+  generateEtags: false,
+  compress: true,
+  
+  // Forçar revalidação constante
+  staticPageGenerationTimeout: 10,
 
   // Configuração de imagens otimizada
   images: {
     formats: ['image/webp', 'image/avif'],
     deviceSizes: [640, 750, 828, 1080, 1200, 1920, 2048, 3840],
     imageSizes: [16, 32, 48, 64, 96, 128, 256, 384],
-    minimumCacheTTL: 31536000, // 1 ano
+    minimumCacheTTL: 60, // Apenas 1 minuto de cache para imagens
     dangerouslyAllowSVG: true,
     contentSecurityPolicy: "default-src 'self'; script-src 'none'; sandbox;",
+    unoptimized: isDev, // Desabilitar otimização em dev para performance
     remotePatterns: [
       {
         protocol: 'https',
@@ -167,8 +190,90 @@ const nextConfig = {
       }] : [])
     ];
 
+    // Headers de no-cache EXTREMAMENTE agressivos
+    const noCacheHeaders = [
+      {
+        key: 'Cache-Control',
+        value: 'private, no-cache, no-store, max-age=0, must-revalidate, proxy-revalidate, s-maxage=0'
+      },
+      {
+        key: 'Pragma',
+        value: 'no-cache'
+      },
+      {
+        key: 'Expires',
+        value: '0'
+      },
+      {
+        key: 'Surrogate-Control',
+        value: 'no-store'
+      },
+      {
+        key: 'X-Accel-Expires',
+        value: '0'
+      },
+      {
+        key: 'CDN-Cache-Control',
+        value: 'no-cache'
+      },
+      {
+        key: 'Cloudflare-CDN-Cache-Control',
+        value: 'no-store, no-cache, private'
+      },
+      {
+        key: 'X-Vercel-Cache',
+        value: 'no-cache'
+      },
+      {
+        key: 'X-Nextjs-Cache',
+        value: 'no-cache'
+      }
+    ];
+
     return [
-      // Headers para livros EPUB
+      // Headers para TODAS as rotas - NO CACHE ABSOLUTO
+      {
+        source: '/:path*',
+        headers: [
+          ...securityHeaders,
+          ...noCacheHeaders,
+          {
+            key: 'X-Cache-Version',
+            value: `${cacheVersion}-${Date.now()}`
+          },
+          {
+            key: 'Vary',
+            value: '*'
+          }
+        ]
+      },
+      // Headers para API - NO CACHE ABSOLUTO
+      {
+        source: '/api/:path*',
+        headers: [
+          ...noCacheHeaders,
+          {
+            key: 'X-API-Version',
+            value: `${cacheVersion}-${Date.now()}`
+          },
+          {
+            key: 'Content-Type',
+            value: 'application/json; charset=utf-8'
+          }
+        ]
+      },
+      // Headers para _next - NO CACHE para páginas
+      {
+        source: '/_next/data/:path*',
+        headers: [
+          ...noCacheHeaders,
+          {
+            key: 'X-Robots-Tag',
+            value: 'noindex'
+          }
+        ]
+      },
+      // Headers para livros EPUB - Cache permitido apenas para estes
       {
         source: '/books/:path*',
         headers: [
@@ -183,13 +288,13 @@ const nextConfig = {
           ...securityHeaders
         ]
       },
-      // Headers para assets estáticos
+      // Headers para JavaScript e CSS - Cache mínimo para performance do menu
       {
-        source: '/(.*\\.(?:js|css|png|jpg|jpeg|gif|webp|svg|ico|woff|woff2)$)',
+        source: '/_next/static/chunks/:path*',
         headers: [
           {
             key: 'Cache-Control',
-            value: 'public, max-age=31536000, immutable'
+            value: 'private, max-age=300, stale-while-revalidate=60'
           },
           {
             key: 'X-Cache-Version',
@@ -197,11 +302,24 @@ const nextConfig = {
           }
         ]
       },
-      // Headers gerais
+      // Headers para CSS - Cache mínimo
       {
-        source: '/((?!api/).*)',
+        source: '/_next/static/css/:path*',
         headers: [
-          ...securityHeaders,
+          {
+            key: 'Cache-Control',
+            value: 'private, max-age=300, stale-while-revalidate=60'
+          }
+        ]
+      },
+      // Headers para imagens e fontes - Cache moderado
+      {
+        source: '/(.*\\.(?:png|jpg|jpeg|gif|webp|svg|ico|woff|woff2)$)',
+        headers: [
+          {
+            key: 'Cache-Control',
+            value: 'public, max-age=3600, s-maxage=86400, stale-while-revalidate=86400'
+          },
           {
             key: 'X-Cache-Version',
             value: cacheVersion
@@ -226,23 +344,6 @@ const nextConfig = {
     config.parallelism = 10;
     
     fastRefresh = true;
-    // Configuração de cache
-    config.cache = {
-      type: 'filesystem',
-      buildDependencies: {
-        config: [__filename],
-      },
-      maxAge: isProd ? 24 * 60 * 60 * 1000  // 1 dia
-        : 60 * 60 * 1000, // 1 hora
-      store: 'pack',
-      compression: 'gzip',
-      idleTimeout: 5000, // 5 segundos
-      idleTimeoutForInitialStore: 1000, // 1 segundo
-      idleTimeoutAfterLargeChanges: 10000, // 10 segundos
-      profile: isProd, // Ativar profiling em produção
-      version: cacheVersion,  
-    };
-
 
     // Plugin para versão de cache no Service Worker
     if (!isServer) {
@@ -452,12 +553,16 @@ const nextConfig = {
       };
     }
 
-    // Configurações específicas para desenvolvimento
+    // Configurações específicas para desenvolvimento - Menu mais rápido
     if (dev) {
       config.watchOptions = {
         poll: false,
         ignored: /node_modules/,
+        aggregateTimeout: 100, // Resposta mais rápida
       };
+      
+      // Desabilitar source maps para performance
+      config.devtool = false;
     }
 
     return config;
@@ -479,6 +584,18 @@ const nextConfig = {
     CUSTOM_KEY: 'my-value',
     CACHE_VERSION: cacheVersion,
     NEXT_PUBLIC_NODE_ENV: process.env.NODE_ENV,
+    NEXT_PUBLIC_NO_CACHE: 'true',
+  },
+  
+  // Configurações adicionais para desabilitar cache
+  serverRuntimeConfig: {
+    // Desabilitar cache do servidor
+    unstable_runtimeJS: false,
+  },
+  
+  publicRuntimeConfig: {
+    // Configurações públicas
+    noCache: true,
   },
 };
 
