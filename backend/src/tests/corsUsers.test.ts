@@ -233,6 +233,60 @@ describe('CORS Users Middleware Tests', () => {
     });
   });
 
+  describe('Wildcard Origin Tests', () => {
+    beforeEach(() => {
+      // Mock a config que usa wildcard
+      jest.mock('../config/corsUsers.config', () => ({
+        ...jest.requireActual('../config/corsUsers.config'),
+        corsUsersConfig: {
+          ...jest.requireActual('../config/corsUsers.config').corsUsersConfig,
+          allowedOrigins: ['*.sabercon.com.br', 'http://localhost:3000'],
+        },
+      }));
+
+      app.use('/wildcard-test', usersCorsMiddleware);
+      app.get('/wildcard-test', (req, res) => {
+        res.json({ success: true });
+      });
+    });
+
+    afterEach(() => {
+      jest.resetModules(); // Limpar mocks
+    });
+
+    it('should allow requests from a valid subdomain', async () => {
+      const response = await request(app)
+        .get('/wildcard-test')
+        .set('Origin', 'https://app.sabercon.com.br')
+        .expect(200);
+      
+      expect(response.headers['access-control-allow-origin']).toBe('https://app.sabercon.com.br');
+    });
+
+    it('should reject requests from a non-matching domain', async () => {
+      await request(app)
+        .get('/wildcard-test')
+        .set('Origin', 'https://another-domain.com')
+        .expect(403);
+    });
+  });
+
+  describe('Missing Origin Header', () => {
+    it('should reject requests without an Origin header', async () => {
+      app.use('/no-origin-test', usersCorsMiddleware);
+      app.get('/no-origin-test', (req, res) => {
+        res.json({ success: true });
+      });
+
+      // Não definimos o header 'Origin'
+      const response = await request(app)
+        .get('/no-origin-test')
+        .expect(403);
+
+      expect(response.body.code).toBe('CORS_ORIGIN_NOT_ALLOWED');
+    });
+  });
+
   afterEach(() => {
     // Reset environment
     delete process.env.NODE_ENV;

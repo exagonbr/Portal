@@ -98,19 +98,34 @@ export const allowedMethods = [
  * Função para verificar se uma origem é permitida
  */
 export function isOriginAllowed(origin: string | undefined, allowedList: string[]): boolean {
-  // Permitir requisições sem 'Origin' (ex: mobile apps, Postman, server-to-server)
-  // ou com origem "unknown" que pode ocorrer em certos cenários (iframes, etc.)
-  if (!origin || origin === 'unknown') {
-    return true;
+  if (!origin) {
+    // Rejeitar requisições sem 'Origin' que são esperadas de navegadores
+    return false;
   }
 
   // Em desenvolvimento, permitir qualquer localhost
-  if (corsUsersConfig.developmentMode && origin.includes('localhost')) {
+  if (corsUsersConfig.developmentMode && origin.startsWith('http://localhost')) {
+    return true;
+  }
+
+  // Permitir origens "unknown" em cenários específicos, se necessário (ex: iframes)
+  if (origin === 'unknown') {
+    // Avaliar se isso é realmente necessário para o seu caso de uso
     return true;
   }
 
   // Verificar se a origem está na lista permitida
-  return allowedList.includes(origin) || allowedList.includes('*');
+  return allowedList.some(allowedOrigin => {
+    if (allowedOrigin === '*') {
+      return true;
+    }
+    // Tratar subdomínios se necessário, ex: .sabercon.com.br
+    if (allowedOrigin.startsWith('*.')) {
+      const domain = allowedOrigin.substring(2);
+      return origin.endsWith(`.${domain}`) || origin === domain;
+    }
+    return origin === allowedOrigin;
+  });
 }
 
 /**
