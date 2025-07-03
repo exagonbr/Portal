@@ -1,7 +1,7 @@
 #!/bin/bash
 
 # Script completo de SSL Let's Encrypt - Portal Sabercon
-# Frontend: localhost:3000 via HTTPS | Backend: localhost:3001 via HTTPS
+# Frontend: portal.sabercon.com.br via HTTPS | Backend: portal.sabercon.com.br via HTTPS
 # Execute como root: sudo bash setup-ssl.sh
 
 set -e

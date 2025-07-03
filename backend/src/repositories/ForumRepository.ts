@@ -63,10 +63,10 @@ export class ForumRepository extends BaseRepository<ForumThread> {
     return this.db('forum_replies')
       .select(
         'forum_replies.*',
-        'users.name as author_name',
-        'users.usuario as author_username'
+        'User.name as author_name',
+        'User.usuario as author_username'
       )
-      .leftJoin('users', 'forum_replies.author_id', 'users.id')
+      .leftJoin('User', 'forum_replies.author_id', 'User.id')
       .where('forum_replies.thread_id', threadId)
       .orderBy('forum_replies.created_at', 'asc');
   }
@@ -75,11 +75,11 @@ export class ForumRepository extends BaseRepository<ForumThread> {
     let query = this.db(this.tableName)
       .select(
         'forum_threads.*',
-        'users.name as author_name',
-        'users.usuario as author_username',
+        'User.name as author_name',
+        'User.usuario as author_username',
         'courses.name as course_name'
       )
-      .leftJoin('users', 'forum_threads.author_id', 'users.id')
+      .leftJoin('User', 'forum_threads.author_id', 'User.id')
       .leftJoin('courses', 'forum_threads.course_id', 'courses.id');
 
     if (courseId) {
@@ -95,11 +95,11 @@ export class ForumRepository extends BaseRepository<ForumThread> {
     const thread = await this.db(this.tableName)
       .select(
         'forum_threads.*',
-        'users.name as author_name',
-        'users.usuario as author_username',
+        'User.name as author_name',
+        'User.usuario as author_username',
         'courses.name as course_name'
       )
-      .leftJoin('users', 'forum_threads.author_id', 'users.id')
+      .leftJoin('User', 'forum_threads.author_id', 'User.id')
       .leftJoin('courses', 'forum_threads.course_id', 'courses.id')
       .where('forum_threads.id', id)
       .first();
@@ -183,10 +183,10 @@ export class ForumReplyRepository extends BaseRepository<ForumReply> {
     const result = await this.db(this.tableName)
       .select(
         'forum_replies.*',
-        'users.name as author_name',
-        'users.usuario as author_username'
+        'User.name as author_name',
+        'User.usuario as author_username'
       )
-      .leftJoin('users', 'forum_replies.author_id', 'users.id')
+      .leftJoin('User', 'forum_replies.author_id', 'User.id')
       .where('forum_replies.id', id)
       .first();
 
@@ -201,10 +201,10 @@ export class ForumReplyRepository extends BaseRepository<ForumReply> {
     return this.db(this.tableName)
       .select(
         'forum_replies.*',
-        'users.name as author_name',
-        'users.usuario as author_username'
+        'User.name as author_name',
+        'User.usuario as author_username'
       )
-      .leftJoin('users', 'forum_replies.author_id', 'users.id')
+      .leftJoin('User', 'forum_replies.author_id', 'User.id')
       .where('forum_replies.parent_reply_id', parentReplyId)
       .orderBy('forum_replies.created_at', 'asc');
   }

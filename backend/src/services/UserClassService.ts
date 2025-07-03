@@ -211,20 +211,6 @@ export class UserClassService {
     return this.toDto(updatedUserClass);
   }
 
-  private validateUserRole(userRole: string, enrollmentRole: string): void {
-    // Validar se o papel do usuário é compatível com o papel na matrícula
-    const validCombinations: Record<string, string[]> = {
-      'student': ['STUDENT'],
-      'teacher': ['TEACHER', 'COORDINATOR'],
-      'admin': ['STUDENT', 'TEACHER', 'COORDINATOR'],
-      'manager': ['STUDENT', 'TEACHER', 'COORDINATOR']
-    };
-
-    const allowedRoles = validCombinations[userRole] || [];
-    if (!allowedRoles.includes(enrollmentRole)) {
-      throw new AppError(`Usuário com papel '${userRole}' não pode ser matriculado como '${enrollmentRole}'`, 400);
-    }
-  }
 
   private toDto(userClass: any): UserClassDto {
     return {

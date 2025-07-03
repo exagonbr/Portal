@@ -1,9 +1,10 @@
-import { apiClient, handleApiError, ApiClientError } from './apiClient';
+import { apiClient, handleApiError, ApiClientError } from '@/lib/api-client';
 import { 
   CourseDto, 
   CreateCourseDto, 
   UpdateCourseDto,
-  PaginatedResponseDto 
+  PaginatedResponseDto,
+  CourseResponseDto 
 } from '../types/api';
 
 export interface CourseFilters {
@@ -13,6 +14,7 @@ export interface CourseFilters {
   level?: string;
   search?: string;
   active?: boolean;
+  type?: string;
 }
 
 export interface CourseListOptions {
@@ -21,12 +23,6 @@ export interface CourseListOptions {
   sortBy?: string;
   sortOrder?: 'asc' | 'desc';
   filters?: CourseFilters;
-}
-
-export interface CourseResponseDto extends CourseDto {
-  active?: boolean;
-  students_count?: number;
-  teachers_count?: number;
 }
 
 export class CourseService {
@@ -71,7 +67,7 @@ export class CourseService {
 
       return response.data!;
     } catch (error) {
-      console.error('Erro ao buscar cursos:', error);
+      console.log('Erro ao buscar cursos:', error);
       throw new Error(handleApiError(error));
     }
   }
@@ -89,7 +85,7 @@ export class CourseService {
 
       return response.data;
     } catch (error) {
-      console.error(`Erro ao buscar curso ${id}:`, error);
+      console.log(`Erro ao buscar curso ${id}:`, error);
       
       if (error instanceof ApiClientError && error.status === 404) {
         throw new Error('Curso não encontrado');
@@ -121,7 +117,7 @@ export class CourseService {
 
       return response.data;
     } catch (error) {
-      console.error('Erro ao criar curso:', error);
+      console.log('Erro ao criar curso:', error);
       
       if (error instanceof ApiClientError) {
         if (error.status === 409) {
@@ -149,7 +145,7 @@ export class CourseService {
 
       return response.data;
     } catch (error) {
-      console.error(`Erro ao atualizar curso ${id}:`, error);
+      console.log(`Erro ao atualizar curso ${id}:`, error);
       
       if (error instanceof ApiClientError) {
         if (error.status === 404) {
@@ -178,7 +174,7 @@ export class CourseService {
         throw new Error(response.message || 'Falha ao deletar curso');
       }
     } catch (error) {
-      console.error(`Erro ao deletar curso ${id}:`, error);
+      console.log(`Erro ao deletar curso ${id}:`, error);
       
       if (error instanceof ApiClientError) {
         if (error.status === 404) {
@@ -207,7 +203,7 @@ export class CourseService {
 
       return response.items;
     } catch (error) {
-      console.error('Erro ao buscar cursos ativos:', error);
+      console.log('Erro ao buscar cursos ativos:', error);
       throw new Error(handleApiError(error));
     }
   }
@@ -226,7 +222,7 @@ export class CourseService {
 
       return response.items;
     } catch (error) {
-      console.error(`Erro ao buscar cursos da instituição ${institutionId}:`, error);
+      console.log(`Erro ao buscar cursos da instituição ${institutionId}:`, error);
       return [];
     }
   }
@@ -249,7 +245,7 @@ export class CourseService {
 
       return response.items;
     } catch (error) {
-      console.error('Erro ao buscar cursos por nome:', error);
+      console.log('Erro ao buscar cursos por nome:', error);
       return [];
     }
   }
@@ -270,7 +266,7 @@ export class CourseService {
 
       return response.data;
     } catch (error) {
-      console.error(`Erro ao alterar status do curso ${id}:`, error);
+      console.log(`Erro ao alterar status do curso ${id}:`, error);
       
       if (error instanceof ApiClientError && error.status === 404) {
         throw new Error('Curso não encontrado');
@@ -301,7 +297,7 @@ export class CourseService {
 
       return response.data;
     } catch (error) {
-      console.error(`Erro ao buscar estudantes do curso ${id}:`, error);
+      console.log(`Erro ao buscar estudantes do curso ${id}:`, error);
       throw new Error(handleApiError(error));
     }
   }
@@ -327,7 +323,7 @@ export class CourseService {
 
       return response.data;
     } catch (error) {
-      console.error(`Erro ao buscar professores do curso ${id}:`, error);
+      console.log(`Erro ao buscar professores do curso ${id}:`, error);
       throw new Error(handleApiError(error));
     }
   }
@@ -346,7 +342,7 @@ export class CourseService {
         throw new Error(response.message || 'Falha ao matricular estudante');
       }
     } catch (error) {
-      console.error(`Erro ao matricular estudante ${studentId} no curso ${courseId}:`, error);
+      console.log(`Erro ao matricular estudante ${studentId} no curso ${courseId}:`, error);
       
       if (error instanceof ApiClientError) {
         if (error.status === 409) {
@@ -374,7 +370,7 @@ export class CourseService {
         throw new Error(response.message || 'Falha ao remover estudante do curso');
       }
     } catch (error) {
-      console.error(`Erro ao remover estudante ${studentId} do curso ${courseId}:`, error);
+      console.log(`Erro ao remover estudante ${studentId} do curso ${courseId}:`, error);
       
       if (error instanceof ApiClientError && error.status === 404) {
         throw new Error('Curso ou estudante não encontrado');
@@ -398,7 +394,7 @@ export class CourseService {
         throw new Error(response.message || 'Falha ao adicionar professor');
       }
     } catch (error) {
-      console.error(`Erro ao adicionar professor ${teacherId} ao curso ${courseId}:`, error);
+      console.log(`Erro ao adicionar professor ${teacherId} ao curso ${courseId}:`, error);
       
       if (error instanceof ApiClientError) {
         if (error.status === 409) {
@@ -426,7 +422,7 @@ export class CourseService {
         throw new Error(response.message || 'Falha ao remover professor do curso');
       }
     } catch (error) {
-      console.error(`Erro ao remover professor ${teacherId} do curso ${courseId}:`, error);
+      console.log(`Erro ao remover professor ${teacherId} do curso ${courseId}:`, error);
       
       if (error instanceof ApiClientError && error.status === 404) {
         throw new Error('Curso ou professor não encontrado');
@@ -465,7 +461,7 @@ export class CourseService {
 
       return response.data;
     } catch (error) {
-      console.error('Erro ao buscar estatísticas dos cursos:', error);
+      console.log('Erro ao buscar estatísticas dos cursos:', error);
       throw new Error(handleApiError(error));
     }
   }
@@ -485,7 +481,7 @@ export class CourseService {
 
       return response.data;
     } catch (error) {
-      console.error(`Erro ao verificar se curso ${id} pode ser deletado:`, error);
+      console.log(`Erro ao verificar se curso ${id} pode ser deletado:`, error);
       return { canDelete: false, reason: handleApiError(error) };
     }
   }
@@ -515,7 +511,7 @@ export class CourseService {
 
       return response.data;
     } catch (error) {
-      console.error(`Erro ao duplicar curso ${id}:`, error);
+      console.log(`Erro ao duplicar curso ${id}:`, error);
       
       if (error instanceof ApiClientError) {
         if (error.status === 404) {
@@ -559,7 +555,7 @@ export class CourseService {
 
       return response.data;
     } catch (error) {
-      console.error('Erro ao exportar cursos:', error);
+      console.log('Erro ao exportar cursos:', error);
       throw new Error(handleApiError(error));
     }
   }
@@ -610,3 +606,39 @@ export const deleteCourse = (id: string) => courseService.deleteCourse(id);
 export const getActiveCourses = () => courseService.getActiveCourses();
 export const getCoursesByInstitution = (institutionId: string) => courseService.getCoursesByInstitution(institutionId);
 export const searchCoursesByName = (name: string) => courseService.searchCoursesByName(name);
+
+/**
+ * Busca cursos onde o usuário é professor
+ */
+export const getCoursesByTeacher = async (teacherId: string): Promise<CourseResponseDto[]> => {
+  try {
+    const response = await apiClient.get<CourseResponseDto[]>(`/teachers/${teacherId}/courses`);
+    
+    if (!response.success || !response.data) {
+      return [];
+    }
+    
+    return response.data;
+  } catch (error) {
+    console.log(`Erro ao buscar cursos do professor ${teacherId}:`, error);
+    return [];
+  }
+};
+
+/**
+ * Busca cursos onde o usuário é aluno
+ */
+export const getCoursesByStudent = async (studentId: string): Promise<CourseResponseDto[]> => {
+  try {
+    const response = await apiClient.get<CourseResponseDto[]>(`/students/${studentId}/courses`);
+    
+    if (!response.success || !response.data) {
+      return [];
+    }
+    
+    return response.data;
+  } catch (error) {
+    console.log(`Erro ao buscar cursos do aluno ${studentId}:`, error);
+    return [];
+  }
+};

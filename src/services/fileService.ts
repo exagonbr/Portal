@@ -2,17 +2,86 @@ import { FileRecord, S3FileInfo, FileUploadRequest, FileMoveRequest, FileUpdateR
 
 const API_BASE = '/api/content/files'
 
+// Função para obter o token de autenticação
+const getAuthToken = (): string | null => {
+  if (typeof window === 'undefined') return null;
+  
+  // 1. Tentar obter token de localStorage primeiro
+  let token = localStorage.getItem('auth_token') || 
+              localStorage.getItem('token') ||
+              localStorage.getItem('authToken') ||
+              sessionStorage.getItem('token') ||
+              sessionStorage.getItem('auth_token');
+  
+  // 2. Se não encontrar no storage, tentar obter dos cookies
+  if (!token) {
+    const cookies = document.cookie.split(';');
+    for (const cookie of cookies) {
+      const [name, value] = cookie.trim().split('=');
+      if (name === 'auth_token' || name === 'token' || name === 'authToken') {
+        token = decodeURIComponent(value);
+        break;
+      }
+    }
+  }
+  
+  // 3. Como último recurso, tentar obter da sessão de usuário (se houver)
+  if (!token) {
+    try {
+      const userCookie = document.cookie
+        .split(';')
+        .find(cookie => cookie.trim().startsWith('user_session='));
+      
+      if (userCookie) {
+        const userSessionValue = userCookie.split('=')[1];
+        const userData = JSON.parse(decodeURIComponent(userSessionValue));
+        if (userData && userData.token) {
+          token = userData.token;
+        }
+      }
+    } catch (error) {
+      console.warn('⚠️ Erro ao extrair token da sessão do usuário:', error);
+    }
+  }
+  
+  return token;
+};
+
+// Função para criar headers com autenticação
+const createAuthHeaders = (): Record<string, string> => {
+  const headers: Record<string, string> = {
+    'Content-Type': 'application/json',
+  };
+  
+  const token = getAuthToken();
+  if (token) {
+    headers.Authorization = `Bearer ${token}`;
+  }
+  
+  return headers;
+};
+
 export class FileService {
   // Listar arquivos de uma categoria específica
   static async getFilesByCategory(category: 'literario' | 'professor' | 'aluno'): Promise<S3FileInfo[]> {
     try {
-      const response = await fetch(`${API_BASE}?category=${category}`)
+      const response = await fetch(`${API_BASE}?category=${category}`, {
+        headers: createAuthHeaders()
+      })
       if (!response.ok) {
         throw new Error('Erro ao buscar arquivos')
       }
-      return await response.json()
+      const result = await response.json()
+      
+      // O backend retorna { success: true, data: [...] }
+      if (result.success && result.data) {
+        return Array.isArray(result.data) ? result.data : []
+      }
+      
+      // Fallback para estrutura antiga
+      return Array.isArray(result) ? result : []
     } catch (error) {
-      console.error('Erro no serviço de arquivos:', error)
+      console.log('Erro no serviço de arquivos:', error)
       throw error
     }
   }
@@ -20,30 +89,28 @@ export class FileService {
   // Buscar todos os arquivos
   static async getAllFiles(): Promise<Record<string, S3FileInfo[]>> {
     try {
-      const response = await fetch(`${API_BASE}/all`)
+      const response = await fetch(`${API_BASE}/all`, {
+        headers: createAuthHeaders()
+      })
       if (!response.ok) {
         throw new Error('Erro ao buscar todos os arquivos')
       }
-      return await response.json()
+      const result = await response.json()
+      
+      // O backend retorna { success: true, data: {...} }
+      if (result.success && result.data) {
+        return result.data
+      }
+      
+      // Fallback para estrutura antiga
+      return result || {}
     } catch (error) {
-      console.error('Erro no serviço de arquivos:', error)
+      console.log('Erro no serviço de arquivos:', error)
       throw error
     }
   }
 
-  // Verificar referências no banco de dados
-  static async checkDatabaseReferences(category: 'literario' | 'professor' | 'aluno'): Promise<S3FileInfo[]> {
-    try {
-      const response = await fetch(`${API_BASE}/check-references?category=${category}`)
-      if (!response.ok) {
-        throw new Error('Erro ao verificar referências')
-      }
-      return await response.json()
-    } catch (error) {
-      console.error('Erro ao verificar referências:', error)
-      throw error
-    }
-  }
+  // Método removido: checkDatabaseReferences
 
   // Upload de arquivo
   static async uploadFile(uploadData: FileUploadRequest): Promise<FileRecord> {
@@ -58,18 +125,31 @@ export class FileService {
         formData.append('tags', JSON.stringify(uploadData.tags))
       }
 
+      const headers = createAuthHeaders();
+      // Remove Content-Type header para FormData
+      delete headers['Content-Type'];
+
       const response = await fetch(`${API_BASE}/upload`, {
         method: 'POST',
-        body: formData
+        body: formData,
+        headers
       })
 
       if (!response.ok) {
         throw new Error('Erro ao fazer upload do arquivo')
       }
 
-      return await response.json()
+      const result = await response.json()
+      
+      // O backend retorna { success: true, data: {...} }
+      if (result.success && result.data) {
+        return result.data
+      }
+      
+      // Fallback para estrutura antiga
+      return result
     } catch (error) {
-      console.error('Erro no upload:', error)
+      console.log('Erro no upload:', error)
       throw error
     }
   }
@@ -81,18 +161,31 @@ export class FileService {
       formData.append('file', newFile)
       formData.append('fileId', fileId)
 
+      const headers = createAuthHeaders();
+      // Remove Content-Type header para FormData
+      delete headers['Content-Type'];
+
       const response = await fetch(`${API_BASE}/replace`, {
         method: 'PUT',
-        body: formData
+        body: formData,
+        headers
       })
 
       if (!response.ok) {
         throw new Error('Erro ao substituir arquivo')
       }
 
-      return await response.json()
+      const result = await response.json()
+      
+      // O backend retorna { success: true, data: {...} }
+      if (result.success && result.data) {
+        return result.data
+      }
+      
+      // Fallback para estrutura antiga
+      return result
     } catch (error) {
-      console.error('Erro ao substituir arquivo:', error)
+      console.log('Erro ao substituir arquivo:', error)
       throw error
     }
   }
@@ -102,9 +195,7 @@ export class FileService {
     try {
       const response = await fetch(`${API_BASE}/${fileId}/rename`, {
         method: 'PATCH',
-        headers: {
-          'Content-Type': 'application/json'
-        },
+        headers: createAuthHeaders(),
         body: JSON.stringify({ name: newName })
       })
 
@@ -112,9 +203,17 @@ export class FileService {
         throw new Error('Erro ao renomear arquivo')
       }
 
-      return await response.json()
+      const result = await response.json()
+      
+      // O backend retorna { success: true, data: {...} }
+      if (result.success && result.data) {
+        return result.data
+      }
+      
+      // Fallback para estrutura antiga
+      return result
     } catch (error) {
-      console.error('Erro ao renomear arquivo:', error)
+      console.log('Erro ao renomear arquivo:', error)
       throw error
     }
   }
@@ -124,9 +223,7 @@ export class FileService {
     try {
       const response = await fetch(`${API_BASE}/move`, {
         method: 'POST',
-        headers: {
-          'Content-Type': 'application/json'
-        },
+        headers: createAuthHeaders(),
         body: JSON.stringify(moveData)
       })
 
@@ -134,9 +231,17 @@ export class FileService {
         throw new Error('Erro ao mover/copiar arquivo')
       }
 
-      return await response.json()
+      const result = await response.json()
+      
+      // O backend retorna { success: true, data: {...} }
+      if (result.success && result.data) {
+        return result.data
+      }
+      
+      // Fallback para estrutura antiga
+      return result
     } catch (error) {
-      console.error('Erro ao mover arquivo:', error)
+      console.log('Erro ao mover arquivo:', error)
       throw error
     }
   }
@@ -145,7 +250,8 @@ export class FileService {
   static async deleteFile(fileId: string): Promise<boolean> {
     try {
       const response = await fetch(`${API_BASE}/${fileId}`, {
-        method: 'DELETE'
+        method: 'DELETE',
+        headers: createAuthHeaders()
       })
 
       if (!response.ok) {
@@ -154,7 +260,7 @@ export class FileService {
 
       return true
     } catch (error) {
-      console.error('Erro ao deletar arquivo:', error)
+      console.log('Erro ao deletar arquivo:', error)
       throw error
     }
   }
@@ -164,9 +270,7 @@ export class FileService {
     try {
       const response = await fetch(`${API_BASE}/${updateData.fileId}`, {
         method: 'PATCH',
-        headers: {
-          'Content-Type': 'application/json'
-        },
+        headers: createAuthHeaders(),
         body: JSON.stringify(updateData)
       })
 
@@ -174,9 +278,17 @@ export class FileService {
         throw new Error('Erro ao atualizar arquivo')
       }
 
-      return await response.json()
+      const result = await response.json()
+      
+      // O backend retorna { success: true, data: {...} }
+      if (result.success && result.data) {
+        return result.data
+      }
+      
+      // Fallback para estrutura antiga
+      return result
     } catch (error) {
-      console.error('Erro ao atualizar arquivo:', error)
+      console.log('Erro ao atualizar arquivo:', error)
       throw error
     }
   }
@@ -186,9 +298,7 @@ export class FileService {
     try {
       const response = await fetch(`${API_BASE}/create-reference`, {
         method: 'POST',
-        headers: {
-          'Content-Type': 'application/json'
-        },
+        headers: createAuthHeaders(),
         body: JSON.stringify({ s3Key, category, ...metadata })
       })
 
@@ -196,9 +306,17 @@ export class FileService {
         throw new Error('Erro ao criar referência no banco')
       }
 
-      return await response.json()
+      const result = await response.json()
+      
+      // O backend retorna { success: true, data: {...} }
+      if (result.success && result.data) {
+        return result.data
+      }
+      
+      // Fallback para estrutura antiga
+      return result
     } catch (error) {
-      console.error('Erro ao criar referência:', error)
+      console.log('Erro ao criar referência:', error)
       throw error
     }
   }
@@ -206,13 +324,24 @@ export class FileService {
   // Buscar TODOS os arquivos do bucket (incluindo não vinculados)
   static async getAllBucketFiles(category: string): Promise<S3FileInfo[]> {
     try {
-      const response = await fetch(`${API_BASE}/bucket-files?category=${category}`)
+      const response = await fetch(`${API_BASE}/bucket-files?category=${category}`, {
+        headers: createAuthHeaders()
+      })
       if (!response.ok) {
         throw new Error('Erro ao buscar arquivos do bucket')
       }
-      return await response.json()
+      
+      const result = await response.json()
+      
+      // O backend retorna { success: true, data: {...} }
+      if (result.success && result.data) {
+        return result.data
+      }
+      
+      // Fallback para estrutura antiga
+      return result
     } catch (error) {
-      console.error('Erro ao buscar arquivos do bucket:', error)
+      console.log('Erro ao buscar arquivos do bucket:', error)
       throw error
     }
   }
@@ -222,9 +351,7 @@ export class FileService {
     try {
       const response = await fetch(`${API_BASE}/${fileId}/link-collection`, {
         method: 'POST',
-        headers: {
-          'Content-Type': 'application/json'
-        },
+        headers: createAuthHeaders(),
         body: JSON.stringify({ collectionId })
       })
 
@@ -232,9 +359,17 @@ export class FileService {
         throw new Error('Erro ao vincular arquivo à coleção')
       }
 
-      return await response.json()
+      const result = await response.json()
+      
+      // O backend retorna { success: true, data: {...} }
+      if (result.success && result.data) {
+        return result.data
+      }
+      
+      // Fallback para estrutura antiga
+      return result
     } catch (error) {
-      console.error('Erro ao vincular à coleção:', error)
+      console.log('Erro ao vincular à coleção:', error)
       throw error
     }
   }
@@ -244,9 +379,7 @@ export class FileService {
     try {
       const response = await fetch(`${API_BASE}/${fileId}/add-library`, {
         method: 'POST',
-        headers: {
-          'Content-Type': 'application/json'
-        },
+        headers: createAuthHeaders(),
         body: JSON.stringify({ libraryCategory })
       })
 
@@ -254,9 +387,17 @@ export class FileService {
         throw new Error('Erro ao adicionar arquivo à biblioteca')
       }
 
-      return await response.json()
+      const result = await response.json()
+      
+      // O backend retorna { success: true, data: {...} }
+      if (result.success && result.data) {
+        return result.data
+      }
+      
+      // Fallback para estrutura antiga
+      return result
     } catch (error) {
-      console.error('Erro ao adicionar à biblioteca:', error)
+      console.log('Erro ao adicionar à biblioteca:', error)
       throw error
     }
   }
@@ -266,18 +407,24 @@ export class FileService {
     try {
       const response = await fetch(`${API_BASE}/${fileId}/unlink`, {
         method: 'POST',
-        headers: {
-          'Content-Type': 'application/json'
-        }
+        headers: createAuthHeaders()
       })
 
       if (!response.ok) {
         throw new Error('Erro ao desvincular arquivo do conteúdo')
       }
 
-      return await response.json()
+      const result = await response.json()
+      
+      // O backend retorna { success: true, data: {...} }
+      if (result.success && result.data) {
+        return result.data
+      }
+      
+      // Fallback para estrutura antiga
+      return result
     } catch (error) {
-      console.error('Erro ao desvincular do conteúdo:', error)
+      console.log('Erro ao desvincular do conteúdo:', error)
       throw error
     }
   }
@@ -297,9 +444,7 @@ export class FileService {
     try {
       const response = await fetch(`${API_BASE}/${fileId}/add-book`, {
         method: 'POST',
-        headers: {
-          'Content-Type': 'application/json'
-        },
+        headers: createAuthHeaders(),
         body: JSON.stringify(bookData)
       })
 
@@ -307,9 +452,17 @@ export class FileService {
         throw new Error('Erro ao adicionar arquivo à biblioteca de livros')
       }
 
-      return await response.json()
+      const result = await response.json()
+      
+      // O backend retorna { success: true, data: {...} }
+      if (result.success && result.data) {
+        return result.data
+      }
+      
+      // Fallback para estrutura antiga
+      return result
     } catch (error) {
-      console.error('Erro ao adicionar à biblioteca de livros:', error)
+      console.log('Erro ao adicionar à biblioteca de livros:', error)
       throw error
     }
   }

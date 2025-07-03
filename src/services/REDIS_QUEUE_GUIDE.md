@@ -191,7 +191,7 @@ queueService.registerHandler(JobTypes.USER_IMPORT, async (data, job) => {
     
     console.log(`Importação concluída: ${result.imported} usuários`);
   } catch (error) {
-    console.error('Erro na importação:', error);
+    console.log('Erro na importação:', error);
     throw error; // Job será marcado como falhado
   }
 });
@@ -487,9 +487,9 @@ await initializeServices();
 
 ```typescript
 // Logs estruturados para debugging
-console.error('[Cache] Redis connection failed:', error);
-console.error('[Queue] Job processing failed:', { jobId, error, attempts });
-console.error('[API] Request failed with cache miss:', { url, error });
+console.log('[Cache] Redis connection failed:', error);
+console.log('[Queue] Job processing failed:', { jobId, error, attempts });
+console.log('[API] Request failed with cache miss:', { url, error });
 ```
 
 ## 📈 Otimizações

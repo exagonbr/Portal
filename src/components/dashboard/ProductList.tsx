@@ -1,6 +1,29 @@
 'use client'
 
-import { teacherMockData } from '@/constants/mockData'
+// Dados mock locais
+const teacherMockData = {
+  classNotifications: [
+    {
+      id: 1,
+      subject: 'Matemática',
+      time: '10:30',
+      date: '2024-01-25',
+      students: 25,
+      type: 'class' as const,
+      message: 'Aula sobre equações do 2º grau'
+    },
+    {
+      id: 2,
+      subject: 'Reunião de Pais',
+      time: '14:15',
+      date: '2024-01-30',
+      students: 0,
+      type: 'notification' as const,
+      message: 'Reunião para discussão do desempenho dos alunos'
+    }
+  ]
+}
+
 import { useAuth } from '@/contexts/AuthContext'
 
 interface ClassNotification {
@@ -22,27 +45,23 @@ export default function ProductList() {
 
   const currentDate = new Date()
   const notifications: ClassNotification[] = [
-    ...teacherMockData.upcomingClasses.map(classItem => ({
-      ...classItem,
-      type: 'class' as const,
-    })),
     {
-      id: 101,
+      id: 1,
       subject: 'Matemática',
-      time: '13:45',
-      date: '2024-01-20',
-      students: 3,
-      type: 'notification',
-      message: 'Novos exercícios entregues'
+      time: '10:30',
+      date: '2024-01-25',
+      students: 25,
+      type: 'class',
+      message: 'Aula sobre equações do 2º grau'
     },
     {
-      id: 102,
-      subject: 'Física',
-      time: '14:30',
-      date: '2024-01-20',
-      students: 5,
+      id: 2,
+      subject: 'Reunião de Pais',
+      time: '14:15',
+      date: '2024-01-30',
+      students: 0,
       type: 'notification',
-      message: 'Dúvidas pendentes no fórum'
+      message: 'Reunião para discussão do desempenho dos alunos'
     }
   ]
 
@@ -58,7 +77,7 @@ export default function ProductList() {
             </div>
             <div className="flex-1">
               <div className="flex items-center justify-between">
-                <h3 className="font-medium text-gray-900">{item.subject}</h3>
+                <h3 className="font-medium text-gray-700">{item.subject}</h3>
                 <span className="text-sm text-gray-500">{item.time}</span>
               </div>
               <p className="text-sm text-gray-600">

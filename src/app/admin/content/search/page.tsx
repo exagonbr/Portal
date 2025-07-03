@@ -14,8 +14,8 @@ const SORT_OPTIONS = [
   { value: 'type', label: 'Tipo' }
 ]
 
-const ITEMS_PER_PAGE_OPTIONS = [10, 20, 50, 100]
-const DEFAULT_ITEMS_PER_PAGE = 20
+const ITEMS_PER_PAGE_OPTIONS = [10, 20, 50, 100, 200, 500]
+const DEFAULT_ITEMS_PER_PAGE = 50
 
 interface BucketInfo {
   name: string
@@ -91,12 +91,21 @@ export default function AdminContentSearchPage() {
 
   // Carregar buckets ao montar o componente
   useEffect(() => {
-    loadBuckets()
+    const initializeData = async () => {
+      await loadBuckets()
+      // Após carregar os buckets, carregar todos os arquivos se a aba for "todos"
+      if (activeTab === 'todos' || !activeTab) {
+        await loadAllFiles()
+      }
+    }
+    initializeData()
   }, [])
 
   // Carregar arquivos quando mudar aba ativa
   useEffect(() => {
-    if (activeTab) {
+    if (activeTab === 'todos') {
+      loadAllFiles()
+    } else if (activeTab) {
       loadFiles()
     }
   }, [activeTab])
@@ -113,9 +122,9 @@ export default function AdminContentSearchPage() {
       const buckets = await BucketService.getConfiguredBuckets()
       setAvailableBuckets(buckets)
       
-      // Definir primeira aba como ativa se não houver nenhuma
+      // Definir aba "todos" como ativa por padrão
       if (buckets.length > 0 && !activeTab) {
-        setActiveTab(buckets[0].category)
+        setActiveTab('todos')
       }
       
       // Inicializar estado de contents para todos os buckets
@@ -126,7 +135,7 @@ export default function AdminContentSearchPage() {
       setContents(initialContents)
       
     } catch (err) {
-      console.error('Erro ao carregar buckets:', err)
+      console.log('Erro ao carregar buckets:', err)
       setError('Erro ao carregar buckets. Tente novamente.')
     } finally {
       setBucketsLoading(false)
@@ -160,17 +169,14 @@ export default function AdminContentSearchPage() {
       const allBucketFiles = await FileService.getAllBucketFiles(activeTab)
       updateProgress(60)
       
-      // Verificar referências no banco de dados para esta categoria específica
-      const filesWithReferences = await FileService.checkDatabaseReferences(activeTab as 'literario' | 'professor' | 'aluno')
       updateProgress(80)
       
-      // Combinar arquivos do bucket com informações de referência
+      // Mapear arquivos do bucket sem verificação de referências (método removido)
       const combinedFiles = allBucketFiles.map((bucketFile: S3FileInfo) => {
-        const dbReference = filesWithReferences.find(dbFile => dbFile.name === bucketFile.name)
         return {
           ...bucketFile,
-          hasDbReference: !!dbReference,
-          dbRecord: dbReference?.dbRecord || null,
+          hasDbReference: false, // Temporariamente false até implementar nova verificação
+          dbRecord: null,
           bucket: activeBucket.name, // Garantir que o bucket está correto
           category: activeTab // Adicionar categoria para facilitar filtragem
         }
@@ -185,7 +191,7 @@ export default function AdminContentSearchPage() {
         [activeTab]: combinedFiles
       }))
     } catch (err) {
-      console.error('Erro ao carregar arquivos:', err)
+      console.log('Erro ao carregar arquivos:', err)
       setError(`Erro ao carregar arquivos da categoria ${activeTab}. Tente novamente.`)
     } finally {
       setLoading(false)
@@ -211,16 +217,12 @@ export default function AdminContentSearchPage() {
           // Carregar arquivos do bucket específico
           const allBucketFiles = await FileService.getAllBucketFiles(bucket.category)
           
-          // Verificar referências no banco para esta categoria
-          const filesWithReferences = await FileService.checkDatabaseReferences(bucket.category as 'literario' | 'professor' | 'aluno')
-          
-          // Combinar dados
+          // Mapear dados sem verificação de referências (método removido)
           const combinedFiles = allBucketFiles.map((bucketFile: S3FileInfo) => {
-            const dbReference = filesWithReferences.find(dbFile => dbFile.name === bucketFile.name)
             return {
               ...bucketFile,
-              hasDbReference: !!dbReference,
-              dbRecord: dbReference?.dbRecord || null,
+              hasDbReference: false, // Temporariamente false até implementar nova verificação
+              dbRecord: null,
               bucket: bucket.name,
               category: bucket.category
             }
@@ -230,7 +232,7 @@ export default function AdminContentSearchPage() {
           console.log(`✓ Carregados ${combinedFiles.length} arquivos para ${bucket.category}`)
           
         } catch (bucketError) {
-          console.error(`Erro ao carregar bucket ${bucket.category}:`, bucketError)
+          console.log(`Erro ao carregar bucket ${bucket.category}:`, bucketError)
           allFiles[bucket.category] = [] // Adicionar array vazio em caso de erro
         }
       }
@@ -239,7 +241,7 @@ export default function AdminContentSearchPage() {
       console.log('✅ Todos os buckets carregados com sucesso')
       
     } catch (err) {
-      console.error('Erro ao carregar todos os arquivos:', err)
+      console.log('Erro ao carregar todos os arquivos:', err)
       setError('Erro ao carregar arquivos de alguns buckets. Tente novamente.')
     } finally {
       setLoading(false)
@@ -273,7 +275,7 @@ export default function AdminContentSearchPage() {
       setShowBucketModal(false)
       
     } catch (err) {
-      console.error('Erro ao adicionar bucket:', err)
+      console.log('Erro ao adicionar bucket:', err)
       setError('Erro ao adicionar bucket. Verifique se o bucket existe na AWS.')
     } finally {
       setLoading(false)
@@ -282,7 +284,14 @@ export default function AdminContentSearchPage() {
 
   // Função para filtrar e ordenar conteúdo com paginação
   const getFilteredContent = useMemo(() => {
-    let content = contents[activeTab] || []
+    let content: S3FileInfo[] = []
+    
+    // Se a aba ativa for "todos", combinar todos os arquivos
+    if (activeTab === 'todos') {
+      content = Object.values(contents).flat()
+    } else {
+      content = contents[activeTab] || []
+    }
     
     // Filtrar por termo de busca
     if (searchTerm) {
@@ -348,7 +357,7 @@ export default function AdminContentSearchPage() {
         await loadFiles() // Recarregar dados
         setSelectedItem(null)
       } catch (error) {
-        console.error('Erro ao substituir arquivo:', error)
+        console.log('Erro ao substituir arquivo:', error)
         setError('Erro ao substituir arquivo')
       } finally {
         setLoading(false)
@@ -366,7 +375,7 @@ export default function AdminContentSearchPage() {
         setNewName('')
         setSelectedItem(null)
       } catch (error) {
-        console.error('Erro ao renomear arquivo:', error)
+        console.log('Erro ao renomear arquivo:', error)
         setError('Erro ao renomear arquivo')
       } finally {
         setLoading(false)
@@ -389,7 +398,7 @@ export default function AdminContentSearchPage() {
         setTargetBucket('')
         setSelectedItem(null)
       } catch (error) {
-        console.error('Erro ao mover arquivo:', error)
+        console.log('Erro ao mover arquivo:', error)
         setError('Erro ao mover arquivo')
       } finally {
         setLoading(false)
@@ -406,7 +415,7 @@ export default function AdminContentSearchPage() {
         setShowDeleteModal(false)
         setSelectedItem(null)
       } catch (error) {
-        console.error('Erro ao deletar arquivo:', error)
+        console.log('Erro ao deletar arquivo:', error)
         setError('Erro ao deletar arquivo')
       } finally {
         setLoading(false)
@@ -433,7 +442,7 @@ export default function AdminContentSearchPage() {
         setRefTags('')
         setSelectedItem(null)
       } catch (error) {
-        console.error('Erro ao criar referência:', error)
+        console.log('Erro ao criar referência:', error)
         setError('Erro ao criar referência no banco')
       } finally {
         setLoading(false)
@@ -474,7 +483,7 @@ export default function AdminContentSearchPage() {
         setSelectedCollection('')
         setSelectedItem(null)
       } catch (error) {
-        console.error('Erro ao vincular à coleção:', error)
+        console.log('Erro ao vincular à coleção:', error)
         setError('Erro ao vincular arquivo à coleção')
       } finally {
         setLoading(false)
@@ -507,7 +516,7 @@ export default function AdminContentSearchPage() {
         setBookDescription('')
         setSelectedItem(null)
       } catch (error) {
-        console.error('Erro ao adicionar à biblioteca de livros:', error)
+        console.log('Erro ao adicionar à biblioteca de livros:', error)
         setError('Erro ao adicionar arquivo à biblioteca de livros')
       } finally {
         setLoading(false)
@@ -522,7 +531,7 @@ export default function AdminContentSearchPage() {
 
   const openAddLibraryModal = (item: S3FileInfo) => {
     setSelectedItem(item)
-    setBookTitle(item.name.replace(/\.[^/.]+$/, "")) // Remove extensão
+    setBookTitle(item.name?.replace(/\.[^/.]+$/, "") || item.name || "") // Remove extensão
     setBookAuthor('Autor não informado')
     setBookPublisher('Editora não informada')
     setBookDescription(item.description || 'Descrição não disponível')
@@ -539,7 +548,7 @@ export default function AdminContentSearchPage() {
         setShowUnlinkModal(false)
         setSelectedItem(null)
       } catch (error) {
-        console.error('Erro ao desvincular arquivo:', error)
+        console.log('Erro ao desvincular arquivo:', error)
         setError('Erro ao desvincular arquivo')
       } finally {
         setLoading(false)
@@ -568,7 +577,7 @@ export default function AdminContentSearchPage() {
       {/* Header */}
       <div className="mb-8 flex justify-between items-start">
         <div>
-          <h1 className="text-3xl font-bold text-gray-800 mb-2">Gerenciamento de Conteúdo</h1>
+          <h1 className="text-3xl font-bold text-gray-600 mb-2">Gerenciamento de Conteúdo</h1>
           <p className="text-gray-600">Gerencie arquivos nos buckets S3 da AWS e suas referências no banco de dados</p>
         </div>
         <div className="flex space-x-2">
@@ -647,7 +656,7 @@ export default function AdminContentSearchPage() {
       {/* Filtros Globais */}
       <div className="bg-white rounded-lg shadow-md p-6 mb-8">
         <div className="flex justify-between items-center mb-4">
-          <h2 className="text-lg font-semibold text-gray-800">Filtros</h2>
+          <h2 className="text-lg font-semibold text-gray-600">Filtros</h2>
           <button
             onClick={loadFiles}
             disabled={loading}
@@ -702,6 +711,39 @@ export default function AdminContentSearchPage() {
         <div className="mb-6">
           <div className="border-b border-gray-200">
             <nav className="-mb-px flex space-x-8">
+              {/* Aba Todos */}
+              <button
+                onClick={() => setActiveTab('todos')}
+                disabled={loading}
+                className={`py-3 px-4 border-b-2 font-medium text-sm flex items-center space-x-3 transition-all duration-200 disabled:cursor-not-allowed ${
+                  activeTab === 'todos'
+                    ? 'border-blue-500 text-blue-600 bg-blue-50'
+                    : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300 hover:bg-gray-50'
+                }`}
+              >
+                <span className="material-symbols-outlined text-lg">folder</span>
+                <div className="flex flex-col items-start">
+                  <span className="font-semibold">Todos os Arquivos</span>
+                  <span className="text-xs text-gray-500">Todos os buckets</span>
+                </div>
+                
+                {loading && activeTab === 'todos' ? (
+                  <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-blue-600"></div>
+                ) : (
+                  <div className="flex flex-col items-center">
+                    <span className="bg-gray-100 text-gray-600 px-2 py-0.5 rounded-full text-xs font-bold">
+                      {Object.values(contents).flat().length}
+                    </span>
+                    {Object.values(contents).flat().length > 0 && (
+                      <span className="text-xs text-green-600 font-medium">
+                        {Object.values(contents).flat().filter(file => file.hasDbReference).length} vinculados
+                      </span>
+                    )}
+                  </div>
+                )}
+              </button>
+
+              {/* Abas dos buckets */}
               {availableBuckets.map((bucket) => {
                 const isActive = activeTab === bucket.category
                 const filesCount = contents[bucket.category]?.length || 0
@@ -756,27 +798,39 @@ export default function AdminContentSearchPage() {
                   <span className="material-symbols-outlined text-blue-600">info</span>
                   <div>
                     <h3 className="font-medium text-blue-800">
-                      {availableBuckets.find(b => b.category === activeTab)?.label}
+                      {activeTab === 'todos' 
+                        ? 'Todos os Arquivos' 
+                        : availableBuckets.find(b => b.category === activeTab)?.label}
                     </h3>
                     <p className="text-blue-600 text-sm">
-                      Bucket: {availableBuckets.find(b => b.category === activeTab)?.name}
+                      {activeTab === 'todos' 
+                        ? `${availableBuckets.length} buckets configurados` 
+                        : `Bucket: ${availableBuckets.find(b => b.category === activeTab)?.name}`}
                     </p>
                   </div>
                 </div>
                 <div className="flex items-center space-x-4 text-sm">
                   <div className="text-center">
-                    <div className="font-bold text-blue-800">{contents[activeTab]?.length || 0}</div>
+                    <div className="font-bold text-blue-800">
+                      {activeTab === 'todos' 
+                        ? Object.values(contents).flat().length 
+                        : contents[activeTab]?.length || 0}
+                    </div>
                     <div className="text-blue-600">Total</div>
                   </div>
                   <div className="text-center">
                     <div className="font-bold text-green-600">
-                      {contents[activeTab]?.filter(file => file.hasDbReference).length || 0}
+                      {activeTab === 'todos'
+                        ? Object.values(contents).flat().filter(file => file.hasDbReference).length
+                        : contents[activeTab]?.filter(file => file.hasDbReference).length || 0}
                     </div>
                     <div className="text-green-600">Vinculados</div>
                   </div>
                   <div className="text-center">
                     <div className="font-bold text-red-600">
-                      {contents[activeTab]?.filter(file => !file.hasDbReference).length || 0}
+                      {activeTab === 'todos'
+                        ? Object.values(contents).flat().filter(file => !file.hasDbReference).length
+                        : contents[activeTab]?.filter(file => !file.hasDbReference).length || 0}
                     </div>
                     <div className="text-red-600">Não vinculados</div>
                   </div>
@@ -789,6 +843,24 @@ export default function AdminContentSearchPage() {
 
       {/* Lista de Conteúdo */}
       <div className="bg-white rounded-lg shadow-md overflow-hidden">
+        {/* Indicador de quantidade de arquivos */}
+        {getFilteredContent.length > 0 && (
+          <div className="bg-gray-50 px-6 py-3 border-b border-gray-200">
+            <div className="flex justify-between items-center">
+              <p className="text-sm text-gray-700">
+                Exibindo <span className="font-bold">{paginatedContent.length}</span> de{' '}
+                <span className="font-bold">{getFilteredContent.length}</span> arquivos
+                {searchTerm && ` (filtrado por: "${searchTerm}")`}
+                {contentType !== 'Todos' && ` (tipo: ${contentType})`}
+              </p>
+              {activeTab === 'todos' && (
+                <p className="text-sm text-gray-600">
+                  De <span className="font-bold">{availableBuckets.length}</span> buckets diferentes
+                </p>
+              )}
+            </div>
+          </div>
+        )}
         <div className="overflow-x-auto">
           <table className="min-w-full divide-y divide-gray-200">
             <thead className="bg-gray-50">
@@ -796,6 +868,11 @@ export default function AdminContentSearchPage() {
                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                   Arquivo
                 </th>
+                {activeTab === 'todos' && (
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    Bucket
+                  </th>
+                )}
                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                   Tipo
                 </th>
@@ -832,7 +909,7 @@ export default function AdminContentSearchPage() {
                         </div>
                       </div>
                       <div className="ml-4">
-                        <div className="text-sm font-medium text-gray-900 flex items-center">
+                        <div className="text-sm font-medium text-gray-700 flex items-center">
                           {item.name}
                           {!item.hasDbReference && (
                             <span className="ml-2 material-symbols-outlined text-red-500 text-sm" title="Sem referência no banco">
@@ -844,15 +921,25 @@ export default function AdminContentSearchPage() {
                       </div>
                     </div>
                   </td>
+                  {activeTab === 'todos' && (
+                    <td className="px-6 py-4 whitespace-nowrap">
+                      <div className="text-sm">
+                        <div className="font-medium text-gray-700">
+                          {availableBuckets.find(b => b.category === item.category)?.label || item.category}
+                        </div>
+                        <div className="text-gray-500 text-xs">{item.bucket}</div>
+                      </div>
+                    </td>
+                  )}
                   <td className="px-6 py-4 whitespace-nowrap">
                     <span className="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-blue-100 text-blue-800">
                       {item.type}
                     </span>
                   </td>
-                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-700">
                     {item.size}
                   </td>
-                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-700">
                     {new Date(item.lastModified).toLocaleDateString('pt-BR')}
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap">
@@ -990,21 +1077,22 @@ export default function AdminContentSearchPage() {
                   <span className="font-medium">{getFilteredContent.length}</span>
                   {' '}resultados
                 </p>
-                {totalPages > 1 && (
-                  <div className="flex items-center space-x-2">
-                    <label className="text-sm text-gray-700">Mostrar:</label>
-                    <select
-                      value={itemsPerPage}
-                      onChange={(e) => setItemsPerPage(Number(e.target.value))}
-                      className="border border-gray-300 rounded px-2 py-1 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
-                    >
-                      {ITEMS_PER_PAGE_OPTIONS.map(option => (
-                        <option key={option} value={option}>{option}</option>
-                      ))}
-                    </select>
-                    <span className="text-sm text-gray-700">por página</span>
-                  </div>
-                )}
+                <div className="flex items-center space-x-2">
+                  <label className="text-sm text-gray-700">Mostrar:</label>
+                  <select
+                    value={itemsPerPage}
+                    onChange={(e) => setItemsPerPage(Number(e.target.value))}
+                    className="border border-gray-300 rounded px-2 py-1 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  >
+                    {ITEMS_PER_PAGE_OPTIONS.map(option => (
+                      <option key={option} value={option}>{option}</option>
+                    ))}
+                    {getFilteredContent.length <= 500 && (
+                      <option value={getFilteredContent.length}>Todos ({getFilteredContent.length})</option>
+                    )}
+                  </select>
+                  <span className="text-sm text-gray-700">por página</span>
+                </div>
               </div>
               
               {totalPages > 1 && (
@@ -1100,7 +1188,7 @@ export default function AdminContentSearchPage() {
         ) : getFilteredContent.length === 0 ? (
           <div className="text-center py-12">
             <span className="material-symbols-outlined text-gray-400 text-6xl mb-4">folder_open</span>
-            <h3 className="text-lg font-medium text-gray-900 mb-2">Nenhum arquivo encontrado</h3>
+            <h3 className="text-lg font-medium text-gray-700 mb-2">Nenhum arquivo encontrado</h3>
             <p className="text-gray-500">
               {activeTab ? 'Tente ajustar os filtros ou adicione novos arquivos.' : 'Selecione uma aba para ver os arquivos.'}
             </p>
@@ -1121,7 +1209,7 @@ export default function AdminContentSearchPage() {
         <div className="fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full z-50">
           <div className="relative top-20 mx-auto p-5 border w-96 shadow-lg rounded-md bg-white">
             <div className="mt-3">
-              <h3 className="text-lg font-medium text-gray-900 mb-4">Adicionar Novo Bucket</h3>
+              <h3 className="text-lg font-medium text-gray-700 mb-4">Adicionar Novo Bucket</h3>
               
               <div className="mb-4">
                 <label className="block text-sm font-medium text-gray-700 mb-1">Nome do Bucket</label>
@@ -1240,26 +1328,26 @@ export default function AdminContentSearchPage() {
                 
                 {/* File Info Card */}
                 <div className="bg-gradient-to-br from-gray-50 to-gray-100 rounded-2xl p-6 border border-gray-200">
-                  <h4 className="font-bold text-gray-800 mb-4 flex items-center">
+                  <h4 className="font-bold text-gray-600 mb-4 flex items-center">
                     <span className="material-symbols-outlined mr-2">folder</span>
                     Informações do Arquivo
                   </h4>
                   <div className="grid grid-cols-2 gap-4 text-sm">
                     <div>
                       <span className="text-gray-600 font-medium">Nome:</span>
-                      <p className="text-gray-800 font-semibold truncate">{selectedItem.name}</p>
+                      <p className="text-gray-600 font-semibold truncate">{selectedItem.name}</p>
                     </div>
                     <div>
                       <span className="text-gray-600 font-medium">Tipo:</span>
-                      <p className="text-gray-800 font-semibold">{selectedItem.type}</p>
+                      <p className="text-gray-600 font-semibold">{selectedItem.type}</p>
                     </div>
                     <div>
                       <span className="text-gray-600 font-medium">Tamanho:</span>
-                      <p className="text-gray-800 font-semibold">{selectedItem.size}</p>
+                      <p className="text-gray-600 font-semibold">{selectedItem.size}</p>
                     </div>
                     <div>
                       <span className="text-gray-600 font-medium">Bucket:</span>
-                      <p className="text-gray-800 font-semibold">{selectedItem.bucket}</p>
+                      <p className="text-gray-600 font-semibold">{selectedItem.bucket}</p>
                     </div>
                   </div>
                 </div>
@@ -1394,7 +1482,7 @@ export default function AdminContentSearchPage() {
                 
                 {/* Current File Info Card */}
                 <div className="bg-gradient-to-br from-gray-50 to-gray-100 rounded-2xl p-6 border border-gray-200">
-                  <h4 className="font-bold text-gray-800 mb-4 flex items-center">
+                  <h4 className="font-bold text-gray-600 mb-4 flex items-center">
                     <span className="material-symbols-outlined mr-2">info</span>
                     Informações Atuais
                   </h4>
@@ -1411,7 +1499,7 @@ export default function AdminContentSearchPage() {
                       </span>
                     </div>
                     <div className="flex-1">
-                      <h5 className="font-semibold text-gray-800">{selectedItem.name}</h5>
+                      <h5 className="font-semibold text-gray-600">{selectedItem.name}</h5>
                       <p className="text-gray-600 text-sm">{selectedItem.type} • {selectedItem.size}</p>
                       <p className="text-gray-500 text-xs">Bucket: {selectedItem.bucket}</p>
                     </div>
@@ -1446,14 +1534,14 @@ export default function AdminContentSearchPage() {
                       <span className="material-symbols-outlined text-gray-400">arrow_forward</span>
                       <div>
                         <p className="text-sm text-gray-600">Nome anterior:</p>
-                        <p className="font-medium text-gray-800">{selectedItem.name}</p>
+                        <p className="font-medium text-gray-600">{selectedItem.name}</p>
                       </div>
                     </div>
                     <div className="flex items-center space-x-3 mt-4">
                       <span className="material-symbols-outlined text-green-600">check</span>
                       <div>
                         <p className="text-sm text-gray-600">Novo nome:</p>
-                        <p className="font-medium text-gray-800">{newName || 'Digite o novo nome...'}</p>
+                        <p className="font-medium text-gray-600">{newName || 'Digite o novo nome...'}</p>
                       </div>
                     </div>
                   </div>
@@ -1513,7 +1601,7 @@ export default function AdminContentSearchPage() {
         <div className="fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full z-50">
           <div className="relative top-20 mx-auto p-5 border w-96 shadow-lg rounded-md bg-white">
             <div className="mt-3">
-              <h3 className="text-lg font-medium text-gray-900 mb-4">Mover/Copiar Arquivo</h3>
+              <h3 className="text-lg font-medium text-gray-700 mb-4">Mover/Copiar Arquivo</h3>
               
               <div className="mb-4">
                 <label className="block text-sm font-medium text-gray-700 mb-2">Ação</label>
@@ -1587,7 +1675,7 @@ export default function AdminContentSearchPage() {
               <div className="mx-auto flex items-center justify-center h-12 w-12 rounded-full bg-red-100 mb-4">
                 <span className="material-symbols-outlined text-red-600">warning</span>
               </div>
-              <h3 className="text-lg font-medium text-gray-900 text-center mb-2">Confirmar Exclusão</h3>
+              <h3 className="text-lg font-medium text-gray-700 text-center mb-2">Confirmar Exclusão</h3>
               <p className="text-sm text-gray-500 text-center mb-4">
                 Tem certeza que deseja deletar o arquivo <strong>{selectedItem?.name}</strong>? 
                 Esta ação não pode ser desfeita.
@@ -1620,7 +1708,7 @@ export default function AdminContentSearchPage() {
         <div className="fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full z-50">
           <div className="relative top-20 mx-auto p-5 border w-96 shadow-lg rounded-md bg-white">
             <div className="mt-3">
-              <h3 className="text-lg font-medium text-gray-900 mb-4">Vincular à Coleção</h3>
+              <h3 className="text-lg font-medium text-gray-700 mb-4">Vincular à Coleção</h3>
               <p className="text-sm text-gray-600 mb-4">
                 Arquivo: <strong>{selectedItem.name}</strong>
               </p>
@@ -1711,7 +1799,7 @@ export default function AdminContentSearchPage() {
                 
                 {/* File Preview Card */}
                 <div className="bg-gradient-to-br from-gray-50 to-gray-100 rounded-2xl p-6 border border-gray-200">
-                  <h4 className="font-bold text-gray-800 mb-4 flex items-center">
+                  <h4 className="font-bold text-gray-600 mb-4 flex items-center">
                     <span className="material-symbols-outlined mr-2">preview</span>
                     Preview do Arquivo
                   </h4>
@@ -1728,7 +1816,7 @@ export default function AdminContentSearchPage() {
                       </span>
                     </div>
                     <div className="flex-1">
-                      <h5 className="font-semibold text-gray-800 truncate">{selectedItem.name}</h5>
+                      <h5 className="font-semibold text-gray-600 truncate">{selectedItem.name}</h5>
                       <p className="text-gray-600 text-sm">{selectedItem.type} • {selectedItem.size}</p>
                     </div>
                   </div>
@@ -1848,7 +1936,7 @@ export default function AdminContentSearchPage() {
                           className="sr-only"
                         />
                         <div className="flex-1">
-                          <div className="font-semibold text-gray-800 text-sm">{category.label}</div>
+                          <div className="font-semibold text-gray-600 text-sm">{category.label}</div>
                           <div className="text-gray-600 text-xs">{category.desc}</div>
                         </div>
                         {libraryCategory === category.value && (
@@ -1910,7 +1998,7 @@ export default function AdminContentSearchPage() {
               <div className="mx-auto flex items-center justify-center h-12 w-12 rounded-full bg-orange-100 mb-4">
                 <span className="material-symbols-outlined text-orange-600">link_off</span>
               </div>
-              <h3 className="text-lg font-medium text-gray-900 text-center mb-2">Desvincular Arquivo</h3>
+              <h3 className="text-lg font-medium text-gray-700 text-center mb-2">Desvincular Arquivo</h3>
               <p className="text-sm text-gray-500 text-center mb-4">
                 Tem certeza que deseja desvincular o arquivo <strong>{selectedItem?.name}</strong> do conteúdo? 
                 O arquivo permanecerá no bucket S3, mas será removido da biblioteca/coleção.

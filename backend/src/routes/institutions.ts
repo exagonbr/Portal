@@ -1,10 +1,28 @@
 import express from 'express';
-import { validateJWT } from '../middleware/auth';
+import { requireAuth } from '../middleware/requireAuth';
 import { InstitutionController } from '../controllers/refactored/InstitutionController';
 import { body, param } from 'express-validator';
 
 const router = express.Router();
+
+// 🔐 APLICAR MIDDLEWARE UNIFICADO DE AUTENTICAÇÃO
+router.use(requireAuth);
+
 const institutionController = new InstitutionController();
+
+// Middleware para verificar role de administrador
+const requireAdmin = (req: any, res: any, next: any) => {
+  const user = req.user;
+  
+  if (!['SYSTEM_ADMIN', 'INSTITUTION_MANAGER'].includes(user.role)) {
+    return res.status(403).json({
+      success: false,
+      message: 'Acesso negado - apenas administradores podem gerenciar instituições'
+    });
+  }
+  
+  next();
+};
 
 const institutionTypesArray = ['SCHOOL', 'COLLEGE', 'UNIVERSITY', 'TECH_CENTER'];
 
@@ -50,11 +68,10 @@ const validateCodeParam = [
   param('code').isString().notEmpty().withMessage('Code is required.'),
 ];
 
-
 /**
  * @swagger
  * tags:
- *   name: Institutions
+ *   name: institution
  *   description: Institution management
  */
 
@@ -137,13 +154,12 @@ const validateCodeParam = [
  *       bearerFormat: JWT
  */
 
-
 /**
  * @swagger
- * /api/institutions:
+ * /api/institution:
  *   get:
- *     summary: Get all institutions with filters and pagination
- *     tags: [Institutions]
+ *     summary: Get all institution with filters and pagination
+ *     tags: [institution]
  *     security:
  *       - bearerAuth: []
  *     parameters:
@@ -179,7 +195,7 @@ const validateCodeParam = [
  *         name: sortBy
  *         schema:
  *           type: string
- *           enum: ['name', 'code', 'type', 'created_at'] # Adicionar mais campos se necessário
+ *           enum: ['name', 'code', 'type', 'created_at']
  *         description: Field to sort by
  *       - in: query
  *         name: sortOrder
@@ -189,7 +205,7 @@ const validateCodeParam = [
  *         description: Sort order
  *     responses:
  *       200:
- *         description: List of institutions
+ *         description: List of institution
  *         content:
  *           application/json:
  *             schema:
@@ -202,45 +218,47 @@ const validateCodeParam = [
  *                   items:
  *                     $ref: '#/components/schemas/Institution'
  *                 pagination:
- *                   $ref: '#/components/schemas/PaginationResult' # Supondo que PaginationResult está definido
+ *                   type: object
  *       401:
  *         description: Unauthorized
+ *       403:
+ *         description: Forbidden
  */
-router.get(
-  '/',
-  validateJWT,
-  institutionController.getAll
-);
+router.get('/', institutionController.getAll);
 
 /**
  * @swagger
- * /api/institutions/{id}:
+ * /api/institution/{id}:
  *   get:
  *     summary: Get institution by ID
- *     tags: [Institutions]
+ *     tags: [institution]
  *     security:
  *       - bearerAuth: []
  *     parameters:
- *       - $ref: '#/components/parameters/idParam'
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema:
+ *           type: string
+ *           format: uuid
  *     responses:
  *       200:
  *         description: Institution found
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/Institution'
  *       404:
  *         description: Institution not found
  */
-router.get(
-  '/:id',
-  validateJWT,
-  validateIdParam,
-  institutionController.getById
-);
+router.get('/:id', validateIdParam, institutionController.getById);
 
 /**
  * @swagger
- * /api/institutions/code/{code}:
+ * /api/institution/code/{code}:
  *   get:
  *     summary: Get institution by code
- *     tags: [Institutions]
+ *     tags: [institution]
  *     security:
  *       - bearerAuth: []
  *     parameters:
@@ -258,17 +276,16 @@ router.get(
  */
 router.get(
   '/code/:code',
-  validateJWT,
   validateCodeParam,
   institutionController.getByCode
 );
 
 /**
  * @swagger
- * /api/institutions/{id}/stats:
+ * /api/institution/{id}/stats:
  *   get:
  *     summary: Get statistics for an institution
- *     tags: [Institutions]
+ *     tags: [institution]
  *     security:
  *       - bearerAuth: []
  *     parameters:
@@ -281,17 +298,16 @@ router.get(
  */
 router.get(
   '/:id/stats',
-  validateJWT,
   validateIdParam,
   institutionController.getStats
 );
 
 /**
  * @swagger
- * /api/institutions:
+ * /api/institution:
  *   post:
  *     summary: Create a new institution
- *     tags: [Institutions]
+ *     tags: [institution]
  *     security:
  *       - bearerAuth: []
  *     requestBody:
@@ -303,26 +319,30 @@ router.get(
  *     responses:
  *       201:
  *         description: Institution created
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/Institution'
  *       400:
  *         description: Invalid input
  */
-router.post(
-  '/',
-  validateJWT,
-  validateCreateInstitution,
-  institutionController.create
-);
+router.post('/', requireAdmin, validateCreateInstitution, institutionController.create);
 
 /**
  * @swagger
- * /api/institutions/{id}:
+ * /api/institution/{id}:
  *   put:
  *     summary: Update an institution
- *     tags: [Institutions]
+ *     tags: [institution]
  *     security:
  *       - bearerAuth: []
  *     parameters:
- *       - $ref: '#/components/parameters/idParam'
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema:
+ *           type: string
+ *           format: uuid
  *     requestBody:
  *       required: true
  *       content:
@@ -332,40 +352,37 @@ router.post(
  *     responses:
  *       200:
  *         description: Institution updated
- *       400:
- *         description: Invalid input
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/Institution'
  *       404:
  *         description: Institution not found
  */
-router.put(
-  '/:id',
-  validateJWT,
-  validateUpdateInstitution,
-  institutionController.update
-);
+router.put('/:id', requireAdmin, validateUpdateInstitution, institutionController.update);
 
 /**
  * @swagger
- * /api/institutions/{id}:
+ * /api/institution/{id}:
  *   delete:
  *     summary: Delete an institution
- *     tags: [Institutions]
+ *     tags: [institution]
  *     security:
  *       - bearerAuth: []
  *     parameters:
- *       - $ref: '#/components/parameters/idParam' # Reutilizando o parâmetro ID
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema:
+ *           type: string
+ *           format: uuid
  *     responses:
  *       200:
  *         description: Institution deleted
  *       404:
  *         description: Institution not found
  */
-router.delete(
-  '/:id',
-  validateJWT,
-  validateIdParam, // Apenas validação do ID é necessária para delete
-  institutionController.delete
-);
+router.delete('/:id', requireAdmin, validateIdParam, institutionController.delete);
 
 // Helper para definir parâmetros reutilizáveis no Swagger (opcional, mas bom para DRY)
 /**

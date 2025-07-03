@@ -6,10 +6,10 @@ export default function AcademicReportsPage() {
   const { user } = useAuth()
 
   return (
-    <div className="container mx-auto px-4 py-8">
-      <div className="flex justify-between items-center mb-6">
+    <div className="space-y-6">
+      <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-2xl font-bold text-gray-800">Relatórios Acadêmicos</h1>
+          <h1 className="text-2xl font-bold text-gray-600">Relatórios Acadêmicos</h1>
           <p className="text-gray-600">Análise detalhada do desempenho acadêmico</p>
         </div>
         <div className="space-x-4">
@@ -51,7 +51,7 @@ export default function AcademicReportsPage() {
       {/* Performance Overview */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-6">
         <div className="bg-white rounded-lg shadow-md p-6">
-          <h3 className="text-lg font-semibold text-gray-800 mb-4">Média Geral</h3>
+          <h3 className="text-lg font-semibold text-gray-600 mb-4">Média Geral</h3>
           <div className="flex items-center justify-center">
             <div className="relative w-32 h-32">
               {/* Placeholder for circular progress chart */}
@@ -66,7 +66,7 @@ export default function AcademicReportsPage() {
         </div>
 
         <div className="bg-white rounded-lg shadow-md p-6">
-          <h3 className="text-lg font-semibold text-gray-800 mb-4">Distribuição de Notas</h3>
+          <h3 className="text-lg font-semibold text-gray-600 mb-4">Distribuição de Notas</h3>
           <div className="space-y-4">
             <div>
               <div className="flex justify-between text-sm mb-1">
@@ -108,7 +108,7 @@ export default function AcademicReportsPage() {
         </div>
 
         <div className="bg-white rounded-lg shadow-md p-6">
-          <h3 className="text-lg font-semibold text-gray-800 mb-4">Indicadores Chave</h3>
+          <h3 className="text-lg font-semibold text-gray-600 mb-4">Indicadores Chave</h3>
           <div className="space-y-4">
             <div className="flex justify-between items-center">
               <span className="text-sm text-gray-600">Taxa de Aprovação</span>
@@ -159,23 +159,23 @@ export default function AcademicReportsPage() {
             <tbody className="bg-white divide-y divide-gray-200">
               <tr>
                 <td className="px-6 py-4">
-                  <div className="text-sm font-medium text-gray-900">Cálculo I</div>
+                  <div className="text-sm font-medium text-gray-700">Cálculo I</div>
                   <div className="text-sm text-gray-500">MAT101</div>
                 </td>
                 <td className="px-6 py-4 whitespace-nowrap">
-                  <div className="text-sm text-gray-900">João Silva</div>
+                  <div className="text-sm text-gray-700">João Silva</div>
                 </td>
                 <td className="px-6 py-4 whitespace-nowrap">
                   <div className="text-sm font-medium text-green-600">8.2</div>
                 </td>
                 <td className="px-6 py-4 whitespace-nowrap">
-                  <div className="text-sm text-gray-900">88%</div>
+                  <div className="text-sm text-gray-700">88%</div>
                 </td>
                 <td className="px-6 py-4 whitespace-nowrap">
-                  <div className="text-sm text-gray-900">94%</div>
+                  <div className="text-sm text-gray-700">94%</div>
                 </td>
                 <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
-                  <button className="text-blue-600 hover:text-blue-900">Detalhes</button>
+                  <button className="text-primary hover:text-primary/80 px-3 py-1 rounded transition-colors">Detalhes</button>
                 </td>
               </tr>
             </tbody>

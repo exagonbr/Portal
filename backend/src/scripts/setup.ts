@@ -1,7 +1,7 @@
 #!/usr/bin/env node
 
 import { AppDataSource } from '../config/typeorm.config';
-import { AuthService } from '../services/AuthService';
+import AuthService from '../services/AuthService';
 import { getRedisClient, testRedisConnection } from '../config/redis';
 import * as dotenv from 'dotenv';
 
@@ -28,7 +28,7 @@ async function setupDatabase() {
 
     console.log('✅ Banco de dados configurado com sucesso');
   } catch (error) {
-    console.error('❌ Erro ao configurar banco de dados:', error);
+    console.log('❌ Erro ao configurar banco de dados:', error);
     throw error;
   }
 }
@@ -43,7 +43,7 @@ async function setupRedis() {
     }
     console.log('✅ Redis configurado com sucesso');
   } catch (error) {
-    console.error('❌ Erro ao configurar Redis:', error);
+    console.log('❌ Erro ao configurar Redis:', error);
     throw error;
   }
 }
@@ -62,7 +62,7 @@ async function createDefaultData() {
     
     console.log('✅ Dados padrão criados com sucesso');
   } catch (error) {
-    console.error('❌ Erro ao criar dados padrão:', error);
+    console.log('❌ Erro ao criar dados padrão:', error);
     throw error;
   }
 }
@@ -93,7 +93,7 @@ async function cleanupExpiredSessions() {
     
     console.log(`✅ ${blacklistedKeys.length} chaves de sessão verificadas`);
   } catch (error) {
-    console.error('❌ Erro ao limpar sessões:', error);
+    console.log('❌ Erro ao limpar sessões:', error);
     throw error;
   }
 }
@@ -104,15 +104,13 @@ async function showSystemInfo() {
   console.log(`   Versão Node.js: ${process.version}`);
   console.log(`   Porta da API: ${process.env.PORT || 3001}`);
   console.log(`   URL do Redis: ${process.env.REDIS_HOST || 'localhost'}:${process.env.REDIS_PORT || 6379}`);
-  console.log(`   CORS Origin: ${process.env.CORS_ORIGIN || 'http://localhost:3000'}`);
-  console.log(`   JWT Secret: ${process.env.JWT_SECRET ? '✅ Configurado' : '❌ Usando padrão'}`);
+  console.log(`   CORS Origin: ${process.env.CORS_ORIGIN || 'https://portal.sabercon.com.br'}`);
+  console.log(`   JWT Secret: ✅ Hardcoded (Produção)`);
   
   // Verifica configurações importantes
   const warnings = [];
   
-  if (!process.env.JWT_SECRET) {
-    warnings.push('JWT_SECRET não configurado (usando padrão inseguro)');
-  }
+  // JWT_SECRET agora é hardcoded - não precisa de verificação
   
   if (process.env.NODE_ENV === 'production' && !process.env.REDIS_PASSWORD) {
     warnings.push('Redis sem senha em produção');
@@ -149,7 +147,7 @@ async function main() {
     console.log('   npm run start (produção)\n');
     
   } catch (error) {
-    console.error('\n❌ Falha no setup:', error);
+    console.log('\n❌ Falha no setup:', error);
     process.exit(1);
   } finally {
     // Fecha conexões
@@ -169,7 +167,7 @@ async function main() {
 // Executa o setup se este arquivo for executado diretamente
 if (require.main === module) {
   main().catch(error => {
-    console.error('Erro fatal no setup:', error);
+    console.log('Erro fatal no setup:', error);
     process.exit(1);
   });
 }

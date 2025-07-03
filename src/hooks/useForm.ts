@@ -19,9 +19,9 @@ export function useForm<T extends { [key: string]: any }>({
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   const validateField = useCallback(
-    (name: keyof T) => {
+    (name: keyof T, currentValues: T) => {
       if (validationRules[name]) {
-        const error = validationRules[name](values[name], values);
+        const error = validationRules[name](currentValues[name], currentValues);
         setErrors(prev => ({
           ...prev,
           [name]: error
@@ -30,17 +30,20 @@ export function useForm<T extends { [key: string]: any }>({
       }
       return '';
     },
-    [validationRules, values]
+    [validationRules]
   );
 
   const handleChange = useCallback(
     (event: ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
       const { name, value } = event.target;
-      setValues(prev => ({
-        ...prev,
-        [name]: value
-      }));
-      validateField(name as keyof T);
+      setValues(prevValues => {
+        const newValues = {
+          ...prevValues,
+          [name]: value
+        };
+        validateField(name as keyof T, newValues);
+        return newValues;
+      });
     },
     [validateField]
   );
@@ -52,7 +55,7 @@ export function useForm<T extends { [key: string]: any }>({
         ...prev,
         [name]: true
       }));
-      validateField(name as keyof T);
+      validateField(name as keyof T, values);
     },
     [validateField, values]
   );
@@ -62,7 +65,7 @@ export function useForm<T extends { [key: string]: any }>({
     let isValid = true;
 
     (Object.keys(values) as Array<keyof T>).forEach(key => {
-      const error = validateField(key);
+      const error = validateField(key, values);
       if (error) {
         formErrors[key as string] = error;
         isValid = false;
@@ -76,6 +79,9 @@ export function useForm<T extends { [key: string]: any }>({
   const handleSubmit = useCallback(
     async (event: FormEvent) => {
       event.preventDefault();
+      if (isSubmitting) {
+        return;
+      }
       
       // Mark all fields as touched
       const touchedFields = Object.keys(values).reduce(
@@ -92,13 +98,19 @@ export function useForm<T extends { [key: string]: any }>({
       try {
         await onSubmit(values);
       } catch (error) {
-        console.error('Form submission error:', error);
+        console.log('Form submission error:', error);
       } finally {
         setIsSubmitting(false);
       }
     },
-    [onSubmit, validateForm, values]
+    [onSubmit, validateForm, values, isSubmitting]
   );
+
+  const resetForm = useCallback(() => {
+    setValues(initialValues);
+    setErrors({});
+    setTouched({});
+  }, [initialValues]);
 
   return {
     values,
@@ -107,6 +119,7 @@ export function useForm<T extends { [key: string]: any }>({
     isSubmitting,
     handleChange,
     handleBlur,
-    handleSubmit
+    handleSubmit,
+    resetForm
   };
 }

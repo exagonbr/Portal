@@ -62,10 +62,11 @@ export class PushSubscriptionController {
 
             return res.status(200).json({
                 success: true,
-                message: 'Push subscription registered successfully'
+                message: 'Push subscription registered successfully',
+                data: {}
             });
         } catch (error) {
-            console.error('Error registering push subscription:', error);
+            console.log('Error registering push subscription:', error);
             return res.status(500).json({
                 success: false,
                 message: 'Failed to register push subscription'
@@ -91,10 +92,11 @@ export class PushSubscriptionController {
 
             return res.status(200).json({
                 success: true,
-                message: 'Push subscription removed successfully'
+                message: 'Push subscription removed successfully',
+                data: {}
             });
         } catch (error) {
-            console.error('Error removing push subscription:', error);
+            console.log('Error removing push subscription:', error);
             return res.status(500).json({
                 success: false,
                 message: 'Failed to remove push subscription'
@@ -142,13 +144,13 @@ export class PushSubscriptionController {
                     await this.sendNotification(subscription, payload);
                     sentCount++;
                 } catch (error) {
-                    console.error(`Error sending notification to subscription ${subscription.endpoint}:`, error);
+                    console.log(`Error sending notification to subscription ${subscription.endpoint}:`, error);
                 }
             }
 
             return sentCount;
         } catch (error) {
-            console.error('Error sending notification to user:', error);
+            console.log('Error sending notification to user:', error);
             throw error;
         }
     }
@@ -164,7 +166,20 @@ export class PushSubscriptionController {
 
             return totalSent;
         } catch (error) {
-            console.error('Error sending notifications to users:', error);
+            console.log('Error sending notifications to users:', error);
+            throw error;
+        }
+    }
+
+    async getUserSubscriptions(userId: string): Promise<PushSubscription[]> {
+        try {
+            const subscriptions = await db<PushSubscription>('push_subscriptions')
+                .where('user_id', userId)
+                .where('is_active', true);
+
+            return subscriptions;
+        } catch (error) {
+            console.log('Error getting user subscriptions:', error);
             throw error;
         }
     }
@@ -211,7 +226,7 @@ export class PushSubscriptionController {
                         await this.sendNotification(subscription, payload);
                         sentCount++;
                     } catch (error) {
-                        console.error(`Error sending notification to subscription ${subscription.endpoint}:`, error);
+                        console.log(`Error sending notification to subscription ${subscription.endpoint}:`, error);
                     }
                 }
             }
@@ -219,10 +234,10 @@ export class PushSubscriptionController {
             return res.status(200).json({
                 success: true,
                 message: `Notification sent to ${sentCount} subscriptions`,
-                sentCount
+                data: { sentCount }
             });
         } catch (error) {
-            console.error('Error sending bulk notification:', error);
+            console.log('Error sending bulk notification:', error);
             return res.status(500).json({
                 success: false,
                 message: 'Failed to send bulk notification'

@@ -1,0 +1,665 @@
+openapi: 3.0.3
+info:
+  title: Portal API
+  description: API para o sistema Portal - Plataforma educacional
+  version: 1.0.0
+  contact:
+    name: Equipe de Desenvolvimento
+    email: dev@portal.com
+
+servers:
+  - url: https://portal.sabercon.com.br/api
+    description: Servidor de desenvolvimento
+  - url: https://api.portal.com
+    description: Servidor de produção
+
+components:
+  securitySchemes:
+    BearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+
+  schemas:
+    # Tipos base
+    UUID:
+      type: string
+      format: uuid
+      example: "123e4567-e89b-12d3-a456-426614174000"
+    
+    DateString:
+      type: string
+      format: date-time
+      example: "2024-01-15T10:30:00Z"
+    
+    Email:
+      type: string
+      format: email
+      example: "usuario@exemplo.com"
+    
+    Phone:
+      type: string
+      pattern: '^\(\d{2}\)\s\d{4,5}-\d{4}$'
+      example: "(11) 99999-9999"
+
+    # Enums
+    InstitutionType:
+      type: string
+      enum: [SCHOOL, COLLEGE, UNIVERSITY, TECH_CENTER]
+      example: UNIVERSITY
+
+    UserRole:
+      type: string
+      enum: [student, teacher, admin, manager, system_admin, institution_manager, academic_coordinator, guardian]
+      example: student
+
+    # Estruturas de resposta
+    ApiResponse:
+      type: object
+      required:
+        - success
+      properties:
+        success:
+          type: boolean
+        data:
+          type: object
+        message:
+          type: string
+        errors:
+          type: array
+          items:
+            type: string
+
+    PaginatedResponse:
+      type: object
+      required:
+        - items
+        - total
+        - page
+        - limit
+        - totalPages
+      properties:
+        items:
+          type: array
+          items:
+            type: object
+        total:
+          type: integer
+          minimum: 0
+        page:
+          type: integer
+          minimum: 1
+        limit:
+          type: integer
+          minimum: 1
+          maximum: 100
+        totalPages:
+          type: integer
+          minimum: 0
+
+    # Entidades principais
+    User:
+      type: object
+      required:
+        - id
+        - name
+        - email
+        - role_id
+        - is_active
+        - created_at
+        - updated_at
+      properties:
+        id:
+          $ref: '#/components/schemas/UUID'
+        name:
+          type: string
+          minLength: 1
+          maxLength: 255
+        email:
+          $ref: '#/components/schemas/Email'
+        cpf:
+          type: string
+          pattern: '^\d{3}\.\d{3}\.\d{3}-\d{2}$'
+        phone:
+          $ref: '#/components/schemas/Phone'
+        birth_date:
+          $ref: '#/components/schemas/DateString'
+        address:
+          type: string
+          maxLength: 500
+        city:
+          type: string
+          maxLength: 100
+        state:
+          type: string
+          maxLength: 2
+        zip_code:
+          type: string
+          pattern: '^\d{5}-?\d{3}$'
+        role_id:
+          $ref: '#/components/schemas/UUID'
+        institution_id:
+          $ref: '#/components/schemas/UUID'
+        school_id:
+          $ref: '#/components/schemas/UUID'
+        is_active:
+          type: boolean
+        created_at:
+          $ref: '#/components/schemas/DateString'
+        updated_at:
+          $ref: '#/components/schemas/DateString'
+        # Campos legados (deprecated)
+        telefone:
+          $ref: '#/components/schemas/Phone'
+          deprecated: true
+        endereco:
+          type: string
+          deprecated: true
+
+    CreateUser:
+      type: object
+      required:
+        - name
+        - email
+        - password
+        - role_id
+      properties:
+        name:
+          type: string
+          minLength: 1
+          maxLength: 255
+        email:
+          $ref: '#/components/schemas/Email'
+        password:
+          type: string
+          minLength: 8
+        cpf:
+          type: string
+        phone:
+          $ref: '#/components/schemas/Phone'
+        birth_date:
+          $ref: '#/components/schemas/DateString'
+        address:
+          type: string
+        city:
+          type: string
+        state:
+          type: string
+        zip_code:
+          type: string
+        role_id:
+          $ref: '#/components/schemas/UUID'
+        institution_id:
+          $ref: '#/components/schemas/UUID'
+        school_id:
+          $ref: '#/components/schemas/UUID'
+        is_active:
+          type: boolean
+          default: true
+
+    UpdateUser:
+      type: object
+      properties:
+        name:
+          type: string
+          minLength: 1
+          maxLength: 255
+        email:
+          $ref: '#/components/schemas/Email'
+        password:
+          type: string
+          minLength: 8
+        cpf:
+          type: string
+        phone:
+          $ref: '#/components/schemas/Phone'
+        birth_date:
+          $ref: '#/components/schemas/DateString'
+        address:
+          type: string
+        city:
+          type: string
+        state:
+          type: string
+        zip_code:
+          type: string
+        role_id:
+          $ref: '#/components/schemas/UUID'
+        institution_id:
+          $ref: '#/components/schemas/UUID'
+        school_id:
+          $ref: '#/components/schemas/UUID'
+        is_active:
+          type: boolean
+
+    Institution:
+      type: object
+      required:
+        - id
+        - name
+        - code
+        - type
+        - is_active
+        - created_at
+        - updated_at
+      properties:
+        id:
+          $ref: '#/components/schemas/UUID'
+        name:
+          type: string
+          minLength: 1
+          maxLength: 255
+        code:
+          type: string
+          minLength: 1
+          maxLength: 50
+        type:
+          $ref: '#/components/schemas/InstitutionType'
+        description:
+          type: string
+          maxLength: 1000
+        email:
+          $ref: '#/components/schemas/Email'
+        phone:
+          $ref: '#/components/schemas/Phone'
+        website:
+          type: string
+          format: uri
+        address:
+          type: string
+          maxLength: 500
+        city:
+          type: string
+          maxLength: 100
+        state:
+          type: string
+          maxLength: 2
+        zip_code:
+          type: string
+        logo_url:
+          type: string
+          format: uri
+        is_active:
+          type: boolean
+        created_at:
+          $ref: '#/components/schemas/DateString'
+        updated_at:
+          $ref: '#/components/schemas/DateString'
+        # Campos computados
+        schools_count:
+          type: integer
+          minimum: 0
+        users_count:
+          type: integer
+          minimum: 0
+        active_courses:
+          type: integer
+          minimum: 0
+
+    CreateInstitution:
+      type: object
+      required:
+        - name
+        - code
+        - type
+      properties:
+        name:
+          type: string
+          minLength: 1
+          maxLength: 255
+        code:
+          type: string
+          minLength: 1
+          maxLength: 50
+        type:
+          $ref: '#/components/schemas/InstitutionType'
+        description:
+          type: string
+        email:
+          $ref: '#/components/schemas/Email'
+        phone:
+          $ref: '#/components/schemas/Phone'
+        website:
+          type: string
+          format: uri
+        address:
+          type: string
+        city:
+          type: string
+        state:
+          type: string
+        zip_code:
+          type: string
+        logo_url:
+          type: string
+          format: uri
+        is_active:
+          type: boolean
+          default: true
+
+    # Filtros
+    UserFilter:
+      type: object
+      properties:
+        search:
+          type: string
+        role_id:
+          $ref: '#/components/schemas/UUID'
+        institution_id:
+          $ref: '#/components/schemas/UUID'
+        school_id:
+          $ref: '#/components/schemas/UUID'
+        is_active:
+          type: boolean
+        page:
+          type: integer
+          minimum: 1
+          default: 1
+        limit:
+          type: integer
+          minimum: 1
+          maximum: 100
+          default: 10
+        sortBy:
+          type: string
+        sortOrder:
+          type: string
+          enum: [asc, desc]
+          default: asc
+
+    InstitutionFilter:
+      type: object
+      properties:
+        search:
+          type: string
+        type:
+          $ref: '#/components/schemas/InstitutionType'
+        is_active:
+          type: boolean
+        city:
+          type: string
+        state:
+          type: string
+        page:
+          type: integer
+          minimum: 1
+          default: 1
+        limit:
+          type: integer
+          minimum: 1
+          maximum: 100
+          default: 10
+        sortBy:
+          type: string
+        sortOrder:
+          type: string
+          enum: [asc, desc]
+          default: asc
+
+    # Respostas de erro
+    ErrorResponse:
+      type: object
+      required:
+        - success
+        - message
+      properties:
+        success:
+          type: boolean
+          example: false
+        message:
+          type: string
+        errors:
+          type: array
+          items:
+            type: string
+
+security:
+  - BearerAuth: []
+
+paths:
+  # Endpoints de usuários
+  /users:
+    get:
+      summary: Listar usuários
+      tags: [Users]
+      parameters:
+        - name: search
+          in: query
+          schema:
+            type: string
+        - name: role_id
+          in: query
+          schema:
+            $ref: '#/components/schemas/UUID'
+        - name: institution_id
+          in: query
+          schema:
+            $ref: '#/components/schemas/UUID'
+        - name: is_active
+          in: query
+          schema:
+            type: boolean
+        - name: page
+          in: query
+          schema:
+            type: integer
+            minimum: 1
+            default: 1
+        - name: limit
+          in: query
+          schema:
+            type: integer
+            minimum: 1
+            maximum: 100
+            default: 10
+      responses:
+        '200':
+          description: Lista de usuários
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/ApiResponse'
+                  - type: object
+                    properties:
+                      data:
+                        $ref: '#/components/schemas/PaginatedResponse'
+        '400':
+          description: Parâmetros inválidos
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '401':
+          description: Não autorizado
+        '500':
+          description: Erro interno do servidor
+
+    post:
+      summary: Criar usuário
+      tags: [Users]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateUser'
+      responses:
+        '201':
+          description: Usuário criado com sucesso
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/ApiResponse'
+                  - type: object
+                    properties:
+                      data:
+                        $ref: '#/components/schemas/User'
+        '400':
+          description: Dados inválidos
+        '409':
+          description: Email já existe
+        '500':
+          description: Erro interno do servidor
+
+  /users/{id}:
+    get:
+      summary: Obter usuário por ID
+      tags: [Users]
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            $ref: '#/components/schemas/UUID'
+      responses:
+        '200':
+          description: Dados do usuário
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/ApiResponse'
+                  - type: object
+                    properties:
+                      data:
+                        $ref: '#/components/schemas/User'
+        '404':
+          description: Usuário não encontrado
+        '500':
+          description: Erro interno do servidor
+
+    put:
+      summary: Atualizar usuário
+      tags: [Users]
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            $ref: '#/components/schemas/UUID'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UpdateUser'
+      responses:
+        '200':
+          description: Usuário atualizado com sucesso
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/ApiResponse'
+                  - type: object
+                    properties:
+                      data:
+                        $ref: '#/components/schemas/User'
+        '400':
+          description: Dados inválidos
+        '404':
+          description: Usuário não encontrado
+        '500':
+          description: Erro interno do servidor
+
+    delete:
+      summary: Deletar usuário
+      tags: [Users]
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            $ref: '#/components/schemas/UUID'
+      responses:
+        '200':
+          description: Usuário deletado com sucesso
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/ApiResponse'
+                  - type: object
+                    properties:
+                      data:
+                        type: object
+        '404':
+          description: Usuário não encontrado
+        '500':
+          description: Erro interno do servidor
+
+  # Endpoints de instituições
+  /institutions:
+    get:
+      summary: Listar instituições
+      tags: [Institutions]
+      parameters:
+        - name: search
+          in: query
+          schema:
+            type: string
+        - name: type
+          in: query
+          schema:
+            $ref: '#/components/schemas/InstitutionType'
+        - name: is_active
+          in: query
+          schema:
+            type: boolean
+        - name: page
+          in: query
+          schema:
+            type: integer
+            minimum: 1
+            default: 1
+        - name: limit
+          in: query
+          schema:
+            type: integer
+            minimum: 1
+            maximum: 100
+            default: 10
+      responses:
+        '200':
+          description: Lista de instituições
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/ApiResponse'
+                  - type: object
+                    properties:
+                      data:
+                        $ref: '#/components/schemas/PaginatedResponse'
+
+    post:
+      summary: Criar instituição
+      tags: [Institutions]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateInstitution'
+      responses:
+        '201':
+          description: Instituição criada com sucesso
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/ApiResponse'
+                  - type: object
+                    properties:
+                      data:
+                        $ref: '#/components/schemas/Institution'
+
+tags:
+  - name: Users
+    description: Operações relacionadas a usuários
+  - name: Institutions
+    description: Operações relacionadas a instituições
+  - name: Auth
+    description: Operações de autenticação 

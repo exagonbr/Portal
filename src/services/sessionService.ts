@@ -1,311 +1,287 @@
-import { getRedisClient, TTL } from '../config/redis';
-import { User } from '../types/auth';
-import { v4 as uuidv4 } from 'uuid';
-
-export interface SessionData {
-  userId: string;
-  user: User;
-  createdAt: number;
-  lastActivity: number;
-  ipAddress?: string;
-  userAgent?: string;
-  deviceInfo?: string;
-}
-
 export interface ActiveSession {
-  sessionId: string;
+  id: string;
   userId: string;
-  user: User;
-  createdAt: Date;
-  lastActivity: Date;
-  ipAddress?: string;
-  userAgent?: string;
-  deviceInfo?: string;
+  userRole: string;
+  userName: string;
+  userEmail: string;
+  institutionId?: string;
+  institutionName?: string;
+  deviceInfo: {
+    type: 'desktop' | 'mobile' | 'tablet';
+    browser: string;
+    os: string;
+    ip: string;
+  };
+  loginTime: string;
+  lastActivity: string;
+  expiresAt: string;
+  isActive: boolean;
+  location?: {
+    country: string;
+    city: string;
+    region: string;
+  };
 }
 
 class SessionService {
-  private redis = getRedisClient();
-  private readonly SESSION_PREFIX = 'session:';
-  private readonly USER_SESSIONS_PREFIX = 'user_sessions:';
-  private readonly ACTIVE_USERS_SET = 'active_users';
-
-  /**
-   * Cria uma nova sessão para o usuário
-   */
-  async createSession(
-    user: User, 
-    ipAddress?: string, 
-    userAgent?: string,
-    deviceInfo?: string
-  ): Promise<string> {
-    const sessionId = uuidv4();
-    const now = Date.now();
-    
-    const sessionData: SessionData = {
-      userId: user.id,
-      user,
-      createdAt: now,
-      lastActivity: now,
-      ipAddress,
-      userAgent,
-      deviceInfo,
-    };
-
-    // Armazena os dados da sessão
-    await this.redis.setex(
-      `${this.SESSION_PREFIX}${sessionId}`,
-      TTL.SESSION,
-      JSON.stringify(sessionData)
-    );
-
-    // Adiciona a sessão à lista de sessões do usuário
-    await this.redis.sadd(`${this.USER_SESSIONS_PREFIX}${user.id}`, sessionId);
-    
-    // Adiciona o usuário ao conjunto de usuários ativos
-    await this.redis.sadd(this.ACTIVE_USERS_SET, user.id);
-
-    // Define TTL para a lista de sessões do usuário
-    await this.redis.expire(`${this.USER_SESSIONS_PREFIX}${user.id}`, TTL.SESSION);
-
-    console.log(`✅ Sessão criada para usuário ${user.email}: ${sessionId}`);
-    return sessionId;
-  }
-
-  /**
-   * Recupera os dados de uma sessão
-   */
-  async getSession(sessionId: string): Promise<SessionData | null> {
-    try {
-      const sessionDataStr = await this.redis.get(`${this.SESSION_PREFIX}${sessionId}`);
-      
-      if (!sessionDataStr) {
-        return null;
-      }
-
-      const sessionData: SessionData = JSON.parse(sessionDataStr);
-      
-      // Atualiza a última atividade
-      await this.updateLastActivity(sessionId);
-      
-      return sessionData;
-    } catch (error) {
-      console.error('Erro ao recuperar sessão:', error);
-      return null;
-    }
-  }
-
-  /**
-   * Atualiza a última atividade da sessão
-   */
-  async updateLastActivity(sessionId: string): Promise<void> {
-    try {
-      const sessionDataStr = await this.redis.get(`${this.SESSION_PREFIX}${sessionId}`);
-      
-      if (sessionDataStr) {
-        const sessionData: SessionData = JSON.parse(sessionDataStr);
-        sessionData.lastActivity = Date.now();
-        
-        await this.redis.setex(
-          `${this.SESSION_PREFIX}${sessionId}`,
-          TTL.SESSION,
-          JSON.stringify(sessionData)
-        );
-      }
-    } catch (error) {
-      console.error('Erro ao atualizar última atividade:', error);
-    }
-  }
-
-  /**
-   * Remove uma sessão específica
-   */
-  async destroySession(sessionId: string): Promise<boolean> {
-    try {
-      // Recupera os dados da sessão antes de removê-la
-      const sessionDataStr = await this.redis.get(`${this.SESSION_PREFIX}${sessionId}`);
-      
-      if (sessionDataStr) {
-        const sessionData: SessionData = JSON.parse(sessionDataStr);
-        
-        // Remove a sessão
-        await this.redis.del(`${this.SESSION_PREFIX}${sessionId}`);
-        
-        // Remove a sessão da lista do usuário
-        await this.redis.srem(`${this.USER_SESSIONS_PREFIX}${sessionData.userId}`, sessionId);
-        
-        // Verifica se o usuário ainda tem outras sessões ativas
-        const userSessions = await this.redis.smembers(`${this.USER_SESSIONS_PREFIX}${sessionData.userId}`);
-        
-        if (userSessions.length === 0) {
-          // Remove o usuário do conjunto de usuários ativos
-          await this.redis.srem(this.ACTIVE_USERS_SET, sessionData.userId);
-          // Remove a chave de sessões do usuário
-          await this.redis.del(`${this.USER_SESSIONS_PREFIX}${sessionData.userId}`);
-        }
-        
-        console.log(`✅ Sessão removida: ${sessionId}`);
-        return true;
-      }
-      
-      return false;
-    } catch (error) {
-      console.error('Erro ao remover sessão:', error);
-      return false;
-    }
-  }
-
-  /**
-   * Remove todas as sessões de um usuário
-   */
-  async destroyAllUserSessions(userId: string): Promise<number> {
-    try {
-      const sessionIds = await this.redis.smembers(`${this.USER_SESSIONS_PREFIX}${userId}`);
-      
-      if (sessionIds.length === 0) {
-        return 0;
-      }
-
-      // Remove todas as sessões
-      const sessionKeys = sessionIds.map(id => `${this.SESSION_PREFIX}${id}`);
-      await this.redis.del(...sessionKeys);
-      
-      // Remove a lista de sessões do usuário
-      await this.redis.del(`${this.USER_SESSIONS_PREFIX}${userId}`);
-      
-      // Remove o usuário do conjunto de usuários ativos
-      await this.redis.srem(this.ACTIVE_USERS_SET, userId);
-      
-      console.log(`✅ ${sessionIds.length} sessões removidas para usuário ${userId}`);
-      return sessionIds.length;
-    } catch (error) {
-      console.error('Erro ao remover todas as sessões do usuário:', error);
-      return 0;
-    }
-  }
-
-  /**
-   * Lista todas as sessões ativas de um usuário
-   */
-  async getUserSessions(userId: string): Promise<ActiveSession[]> {
-    try {
-      const sessionIds = await this.redis.smembers(`${this.USER_SESSIONS_PREFIX}${userId}`);
-      const sessions: ActiveSession[] = [];
-
-      for (const sessionId of sessionIds) {
-        const sessionDataStr = await this.redis.get(`${this.SESSION_PREFIX}${sessionId}`);
-        
-        if (sessionDataStr) {
-          const sessionData: SessionData = JSON.parse(sessionDataStr);
-          sessions.push({
-            sessionId,
-            userId: sessionData.userId,
-            user: sessionData.user,
-            createdAt: new Date(sessionData.createdAt),
-            lastActivity: new Date(sessionData.lastActivity),
-            ipAddress: sessionData.ipAddress,
-            userAgent: sessionData.userAgent,
-            deviceInfo: sessionData.deviceInfo,
-          });
-        }
-      }
-
-      return sessions.sort((a, b) => b.lastActivity.getTime() - a.lastActivity.getTime());
-    } catch (error) {
-      console.error('Erro ao listar sessões do usuário:', error);
-      return [];
-    }
-  }
-
-  /**
-   * Lista todos os usuários ativos
-   */
-  async getActiveUsers(): Promise<string[]> {
-    try {
-      return await this.redis.smembers(this.ACTIVE_USERS_SET);
-    } catch (error) {
-      console.error('Erro ao listar usuários ativos:', error);
-      return [];
-    }
-  }
-
-  /**
-   * Conta o número total de sessões ativas
-   */
-  async getActiveSessionsCount(): Promise<number> {
-    try {
-      const keys = await this.redis.keys(`${this.SESSION_PREFIX}*`);
-      return keys.length;
-    } catch (error) {
-      console.error('Erro ao contar sessões ativas:', error);
-      return 0;
-    }
-  }
-
-  /**
-   * Limpa sessões expiradas (executado periodicamente)
-   */
-  async cleanupExpiredSessions(): Promise<number> {
-    try {
-      const sessionKeys = await this.redis.keys(`${this.SESSION_PREFIX}*`);
-      let cleanedCount = 0;
-
-      for (const key of sessionKeys) {
-        const ttl = await this.redis.ttl(key);
-        
-        // Se TTL é -1, a chave não tem expiração definida (problema)
-        // Se TTL é 0 ou negativo, a chave expirou
-        if (ttl <= 0) {
-          const sessionId = key.replace(this.SESSION_PREFIX, '');
-          await this.destroySession(sessionId);
-          cleanedCount++;
-        }
-      }
-
-      if (cleanedCount > 0) {
-        console.log(`🧹 ${cleanedCount} sessões expiradas foram limpas`);
-      }
-
-      return cleanedCount;
-    } catch (error) {
-      console.error('Erro na limpeza de sessões expiradas:', error);
-      return 0;
-    }
-  }
+  private sessions: Map<string, ActiveSession> = new Map();
 
   /**
    * Verifica se uma sessão é válida
    */
   async isSessionValid(sessionId: string): Promise<boolean> {
     try {
-      const exists = await this.redis.exists(`${this.SESSION_PREFIX}${sessionId}`);
-      return exists === 1;
+      const session = this.sessions.get(sessionId);
+      if (!session) {
+        return false;
+      }
+
+      const now = new Date();
+      const expiresAt = new Date(session.expiresAt);
+      
+      return session.isActive && now < expiresAt;
     } catch (error) {
-      console.error('Erro ao verificar validade da sessão:', error);
+      console.log('Erro ao verificar validade da sessão:', error);
       return false;
     }
   }
 
   /**
-   * Estende o tempo de vida de uma sessão
+   * Obtém dados de uma sessão
    */
-  async extendSession(sessionId: string, additionalSeconds: number = TTL.SESSION): Promise<boolean> {
+  async getSession(sessionId: string): Promise<ActiveSession | null> {
     try {
-      const exists = await this.redis.exists(`${this.SESSION_PREFIX}${sessionId}`);
+      const session = this.sessions.get(sessionId);
+      if (!session) {
+        return null;
+      }
+
+      // Verificar se a sessão ainda é válida
+      const isValid = await this.isSessionValid(sessionId);
+      if (!isValid) {
+        this.sessions.delete(sessionId);
+        return null;
+      }
+
+      return session;
+    } catch (error) {
+      console.log('Erro ao obter sessão:', error);
+      return null;
+    }
+  }
+
+  /**
+   * Estende o tempo de uma sessão
+   */
+  async extendSession(sessionId: string, extendByMinutes: number = 30): Promise<boolean> {
+    try {
+      const session = this.sessions.get(sessionId);
+      if (!session) {
+        return false;
+      }
+
+      const currentExpiry = new Date(session.expiresAt);
+      const newExpiry = new Date(currentExpiry.getTime() + (extendByMinutes * 60 * 1000));
       
-      if (exists) {
-        await this.redis.expire(`${this.SESSION_PREFIX}${sessionId}`, additionalSeconds);
-        await this.updateLastActivity(sessionId);
+      session.expiresAt = newExpiry.toISOString();
+      session.lastActivity = new Date().toISOString();
+      
+      this.sessions.set(sessionId, session);
+      
+      return true;
+    } catch (error) {
+      console.log('Erro ao estender sessão:', error);
+      return false;
+    }
+  }
+
+  /**
+   * Cria uma nova sessão
+   */
+  async createSession(sessionData: Omit<ActiveSession, 'id' | 'loginTime' | 'lastActivity' | 'expiresAt' | 'isActive'>): Promise<string> {
+    try {
+      const sessionId = this.generateSessionId();
+      const now = new Date();
+      const expiresAt = new Date(now.getTime() + (8 * 60 * 60 * 1000)); // 8 horas
+
+      const session: ActiveSession = {
+        ...sessionData,
+        id: sessionId,
+        loginTime: now.toISOString(),
+        lastActivity: now.toISOString(),
+        expiresAt: expiresAt.toISOString(),
+        isActive: true
+      };
+
+      this.sessions.set(sessionId, session);
+      
+      return sessionId;
+    } catch (error) {
+      console.log('Erro ao criar sessão:', error);
+      throw error;
+    }
+  }
+
+  /**
+   * Remove uma sessão (logout)
+   */
+  async removeSession(sessionId: string): Promise<boolean> {
+    try {
+      const session = this.sessions.get(sessionId);
+      if (session) {
+        session.isActive = false;
+        this.sessions.delete(sessionId);
         return true;
       }
-      
       return false;
     } catch (error) {
-      console.error('Erro ao estender sessão:', error);
+      console.log('Erro ao remover sessão:', error);
       return false;
+    }
+  }
+
+  /**
+   * Lista todas as sessões ativas
+   */
+  async getActiveSessions(): Promise<ActiveSession[]> {
+    try {
+      const activeSessions: ActiveSession[] = [];
+      const now = new Date();
+
+      for (const [sessionId, session] of this.sessions.entries()) {
+        const expiresAt = new Date(session.expiresAt);
+        
+        if (session.isActive && now < expiresAt) {
+          activeSessions.push(session);
+        } else {
+          // Remove sessões expiradas
+          this.sessions.delete(sessionId);
+        }
+      }
+
+      return activeSessions;
+    } catch (error) {
+      console.log('Erro ao obter sessões ativas:', error);
+      return [];
+    }
+  }
+
+  /**
+   * Obtém sessões de um usuário específico
+   */
+  async getUserSessions(userId: string): Promise<ActiveSession[]> {
+    try {
+      const allSessions = await this.getActiveSessions();
+      return allSessions.filter(session => session.userId === userId);
+    } catch (error) {
+      console.log('Erro ao obter sessões do usuário:', error);
+      return [];
+    }
+  }
+
+  /**
+   * Atualiza a última atividade de uma sessão
+   */
+  async updateLastActivity(sessionId: string): Promise<boolean> {
+    try {
+      const session = this.sessions.get(sessionId);
+      if (!session) {
+        return false;
+      }
+
+      session.lastActivity = new Date().toISOString();
+      this.sessions.set(sessionId, session);
+      
+      return true;
+    } catch (error) {
+      console.log('Erro ao atualizar última atividade:', error);
+      return false;
+    }
+  }
+
+  /**
+   * Gera um ID único para a sessão
+   */
+  private generateSessionId(): string {
+    return 'sess_' + Math.random().toString(36).substr(2, 9) + '_' + Date.now().toString(36);
+  }
+
+  /**
+   * Limpa sessões expiradas (método de limpeza)
+   */
+  async cleanupExpiredSessions(): Promise<number> {
+    try {
+      const now = new Date();
+      let cleanedCount = 0;
+
+      for (const [sessionId, session] of this.sessions.entries()) {
+        const expiresAt = new Date(session.expiresAt);
+        
+        if (!session.isActive || now >= expiresAt) {
+          this.sessions.delete(sessionId);
+          cleanedCount++;
+        }
+      }
+
+      return cleanedCount;
+    } catch (error) {
+      console.log('Erro ao limpar sessões expiradas:', error);
+      return 0;
+    }
+  }
+
+  /**
+   * Obtém estatísticas das sessões
+   */
+  async getSessionStats(): Promise<{
+    totalActive: number;
+    byDevice: Record<string, number>;
+    byRole: Record<string, number>;
+    averageSessionDuration: number;
+  }> {
+    try {
+      const activeSessions = await this.getActiveSessions();
+      
+      const byDevice: Record<string, number> = {};
+      const byRole: Record<string, number> = {};
+      let totalDuration = 0;
+
+      for (const session of activeSessions) {
+        // Contar por dispositivo
+        const deviceType = session.deviceInfo.type;
+        byDevice[deviceType] = (byDevice[deviceType] || 0) + 1;
+
+        // Contar por role
+        const role = session.userRole;
+        byRole[role] = (byRole[role] || 0) + 1;
+
+        // Calcular duração da sessão
+        const loginTime = new Date(session.loginTime);
+        const lastActivity = new Date(session.lastActivity);
+        const duration = lastActivity.getTime() - loginTime.getTime();
+        totalDuration += duration;
+      }
+
+      const averageSessionDuration = activeSessions.length > 0 
+        ? totalDuration / activeSessions.length / (1000 * 60) // em minutos
+        : 0;
+
+      return {
+        totalActive: activeSessions.length,
+        byDevice,
+        byRole,
+        averageSessionDuration
+      };
+    } catch (error) {
+      console.log('Erro ao obter estatísticas das sessões:', error);
+      return {
+        totalActive: 0,
+        byDevice: {},
+        byRole: {},
+        averageSessionDuration: 0
+      };
     }
   }
 }
 
-// Instância singleton do serviço de sessão
 export const sessionService = new SessionService();
-export default sessionService;

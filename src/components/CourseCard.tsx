@@ -1,253 +1,137 @@
 'use client'
 
-import { useState } from 'react'
-import { EDUCATION_LEVELS, EDUCATION_MODALITIES } from '../constants/education'
-import type { Course } from '../types/education'
+import { CourseResponseDto } from '@/types/api'
+import { BookOpen, Users, Clock, ExternalLink, Edit } from 'lucide-react'
+import { Button } from '@/components/ui/Button'
+import { Badge } from '@/components/ui/Badge'
 
 interface CourseCardProps {
-  course: Course
-  onEnroll?: () => void
-  onViewDetails?: () => void
-  isEnrolled?: boolean
+  course: CourseResponseDto
+  userType: 'teacher' | 'student'
+  onAccess: () => void
+  onManage: () => void
 }
 
-export default function CourseCard({
-  course,
-  onEnroll,
-  onViewDetails,
-  isEnrolled = false
-}: CourseCardProps) {
-  const [showDetails, setShowDetails] = useState(false)
-  const [isHovered, setIsHovered] = useState(false)
-
-  const getLevelBadgeColor = (level: keyof typeof EDUCATION_LEVELS) => {
-    const colors = {
-      BASIC: 'bg-accent-blue-light/20 text-accent-blue-dark',
-      SUPERIOR: 'bg-accent-purple-light/20 text-accent-purple-dark',
-      PROFESSIONAL: 'bg-accent-green-light/20 text-accent-green-dark',
-      SPECIAL: 'bg-accent-orange-light/20 text-accent-orange-dark'
-    }
-    return colors[level] || 'bg-secondary-light text-text-secondary';
-  }
-
-  const getModalityBadgeColor = (modality: keyof typeof EDUCATION_MODALITIES) => {
-    const colors = {
-      SPECIAL: 'bg-accent-orange-light/20 text-accent-orange-dark',
-      DISTANCE: 'bg-secondary-light text-text-secondary',
-      PROFESSIONAL: 'bg-accent-green-light/20 text-accent-green-dark',
-      ADULT: 'bg-primary-light/20 text-primary-dark',
-      INDIGENOUS: 'bg-error-light/20 text-error-dark'
-    }
-    return colors[modality] || 'bg-secondary-light text-text-secondary';
-  }
-
-  const formatSchedule = (schedule: Course['schedule']) => {
-    const startDate = new Date(schedule.startDate)
-    const endDate = new Date(schedule.endDate)
-
-    return {
-      period: `${startDate.toLocaleDateString('pt-BR')} - ${endDate.toLocaleDateString('pt-BR')}`,
-      days: schedule.classDays.join(', '),
-      time: schedule.classTime
+export default function CourseCard({ course, userType, onAccess, onManage }: CourseCardProps) {
+  // Funções para obter cores baseadas no nível e tipo do curso
+  const getLevelColor = () => {
+    switch (course.level) {
+      case 'FUNDAMENTAL': return 'bg-green-100 text-green-800'
+      case 'MEDIO': return 'bg-blue-100 text-blue-800'
+      case 'SUPERIOR': return 'bg-purple-100 text-purple-800'
+      case 'POS_GRADUACAO': return 'bg-pink-100 text-pink-800'
+      case 'MESTRADO': return 'bg-indigo-100 text-indigo-800'
+      case 'DOUTORADO': return 'bg-red-100 text-red-800'
+      default: return 'bg-gray-100 text-gray-800'
     }
   }
 
-  const schedule = formatSchedule(course.schedule)
+  const getLevelLabel = () => {
+    switch (course.level) {
+      case 'FUNDAMENTAL': return 'Ensino Fundamental'
+      case 'MEDIO': return 'Ensino Médio'
+      case 'SUPERIOR': return 'Ensino Superior'
+      case 'POS_GRADUACAO': return 'Pós-Graduação'
+      case 'MESTRADO': return 'Mestrado'
+      case 'DOUTORADO': return 'Doutorado'
+      default: return course.level || 'Não definido'
+    }
+  }
+
+  const getTypeLabel = () => {
+    switch (course.type) {
+      case 'PRESENCIAL': return 'Presencial'
+      case 'EAD': return 'EAD'
+      case 'HIBRIDO': return 'Híbrido'
+      default: return course.type || 'Não definido'
+    }
+  }
+
+  // Função para gerar a cor de fundo baseada no nome do curso
+  const getGradientColors = () => {
+    const hash = course.name.split('').reduce((acc, char) => {
+      return char.charCodeAt(0) + ((acc << 5) - acc)
+    }, 0)
+    
+    const h = Math.abs(hash % 360)
+    return `from-blue-600 to-indigo-700`
+  }
 
   return (
-    <div
-      className="card hover:translate-y-[-4px] transition-all duration-300 bg-background-primary shadow-md hover:shadow-lg rounded-lg overflow-hidden border border-border-light"
-      onMouseEnter={() => setIsHovered(true)}
-      onMouseLeave={() => setIsHovered(false)}
-      role="article"
-      aria-labelledby={`course-title-${course.id}`}
-    >
-      <div className="p-6 space-y-6">
-        {/* Header */}
-        <div className="flex justify-between items-start">
-          <div className="space-y-1">
-            <h3
-              id={`course-title-${course.id}`}
-              className="text-xl font-semibold text-primary-dark group-hover:text-primary-DEFAULT transition-colors duration-300"
-            >
-              {course.name}
-            </h3>
-            <p className="text-sm text-text-secondary">
-              {course.institution.name}
-            </p>
+    <div className="bg-white rounded-xl shadow-sm border border-gray-100 hover:shadow-md transition-all duration-200 overflow-hidden flex flex-col h-full">
+      <div className={`h-40 bg-gradient-to-br ${getGradientColors()} rounded-t-xl flex items-center justify-center relative overflow-hidden`}>
+        <span className="text-white/20 text-6xl font-bold absolute">
+          {course.name[0]}
+        </span>
+        <div className="relative z-10 text-white text-center p-4">
+          <h3 className="text-xl font-semibold mb-1">
+            {course.name}
+          </h3>
+          <div className="flex items-center justify-center space-x-2">
+            <Badge variant="default" className="bg-white/20 text-white border border-white/10">
+              {getLevelLabel()}
+            </Badge>
+            <Badge variant="secondary" className="bg-white/20 text-white border border-white/10">
+              {getTypeLabel()}
+            </Badge>
           </div>
-          <div className="flex flex-wrap gap-2">
-            <span className={`badge px-2.5 py-0.5 rounded-full text-xs font-medium ${getLevelBadgeColor(course.level)}`}>
-              {EDUCATION_LEVELS[course.level]}
+        </div>
+      </div>
+      
+      <div className="p-6 flex-grow flex flex-col">
+        <p className="text-gray-600 text-sm mb-4 line-clamp-2">{course.description}</p>
+        
+        <div className="space-y-2 mb-4">
+          <div className="flex items-center text-sm text-gray-600">
+            <Users className="w-4 h-4 mr-2 text-gray-400" />
+            <span>
+              {course.students?.length || 0} {course.students?.length === 1 ? 'Aluno' : 'Alunos'}
             </span>
-            {course.modality && (
-              <span className={`badge px-2.5 py-0.5 rounded-full text-xs font-medium ${getModalityBadgeColor(course.modality)}`}>
-                {EDUCATION_MODALITIES[course.modality].name}
-              </span>
-            )}
+          </div>
+          
+          <div className="flex items-center text-sm text-gray-600">
+            <BookOpen className="w-4 h-4 mr-2 text-gray-400" />
+            <span>
+              {course.institution?.name || 'Instituição não definida'}
+            </span>
+          </div>
+          
+          <div className="flex items-center text-sm text-gray-600">
+            <Clock className="w-4 h-4 mr-2 text-gray-400" />
+            <span>
+              Criado em {new Date(course.created_at).toLocaleDateString('pt-BR')}
+            </span>
           </div>
         </div>
-
-        {/* Basic Info */}
-        <div className="grid grid-cols-2 gap-4">
-          <div className="flex items-center space-x-3">
-            <div className="w-10 h-10 rounded-lg bg-primary-light/20 flex items-center justify-center">
-              <svg className="w-5 h-5 text-primary-DEFAULT" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
-              </svg>
-            </div>
-            <div>
-              <p className="text-sm text-text-secondary">Duração</p>
-              <p className="text-sm font-medium text-text-primary">{course.duration}</p>
-            </div>
-          </div>
-          <div className="flex items-center space-x-3">
-            <div className="w-10 h-10 rounded-lg bg-secondary-light/50 flex items-center justify-center">
-              <svg className="w-5 h-5 text-secondary-dark" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
-              </svg>
-            </div>
-            <div>
-              <p className="text-sm text-text-secondary">Horário</p>
-              <p className="text-sm font-medium text-text-primary">{schedule.time}</p>
-            </div>
-          </div>
-        </div>
-
-        {/* Description */}
-        <div className="relative">
-          <p className={`text-sm text-text-secondary transition-all duration-500 ${
-            showDetails ? '' : 'line-clamp-2'
-          }`}>
-            {course.description}
-          </p>
-          {!showDetails && (
-            <div className="absolute bottom-0 left-0 w-full h-8 bg-gradient-to-t from-background-primary to-transparent" />
-          )}
-        </div>
-
-        {/* Expandable Details */}
-        <div>
-          <button
-            onClick={() => setShowDetails(!showDetails)}
-            className="text-sm text-primary-DEFAULT hover:text-primary-dark font-medium flex items-center space-x-1 transition-colors duration-300"
-            aria-expanded={showDetails}
-          >
-            <span>{showDetails ? 'Menos detalhes' : 'Mais detalhes'}</span>
-            <svg
-              className={`h-5 w-5 transform transition-transform duration-300 ${
-                showDetails ? 'rotate-180' : ''
-              }`}
-              fill="none"
-              viewBox="0 0 24 24"
-              stroke="currentColor"
+        
+        <div className="mt-auto pt-4 border-t border-gray-100 flex gap-2">
+          {userType === 'student' ? (
+            <Button
+              variant="default"
+              className="w-full"
+              onClick={onAccess}
             >
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
-            </svg>
-          </button>
-
-          <div className={`mt-4 space-y-4 transition-all duration-500 ${
-            showDetails ? 'opacity-100 max-h-[500px]' : 'opacity-0 max-h-0 overflow-hidden'
-          }`}>
-            <div className="grid grid-cols-2 gap-4">
-              <div className="p-3 rounded-lg bg-background-secondary">
-                <p className="text-sm text-text-secondary">Período</p>
-                <p className="text-sm font-medium text-text-primary">{schedule.period}</p>
-              </div>
-              <div className="p-3 rounded-lg bg-background-secondary">
-                <p className="text-sm text-text-secondary">Dias de Aula</p>
-                <p className="text-sm font-medium text-text-primary">{schedule.days}</p>
-              </div>
-            </div>
-
-            {course.cycle && (
-              <div className="p-3 rounded-lg bg-background-secondary">
-                <p className="text-sm text-text-secondary">Ciclo</p>
-                <p className="text-sm font-medium text-text-primary">{course.cycle}</p>
-              </div>
-            )}
-
-            {course.stage && (
-              <div className="p-3 rounded-lg bg-background-secondary">
-                <p className="text-sm text-text-secondary">Estágio</p>
-                <p className="text-sm font-medium text-text-primary">{course.stage}</p>
-              </div>
-            )}
-
-            <div className="p-4 rounded-lg bg-background-tertiary">
-              <h4 className="text-sm font-medium text-text-primary mb-3">Informações da Instituição</h4>
-              <ul className="space-y-2">
-                {course.institution.characteristics.map((characteristic, index) => (
-                  <li
-                    key={index}
-                    className="text-sm text-text-secondary flex items-start space-x-2"
-                  >
-                    <svg
-                      className="h-5 w-5 text-success-DEFAULT flex-shrink-0"
-                      fill="none"
-                      viewBox="0 0 24 24"
-                      stroke="currentColor"
-                    >
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
-                    </svg>
-                    <span>{characteristic}</span>
-                  </li>
-                ))}
-              </ul>
-            </div>
-          </div>
-        </div>
-
-        {/* Actions */}
-        <div className="flex gap-3">
-          {isEnrolled ? (
-            <button
-              onClick={onViewDetails}
-              className="bg-primary-DEFAULT hover:bg-primary-dark text-white px-4 py-2 rounded-lg transition-colors duration-200 w-full flex items-center justify-center group"
-              aria-label={`Ver detalhes do curso ${course.name}`}
-            >
-              <span>Ver Detalhes</span>
-              <svg
-                className="w-4 h-4 ml-2 transform transition-transform group-hover:translate-x-1"
-                fill="none"
-                viewBox="0 0 24 24"
-                stroke="currentColor"
-              >
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
-              </svg>
-            </button>
+              <ExternalLink className="w-4 h-4 mr-2" />
+              Acessar
+            </Button>
           ) : (
             <>
-              <button
-                onClick={onEnroll}
-                className="bg-primary-DEFAULT hover:bg-primary-dark text-white px-4 py-2 rounded-lg transition-colors duration-200 flex-1 flex items-center justify-center group"
-                aria-label={`Inscrever-se no curso ${course.name}`}
+              <Button 
+                variant="outline" 
+                className="flex-1"
+                onClick={onAccess}
               >
-                <span>Inscrever-se</span>
-                <svg
-                  className="w-4 h-4 ml-2 transform transition-transform group-hover:translate-x-1"
-                  fill="none"
-                  viewBox="0 0 24 24"
-                  stroke="currentColor"
-                >
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 8l4 4m0 0l-4 4m4-4H3" />
-                </svg>
-              </button>
-              <button
-                onClick={onViewDetails}
-                className="border border-primary-DEFAULT text-primary-DEFAULT hover:bg-primary-light/20 px-4 py-2 rounded-lg transition-colors duration-200 flex-1 flex items-center justify-center group"
-                aria-label={`Mais informações sobre o curso ${course.name}`}
+                <ExternalLink className="w-4 h-4 mr-2" />
+                Visualizar
+              </Button>
+              <Button
+                variant="default"
+                className="flex-1"
+                onClick={onManage}
               >
-                <span>Mais Informações</span>
-                <svg
-                  className="w-4 h-4 ml-2 transform transition-transform group-hover:translate-x-1"
-                  fill="none"
-                  viewBox="0 0 24 24"
-                  stroke="currentColor"
-                >
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-                </svg>
-              </button>
+                <Edit className="w-4 h-4 mr-2" />
+                Gerenciar
+              </Button>
             </>
           )}
         </div>

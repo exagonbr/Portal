@@ -11,7 +11,7 @@ const config: { [key: string]: Knex.Config } = {
       port: parseInt(process.env.DB_PORT || '5432'),
       database: process.env.DB_NAME || 'portal_sabercon',
       user: process.env.DB_USER || 'postgres',
-      password: process.env.DB_PASSWORD || 'root',
+      password: String(process.env.DB_PASSWORD || 'root'), // Garantir que seja string para evitar erro SASL
       ssl: process.env.DB_SSL === 'true' ? { rejectUnauthorized: false } : false,
     },
     pool: {
@@ -34,7 +34,7 @@ const config: { [key: string]: Knex.Config } = {
       port: parseInt(process.env.DB_PORT || '5432'),
       database: process.env.DB_NAME || 'portal_sabercon',
       user: process.env.DB_USER || 'postgres',
-      password: process.env.DB_PASSWORD || '',
+      password: String(process.env.DB_PASSWORD || ''), // Garantir que seja string para evitar erro SASL
       ssl: process.env.DB_SSL === 'true' ? { rejectUnauthorized: false } : false,
     },
     pool: {
@@ -57,16 +57,18 @@ const config: { [key: string]: Knex.Config } = {
       port: parseInt(process.env.DB_PORT || '5432'),
       database: process.env.DB_NAME || 'portal_sabercon',
       user: process.env.DB_USER || 'postgres',
-      password: process.env.DB_PASSWORD || '',
+      password: String(process.env.DB_PASSWORD || ''), // Garantir que seja string para evitar erro SASL
       ssl: process.env.DB_SSL === 'true' ? { rejectUnauthorized: false } : false,
     },
     pool: {
-      min: 2,
-      max: 20,
-      acquireTimeoutMillis: 60000,
+      min: 5,
+      max: 30,
+      acquireTimeoutMillis: 120000,
       destroyTimeoutMillis: 5000,
-      idleTimeoutMillis: 30000,
+      idleTimeoutMillis: 60000,
       reapIntervalMillis: 1000,
+      createTimeoutMillis: 30000,
+      createRetryIntervalMillis: 200,
     },
     migrations: {
       tableName: 'knex_migrations',
@@ -75,6 +77,7 @@ const config: { [key: string]: Knex.Config } = {
     seeds: {
       directory: './seeds',
     },
+    acquireConnectionTimeout: 120000,
   },
 };
 

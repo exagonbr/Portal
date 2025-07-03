@@ -18,6 +18,8 @@ export default function SchoolModal({ school, onClose }: SchoolModalProps) {
     name: '',
     code: '',
     institution_id: '',
+    type: undefined,
+    description: '',
     address: '',
     city: '',
     state: '',
@@ -33,6 +35,8 @@ export default function SchoolModal({ school, onClose }: SchoolModalProps) {
         name: school.name,
         code: school.code,
         institution_id: school.institution_id,
+        type: school.type,
+        description: school.description || '',
         address: school.address || '',
         city: school.city || '',
         state: school.state || '',
@@ -46,9 +50,9 @@ export default function SchoolModal({ school, onClose }: SchoolModalProps) {
   const loadInstitutions = async () => {
     try {
       const response = await institutionService.getAll();
-      setInstitutions(response.data);
+      setInstitutions(response);
     } catch (error) {
-      console.error('Erro ao carregar instituições:', error);
+      console.log('Erro ao carregar instituições:', error);
     }
   };
 
@@ -130,7 +134,7 @@ export default function SchoolModal({ school, onClose }: SchoolModalProps) {
                 />
               </div>
 
-              <div className="md:col-span-2">
+              <div>
                 <label className="block text-sm font-medium text-text-secondary mb-1">
                   Instituição *
                 </label>
@@ -147,6 +151,36 @@ export default function SchoolModal({ school, onClose }: SchoolModalProps) {
                     </option>
                   ))}
                 </select>
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-text-secondary mb-1">
+                  Tipo de Escola
+                </label>
+                <select
+                  value={formData.type || ''}
+                  onChange={(e) => setFormData({ ...formData, type: e.target.value as 'elementary' | 'middle' | 'high' | 'technical' || undefined })}
+                  className="w-full px-3 py-2 border border-border-DEFAULT rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-DEFAULT text-text-primary bg-background-primary"
+                >
+                  <option value="">Selecione o tipo</option>
+                  <option value="elementary">Fundamental I</option>
+                  <option value="middle">Fundamental II</option>
+                  <option value="high">Ensino Médio</option>
+                  <option value="technical">Técnico</option>
+                </select>
+              </div>
+
+              <div className="md:col-span-2">
+                <label className="block text-sm font-medium text-text-secondary mb-1">
+                  Descrição
+                </label>
+                <textarea
+                  value={formData.description}
+                  onChange={(e) => setFormData({ ...formData, description: e.target.value })}
+                  className="w-full px-3 py-2 border border-border-DEFAULT rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-DEFAULT text-text-primary bg-background-primary"
+                  rows={3}
+                  placeholder="Descrição da escola (opcional)"
+                />
               </div>
 
               <div className="md:col-span-2">

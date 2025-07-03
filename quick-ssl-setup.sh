@@ -1,7 +1,7 @@
 #!/bin/bash
 
 # Script rápido para SSL Let's Encrypt - Portal Sabercon
-# Frontend: localhost:3000 via HTTPS | Backend: localhost:3001 via HTTPS
+# Frontend: portal.sabercon.com.br via HTTPS | Backend: portal.sabercon.com.br via HTTPS
 # Execute como root: sudo bash quick-ssl-setup.sh
 
 set -e
@@ -68,7 +68,7 @@ server {
     listen 80;
     server_name $IP;
     
-    # Frontend (raiz do site) → localhost:3000
+    # Frontend (raiz do site) → portal.sabercon.com.br
     location / {
         proxy_pass http://localhost:$FRONTEND_PORT;
         proxy_set_header Host \$host;
@@ -88,7 +88,7 @@ server {
         proxy_read_timeout 30s;
     }
     
-    # Backend API → localhost:3001/api
+    # Backend API → portal.sabercon.com.br/api
     location /api/ {
         proxy_pass http://localhost:$BACKEND_PORT/api/;
         proxy_set_header Host \$host;
@@ -111,7 +111,7 @@ server {
         proxy_read_timeout 60s;
     }
     
-    # Backend direto → localhost:3001
+    # Backend direto → portal.sabercon.com.br
     location /backend/ {
         proxy_pass http://localhost:$BACKEND_PORT/;
         proxy_set_header Host \$host;

@@ -2,6 +2,9 @@
 
 import React, { useState } from 'react';
 import { mockCourses } from '@/constants/mockData'; // Assuming mockInstitutions might come from here or similar
+import { useTheme } from '@/contexts/ThemeContext';
+import Modal from '@/components/ui/Modal';
+import { motion } from 'framer-motion';
 
 interface UnitFormData {
   name: string;
@@ -29,8 +32,8 @@ const mockInstitutionsList = mockCourses.length > 0
   ? Array.from(new Set(mockCourses.map(course => course.institution))).map(inst => ({id: inst.id || inst.name, name: inst.name})) // Ensure id is present
   : [{id: 'defaultInst', name: 'Instituição Padrão'}];
 
-
 export default function UnitAddModal({ isOpen, onClose }: UnitAddModalProps) {
+  const { theme } = useTheme();
   const [currentStep, setCurrentStep] = useState(1);
   const [formData, setFormData] = useState<UnitFormData>({
     name: '',
@@ -165,354 +168,443 @@ export default function UnitAddModal({ isOpen, onClose }: UnitAddModalProps) {
   };
 
   return (
-    <div className="fixed inset-0 bg-text-primary/60 backdrop-blur-sm flex items-center justify-center z-50 p-4">
-      <div className="bg-background-primary rounded-lg shadow-xl w-full max-w-3xl max-h-[90vh] overflow-hidden">
-        {/* Header */}
-        <div className="bg-gradient-to-r from-primary-DEFAULT to-primary-dark text-white p-6">
-          <div className="flex justify-between items-center">
-            <div>
-              <h2 className="text-2xl font-bold">Nova Unidade de Ensino</h2>
-              <p className="text-primary-light/80 mt-1">Adicione uma nova unidade à plataforma</p>
+    <Modal
+      isOpen={isOpen}
+      onClose={handleClose}
+      title="Nova Unidade de Ensino"
+      size="xl"
+    >
+      <div className="p-6 overflow-y-auto" style={{ maxHeight: `calc(90vh - 120px - 68px)` }}>
+        {renderStepIndicator()}
+
+        <form className="space-y-6">
+          {/* Step 1: Basic Information */}
+          {currentStep === 1 && (
+            <div className="space-y-6">
+              <h3 className="text-lg font-semibold mb-4" style={{ color: theme.colors.text.primary }}>
+                Informações Básicas
+              </h3>
+
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div>
+                  <label className="block text-sm font-medium mb-2" style={{ color: theme.colors.text.secondary }}>
+                    Nome da Unidade <span style={{ color: theme.colors.status.error }}>*</span>
+                  </label>
+                  <input
+                    type="text"
+                    name="name"
+                    value={formData.name}
+                    onChange={handleInputChange}
+                    className={`w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 ${
+                      errors.name ? 'border-error-DEFAULT' : ''
+                    }`}
+                    style={{
+                      borderColor: errors.name ? theme.colors.status.error : theme.colors.border.DEFAULT,
+                      backgroundColor: theme.colors.background.primary,
+                      color: theme.colors.text.primary
+                    }}
+                    placeholder="Ex: Campus São Paulo"
+                  />
+                  {errors.name && <p className="text-sm mt-1" style={{ color: theme.colors.status.error }}>{errors.name}</p>}
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium mb-2" style={{ color: theme.colors.text.secondary }}>
+                    Instituição <span style={{ color: theme.colors.status.error }}>*</span>
+                  </label>
+                  <select
+                    name="institutionId"
+                    value={formData.institutionId}
+                    onChange={handleInputChange}
+                    className={`w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 ${
+                      errors.institutionId ? 'border-error-DEFAULT' : ''
+                    }`}
+                    style={{
+                      borderColor: errors.institutionId ? theme.colors.status.error : theme.colors.border.DEFAULT,
+                      backgroundColor: theme.colors.background.primary,
+                      color: theme.colors.text.primary
+                    }}
+                  >
+                    <option value="">Selecione uma instituição</option>
+                    {institutions.map(inst => (
+                      <option key={inst.id} value={inst.id}>{inst.name}</option>
+                    ))}
+                  </select>
+                  {errors.institutionId && <p className="text-sm mt-1" style={{ color: theme.colors.status.error }}>{errors.institutionId}</p>}
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium mb-2" style={{ color: theme.colors.text.secondary }}>
+                    Tipo de Unidade <span style={{ color: theme.colors.status.error }}>*</span>
+                  </label>
+                  <select
+                    name="type"
+                    value={formData.type}
+                    onChange={handleInputChange}
+                    className="w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2"
+                    style={{
+                      borderColor: theme.colors.border.DEFAULT,
+                      backgroundColor: theme.colors.background.primary,
+                      color: theme.colors.text.primary
+                    }}
+                  >
+                    <option value="Campus Principal">Campus Principal</option>
+                    <option value="Unidade">Unidade</option>
+                    <option value="Polo">Polo</option>
+                    <option value="Extensão">Extensão</option>
+                  </select>
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium mb-2" style={{ color: theme.colors.text.secondary }}>
+                    Status
+                  </label>
+                  <select
+                    name="status"
+                    value={formData.status}
+                    onChange={handleInputChange}
+                    className="w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2"
+                    style={{
+                      borderColor: theme.colors.border.DEFAULT,
+                      backgroundColor: theme.colors.background.primary,
+                      color: theme.colors.text.primary
+                    }}
+                  >
+                    <option value="Ativa">Ativa</option>
+                    <option value="Inativa">Inativa</option>
+                    <option value="Em Manutenção">Em Manutenção</option>
+                  </select>
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium mb-2" style={{ color: theme.colors.text.secondary }}>
+                    Localização <span style={{ color: theme.colors.status.error }}>*</span>
+                  </label>
+                  <input
+                    type="text"
+                    name="location"
+                    value={formData.location}
+                    onChange={handleInputChange}
+                    className={`w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 ${
+                      errors.location ? 'border-error-DEFAULT' : ''
+                    }`}
+                    style={{
+                      borderColor: errors.location ? theme.colors.status.error : theme.colors.border.DEFAULT,
+                      backgroundColor: theme.colors.background.primary,
+                      color: theme.colors.text.primary
+                    }}
+                    placeholder="Ex: São Paulo, SP"
+                  />
+                  {errors.location && <p className="text-sm mt-1" style={{ color: theme.colors.status.error }}>{errors.location}</p>}
+                </div>
+
+                <div className="md:col-span-2">
+                  <label className="block text-sm font-medium mb-2" style={{ color: theme.colors.text.secondary }}>
+                    Endereço Completo <span style={{ color: theme.colors.status.error }}>*</span>
+                  </label>
+                  <textarea
+                    name="address"
+                    value={formData.address}
+                    onChange={handleInputChange}
+                    rows={2}
+                    className={`w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 ${
+                      errors.address ? 'border-error-DEFAULT' : ''
+                    }`}
+                    style={{
+                      borderColor: errors.address ? theme.colors.status.error : theme.colors.border.DEFAULT,
+                      backgroundColor: theme.colors.background.primary,
+                      color: theme.colors.text.primary
+                    }}
+                    placeholder="Ex: Rua das Flores, 123, Centro, São Paulo - SP, CEP: 01234-567"
+                  />
+                  {errors.address && <p className="text-sm mt-1" style={{ color: theme.colors.status.error }}>{errors.address}</p>}
+                </div>
+              </div>
             </div>
-            <button
-              onClick={handleClose}
-              className="text-white hover:text-primary-light/70 transition-colors"
-            >
-              <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-              </svg>
-            </button>
-          </div>
-        </div>
+          )}
 
-        {/* Content */}
-        <div className="p-6 overflow-y-auto" style={{ maxHeight: `calc(90vh - 120px - 68px)` }}>
-          {renderStepIndicator()}
+          {/* Step 2: Contact Information */}
+          {currentStep === 2 && (
+            <div className="space-y-6">
+              <h3 className="text-lg font-semibold mb-4" style={{ color: theme.colors.text.primary }}>
+                Informações de Contato
+              </h3>
 
-          <form className="space-y-6">
-            {/* Step 1: Basic Information */}
-            {currentStep === 1 && (
-              <div className="space-y-6">
-                <h3 className="text-lg font-semibold mb-4 text-text-primary">Informações Básicas</h3>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div>
+                  <label className="block text-sm font-medium mb-2" style={{ color: theme.colors.text.secondary }}>
+                    Coordenador <span style={{ color: theme.colors.status.error }}>*</span>
+                  </label>
+                  <input
+                    type="text"
+                    name="coordinator"
+                    value={formData.coordinator}
+                    onChange={handleInputChange}
+                    className={`w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 ${
+                      errors.coordinator ? 'border-error-DEFAULT' : ''
+                    }`}
+                    style={{
+                      borderColor: errors.coordinator ? theme.colors.status.error : theme.colors.border.DEFAULT,
+                      backgroundColor: theme.colors.background.primary,
+                      color: theme.colors.text.primary
+                    }}
+                    placeholder="Ex: Prof. Dr. João Silva"
+                  />
+                  {errors.coordinator && <p className="text-sm mt-1" style={{ color: theme.colors.status.error }}>{errors.coordinator}</p>}
+                </div>
 
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                  <div>
-                    <label className="block text-sm font-medium text-text-secondary mb-2">
-                      Nome da Unidade <span className="text-error-DEFAULT">*</span>
-                    </label>
-                    <input
-                      type="text"
-                      name="name"
-                      value={formData.name}
-                      onChange={handleInputChange}
-                      className={`w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-DEFAULT ${
-                        errors.name ? 'border-error-DEFAULT' : 'border-border-DEFAULT'
-                      }`}
-                      placeholder="Ex: Campus São Paulo"
-                    />
-                    {errors.name && <p className="text-error-text text-sm mt-1">{errors.name}</p>}
-                  </div>
+                <div>
+                  <label className="block text-sm font-medium mb-2" style={{ color: theme.colors.text.secondary }}>
+                    Telefone <span style={{ color: theme.colors.status.error }}>*</span>
+                  </label>
+                  <input
+                    type="text"
+                    name="phone"
+                    value={formData.phone}
+                    onChange={handleInputChange}
+                    className={`w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 ${
+                      errors.phone ? 'border-error-DEFAULT' : ''
+                    }`}
+                    style={{
+                      borderColor: errors.phone ? theme.colors.status.error : theme.colors.border.DEFAULT,
+                      backgroundColor: theme.colors.background.primary,
+                      color: theme.colors.text.primary
+                    }}
+                    placeholder="Ex: (11) 1234-5678"
+                  />
+                  {errors.phone && <p className="text-sm mt-1" style={{ color: theme.colors.status.error }}>{errors.phone}</p>}
+                </div>
 
-                  <div>
-                    <label className="block text-sm font-medium text-text-secondary mb-2">
-                      Instituição <span className="text-error-DEFAULT">*</span>
-                    </label>
-                    <select
-                      name="institutionId"
-                      value={formData.institutionId}
-                      onChange={handleInputChange}
-                      className={`w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-DEFAULT ${
-                        errors.institutionId ? 'border-error-DEFAULT' : 'border-border-DEFAULT'
-                      }`}
-                    >
-                      <option value="">Selecione uma instituição</option>
-                      {institutions.map(inst => (
-                        <option key={inst.id} value={inst.id}>{inst.name}</option>
-                      ))}
-                    </select>
-                    {errors.institutionId && <p className="text-error-text text-sm mt-1">{errors.institutionId}</p>}
-                  </div>
-
-                  <div>
-                    <label className="block text-sm font-medium text-text-secondary mb-2">
-                      Tipo de Unidade <span className="text-error-DEFAULT">*</span>
-                    </label>
-                    <select
-                      name="type"
-                      value={formData.type}
-                      onChange={handleInputChange}
-                      className="w-full px-3 py-2 border border-border-DEFAULT rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-DEFAULT"
-                    >
-                      <option value="Campus Principal">Campus Principal</option>
-                      <option value="Unidade">Unidade</option>
-                      <option value="Polo">Polo</option>
-                      <option value="Extensão">Extensão</option>
-                    </select>
-                  </div>
-
-                  <div>
-                    <label className="block text-sm font-medium text-text-secondary mb-2">
-                      Status
-                    </label>
-                    <select
-                      name="status"
-                      value={formData.status}
-                      onChange={handleInputChange}
-                      className="w-full px-3 py-2 border border-border-DEFAULT rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-DEFAULT"
-                    >
-                      <option value="Ativa">Ativa</option>
-                      <option value="Inativa">Inativa</option>
-                      <option value="Em Manutenção">Em Manutenção</option>
-                    </select>
-                  </div>
-
-                  <div>
-                    <label className="block text-sm font-medium text-text-secondary mb-2">
-                      Localização <span className="text-error-DEFAULT">*</span>
-                    </label>
-                    <input
-                      type="text"
-                      name="location"
-                      value={formData.location}
-                      onChange={handleInputChange}
-                      className={`w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-DEFAULT ${
-                        errors.location ? 'border-error-DEFAULT' : 'border-border-DEFAULT'
-                      }`}
-                      placeholder="Ex: São Paulo, SP"
-                    />
-                    {errors.location && <p className="text-error-text text-sm mt-1">{errors.location}</p>}
-                  </div>
-
-                  <div className="md:col-span-2">
-                    <label className="block text-sm font-medium text-text-secondary mb-2">
-                      Endereço Completo <span className="text-error-DEFAULT">*</span>
-                    </label>
-                    <textarea
-                      name="address"
-                      value={formData.address}
-                      onChange={handleInputChange}
-                      rows={2}
-                      className={`w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-DEFAULT ${
-                        errors.address ? 'border-error-DEFAULT' : 'border-border-DEFAULT'
-                      }`}
-                      placeholder="Ex: Rua das Flores, 123, Centro, São Paulo - SP, CEP: 01234-567"
-                    />
-                    {errors.address && <p className="text-error-text text-sm mt-1">{errors.address}</p>}
-                  </div>
+                <div>
+                  <label className="block text-sm font-medium mb-2" style={{ color: theme.colors.text.secondary }}>
+                    E-mail <span style={{ color: theme.colors.status.error }}>*</span>
+                  </label>
+                  <input
+                    type="email"
+                    name="email"
+                    value={formData.email}
+                    onChange={handleInputChange}
+                    className={`w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 ${
+                      errors.email ? 'border-error-DEFAULT' : ''
+                    }`}
+                    style={{
+                      borderColor: errors.email ? theme.colors.status.error : theme.colors.border.DEFAULT,
+                      backgroundColor: theme.colors.background.primary,
+                      color: theme.colors.text.primary
+                    }}
+                    placeholder="Ex: contato@unidade.edu.br"
+                  />
+                  {errors.email && <p className="text-sm mt-1" style={{ color: theme.colors.status.error }}>{errors.email}</p>}
                 </div>
               </div>
-            )}
 
-            {/* Step 2: Contact Information */}
-            {currentStep === 2 && (
-              <div className="space-y-6">
-                <h3 className="text-lg font-semibold mb-4 text-text-primary">Informações de Contato</h3>
-
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                  <div>
-                    <label className="block text-sm font-medium text-text-secondary mb-2">
-                      Coordenador <span className="text-error-DEFAULT">*</span>
-                    </label>
-                    <input
-                      type="text"
-                      name="coordinator"
-                      value={formData.coordinator}
-                      onChange={handleInputChange}
-                      className={`w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-DEFAULT ${
-                        errors.coordinator ? 'border-error-DEFAULT' : 'border-border-DEFAULT'
-                      }`}
-                      placeholder="Ex: Prof. Dr. João Silva"
-                    />
-                    {errors.coordinator && <p className="text-error-text text-sm mt-1">{errors.coordinator}</p>}
-                  </div>
-
-                  <div>
-                    <label className="block text-sm font-medium text-text-secondary mb-2">
-                      Telefone <span className="text-error-DEFAULT">*</span>
-                    </label>
-                    <input
-                      type="text"
-                      name="phone"
-                      value={formData.phone}
-                      onChange={handleInputChange}
-                      className={`w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-DEFAULT ${
-                        errors.phone ? 'border-error-DEFAULT' : 'border-border-DEFAULT'
-                      }`}
-                      placeholder="Ex: (11) 1234-5678"
-                    />
-                    {errors.phone && <p className="text-error-text text-sm mt-1">{errors.phone}</p>}
-                  </div>
-
-                  <div>
-                    <label className="block text-sm font-medium text-text-secondary mb-2">
-                      E-mail <span className="text-error-DEFAULT">*</span>
-                    </label>
-                    <input
-                      type="email"
-                      name="email"
-                      value={formData.email}
-                      onChange={handleInputChange}
-                      className={`w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-DEFAULT ${
-                        errors.email ? 'border-error-DEFAULT' : 'border-border-DEFAULT'
-                      }`}
-                      placeholder="Ex: contato@unidade.edu.br"
-                    />
-                    {errors.email && <p className="text-error-text text-sm mt-1">{errors.email}</p>}
-                  </div>
-                </div>
-
-                <div className="mt-6 p-4 bg-info-light/20 rounded-lg">
-                  <h4 className="font-medium text-info-dark mb-3">Dica</h4>
-                  <p className="text-sm text-info-text">
-                    Certifique-se de que as informações de contato estejam atualizadas, pois serão utilizadas
-                    para comunicação oficial com a unidade.
-                  </p>
-                </div>
+              <div className="mt-6 p-4 rounded-lg" style={{ 
+                backgroundColor: theme.colors.status.info + '20',
+                borderColor: theme.colors.status.info,
+                borderWidth: '1px',
+                borderStyle: 'solid'
+              }}>
+                <h4 className="font-medium mb-3" style={{ color: theme.colors.status.info }}>Dica</h4>
+                <p className="text-sm" style={{ color: theme.colors.text.primary }}>
+                  Certifique-se de que as informações de contato estejam atualizadas, pois serão utilizadas
+                  para comunicação oficial com a unidade.
+                </p>
               </div>
-            )}
-
-            {/* Step 3: Documentation */}
-            {currentStep === 3 && (
-              <div className="space-y-6">
-                <h3 className="text-lg font-semibold mb-4 text-text-primary">Documentação</h3>
-
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                  <div>
-                    <label className="block text-sm font-medium text-text-secondary mb-2">
-                      CNPJ <span className="text-error-DEFAULT">*</span>
-                    </label>
-                    <input
-                      type="text"
-                      name="cnpj"
-                      value={formData.cnpj}
-                      onChange={handleInputChange}
-                      className={`w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-DEFAULT ${
-                        errors.cnpj ? 'border-error-DEFAULT' : 'border-border-DEFAULT'
-                      }`}
-                      placeholder="Ex: 12.345.678/0001-90"
-                    />
-                    {errors.cnpj && <p className="text-error-text text-sm mt-1">{errors.cnpj}</p>}
-                  </div>
-
-                  <div>
-                    <label className="block text-sm font-medium text-text-secondary mb-2">
-                      Inscrição Estadual
-                    </label>
-                    <input
-                      type="text"
-                      name="stateRegistration"
-                      value={formData.stateRegistration}
-                      onChange={handleInputChange}
-                      className="w-full px-3 py-2 border border-border-DEFAULT rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-DEFAULT"
-                      placeholder="Ex: 123.456.789.012"
-                    />
-                  </div>
-
-                  <div>
-                    <label className="block text-sm font-medium text-text-secondary mb-2">
-                      Data de Fundação <span className="text-error-DEFAULT">*</span>
-                    </label>
-                    <input
-                      type="date"
-                      name="foundationDate"
-                      value={formData.foundationDate}
-                      onChange={handleInputChange}
-                      className={`w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-DEFAULT ${
-                        errors.foundationDate ? 'border-error-DEFAULT' : 'border-border-DEFAULT'
-                      }`}
-                    />
-                    {errors.foundationDate && <p className="text-error-text text-sm mt-1">{errors.foundationDate}</p>}
-                  </div>
-
-                  <div>
-                    <label className="block text-sm font-medium text-text-secondary mb-2">
-                      Alvará de Funcionamento
-                    </label>
-                    <input
-                      type="text"
-                      name="operatingLicense"
-                      value={formData.operatingLicense}
-                      onChange={handleInputChange}
-                      className="w-full px-3 py-2 border border-border-DEFAULT rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-DEFAULT"
-                      placeholder="Ex: ALV-2024-0123"
-                    />
-                  </div>
-                </div>
-
-                {/* Summary */}
-                <div className="mt-8 p-6 bg-background-secondary rounded-lg">
-                  <h4 className="font-semibold text-text-primary mb-4">Resumo da Nova Unidade</h4>
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm">
-                    <div>
-                      <span className="text-text-secondary">Nome:</span>
-                      <span className="ml-2 font-medium text-text-primary">{formData.name}</span>
-                    </div>
-                    <div>
-                      <span className="text-text-secondary">Instituição:</span>
-                      <span className="ml-2 font-medium text-text-primary">
-                        {institutions.find(i => i.id === formData.institutionId)?.name || '-'}
-                      </span>
-                    </div>
-                    <div>
-                      <span className="text-text-secondary">Tipo:</span>
-                      <span className="ml-2 font-medium text-text-primary">{formData.type}</span>
-                    </div>
-                    <div>
-                      <span className="text-text-secondary">Status:</span>
-                      <span className="ml-2 font-medium text-text-primary">{formData.status}</span>
-                    </div>
-                    <div>
-                      <span className="text-text-secondary">Coordenador:</span>
-                      <span className="ml-2 font-medium text-text-primary">{formData.coordinator}</span>
-                    </div>
-                    <div>
-                      <span className="text-text-secondary">E-mail:</span>
-                      <span className="ml-2 font-medium text-text-primary">{formData.email}</span>
-                    </div>
-                  </div>
-                </div>
-              </div>
-            )}
-          </form>
-        </div>
-
-        {/* Footer */}
-        <div className="border-t border-border-light px-6 py-4 bg-background-secondary">
-          <div className="flex justify-between items-center">
-            <button
-              onClick={handleClose}
-              className="px-4 py-2 text-text-secondary hover:text-text-primary"
-            >
-              Cancelar
-            </button>
-            <div className="flex gap-3">
-              {currentStep > 1 && (
-                <button
-                  onClick={handlePrevious}
-                  className="px-4 py-2 border border-border-DEFAULT text-text-primary rounded-lg hover:bg-background-tertiary"
-                >
-                  Anterior
-                </button>
-              )}
-              {currentStep < 3 ? (
-                <button
-                  onClick={handleNext}
-                  className="px-4 py-2 bg-primary-DEFAULT text-white rounded-lg hover:bg-primary-dark"
-                >
-                  Próximo
-                </button>
-              ) : (
-                <button
-                  onClick={handleSubmit}
-                  className="px-4 py-2 bg-success-DEFAULT text-white rounded-lg hover:bg-success-dark"
-                >
-                  Criar Unidade
-                </button>
-              )}
             </div>
+          )}
+
+          {/* Step 3: Documentation */}
+          {currentStep === 3 && (
+            <div className="space-y-6">
+              <h3 className="text-lg font-semibold mb-4" style={{ color: theme.colors.text.primary }}>
+                Documentação
+              </h3>
+
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div>
+                  <label className="block text-sm font-medium mb-2" style={{ color: theme.colors.text.secondary }}>
+                    CNPJ <span style={{ color: theme.colors.status.error }}>*</span>
+                  </label>
+                  <input
+                    type="text"
+                    name="cnpj"
+                    value={formData.cnpj}
+                    onChange={handleInputChange}
+                    className={`w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 ${
+                      errors.cnpj ? 'border-error-DEFAULT' : ''
+                    }`}
+                    style={{
+                      borderColor: errors.cnpj ? theme.colors.status.error : theme.colors.border.DEFAULT,
+                      backgroundColor: theme.colors.background.primary,
+                      color: theme.colors.text.primary
+                    }}
+                    placeholder="Ex: 12.345.678/0001-90"
+                  />
+                  {errors.cnpj && <p className="text-sm mt-1" style={{ color: theme.colors.status.error }}>{errors.cnpj}</p>}
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium mb-2" style={{ color: theme.colors.text.secondary }}>
+                    Inscrição Estadual
+                  </label>
+                  <input
+                    type="text"
+                    name="stateRegistration"
+                    value={formData.stateRegistration}
+                    onChange={handleInputChange}
+                    className="w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2"
+                    style={{
+                      borderColor: theme.colors.border.DEFAULT,
+                      backgroundColor: theme.colors.background.primary,
+                      color: theme.colors.text.primary
+                    }}
+                    placeholder="Ex: 123.456.789.012"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium mb-2" style={{ color: theme.colors.text.secondary }}>
+                    Data de Fundação <span style={{ color: theme.colors.status.error }}>*</span>
+                  </label>
+                  <input
+                    type="date"
+                    name="foundationDate"
+                    value={formData.foundationDate}
+                    onChange={handleInputChange}
+                    className={`w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 ${
+                      errors.foundationDate ? 'border-error-DEFAULT' : ''
+                    }`}
+                    style={{
+                      borderColor: errors.foundationDate ? theme.colors.status.error : theme.colors.border.DEFAULT,
+                      backgroundColor: theme.colors.background.primary,
+                      color: theme.colors.text.primary
+                    }}
+                  />
+                  {errors.foundationDate && <p className="text-sm mt-1" style={{ color: theme.colors.status.error }}>{errors.foundationDate}</p>}
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium mb-2" style={{ color: theme.colors.text.secondary }}>
+                    Alvará de Funcionamento
+                  </label>
+                  <input
+                    type="text"
+                    name="operatingLicense"
+                    value={formData.operatingLicense}
+                    onChange={handleInputChange}
+                    className="w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2"
+                    style={{
+                      borderColor: theme.colors.border.DEFAULT,
+                      backgroundColor: theme.colors.background.primary,
+                      color: theme.colors.text.primary
+                    }}
+                    placeholder="Ex: ALV-2024-0123"
+                  />
+                </div>
+              </div>
+
+              {/* Summary */}
+              <div className="mt-8 p-6 rounded-lg" style={{ backgroundColor: theme.colors.background.secondary }}>
+                <h4 className="font-semibold mb-4" style={{ color: theme.colors.text.primary }}>
+                  Resumo da Nova Unidade
+                </h4>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm">
+                  <div>
+                    <span style={{ color: theme.colors.text.secondary }}>Nome:</span>
+                    <span className="ml-2 font-medium" style={{ color: theme.colors.text.primary }}>
+                      {formData.name}
+                    </span>
+                  </div>
+                  <div>
+                    <span style={{ color: theme.colors.text.secondary }}>Instituição:</span>
+                    <span className="ml-2 font-medium" style={{ color: theme.colors.text.primary }}>
+                      {institutions.find(i => i.id === formData.institutionId)?.name || '-'}
+                    </span>
+                  </div>
+                  <div>
+                    <span style={{ color: theme.colors.text.secondary }}>Tipo:</span>
+                    <span className="ml-2 font-medium" style={{ color: theme.colors.text.primary }}>
+                      {formData.type}
+                    </span>
+                  </div>
+                  <div>
+                    <span style={{ color: theme.colors.text.secondary }}>Status:</span>
+                    <span className="ml-2 font-medium" style={{ color: theme.colors.text.primary }}>
+                      {formData.status}
+                    </span>
+                  </div>
+                  <div>
+                    <span style={{ color: theme.colors.text.secondary }}>Coordenador:</span>
+                    <span className="ml-2 font-medium" style={{ color: theme.colors.text.primary }}>
+                      {formData.coordinator}
+                    </span>
+                  </div>
+                  <div>
+                    <span style={{ color: theme.colors.text.secondary }}>E-mail:</span>
+                    <span className="ml-2 font-medium" style={{ color: theme.colors.text.primary }}>
+                      {formData.email}
+                    </span>
+                  </div>
+                </div>
+              </div>
+            </div>
+          )}
+        </form>
+      </div>
+
+      {/* Footer */}
+      <div className="border-t px-6 py-4" style={{ 
+        borderColor: theme.colors.border.light,
+        backgroundColor: theme.colors.background.secondary 
+      }}>
+        <div className="flex justify-between items-center">
+          <button
+            onClick={handleClose}
+            className="px-4 py-2 hover:opacity-80 transition-opacity"
+            style={{ color: theme.colors.text.secondary }}
+          >
+            Cancelar
+          </button>
+          <div className="flex gap-3">
+            {currentStep > 1 && (
+              <button
+                onClick={handlePrevious}
+                className="px-4 py-2 border rounded-lg hover:opacity-80 transition-opacity"
+                style={{
+                  borderColor: theme.colors.border.DEFAULT,
+                  color: theme.colors.text.primary,
+                  backgroundColor: theme.colors.background.primary
+                }}
+              >
+                Anterior
+              </button>
+            )}
+            {currentStep < 3 ? (
+              <button
+                onClick={handleNext}
+                className="px-4 py-2 rounded-lg hover:opacity-80 transition-opacity"
+                style={{
+                  backgroundColor: theme.colors.primary.DEFAULT,
+                  color: theme.colors.primary.contrast
+                }}
+              >
+                Próximo
+              </button>
+            ) : (
+              <button
+                onClick={handleSubmit}
+                className="px-4 py-2 rounded-lg hover:opacity-80 transition-opacity"
+                style={{
+                  backgroundColor: theme.colors.status.success,
+                  color: '#ffffff'
+                }}
+              >
+                Criar Unidade
+              </button>
+            )}
           </div>
         </div>
       </div>
-    </div>
+    </Modal>
   );
 }

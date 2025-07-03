@@ -6,7 +6,8 @@ import {
   CreateInstitutionDto as CreateInstitutionDtoFromInstitution,
   UpdateInstitutionDto as UpdateInstitutionDtoFromInstitution,
   InstitutionType,
-  INSTITUTION_TYPE_LABELS
+  INSTITUTION_TYPE_LABELS,
+  InstitutionNature
 } from '@/types/institution';
 import { institutionService } from '@/services/institutionService';
 
@@ -20,7 +21,8 @@ export default function InstitutionModal({ institution, onClose }: InstitutionMo
   const [formData, setFormData] = useState<CreateInstitutionDtoFromInstitution>({
     name: '',
     code: '',
-    type: 'PUBLIC',
+    nature: 'PUBLIC' as InstitutionNature,
+    type: 'UNIVERSITY' as InstitutionType,
     address: '',
     phone: '',
     email: ''
@@ -31,6 +33,7 @@ export default function InstitutionModal({ institution, onClose }: InstitutionMo
       setFormData({
         name: institution.name,
         code: institution.code,
+        nature: institution.nature || 'PUBLIC' as InstitutionNature,
         type: institution.type,
         address: institution.address || '',
         phone: institution.phone || '',
@@ -44,10 +47,17 @@ export default function InstitutionModal({ institution, onClose }: InstitutionMo
     setLoading(true);
 
     try {
+      // Convert the form data to match the service's expected format
+      const serviceData = {
+        ...formData,
+        // Use the type directly since it now matches the backend
+        type: formData.type
+      };
+
       if (institution) {
-        await institutionService.update(institution.id, formData as UpdateInstitutionDtoFromInstitution);
+        await institutionService.updateInstitution(institution.id, serviceData);
       } else {
-        await institutionService.create(formData);
+        await institutionService.createInstitution(serviceData);
       }
       onClose();
     } catch (error: any) {

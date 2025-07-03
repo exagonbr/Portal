@@ -1,318 +1,192 @@
 'use client'
 
-import React, { useState, useEffect, ChangeEvent } from 'react';
-
-interface Unit {
-  id: string;
-  name: string;
-  // Add other relevant unit properties if needed, e.g., address, responsible person
-}
-
-interface InstitutionDisplayData {
-  id: string;
-  name: string;
-  location: string; // e.g., "São Paulo, SP"
-  status: string; // e.g., "Ativa"
-  imageUrl?: string; // Optional image URL
-  studentCount: number;
-  teacherCount: number;
-  courseCount: number;
-  type: string; // e.g., "UNIVERSITY", "SCHOOL"
-  address?: string;
-  units?: Unit[];
-}
+import { useState, useEffect } from 'react'
+import Modal from '@/components/ui/Modal'
+import { Button } from '@/components/ui/Button'
+import Input from '@/components/ui/Input'
+import { Textarea } from '@/components/ui/Textarea'
+import { Switch } from '@/components/ui/Switch'
+import { InstitutionResponseDto, InstitutionUpdateDto } from '@/types/api'
 
 interface InstitutionEditModalProps {
-  isOpen: boolean;
-  onClose: () => void;
-  institution: InstitutionDisplayData | null;
+  isOpen: boolean
+  onClose: () => void
+  onSave: (data: InstitutionUpdateDto) => Promise<void>
+  institution: InstitutionResponseDto
+  title: string
 }
 
-const InstitutionEditModal: React.FC<InstitutionEditModalProps> = ({
-  isOpen,
-  onClose,
-  institution,
-}) => {
-  const [formData, setFormData] = useState<InstitutionDisplayData | null>(institution);
-  const [newUnitName, setNewUnitName] = useState('');
+export function InstitutionEditModal({ isOpen, onClose, onSave, institution, title }: InstitutionEditModalProps) {
+  const [formData, setFormData] = useState<InstitutionUpdateDto>({
+    name: '',
+    code: '',
+    description: '',
+    email: '',
+    phone: '',
+    address: '',
+    active: true
+  })
+  const [loading, setLoading] = useState(false)
+  const [errors, setErrors] = useState<Record<string, string>>({})
 
   useEffect(() => {
-    if (isOpen && institution) {
-      setFormData({ ...institution, units: institution.units ? [...institution.units.map(u => ({...u}))] : [] });
-    } else if (!isOpen) {
-      setFormData(null); // Clear form data when modal is closed
-      setNewUnitName(''); // Clear new unit name as well
+    if (institution) {
+      setFormData({
+        name: institution.name,
+        code: institution.code,
+        description: institution.description || '',
+        email: institution.email || '',
+        phone: institution.phone || '',
+        address: typeof institution.address === 'string' ? institution.address : '',
+        active: institution.active
+      })
     }
-  }, [institution, isOpen]);
+  }, [institution])
 
-  if (!isOpen || !institution) {
-    return null;
-  }
+  const validateForm = (): boolean => {
+    const newErrors: Record<string, string> = {}
 
-  if (!formData) {
-      return null;
-  }
-
-
-  const handleChange = (e: ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
-    const { name, value } = e.target;
-    let processedValue: string | number = value;
-
-    if (e.target.type === 'number') {
-      processedValue = value === '' ? 0 : parseInt(value, 10);
-      if (isNaN(processedValue as number)) {
-        processedValue = 0;
-      }
+    if (!formData.name || !formData.name.trim()) {
+      newErrors.name = 'Nome é obrigatório'
     }
 
-    setFormData(prev => prev ? { ...prev, [name]: processedValue } : null);
-  };
+    if (!formData.code || !formData.code.trim()) {
+      newErrors.code = 'Código é obrigatório'
+    }
 
-  const handleSaveChanges = () => {
-    console.log("Saving data:", formData);
-    onClose();
-  };
+    if (formData.email && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(formData.email)) {
+      newErrors.email = 'Email inválido'
+    }
 
-  const handleInactivate = () => {
-    console.log("Inactivating institution:", formData?.id);
-    onClose();
+    setErrors(newErrors)
+    return Object.keys(newErrors).length === 0
   }
 
-  const handleAddUnit = () => {
-    if (newUnitName.trim() === '' || !formData) return;
-    const newUnit: Unit = {
-      id: `unit-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`, // Simple unique ID
-      name: newUnitName.trim(),
-    };
-    setFormData(prev => prev ? { ...prev, units: [...(prev.units || []), newUnit] } : null);
-    setNewUnitName(''); // Reset input
-  };
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault()
+    
+    if (!validateForm()) {
+      return
+    }
 
-  const handleRemoveUnit = (unitId: string) => {
-    if (!formData) return;
-    setFormData(prev => prev ? { ...prev, units: (prev.units || []).filter(unit => unit.id !== unitId) } : null);
-  };
+    setLoading(true)
+    try {
+      await onSave(formData)
+      onClose()
+    } catch (error) {
+      console.log('Erro ao salvar instituição:', error)
+    } finally {
+      setLoading(false)
+    }
+  }
 
-  const handleUnitNameChange = (unitId: string, newName: string) => {
-    if (!formData || !formData.units) return;
-    setFormData(prev => {
-      if (!prev || !prev.units) return prev;
-      return {
+  const handleInputChange = (field: keyof InstitutionUpdateDto, value: string | boolean) => {
+    setFormData(prev => ({
+      ...prev,
+      [field]: value
+    }))
+    
+    // Limpar erro do campo quando o usuário começar a digitar
+    if (errors[field]) {
+      setErrors(prev => ({
         ...prev,
-        units: prev.units.map(unit => unit.id === unitId ? { ...unit, name: newName } : unit)
-      };
-    });
-  };
-
+        [field]: ''
+      }))
+    }
+  }
 
   return (
-    <div className="fixed inset-0 bg-text-primary/60 backdrop-blur-sm z-50 flex justify-center items-center p-4 overflow-y-auto">
-      <div className="bg-background-primary rounded-lg shadow-xl p-6 w-full max-w-3xl my-8">
-        <div className="flex justify-between items-center mb-6">
-          <h2 className="text-xl font-bold text-text-primary">Gerenciar Instituição</h2>
-          <button
-            onClick={onClose}
-            type="button"
-            className="text-text-secondary hover:text-text-primary"
-          >
-            <span className="material-icons">close</span>
-          </button>
+    <Modal isOpen={isOpen} onClose={onClose} title={title}>
+      <form onSubmit={handleSubmit} className="space-y-4">
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <div>
+            <Input
+              label="Nome *"
+              value={formData.name}
+              onChange={(e) => handleInputChange('name', e.target.value)}
+              error={errors.name}
+              placeholder="Nome da instituição"
+            />
+          </div>
+          
+          <div>
+            <Input
+              label="Código *"
+              value={formData.code}
+              onChange={(e) => handleInputChange('code', e.target.value)}
+              error={errors.code}
+              placeholder="Código único da instituição"
+            />
+          </div>
         </div>
 
-        <form onSubmit={(e) => { e.preventDefault(); handleSaveChanges(); }}>
-          <div className="space-y-6">
-            <fieldset className="border border-border-DEFAULT p-4 rounded-md">
-              <legend className="text-lg font-medium text-text-primary px-2">Detalhes da Instituição</legend>
-              <div className="space-y-4 mt-2">
-                <div>
-                  <label htmlFor="name" className="block text-sm font-medium text-text-secondary">Nome da Instituição</label>
-                  <input
-                    type="text"
-                    name="name"
-                    id="name"
-                    value={formData.name}
-                    onChange={handleChange}
-                    className="mt-1 block w-full px-3 py-2 bg-background-primary border border-border-DEFAULT rounded-md shadow-sm focus:outline-none focus:ring-primary-DEFAULT focus:border-primary-DEFAULT sm:text-sm"
-                  />
-                </div>
+        <div>
+          <Textarea
+            label="Descrição"
+            value={formData.description || ''}
+            onChange={(e) => handleInputChange('description', e.target.value)}
+            placeholder="Descrição da instituição"
+            rows={3}
+          />
+        </div>
 
-                <div>
-                  <label htmlFor="location" className="block text-sm font-medium text-text-secondary">Localização (Cidade, UF)</label>
-                  <input
-                    type="text"
-                    name="location"
-                    id="location"
-                    value={formData.location}
-                    onChange={handleChange}
-                    className="mt-1 block w-full px-3 py-2 bg-background-primary border border-border-DEFAULT rounded-md shadow-sm focus:outline-none focus:ring-primary-DEFAULT focus:border-primary-DEFAULT sm:text-sm"
-                  />
-                </div>
-
-                <div>
-                  <label htmlFor="address" className="block text-sm font-medium text-text-secondary">Endereço Completo</label>
-                  <input
-                    type="text"
-                    name="address"
-                    id="address"
-                    value={formData.address || ''}
-                    onChange={handleChange}
-                    className="mt-1 block w-full px-3 py-2 bg-background-primary border border-border-DEFAULT rounded-md shadow-sm focus:outline-none focus:ring-primary-DEFAULT focus:border-primary-DEFAULT sm:text-sm"
-                  />
-                </div>
-
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  <div>
-                    <label htmlFor="type" className="block text-sm font-medium text-text-secondary">Tipo de Instituição</label>
-                    <input
-                      type="text"
-                      name="type"
-                      id="type"
-                      value={formData.type}
-                      onChange={handleChange}
-                      className="mt-1 block w-full px-3 py-2 bg-background-primary border border-border-DEFAULT rounded-md shadow-sm focus:outline-none focus:ring-primary-DEFAULT focus:border-primary-DEFAULT sm:text-sm"
-                    />
-                  </div>
-                  <div>
-                    <label htmlFor="status" className="block text-sm font-medium text-text-secondary">Status</label>
-                    <select
-                      name="status"
-                      id="status"
-                      value={formData.status}
-                      onChange={handleChange}
-                      className="mt-1 block w-full px-3 py-2 bg-background-primary border border-border-DEFAULT rounded-md shadow-sm focus:outline-none focus:ring-primary-DEFAULT focus:border-primary-DEFAULT sm:text-sm"
-                    >
-                      <option value="Ativa">Ativa</option>
-                      <option value="Inativa">Inativa</option>
-                      <option value="Pendente">Pendente</option>
-                    </select>
-                  </div>
-                </div>
-
-                <div>
-                  <label htmlFor="imageUrl" className="block text-sm font-medium text-text-secondary">URL da Imagem (Opcional)</label>
-                  <input
-                    type="text"
-                    name="imageUrl"
-                    id="imageUrl"
-                    value={formData.imageUrl || ''}
-                    onChange={handleChange}
-                    className="mt-1 block w-full px-3 py-2 bg-background-primary border border-border-DEFAULT rounded-md shadow-sm focus:outline-none focus:ring-primary-DEFAULT focus:border-primary-DEFAULT sm:text-sm"
-                  />
-                </div>
-
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                  <div>
-                    <label htmlFor="studentCount" className="block text-sm font-medium text-text-secondary">Alunos</label>
-                    <input
-                    readOnly
-                      type="number"
-                      name="studentCount"
-                      id="studentCount"
-                      value={formData.studentCount}
-                      onChange={handleChange}
-                      min="0"
-                      className="mt-1 block w-full px-3 py-2 bg-background-secondary border border-border-DEFAULT rounded-md shadow-sm focus:outline-none focus:ring-primary-DEFAULT focus:border-primary-DEFAULT sm:text-sm"
-                    />
-                  </div>
-                  <div>
-                    <label htmlFor="teacherCount" className="block text-sm font-medium text-text-secondary">Professores</label>
-                    <input
-                      readOnly
-                      type="number"
-                      name="teacherCount"
-                      id="teacherCount"
-                      value={formData.teacherCount}
-                      onChange={handleChange}
-                      min="0"
-                      className="mt-1 block w-full px-3 py-2 bg-background-secondary border border-border-DEFAULT rounded-md shadow-sm focus:outline-none focus:ring-primary-DEFAULT focus:border-primary-DEFAULT sm:text-sm"
-                    />
-                  </div>
-                  <div>
-                    <label htmlFor="courseCount" className="block text-sm font-medium text-text-secondary">Unidades de Ensino</label>
-                    <input
-                      readOnly
-                      type="number"
-                      name="courseCount"
-                      id="courseCount"
-                      value={formData.courseCount}
-                      onChange={handleChange}
-                      min="0"
-                      className="mt-1 block w-full px-3 py-2 bg-background-secondary border border-border-DEFAULT rounded-md shadow-sm focus:outline-none focus:ring-primary-DEFAULT focus:border-primary-DEFAULT sm:text-sm"
-                    />
-                  </div>
-                </div>
-              </div>
-            </fieldset>
-
-            <fieldset className="border border-border-DEFAULT p-4 rounded-md">
-              <legend className="text-lg font-medium text-text-primary px-2">Unidades da Instituição</legend>
-              <div className="mt-2 space-y-3">
-                {(formData.units || []).map((unit, index) => (
-                  <div key={unit.id} className="flex items-center space-x-2 p-2 border-b border-border-light">
-                    <input
-                      type="text"
-                      value={unit.name}
-                      onChange={(e) => handleUnitNameChange(unit.id, e.target.value)}
-                      className="flex-grow px-3 py-2 bg-background-primary border border-border-DEFAULT rounded-md shadow-sm focus:outline-none focus:ring-primary-DEFAULT focus:border-primary-DEFAULT sm:text-sm"
-                      placeholder={`Nome da Unidade ${index + 1}`}
-                    />
-                    <button
-                      type="button"
-                      onClick={() => handleRemoveUnit(unit.id)}
-                      className="text-error-DEFAULT hover:text-error-dark p-1 rounded-full hover:bg-error-light/20"
-                      aria-label="Remover Unidade"
-                    >
-                      <span className="material-icons text-lg">delete_outline</span>
-                    </button>
-                  </div>
-                ))}
-                <div className="flex items-center space-x-2 pt-2">
-                  <input
-                    type="text"
-                    value={newUnitName}
-                    onChange={(e) => setNewUnitName(e.target.value)}
-                    className="flex-grow px-3 py-2 bg-background-primary border border-border-DEFAULT rounded-md shadow-sm focus:outline-none focus:ring-primary-DEFAULT focus:border-primary-DEFAULT sm:text-sm"
-                    placeholder="Nome da Nova Unidade"
-                  />
-                  <button
-                    type="button"
-                    onClick={handleAddUnit}
-                    className="bg-success-DEFAULT text-white px-3 py-2 rounded-lg hover:bg-success-dark text-sm flex items-center"
-                  >
-                    <span className="material-icons text-lg mr-1">add_circle_outline</span>
-                    Adicionar Unidade
-                  </button>
-                </div>
-              </div>
-            </fieldset>
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <div>
+            <Input
+              label="Email"
+              type="email"
+              value={formData.email || ''}
+              onChange={(e) => handleInputChange('email', e.target.value)}
+              error={errors.email}
+              placeholder="email@instituicao.com"
+            />
           </div>
-
-          <div className="mt-10 flex justify-end space-x-3">
-            <button
-              type="button"
-              onClick={handleInactivate}
-              className="bg-error-DEFAULT text-white px-4 py-2 rounded-lg hover:bg-error-dark"
-            >
-              Inativar
-            </button>
-            <button
-              type="submit"
-              className="bg-primary-DEFAULT text-white px-4 py-2 rounded-lg hover:bg-primary-dark"
-            >
-              Salvar Alterações
-            </button>
-            <button
-              type="button"
-              onClick={onClose}
-              className="bg-secondary-light text-text-secondary px-4 py-2 rounded-lg hover:bg-secondary-DEFAULT"
-            >
-              Cancelar
-            </button>
+          
+          <div>
+            <Input
+              label="Telefone"
+              value={formData.phone || ''}
+              onChange={(e) => handleInputChange('phone', e.target.value)}
+              placeholder="(11) 99999-9999"
+            />
           </div>
-        </form>
-      </div>
-    </div>
-  );
-};
+        </div>
 
-export default InstitutionEditModal;
+        <div>
+          <Textarea
+            label="Endereço"
+            value={formData.address || ''}
+            onChange={(e) => handleInputChange('address', e.target.value)}
+            placeholder="Endereço completo da instituição"
+            rows={2}
+          />
+        </div>
+
+        <div>
+          <Switch
+            label="Instituição ativa"
+            checked={formData.active}
+            onChange={(checked) => handleInputChange('active', checked)}
+          />
+        </div>
+
+        <div className="flex justify-end space-x-2 pt-4">
+          <Button
+            type="button"
+            variant="outline"
+            onClick={onClose}
+            disabled={loading}
+          >
+            Cancelar
+          </Button>
+          <Button
+            type="submit"
+            loading={loading}
+          >
+            Atualizar Instituição
+          </Button>
+        </div>
+      </form>
+    </Modal>
+  )
+}

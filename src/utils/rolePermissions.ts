@@ -24,7 +24,7 @@ export const rolePermissions: Record<UserRole, string[]> = {
     'reports.institutional',
     'financial.view'
   ],
-  [UserRole.ACADEMIC_COORDINATOR]: [
+  [UserRole.COORDINATOR]: [
     'cycles.manage',
     'curriculum.manage',
     'teachers.evaluate',
@@ -112,7 +112,7 @@ export function getDefaultDashboard(role: UserRole): string {
   const dashboardRoutes: Record<UserRole, string> = {
     [UserRole.SYSTEM_ADMIN]: '/dashboard/system-admin',
     [UserRole.INSTITUTION_MANAGER]: '/dashboard/institution-manager',
-    [UserRole.ACADEMIC_COORDINATOR]: '/dashboard/coordinator',
+    [UserRole.COORDINATOR]: '/dashboard/coordinator',
     [UserRole.TEACHER]: '/dashboard/teacher',
     [UserRole.STUDENT]: '/dashboard/student',
     [UserRole.GUARDIAN]: '/dashboard/guardian'
@@ -126,7 +126,7 @@ export function getRoleName(role: UserRole): string {
   const roleNames: Record<UserRole, string> = {
     [UserRole.SYSTEM_ADMIN]: 'Administrador do Sistema',
     [UserRole.INSTITUTION_MANAGER]: 'Gestor Institucional',
-    [UserRole.ACADEMIC_COORDINATOR]: 'Coordenador Acadêmico',
+    [UserRole.COORDINATOR]: 'Coordenador Acadêmico',
     [UserRole.TEACHER]: 'Professor',
     [UserRole.STUDENT]: 'Estudante',
     [UserRole.GUARDIAN]: 'Responsável'
@@ -140,7 +140,7 @@ export function getRoleColor(role: UserRole): string {
   const roleColors: Record<UserRole, string> = {
     [UserRole.SYSTEM_ADMIN]: 'bg-red-500',
     [UserRole.INSTITUTION_MANAGER]: 'bg-purple-500',
-    [UserRole.ACADEMIC_COORDINATOR]: 'bg-blue-500',
+    [UserRole.COORDINATOR]: 'bg-blue-500',
     [UserRole.TEACHER]: 'bg-green-500',
     [UserRole.STUDENT]: 'bg-yellow-500',
     [UserRole.GUARDIAN]: 'bg-indigo-500'

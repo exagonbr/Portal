@@ -1,5 +1,5 @@
 import { queueService, JobTypes } from './queueService';
-import { apiClient } from './apiClient';
+import { apiClient } from '@/lib/api-client';
 import { CreateNotificationDto, Notification } from '@/types/notification';
 
 interface NotificationAPI {
@@ -10,7 +10,7 @@ interface NotificationAPI {
 // Simple API implementation that doesn't depend on notificationService
 const notificationAPI: NotificationAPI = {
   async createNotification(notification: CreateNotificationDto): Promise<Notification> {
-    const response = await apiClient.post<{ data: Notification }>('/api/notifications', notification);
+    const response = await apiClient.post<{ data: Notification }>('notifications', notification);
     if (!response.success || !response.data) {
       throw new Error('Failed to create notification');
     }
@@ -18,7 +18,7 @@ const notificationAPI: NotificationAPI = {
   },
   
   async updateNotification(id: number, updates: any): Promise<Notification> {
-    const response = await apiClient.patch<{ data: Notification }>(`/api/notifications/${id}`, updates);
+    const response = await apiClient.patch<{ data: Notification }>(`notifications/${id}`, updates);
     if (!response.success || !response.data) {
       throw new Error(`Failed to update notification with id ${id}`);
     }
@@ -42,7 +42,7 @@ export const initializeNotificationQueue = () => {
       const userIds = data.notification.recipients.specific || [];
       
       // Send push notification through API
-      await apiClient.post('/api/push-notifications/send', {
+      await apiClient.post('/push-notifications/send', {
         title,
         message,
         userIds,
@@ -61,7 +61,7 @@ export const initializeNotificationQueue = () => {
       // Successfully processed
       return;
     } catch (error) {
-      console.error('Error processing notification:', error);
+      console.log('Error processing notification:', error);
       throw error;
     }
   });
@@ -100,10 +100,10 @@ if (typeof window !== 'undefined') {
   queueService.registerHandler(JobTypes.NOTIFICATION_CLEANUP, async (data: { olderThan?: string }) => {
     try {
       const params = data.olderThan ? { olderThan: data.olderThan } : {};
-      await apiClient.post('/api/notifications/cleanup', params);
+      await apiClient.post('/notifications/cleanup', params);
       console.log('Notification cleanup completed');
     } catch (error) {
-      console.error('Error during notification cleanup:', error);
+      console.log('Error during notification cleanup:', error);
       throw error;
     }
   });

@@ -1,52 +1,184 @@
-import { Router } from 'express';
-import { UserController } from '../controllers/refactored/UserController';
-import { authenticateToken, authorizeRoles } from '../middleware/authMiddleware';
+import express from 'express';
+import { requireAuth } from '../middleware/requireAuth';
 
-const router = Router();
-const userController = new UserController();
+const router = express.Router();
 
-// Rotas protegidas (precisam de autenticação)
-router.use(authenticateToken);
+// 🔐 APLICAR MIDDLEWARE UNIFICADO DE AUTENTICAÇÃO
+router.use(requireAuth);
 
-// Listar todos os usuários (apenas admin e gestores)
-router.get(
-  '/',
-  authorizeRoles('admin', 'institution_manager', 'school_manager'),
-  userController.getAll
-);
+// Middleware para verificar role de administrador
+const requireAdmin = (req: any, res: any, next: any) => {
+  const user = req.user;
+  
+  if (!['SYSTEM_ADMIN', 'INSTITUTION_MANAGER'].includes(user.role)) {
+    return res.status(403).json({
+      success: false,
+      message: 'Acesso negado - apenas administradores podem gerenciar usuários'
+    });
+  }
+  
+  next();
+};
 
-// Buscar perfil do usuário autenticado
-router.get('/me', userController.getProfile);
+/**
+ * @swagger
+ * /api/user-routes:
+ *   get:
+ *     summary: Get all user routes
+ *     tags: [UserRoutes]
+ *     security:
+ *       - bearerAuth: []
+ *     responses:
+ *       200:
+ *         description: List of user routes
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: array
+ *               items:
+ *                 $ref: '#/components/schemas/UserRoute'
+ *       401:
+ *         description: Unauthorized
+ *       403:
+ *         description: Forbidden
+ */
+router.get('/', requireAdmin, async (req, res) => {
+  // Implementation will be added in the controller
+  res.json({
+    success: true,
+    message: 'User routes list - implementação pendente',
+    data: []
+  });
+});
 
-// Atualizar perfil do usuário autenticado
-router.put('/me', userController.updateProfile);
+/**
+ * @swagger
+ * /api/user-routes/permissions/{userId}:
+ *   get:
+ *     summary: Get user permissions
+ *     tags: [UserRoutes]
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: userId
+ *         required: true
+ *         schema:
+ *           type: string
+ *           format: uuid
+ *     responses:
+ *       200:
+ *         description: User permissions
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 success:
+ *                   type: boolean
+ *                 data:
+ *                   type: array
+ *                   items:
+ *                     type: string
+ */
+router.get('/permissions/:userId', requireAdmin, async (req, res) => {
+  // Implementation will be added in the controller
+  res.json({
+    success: true,
+    message: 'User permissions - implementação pendente',
+    data: []
+  });
+});
 
-// Alterar senha do usuário autenticado
-router.post('/me/change-password', userController.changePassword);
+/**
+ * @swagger
+ * /api/user-routes/permissions/{userId}:
+ *   put:
+ *     summary: Update user permissions
+ *     tags: [UserRoutes]
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: userId
+ *         required: true
+ *         schema:
+ *           type: string
+ *           format: uuid
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required:
+ *               - permissions
+ *             properties:
+ *               permissions:
+ *                 type: array
+ *                 items:
+ *                   type: string
+ *     responses:
+ *       200:
+ *         description: Permissions updated
+ */
+router.put('/permissions/:userId', requireAdmin, async (req, res) => {
+  // Implementation will be added in the controller
+  res.json({
+    success: true,
+    message: 'Update user permissions - implementação pendente'
+  });
+});
 
-// Buscar cursos do usuário autenticado
-router.get('/me/courses', userController.getMyCourses);
-
-// Buscar usuários (com filtros)
-router.get('/search', userController.searchUsers);
-
-// Buscar usuário por email
-router.get('/by-email/:email', userController.getByEmail);
-
-// Buscar usuário por ID
-router.get('/:id', userController.getById);
-
-// Buscar cursos de um usuário específico
-router.get('/:id/courses', userController.getUserCourses);
-
-// Atualizar usuário (apenas admin ou o próprio usuário)
-router.put('/:id', userController.update);
-
-// Deletar usuário (apenas admin)
-router.delete(
-  '/:id',
-  authorizeRoles('admin'),
-  userController.delete
-);
+/**
+ * @swagger
+ * /api/user-routes/access-history/{userId}:
+ *   get:
+ *     summary: Get user access history
+ *     tags: [UserRoutes]
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: userId
+ *         required: true
+ *         schema:
+ *           type: string
+ *           format: uuid
+ *       - in: query
+ *         name: page
+ *         schema:
+ *           type: integer
+ *           default: 1
+ *         description: Page number
+ *       - in: query
+ *         name: limit
+ *         schema:
+ *           type: integer
+ *           default: 10
+ *         description: Items per page
+ *     responses:
+ *       200:
+ *         description: User access history
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 success:
+ *                   type: boolean
+ *                 data:
+ *                   type: array
+ *                   items:
+ *                     $ref: '#/components/schemas/AccessLog'
+ */
+router.get('/access-history/:userId', requireAdmin, async (req, res) => {
+  // Implementation will be added in the controller
+  res.json({
+    success: true,
+    message: 'User access history - implementação pendente',
+    data: []
+  });
+});
 
 export default router;

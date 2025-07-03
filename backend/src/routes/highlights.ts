@@ -1,7 +1,25 @@
 import express from 'express';
-import { validateJWT, requireInstitution } from '../middleware/auth';
+import { requireAuth } from '../middleware/requireAuth';
 
 const router = express.Router();
+
+// 🔐 APLICAR MIDDLEWARE UNIFICADO DE AUTENTICAÇÃO
+router.use(requireAuth);
+
+// Middleware para verificar instituição (implementação básica)
+const requireInstitution = (req: any, res: any, next: any) => {
+  const user = req.user;
+  
+  // Verificar se usuário tem institutionId
+  if (!user.institutionId && user.role !== 'SYSTEM_ADMIN') {
+    return res.status(403).json({
+      success: false,
+      message: 'Usuário deve estar associado a uma instituição'
+    });
+  }
+  
+  next();
+};
 
 /**
  * @swagger
@@ -18,12 +36,6 @@ const router = express.Router();
  *           type: string
  *           format: uuid
  *         description: Filter highlights by book ID
- *       - in: query
- *         name: user_id
- *         schema:
- *           type: string
- *           format: uuid
- *         description: Filter highlights by user ID
  *     responses:
  *       200:
  *         description: List of highlights
@@ -36,8 +48,13 @@ const router = express.Router();
  *       401:
  *         description: Unauthorized
  */
-router.get('/', validateJWT, requireInstitution, async (req, res) => {
+router.get('/', requireInstitution, async (req, res) => {
   // Implementation will be added in the controller
+  res.json({
+    success: true,
+    message: 'Highlights list - implementação pendente',
+    data: []
+  });
 });
 
 /**
@@ -65,8 +82,13 @@ router.get('/', validateJWT, requireInstitution, async (req, res) => {
  *       404:
  *         description: Highlight not found
  */
-router.get('/:id', validateJWT, requireInstitution, async (req, res) => {
+router.get('/:id', requireInstitution, async (req, res) => {
   // Implementation will be added in the controller
+  res.json({
+    success: true,
+    message: 'Highlight by ID - implementação pendente',
+    data: null
+  });
 });
 
 /**
@@ -84,23 +106,26 @@ router.get('/:id', validateJWT, requireInstitution, async (req, res) => {
  *           schema:
  *             type: object
  *             required:
- *               - content
- *               - page_number
+ *               - text
  *               - book_id
- *               - color
+ *               - position
  *             properties:
- *               content:
+ *               text:
  *                 type: string
- *               page_number:
- *                 type: integer
- *                 minimum: 1
  *               book_id:
  *                 type: string
  *                 format: uuid
+ *               position:
+ *                 type: object
+ *                 properties:
+ *                   start:
+ *                     type: number
+ *                   end:
+ *                     type: number
  *               color:
  *                 type: string
- *                 description: Color code for the highlight (e.g., #FFEB3B)
- *                 pattern: '^#[0-9A-Fa-f]{6}$'
+ *               note:
+ *                 type: string
  *     responses:
  *       201:
  *         description: Highlight created
@@ -111,8 +136,13 @@ router.get('/:id', validateJWT, requireInstitution, async (req, res) => {
  *       400:
  *         description: Invalid input
  */
-router.post('/', validateJWT, requireInstitution, async (req, res) => {
+router.post('/', requireInstitution, async (req, res) => {
   // Implementation will be added in the controller
+  res.status(201).json({
+    success: true,
+    message: 'Create highlight - implementação pendente',
+    data: null
+  });
 });
 
 /**
@@ -137,15 +167,12 @@ router.post('/', validateJWT, requireInstitution, async (req, res) => {
  *           schema:
  *             type: object
  *             properties:
- *               content:
+ *               text:
  *                 type: string
- *               page_number:
- *                 type: integer
- *                 minimum: 1
  *               color:
  *                 type: string
- *                 description: Color code for the highlight (e.g., #FFEB3B)
- *                 pattern: '^#[0-9A-Fa-f]{6}$'
+ *               note:
+ *                 type: string
  *     responses:
  *       200:
  *         description: Highlight updated
@@ -156,8 +183,13 @@ router.post('/', validateJWT, requireInstitution, async (req, res) => {
  *       404:
  *         description: Highlight not found
  */
-router.put('/:id', validateJWT, requireInstitution, async (req, res) => {
+router.put('/:id', requireInstitution, async (req, res) => {
   // Implementation will be added in the controller
+  res.json({
+    success: true,
+    message: 'Update highlight - implementação pendente',
+    data: null
+  });
 });
 
 /**
@@ -181,8 +213,12 @@ router.put('/:id', validateJWT, requireInstitution, async (req, res) => {
  *       404:
  *         description: Highlight not found
  */
-router.delete('/:id', validateJWT, requireInstitution, async (req, res) => {
+router.delete('/:id', requireInstitution, async (req, res) => {
   // Implementation will be added in the controller
+  res.json({
+    success: true,
+    message: 'Delete highlight - implementação pendente'
+  });
 });
 
 export default router;

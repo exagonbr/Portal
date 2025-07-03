@@ -83,7 +83,7 @@ export default function AreaContentManager({ area, allowedTypes, title }: AreaCo
       }));
       setCarouselImages(images);
     } catch (err) {
-      console.error('Falha ao carregar imagens do carrossel:', err);
+      console.log('Falha ao carregar imagens do carrossel:', err);
     }
   };
 

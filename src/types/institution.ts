@@ -1,13 +1,57 @@
-export type InstitutionType = 'PUBLIC' | 'PRIVATE' | 'MIXED';
+import { 
+  BaseEntity, 
+  BaseEntityDto, 
+  InstitutionType, 
+  BaseFilter,
+  UUID,
+  DateString,
+  Phone,
+  Email,
+  INSTITUTION_TYPE_LABELS
+} from './common';
 
-export interface Institution {
-  id: string;
+// Re-export tipos importantes para garantir disponibilidade
+export { InstitutionType, INSTITUTION_TYPE_LABELS };
+
+// Enum para natureza da instituição (público/privado)
+export enum InstitutionNature {
+  PUBLIC = 'PUBLIC',
+  PRIVATE = 'PRIVATE',
+  MIXED = 'MIXED'
+}
+
+// Labels para natureza da instituição
+export const INSTITUTION_NATURE_LABELS: Record<InstitutionNature, string> = {
+  [InstitutionNature.PUBLIC]: 'Pública',
+  [InstitutionNature.PRIVATE]: 'Privada',
+  [InstitutionNature.MIXED]: 'Mista'
+};
+
+// Cores para os tipos de instituição
+export const INSTITUTION_TYPE_COLORS: Record<InstitutionType, string> = {
+  SCHOOL: '#4CAF50',
+  COLLEGE: '#2196F3', 
+  UNIVERSITY: '#9C27B0',
+  TECH_CENTER: '#FF9800'
+};
+
+// Cores para a natureza da instituição
+export const INSTITUTION_NATURE_COLORS: Record<InstitutionNature, string> = {
+  PUBLIC: '#4CAF50',
+  PRIVATE: '#2196F3',
+  MIXED: '#FF9800'
+};
+
+// Interface principal da Instituição
+export interface Institution extends BaseEntity {
   name: string;
   code: string;
+  cnpj?: string;
   type: InstitutionType;
+  nature?: InstitutionNature; // Público, privado ou misto
   description?: string;
-  email?: string;
-  phone?: string;
+  email?: Email;
+  phone?: Phone;
   website?: string;
   address?: string;
   city?: string;
@@ -15,60 +59,82 @@ export interface Institution {
   zip_code?: string;
   logo_url?: string;
   is_active: boolean;
-  created_at: Date;
-  updated_at: Date;
 }
 
-export interface CreateInstitutionDto {
+// DTO da Instituição
+export interface InstitutionDto extends BaseEntityDto {
   name: string;
   code: string;
+  cnpj?: string;
   type: InstitutionType;
+  nature?: InstitutionNature; // Público, privado ou misto
   description?: string;
-  email?: string;
-  phone?: string;
+  email?: Email;
+  phone?: Phone;
   website?: string;
   address?: string;
   city?: string;
   state?: string;
   zip_code?: string;
   logo_url?: string;
-  is_active?: boolean;
-}
-
-export interface UpdateInstitutionDto {
-  name?: string;
-  code?: string;
-  type?: InstitutionType;
-  description?: string;
-  email?: string;
-  phone?: string;
-  website?: string;
-  address?: string;
-  city?: string;
-  state?: string;
-  zip_code?: string;
-  logo_url?: string;
-  is_active?: boolean;
-}
-
-export interface InstitutionDto extends Institution {
+  logo?: string; // Alias para logo_url para compatibilidade
+  is_active: boolean;
+  active?: boolean; // Alias para is_active para compatibilidade
+  created_by?: string; // Campo adicional para compatibilidade
   schools_count?: number;
   users_count?: number;
   active_courses?: number;
+  courses_count?: number; // Alias para active_courses
 }
 
-export interface InstitutionFilter {
-  search?: string;
-  type?: InstitutionType;
-  is_active?: boolean;
+// DTO para criação de Instituição
+export interface CreateInstitutionDto {
+  name: string;
+  code: string;
+  cnpj?: string;
+  type: InstitutionType;
+  nature?: InstitutionNature; // Público, privado ou misto
+  description?: string;
+  email?: Email;
+  phone?: Phone;
+  website?: string;
+  address?: string;
   city?: string;
   state?: string;
-  page?: number;
-  limit?: number;
-  sortBy?: keyof Institution;
-  sortOrder?: 'asc' | 'desc';
+  zip_code?: string;
+  logo_url?: string;
+  is_active?: boolean;
 }
 
+// DTO para atualização de Instituição
+export interface UpdateInstitutionDto {
+  name?: string;
+  code?: string;
+  cnpj?: string;
+  type?: InstitutionType;
+  nature?: InstitutionNature; // Público, privado ou misto
+  description?: string;
+  email?: Email;
+  phone?: Phone;
+  website?: string;
+  address?: string;
+  city?: string;
+  state?: string;
+  zip_code?: string;
+  logo_url?: string;
+  is_active?: boolean;
+}
+
+// Interface para filtros de Instituição
+export interface InstitutionFilter extends BaseFilter {
+  type?: InstitutionType;
+  nature?: InstitutionNature;
+  city?: string;
+  state?: string;
+  sortBy?: keyof Institution;
+}
+
+// Interface para estatísticas de Instituição
 export interface InstitutionStats {
   total_institutions: number;
   active_institutions: number;
@@ -76,21 +142,11 @@ export interface InstitutionStats {
   total_users: number;
   total_courses: number;
   institutions_by_type: Record<InstitutionType, number>;
+  institutions_by_nature: Record<InstitutionNature, number>;
   institutions_by_state: Record<string, number>;
 }
 
-export const INSTITUTION_TYPE_LABELS: Record<InstitutionType, string> = {
-  PUBLIC: 'Pública',
-  PRIVATE: 'Privada',
-  MIXED: 'Mista'
-};
-
-export const INSTITUTION_TYPE_COLORS: Record<InstitutionType, string> = {
-  PUBLIC: '#4CAF50',
-  PRIVATE: '#2196F3',
-  MIXED: '#FF9800'
-};
-
+// Estados brasileiros
 export const BRAZILIAN_STATES = [
   { value: 'AC', label: 'Acre' },
   { value: 'AL', label: 'Alagoas' },

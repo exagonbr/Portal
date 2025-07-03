@@ -10,7 +10,7 @@ const vapidKeys = {
 };
 
 if (!vapidKeys.publicKey || !vapidKeys.privateKey) {
-  console.error('VAPID keys not found. Please run: npm run generate:vapid');
+  console.log('VAPID keys not found. Please run: npm run generate:vapid');
   process.exit(1);
 }
 
@@ -49,7 +49,7 @@ async function cleanup() {
     try {
       await browser.close();
     } catch (error) {
-      console.error('Error closing browser:', error);
+      console.log('Error closing browser:', error);
     }
   }
 
@@ -57,7 +57,7 @@ async function cleanup() {
     try {
       await new Promise((resolve) => server.close(resolve));
     } catch (error) {
-      console.error('Error closing server:', error);
+      console.log('Error closing server:', error);
     }
   }
 }
@@ -105,7 +105,7 @@ async function runTests() {
         const registration = await navigator.serviceWorker.ready;
         return registration.active !== null;
       } catch (error) {
-        console.error('SW registration error:', error);
+        console.log('SW registration error:', error);
         return false;
       }
     });
@@ -162,7 +162,7 @@ async function runTests() {
         });
         return res.json();
       } catch (error) {
-        console.error('Notification creation error:', error);
+        console.log('Notification creation error:', error);
         return null;
       }
     }, testNotification);
@@ -203,7 +203,7 @@ async function runTests() {
         }
         return false;
       } catch (error) {
-        console.error('Unsubscribe error:', error);
+        console.log('Unsubscribe error:', error);
         return false;
       }
     });
@@ -219,7 +219,7 @@ async function runTests() {
     process.exit(0);
 
   } catch (error) {
-    console.error('\n❌ Test failed:', error.message);
+    console.log('\n❌ Test failed:', error.message);
     await cleanup();
     process.exit(1);
   }
@@ -227,7 +227,7 @@ async function runTests() {
 
 // Run tests
 runTests().catch(async (error) => {
-  console.error('Unexpected error:', error);
+  console.log('Unexpected error:', error);
   await cleanup();
   process.exit(1);
 });

@@ -34,6 +34,7 @@ REDIS_PORT=6379
 REDIS_PASSWORD=
 REDIS_DB=0
 REDIS_TLS=false
+REDIS_ENABLED=true
 
 # ===================================
 # REDIS QUEUE SETTINGS
@@ -46,14 +47,14 @@ QUEUE_REDIS_DB=1
 # ===================================
 # CORS SETTINGS
 # ===================================
-CORS_ORIGIN=http://localhost:3000
+CORS_ORIGIN=https://portal.sabercon.com.br
 CORS_CREDENTIALS=true
 
 # ===================================
 # ADMIN USER SETTINGS
 # ===================================
 ADMIN_EMAIL=admin@portal.com
-ADMIN_PASSWORD=admin123
+ADMIN_PASSWORD=password123
 
 # ===================================
 # QUEUE CONCURRENCY SETTINGS
@@ -105,6 +106,7 @@ npm_package_version=1.0.0
 | `REDIS_PASSWORD` | string | (vazio) | Senha do Redis (opcional) |
 | `REDIS_DB` | number | 0 | Banco de dados Redis (0-15) |
 | `REDIS_TLS` | boolean | false | Usar TLS para conexão Redis |
+| `REDIS_ENABLED` | boolean | true | Habilitar Redis |
 
 ### REDIS QUEUE SETTINGS
 
@@ -119,7 +121,7 @@ npm_package_version=1.0.0
 
 | Variável | Tipo | Padrão | Descrição |
 |----------|------|--------|-----------|
-| `CORS_ORIGIN` | string | http://localhost:3000 | Origem permitida para CORS |
+| `CORS_ORIGIN` | string | https://portal.sabercon.com.br | Origem permitida para CORS |
 | `CORS_CREDENTIALS` | boolean | true | Permitir credenciais em requisições CORS |
 
 ### ADMIN USER SETTINGS
@@ -127,7 +129,7 @@ npm_package_version=1.0.0
 | Variável | Tipo | Padrão | Descrição |
 |----------|------|--------|-----------|
 | `ADMIN_EMAIL` | string | admin@portal.com | Email do usuário administrador padrão |
-| `ADMIN_PASSWORD` | string | admin123 | Senha do usuário administrador padrão |
+| `ADMIN_PASSWORD` | string | password123 | Senha do usuário administrador padrão |
 
 ⚠️ **IMPORTANTE**: Altere estas credenciais em produção!
 
@@ -148,7 +150,7 @@ PORT=3001
 JWT_SECRET=dev-secret-key
 DB_PASSWORD=root
 REDIS_PASSWORD=
-CORS_ORIGIN=http://localhost:3000
+CORS_ORIGIN=https://portal.sabercon.com.br
 ```
 
 ### Production

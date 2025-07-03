@@ -1,0 +1,516 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Demo - Gerenciamento de Usuários</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200" rel="stylesheet" />
+    <style>
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+        }
+        .modal-backdrop {
+            background-color: rgba(0, 0, 0, 0.5);
+            backdrop-filter: blur(4px);
+        }
+    </style>
+</head>
+<body class="bg-gray-50">
+    <!-- Header -->
+    <header class="bg-white shadow-sm border-b">
+        <div class="container mx-auto px-4 py-4">
+            <div class="flex items-center justify-between">
+                <h1 class="text-2xl font-bold text-gray-800">Portal Educacional - Admin</h1>
+                <div class="flex items-center gap-4">
+                    <span class="text-sm text-gray-600">admin@example.com</span>
+                    <button class="text-gray-600 hover:text-gray-800">
+                        <span class="material-symbols-outlined">logout</span>
+                    </button>
+                </div>
+            </div>
+        </div>
+    </header>
+
+    <!-- Main Content -->
+    <main class="container mx-auto px-4 py-8">
+        <!-- Page Title and Actions -->
+        <div class="flex justify-between items-center mb-6">
+            <h2 class="text-2xl font-bold text-gray-800">Gerenciamento de Usuários</h2>
+            <div class="flex items-center gap-3">
+                <input type="search" placeholder="Buscar usuários..." class="px-4 py-2 border rounded-lg w-64">
+                <button class="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 flex items-center gap-2">
+                    <span class="material-symbols-outlined">add</span>
+                    Novo Usuário
+                </button>
+            </div>
+        </div>
+
+        <!-- Users Table -->
+        <div class="bg-white rounded-lg shadow overflow-x-auto">
+            <table class="w-full min-w-max">
+                <thead class="bg-gray-50 border-b">
+                    <tr>
+                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Nome</th>
+                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Email</th>
+                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Função</th>
+                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Instituição</th>
+                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Status</th>
+                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Cadastrado em</th>
+                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider" style="min-width: 380px;">Ações</th>
+                    </tr>
+                </thead>
+                <tbody class="bg-white divide-y divide-gray-200">
+                    <!-- User Row 1 -->
+                    <tr class="hover:bg-gray-50">
+                        <td class="px-6 py-4 whitespace-nowrap">João Silva</td>
+                        <td class="px-6 py-4 whitespace-nowrap">joao.silva@example.com</td>
+                        <td class="px-6 py-4 whitespace-nowrap">
+                            <span class="px-2 py-1 text-xs rounded-full bg-blue-100 text-blue-800">Professor</span>
+                        </td>
+                        <td class="px-6 py-4 whitespace-nowrap">Escola ABC</td>
+                        <td class="px-6 py-4 whitespace-nowrap">
+                            <span class="px-2 py-1 text-xs rounded-full bg-green-100 text-green-800">Ativo</span>
+                        </td>
+                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">15/01/2024</td>
+                        <td class="px-6 py-4 whitespace-nowrap">
+                            <div class="flex items-center gap-1">
+                                <!-- View -->
+                                <button class="p-1 hover:bg-gray-100 rounded" title="Visualizar" onclick="showDetailsModal()">
+                                    <span class="material-symbols-outlined text-gray-600 text-base">visibility</span>
+                                </button>
+                                <!-- Edit -->
+                                <button class="p-1 hover:bg-gray-100 rounded" title="Editar">
+                                    <span class="material-symbols-outlined text-gray-600 text-base">edit</span>
+                                </button>
+                                <!-- Delete -->
+                                <button class="p-1 hover:bg-gray-100 rounded" title="Excluir">
+                                    <span class="material-symbols-outlined text-gray-600 text-base">delete</span>
+                                </button>
+                                <!-- History -->
+                                <button class="p-1 hover:bg-gray-100 rounded" title="Histórico" onclick="showHistoryModal()">
+                                    <span class="material-symbols-outlined text-gray-600 text-base">history</span>
+                                </button>
+                                <!-- Permissions -->
+                                <button class="p-1 hover:bg-gray-100 rounded" title="Permissões" onclick="showPermissionsModal()">
+                                    <span class="material-symbols-outlined text-gray-600 text-base">shield</span>
+                                </button>
+                                <!-- Reports -->
+                                <button class="p-1 hover:bg-gray-100 rounded" title="Relatórios" onclick="showReportsModal()">
+                                    <span class="material-symbols-outlined text-gray-600 text-base">bar_chart</span>
+                                </button>
+                                <!-- Notifications -->
+                                <button class="p-1 hover:bg-gray-100 rounded" title="Notificações" onclick="showNotificationsModal()">
+                                    <span class="material-symbols-outlined text-gray-600 text-base">notifications</span>
+                                </button>
+                                <!-- Reset Password -->
+                                <button class="p-1 hover:bg-gray-100 rounded" title="Resetar senha">
+                                    <span class="material-symbols-outlined text-orange-600 text-base">key</span>
+                                </button>
+                                <!-- Toggle Status -->
+                                <button class="p-1 hover:bg-gray-100 rounded" title="Alternar status">
+                                    <span class="material-symbols-outlined text-gray-600 text-base">toggle_on</span>
+                                </button>
+                            </div>
+                        </td>
+                    </tr>
+                    <!-- User Row 2 -->
+                    <tr class="hover:bg-gray-50">
+                        <td class="px-6 py-4 whitespace-nowrap">Maria Santos</td>
+                        <td class="px-6 py-4 whitespace-nowrap">maria.santos@example.com</td>
+                        <td class="px-6 py-4 whitespace-nowrap">
+                            <span class="px-2 py-1 text-xs rounded-full bg-green-100 text-green-800">Aluno</span>
+                        </td>
+                        <td class="px-6 py-4 whitespace-nowrap">Escola XYZ</td>
+                        <td class="px-6 py-4 whitespace-nowrap">
+                            <span class="px-2 py-1 text-xs rounded-full bg-green-100 text-green-800">Ativo</span>
+                        </td>
+                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">10/01/2024</td>
+                        <td class="px-6 py-4 whitespace-nowrap">
+                            <div class="flex items-center gap-1">
+                                <!-- Same actions as above -->
+                                <button class="p-1 hover:bg-gray-100 rounded" title="Visualizar"><span class="material-symbols-outlined text-gray-600 text-base">visibility</span></button>
+                                <button class="p-1 hover:bg-gray-100 rounded" title="Editar"><span class="material-symbols-outlined text-gray-600 text-base">edit</span></button>
+                                <button class="p-1 hover:bg-gray-100 rounded" title="Excluir"><span class="material-symbols-outlined text-gray-600 text-base">delete</span></button>
+                                <button class="p-1 hover:bg-gray-100 rounded" title="Histórico"><span class="material-symbols-outlined text-gray-600 text-base">history</span></button>
+                                <button class="p-1 hover:bg-gray-100 rounded" title="Permissões"><span class="material-symbols-outlined text-gray-600 text-base">shield</span></button>
+                                <button class="p-1 hover:bg-gray-100 rounded" title="Relatórios"><span class="material-symbols-outlined text-gray-600 text-base">bar_chart</span></button>
+                                <button class="p-1 hover:bg-gray-100 rounded" title="Notificações"><span class="material-symbols-outlined text-gray-600 text-base">notifications</span></button>
+                                <button class="p-1 hover:bg-gray-100 rounded" title="Resetar senha"><span class="material-symbols-outlined text-orange-600 text-base">key</span></button>
+                                <button class="p-1 hover:bg-gray-100 rounded" title="Alternar status"><span class="material-symbols-outlined text-gray-600 text-base">toggle_on</span></button>
+                            </div>
+                        </td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+
+        <!-- Pagination -->
+        <div class="mt-4 flex justify-between items-center">
+            <span class="text-sm text-gray-700">Mostrando 1 a 2 de 2 resultados</span>
+            <div class="flex gap-2">
+                <button class="px-3 py-1 border rounded hover:bg-gray-50">Anterior</button>
+                <button class="px-3 py-1 border rounded bg-blue-600 text-white">1</button>
+                <button class="px-3 py-1 border rounded hover:bg-gray-50">Próximo</button>
+            </div>
+        </div>
+    </main>
+
+    <!-- User Details Modal -->
+    <div id="detailsModal" class="fixed inset-0 modal-backdrop hidden items-center justify-center z-50 p-4">
+        <div class="bg-white rounded-lg shadow-xl w-full max-w-2xl max-h-[90vh] overflow-hidden">
+            <div class="bg-gradient-to-r from-blue-600 to-blue-700 text-white p-6">
+                <div class="flex justify-between items-start">
+                    <div class="flex items-center gap-4">
+                        <div class="h-16 w-16 rounded-full bg-white/20 flex items-center justify-center text-white text-2xl font-bold">
+                            JS
+                        </div>
+                        <div>
+                            <h2 class="text-2xl font-bold">João Silva</h2>
+                            <p class="text-blue-100">joao.silva@example.com</p>
+                        </div>
+                    </div>
+                    <button onclick="hideModal('detailsModal')" class="text-white hover:text-blue-200">
+                        <span class="material-symbols-outlined">close</span>
+                    </button>
+                </div>
+            </div>
+            <div class="p-6">
+                <div class="grid grid-cols-2 gap-6">
+                    <div>
+                        <h3 class="text-lg font-semibold mb-3">Informações Pessoais</h3>
+                        <div class="space-y-2 text-sm">
+                            <div class="flex items-center gap-2">
+                                <span class="material-symbols-outlined text-gray-500 text-base">mail</span>
+                                <span>joao.silva@example.com</span>
+                            </div>
+                            <div class="flex items-center gap-2">
+                                <span class="material-symbols-outlined text-gray-500 text-base">phone</span>
+                                <span>(11) 98765-4321</span>
+                            </div>
+                        </div>
+                    </div>
+                    <div>
+                        <h3 class="text-lg font-semibold mb-3">Informações do Sistema</h3>
+                        <div class="space-y-2 text-sm">
+                            <div class="flex items-center gap-2">
+                                <span class="material-symbols-outlined text-gray-500 text-base">shield</span>
+                                <span>Função: Professor</span>
+                            </div>
+                            <div class="flex items-center gap-2">
+                                <span class="material-symbols-outlined text-gray-500 text-base">business</span>
+                                <span>Instituição: Escola ABC</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="mt-6 pt-6 border-t">
+                    <h3 class="text-lg font-semibold mb-3">Estatísticas</h3>
+                    <div class="grid grid-cols-4 gap-4">
+                        <div class="bg-gray-50 rounded-lg p-3 text-center">
+                            <div class="text-2xl font-bold text-blue-600">5</div>
+                            <div class="text-sm text-gray-600">Cursos</div>
+                        </div>
+                        <div class="bg-gray-50 rounded-lg p-3 text-center">
+                            <div class="text-2xl font-bold text-blue-600">23</div>
+                            <div class="text-sm text-gray-600">Atividades</div>
+                        </div>
+                        <div class="bg-gray-50 rounded-lg p-3 text-center">
+                            <div class="text-2xl font-bold text-blue-600">3</div>
+                            <div class="text-sm text-gray-600">Certificados</div>
+                        </div>
+                        <div class="bg-gray-50 rounded-lg p-3 text-center">
+                            <div class="text-2xl font-bold text-blue-600">45h</div>
+                            <div class="text-sm text-gray-600">Tempo Total</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="border-t px-6 py-4 bg-gray-50 flex justify-end">
+                <button onclick="hideModal('detailsModal')" class="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700">
+                    Fechar
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- History Modal -->
+    <div id="historyModal" class="fixed inset-0 modal-backdrop hidden items-center justify-center z-50 p-4">
+        <div class="bg-white rounded-lg shadow-xl w-full max-w-4xl max-h-[90vh] overflow-hidden">
+            <div class="bg-gradient-to-r from-blue-500 to-blue-600 text-white p-6">
+                <div class="flex justify-between items-center">
+                    <div class="flex items-center gap-3">
+                        <span class="material-symbols-outlined">history</span>
+                        <div>
+                            <h2 class="text-xl font-bold">Histórico de Atividades</h2>
+                            <p class="text-blue-100">João Silva</p>
+                        </div>
+                    </div>
+                    <button onclick="hideModal('historyModal')" class="text-white hover:text-blue-200">
+                        <span class="material-symbols-outlined">close</span>
+                    </button>
+                </div>
+            </div>
+            <div class="p-6 overflow-y-auto max-h-96">
+                <div class="space-y-4">
+                    <div class="flex items-start gap-4 p-4 bg-gray-50 rounded-lg">
+                        <span class="material-symbols-outlined text-blue-500">login</span>
+                        <div class="flex-1">
+                            <div class="flex justify-between">
+                                <div>
+                                    <h4 class="font-medium">Login realizado</h4>
+                                    <p class="text-sm text-gray-600">IP: 192.168.1.1</p>
+                                </div>
+                                <span class="text-xs text-gray-500">15/01/2024 14:30</span>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="flex items-start gap-4 p-4 bg-gray-50 rounded-lg">
+                        <span class="material-symbols-outlined text-blue-500">edit</span>
+                        <div class="flex-1">
+                            <div class="flex justify-between">
+                                <div>
+                                    <h4 class="font-medium">Perfil atualizado</h4>
+                                    <p class="text-sm text-gray-600">Email alterado</p>
+                                </div>
+                                <span class="text-xs text-gray-500">14/01/2024 10:15</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="border-t px-6 py-4 bg-gray-50 flex justify-end">
+                <button onclick="hideModal('historyModal')" class="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700">
+                    Fechar
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Permissions Modal -->
+    <div id="permissionsModal" class="fixed inset-0 modal-backdrop hidden items-center justify-center z-50 p-4">
+        <div class="bg-white rounded-lg shadow-xl w-full max-w-4xl max-h-[90vh] overflow-hidden">
+            <div class="bg-gradient-to-r from-purple-500 to-purple-600 text-white p-6">
+                <div class="flex justify-between items-center">
+                    <div class="flex items-center gap-3">
+                        <span class="material-symbols-outlined">shield</span>
+                        <div>
+                            <h2 class="text-xl font-bold">Gerenciar Permissões</h2>
+                            <p class="text-purple-100">João Silva</p>
+                        </div>
+                    </div>
+                    <button onclick="hideModal('permissionsModal')" class="text-white hover:text-purple-200">
+                        <span class="material-symbols-outlined">close</span>
+                    </button>
+                </div>
+            </div>
+            <div class="p-6 overflow-y-auto max-h-96">
+                <div class="space-y-6">
+                    <div class="border rounded-lg p-4">
+                        <h3 class="font-semibold mb-3">Usuários</h3>
+                        <div class="grid grid-cols-4 gap-4">
+                            <label class="flex items-center gap-2">
+                                <input type="checkbox" checked class="rounded">
+                                <span class="text-sm">Criar</span>
+                            </label>
+                            <label class="flex items-center gap-2">
+                                <input type="checkbox" checked class="rounded">
+                                <span class="text-sm">Ler</span>
+                            </label>
+                            <label class="flex items-center gap-2">
+                                <input type="checkbox" class="rounded">
+                                <span class="text-sm">Atualizar</span>
+                            </label>
+                            <label class="flex items-center gap-2">
+                                <input type="checkbox" class="rounded">
+                                <span class="text-sm">Deletar</span>
+                            </label>
+                        </div>
+                    </div>
+                    <div class="border rounded-lg p-4">
+                        <h3 class="font-semibold mb-3">Cursos</h3>
+                        <div class="grid grid-cols-4 gap-4">
+                            <label class="flex items-center gap-2">
+                                <input type="checkbox" class="rounded">
+                                <span class="text-sm">Criar</span>
+                            </label>
+                            <label class="flex items-center gap-2">
+                                <input type="checkbox" checked class="rounded">
+                                <span class="text-sm">Ler</span>
+                            </label>
+                            <label class="flex items-center gap-2">
+                                <input type="checkbox" class="rounded">
+                                <span class="text-sm">Atualizar</span>
+                            </label>
+                            <label class="flex items-center gap-2">
+                                <input type="checkbox" class="rounded">
+                                <span class="text-sm">Deletar</span>
+                            </label>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="border-t px-6 py-4 bg-gray-50 flex justify-end gap-3">
+                <button onclick="hideModal('permissionsModal')" class="px-4 py-2 border rounded hover:bg-gray-50">
+                    Cancelar
+                </button>
+                <button class="px-4 py-2 bg-purple-600 text-white rounded hover:bg-purple-700">
+                    Salvar Permissões
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Reports Modal -->
+    <div id="reportsModal" class="fixed inset-0 modal-backdrop hidden items-center justify-center z-50 p-4">
+        <div class="bg-white rounded-lg shadow-xl w-full max-w-3xl max-h-[90vh] overflow-hidden">
+            <div class="bg-gradient-to-r from-green-500 to-green-600 text-white p-6">
+                <div class="flex justify-between items-center">
+                    <div class="flex items-center gap-3">
+                        <span class="material-symbols-outlined">bar_chart</span>
+                        <div>
+                            <h2 class="text-xl font-bold">Relatórios do Usuário</h2>
+                            <p class="text-green-100">João Silva</p>
+                        </div>
+                    </div>
+                    <button onclick="hideModal('reportsModal')" class="text-white hover:text-green-200">
+                        <span class="material-symbols-outlined">close</span>
+                    </button>
+                </div>
+            </div>
+            <div class="p-6">
+                <div class="space-y-4">
+                    <div class="border rounded-lg p-4 hover:bg-gray-50">
+                        <div class="flex justify-between items-center">
+                            <div>
+                                <h3 class="font-semibold">Relatório de Atividades</h3>
+                                <p class="text-sm text-gray-600">Histórico completo de ações do usuário</p>
+                            </div>
+                            <button class="px-3 py-1 bg-gray-100 rounded hover:bg-gray-200 flex items-center gap-2">
+                                <span class="material-symbols-outlined text-base">description</span>
+                                Gerar
+                            </button>
+                        </div>
+                    </div>
+                    <div class="border rounded-lg p-4 hover:bg-gray-50">
+                        <div class="flex justify-between items-center">
+                            <div>
+                                <h3 class="font-semibold">Relatório de Performance</h3>
+                                <p class="text-sm text-gray-600">Desempenho em cursos e atividades</p>
+                            </div>
+                            <button class="px-3 py-1 bg-gray-100 rounded hover:bg-gray-200 flex items-center gap-2">
+                                <span class="material-symbols-outlined text-base">description</span>
+                                Gerar
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="border-t px-6 py-4 bg-gray-50 flex justify-end">
+                <button onclick="hideModal('reportsModal')" class="px-4 py-2 bg-green-600 text-white rounded hover:bg-green-700">
+                    Fechar
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Notifications Modal -->
+    <div id="notificationsModal" class="fixed inset-0 modal-backdrop hidden items-center justify-center z-50 p-4">
+        <div class="bg-white rounded-lg shadow-xl w-full max-w-4xl max-h-[90vh] overflow-hidden">
+            <div class="bg-gradient-to-r from-orange-500 to-orange-600 text-white p-6">
+                <div class="flex justify-between items-center">
+                    <div class="flex items-center gap-3">
+                        <span class="material-symbols-outlined">notifications</span>
+                        <div>
+                            <h2 class="text-xl font-bold">Notificações</h2>
+                            <p class="text-orange-100">João Silva</p>
+                        </div>
+                    </div>
+                    <button onclick="hideModal('notificationsModal')" class="text-white hover:text-orange-200">
+                        <span class="material-symbols-outlined">close</span>
+                    </button>
+                </div>
+            </div>
+            <div class="p-6">
+                <div class="flex justify-between items-center mb-4">
+                    <h3 class="text-lg font-semibold">Histórico de Notificações</h3>
+                    <button class="px-4 py-2 bg-orange-600 text-white rounded hover:bg-orange-700 flex items-center gap-2">
+                        <span class="material-symbols-outlined text-base">notifications</span>
+                        Enviar Notificação
+                    </button>
+                </div>
+                <div class="space-y-3">
+                    <div class="p-4 rounded-lg border bg-blue-50 border-blue-200">
+                        <div class="flex justify-between items-start">
+                            <div>
+                                <h4 class="font-medium">Novo curso disponível</h4>
+                                <p class="text-sm text-gray-600 mt-1">Matemática Avançada está disponível</p>
+                            </div>
+                            <div class="text-right">
+                                <span class="text-xs text-gray-500">14/01/2024</span>
+                                <div class="w-2 h-2 bg-blue-500 rounded-full mt-1 ml-auto"></div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="p-4 rounded-lg border bg-gray-50">
+                        <div class="flex justify-between items-start">
+                            <div>
+                                <h4 class="font-medium">Bem-vindo ao sistema</h4>
+                                <p class="text-sm text-gray-600 mt-1">Sua conta foi criada com sucesso</p>
+                            </div>
+                            <span class="text-xs text-gray-500">15/01/2024</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="border-t px-6 py-4 bg-gray-50 flex justify-end">
+                <button onclick="hideModal('notificationsModal')" class="px-4 py-2 bg-orange-600 text-white rounded hover:bg-orange-700">
+                    Fechar
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        function showModal(modalId) {
+            document.getElementById(modalId).classList.remove('hidden');
+            document.getElementById(modalId).classList.add('flex');
+        }
+
+        function hideModal(modalId) {
+            document.getElementById(modalId).classList.add('hidden');
+            document.getElementById(modalId).classList.remove('flex');
+        }
+
+        function showDetailsModal() {
+            showModal('detailsModal');
+        }
+
+        function showHistoryModal() {
+            showModal('historyModal');
+        }
+
+        function showPermissionsModal() {
+            showModal('permissionsModal');
+        }
+
+        function showReportsModal() {
+            showModal('reportsModal');
+        }
+
+        function showNotificationsModal() {
+            showModal('notificationsModal');
+        }
+
+        // Close modal when clicking outside
+        document.querySelectorAll('.modal-backdrop').forEach(modal => {
+            modal.addEventListener('click', function(e) {
+                if (e.target === this) {
+                    this.classList.add('hidden');
+                    this.classList.remove('flex');
+                }
+            });
+        });
+    </script>
+</body>
+</html>

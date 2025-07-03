@@ -1,4 +1,4 @@
-import { apiClient } from './apiClient';
+import { apiClient } from '@/lib/api-client';
 import { notificationQueue } from './notificationQueue';
 import {
     Notification,

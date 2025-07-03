@@ -70,7 +70,7 @@ export const AnnotationLayer: React.FC<AnnotationLayerProps> = ({
             }}
           >
             <div className="flex justify-between items-start">
-              <p className="text-sm text-gray-800">{annotation.content}</p>
+              <p className="text-sm text-gray-600">{annotation.content}</p>
               <button
                 onClick={() => onAnnotationDelete(annotation.id)}
                 className="ml-2 text-gray-500 hover:text-gray-700"
@@ -129,7 +129,7 @@ export const AnnotationLayer: React.FC<AnnotationLayerProps> = ({
                 setAnnotationText('');
                 setSelectedPosition(null);
               }}
-              className="px-2 py-1 text-sm text-gray-600 hover:text-gray-800"
+              className="px-2 py-1 text-sm text-gray-600 hover:text-gray-600"
             >
               Cancel
             </button>
@@ -153,7 +153,7 @@ export const AnnotationLayer: React.FC<AnnotationLayerProps> = ({
       {/* Toggle annotation mode button */}
       <button
         onClick={() => setIsAddingAnnotation(!isAddingAnnotation)}
-        className="fixed bottom-4 left-4 bg-white text-gray-800 px-3 py-2 rounded-full shadow-lg pointer-events-auto hover:bg-gray-100"
+        className="fixed bottom-4 left-4 bg-white text-gray-600 px-3 py-2 rounded-full shadow-lg pointer-events-auto hover:bg-gray-100"
       >
         <FiEdit2 size={20} />
       </button>

@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { S3Client, ListBucketsCommand } from '@aws-sdk/client-s3'
+import { createCorsOptionsResponse, getCorsHeaders } from '@/config/cors'
 
 // Configuração S3
 const s3Client = new S3Client({
@@ -32,6 +33,13 @@ const CONFIGURED_BUCKETS = {
   }
 }
 
+
+// Handler para requisições OPTIONS (preflight)
+export async function OPTIONS(request: NextRequest) {
+  const origin = request.headers.get('origin') || undefined;
+  return createCorsOptionsResponse(origin);
+}
+
 export async function GET(request: NextRequest) {
   try {
     const { searchParams } = new URL(request.url)
@@ -53,6 +61,8 @@ export async function GET(request: NextRequest) {
           configured: Object.values(CONFIGURED_BUCKETS),
           all: allBuckets,
           total: allBuckets.length
+        }, {
+          headers: getCorsHeaders(request.headers.get('origin') || undefined)
         })
       } catch (awsError) {
         console.warn('Não foi possível listar todos os buckets AWS:', awsError)
@@ -62,6 +72,8 @@ export async function GET(request: NextRequest) {
           all: [],
           total: Object.keys(CONFIGURED_BUCKETS).length,
           warning: 'Não foi possível listar todos os buckets AWS. Mostrando apenas buckets configurados.'
+        }, {
+          headers: getCorsHeaders(request.headers.get('origin') || undefined)
         })
       }
     }
@@ -70,14 +82,16 @@ export async function GET(request: NextRequest) {
     return NextResponse.json({
       configured: Object.values(CONFIGURED_BUCKETS),
       total: Object.keys(CONFIGURED_BUCKETS).length
+    }, {
+      headers: getCorsHeaders(request.headers.get('origin') || undefined)
     })
 
   } catch (error) {
-    console.error('Erro ao listar buckets:', error)
-    return NextResponse.json(
-      { error: 'Erro interno do servidor ao listar buckets' },
-      { status: 500 }
-    )
+    console.log('Erro ao listar buckets:', error)
+    return NextResponse.json({ error: 'Erro interno do servidor ao listar buckets' }, { 
+      status: 500,
+      headers: getCorsHeaders(request.headers.get('origin') || undefined)
+    })
   }
 }
 
@@ -100,16 +114,16 @@ export async function POST(request: NextRequest) {
       const bucketExists = response.Buckets?.some(bucket => bucket.Name === name)
 
       if (!bucketExists) {
-        return NextResponse.json(
-          { error: 'Bucket não encontrado na sua conta AWS' },
-          { status: 404 }
-        )
+        return NextResponse.json({ error: 'Bucket não encontrado na sua conta AWS' }, { 
+      status: 404,
+      headers: getCorsHeaders(request.headers.get('origin') || undefined)
+    })
       }
     } catch (awsError) {
-      return NextResponse.json(
-        { error: 'Erro ao verificar bucket na AWS' },
-        { status: 500 }
-      )
+      return NextResponse.json({ error: 'Erro ao verificar bucket na AWS' }, { 
+      status: 500,
+      headers: getCorsHeaders(request.headers.get('origin') || undefined)
+    })
     }
 
     // Em uma implementação real, você salvaria esta configuração no banco de dados
@@ -121,13 +135,16 @@ export async function POST(request: NextRequest) {
       addedAt: new Date().toISOString()
     }
 
-    return NextResponse.json(newBucket, { status: 201 })
+    return NextResponse.json(newBucket, { 
+      status: 201,
+      headers: getCorsHeaders(request.headers.get('origin') || undefined)
+    })
 
   } catch (error) {
-    console.error('Erro ao adicionar bucket:', error)
-    return NextResponse.json(
-      { error: 'Erro interno do servidor' },
-      { status: 500 }
-    )
+    console.log('Erro ao adicionar bucket:', error)
+    return NextResponse.json({ error: 'Erro interno do servidor' }, { 
+      status: 500,
+      headers: getCorsHeaders(request.headers.get('origin') || undefined)
+    })
   }
 } 

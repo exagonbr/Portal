@@ -104,7 +104,7 @@ export default function RewardCenter({ isTeacher = false }) {
               >
                 {Object.values(RewardType).map((type) => (
                   <option key={type} value={type}>
-                    {type.replace('_', ' ')}
+                    {type?.replace('_', ' ') || type}
                   </option>
                 ))}
               </select>
@@ -156,7 +156,7 @@ export default function RewardCenter({ isTeacher = false }) {
             <p className="text-sm text-gray-600">{reward.description}</p>
             <div className="flex justify-between items-center">
               <span className="text-xs text-gray-500">
-                Type: {reward.type.replace('_', ' ')}
+                Type: {reward.type?.replace('_', ' ') || reward.type}
               </span>
               {!isTeacher && (
                 <button

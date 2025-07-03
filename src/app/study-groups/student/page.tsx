@@ -224,7 +224,7 @@ export default function StudyGroupsPage() {
 
       setStudyGroups(mockGroups);
     } catch (error) {
-      console.error('Erro ao carregar grupos:', error);
+      console.log('Erro ao carregar grupos:', error);
     } finally {
       setLoading(false);
     }
@@ -265,7 +265,7 @@ export default function StudyGroupsPage() {
 
       setMySessions(mockSessions);
     } catch (error) {
-      console.error('Erro ao carregar sessões:', error);
+      console.log('Erro ao carregar sessões:', error);
     }
   };
 
@@ -364,7 +364,7 @@ export default function StudyGroupsPage() {
         <div className="mb-8">
           <div className="flex items-center justify-between mb-4">
             <div>
-              <h1 className="text-3xl font-bold text-gray-900">Grupos de Estudo</h1>
+              <h1 className="text-3xl font-bold text-gray-700">Grupos de Estudo</h1>
               <p className="text-gray-600 mt-2">
                 Conecte-se com outros estudantes e aprenda em grupo
               </p>
@@ -382,30 +382,30 @@ export default function StudyGroupsPage() {
           <div className="flex gap-1 bg-white rounded-lg p-1 shadow-sm">
             <button
               onClick={() => setSelectedView('grupos')}
-              className={`px-4 py-2 rounded-md transition-colors ${
+              className={`px-4 py-2 rounded-md transition-all duration-200 ${
                 selectedView === 'grupos'
-                  ? 'bg-primary text-white'
-                  : 'text-gray-600 hover:bg-gray-100'
+                  ? 'bg-blue-600 text-white shadow-md'
+                  : 'text-gray-600 hover:bg-blue-50 hover:text-blue-600'
               }`}
             >
               Todos os Grupos
             </button>
             <button
               onClick={() => setSelectedView('meus-grupos')}
-              className={`px-4 py-2 rounded-md transition-colors ${
+              className={`px-4 py-2 rounded-md transition-all duration-200 ${
                 selectedView === 'meus-grupos'
-                  ? 'bg-primary text-white'
-                  : 'text-gray-600 hover:bg-gray-100'
+                  ? 'bg-blue-600 text-white shadow-md'
+                  : 'text-gray-600 hover:bg-blue-50 hover:text-blue-600'
               }`}
             >
               Meus Grupos ({myGroups.length})
             </button>
             <button
               onClick={() => setSelectedView('sessoes')}
-              className={`px-4 py-2 rounded-md transition-colors ${
+              className={`px-4 py-2 rounded-md transition-all duration-200 ${
                 selectedView === 'sessoes'
-                  ? 'bg-primary text-white'
-                  : 'text-gray-600 hover:bg-gray-100'
+                  ? 'bg-blue-600 text-white shadow-md'
+                  : 'text-gray-600 hover:bg-blue-50 hover:text-blue-600'
               }`}
             >
               Próximas Sessões ({mySessions.length})

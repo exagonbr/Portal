@@ -1,18 +1,124 @@
+export const dynamic = 'force-dynamic';
 import { NextRequest, NextResponse } from 'next/server'
-import { getDatabase } from '@/lib/database'
+import { createCorsOptionsResponse, getCorsHeaders } from '@/config/cors';
+import { S3Client, ListObjectsV2Command, GetObjectCommand } from '@aws-sdk/client-s3'
+import { getSignedUrl } from '@aws-sdk/s3-request-presigner'
+import { S3FileInfo, FileRecord } from '@/types/files'
+
+// Configuração S3
+const s3Client = new S3Client({
+  region: process.env.AWS_REGION || 'sa-east-1',
+  credentials: {
+    accessKeyId: process.env.AWS_ACCESS_KEY_ID || '',
+    secretAccessKey: process.env.AWS_SECRET_ACCESS_KEY || ''
+  }
+})
+
+const BUCKETS = {
+  literario: process.env.S3_BUCKET_LITERARIO || 'literario-bucket',
+  professor: process.env.S3_BUCKET_PROFESSOR || 'professor-bucket',
+  aluno: process.env.S3_BUCKET_ALUNO || 'aluno-bucket'
+}
+
+// Mock do banco de dados - substitua pela sua implementação
+const mockDatabase: FileRecord[] = [
+  {
+    id: 'db_1',
+    name: 'Dom Casmurro.pdf',
+    originalName: 'dom-casmurro.pdf',
+    type: 'PDF',
+    size: 2515968,
+    sizeFormatted: '2.4 MB',
+    bucket: 'literario-bucket',
+    s3Key: 'dom-casmurro.pdf',
+    s3Url: 'https://literario-bucket.s3.amazonaws.com/dom-casmurro.pdf',
+    description: 'Clássico da literatura brasileira',
+    category: 'literario',
+    createdAt: new Date('2024-01-15'),
+    updatedAt: new Date('2024-01-15'),
+    uploadedBy: 'admin',
+    isActive: true,
+    tags: ['literatura', 'clássico', 'machado-assis']
+  }
+]
+
+// Função auxiliar para formatar tamanho
+function formatFileSize(bytes: number): string {
+  const sizes = ['Bytes', 'KB', 'MB', 'GB']
+  if (bytes === 0) return '0 Bytes'
+  const i = Math.floor(Math.log(bytes) / Math.log(1024))
+  return Math.round(bytes / Math.pow(1024, i) * 100) / 100 + ' ' + sizes[i]
+}
+
+// Função para listar TODOS os arquivos do S3 (incluindo os que não têm referência no banco)
+async function listAllS3Files(bucket: string): Promise<S3FileInfo[]> {
+  try {
+    const command = new ListObjectsV2Command({
+      Bucket: bucket,
+      MaxKeys: 1000
+    })
+
+    const response = await s3Client.send(command)
+    const files: S3FileInfo[] = []
+
+    if (response.Contents) {
+      for (const object of response.Contents) {
+        if (object.Key && object.Size && object.LastModified) {
+          // Verificar se existe referência no banco
+          const dbRecord = mockDatabase.find(record =>
+            record.s3Key === object.Key && record.bucket === bucket
+          )
+
+          // Gerar URL assinada
+          const getObjectCommand = new GetObjectCommand({
+            Bucket: bucket,
+            Key: object.Key
+          })
+          const signedUrl = await getSignedUrl(s3Client, getObjectCommand, { expiresIn: 3600 })
+
+          const fileInfo: S3FileInfo = {
+            id: object.Key?.replace(/[^a-zA-Z0-9]/g, '_') || 'unknown_id',
+            name: object.Key.split('/').pop() || object.Key,
+            type: object.Key.split('.').pop()?.toUpperCase() || 'UNKNOWN',
+            size: formatFileSize(object.Size),
+            bucket: bucket,
+            lastModified: object.LastModified.toISOString().split('T')[0],
+            description: dbRecord?.description || 'Sem descrição',
+            url: signedUrl,
+            hasDbReference: !!dbRecord,
+            dbRecord: dbRecord || null
+          }
+
+          files.push(fileInfo)
+        }
+      }
+    }
+
+    return files
+  } catch (error) {
+    console.log('Erro ao listar arquivos S3:', error)
+    return []
+  }
+}
+
+// GET - Listar TODOS os arquivos do bucket (incluindo não vinculados)
+
+// Handler para requisições OPTIONS (preflight)
+export async function OPTIONS(request: NextRequest) {
+  const origin = request.headers.get('origin') || undefined;
+  return createCorsOptionsResponse(origin);
+}
 
 export async function GET(request: NextRequest) {
-  const db = getDatabase()
-  
   try {
     const { searchParams } = new URL(request.url)
-    const category = searchParams.get('category')
+    const category = searchParams.get('category') as 'literario' | 'professor' | 'aluno'
 
     if (!category) {
-      return NextResponse.json(
-        { error: 'Categoria é obrigatória' },
-        { status: 400 }
-      )
+      return NextResponse.json({ error: 'Categoria é obrigatória' }, { 
+      status: 400,
+      headers: getCorsHeaders(request.headers.get('origin') || undefined)
+    })
     }
 
     if (!['literario', 'professor', 'aluno'].includes(category)) {
@@ -22,72 +128,18 @@ export async function GET(request: NextRequest) {
       )
     }
 
-    console.log(`🔍 Buscando arquivos da categoria: ${category}`)
-
-    // Buscar todos os arquivos ativos da categoria específica
-    const files = await db('files')
-      .select([
-        'id',
-        'name',
-        'original_name',
-        'type',
-        'size',
-        'size_formatted',
-        'bucket',
-        's3_key',
-        's3_url',
-        'description',
-        'category',
-        'metadata',
-        'tags',
-        'is_active',
-        'created_at',
-        'updated_at'
-      ])
-      .where({
-        category: category,
-        is_active: true
-      })
-      .orderBy('name', 'asc')
-
-    console.log(`✅ Encontrados ${files.length} arquivos na categoria ${category}`)
-
-    // Transformar dados para o formato esperado pelo frontend
-    const transformedFiles = files.map(file => ({
-      id: file.id,
-      name: file.name,
-      originalName: file.original_name,
-      type: file.type,
-      size: file.size_formatted,
-      sizeBytes: file.size,
-      bucket: file.bucket,
-      s3Key: file.s3_key,
-      url: file.s3_url,
-      description: file.description || '',
-      category: file.category,
-      metadata: file.metadata || {},
-      tags: file.tags || [],
-      lastModified: file.updated_at,
-      createdAt: file.created_at,
-      hasDbReference: true // Todos os arquivos retornados têm referência no banco
-    }))
-
-    return NextResponse.json(transformedFiles)
+    const bucket = BUCKETS[category]
+    const files = await listAllS3Files(bucket)
+    
+    return NextResponse.json(files, {
+      headers: getCorsHeaders(request.headers.get('origin') || undefined)
+    })
 
   } catch (error) {
-    console.error('❌ Erro ao buscar arquivos do bucket:', error)
-    
-    // Log detalhado do erro para debug
-    if (error instanceof Error) {
-      console.error('Detalhes do erro:', {
-        message: error.message,
-        stack: error.stack
-      })
-    }
-
-    return NextResponse.json(
-      { error: 'Erro interno do servidor ao buscar arquivos' },
-      { status: 500 }
-    )
+    console.log('Erro ao buscar arquivos do bucket:', error)
+    return NextResponse.json({ error: 'Erro interno do servidor' }, { 
+      status: 500,
+      headers: getCorsHeaders(request.headers.get('origin') || undefined)
+    })
   }
-} 
+}

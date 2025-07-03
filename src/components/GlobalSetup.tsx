@@ -1,6 +1,9 @@
 'use client';
 
 import { useEffect } from 'react';
+import { initializeLoopPrevention } from '@/utils/loop-prevention';
+import { isDevelopment, isProduction } from '@/utils/env';
+import { setupHydrationErrorPrevention } from '@/utils/hydration-fix';
 
 // Declarações de tipos para bibliotecas globais
 declare global {
@@ -13,12 +16,50 @@ declare global {
 
 export default function GlobalSetup() {
   useEffect(() => {
-    // Evitar aplicar o patch múltiplas vezes
-    if (typeof window !== 'undefined' && window.__resizeObserverPatched) {
-      return;
+    // Configurações globais do sistema
+    
+    // Configurar prevenção de erros de hidratação
+    setupHydrationErrorPrevention();
+    
+    // Inicializar sistema de prevenção de loops
+    try {
+      const loopPrevention = initializeLoopPrevention();
+      console.log('✅ Sistema de prevenção de loops inicializado');
+      
+      // Adicionar ao window para debug em desenvolvimento
+      if (isDevelopment()) {
+        (window as any).loopPrevention = loopPrevention;
+        (window as any).loopStats = () => loopPrevention.getStats();
+      }
+    } catch (error) {
+      console.log('❌ Erro ao inicializar prevenção de loops:', error);
     }
 
-    // Configurar Chart.js de forma mais agressiva
+    // Desabilitar logs desnecessários em produção
+    if (isProduction()) {
+      const noop = () => {};
+      console.debug = noop;
+      console.info = noop;
+    }
+
+    // Configurar tratamento global de erros
+    window.addEventListener('unhandledrejection', (event) => {
+      console.log('Unhandled promise rejection:', event.reason);
+      event.preventDefault();
+    });
+
+    // Configurar detecção de conexão
+    window.addEventListener('online', () => {
+      console.log('🌐 Conexão restaurada');
+    });
+
+    window.addEventListener('offline', () => {
+      console.log('📵 Sem conexão');
+    });
+
+    // Configurar globalmente para evitar erros do ResizeObserver
+    
+    // Otimizar Chart.js se estiver disponível
     if (typeof window !== 'undefined' && window.Chart) {
       window.Chart.defaults.responsive = true;
       window.Chart.defaults.maintainAspectRatio = false;
@@ -145,22 +186,11 @@ export default function GlobalSetup() {
       }
     }
 
-    // Adicionar listener global para interceptar erros de resize
-    const handleGlobalError = (event: Event) => {
-      const errorEvent = event as ErrorEvent;
-      if (errorEvent.message && 
-          errorEvent.message.toLowerCase().includes('resizeobserver')) {
-        event.preventDefault();
-        event.stopPropagation();
-        return false;
-      }
-    };
-
-    window.addEventListener('error', handleGlobalError, true);
-
     // Cleanup
     return () => {
-      window.removeEventListener('error', handleGlobalError, true);
+      window.removeEventListener('unhandledrejection', () => {});
+      window.removeEventListener('online', () => {});
+      window.removeEventListener('offline', () => {});
     };
   }, []);
 

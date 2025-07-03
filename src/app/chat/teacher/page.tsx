@@ -165,7 +165,7 @@ export default function ChatWithTeacherPage() {
 
       setTeachers(mockTeachers);
     } catch (error) {
-      console.error('Erro ao carregar professores:', error);
+      console.log('Erro ao carregar professores:', error);
     }
   };
 
@@ -204,7 +204,7 @@ export default function ChatWithTeacherPage() {
 
       setConversations(mockConversations);
     } catch (error) {
-      console.error('Erro ao carregar conversas:', error);
+      console.log('Erro ao carregar conversas:', error);
     }
   };
 
@@ -398,7 +398,7 @@ export default function ChatWithTeacherPage() {
           <div className="px-6 py-4">
             <div className="flex items-center justify-between">
               <div>
-                <h1 className="text-2xl font-bold text-gray-900">Chat com Professores</h1>
+                <h1 className="text-3xl font-bold text-gray-700 dark:text-gray-800">Chat com Professores</h1>
                 <p className="text-gray-600 mt-1">
                   Tire suas dúvidas diretamente com os professores
                 </p>
@@ -456,7 +456,7 @@ export default function ChatWithTeacherPage() {
               {showTeacherList ? (
                 <div className="p-4 space-y-3">
                   <div className="flex items-center justify-between mb-4">
-                    <h3 className="font-semibold text-gray-900">Professores Disponíveis</h3>
+                    <h3 className="font-semibold text-gray-700">Professores Disponíveis</h3>
                     <span className="text-sm text-gray-500">
                       {filteredTeachers.length} encontrados
                     </span>
@@ -478,7 +478,7 @@ export default function ChatWithTeacherPage() {
                         
                         <div className="flex-1 min-w-0">
                           <div className="flex items-center justify-between mb-1">
-                            <h4 className="font-semibold text-gray-900 truncate">{teacher.name}</h4>
+                            <h4 className="font-semibold text-gray-700 truncate">{teacher.name}</h4>
                             <div className="flex items-center gap-1">
                               <Star className="w-3 h-3 text-yellow-500" />
                               <span className="text-xs text-gray-600">{teacher.rating}</span>
@@ -512,7 +512,7 @@ export default function ChatWithTeacherPage() {
               ) : (
                 <div className="space-y-1">
                   <div className="p-4 border-b border-gray-200">
-                    <h3 className="font-semibold text-gray-900">Conversas Recentes</h3>
+                    <h3 className="font-semibold text-gray-700">Conversas Recentes</h3>
                   </div>
                   
                   {conversations.map((conversation) => (
@@ -532,7 +532,7 @@ export default function ChatWithTeacherPage() {
                         
                         <div className="flex-1 min-w-0">
                           <div className="flex items-center justify-between mb-1">
-                            <h4 className="font-medium text-gray-900 truncate">{conversation.teacherName}</h4>
+                            <h4 className="font-medium text-gray-700 truncate">{conversation.teacherName}</h4>
                             {conversation.unreadCount > 0 && (
                               <span className="bg-primary text-white text-xs rounded-full px-2 py-1 min-w-[20px] text-center">
                                 {conversation.unreadCount}
@@ -577,7 +577,7 @@ export default function ChatWithTeacherPage() {
                     <div className={`absolute -bottom-1 -right-1 w-3 h-3 ${getStatusColor(selectedTeacher.status)} rounded-full border-2 border-white`} />
                   </div>
                   <div>
-                    <h3 className="font-semibold text-gray-900">{selectedTeacher.name}</h3>
+                    <h3 className="font-semibold text-gray-700">{selectedTeacher.name}</h3>
                     <p className="text-sm text-gray-600">{selectedTeacher.subject} • {getStatusText(selectedTeacher)}</p>
                   </div>
                 </div>
@@ -609,7 +609,7 @@ export default function ChatWithTeacherPage() {
                         className={`max-w-[70%] ${
                           isOwnMessage
                             ? 'bg-primary text-white'
-                            : 'bg-gray-100 text-gray-900'
+                            : 'bg-gray-100 text-gray-700'
                         } rounded-lg px-4 py-2`}
                       >
                         {!isOwnMessage && (
@@ -708,7 +708,7 @@ export default function ChatWithTeacherPage() {
             <div className="flex-1 flex items-center justify-center bg-gray-50">
               <div className="text-center">
                 <MessageSquare className="w-16 h-16 text-gray-400 mx-auto mb-4" />
-                <h3 className="text-lg font-semibold text-gray-900 mb-2">
+                <h3 className="text-lg font-semibold text-gray-700 mb-2">
                   Selecione um professor para conversar
                 </h3>
                 <p className="text-gray-600">

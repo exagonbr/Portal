@@ -1,5 +1,7 @@
 import { DataSource, DataSourceOptions } from 'typeorm';
 import * as dotenv from 'dotenv';
+import { User } from '../entities/User';
+import { Users } from '../entities/Users';
 import { Role } from '../entities/Role';
 import { Institution } from '../entities/Institution';
 import { School } from '../entities/School';
@@ -24,6 +26,19 @@ import { ForumThread } from '../entities/ForumThread';
 import { ForumReply } from '../entities/ForumReply';
 import { ChatMessage } from '../entities/ChatMessage';
 import { Announcement } from '../entities/Announcement';
+import { File } from '../entities/File';
+import { VideoCollection } from '../entities/VideoCollection';
+import { VideoModule } from '../entities/VideoModule';
+import {
+  TvShowComplete,
+  TvShowVideo,
+  TvShowQuestion,
+  TvShowAnswer,
+  TvShowFile,
+  TvShowVideoFile,
+  TvShowAuthor,
+  TvShowGenre
+} from '../entities/TvShowComplete';
 
 dotenv.config();
 
@@ -34,12 +49,14 @@ export const dataSourceOptions: DataSourceOptions = {
   host: process.env.DB_HOST || 'localhost',
   port: parseInt(process.env.DB_PORT || '5432'),
   username: process.env.DB_USER || 'postgres',
-  password: process.env.DB_PASSWORD || 'root',
+  password: String(process.env.DB_PASSWORD || 'root'), // Garantir que seja string para evitar erro SASL
   database: process.env.DB_NAME || 'portal_sabercon',
   ssl: process.env.DB_SSL === 'true' ? { rejectUnauthorized: false } : false,
-  synchronize: environment === 'development',
+  synchronize: false, // Disabled to prevent conflicts with Knex migrations
   logging: environment === 'development',
   entities: [
+    User,
+    Users,
     Role,
     Institution,
     School,
@@ -63,9 +80,20 @@ export const dataSourceOptions: DataSourceOptions = {
     ForumThread,
     ForumReply,
     ChatMessage,
-    Announcement
+    Announcement,
+    File,
+    VideoCollection,
+    VideoModule,
+    TvShowComplete,
+    TvShowVideo,
+    TvShowQuestion,
+    TvShowAnswer,
+    TvShowFile,
+    TvShowVideoFile,
+    TvShowAuthor,
+    TvShowGenre
   ],
-  migrations: ['src/migrations/*.ts'],
+  migrations: ['src/database/migrations/*.ts'],
   subscribers: ['src/subscribers/*.ts'],
 };
 
@@ -77,7 +105,7 @@ export const initializeDatabase = async (): Promise<void> => {
     await AppDataSource.initialize();
     console.log('✅ Conexão com PostgreSQL estabelecida com sucesso via TypeORM');
   } catch (error) {
-    console.error('❌ Erro ao conectar com PostgreSQL via TypeORM:', error);
+    console.log('❌ Erro ao conectar com PostgreSQL via TypeORM:', error);
     throw error;
   }
 };
@@ -90,7 +118,7 @@ export const closeDatabaseConnection = async (): Promise<void> => {
       console.log('🔌 Conexão com PostgreSQL fechada');
     }
   } catch (error) {
-    console.error('❌ Erro ao fechar conexão com PostgreSQL:', error);
+    console.log('❌ Erro ao fechar conexão com PostgreSQL:', error);
     throw error;
   }
 };

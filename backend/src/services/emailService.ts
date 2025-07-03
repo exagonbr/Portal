@@ -1,5 +1,6 @@
 import nodemailer from 'nodemailer';
 import { env } from '../config/env';
+import SystemSettingsService from './SystemSettingsService';
 
 export interface EmailOptions {
   to: string | string[];
@@ -22,6 +23,19 @@ export interface EmailTemplate {
   text?: string;
 }
 
+interface SMTPConfig {
+  host: string;
+  port: number;
+  secure: boolean;
+  auth?: {
+    user: string;
+    pass: string;
+  };
+  tls?: {
+    rejectUnauthorized?: boolean;
+  };
+}
+
 class EmailService {
   private transporter: nodemailer.Transporter | null = null;
   private templates: Map<string, EmailTemplate> = new Map();
@@ -29,33 +43,39 @@ class EmailService {
   private initializationError: string | null = null;
 
   constructor() {
-    this.setupTransporter();
+    this.initializeService();
     this.loadTemplates();
   }
 
-  private setupTransporter() {
+  private async initializeService() {
     try {
-      // Verificar se as configurações mínimas estão presentes
-      if (!env.SMTP_HOST || env.SMTP_HOST === 'localhost') {
+      await this.setupTransporter();
+    } catch (error) {
+      console.log('Erro na inicialização do serviço de email:', error);
+    }
+  }
+
+  private async setupTransporter() {
+    try {
+      // Primeiro, tentar usar configurações das variáveis de ambiente
+      let smtpConfig = await this.getEmailConfigFromEnv();
+      
+      // Se não houver configuração válida no .env, tentar buscar do banco de dados
+      if (!smtpConfig.host || smtpConfig.host === 'localhost') {
+        console.log('⚠️  Configuração SMTP não encontrada no .env, tentando buscar do banco de dados...');
+        const dbConfig = await this.getEmailConfigFromDatabase();
+        if (dbConfig.host && dbConfig.host !== 'localhost') {
+          smtpConfig = dbConfig;
+        }
+      }
+
+      // Verificar se temos configuração válida
+      if (!smtpConfig.host || smtpConfig.host === 'localhost') {
         this.isEmailEnabled = false;
         this.initializationError = 'Configuração de email não encontrada (SMTP_HOST não configurado)';
         console.log('⚠️  Email desabilitado: Configuração SMTP não encontrada. O sistema continuará funcionando sem envio de emails.');
         return;
       }
-
-      // Configuração do transporter baseada nas variáveis de ambiente
-      const smtpConfig = {
-        host: env.SMTP_HOST,
-        port: parseInt(env.SMTP_PORT),
-        secure: env.SMTP_SECURE === 'true', // true para 465, false para outras portas
-        auth: env.SMTP_USER && env.SMTP_PASS ? {
-          user: env.SMTP_USER,
-          pass: env.SMTP_PASS
-        } : undefined,
-        tls: {
-          rejectUnauthorized: env.SMTP_TLS_REJECT_UNAUTHORIZED !== 'false'
-        }
-      };
 
       this.transporter = nodemailer.createTransport(smtpConfig);
 
@@ -68,6 +88,81 @@ class EmailService {
       console.log('⚠️  Email desabilitado: Erro na configuração do transporter. O sistema continuará funcionando sem envio de emails.');
       console.log('Detalhes do erro:', error);
     }
+  }
+
+  private async getEmailConfigFromEnv(): Promise<SMTPConfig> {
+    const config: SMTPConfig = {
+      host: env.SMTP_HOST || 'localhost',
+      port: parseInt(env.SMTP_PORT || '587', 10),
+      secure: (env.SMTP_SECURE || 'false').toLowerCase() === 'true',
+      auth: (env.SMTP_USER && env.SMTP_PASS)
+        ? { user: env.SMTP_USER, pass: env.SMTP_PASS }
+        : undefined,
+    };
+
+    // Adicionar tls.rejectUnauthorized apenas se for explicitamente 'false'.
+    // Deixar o nodemailer usar seus padrões para outros casos é mais seguro e
+    // evita conflitos com a negociação STARTTLS.
+    if ((env.SMTP_TLS_REJECT_UNAUTHORIZED || '').toLowerCase() === 'false') {
+      config.tls = {
+        rejectUnauthorized: false,
+      };
+    }
+
+    return config;
+  }
+
+  private async getEmailConfigFromDatabase(): Promise<SMTPConfig> {
+    try {
+      console.log('🔍 Buscando configurações de email do banco de dados...');
+      
+      const emailSettings = await SystemSettingsService.getSettingsByCategory('email', true);
+      
+      if (!emailSettings || !emailSettings.email_smtp_host) {
+        console.log('⚠️  Configurações de email não encontradas no banco de dados');
+        return { 
+          host: 'localhost',
+          port: 587,
+          secure: false,
+          auth: undefined,
+          tls: { rejectUnauthorized: false }
+        };
+      }
+
+      console.log('✅ Configurações de email encontradas no banco de dados');
+      
+      const config: SMTPConfig = {
+        host: emailSettings.email_smtp_host,
+        port: parseInt(emailSettings.email_smtp_port?.toString() || '587'),
+        secure: emailSettings.email_smtp_secure === true || emailSettings.email_smtp_secure === 'true',
+        auth: emailSettings.email_smtp_user && emailSettings.email_smtp_password ? {
+          user: emailSettings.email_smtp_user,
+          pass: emailSettings.email_smtp_password
+        } : undefined,
+      };
+
+      // A configuração do banco de dados não tem uma opção para rejectUnauthorized,
+      // então não definimos `tls` para usar o padrão do nodemailer.
+      // Se fosse necessário, uma nova configuração 'email_smtp_reject_unauthorized'
+      // deveria ser adicionada ao SystemSettingsService.
+
+      return config;
+    } catch (error) {
+      console.log('Erro ao buscar configurações de email do banco:', error);
+      return { 
+        host: 'localhost',
+        port: 587,
+        secure: false,
+        auth: undefined,
+        tls: { rejectUnauthorized: false }
+      };
+    }
+  }
+
+  // Método público para reconfigurar o email quando as configurações mudarem
+  async reconfigure() {
+    console.log('🔄 Reconfigurando serviço de email...');
+    await this.setupTransporter();
   }
 
   private async verifyConnectionAsync() {
@@ -156,6 +251,26 @@ class EmailService {
       `,
       text: 'Alerta do Sistema - {{type}}: {{message}}'
     });
+
+    // Template de verificação de email
+    this.templates.set('email-verification', {
+      subject: 'Verifique seu endereço de email - Portal Sabercon',
+      html: `
+        <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
+          <h1 style="color: #2563eb;">Verificação de Email</h1>
+          <p>Olá <strong>{{name}}</strong>,</p>
+          <p>Obrigado por se registrar. Por favor, clique no botão abaixo para verificar seu endereço de email:</p>
+          <div style="text-align: center; margin: 30px 0;">
+            <a href="{{verificationUrl}}" style="background-color: #2563eb; color: white; padding: 12px 24px; text-decoration: none; border-radius: 5px; display: inline-block;">
+              Verificar Email
+            </a>
+          </div>
+          <p>Se você não criou uma conta, nenhuma outra ação é necessária.</p>
+          <p>Atenciosamente,<br>Equipe Portal Sabercon</p>
+        </div>
+      `,
+      text: 'Verifique seu email - Portal Sabercon. Link: {{verificationUrl}}'
+    });
   }
 
   private renderTemplate(templateName: string, data: Record<string, any>): EmailTemplate | null {
@@ -230,7 +345,7 @@ class EmailService {
 
       return true;
     } catch (error) {
-      console.error('❌ Erro ao enviar email:', error);
+      console.log('❌ Erro ao enviar email:', error);
       console.log('⚠️  O sistema continuará funcionando normalmente sem o envio deste email.');
       return false; // Retorna false em vez de lançar erro
     }
@@ -256,6 +371,17 @@ class EmailService {
       data: {
         name: userName,
         resetUrl: `${env.FRONTEND_URL}/reset-password?token=${resetToken}`
+      }
+    });
+  }
+
+  async sendVerificationEmail(userEmail: string, userName: string, verificationToken: string): Promise<boolean> {
+    return this.sendEmail({
+      to: userEmail,
+      template: 'email-verification',
+      data: {
+        name: userName,
+        verificationUrl: `${env.FRONTEND_URL}/verify-email?token=${verificationToken}`
       }
     });
   }

@@ -1,22 +1,51 @@
 import { NextRequest, NextResponse } from 'next/server';
+import { getInternalApiUrl } from '@/config/env';
+import { createCorsOptionsResponse, getCorsHeaders } from '@/config/cors'
 
-const BACKEND_URL = process.env.BACKEND_URL || 'http://localhost:3001';
+// Funções CORS
+function getCorsHeaders(origin?: string) {
+  return {
+    'Access-Control-Allow-Origin': origin || '*',
+    'Access-Control-Allow-Methods': 'GET, POST, PUT, DELETE, OPTIONS',
+    'Access-Control-Allow-Headers': 'Content-Type, Authorization',
+    'Access-Control-Allow-Credentials': 'true',
+  }
+}
+
+function createCorsOptionsResponse(origin?: string) {
+  return new NextResponse(null, {
+    status: 200,
+    headers: getCorsHeaders(origin)
+  })
+}
+
+
+// Handler para requisições OPTIONS (preflight)
+export async function OPTIONS(request: NextRequest) {
+  const origin = request.headers.get('origin') || undefined;
+  return createCorsOptionsResponse(origin);
+}
 
 export async function POST(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
     const authHeader = request.headers.get('authorization');
     
     if (!authHeader) {
+      const origin = request.headers.get('origin') || undefined;
       return NextResponse.json(
         { success: false, message: 'Authorization header missing' },
-        { status: 401 }
+        { 
+          status: 401,
+          headers: getCorsHeaders(origin)
+        }
       );
     }
 
-    const response = await fetch(`${BACKEND_URL}/api/aws/settings/${params.id}/test-connection`, {
+    const resolvedParams = await params;
+    const response = await fetch(getInternalApiUrl(`/api/aws/settings/${resolvedParams.id}/test-connection`), {
       method: 'POST',
       headers: {
         'Authorization': authHeader,
@@ -27,13 +56,21 @@ export async function POST(
     });
 
     const data = await response.json();
+    const origin = request.headers.get('origin') || undefined;
 
-    return NextResponse.json(data, { status: response.status });
+    return NextResponse.json(data, { 
+      status: response.status,
+      headers: getCorsHeaders(origin)
+    });
   } catch (error) {
-    console.error('Erro ao testar conexão AWS:', error);
+    console.log('Erro ao testar conexão AWS:', error);
+    const origin = request.headers.get('origin') || undefined;
     return NextResponse.json(
       { success: false, message: 'Erro interno do servidor' },
-      { status: 500 }
+      { 
+        status: 500,
+        headers: getCorsHeaders(origin)
+      }
     );
   }
 } 

@@ -77,7 +77,7 @@ export default function VirtualClassroom({
         onRecordingStatusChange?.(status)
       })
     } catch (error) {
-      console.error('Failed to initialize virtual classroom:', error)
+      console.log('Failed to initialize virtual classroom:', error)
     }
   }, [classroomId, title, isHost, user])
 
@@ -148,7 +148,7 @@ export default function VirtualClassroom({
       {/* Virtual Classroom Container */}
       <div
         id={containerId}
-        className="flex-1 w-full bg-gray-900"
+        className="flex-1 w-full bg-gray-200"
         style={{ minHeight: '600px' }}
       />
     </div>

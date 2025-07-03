@@ -1,4 +1,4 @@
-export interface LoginRequest {
+   export interface LoginRequest {
   email: string;
   password: string;
 }
@@ -7,8 +7,8 @@ export interface CreateUserDto {
   email: string;
   password: string;
   name: string;
-  role_id: number;
-  institution_id?: number;
+  role_id?: string; // Agora opcional, será definido para TEACHER por padrão
+  institution_id?: string;
   endereco?: string;
   telefone?: string;
   usuario?: string;

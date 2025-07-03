@@ -1,105 +1,42 @@
+ import { BaseRepository } from './BaseRepository';
+import { User, CreateUserData, UpdateUserData } from '../models/User';
 import db from '../config/database';
-import bcrypt from 'bcryptjs';
-import { User, CreateUserData, UpdateUserData, UserWithRelations } from '../entities/User';
 
-export class UserRepository {
-  private static readonly TABLE_NAME = 'users';
+export class UserRepository extends BaseRepository<User> {
+  protected tableName = 'users';
 
-  static async findById(id: number): Promise<UserWithRelations | null> {
-    try {
-      const user = await db(this.TABLE_NAME)
-        .leftJoin('roles', 'users.role_id', 'roles.id')
-        .leftJoin('institutions', 'users.institution_id', 'institutions.id')
-        .select(
-          'users.*',
-          'roles.id as role_id',
-          'roles.name as role_name',
-          db.raw('roles.permissions as role_permissions'),
-          'institutions.id as institution_id',
-          'institutions.name as institution_name'
-        )
-        .where('users.id', id)
-        .first();
-
-      if (!user) return null;
-
-      return this.mapUserWithRelations(user);
-    } catch (error) {
-      console.error('Erro ao buscar usuário por ID:', error);
-      throw error;
-    }
+  constructor() {
+    super('users');
   }
 
-  static async findByEmail(email: string): Promise<UserWithRelations | null> {
-    try {
-      const user = await db(this.TABLE_NAME)
-        .leftJoin('roles', 'users.role_id', 'roles.id')
-        .leftJoin('institutions', 'users.institution_id', 'institutions.id')
-        .select(
-          'users.*',
-          'roles.id as role_id',
-          'roles.name as role_name',
-          db.raw('roles.permissions as role_permissions'),
-          'institutions.id as institution_id',
-          'institutions.name as institution_name'
-        )
-        .where('users.email', email)
-        .first();
-
-      if (!user) return null;
-
-      return this.mapUserWithRelations(user);
-    } catch (error) {
-      console.error('Erro ao buscar usuário por email:', error);
-      throw error;
+  async findByEmail(email: string): Promise<User | null> {
+    console.log(`🔍 [UserRepository] Buscando usuário por email: ${email}`);
+    
+    const result = await this.db(this.tableName)
+      .where({ email })
+      .select('*')
+      .first();
+    
+    if (!result) {
+      console.log(`❌ [UserRepository] Usuário não encontrado: ${email}`);
+      return null;
     }
-  }
-
-  static async create(userData: CreateUserData): Promise<User> {
-    try {
-      // Hash da senha antes de salvar
-      if (userData.password) {
-        const salt = await bcrypt.genSalt(12);
-        userData.password = await bcrypt.hash(userData.password, salt);
-      }
-
-      const [user] = await db(this.TABLE_NAME)
-        .insert({
-          ...userData,
-          is_active: userData.is_active ?? true,
-          created_at: new Date(),
-          updated_at: new Date()
-        })
-        .returning('*');
-
-      return user;
-    } catch (error) {
-      console.error('Erro ao criar usuário:', error);
-      throw error;
-    }
-  }
-
-  static async update(id: number, userData: UpdateUserData): Promise<User | null> {
-    try {
-      // Hash da senha se fornecida
-      if (userData.password) {
-        const salt = await bcrypt.genSalt(12);
-        userData.password = await bcrypt.hash(userData.password, salt);
-      }
-
-      const [user] = await db(this.TABLE_NAME)
-        .where('id', id)
-        .update({
-          ...userData,
-          updated_at: new Date()
-        })
-        .returning('*');
-
-      return user || null;
-    } catch (error) {
-      console.error('Erro ao atualizar usuário:', error);
-      throw error;
-    }
+    
+    // Mapear enabled para is_active para compatibilidade
+    const user = {
+      ...result,
+      is_active: result.enabled !== false // true se enabled for true ou null
+    };
+    
+    console.log(`✅ [UserRepository] Usuário encontrado:`, {
+      id: user.id,
+      email: user.email,
+      enabled: result.enabled,
+      is_active: user.is_active,
+      full_name: user.full_name
+    });
+    
+    return user as User;
   }
 
   static async delete(id: number): Promise<boolean> {
@@ -169,174 +106,126 @@ export class UserRepository {
     }
   }
 
-  static async comparePassword(plainPassword: string, hashedPassword: string): Promise<boolean> {
-    try {
-      return await bcrypt.compare(plainPassword, hashedPassword);
-    } catch (error) {
-      console.error('Erro ao comparar senhas:', error);
-      throw error;
-    }
-  }
+  async findById(id: string): Promise<User | null> {
+    const user = await this.db(this.tableName)
+      .where({ [`${this.tableName}.id`]: id })
+      .leftJoin('roles', `${this.tableName}.role_id`, 'roles.id')
+      .select(
+        `${this.tableName}.*`,
+        'roles.name as roleName',
+        'roles.permissions as rolePermissions'
+      )
+      .first();
 
-  static async count(): Promise<number> {
-    try {
-      const result = await db(this.TABLE_NAME).count('id as total').first();
-      return parseInt(result?.total as string) || 0;
-    } catch (error) {
-      console.error('Erro ao contar usuários:', error);
-      throw error;
+    if (!user) {
+      return null;
     }
-  }
 
-  private static mapUserWithRelations(row: any): UserWithRelations {
-    const user: UserWithRelations = {
-      id: row.id,
-      version: row.version,
-      email: row.email,
-      password: row.password,
-      name: row.name,
-      cpf: row.cpf,
-      phone: row.phone,
-      birth_date: row.birth_date,
-      address: row.address,
-      city: row.city,
-      state: row.state,
-      zip_code: row.zip_code,
-      endereco: row.endereco,
-      telefone: row.telefone,
-      usuario: row.usuario,
-      unidade_ensino: row.unidade_ensino,
-      is_active: row.is_active,
-      role_id: row.role_id,
-      institution_id: row.institution_id,
-      created_at: row.created_at,
-      updated_at: row.updated_at
+    const { roleName, rolePermissions, ...userProps } = user;
+    
+    // Mapear enabled para is_active para compatibilidade
+    const mappedUser = {
+      ...userProps,
+      is_active: userProps.enabled !== false, // true se enabled for true ou null
+      role: {
+        id: user.role_id,
+        name: roleName,
+        permissions: rolePermissions,
+      },
     };
+    
+    console.log(`✅ [UserRepository] findById - Usuário mapeado:`, {
+      id: mappedUser.id,
+      enabled: userProps.enabled,
+      is_active: mappedUser.is_active
+    });
+    
+    return mappedUser as unknown as User;
+  }
 
-    if (row.role_name) {
-      let permissions = [];
+  async getUserWithRoleAndInstitution(id: string): Promise<any | null> {
+    return this.findById(id);
+  }
+
+  async searchUsers(searchTerm: string, institutionId?: string): Promise<User[]> {
+    let query = this.db(this.tableName)
+      .where('full_name', 'ilike', `%${searchTerm}%`)
+      .orWhere('email', 'ilike', `%${searchTerm}%`);
+
+    if (institutionId) {
+      query = query.andWhere({ institution_id: institutionId });
+    }
+
+    return query.select('*');
+  }
+
+  async findByRole(role: string): Promise<User[]> {
+    const roleResult = await this.db('roles').where({ name: role }).first();
+    if (!roleResult) return [];
+    return this.findAll({ role_id: roleResult.id });
+  }
+
+  async findByInstitution(institutionId: string): Promise<User[]> {
+    return this.findAll({ institution_id: institutionId });
+  }
+
+  async getUserCourses(userId: string): Promise<any[]> {
+    return this.db('user_classes')
+      .where({ user_id: userId })
+      .join('classes', 'user_classes.class_id', 'classes.id')
+      .join('courses', 'classes.course_id', 'courses.id')
+      .select('courses.*');
+  }
+
+  async updateLastLogin(userId: string): Promise<void> {
+    await this.update(userId, { last_login: new Date() } as any);
+  }
+
+  async getUserStatsByRole(): Promise<Record<string, number>> {
+    try {
+      const result = await db('users')
+        .select('role_id')
+        .count('id as count')
+        .groupBy('role_id');
+
+      const stats: Record<string, number> = {};
+      result.forEach((row: any) => {
+        stats[row.role_id || 'UNKNOWN'] = parseInt(row.count, 10) || 0;
+      });
+      return stats;
+    } catch (error) {
+      console.log('Error fetching user stats by role:', error);
+      return {};
+    }
+  }
+
+  async getUserStatsByInstitution(): Promise<Record<string, number>> {
+    try {
+      const result = await db(this.tableName)
+        .select('institution_id')
+        .count('id as count')
+        .groupBy('institution_id');
+
+      const stats: Record<string, number> = {};
+      result.forEach((row: any) => {
+        stats[row.institution_id || 'UNKNOWN'] = parseInt(row.count, 10) || 0;
+      });
+      return stats;
+    } catch (error) {
+      console.log('Error fetching user stats by institution:', error);
+      return {};
+    }
+  }
+
+  async countNewThisMonth(): Promise<number> {
+    const firstDayOfMonth = new Date(new Date().setDate(1));
+    firstDayOfMonth.setHours(0, 0, 0, 0);
+    
+    const result = await db(this.tableName)
+      .where('created_at', '>=', firstDayOfMonth)
+      .count('id as count')
+      .first();
       
-      // Tenta extrair as permissões independentemente do formato
-      if (row.role_permissions) {
-        try {
-          // Se for string, tenta fazer parse
-          if (typeof row.role_permissions === 'string') {
-            try {
-              permissions = JSON.parse(row.role_permissions);
-            } catch (e) {
-              console.warn('Erro ao fazer parse de permissões como string:', e);
-              permissions = [];
-            }
-          } 
-          // Se já for objeto (PostgreSQL pode retornar JSONB como objeto)
-          else if (typeof row.role_permissions === 'object') {
-            if (Array.isArray(row.role_permissions)) {
-              permissions = row.role_permissions;
-            } else {
-              // Se for objeto mas não array, pode ser que o driver esteja retornando de forma específica
-              console.warn('role_permissions é um objeto não-array:', row.role_permissions);
-              permissions = [];
-            }
-          } else {
-            console.warn('role_permissions tem tipo inesperado:', typeof row.role_permissions);
-            permissions = [];
-          }
-        } catch (error) {
-          console.warn('Erro ao processar permissões:', error);
-          permissions = [];
-        }
-      }
-      
-      user.role = {
-        id: row.role_id,
-        name: row.role_name,
-        permissions: permissions
-      };
-    }
-
-    if (row.institution_name) {
-      user.institution = {
-        id: row.institution_id,
-        name: row.institution_name
-      };
-    }
-
-    return user;
-  }
-
-  static async findByRole(roleName: string): Promise<UserWithRelations[]> {
-    try {
-      const users = await db(this.TABLE_NAME)
-        .leftJoin('roles', 'users.role_id', 'roles.id')
-        .leftJoin('institutions', 'users.institution_id', 'institutions.id')
-        .select(
-          'users.*',
-          'roles.id as role_id',
-          'roles.name as role_name',
-          db.raw('roles.permissions as role_permissions'),
-          'institutions.id as institution_id',
-          'institutions.name as institution_name'
-        )
-        .where('roles.name', roleName)
-        .orderBy('users.created_at', 'desc');
-
-      return users.map(user => this.mapUserWithRelations(user));
-    } catch (error) {
-      console.error('Erro ao buscar usuários por role:', error);
-      throw error;
-    }
-  }
-
-  static async searchUsers(searchTerm: string, institutionId?: string): Promise<UserWithRelations[]> {
-    try {
-      let query = db(this.TABLE_NAME)
-        .leftJoin('roles', 'users.role_id', 'roles.id')
-        .leftJoin('institutions', 'users.institution_id', 'institutions.id')
-        .select(
-          'users.*',
-          'roles.id as role_id',
-          'roles.name as role_name',
-          db.raw('roles.permissions as role_permissions'),
-          'institutions.id as institution_id',
-          'institutions.name as institution_name'
-        )
-        .where(builder => {
-          builder
-            .where('users.name', 'ilike', `%${searchTerm}%`)
-            .orWhere('users.email', 'ilike', `%${searchTerm}%`);
-        });
-
-      if (institutionId) {
-        query = query.where('users.institution_id', institutionId);
-      }
-
-      const users = await query.orderBy('users.name', 'asc');
-      return users.map(user => this.mapUserWithRelations(user));
-    } catch (error) {
-      console.error('Erro ao buscar usuários por termo de pesquisa:', error);
-      throw error;
-    }
-  }
-
-  static async getUsersWithRoleAndInstitution(): Promise<UserWithRelations[]> {
-    try {
-      const users = await db(this.TABLE_NAME)
-        .leftJoin('roles', 'users.role_id', 'roles.id')
-        .leftJoin('institutions', 'users.institution_id', 'institutions.id')
-        .select(
-          'users.*',
-          'roles.id as role_id',
-          'roles.name as role_name',
-          db.raw('roles.permissions as role_permissions'),
-          'institutions.id as institution_id',
-          'institutions.name as institution_name'
-        )
-        .orderBy('users.name', 'asc');
-
-      return users.map(user => this.mapUserWithRelations(user));
-    } catch (error) {
-      console.error('Erro ao buscar usuários com roles e instituições:', error);
-      throw error;
-    }
+    return parseInt(String(result?.count || '0'), 10);
   }
 }

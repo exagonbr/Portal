@@ -5,6 +5,7 @@ export interface ApiResponse<T> {
   message?: string;
   errors?: string[];
   pagination?: PaginationResult;
+  exists?: boolean;
 }
 
 export interface PaginationResult {
@@ -23,32 +24,35 @@ export interface PaginationParams {
 
 // DTOs de usuário que correspondem ao backend
 export interface CreateUserDto {
+  name: any;
+  full_name: string;
   email: string;
   password: string;
-  name: string;
   role_id: string;
-  institution_id?: string;
+  institution_id: string;
   endereco?: string;
   telefone?: string;
-  school_id?: string;
+  cpf?: string;
+  birth_date?: string;
   is_active?: boolean;
 }
 
 export interface UpdateUserDto {
+  full_name?: string;
   email?: string;
   password?: string;
-  name?: string;
   role_id?: string;
   institution_id?: string;
   endereco?: string;
   telefone?: string;
-  school_id?: string;
+  cpf?: string;
+  birth_date?: string;
   is_active?: boolean;
 }
 
 export interface UpdateProfileDto {
   email?: string;
-  name?: string;
+  full_name?: string;
   endereco?: string;
   telefone?: string;
   school_id?: string;
@@ -60,16 +64,23 @@ export interface ChangePasswordDto {
 }
 
 export interface UserResponseDto {
+  name: any | string;
   id: string;
-  name: string;
+  full_name: string;
   email: string;
-  role?: {
-    name: string;
-    permissions: string[];
-  };
-  institution_id?: string;
+  role_id: string;
+  institution_id: string;
+  endereco?: string;
+  telefone?: string;
+  school_id?: string;
+  cpf?: string;
+  birth_date?: string;
+  is_active: boolean;
   created_at: string;
   updated_at: string;
+  role_name?: string;
+  institution_name?: string;
+  school_name?: string;
 }
 
 export interface UserWithRoleDto extends UserResponseDto {
@@ -79,11 +90,18 @@ export interface UserWithRoleDto extends UserResponseDto {
 
 export interface UserFilterDto {
   search?: string;
+  full_name?: string;
+  email?: string;
   role?: string;
+  role_id?: string;
+  institution_id?: string;
   school_id?: string;
+  is_active?: boolean;
+  created_after?: string;
+  created_before?: string;
   page?: number;
   limit?: number;
-  sortBy?: 'name' | 'email' | 'created_at' | 'updated_at';
+  sortBy?: 'full_name' | 'email' | 'created_at' | 'updated_at';
   sortOrder?: 'asc' | 'desc';
 }
 
@@ -121,6 +139,7 @@ export interface RoleDto {
 }
 
 export interface RoleResponseDto extends RoleDto {
+  status: string;
   active?: boolean;
   users_count?: number;
 }
@@ -146,37 +165,68 @@ export interface RoleUpdateDto extends UpdateRoleDto {}
 export interface InstitutionDto {
   id: string;
   name: string;
-  code: string;
+  code?: string;
+  cnpj?: string;
   description?: string;
-  address?: string;
+  address?: string | {
+    street?: string;
+    number?: string;
+    complement?: string;
+    neighborhood?: string;
+    city?: string;
+    state?: string;
+    zipCode?: string;
+  };
   phone?: string;
   email?: string;
+  website?: string;
+  logo?: string;
+  type?: 'SCHOOL' | 'COLLEGE' | 'UNIVERSITY' | 'TECH_CENTER';
   created_at: string;
   updated_at: string;
+  created_by?: string;
 }
 
 export interface InstitutionResponseDto extends InstitutionDto {
   active?: boolean;
   users_count?: number;
   courses_count?: number;
+  schools_count?: number;
+  settings?: {
+    allowStudentRegistration?: boolean;
+    requireEmailVerification?: boolean;
+    maxSchools?: number;
+    maxUsersPerSchool?: number;
+  };
+  schools?: any[];
+  // Campos adicionais da tabela institution
+  city?: string;
+  state?: string;
+  zip_code?: string;
+  status?: 'active' | 'inactive';
+  logo_url?: string;
 }
 
 export interface CreateInstitutionDto {
   name: string;
+  code: string;
   description?: string;
   address?: string;
   phone?: string;
   email?: string;
   active?: boolean;
+  type?: 'SCHOOL' | 'COLLEGE' | 'UNIVERSITY' | 'TECH_CENTER';
 }
 
 export interface UpdateInstitutionDto {
   name?: string;
+  code?: string;
   description?: string;
   address?: string;
   phone?: string;
   email?: string;
   active?: boolean;
+  type?: 'SCHOOL' | 'COLLEGE' | 'UNIVERSITY' | 'TECH_CENTER';
 }
 
 export interface InstitutionCreateDto extends CreateInstitutionDto {}
@@ -211,11 +261,55 @@ export interface UpdateCourseDto {
   duration?: number;
 }
 
+export interface CourseResponseDto {
+  id: string;
+  name: string;
+  description: string;
+  level: string;
+  type: string;
+  active: boolean;
+  institution_id: string;
+  created_at: string;
+  updated_at: string;
+  institution?: {
+    id: string;
+    name: string;
+  };
+  teachers?: {
+    id: string;
+    name: string;
+  }[];
+  students?: {
+    id: string;
+    name: string;
+  }[];
+}
+
+export interface CourseCreateDto {
+  name: string;
+  description: string;
+  level: string;
+  type: string;
+  institution_id: string;
+  active?: boolean;
+}
+
+export interface CourseUpdateDto {
+  name?: string;
+  description?: string;
+  level?: string;
+  type?: string;
+  institution_id?: string;
+  active?: boolean;
+}
+
 // Tipos de erro da API
 export interface ApiError {
+  name: string;
   message: string;
   status: number;
   errors?: string[];
+  details?: any;
 }
 
 // Tipos de filtro genérico
@@ -225,6 +319,12 @@ export interface BaseFilterDto {
   limit?: number;
   sortBy?: string;
   sortOrder?: 'asc' | 'desc';
+}
+
+export interface RoleFilterDto extends BaseFilterDto {
+  type?: string;
+  status?: string;
+  active?: boolean;
 }
 
 // Tipos de resposta de lista
@@ -300,4 +400,111 @@ export interface NotificationStatsDto {
   total: number;
   read: number;
   unread: number;
+}
+
+export interface UnitResponseDto {
+  id: string;
+  name: string;
+  description: string;
+  type: string;
+  active: boolean;
+  institution_id: string;
+  created_at: string;
+  updated_at: string;
+  institution?: InstitutionResponseDto;
+}
+
+export interface UnitCreateDto {
+  name: string;
+  description: string;
+  type: string;
+  institution_id: string;
+  active?: boolean;
+}
+
+export interface UnitUpdateDto {
+  name?: string;
+  description?: string;
+  type?: string;
+  institution_id?: string;
+  active?: boolean;
+}
+
+export interface ClassResponseDto {
+  id: string;
+  name: string;
+  description: string;
+  status: string;
+  active: boolean;
+  course_id: string;
+  teacher_id: string;
+  created_at: string;
+  updated_at: string;
+  course?: {
+    id: string;
+    name: string;
+  };
+  teacher?: {
+    id: string;
+    name: string;
+  };
+  students?: {
+    id: string;
+    name: string;
+  }[];
+}
+
+export interface ClassCreateDto {
+  name: string;
+  description: string;
+  status: string;
+  course_id: string;
+  teacher_id: string;
+  active?: boolean;
+}
+
+export interface ClassUpdateDto {
+  name?: string;
+  description?: string;
+  status?: string;
+  course_id?: string;
+  teacher_id?: string;
+  active?: boolean;
+}
+
+// Book DTOs
+export interface BookResponseDto {
+  id: string;
+  name: string;
+  subtitle?: string;
+  author: string;
+  category: string;
+  status: string;
+  pages: number;
+  cover_url?: string;
+  published_date: string;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface BookCreateDto {
+  name: string;
+  subtitle?: string;
+  author: string;
+  category: string;
+  status: string;
+  pages: number;
+  cover_url?: string;
+  published_date: string;
+}
+
+export interface BookUpdateDto {
+  name?: string;
+  subtitle?: string;
+  author?: string;
+  category?: string;
+  status?: string;
+  pages?: number;
+  cover_url?: string;
+  published_date?: string;
 }

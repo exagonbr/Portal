@@ -1,9 +1,46 @@
-import type { Knex } from 'knex';
-
-export async function seed(knex: Knex): Promise<void> {
+export async function seed(knex: any): Promise<void> {
   console.log('🌱 Populando dados de exemplo para arquivos e livros...');
-  
-  // Buscar instituição para usar nos dados
+// Garantir que a função link_file_to_book exista
+  await knex.raw(`
+    CREATE OR REPLACE FUNCTION link_file_to_book(
+        p_file_id UUID,
+        p_book_id UUID
+    )
+    RETURNS BOOLEAN AS $$
+    DECLARE
+        file_exists BOOLEAN := false;
+        book_exists BOOLEAN := false;
+    BEGIN
+        SELECT EXISTS(SELECT 1 FROM files WHERE id = p_file_id AND is_active = true) INTO file_exists;
+        SELECT EXISTS(SELECT 1 FROM books WHERE id = p_book_id) INTO book_exists;
+        
+        IF NOT file_exists THEN
+            RAISE EXCEPTION 'Arquivo não encontrado ou não está ativo';
+        END IF;
+        
+        IF NOT book_exists THEN
+            RAISE EXCEPTION 'Livro não encontrado';
+        END IF;
+        
+        UPDATE files 
+        SET 
+            linked_book_id = p_book_id,
+            linked_at = CURRENT_TIMESTAMP,
+            updated_at = CURRENT_TIMESTAMP
+        WHERE id = p_file_id;
+        
+        UPDATE books 
+        SET 
+            file_id = p_file_id,
+            updated_at = CURRENT_TIMESTAMP
+        WHERE id = p_book_id;
+        
+        RETURN true;
+    END;
+    $$ LANGUAGE plpgsql;
+  `);
+
+  // Buscar uma instituição existente
   const institution = await knex('institutions').where('status', 'active').first();
   
   if (!institution) {
@@ -186,73 +223,70 @@ export async function seed(knex: Knex): Promise<void> {
         format: 'Visual',
         schools: ['Barroco', 'Arcadismo', 'Romantismo', 'Realismo', 'Parnasianismo', 'Simbolismo']
       }),
-      checksum: 'sha256:vwx234yz567abc123def456ghi789jkl012mno345pqr678stu901',
-      is_active: true,
-      tags: ['mapa-mental', 'escolas-literarias', 'visual', 'aluno']
+      tags: ['ciências', 'jogo', 'interativo', 'educativo'],
+      is_active: true
+    }
+  ];
+
+  console.log('📁 Inserindo arquivos de exemplo...');
+  const insertedFiles = await knex('files').insert(files).returning('*');
+
+  // Criar livros para alguns arquivos literários
+  const books = [
+    {
+      id: knex.raw('gen_random_uuid()'),
+      title: 'Dom Casmurro',
+      author: 'Machado de Assis',
+      isbn: '978-85-7326-215-4',
+      description: 'Um dos maiores clássicos da literatura brasileira, Dom Casmurro narra a história de Bentinho e sua obsessão por Capitu.',
+      publisher: 'Editora Ática',
+      publication_year: 1899,
+      language: 'pt-BR',
+      pages: 208,
+      category: 'literario',
+      cover_url: 'https://sabercon-literario.s3.us-east-1.amazonaws.com/covers/dom-casmurro.jpg',
+      file_url: insertedFiles.find((f: any) => f.name === 'Dom Casmurro.pdf')?.s3_url,
+      file_type: 'PDF',
+      file_size: 2458624,
+      institution_id: institution.id,
+      status: 'available'
     },
     {
-      name: 'Atividade - Interpretação de Texto',
-      original_name: 'atividade_interpretacao.pdf',
-      type: 'pdf',
-      size: 786432, // 768KB
-      size_formatted: '768 KB',
-      bucket: 'sabercon-students',
-      s3_key: 'students/activities/interpretacao_texto_atividade.pdf',
-      s3_url: 'https://sabercon-students.s3.amazonaws.com/students/activities/interpretacao_texto_atividade.pdf',
-      description: 'Atividade prática de interpretação de textos literários',
-      category: 'aluno',
-      metadata: JSON.stringify({
-        type: 'Atividade',
-        skill: 'Interpretação de Texto',
-        questions: 15,
-        difficulty: 'Médio'
-      }),
-      checksum: 'sha256:yz567abc123def456ghi789jkl012mno345pqr678stu901vwx234',
-      is_active: true,
-      tags: ['atividade', 'interpretacao', 'textos', 'aluno']
-    },
-    {
-      name: 'Bibliografia - Literatura Contemporânea',
-      original_name: 'bibliografia_contemporanea.pdf',
-      type: 'pdf',
-      size: 1310720, // 1.25MB
-      size_formatted: '1.25 MB',
-      bucket: 'sabercon-students',
-      s3_key: 'students/references/literatura_contemporanea_bibliografia.pdf',
-      s3_url: 'https://sabercon-students.s3.amazonaws.com/students/references/literatura_contemporanea_bibliografia.pdf',
-      description: 'Lista de referências para estudo de literatura contemporânea',
-      category: 'aluno',
-      metadata: JSON.stringify({
-        type: 'Bibliografia',
-        period: 'Literatura Contemporânea',
-        sources: 45,
-        updated: '2024'
-      }),
-      checksum: 'sha256:abc123def456ghi789jkl012mno345pqr678stu901vwx234yz567',
-      is_active: true,
-      tags: ['bibliografia', 'literatura-contemporanea', 'referencias', 'aluno']
+      id: knex.raw('gen_random_uuid()'),
+      title: 'O Cortiço',
+      author: 'Aluísio Azevedo',
+      isbn: '978-85-7326-216-1',
+      description: 'Romance naturalista que retrata a vida em um cortiço no Rio de Janeiro do século XIX.',
+      publisher: 'Editora Moderna',
+      publication_year: 1890,
+      language: 'pt-BR',
+      pages: 272,
+      category: 'literario',
+      cover_url: 'https://sabercon-literario.s3.us-east-1.amazonaws.com/covers/o-cortico.jpg',
+      file_url: insertedFiles.find((f: any) => f.name === 'O Cortiço.epub')?.s3_url,
+      file_type: 'EPUB',
+      file_size: 1876345,
+      institution_id: institution.id,
+      status: 'available'
     }
   ]).returning('*');
 
   console.log('✅ Dados iniciais da tabela files inseridos com sucesso!');
   console.log(`📊 Total de arquivos inseridos: ${bookFiles.length}`);
   
-  // Contar por categoria
-  const categories = bookFiles.reduce((acc, file) => {
-    acc[file.category] = (acc[file.category] || 0) + 1;
-    return acc;
-  }, {} as Record<string, number>);
+  const domCasmurroFile = insertedFiles.find((f: any) => f.name === 'Dom Casmurro.pdf');
+  const domCasmurroBook = insertedBooks.find((b: any) => b.title === 'Dom Casmurro');
+  
+  if (domCasmurroFile && domCasmurroBook) {
+    await knex.raw('SELECT link_file_to_book(?::uuid, ?::uuid)', [domCasmurroFile.id, domCasmurroBook.id]);
+  }
 
-  console.log('📂 Distribuição por categoria:');
-  Object.entries(categories).forEach(([category, count]) => {
-    const emoji = category === 'literario' ? '📚' : 
-                  category === 'professor' ? '👨‍🏫' : 
-                  category === 'aluno' ? '👨‍🎓' : '🧪';
-    const label = category === 'literario' ? 'Literário' :
-                  category === 'professor' ? 'Professor' :
-                  category === 'aluno' ? 'Aluno' : 'Teste';
-    console.log(`   ${emoji} ${label}: ${count as number} arquivo${(count as number) > 1 ? 's' : ''}`);
-  });
+  const corticoFile = insertedFiles.find((f: any) => f.name === 'O Cortiço.epub');
+  const corticoBook = insertedBooks.find((b: any) => b.title === 'O Cortiço');
+  
+  if (corticoFile && corticoBook) {
+    await knex.raw('SELECT link_file_to_book(?::uuid, ?::uuid)', [corticoFile.id, corticoBook.id]);
+  }
 
   console.log(`\nℹ️  Nota: Para adicionar usuário responsável, execute:`);
   console.log(`   UPDATE files SET uploaded_by = (SELECT id FROM users WHERE email = 'admin@sabercon.edu.br') WHERE uploaded_by IS NULL;`);

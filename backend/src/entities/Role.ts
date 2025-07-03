@@ -30,8 +30,8 @@ export class Role {
   @Column({ type: 'text', nullable: true })
   description?: string;
 
-  @Column({ type: 'jsonb', default: [] })
-  permissions: string[];
+  // @Column({ type: 'jsonb', default: [] })
+  // permissions: string[];
 
   @Column({ default: true })
   active: boolean;
@@ -43,9 +43,9 @@ export class Role {
   updated_at: Date;
 
   // Métodos auxiliares para verificar permissões
-  hasPermission(permission: string): boolean {
-    return this.permissions.includes(permission);
-  }
+  // hasPermission(permission: string): boolean {
+  //   return this.permissions.includes(permission);
+  // }
 
   // Permissões padrão por role
   static getDefaultPermissions(role: UserRole): string[] {

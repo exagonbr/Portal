@@ -1,7 +1,10 @@
 import express from 'express';
-import { validateJWT, requireRole } from '../middleware/auth';
+import { requireAuth } from '../middleware/requireAuth';
 
 const router = express.Router();
+
+// 🔐 APLICAR MIDDLEWARE UNIFICADO DE AUTENTICAÇÃO
+router.use(requireAuth);
 
 /**
  * @swagger
@@ -30,8 +33,13 @@ const router = express.Router();
  *       401:
  *         description: Unauthorized
  */
-router.get('/', validateJWT, async (req, res) => {
+router.get('/', async (req, res) => {
   // Implementation will be added in the controller
+  res.json({
+    success: true,
+    data: [],
+    message: 'Chats endpoint - implementation pending'
+  });
 });
 
 /**
@@ -61,8 +69,13 @@ router.get('/', validateJWT, async (req, res) => {
  *       403:
  *         description: Not a participant in this chat
  */
-router.get('/:id', validateJWT, async (req, res) => {
+router.get('/:id', async (req, res) => {
   // Implementation will be added in the controller
+  res.json({
+    success: true,
+    data: null,
+    message: 'Chat by ID endpoint - implementation pending'
+  });
 });
 
 /**
@@ -105,8 +118,23 @@ router.get('/:id', validateJWT, async (req, res) => {
  *       400:
  *         description: Invalid input
  */
-router.post('/', validateJWT, requireRole(['admin', 'teacher']), async (req, res) => {
+router.post('/', async (req, res) => {
+  const user = (req as any).user;
+  
+  // Verificar se é admin ou teacher
+  if (!['SYSTEM_ADMIN', 'INSTITUTION_MANAGER', 'TEACHER'].includes(user.role)) {
+    return res.status(403).json({
+      success: false,
+      message: 'Acesso negado - apenas administradores e professores podem criar chats'
+    });
+  }
+
   // Implementation will be added in the controller
+  return res.status(201).json({
+    success: true,
+    data: null,
+    message: 'Create chat endpoint - implementation pending'
+  });
 });
 
 /**
@@ -150,8 +178,13 @@ router.post('/', validateJWT, requireRole(['admin', 'teacher']), async (req, res
  *       403:
  *         description: Not a participant in this chat
  */
-router.get('/:id/messages', validateJWT, async (req, res) => {
+router.get('/:id/messages', async (req, res) => {
   // Implementation will be added in the controller
+  res.json({
+    success: true,
+    data: [],
+    message: 'Chat messages endpoint - implementation pending'
+  });
 });
 
 /**
@@ -195,41 +228,13 @@ router.get('/:id/messages', validateJWT, async (req, res) => {
  *       403:
  *         description: Not a participant in this chat
  */
-router.post('/:id/messages', validateJWT, async (req, res) => {
+router.post('/:id/messages', async (req, res) => {
   // Implementation will be added in the controller
-});
-
-/**
- * @swagger
- * /api/chats/{id}/messages/{messageId}/read:
- *   post:
- *     summary: Mark a message as read
- *     tags: [Chats]
- *     security:
- *       - bearerAuth: []
- *     parameters:
- *       - in: path
- *         name: id
- *         required: true
- *         schema:
- *           type: string
- *           format: uuid
- *       - in: path
- *         name: messageId
- *         required: true
- *         schema:
- *           type: string
- *           format: uuid
- *     responses:
- *       200:
- *         description: Message marked as read
- *       404:
- *         description: Chat or message not found
- *       403:
- *         description: Not a participant in this chat
- */
-router.post('/:id/messages/:messageId/read', validateJWT, async (req, res) => {
-  // Implementation will be added in the controller
+  res.status(201).json({
+    success: true,
+    data: null,
+    message: 'Send message endpoint - implementation pending'
+  });
 });
 
 /**
@@ -254,9 +259,9 @@ router.post('/:id/messages/:messageId/read', validateJWT, async (req, res) => {
  *           schema:
  *             type: object
  *             required:
- *               - participants
+ *               - user_ids
  *             properties:
- *               participants:
+ *               user_ids:
  *                 type: array
  *                 items:
  *                   type: string
@@ -264,15 +269,27 @@ router.post('/:id/messages/:messageId/read', validateJWT, async (req, res) => {
  *     responses:
  *       200:
  *         description: Participants added
- *       400:
- *         description: Invalid input
  *       404:
  *         description: Chat not found
  *       403:
- *         description: Not authorized to modify this chat
+ *         description: Not authorized to add participants
  */
-router.post('/:id/participants', validateJWT, requireRole(['admin', 'teacher']), async (req, res) => {
+router.post('/:id/participants', async (req, res) => {
+  const user = (req as any).user;
+  
+  // Verificar se é admin ou teacher
+  if (!['SYSTEM_ADMIN', 'INSTITUTION_MANAGER', 'TEACHER'].includes(user.role)) {
+    return res.status(403).json({
+      success: false,
+      message: 'Acesso negado - apenas administradores e professores podem adicionar participantes'
+    });
+  }
+
   // Implementation will be added in the controller
+  return res.json({
+    success: true,
+    message: 'Add participants endpoint - implementation pending'
+  });
 });
 
 export default router;

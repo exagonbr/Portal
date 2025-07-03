@@ -6,8 +6,7 @@ import { UserClass, CreateUserClassData, UserClassRole, USER_CLASS_ROLE_LABELS, 
 import { userClassService } from '@/services/userClassService';
 import { classService } from '@/services/classService';
 import { userService } from '@/services/userService';
-import { Class } from '@/types/class';
-import { UserResponseDto } from '@/types/api';
+import { ClassResponseDto, UserResponseDto } from '@/types/api';
 
 interface UserClassModalProps {
   isOpen: boolean;
@@ -25,7 +24,7 @@ export default function UserClassModal({ isOpen, onClose, onSuccess, classId, us
     enrollment_date: new Date()
   });
   const [enrollmentDateStr, setEnrollmentDateStr] = useState(new Date().toISOString().split('T')[0]);
-  const [classes, setClasses] = useState<Class[]>([]);
+  const [classes, setClasses] = useState<ClassResponseDto[]>([]);
   const [users, setUsers] = useState<UserResponseDto[]>([]);
   const [enrolledUsers, setEnrolledUsers] = useState<UserClassWithDetails[]>([]);
   const [searchTerm, setSearchTerm] = useState('');
@@ -55,7 +54,7 @@ export default function UserClassModal({ isOpen, onClose, onSuccess, classId, us
       setClasses(classesResponse.items || []);
       setUsers(usersResponse.items || []);
     } catch (error) {
-      console.error('Erro ao carregar dados:', error);
+      console.log('Erro ao carregar dados:', error);
     }
   };
 
@@ -64,7 +63,7 @@ export default function UserClassModal({ isOpen, onClose, onSuccess, classId, us
       const response = await userClassService.getByClass(classId);
       setEnrolledUsers(response.data || []);
     } catch (error) {
-      console.error('Erro ao carregar usuários matriculados:', error);
+      console.log('Erro ao carregar usuários matriculados:', error);
     }
   };
 
@@ -125,57 +124,31 @@ export default function UserClassModal({ isOpen, onClose, onSuccess, classId, us
   if (!isOpen) return null;
 
   return (
-    <div className="fixed inset-0 bg-sidebar-bg/90 backdrop-blur-md flex items-center justify-center z-50 p-4 animate-fade-in">
-      <div className="card-modern w-full max-w-5xl max-h-[90vh] overflow-hidden flex flex-col">
-        {/* Header moderno */}
-        <div className="p-6 border-b border-border-light bg-gradient-to-r from-primary/5 to-secondary/5">
-          <div className="flex justify-between items-center">
-            <div className="flex items-center gap-4">
-              <div className="w-12 h-12 bg-gradient-to-r from-primary to-secondary rounded-xl flex items-center justify-center">
-                <Users className="w-6 h-6 text-white" />
-              </div>
-              <div>
-                <h2 className="text-2xl font-bold text-text-primary">
-                  Gerenciar Usuários da Turma
-                </h2>
-                <p className="text-text-tertiary text-sm">
-                  Matricule e gerencie usuários nas turmas
-                </p>
-              </div>
-            </div>
-            <button
-              onClick={onClose}
-              className="button-icon hover:bg-error/10 hover:text-error group"
-            >
-              <X className="w-5 h-5 group-hover:scale-110 transition-transform duration-200" />
-            </button>
-          </div>
+    <div className="fixed inset-0 bg-background-primary bg-opacity-50 flex items-center justify-center z-50">
+      <div className="bg-background-secondary rounded-lg p-6 w-full max-w-4xl max-h-[90vh] overflow-hidden flex flex-col">
+        <div className="flex justify-between items-center mb-4 flex-shrink-0">
+          <h2 className="text-xl font-semibold text-text-primary">Gerenciar Usuários da Turma</h2>
+          <button
+            onClick={onClose}
+            className="text-text-secondary hover:text-text-primary"
+          >
+            <X className="w-5 h-5" />
+          </button>
         </div>
 
         {/* Error Alert modernizado */}
         {error && (
-          <div className="mx-6 mt-4 rounded-xl bg-error/10 border border-error/20 p-4 animate-slide-down">
-            <div className="flex items-start gap-3">
-              <div className="w-8 h-8 bg-error/20 rounded-lg flex items-center justify-center flex-shrink-0">
-                <svg className="w-4 h-4 text-error" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-2.004-.833-.77-2.5 1.732-2.5z" />
-                </svg>
-              </div>
-              <div>
-                <h3 className="text-sm font-semibold text-error">Erro</h3>
-                <p className="text-sm text-text-secondary mt-1">{error}</p>
-              </div>
-            </div>
+          <div className="mb-4 p-3 bg-error-light border border-error-dark text-error-text rounded">
+            {error}
           </div>
         )}
 
-        {/* Tabs modernos */}
-        <div className="flex border-b border-border-light bg-background-tertiary mx-6 mt-4 rounded-xl overflow-hidden">
+        <div className="flex space-x-1 mb-4 flex-shrink-0">
           <button
             className={`flex-1 px-6 py-4 font-medium transition-all duration-200 flex items-center justify-center gap-2 ${
               activeTab === 'enroll'
-                ? 'bg-primary text-white shadow-lg'
-                : 'text-text-secondary hover:text-primary hover:bg-background-hover'
+                ? 'text-accent-blue border-b-2 border-accent-blue'
+                : 'text-text-secondary hover:text-text-primary'
             }`}
             onClick={() => setActiveTab('enroll')}
           >
@@ -185,8 +158,8 @@ export default function UserClassModal({ isOpen, onClose, onSuccess, classId, us
           <button
             className={`flex-1 px-6 py-4 font-medium transition-all duration-200 flex items-center justify-center gap-2 ${
               activeTab === 'manage'
-                ? 'bg-primary text-white shadow-lg'
-                : 'text-text-secondary hover:text-primary hover:bg-background-hover'
+                ? 'text-accent-blue border-b-2 border-accent-blue'
+                : 'text-text-secondary hover:text-text-primary'
             }`}
             onClick={() => setActiveTab('manage')}
           >
@@ -195,7 +168,7 @@ export default function UserClassModal({ isOpen, onClose, onSuccess, classId, us
           </button>
         </div>
 
-        <div className="flex-1 overflow-y-auto p-6 scrollbar-thin">
+        <div className="flex-1 overflow-hidden">
           {activeTab === 'enroll' ? (
             <form onSubmit={handleEnroll} className="space-y-6">
               {!classId && (
@@ -211,13 +184,13 @@ export default function UserClassModal({ isOpen, onClose, onSuccess, classId, us
                         loadEnrolledUsers(e.target.value);
                       }
                     }}
-                    className="input-field-modern"
+                    className="w-full px-3 py-2 border border-border-DEFAULT rounded-lg focus:ring-2 focus:ring-primary bg-background-primary"
                     required
                   >
                     <option value="">Selecione uma turma</option>
                     {classes.map((classItem) => (
                       <option key={classItem.id} value={classItem.id}>
-                        {classItem.name} - {classItem.code}
+                        {classItem.name} - {classItem.description}
                       </option>
                     ))}
                   </select>
@@ -235,29 +208,30 @@ export default function UserClassModal({ isOpen, onClose, onSuccess, classId, us
                     placeholder="Digite o nome ou email do usuário..."
                     value={searchTerm}
                     onChange={(e) => setSearchTerm(e.target.value)}
-                    className="input-field-modern pl-10"
+                    placeholder="Buscar por nome ou email..."
+                    className="w-full pl-10 pr-3 py-2 border border-border-DEFAULT rounded-lg focus:ring-2 focus:ring-primary bg-background-primary"
                   />
                 </div>
               </div>
 
-              {!userId && (
-                <div>
-                  <label className="block text-sm font-semibold text-text-primary mb-3">
-                    Usuário Disponível
-                  </label>
-                  <select
-                    value={formData.user_id}
-                    onChange={(e) => setFormData({ ...formData, user_id: e.target.value })}
-                    className="input-field-modern"
-                    required
-                  >
-                    <option value="">Selecione um usuário</option>
-                    {availableUsers.map((user) => (
-                      <option key={user.id} value={user.id}>
-                        {user.name} ({user.email})
-                      </option>
-                    ))}
-                  </select>
+              {searchTerm && (
+                <div className="mb-4 max-h-48 overflow-y-auto border border-border-DEFAULT rounded-lg">
+                  {availableUsers.length === 0 ? (
+                    <p className="p-4 text-center text-text-secondary">Nenhum usuário disponível encontrado</p>
+                  ) : (
+                    availableUsers.map((user) => (
+                      <div
+                        key={user.id}
+                        className={`p-3 hover:bg-background-tertiary cursor-pointer ${
+                          formData.user_id === user.id ? 'bg-accent-blue-light' : ''
+                        }`}
+                        onClick={() => setFormData({ ...formData, user_id: user.id })}
+                      >
+                        <p className="font-medium text-text-primary">{user.name}</p>
+                        <p className="text-sm text-text-secondary">{user.email}</p>
+                      </div>
+                    ))
+                  )}
                 </div>
               )}
 
@@ -269,7 +243,7 @@ export default function UserClassModal({ isOpen, onClose, onSuccess, classId, us
                   <select
                     value={formData.role}
                     onChange={(e) => setFormData({ ...formData, role: e.target.value as UserClassRole })}
-                    className="input-field-modern"
+                    className="w-full px-3 py-2 border border-border-DEFAULT rounded-lg focus:ring-2 focus:ring-primary bg-background-primary"
                     required
                   >
                     {Object.entries(USER_CLASS_ROLE_LABELS).map(([value, label]) => (
@@ -288,7 +262,7 @@ export default function UserClassModal({ isOpen, onClose, onSuccess, classId, us
                     type="date"
                     value={enrollmentDateStr}
                     onChange={(e) => setEnrollmentDateStr(e.target.value)}
-                    className="input-field-modern"
+                    className="w-full px-3 py-2 border border-border-DEFAULT rounded-lg focus:ring-2 focus:ring-primary bg-background-primary"
                     required
                   />
                 </div>
@@ -297,8 +271,8 @@ export default function UserClassModal({ isOpen, onClose, onSuccess, classId, us
               <div className="flex gap-4 pt-6 border-t border-border-light">
                 <button
                   type="submit"
-                  disabled={loading}
-                  className="button-primary flex-1 group"
+                  disabled={loading || !formData.user_id || !formData.class_id}
+                  className="px-4 py-2 bg-accent-blue text-white rounded-lg hover:bg-accent-blue-dark disabled:opacity-50 flex items-center gap-2"
                 >
                   {loading ? (
                     <div className="loading-spinner w-4 h-4 border-white/30 border-t-white mr-2"></div>
@@ -317,16 +291,32 @@ export default function UserClassModal({ isOpen, onClose, onSuccess, classId, us
               </div>
             </form>
           ) : (
-            <div className="space-y-6">
-              {/* Header de estatísticas */}
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                <div className="stat-card">
-                  <div className="flex items-center justify-between">
-                    <div>
-                      <p className="stat-label">Total de Alunos</p>
-                      <p className="stat-value text-primary">
-                        {enrolledUsers.filter(u => u.role === 'STUDENT').length}
-                      </p>
+            <div>
+              {enrolledUsers.length === 0 ? (
+                <p className="text-center text-text-secondary py-8">Nenhum usuário matriculado nesta turma</p>
+              ) : (
+                <div className="space-y-2">
+                  {enrolledUsers.map((userClass) => (
+                    <div
+                      key={userClass.id}
+                      className="flex items-center justify-between p-4 bg-background-tertiary rounded-lg"
+                    >
+                      <div>
+                        <p className="font-medium text-text-primary">{userClass.user_name || 'Usuário não encontrado'}</p>
+                        <p className="text-sm text-text-secondary">
+                          {userClass.user_email} • {USER_CLASS_ROLE_LABELS[userClass.role]}
+                        </p>
+                        <p className="text-xs text-text-tertiary">
+                          Matriculado em: {new Date(userClass.enrollment_date).toLocaleDateString('pt-BR')}
+                        </p>
+                      </div>
+                      <button
+                        onClick={() => handleUnenroll(userClass.id)}
+                        className="px-3 py-1 bg-error-light text-error rounded-lg hover:bg-error-dark flex items-center gap-1"
+                      >
+                        <UserMinus className="w-4 h-4" />
+                        Remover
+                      </button>
                     </div>
                     <div className="w-12 h-12 bg-primary/10 rounded-xl flex items-center justify-center">
                       <GraduationCap className="w-6 h-6 text-primary" />
@@ -419,6 +409,16 @@ export default function UserClassModal({ isOpen, onClose, onSuccess, classId, us
               </div>
             </div>
           )}
+        </div>
+
+        <div className="mt-4 pt-4 border-t flex justify-end">
+          <button
+            type="button"
+            onClick={onClose}
+            className="px-4 py-2 text-text-secondary bg-background-tertiary rounded-lg hover:bg-secondary-light"
+          >
+            Fechar
+          </button>
         </div>
       </div>
     </div>

@@ -1,4 +1,4 @@
-import { apiClient, handleApiError, ApiClientError, isAuthError } from './apiClient';
+import { apiClient, handleApiError, ApiClientError, isAuthError } from '@/lib/api-client';
 import { 
   LoginDto, 
   AuthResponseDto, 
@@ -43,16 +43,12 @@ export class AuthService {
         };
       }
 
-      console.log('✅ AuthService: Login bem-sucedido, salvando dados do usuário');
-      console.log(`🔍 AuthService: Role recebida do backend: "${responseData.user.role}"`);
+      const { user, token } = response.data;
 
       // Salva o token e dados do usuário
-      this.saveAuthData(
-        responseData.token,
-        responseData.sessionId || '',
-        responseData.user,
-        responseData.expires_at || new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString()
-      );
+      if (typeof window !== 'undefined') {
+        localStorage.setItem('accessToken', token);
+      }
 
       // Converte UserResponseDto para User (compatibilidade)
       const compatibleUser = this.convertToCompatibleUser(responseData.user);
@@ -63,7 +59,7 @@ export class AuthService {
         user: compatibleUser
       };
     } catch (error) {
-      console.error('❌ AuthService: Erro no login:', error);
+      console.log('Erro no login:', error);
       
       if (error instanceof ApiClientError) {
         if (error.status === 401) {
@@ -122,17 +118,12 @@ export class AuthService {
         };
       }
 
-      const { user, token, sessionId, expires_at } = response.data;
-
-      if (!user || !token || !sessionId || !expires_at) {
-        return {
-          success: false,
-          message: 'Resposta do servidor incompleta'
-        };
-      }
+      const { user, token } = response.data;
 
       // Salva o token e dados do usuário
-      this.saveAuthData(token, sessionId, user, expires_at);
+      if (typeof window !== 'undefined') {
+        localStorage.setItem('accessToken', token);
+      }
 
       // Converte UserResponseDto para User (compatibilidade)
       const compatibleUser = this.convertToCompatibleUser(user);
@@ -142,7 +133,7 @@ export class AuthService {
         user: compatibleUser
       };
     } catch (error) {
-      console.error('Erro no registro:', error);
+      console.log('Erro no registro:', error);
       
       if (error instanceof ApiClientError) {
         if (error.status === 409) {
@@ -171,33 +162,18 @@ export class AuthService {
    */
   async getCurrentUser(): Promise<User | null> {
     try {
-      // Verifica se há token válido
-      if (!this.isAuthenticated()) {
-        return null;
-      }
-
-      const response = await apiClient.get<UserWithRoleDto>('/users/me');
+      const response = await apiClient.get<UserWithRoleDto>('/user/me');
 
       if (!response.success || !response.data) {
-        // Token pode estar expirado, limpa dados
-        this.clearAuthData();
         return null;
       }
 
       const user = this.convertToCompatibleUser(response.data);
       
-      // Atualiza dados do usuário no storage
-      this.saveUserData(user);
-
       return user;
     } catch (error) {
-      console.error('Erro ao buscar usuário atual:', error);
+      console.log('Erro ao buscar usuário atual:', error);
       
-      // Se for erro de autenticação, limpa dados
-      if (isAuthError(error)) {
-        this.clearAuthData();
-      }
-
       return null;
     }
   }
@@ -210,11 +186,12 @@ export class AuthService {
       // Tenta fazer logout no servidor
       await apiClient.post('/auth/logout');
     } catch (error) {
-      console.error('Erro no logout do servidor:', error);
+      console.log('Erro no logout do servidor:', error);
       // Continua com logout local mesmo se houver erro no servidor
     } finally {
-      // Sempre limpa dados locais
-      this.clearAuthData();
+      if (typeof window !== 'undefined') {
+        localStorage.removeItem('accessToken');
+      }
     }
   }
 
@@ -224,65 +201,79 @@ export class AuthService {
   isAuthenticated(): boolean {
     if (typeof window === 'undefined') return false;
 
-    const token = this.getStoredToken();
-    if (!token) return false;
+    const token = localStorage.getItem('accessToken');
+    return !!token;
+  }
+  
+  /**
+   * Altera senha do usuário
+   */
+  async changePassword(currentPassword: string, newPassword: string): Promise<void> {
+    try {
+      const response = await apiClient.post('/user/me/change-password', {
+        currentPassword,
+        newPassword
+      });
 
-    // Verifica se token não expirou
-    const expiresAt = localStorage.getItem('auth_expires_at');
-    if (expiresAt) {
-      const expirationDate = new Date(expiresAt);
-      if (expirationDate <= new Date()) {
-        this.clearAuthData();
-        return false;
+      if (!response.success) {
+        throw new Error(response.message || 'Falha ao alterar senha');
       }
+    } catch (error) {
+      console.log('Erro ao alterar senha:', error);
+      throw new Error(handleApiError(error));
+    }
+  }
+
+  /**
+   * Solicita recuperação de senha
+   */
+  async requestPasswordReset(email: string): Promise<void> {
+    try {
+      const response = await apiClient.post('/auth/forgot-password', { email });
+
+      if (!response.success) {
+        throw new Error(response.message || 'Falha ao solicitar recuperação de senha');
+      }
+    } catch (error) {
+      console.log('Erro ao solicitar recuperação de senha:', error);
+      throw new Error(handleApiError(error));
+    }
+  }
+
+  /**
+   * Redefine senha com token
+   */
+  async resetPassword(token: string, newPassword: string): Promise<void> {
+    try {
+      const response = await apiClient.post('/auth/reset-password', {
+        token,
+        password: newPassword
+      });
+
+      if (!response.success) {
+        throw new Error(response.message || 'Falha ao redefinir senha');
+      }
+    } catch (error) {
+      console.log('Erro ao redefinir senha:', error);
+      throw new Error(handleApiError(error));
+    }
+  }
+
+  private convertToCompatibleUser(apiUser: UserResponseDto): User {
+    // Mapear role_id para role baseado no UserWithRoleDto se disponível
+    let role: UserRole = UserRole.STUDENT; // default
+    if ('role_name' in apiUser) {
+      const roleMapping: Record<string, UserRole> = {
+        'Aluno': UserRole.STUDENT,
+        'Professor': UserRole.TEACHER,
+        'Gestor': UserRole.INSTITUTION_MANAGER,
+        'Administrador': UserRole.SYSTEM_ADMIN,
+        'Coordenador Acadêmico': UserRole.COORDINATOR,
+        'Responsável': UserRole.GUARDIAN
+      };
+      role = roleMapping[(apiUser as UserWithRoleDto).role_name] || 'student';
     }
 
-    return true;
-  }
-
-  /**
-   * Salva dados de autenticação
-   */
-  private saveAuthData(token: string, refreshToken: string, user: UserResponseDto, expiresAt: string): void {
-    if (typeof window === 'undefined') return;
-
-    // Salva tokens
-    apiClient.setAuthToken(token, refreshToken, expiresAt);
-
-    // Salva dados do usuário
-    this.saveUserData(this.convertToCompatibleUser(user));
-  }
-
-  /**
-   * Salva dados do usuário
-   */
-  private saveUserData(user: User): void {
-    if (typeof window === 'undefined') return;
-    localStorage.setItem('user_data', JSON.stringify(user));
-  }
-
-  /**
-   * Limpa dados de autenticação
-   */
-  private clearAuthData(): void {
-    if (typeof window === 'undefined') return;
-    
-    apiClient.clearAuth();
-    localStorage.removeItem('user_data');
-  }
-
-  /**
-   * Obtém token armazenado
-   */
-  private getStoredToken(): string | null {
-    if (typeof window === 'undefined') return null;
-    return localStorage.getItem('auth_token');
-  }
-
-  /**
-   * Converte UserResponseDto para User
-   */
-  private convertToCompatibleUser(apiUser: UserResponseDto): User {
     return {
       id: apiUser.id,
       name: apiUser.name,
@@ -307,14 +298,23 @@ export const getCurrentUser = () => authService.getCurrentUser();
 export const logout = () => authService.logout();
 export const isAuthenticated = () => authService.isAuthenticated();
 
+/**
+ * Obtém o token de autenticação do localStorage
+ * Função utilitária para compatibilidade com outros serviços
+ */
+export const getAuthToken = (): string | null => {
+  if (typeof window === 'undefined') return null;
+  return localStorage.getItem('accessToken');
+};
+
 // Funções de gerenciamento de usuários (mantidas para compatibilidade)
 export const listUsers = async (): Promise<User[]> => {
   try {
     const { userService } = await import('./userService');
     const result = await userService.getUsers();
-    return result.items.map(user => authService['convertToCompatibleUser'](user));
+    return result.items.map(user => authService['convertToCompatibleUser'](user as any));
   } catch (error) {
-    console.error('Erro ao listar usuários:', error);
+    console.log('Erro ao listar usuários:', error);
     return [];
   }
 };
@@ -325,21 +325,19 @@ export const createUser = async (userData: Omit<User, 'id'>): Promise<User> => {
     
     // Mapear role para role_id - seria melhor buscar roles reais da API
     const roleMapping: Record<UserRole, string> = {
-      'student': 'student-role-id',
-      'teacher': 'teacher-role-id', 
-      'admin': 'admin-role-id',
-      'manager': 'manager-role-id',
-      'system_admin': 'system-admin-role-id',
-      'institution_manager': 'institution-manager-role-id',
-      'academic_coordinator': 'academic-coordinator-role-id',
-      'guardian': 'guardian-role-id'
+      'STUDENT': 'student-role-id',
+      'TEACHER': 'teacher-role-id', 
+      'SYSTEM_ADMIN': 'admin-role-id',
+      'INSTITUTION_MANAGER': 'manager-role-id',
+      'COORDINATOR': 'academic-coordinator-role-id',
+      'GUARDIAN': 'guardian-role-id'
     };
 
     const createData = {
       email: userData.email,
       password: 'temp123', // Senha temporária
       name: userData.name,
-      role_id: (userData.role && roleMapping[userData.role as UserRole]) || roleMapping['student'],
+      role_id: (userData.role && roleMapping[userData.role as UserRole]) || roleMapping[UserRole.STUDENT],
       institution_id: userData.institution_id,
       endereco: userData.endereco,
       telefone: userData.telefone,
@@ -347,10 +345,10 @@ export const createUser = async (userData: Omit<User, 'id'>): Promise<User> => {
       is_active: userData.is_active ?? true
     };
     
-    const result = await userService.createUser(createData);
-    return authService['convertToCompatibleUser'](result);
+    const result = await userService.createUser(createData as any);
+    return authService['convertToCompatibleUser'](result as any);
   } catch (error) {
-    console.error('Erro ao criar usuário:', error);
+    console.log('Erro ao criar usuário:', error);
     throw error;
   }
 };
@@ -363,14 +361,12 @@ export const updateUser = async (id: string, userData: Partial<User>): Promise<U
     let role_id: string | undefined;
     if (userData.role) {
       const roleMapping: Record<UserRole, string> = {
-        'student': 'student-role-id',
-        'teacher': 'teacher-role-id', 
-        'admin': 'admin-role-id',
-        'manager': 'manager-role-id',
-        'system_admin': 'system-admin-role-id',
-        'institution_manager': 'institution-manager-role-id',
-        'academic_coordinator': 'academic-coordinator-role-id',
-        'guardian': 'guardian-role-id'
+        'STUDENT': 'student-role-id',
+        'TEACHER': 'teacher-role-id', 
+        'INSTITUTION_MANAGER': 'manager-role-id',
+        'SYSTEM_ADMIN': 'system-admin-role-id',
+        'COORDINATOR': 'academic-coordinator-role-id',
+        'GUARDIAN': 'guardian-role-id'
       };
       role_id = roleMapping[userData.role];
     }
@@ -386,10 +382,10 @@ export const updateUser = async (id: string, userData: Partial<User>): Promise<U
       is_active: userData.is_active
     };
     
-    const result = await userService.updateUser(id, updateData);
-    return result ? authService['convertToCompatibleUser'](result) : null;
+    const result = await userService.updateUser(id, updateData as any);
+    return result ? authService['convertToCompatibleUser'](result as any) : null;
   } catch (error) {
-    console.error('Erro ao atualizar usuário:', error);
+    console.log('Erro ao atualizar usuário:', error);
     return null;
   }
 };
@@ -400,7 +396,7 @@ export const deleteUser = async (id: string): Promise<boolean> => {
     await userService.deleteUser(id);
     return true;
   } catch (error) {
-    console.error('Erro ao deletar usuário:', error);
+    console.log('Erro ao deletar usuário:', error);
     return false;
   }
 };

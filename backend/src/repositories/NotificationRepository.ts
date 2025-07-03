@@ -1,8 +1,7 @@
 import { BaseRepository } from './BaseRepository';
 import { 
-  Notification, 
-  CreateNotificationData, 
-  UpdateNotificationData, 
+  Notification,
+  CreateNotificationData,
   NotificationFilters,
   NotificationWithSender,
   NotificationStats
@@ -34,11 +33,11 @@ export class NotificationRepository extends BaseRepository<Notification> {
 
   override async findById(id: string): Promise<NotificationWithSender | null> {
     const result = await this.db(this.tableName)
-      .leftJoin('users', 'notifications.sender_id', 'users.id')
+      .leftJoin('User', 'notifications.sender_id', 'User.id')
       .select(
         'notifications.*',
-        'users.name as sender_name',
-        'users.email as sender_email'
+        'User.name as sender_name',
+        'User.email as sender_email'
       )
       .where('notifications.id', id)
       .first();
@@ -53,11 +52,11 @@ export class NotificationRepository extends BaseRepository<Notification> {
     offset: number = 0
   ): Promise<NotificationWithSender[]> {
     let query = this.db(this.tableName)
-      .leftJoin('users', 'notifications.sender_id', 'users.id')
+      .leftJoin('User', 'notifications.sender_id', 'User.id')
       .select(
         'notifications.*',
-        'users.name as sender_name',
-        'users.email as sender_email'
+        'User.name as sender_name',
+        'User.email as sender_email'
       )
       .where('notifications.recipient_id', recipientId);
 
@@ -95,11 +94,11 @@ export class NotificationRepository extends BaseRepository<Notification> {
 
   async findUnreadByRecipient(recipientId: string): Promise<NotificationWithSender[]> {
     const results = await this.db(this.tableName)
-      .leftJoin('users', 'notifications.sender_id', 'users.id')
+      .leftJoin('User', 'notifications.sender_id', 'User.id')
       .select(
         'notifications.*',
-        'users.name as sender_name',
-        'users.email as sender_email'
+        'User.name as sender_name',
+        'User.email as sender_email'
       )
       .where('notifications.recipient_id', recipientId)
       .whereNull('notifications.read_at')

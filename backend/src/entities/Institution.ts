@@ -15,7 +15,7 @@ export enum InstitutionType {
   MIXED = 'MIXED'
 }
 
-@Entity('institutions')
+@Entity('institution')
 export class Institution {
   @PrimaryGeneratedColumn('uuid')
   id: string;

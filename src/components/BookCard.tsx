@@ -14,6 +14,8 @@ import {
   StarIcon as StarSolidIcon
 } from '@heroicons/react/24/solid';
 import BookModal from './BookModal';
+import { useTheme } from '@/contexts/ThemeContext';
+import { motion } from 'framer-motion';
 
 interface BookCardProps {
   id: string;
@@ -33,6 +35,7 @@ interface BookCardProps {
 export default function BookCard({ viewMode = 'grid', onBookOpen, ...props }: BookCardProps) {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [isFavorite, setIsFavorite] = useState(false);
+  const { theme } = useTheme();
   const { thumbnail, title, duration, progress, author, publisher, id, pageCount, format } = props;
 
   // Mock data for annotations and highlights
@@ -45,51 +48,72 @@ export default function BookCard({ viewMode = 'grid', onBookOpen, ...props }: Bo
 
   const ActionButtons: React.FC<ActionButtonsProps> = ({ size = 'default' }) => (
     <>
-      <button
+      <motion.button
+        whileHover={{ scale: 1.05 }}
+        whileTap={{ scale: 0.95 }}
         onClick={onBookOpen}
         className={`${
-          size === 'small'
-            ? 'p-2 rounded-xl bg-gradient-to-r from-blue-500 to-blue-600 hover:from-blue-600 hover:to-blue-700 text-white shadow-lg hover:shadow-xl transform hover:scale-105 transition-all duration-200'
-            : 'p-3 rounded-xl bg-gradient-to-r from-blue-500 to-blue-600 hover:from-blue-600 hover:to-blue-700 text-white shadow-lg hover:shadow-xl transform hover:scale-105 transition-all duration-200'
-        }`}
+          size === 'small' ? 'p-2' : 'p-3'
+        } rounded-xl text-white shadow-lg hover:shadow-xl transition-all duration-200`}
+        style={{
+          background: `linear-gradient(135deg, ${theme.colors.primary.DEFAULT}, ${theme.colors.primary.dark})`
+        }}
         aria-label="Abrir livro"
       >
         <BookOpenIcon className={size === 'small' ? 'w-4 h-4' : 'w-5 h-5'} />
-      </button>
-      <button
+      </motion.button>
+      <motion.button
+        whileHover={{ scale: 1.05 }}
+        whileTap={{ scale: 0.95 }}
         onClick={() => setIsModalOpen(true)}
         className={`${
-          size === 'small'
-            ? 'p-2 rounded-xl bg-gradient-to-r from-gray-500 to-gray-600 hover:from-gray-600 hover:to-gray-700 text-white shadow-lg hover:shadow-xl transform hover:scale-105 transition-all duration-200'
-            : 'p-3 rounded-xl bg-gradient-to-r from-gray-500 to-gray-600 hover:from-gray-600 hover:to-gray-700 text-white shadow-lg hover:shadow-xl transform hover:scale-105 transition-all duration-200'
-        }`}
+          size === 'small' ? 'p-2' : 'p-3'
+        } rounded-xl text-white shadow-lg hover:shadow-xl transition-all duration-200`}
+        style={{
+          backgroundColor: theme.colors.text.secondary
+        }}
         aria-label="Mais informações"
       >
         <InformationCircleIcon className={size === 'small' ? 'w-4 h-4' : 'w-5 h-5'} />
-      </button>
+      </motion.button>
     </>
   );
 
   const StatusIcons = () => (
     <>
-      <button
+      <motion.button
+        whileHover={{ scale: 1.1 }}
+        whileTap={{ scale: 0.9 }}
         onClick={() => setIsFavorite(!isFavorite)}
-        className="p-2 rounded-xl bg-white/90 backdrop-blur-sm hover:bg-white shadow-lg hover:shadow-xl transition-all duration-200 transform hover:scale-110"
+        className="p-2 rounded-xl backdrop-blur-sm shadow-lg hover:shadow-xl transition-all duration-200"
+        style={{
+          backgroundColor: theme.colors.background.card + 'E6'
+        }}
       >
         {isFavorite ? (
-          <HeartSolidIcon className="w-4 h-4 text-red-500" />
+          <HeartSolidIcon className="w-4 h-4" style={{ color: theme.colors.status.error }} />
         ) : (
-          <HeartIcon className="w-4 h-4 text-gray-600 hover:text-red-500" />
+          <HeartIcon className="w-4 h-4" style={{ color: theme.colors.text.secondary }} />
         )}
-      </button>
+      </motion.button>
       {hasAnnotations && (
-        <div className="p-2 rounded-xl bg-white/90 backdrop-blur-sm shadow-lg">
-          <PencilSquareSolidIcon className="w-4 h-4 text-amber-500" />
+        <div 
+          className="p-2 rounded-xl backdrop-blur-sm shadow-lg"
+          style={{
+            backgroundColor: theme.colors.background.card + 'E6'
+          }}
+        >
+          <PencilSquareSolidIcon className="w-4 h-4" style={{ color: theme.colors.accent.DEFAULT }} />
         </div>
       )}
       {hasHighlights && (
-        <div className="p-2 rounded-xl bg-white/90 backdrop-blur-sm shadow-lg">
-          <StarSolidIcon className="w-4 h-4 text-yellow-500" />
+        <div 
+          className="p-2 rounded-xl backdrop-blur-sm shadow-lg"
+          style={{
+            backgroundColor: theme.colors.background.card + 'E6'
+          }}
+        >
+          <StarSolidIcon className="w-4 h-4" style={{ color: theme.colors.secondary.DEFAULT }} />
         </div>
       )}
     </>
@@ -97,10 +121,15 @@ export default function BookCard({ viewMode = 'grid', onBookOpen, ...props }: Bo
 
   const ProgressBar = () => (
     progress !== undefined && progress > 0 ? (
-      <div className="h-2 bg-gray-200 rounded-full overflow-hidden shadow-inner">
-        <div
-          className="h-full bg-gradient-to-r from-blue-500 to-purple-600 rounded-full transition-all duration-500 ease-out"
-          style={{ width: `${progress}%` }}
+      <div className="h-2 rounded-full overflow-hidden shadow-inner" style={{ backgroundColor: theme.colors.background.secondary }}>
+        <motion.div
+          initial={{ width: 0 }}
+          animate={{ width: `${progress}%` }}
+          transition={{ duration: 0.5, ease: "easeOut" }}
+          className="h-full rounded-full"
+          style={{
+            background: `linear-gradient(90deg, ${theme.colors.primary.DEFAULT}, ${theme.colors.secondary.DEFAULT})`
+          }}
         />
       </div>
     ) : null
@@ -109,11 +138,14 @@ export default function BookCard({ viewMode = 'grid', onBookOpen, ...props }: Bo
   const FormatBadge = ({ className = "" }: { className?: string }) => (
     format && (
       <div className={`absolute top-3 right-3 ${className}`}>
-        <span className={`px-2 py-1 text-xs font-semibold rounded-lg shadow-lg ${
-          format?.toUpperCase() === 'PDF' 
-            ? 'bg-gradient-to-r from-red-500 to-red-600 text-white' 
-            : 'bg-gradient-to-r from-green-500 to-green-600 text-white'
-        }`}>
+        <span 
+          className="px-2 py-1 text-xs font-semibold rounded-lg shadow-lg text-white"
+          style={{
+            background: format?.toUpperCase() === 'PDF' 
+              ? `linear-gradient(135deg, ${theme.colors.status.error}, ${theme.colors.status.error}DD)`
+              : `linear-gradient(135deg, ${theme.colors.status.success}, ${theme.colors.status.success}DD)`
+          }}
+        >
           {format?.toUpperCase()}
         </span>
       </div>
@@ -122,7 +154,16 @@ export default function BookCard({ viewMode = 'grid', onBookOpen, ...props }: Bo
 
   if (viewMode === 'list') {
     return (
-      <div className="w-full bg-white rounded-2xl shadow-lg hover:shadow-2xl overflow-hidden transition-all duration-300 transform hover:scale-[1.02] border border-gray-100">
+      <motion.div 
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        whileHover={{ scale: 1.02 }}
+        className="w-full rounded-2xl shadow-lg hover:shadow-2xl overflow-hidden transition-all duration-300 border"
+        style={{
+          backgroundColor: theme.colors.background.card,
+          borderColor: theme.colors.border.light
+        }}
+      >
         <div className="p-4 flex gap-4">
           {/* Thumbnail */}
           <div className="relative w-24 h-32 flex-shrink-0">
@@ -132,9 +173,15 @@ export default function BookCard({ viewMode = 'grid', onBookOpen, ...props }: Bo
               className="w-full h-full object-cover object-center rounded-xl shadow-lg"
               loading="lazy"
             />
-            <div className={`absolute top-2 left-2 px-2 py-1 text-xs font-semibold rounded-lg shadow-lg ${
-              progress ? 'bg-gradient-to-r from-blue-500 to-purple-600 text-white' : 'bg-gray-200 text-gray-600'
-            }`}>
+            <div 
+              className="absolute top-2 left-2 px-2 py-1 text-xs font-semibold rounded-lg shadow-lg text-white"
+              style={{
+                background: progress 
+                  ? `linear-gradient(135deg, ${theme.colors.primary.DEFAULT}, ${theme.colors.primary.dark})`
+                  : theme.colors.background.secondary,
+                color: progress ? 'white' : theme.colors.text.secondary
+              }}
+            >
               {progress ? `${progress}%` : 'Novo'}
             </div>
             <FormatBadge className="top-2 right-2 left-auto" />
@@ -144,23 +191,30 @@ export default function BookCard({ viewMode = 'grid', onBookOpen, ...props }: Bo
           <div className="flex-1 min-w-0 flex flex-col justify-between">
             <div>
               <div className="flex justify-between items-start mb-2">
-                <h3 className="text-lg font-bold text-gray-900 line-clamp-2 pr-4 hover:text-blue-600 transition-colors">{title}</h3>
+                <h3 
+                  className="text-lg font-bold line-clamp-2 pr-4 transition-colors"
+                  style={{ color: theme.colors.text.primary }}
+                  onMouseEnter={(e) => e.currentTarget.style.color = theme.colors.primary.DEFAULT}
+                  onMouseLeave={(e) => e.currentTarget.style.color = theme.colors.text.primary}
+                >
+                  {title}
+                </h3>
                 <div className="flex gap-2 -mt-1">
                   <StatusIcons />
                 </div>
               </div>
-              <div className="text-sm text-gray-600 space-y-1">
-                <p className="flex items-center">
-                  <span className="font-semibold text-gray-800 mr-2">👤 Autor:</span>
+              <div className="text-sm space-y-1">
+                <p className="flex items-center" style={{ color: theme.colors.text.secondary }}>
+                  <span className="font-semibold mr-2">👤 Autor:</span>
                   <span className="truncate">{author}</span>
                 </p>
-                <p className="flex items-center">
-                  <span className="font-semibold text-gray-800 mr-2">🏢 Editora:</span>
+                <p className="flex items-center" style={{ color: theme.colors.text.secondary }}>
+                  <span className="font-semibold mr-2">🏢 Editora:</span>
                   <span className="truncate">{publisher}</span>
                 </p>
                 {pageCount && (
-                  <p className="flex items-center">
-                    <span className="font-semibold text-gray-800 mr-2">📖 Páginas:</span>
+                  <p className="flex items-center" style={{ color: theme.colors.text.secondary }}>
+                    <span className="font-semibold mr-2">📖 Páginas:</span>
                     <span>{pageCount}</span>
                   </p>
                 )}
@@ -175,14 +229,19 @@ export default function BookCard({ viewMode = 'grid', onBookOpen, ...props }: Bo
             </div>
           </div>
         </div>
-      </div>
+      </motion.div>
     );
   }
 
   if (viewMode === 'cover') {
     return (
-      <div className="relative group">
-        <div className="relative aspect-[2/3] rounded-2xl shadow-lg hover:shadow-2xl overflow-hidden transition-all duration-300 transform hover:scale-105">
+      <motion.div 
+        initial={{ opacity: 0, scale: 0.9 }}
+        animate={{ opacity: 1, scale: 1 }}
+        whileHover={{ scale: 1.05 }}
+        className="relative group"
+      >
+        <div className="relative aspect-[2/3] rounded-2xl shadow-lg hover:shadow-2xl overflow-hidden transition-all duration-300">
           <img
             src={thumbnail}
             alt={title}
@@ -191,9 +250,15 @@ export default function BookCard({ viewMode = 'grid', onBookOpen, ...props }: Bo
           />
 
           {/* Progress badge */}
-          <div className={`absolute top-3 left-3 px-2 py-1 text-xs font-semibold rounded-lg shadow-lg ${
-            progress ? 'bg-gradient-to-r from-blue-500 to-purple-600 text-white' : 'bg-white/90 text-gray-700'
-          }`}>
+          <div 
+            className="absolute top-3 left-3 px-2 py-1 text-xs font-semibold rounded-lg shadow-lg"
+            style={{
+              background: progress
+                ? `linear-gradient(135deg, ${theme.colors.primary.DEFAULT}, ${theme.colors.primary.dark})`
+                : theme.colors.background.card + 'E6',
+              color: progress ? 'white' : theme.colors.text.primary
+            }}
+          >
             {progress ? `${progress}%` : 'Novo'}
           </div>
 
@@ -223,20 +288,33 @@ export default function BookCard({ viewMode = 'grid', onBookOpen, ...props }: Bo
           {/* Progress bar */}
           {progress !== undefined && progress > 0 && (
             <div className="absolute bottom-0 left-0 right-0 h-1.5 bg-black/30">
-              <div
-                className="h-full bg-gradient-to-r from-blue-400 to-purple-500"
-                style={{ width: `${progress}%` }}
+              <motion.div
+                initial={{ width: 0 }}
+                animate={{ width: `${progress}%` }}
+                className="h-full"
+                style={{
+                  background: `linear-gradient(90deg, ${theme.colors.primary.light}, ${theme.colors.primary.dark})`
+                }}
               />
             </div>
           )}
         </div>
-      </div>
+      </motion.div>
     );
   }
 
   // Default grid view
   return (
-    <div className="w-full bg-white rounded-2xl shadow-lg hover:shadow-2xl overflow-hidden transition-all duration-300 transform hover:scale-[1.02] min-h-[180px] lg:min-h-[170px] border border-gray-100">
+    <motion.div 
+      initial={{ opacity: 0, y: 20 }}
+      animate={{ opacity: 1, y: 0 }}
+      whileHover={{ scale: 1.02 }}
+      className="w-full rounded-2xl shadow-lg hover:shadow-2xl overflow-hidden transition-all duration-300 min-h-[180px] lg:min-h-[170px] border"
+      style={{
+        backgroundColor: theme.colors.background.card,
+        borderColor: theme.colors.border.light
+      }}
+    >
       <div className="flex flex-col lg:flex-row h-full">
         {/* Thumbnail */}
         <div className="relative w-full lg:w-[38%] flex-shrink-0">
@@ -251,9 +329,15 @@ export default function BookCard({ viewMode = 'grid', onBookOpen, ...props }: Bo
             {/* Gradient overlay */}
             <div className="absolute inset-0 bg-gradient-to-t from-black/20 to-transparent" />
             
-            <div className={`absolute top-3 left-3 px-3 py-1.5 text-xs font-semibold rounded-xl shadow-lg backdrop-blur-sm ${
-              progress ? 'bg-gradient-to-r from-blue-500/90 to-purple-600/90 text-white' : 'bg-white/90 text-gray-700'
-            }`}>
+            <div 
+              className="absolute top-3 left-3 px-3 py-1.5 text-xs font-semibold rounded-xl shadow-lg backdrop-blur-sm"
+              style={{
+                background: progress
+                  ? `linear-gradient(135deg, ${theme.colors.primary.DEFAULT}E6, ${theme.colors.primary.dark}E6)`
+                  : theme.colors.background.card + 'E6',
+                color: progress ? 'white' : theme.colors.text.primary
+              }}
+            >
               {progress ? `${progress}%` : 'Novo'}
             </div>
 
@@ -262,9 +346,13 @@ export default function BookCard({ viewMode = 'grid', onBookOpen, ...props }: Bo
             {/* Progress bar */}
             {progress !== undefined && progress > 0 && (
               <div className="absolute bottom-0 left-0 right-0 h-2 bg-black/20">
-                <div
-                  className="h-full bg-gradient-to-r from-blue-400 to-purple-500"
-                  style={{ width: `${progress}%` }}
+                <motion.div
+                  initial={{ width: 0 }}
+                  animate={{ width: `${progress}%` }}
+                  className="h-full"
+                  style={{
+                    background: `linear-gradient(90deg, ${theme.colors.primary.light}, ${theme.colors.primary.dark})`
+                  }}
                 />
               </div>
             )}
@@ -277,31 +365,36 @@ export default function BookCard({ viewMode = 'grid', onBookOpen, ...props }: Bo
             <div className="absolute right-0 top-0 flex gap-2">
               <StatusIcons />
             </div>
-            <h3 className="text-base lg:text-lg font-bold text-gray-900 line-clamp-2 hover:text-blue-600 transition-colors pr-20">
+            <h3 
+              className="text-base lg:text-lg font-bold line-clamp-2 transition-colors pr-20"
+              style={{ color: theme.colors.text.primary }}
+              onMouseEnter={(e) => e.currentTarget.style.color = theme.colors.primary.DEFAULT}
+              onMouseLeave={(e) => e.currentTarget.style.color = theme.colors.text.primary}
+            >
               {title}
             </h3>
           </div>
 
           <div className="flex-1 overflow-hidden mt-1">
-            <div className="text-sm text-gray-600 space-y-2">
-              <p className="flex items-center">
-                <span className="font-semibold text-gray-800 mr-2">👤</span>
+            <div className="text-sm space-y-2">
+              <p className="flex items-center" style={{ color: theme.colors.text.secondary }}>
+                <span className="font-semibold mr-2">👤</span>
                 <span className="truncate">{author || 'Autor desconhecido'}</span>
               </p>
-              <p className="flex items-center">
-                <span className="font-semibold text-gray-800 mr-2">🏢</span>
+              <p className="flex items-center" style={{ color: theme.colors.text.secondary }}>
+                <span className="font-semibold mr-2">🏢</span>
                 <span className="truncate">{publisher}</span>
               </p>
               {pageCount && (
-                <p className="flex items-center">
-                  <span className="font-semibold text-gray-800 mr-2">📖</span>
+                <p className="flex items-center" style={{ color: theme.colors.text.secondary }}>
+                  <span className="font-semibold mr-2">📖</span>
                   <span>{pageCount} páginas</span>
                 </p>
               )}
             </div>
           </div>
 
-          <div className="mt-4 pt-3 border-t border-gray-100">
+          <div className="mt-4 pt-3 border-t" style={{ borderColor: theme.colors.border.light }}>
             <div className="flex justify-end gap-3">
               <ActionButtons />
             </div>
@@ -314,6 +407,6 @@ export default function BookCard({ viewMode = 'grid', onBookOpen, ...props }: Bo
         onClose={() => setIsModalOpen(false)}
         book={props}
       />
-    </div>
+    </motion.div>
   );
 }

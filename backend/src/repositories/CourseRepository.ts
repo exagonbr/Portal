@@ -43,18 +43,18 @@ export class CourseRepository extends BaseRepository<Course> {
     return this.db(this.tableName)
       .select(
         'courses.*',
-        'institutions.name as institution_name'
+        'institution.name as institution_name'
       )
-      .leftJoin('institutions', 'courses.institution_id', 'institutions.id');
+      .leftJoin('institution', 'courses.institution_id', 'institution.id');
   }
 
   async getCourseWithDetails(id: string): Promise<any | null> {
     const result = await this.db(this.tableName)
       .select(
         'courses.*',
-        'institutions.name as institution_name'
+        'institution.name as institution_name'
       )
-      .leftJoin('institutions', 'courses.institution_id', 'institutions.id')
+      .leftJoin('institution', 'courses.institution_id', 'institution.id')
       .where('courses.id', id)
       .first();
 
@@ -83,26 +83,26 @@ export class CourseRepository extends BaseRepository<Course> {
   async getCourseTeachers(courseId: string): Promise<any[]> {
     return this.db('course_teachers')
       .select(
-        'users.id',
-        'users.name',
-        'users.email',
-        'users.usuario'
+        'User.id',
+        'User.name',
+        'User.email',
+        'User.usuario'
       )
-      .leftJoin('users', 'course_teachers.user_id', 'users.id')
+      .leftJoin('User', 'course_teachers.user_id', 'User.id')
       .where('course_teachers.course_id', courseId);
   }
 
   async getCourseStudents(courseId: string): Promise<any[]> {
     return this.db('course_students')
       .select(
-        'users.id',
-        'users.name',
-        'users.email',
-        'users.usuario',
+        'User.id',
+        'User.name',
+        'User.email',
+        'User.usuario',
         'course_students.progress',
         'course_students.grades'
       )
-      .leftJoin('users', 'course_students.user_id', 'users.id')
+      .leftJoin('User', 'course_students.user_id', 'User.id')
       .where('course_students.course_id', courseId);
   }
 
@@ -150,7 +150,7 @@ export class CourseRepository extends BaseRepository<Course> {
   }
 
   async getInstitutionForCourse(institutionId: string): Promise<Institution | undefined> {
-    const institution = await this.db('institutions')
+    const institution = await this.db('institution')
       .where('id', institutionId)
       .first();
     return institution;
@@ -223,5 +223,29 @@ export class CourseRepository extends BaseRepository<Course> {
 
     const offset = (pagination.page - 1) * pagination.limit;
     return query.limit(pagination.limit).offset(offset);
+  }
+
+  async getCoursesByTeacher(teacherId: string): Promise<any[]> {
+    return this.db('courses')
+      .select(
+        'courses.*',
+        'institution.name as institution_name'
+      )
+      .leftJoin('institution', 'courses.institution_id', 'institution.id')
+      .leftJoin('course_teachers', 'courses.id', 'course_teachers.course_id')
+      .where('course_teachers.user_id', teacherId);
+  }
+
+  async getCoursesByStudent(studentId: string): Promise<any[]> {
+    return this.db('courses')
+      .select(
+        'courses.*',
+        'institution.name as institution_name',
+        'course_students.progress',
+        'course_students.grades'
+      )
+      .leftJoin('institution', 'courses.institution_id', 'institution.id')
+      .leftJoin('course_students', 'courses.id', 'course_students.course_id')
+      .where('course_students.user_id', studentId);
   }
 }

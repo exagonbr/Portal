@@ -1,9 +1,10 @@
 'use client';
 
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { useAuth } from '@/contexts/AuthContext';
 import { UserRole, ROLE_BASED_ROUTES } from '@/types/roles';
+import { clearAllDataForUnauthorized } from '@/utils/clearAllData';
 
 interface RoleGuardProps {
   children: React.ReactNode;
@@ -11,7 +12,7 @@ interface RoleGuardProps {
   redirectTo?: string;
 }
 
-export default function RoleGuard({
+function RoleGuardContent({
   children,
   allowedRoles,
   redirectTo
@@ -22,16 +23,20 @@ export default function RoleGuard({
   useEffect(() => {
     if (!loading) {
       if (!user) {
-        // Se não há usuário, redireciona para login
-        router.push('/login?error=unauthorized');
-      } else if (!allowedRoles.includes(user.role as UserRole)) {
-        // Se o usuário não tem o papel permitido, redireciona para seu dashboard específico
-        const roleRoute = ROLE_BASED_ROUTES.find(route =>
-          route.roles.includes(user.role as UserRole) &&
-          route.path.startsWith('/dashboard')
-        );
-        
-        router.push(roleRoute?.path || redirectTo || '/login');
+        // Se não há usuário, limpar dados e redirecionar para login
+        clearAllDataForUnauthorized().then(() => {
+          router.push('/auth/login?error=unauthorized');
+        }).catch((error) => {
+          console.log('❌ Erro durante limpeza de dados:', error);
+          // Redirecionar mesmo com erro na limpeza
+          router.push('/auth/login?error=unauthorized');
+        });
+      } else {
+        // SYSTEM_ADMIN pode acessar TODAS as rotas
+        if (user.role === UserRole.SYSTEM_ADMIN.toString() || user.role?.toLowerCase() === 'system_admin') {
+          console.log('✅ SYSTEM_ADMIN detectado, permitindo acesso total');
+          return;
+        }
       }
     }
   }, [user, loading, allowedRoles, router, redirectTo]);
@@ -45,6 +50,12 @@ export default function RoleGuard({
     );
   }
 
+  // SYSTEM_ADMIN pode acessar TODAS as rotas
+  if (user && (user.role === UserRole.SYSTEM_ADMIN.toString() || user.role?.toLowerCase() === 'system_admin')) {
+    console.log('✅ SYSTEM_ADMIN detectado no render, permitindo acesso total');
+    return <>{children}</>;
+  }
+  
   // Se não há usuário ou não tem permissão, não renderiza nada
   if (!user || !allowedRoles.includes(user.role as UserRole)) {
     return null;
@@ -52,4 +63,10 @@ export default function RoleGuard({
 
   // Se tudo está ok, renderiza o conteúdo
   return <>{children}</>;
+}
+
+export default function RoleGuard(props: RoleGuardProps) {
+  return (
+    <RoleGuardContent {...props} />
+  );
 }

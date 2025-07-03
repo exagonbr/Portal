@@ -216,7 +216,7 @@ try {
   // Sucesso
 } catch (error) {
   // Erro já tratado e com mensagem amigável
-  console.error('Erro:', error.message);
+  console.log('Erro:', error.message);
   
   // Exibir para o usuário
   showErrorMessage(error.message);
@@ -407,7 +407,7 @@ Todos os serviços incluem logging estruturado:
 ### Exemplo de Migração
 ```typescript
 // Código antigo
-import { getUsers as oldGetUsers } from '../api/users';
+import { getUsers as oldGetUsers } from '../api/user';
 
 // Código novo
 import { userService } from '../services';

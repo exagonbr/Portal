@@ -1,67 +1,92 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { cookies } from 'next/headers';
+import { requireAuth, logoutUser, AuthSession } from '@/middleware/auth';
 
-const BACKEND_URL = process.env.BACKEND_URL || 'http://localhost:3001';
-
-export async function POST(request: NextRequest) {
+export const POST = requireAuth(async (request: NextRequest, auth: AuthSession) => {
   try {
-    const cookieStore = cookies();
-    const authToken = cookieStore.get('auth_token')?.value;
-    const sessionId = cookieStore.get('session_id')?.value;
+    console.log('🚪 [LOGOUT] Realizando logout:', auth.user.email);
 
-    // Se houver token, notificar o backend sobre o logout
-    if (authToken) {
-      try {
-        await fetch(`${BACKEND_URL}/api/auth/logout`, {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-            'Authorization': `Bearer ${authToken}`,
-          },
-          body: JSON.stringify({ sessionId }),
-        });
-      } catch (error) {
-        console.error('Erro ao notificar backend sobre logout:', error);
-        // Continuar com o logout mesmo se falhar a comunicação com o backend
-      }
+    // Fazer logout (adicionar token à blacklist e remover sessão)
+    const logoutResult = await logoutUser(auth.token);
+
+    if (!logoutResult.success) {
+      return NextResponse.json(
+        { 
+          success: false, 
+          message: logoutResult.message,
+          code: 'LOGOUT_ERROR'
+        },
+        { status: 400 }
+      );
     }
 
-    // Limpar todos os cookies de autenticação
-    const cookiesToClear = [
-      'auth_token',
-      'refresh_token',
-      'session_id',
-      'user_data',
-      'next-auth.session-token',
-      'next-auth.csrf-token',
-      '__Secure-next-auth.session-token',
-      '__Host-next-auth.csrf-token',
-    ];
+    console.log('✅ [LOGOUT] Logout realizado com sucesso:', auth.user.email);
 
-    cookiesToClear.forEach(cookieName => {
-      cookieStore.delete({
-        name: cookieName,
-        path: '/',
-      });
+    // Criar resposta removendo cookies
+    const response = NextResponse.json({
+      success: true,
+      message: 'Logout realizado com sucesso',
+      data: {
+        loggedOut: true,
+        logoutTime: new Date().toISOString(),
+        user: {
+          email: auth.user.email,
+          name: auth.user.name
+        }
+      }
     });
 
+    // Remover todos os cookies de autenticação
+    const cookieOptions = {
+      httpOnly: true,
+      secure: process.env.NODE_ENV === 'production',
+      sameSite: 'strict' as const,
+      path: '/',
+      maxAge: 0 // Remove o cookie
+    };
+
+    const publicCookieOptions = {
+      ...cookieOptions,
+      httpOnly: false
+    };
+
+    // Remover todos os cookies de token
+    response.cookies.set('token', '', cookieOptions);
+    response.cookies.set('auth_token', '', cookieOptions);
+    response.cookies.set('authToken', '', publicCookieOptions);
+    response.cookies.set('refreshToken', '', cookieOptions);
+    
+    // Remover cookies de dados do usuário
+    response.cookies.set('user', '', publicCookieOptions);
+    response.cookies.set('sessionId', '', publicCookieOptions);
+
+    // Headers para limpar tokens do lado cliente
+    response.headers.set('X-Auth-Token', '');
+    response.headers.set('X-Refresh-Token', '');
+    response.headers.set('X-Session-Expires', '');
+    response.headers.set('Clear-Site-Data', '"cookies", "storage"');
+
+    return response;
+
+  } catch (error: any) {
+    console.error('❌ [LOGOUT] Erro interno:', error);
     return NextResponse.json(
-      { success: true, message: 'Logout realizado com sucesso' },
       { 
-        status: 200,
-        headers: {
-          // Adicionar headers para garantir que o cache seja limpo
-          'Cache-Control': 'no-store, no-cache, must-revalidate',
-          'Pragma': 'no-cache',
-          'Expires': '0',
-        },
-      }
-    );
-  } catch (error) {
-    console.error('Erro no logout:', error);
-    return NextResponse.json(
-      { success: false, message: 'Erro ao fazer logout' },
+        success: false, 
+        message: 'Erro interno do servidor',
+        code: 'INTERNAL_ERROR'
+      },
       { status: 500 }
     );
   }
+});
+
+export async function OPTIONS() {
+  return NextResponse.json(
+    { 
+      success: true,
+      message: 'API de logout ativa',
+      methods: ['POST', 'OPTIONS'],
+      timestamp: new Date().toISOString()
+    }
+  );
 }

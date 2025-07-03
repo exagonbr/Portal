@@ -1,88 +1,96 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { cookies } from 'next/headers';
+import { extractToken, verifyToken, MOCK_USERS } from '@/middleware/auth';
 
-const BACKEND_URL = process.env.BACKEND_URL || 'http://localhost:3001';
-
-export async function GET(request: NextRequest) {
-  try {
-    const cookieStore = cookies();
-    const authToken = cookieStore.get('auth_token')?.value;
-
-    if (!authToken) {
-      return NextResponse.json(
-        { valid: false, message: 'Token não encontrado' },
-        { status: 401 }
-      );
-    }
-
-    // Validar token com o backend
-    const response = await fetch(`${BACKEND_URL}/api/auth/me`, {
-      method: 'GET',
-      headers: {
-        'Authorization': `Bearer ${authToken}`,
-      },
-    });
-
-    if (!response.ok) {
-      return NextResponse.json(
-        { valid: false, message: 'Token inválido' },
-        { status: 401 }
-      );
-    }
-
-    const data = await response.json();
-
-    return NextResponse.json({
-      valid: true,
-      user: data.user,
-    });
-  } catch (error) {
-    console.error('Erro ao validar token:', error);
-    return NextResponse.json(
-      { valid: false, message: 'Erro ao validar token' },
-      { status: 500 }
-    );
-  }
-}
-
+/**
+ * Validar token de acesso
+ * POST /api/auth/validate
+ */
 export async function POST(request: NextRequest) {
   try {
     const body = await request.json();
-    const { token } = body;
+    const { token: bodyToken } = body;
+
+    // Tentar extrair token do body ou dos headers
+    const token = bodyToken || extractToken(request);
 
     if (!token) {
-      return NextResponse.json(
-        { valid: false, message: 'Token não fornecido' },
-        { status: 400 }
-      );
+      return NextResponse.json({
+        success: false,
+        message: 'Token de acesso requerido',
+        valid: false
+      }, { status: 400 });
     }
 
-    // Validar token com o backend
-    const response = await fetch(`${BACKEND_URL}/api/auth/me`, {
-      method: 'GET',
-      headers: {
-        'Authorization': `Bearer ${token}`,
-      },
-    });
-
-    if (!response.ok) {
-      return NextResponse.json(
-        { valid: false, message: 'Token inválido' },
-        { status: 401 }
-      );
+    // Verificar token
+    const decoded = verifyToken(token);
+    if (!decoded) {
+      return NextResponse.json({
+        success: false,
+        message: 'Token inválido ou expirado',
+        valid: false
+      }, { status: 401 });
     }
 
-    const data = await response.json();
+    // Buscar usuário
+    const user = MOCK_USERS[decoded.email];
+    if (!user) {
+      return NextResponse.json({
+        success: false,
+        message: 'Usuário não encontrado',
+        valid: false
+      }, { status: 401 });
+    }
+
+    if (user.status !== 'ACTIVE') {
+      return NextResponse.json({
+        success: false,
+        message: 'Conta de usuário inativa',
+        valid: false
+      }, { status: 401 });
+    }
+
+    // Verificar se o token não está próximo do vencimento (menos de 5 minutos)
+    const now = Math.floor(Date.now() / 1000);
+    const timeLeft = decoded.exp - now;
+    const isExpiringSoon = timeLeft < 300; // 5 minutos
 
     return NextResponse.json({
+      success: true,
+      message: 'Token válido',
       valid: true,
-      user: data.user,
+      data: {
+        user: {
+          id: user.id,
+          email: user.email,
+          name: user.name,
+          role: user.role,
+          permissions: user.permissions,
+          status: user.status
+        },
+        token: {
+          type: decoded.type,
+          sessionId: decoded.sessionId,
+          issuedAt: new Date(decoded.iat * 1000).toISOString(),
+          expiresAt: new Date(decoded.exp * 1000).toISOString(),
+          timeLeft: timeLeft,
+          isExpiringSoon: isExpiringSoon
+        }
+      }
     });
+
   } catch (error) {
-    console.error('Erro ao validar token:', error);
-    return NextResponse.json(
-      { valid: false, message: 'Erro ao validar token' },
-      { status: 500 }
-    );
+    console.error('Erro na validação do token:', error);
+    return NextResponse.json({
+      success: false,
+      message: 'Erro interno do servidor',
+      valid: false
+    }, { status: 500 });
   }
+}
+
+/**
+ * OPTIONS para CORS
+ */
+export async function OPTIONS() {
+  return NextResponse.json({}, { status: 204 });
 }

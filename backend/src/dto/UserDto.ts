@@ -5,7 +5,7 @@ export interface CreateUserDto {
   email: string;
   password: string;
   name: string;
-  role_id: string;
+  role_id?: string; // Agora opcional, será definido para TEACHER por padrão
   institution_id?: string;
   endereco?: string;
   telefone?: string;
@@ -79,6 +79,12 @@ export interface UserFilterDto {
   limit?: number;
   sortBy?: 'name' | 'email' | 'created_at' | 'updated_at';
   sortOrder?: 'asc' | 'desc';
+  name?: string;
+  email?: string;
+  role_id?: string;
+  is_active?: boolean;
+  created_after?: string;
+  created_before?: string;
 }
 
 // DTOs de validação

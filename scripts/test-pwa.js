@@ -18,7 +18,7 @@ async function testPWA() {
 
     // Test 1: Service Worker Registration
     console.log(chalk.yellow('Testing Service Worker Registration...'));
-    await page.goto('http://localhost:3000');
+    await page.goto('https://portal.sabercon.com.br');
     const swRegistration = await page.evaluate(() => {
       return Boolean(navigator.serviceWorker.controller);
     });
@@ -83,10 +83,10 @@ async function testPWA() {
     console.log(`Notifications: ${notificationPermission !== 'denied' ? '✅' : '❌'}`);
 
   } catch (error) {
-    console.error(chalk.red('\n❌ Test failed:'), error);
+    console.log(chalk.red('\n❌ Test failed:'), error);
   } finally {
     await browser.close();
   }
 }
 
-testPWA().catch(console.error);
+testPWA().catch(console.log);

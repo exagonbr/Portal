@@ -52,16 +52,16 @@ export default function Leaderboard() {
           <tbody className="bg-white divide-y divide-gray-200">
             {leaderboard.slice(0, LEADERBOARD_LIMITS.TOP_STUDENTS).map((entry, index) => (
               <tr key={entry.userId} className="hover:bg-gray-50">
-                <td className="px-4 py-2 whitespace-nowrap text-sm text-gray-900">
+                <td className="px-4 py-2 whitespace-nowrap text-sm text-gray-700">
                   #{index + 1}
                 </td>
-                <td className="px-4 py-2 whitespace-nowrap text-sm text-gray-900">
+                <td className="px-4 py-2 whitespace-nowrap text-sm text-gray-700">
                   {entry.username}
                 </td>
-                <td className="px-4 py-2 whitespace-nowrap text-sm text-gray-900">
+                <td className="px-4 py-2 whitespace-nowrap text-sm text-gray-700">
                   {entry.level}
                 </td>
-                <td className="px-4 py-2 whitespace-nowrap text-sm text-gray-900">
+                <td className="px-4 py-2 whitespace-nowrap text-sm text-gray-700">
                   {entry.xp}
                 </td>
                 <td className="px-4 py-2 whitespace-nowrap">

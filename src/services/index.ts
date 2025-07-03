@@ -1,7 +1,7 @@
 // Exportações centralizadas de todos os serviços
 
 // Cliente API base
-export { apiClient, handleApiError, ApiClientError, isAuthError } from './apiClient';
+export { apiClient, handleApiError, ApiClientError, isAuthError } from '@/lib/api-client';
 
 // Serviços de cache
 export {
@@ -68,15 +68,8 @@ export {
 } from './roleService';
 
 // Serviços de instituições
-export { 
-  institutionService,
-  getInstitutions,
-  getInstitutionById,
-  createInstitution,
-  updateInstitution,
-  deleteInstitution,
-  getActiveInstitutions,
-  searchInstitutionsByName
+export {
+  institutionService
 } from './institutionService';
 
 // Serviços de cursos
@@ -104,14 +97,8 @@ export type {
 } from './roleService';
 
 export type {
-  InstitutionFilters,
-  InstitutionListOptions
-} from './institutionService';
-
-export type {
   CourseFilters,
-  CourseListOptions,
-  CourseResponseDto
+  CourseListOptions
 } from './courseService';
 
 // Tipos de cache e filas
@@ -202,7 +189,7 @@ export const initializeServices = async () => {
     console.log('Serviços inicializados com sucesso');
     return true;
   } catch (error) {
-    console.error('Erro ao inicializar serviços:', error);
+    console.log('Erro ao inicializar serviços:', error);
     return false;
   }
 };
@@ -215,7 +202,7 @@ export const clearAllData = async () => {
     services.queue.stopProcessing();
     console.log('Dados limpos com sucesso');
   } catch (error) {
-    console.error('Erro ao limpar dados:', error);
+    console.log('Erro ao limpar dados:', error);
   }
 };
 
@@ -231,7 +218,7 @@ export const checkServicesHealth = async () => {
 
   try {
     // Testa conectividade básica da API
-    const { apiClient } = await import('./apiClient');
+    const { apiClient } = await import('@/lib/api-client');
     await apiClient.get('/health');
     health.api = true;
   } catch (error) {
@@ -288,7 +275,7 @@ export const warmupCache = async () => {
       },
       {
         key: CacheKeys.ACTIVE_INSTITUTIONS,
-        fetcher: () => services.institution.getActiveInstitutions(),
+        fetcher: () => institutionService.getActiveInstitutions(),
         ttl: CacheTTL.LONG
       },
       {
@@ -320,28 +307,7 @@ export const setupCacheCleanup = () => {
   }, 60 * 60 * 1000); // 1 hora
 };
 
-// Monitoramento das filas
-export const setupQueueMonitoring = () => {
-  // Monitora filas a cada 5 minutos
-  setInterval(async () => {
-    try {
-      const stats = await services.queue.getStats();
-      console.log('Estatísticas das filas:', stats);
-      
-      // Alerta se há muitos jobs falhados
-      if (stats.failed > 10) {
-        console.warn(`Muitos jobs falhados: ${stats.failed}`);
-      }
-      
-      // Alerta se há muitos jobs pendentes
-      if (stats.pending > 50) {
-        console.warn(`Muitos jobs pendentes: ${stats.pending}`);
-      }
-    } catch (error) {
-      console.warn('Erro no monitoramento das filas:', error);
-    }
-  }, 5 * 60 * 1000); // 5 minutos
-};
+
 
 // Utilitários para desenvolvimento
 export const devUtils = {
@@ -357,7 +323,7 @@ export const devUtils = {
 // Configuração padrão para desenvolvimento
 export const setupDevelopmentConfig = () => {
   configureServices({
-    baseURL: process.env.REACT_APP_API_URL || 'http://localhost:3001/api',
+    baseURL: 'https://portal.sabercon.com.br',
     timeout: 30000,
     retryAttempts: 3,
     retryDelay: 1000,
@@ -374,7 +340,6 @@ export const setupDevelopmentConfig = () => {
   if (process.env.NODE_ENV === 'development') {
     setupGlobalInterceptors();
     setupCacheCleanup();
-    setupQueueMonitoring();
     
     // Expõe utilitários no console para desenvolvimento
     if (typeof window !== 'undefined') {
@@ -386,7 +351,7 @@ export const setupDevelopmentConfig = () => {
 // Configuração padrão para produção
 export const setupProductionConfig = () => {
   configureServices({
-    baseURL: process.env.REACT_APP_API_URL || '/api',
+    baseURL: 'https://portal.sabercon.com.br',
     timeout: 15000,
     retryAttempts: 2,
     retryDelay: 2000,
@@ -401,7 +366,6 @@ export const setupProductionConfig = () => {
   });
   
   setupCacheCleanup();
-  setupQueueMonitoring();
 };
 
 // Auto-configuração baseada no ambiente

@@ -64,7 +64,7 @@ export default function ModuleManager({ collectionId }: ModuleManagerProps) {
       // Vídeos simulados por enquanto do mockData.ts
       setAvailableVideos(mockContentVideos);
     } catch (err) {
-      console.error('Falha ao carregar vídeos disponíveis', err);
+      console.log('Falha ao carregar vídeos disponíveis', err);
     }
   };
 

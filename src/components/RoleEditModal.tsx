@@ -42,10 +42,10 @@ export default function RoleEditModal({ isOpen, onClose, role }: RoleEditModalPr
     {
       name: 'Usuários',
       permissions: [
-        { id: 'users.view', name: 'Visualizar Usuários', description: 'Permite visualizar lista de usuários' },
-        { id: 'users.create', name: 'Criar Usuários', description: 'Permite criar novos usuários' },
-        { id: 'users.edit', name: 'Editar Usuários', description: 'Permite editar dados de usuários' },
-        { id: 'users.delete', name: 'Excluir Usuários', description: 'Permite excluir usuários' }
+        { id: 'user.view', name: 'Visualizar Usuários', description: 'Permite visualizar lista de usuários' },
+        { id: 'user.create', name: 'Criar Usuários', description: 'Permite criar novos usuários' },
+        { id: 'user.edit', name: 'Editar Usuários', description: 'Permite editar dados de usuários' },
+        { id: 'user.delete', name: 'Excluir Usuários', description: 'Permite excluir usuários' }
       ]
     },
     {
@@ -558,7 +558,7 @@ export default function RoleEditModal({ isOpen, onClose, role }: RoleEditModalPr
           <div className="bg-background-primary rounded-lg p-6 max-w-md shadow-xl">
             <h3 className="text-lg font-semibold text-text-primary mb-4">Confirmar Exclusão</h3>
             <p className="text-text-secondary mb-6">
-              Tem certeza que deseja excluir a função "{role.name}"? Esta ação não pode ser desfeita.
+              Tem certeza que deseja excluir a função &quot;{role.name}&quot;? Esta ação não pode ser desfeita.
             </p>
             <div className="flex justify-end gap-3">
               <button

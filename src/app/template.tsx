@@ -1,31 +1,60 @@
 'use client'
 
 import { usePathname } from 'next/navigation'
-import { useAuth } from '@/contexts/AuthContext'
-import AuthenticatedDashboardLayout from '@/components/dashboard/AuthenticatedDashboardLayout'
 
-// Routes that should not use the dashboard layout
+// Rotas que não devem usar o layout de dashboard (completamente públicas)
 const publicRoutes = [
-  '/login',
-  '/register',
+  '/', // Página inicial (login)
+  '/auth/login',
+  '/auth/register',
   '/forgot-password',
+  '/auth-error',
+  '/offline',
+  // Rotas do portal público
+  '/portal',
+  '/portal/books',
+  '/portal/videos',
+  '/portal/courses',
+  '/portal/assignments',
+  '/portal/dashboard',
+  '/portal/student',
+  '/portal/reports',
+  // Rotas de teste e debug
   '/test-simple',
   '/test-dashboard',
   '/test-student',
   '/debug-auth',
-  '/test-dashboard-simple', // Keep test route
-  '/' // Add root route as public
+  '/test-dashboard-simple',
+  '/test-auth-integration',
+  '/test-julia-login',
+  '/test-login'
 ]
 
 export default function Template({ children }: { children: React.ReactNode }) {
-  const { user } = useAuth()
   const pathname = usePathname()
 
-  // Don't use dashboard layout for public routes
+  // Por enquanto, renderizar apenas o children sem layout complexo
+  // para evitar problemas de carregamento de chunks
+  return <div className="h-full w-full">{children}</div>
+  
+  // Código comentado temporariamente:
+  /*
+  // Não usar layout de dashboard para rotas públicas
   if (pathname && publicRoutes.includes(pathname)) {
     return <div className="h-full w-full">{children}</div>
   }
 
-  // Use authenticated dashboard layout for all other routes
+  // Verificar se é uma rota de teste que começa com prefixo
+  if (pathname && (pathname.startsWith('/test-') || pathname.startsWith('/debug-'))) {
+    return <div className="h-full w-full">{children}</div>
+  }
+
+  // Não usar layout de dashboard para rotas que têm seu próprio layout
+  if (pathname && dashboardRoutesWithOwnLayout.some(route => pathname.startsWith(route))) {
+    return <>{children}</>
+  }
+
+  // Usar layout de dashboard autenticado para todas as outras rotas
   return <AuthenticatedDashboardLayout>{children}</AuthenticatedDashboardLayout>
+  */
 }

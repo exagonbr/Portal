@@ -29,9 +29,9 @@ export default function LiveClassCard({ liveClass, course, userType }: LiveClass
       case 'in-progress':
         return 'bg-green-100 text-green-800'
       case 'completed':
-        return 'bg-gray-100 text-gray-800'
+        return 'bg-gray-100 text-gray-600'
       default:
-        return 'bg-gray-100 text-gray-800'
+        return 'bg-gray-100 text-gray-600'
     }
   }
 
@@ -54,7 +54,7 @@ export default function LiveClassCard({ liveClass, course, userType }: LiveClass
         <div className="flex justify-between items-start">
           <div className="space-y-3">
             <div>
-              <h3 className="text-lg font-semibold text-gray-900">
+              <h3 className="text-lg font-semibold text-gray-700">
                 {liveClass.title}
               </h3>
               {course && (
@@ -102,7 +102,7 @@ export default function LiveClassCard({ liveClass, course, userType }: LiveClass
         </div>
         {liveClass.materials && liveClass.materials.length > 0 && (
           <div className="mt-6 pt-4 border-t border-gray-100">
-            <h4 className="text-sm font-medium text-gray-900 mb-3 flex items-center">
+            <h4 className="text-sm font-medium text-gray-700 mb-3 flex items-center">
               <span className="material-symbols-outlined mr-2">folder</span>
               Materiais da Aula
             </h4>

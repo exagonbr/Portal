@@ -1,7 +1,24 @@
 import express from 'express';
-import { validateJWT, requireRole } from '../middleware/auth';
+import { requireAuth } from '../middleware/requireAuth';
 
 const router = express.Router();
+
+// 🔐 APLICAR MIDDLEWARE UNIFICADO DE AUTENTICAÇÃO
+router.use(requireAuth);
+
+// Middleware para verificar role de professor/admin para ações administrativas
+const requireTeacherOrAdmin = (req: any, res: any, next: any) => {
+  const user = req.user;
+  
+  if (!['SYSTEM_ADMIN', 'TEACHER'].includes(user.role)) {
+    return res.status(403).json({
+      success: false,
+      message: 'Acesso negado - apenas professores e administradores podem realizar esta ação'
+    });
+  }
+  
+  next();
+};
 
 /**
  * @swagger
@@ -52,8 +69,13 @@ const router = express.Router();
  *       401:
  *         description: Unauthorized
  */
-router.get('/threads', validateJWT, async (req, res) => {
+router.get('/threads', async (req, res) => {
   // Implementation will be added in the controller
+  res.json({
+    success: true,
+    message: 'Forum threads - implementação pendente',
+    data: []
+  });
 });
 
 /**
@@ -81,8 +103,13 @@ router.get('/threads', validateJWT, async (req, res) => {
  *       404:
  *         description: Thread not found
  */
-router.get('/threads/:id', validateJWT, async (req, res) => {
+router.get('/threads/:id', async (req, res) => {
   // Implementation will be added in the controller
+  res.json({
+    success: true,
+    message: 'Forum thread by ID - implementação pendente',
+    data: null
+  });
 });
 
 /**
@@ -127,8 +154,13 @@ router.get('/threads/:id', validateJWT, async (req, res) => {
  *       400:
  *         description: Invalid input
  */
-router.post('/threads', validateJWT, async (req, res) => {
+router.post('/threads', async (req, res) => {
   // Implementation will be added in the controller
+  res.status(201).json({
+    success: true,
+    message: 'Create forum thread - implementação pendente',
+    data: null
+  });
 });
 
 /**
@@ -175,7 +207,7 @@ router.post('/threads', validateJWT, async (req, res) => {
  *       403:
  *         description: Not authorized to edit this thread
  */
-router.put('/threads/:id', validateJWT, async (req, res) => {
+router.put('/threads/:id', async (req, res) => {
   // Implementation will be added in the controller
 });
 
@@ -202,7 +234,7 @@ router.put('/threads/:id', validateJWT, async (req, res) => {
  *       403:
  *         description: Not authorized to delete this thread
  */
-router.delete('/threads/:id', validateJWT, async (req, res) => {
+router.delete('/threads/:id', async (req, res) => {
   // Implementation will be added in the controller
 });
 
@@ -210,76 +242,32 @@ router.delete('/threads/:id', validateJWT, async (req, res) => {
  * @swagger
  * /api/forum/threads/{id}/pin:
  *   post:
- *     summary: Pin/unpin a forum thread
+ *     summary: Pin a forum thread (teachers and admins only)
  *     tags: [Forum]
  *     security:
  *       - bearerAuth: []
- *     parameters:
- *       - in: path
- *         name: id
- *         required: true
- *         schema:
- *           type: string
- *           format: uuid
- *     requestBody:
- *       required: true
- *       content:
- *         application/json:
- *           schema:
- *             type: object
- *             required:
- *               - pinned
- *             properties:
- *               pinned:
- *                 type: boolean
- *     responses:
- *       200:
- *         description: Thread pin status updated
- *       404:
- *         description: Thread not found
- *       403:
- *         description: Not authorized to pin threads
  */
-router.post('/threads/:id/pin', validateJWT, requireRole(['admin', 'teacher']), async (req, res) => {
-  // Implementation will be added in the controller
+router.post('/threads/:id/pin', requireTeacherOrAdmin, async (req, res) => {
+  res.json({
+    success: true,
+    message: 'Pin thread - implementação pendente'
+  });
 });
 
 /**
  * @swagger
  * /api/forum/threads/{id}/lock:
  *   post:
- *     summary: Lock/unlock a forum thread
+ *     summary: Lock a forum thread (teachers and admins only)
  *     tags: [Forum]
  *     security:
  *       - bearerAuth: []
- *     parameters:
- *       - in: path
- *         name: id
- *         required: true
- *         schema:
- *           type: string
- *           format: uuid
- *     requestBody:
- *       required: true
- *       content:
- *         application/json:
- *           schema:
- *             type: object
- *             required:
- *               - locked
- *             properties:
- *               locked:
- *                 type: boolean
- *     responses:
- *       200:
- *         description: Thread lock status updated
- *       404:
- *         description: Thread not found
- *       403:
- *         description: Not authorized to lock threads
  */
-router.post('/threads/:id/lock', validateJWT, requireRole(['admin', 'teacher']), async (req, res) => {
-  // Implementation will be added in the controller
+router.post('/threads/:id/lock', requireTeacherOrAdmin, async (req, res) => {
+  res.json({
+    success: true,
+    message: 'Lock thread - implementação pendente'
+  });
 });
 
 /**
@@ -321,7 +309,7 @@ router.post('/threads/:id/lock', validateJWT, requireRole(['admin', 'teacher']),
  *       404:
  *         description: Thread not found
  */
-router.get('/threads/:id/replies', validateJWT, async (req, res) => {
+router.get('/threads/:id/replies', async (req, res) => {
   // Implementation will be added in the controller
 });
 
@@ -368,7 +356,7 @@ router.get('/threads/:id/replies', validateJWT, async (req, res) => {
  *       404:
  *         description: Thread not found
  */
-router.post('/threads/:id/replies', validateJWT, async (req, res) => {
+router.post('/threads/:id/replies', async (req, res) => {
   // Implementation will be added in the controller
 });
 
@@ -411,7 +399,7 @@ router.post('/threads/:id/replies', validateJWT, async (req, res) => {
  *       403:
  *         description: Not authorized to edit this reply
  */
-router.put('/replies/:id', validateJWT, async (req, res) => {
+router.put('/replies/:id', async (req, res) => {
   // Implementation will be added in the controller
 });
 
@@ -438,7 +426,7 @@ router.put('/replies/:id', validateJWT, async (req, res) => {
  *       403:
  *         description: Not authorized to delete this reply
  */
-router.delete('/replies/:id', validateJWT, async (req, res) => {
+router.delete('/replies/:id', async (req, res) => {
   // Implementation will be added in the controller
 });
 

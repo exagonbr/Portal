@@ -143,7 +143,7 @@ export default function CarouselManager({
                 <button
                   type="button"
                   onClick={handleClose}
-                  className="px-4 py-2 text-gray-600 hover:text-gray-800"
+                  className="px-4 py-2 text-gray-600 hover:text-gray-600"
                   disabled={uploading}
                 >
                   Fechar

@@ -1,4 +1,4 @@
-import { apiClient } from './apiClient';
+import { apiClient } from '@/lib/api-client'
 
 const publicVapidKey = process.env.NEXT_PUBLIC_VAPID_PUBLIC_KEY;
 
@@ -26,12 +26,19 @@ class PushNotificationService {
     }
 
     try {
-      // Register service worker
-      this.swRegistration = await navigator.serviceWorker.register('/sw.js', {
-        scope: '/'
-      });
-      
-      console.log('Service Worker registered successfully');
+      // Tentar registrar service worker melhorado primeiro, fallback para o padrão
+      try {
+        this.swRegistration = await navigator.serviceWorker.register('/sw-improved.js', {
+          scope: '/'
+        });
+        console.log('✅ Service Worker melhorado registrado com sucesso');
+      } catch (improvedError) {
+        console.warn('⚠️ Falha ao registrar SW melhorado, usando padrão:', improvedError);
+        this.swRegistration = await navigator.serviceWorker.register('/sw.js', {
+          scope: '/'
+        });
+        console.log('✅ Service Worker padrão registrado com sucesso');
+      }
 
       // Wait for service worker to be ready
       await navigator.serviceWorker.ready;
@@ -49,7 +56,7 @@ class PushNotificationService {
 
       this.isInitialized = true;
     } catch (error) {
-      console.error('Error initializing push notifications:', error);
+      console.log('Error initializing push notifications:', error);
       // Marca como inicializado mesmo com erro para evitar tentativas repetidas
       this.isInitialized = true;
     }
@@ -69,7 +76,39 @@ class PushNotificationService {
       return 'denied';
     }
 
-    return await Notification.requestPermission();
+    // A permissão só deve ser requisitada a partir de um manipulador de eventos do usuário
+    // Por isso, não vamos requisitar automaticamente aqui
+    console.log('⚠️ Push Notification: Permissão deve ser solicitada via interação do usuário');
+    return 'default';
+  }
+
+  /**
+   * Solicita permissão para notificações (deve ser chamado em resposta a uma ação do usuário)
+   */
+  async requestPermissionFromUser(): Promise<NotificationPermission> {
+    if (!('Notification' in window)) {
+      console.warn('Notifications not supported');
+      return 'denied';
+    }
+
+    if (Notification.permission !== 'default') {
+      return Notification.permission;
+    }
+
+    try {
+      const permission = await Notification.requestPermission();
+      console.log('🔔 Push Notification: Permissão solicitada:', permission);
+      
+      if (permission === 'granted') {
+        // Tentar subscrever após permissão concedida
+        await this.subscribeToPushNotifications();
+      }
+      
+      return permission;
+    } catch (error) {
+      console.log('❌ Erro ao solicitar permissão para notificações:', error);
+      return 'denied';
+    }
   }
 
   private async subscribeToPushNotifications(): Promise<void> {
@@ -108,7 +147,7 @@ class PushNotificationService {
     }
     
     try {
-      const response = await apiClient.post('/api/push-subscriptions', subscription.toJSON());
+      const response = await apiClient.post('/push-subscriptions', subscription.toJSON());
       
       if (response.success) {
         console.log('Push subscription saved successfully');
@@ -128,7 +167,7 @@ class PushNotificationService {
         }
       }
       
-      console.error('Error saving push subscription:', error);
+      console.log('Error saving push subscription:', error);
       // Não propaga o erro para evitar quebrar a aplicação
       return;
     }
@@ -168,7 +207,7 @@ class PushNotificationService {
         await subscription.unsubscribe();
         
         try {
-          await apiClient.delete(`/api/push-subscriptions/${encodeURIComponent(subscription.endpoint)}`);
+          await apiClient.delete(`push-subscriptions/${encodeURIComponent(subscription.endpoint)}`);
           console.log('Successfully unsubscribed from push notifications');
         } catch (error) {
           // Se backend não está disponível, apenas remove localmente
@@ -183,7 +222,7 @@ class PushNotificationService {
         }
       }
     } catch (error) {
-      console.error('Error unsubscribing from push notifications:', error);
+      console.log('Error unsubscribing from push notifications:', error);
       // Não propaga o erro para evitar quebrar a aplicação
     }
   }
@@ -213,7 +252,7 @@ class PushNotificationService {
         const subscription = await this.swRegistration.pushManager.getSubscription();
         subscribed = !!subscription;
       } catch (error) {
-        console.error('Error checking subscription status:', error);
+        console.log('Error checking subscription status:', error);
       }
     }
 
@@ -240,8 +279,8 @@ class PushNotificationService {
   private urlBase64ToUint8Array(base64String: string): Uint8Array {
     const padding = '='.repeat((4 - base64String.length % 4) % 4);
     const base64 = (base64String + padding)
-      .replace(/-/g, '+')
-      .replace(/_/g, '/');
+      ?.replace(/-/g, '+')
+      ?.replace(/_/g, '/') || '';
 
     const rawData = window.atob(base64);
     const outputArray = new Uint8Array(rawData.length);

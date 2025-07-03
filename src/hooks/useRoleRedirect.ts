@@ -22,7 +22,7 @@ export function useRoleRedirect(
 
     // Verifica se a role é válida
     if (!isValidRole(userRole)) {
-      console.error(`Role inválida detectada no redirecionamento: ${userRole}`);
+      console.log(`Role inválida detectada no redirecionamento: ${userRole}`);
       logout();
       router.push(fallbackPath);
       return;
@@ -35,7 +35,7 @@ export function useRoleRedirect(
       console.log(`Redirecionando usuário ${user.name} (${userRole}) para: ${dashboardPath}`);
       router.push(dashboardPath);
     } else {
-      console.error(`Caminho do dashboard não encontrado para a role: ${userRole}`);
+      console.log(`Caminho do dashboard não encontrado para a role: ${userRole}`);
       router.push(fallbackPath);
     }
   }, [user, redirectOnLogin, fallbackPath, router, logout]);
@@ -52,7 +52,7 @@ export function useRoleRedirect(
     const userRole = user.role;
 
     if (!isValidRole(userRole)) {
-      console.error(`Role inválida para redirecionamento manual: ${userRole}`);
+      console.log(`Role inválida para redirecionamento manual: ${userRole}`);
       logout();
       router.push(fallbackPath);
       return;

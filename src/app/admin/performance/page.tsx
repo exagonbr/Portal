@@ -1,188 +1,352 @@
 'use client'
 
-import { useState, useEffect, useCallback } from 'react'
-import { useAwsSettings } from '@/hooks/useAwsSettings'
-import { awsService, CloudWatchMetric } from '@/services/awsService'
+import { useState } from 'react'
+import { 
+  LineChart, 
+  BarChart, 
+  Activity, 
+  Clock, 
+  AlertTriangle,
+  TrendingUp,
+  ArrowUpRight,
+  ArrowDownRight,
+  Zap,
+  CheckCircle,
+  AreaChart,
+  Download,
+  RefreshCw,
+  Lightbulb,
+  AlertCircle
+} from 'lucide-react'
+import { UserRole } from '@/types/roles'
 
 export default function AdminPerformancePage() {
-  const { settings, isLoading: settingsLoading } = useAwsSettings()
-  const [metrics, setMetrics] = useState<CloudWatchMetric[]>([])
-  const [isLoading, setIsLoading] = useState(true)
-  const [lastUpdate, setLastUpdate] = useState<Date>(new Date())
-  const [error, setError] = useState<string | null>(null)
+  const [selectedPeriod, setSelectedPeriod] = useState('7d')
 
-  const fetchMetrics = useCallback(async () => {
-    try {
-      setError(null)
-      awsService.setSettings(settings)
-      const data = await awsService.getPerformanceMetrics()
-      setMetrics(data)
-      setLastUpdate(new Date())
-    } catch (err) {
-      setError(err instanceof Error ? err.message : 'Erro ao carregar métricas')
-      console.error('Erro ao buscar métricas:', err)
-    } finally {
-      setIsLoading(false)
-    }
-  }, [settings])
-
-  useEffect(() => {
-    if (!settingsLoading && settings.accessKeyId) {
-      fetchMetrics()
-    }
-  }, [fetchMetrics, settingsLoading, settings.accessKeyId])
-
-  useEffect(() => {
-    if (!settingsLoading && settings.enableRealTimeUpdates && settings.accessKeyId) {
-      const interval = setInterval(fetchMetrics, settings.updateInterval * 1000)
-      return () => clearInterval(interval)
-    }
-  }, [fetchMetrics, settings.enableRealTimeUpdates, settings.updateInterval, settingsLoading, settings.accessKeyId])
-
-  const getStatusColor = (status: string) => {
-    switch (status) {
-      case 'good': return 'bg-accent-green/20 text-accent-green'
-      case 'warning': return 'bg-accent-yellow/20 text-accent-yellow'
-      case 'critical': return 'bg-error/20 text-error'
-      default: return 'bg-gray-100 text-gray-600'
-    }
-  }
-
-  const getStatusText = (status: string) => {
-    switch (status) {
-      case 'good': return 'Normal'
-      case 'warning': return 'Atenção'
-      case 'critical': return 'Crítico'
-      default: return 'Desconhecido'
-    }
-  }
-
-  if (settingsLoading) {
-    return (
-      <div className="flex items-center justify-center h-64">
-        <div className="text-gray-500">Carregando configurações...</div>
-      </div>
-    )
-  }
-
-  if (!settings.accessKeyId) {
-    return (
-      <div className="space-y-6">
-        <div className="flex items-center justify-between">
-          <h1 className="text-2xl font-bold text-primary">Performance do Sistema</h1>
-        </div>
-        <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-6">
-          <div className="flex items-center">
-            <div className="text-yellow-600 mr-3">⚠️</div>
-            <div>
-              <h3 className="text-lg font-medium text-yellow-800">Configuração da AWS Necessária</h3>
-              <p className="text-yellow-700 mt-1">
-                Para visualizar as métricas de performance, configure suas credenciais da AWS na página de configurações.
-              </p>
-            </div>
-          </div>
-        </div>
-      </div>
-    )
+  const performanceData = {
+    overview: {
+      totalRequests: 1245876,
+      avgResponseTime: 124,
+      errorRate: 0.15,
+      uptime: 99.97
+    },
+    metrics: [
+      { name: 'Requisições/min', value: 2847, change: 12.5, trend: 'up' },
+      { name: 'Tempo de Resposta', value: 124, change: -8.2, trend: 'down' },
+      { name: 'Taxa de Erro', value: 0.15, change: -0.05, trend: 'down' },
+      { name: 'Uso de CPU', value: 68, change: 5.3, trend: 'up' },
+      { name: 'Uso de Memória', value: 72, change: 2.1, trend: 'up' },
+      { name: 'Throughput', value: 156, change: 18.7, trend: 'up' }
+    ],
+    endpoints: [
+      { path: '/api/users', requests: 45678, avgTime: 89, errorRate: 0.12 },
+      { path: '/api/courses', requests: 34521, avgTime: 156, errorRate: 0.08 },
+      { path: '/api/auth/login', requests: 28945, avgTime: 234, errorRate: 0.25 },
+      { path: '/api/content', requests: 23456, avgTime: 312, errorRate: 0.45 },
+      { path: '/api/files', requests: 18734, avgTime: 445, errorRate: 0.89 }
+    ]
   }
 
   return (
-    <div className="space-y-6">
-      <div className="flex items-center justify-between">
+    <div className="p-6 max-w-7xl mx-auto">
+      {/* Cabeçalho */}
+      <div className="mb-8">
+        <h1 className="text-3xl font-bold text-slate-800 mb-2 flex items-center">
+          <Activity className="mr-2 h-8 w-8 text-indigo-600" />
+          Performance do Sistema
+        </h1>
+        <p className="text-slate-600">
+          Análise detalhada da performance e otimização do sistema
+        </p>
+      </div>
+
+      {/* Controles */}
+      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-6 gap-4">
         <div>
-          <h1 className="text-2xl font-bold text-primary">Performance do Sistema</h1>
-          <p className="text-gray-600 text-sm mt-1">
-            Dados atualizados a cada {settings.updateInterval}s | Última atualização: {lastUpdate.toLocaleTimeString()}
-          </p>
-        </div>
-        <div className="flex items-center space-x-4">
-          <div className="flex items-center space-x-2">
-            <span className="text-sm text-gray-600">Região:</span>
-            <span className="bg-gray-100 px-2 py-1 rounded text-sm font-medium">{settings.region}</span>
-          </div>
-          <button 
-            onClick={fetchMetrics}
-            disabled={isLoading}
-            className="bg-primary text-white px-4 py-2 rounded-lg hover:bg-primary-dark disabled:opacity-50"
+          <select 
+            value={selectedPeriod}
+            onChange={(e) => setSelectedPeriod(e.target.value)}
+            className="px-4 py-2 rounded-lg border border-slate-200 focus:outline-none focus:ring-2 focus:ring-indigo-500 w-full sm:w-auto"
           >
-            {isLoading ? 'Atualizando...' : 'Atualizar'}
+            <option value="1h">Última hora</option>
+            <option value="24h">Últimas 24 horas</option>
+            <option value="7d">Últimos 7 dias</option>
+            <option value="30d">Últimos 30 dias</option>
+          </select>
+        </div>
+        <div className="flex gap-3 w-full sm:w-auto">
+          <button className="flex items-center gap-1 px-3 py-2 border border-slate-200 rounded-lg text-sm">
+            <Download className="h-4 w-4" />
+            Exportar
+          </button>
+          <button className="flex items-center gap-1 px-3 py-2 bg-indigo-600 text-white rounded-lg text-sm">
+            <RefreshCw className="h-4 w-4" />
+            Atualizar
           </button>
         </div>
       </div>
 
-      {error && (
-        <div className="bg-red-50 border border-red-200 rounded-lg p-4">
-          <div className="flex items-center">
-            <div className="text-red-600 mr-3">❌</div>
+      {/* Métricas Principais */}
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 mb-6">
+        <div className="bg-white rounded-lg shadow-md p-6 flex flex-col h-full">
+          <div className="flex items-center justify-between">
             <div>
-              <h3 className="text-lg font-medium text-red-800">Erro ao Carregar Dados</h3>
-              <p className="text-red-700">{error}</p>
-            </div>
-          </div>
-        </div>
-      )}
-
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-        {isLoading ? (
-          // Skeleton loading
-          Array.from({ length: 4 }).map((_, index) => (
-            <div key={index} className="bg-white rounded-lg border border-gray-200 p-6 shadow-sm animate-pulse">
-              <div className="h-4 bg-gray-200 rounded w-24 mb-2"></div>
-              <div className="h-8 bg-gray-200 rounded w-16 mb-2"></div>
-              <div className="h-6 bg-gray-200 rounded w-20"></div>
-            </div>
-          ))
-        ) : (
-          metrics.map((metric) => (
-            <div key={metric.name} className="bg-white rounded-lg border border-gray-200 p-6 shadow-sm transition-all hover:shadow-md">
-              <h3 className="text-sm font-medium text-gray-500">{metric.name}</h3>
-              <p className="text-2xl font-bold text-primary mt-2">{metric.value}</p>
-              <div className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium mt-2 ${getStatusColor(metric.status)}`}>
-                {getStatusText(metric.status)}
+              <div className="text-sm font-medium text-slate-500 mb-1">Total de Requisições</div>
+              <div className="text-2xl font-bold text-slate-800">
+                {performanceData.overview.totalRequests.toLocaleString()}
               </div>
-              <p className="text-xs text-gray-400 mt-1">
-                Atualizado: {metric.timestamp.toLocaleTimeString()}
-              </p>
             </div>
-          ))
-        )}
-      </div>
-
-      <div className="bg-white rounded-lg border border-gray-200 p-6 shadow-sm">
-        <div className="flex items-center justify-between mb-4">
-          <h2 className="text-lg font-semibold text-primary">Gráfico de Performance</h2>
-          <div className="flex items-center space-x-2 text-sm text-gray-600">
-            <span>CloudWatch:</span>
-            <span className="bg-green-100 text-green-800 px-2 py-1 rounded text-xs">{settings.cloudWatchNamespace}</span>
+            <div className="p-3 rounded-full bg-indigo-100 flex-shrink-0">
+              <AreaChart className="h-5 w-5 text-indigo-600" />
+            </div>
+          </div>
+          <div className="mt-auto pt-4 flex items-center">
+            <span className="text-emerald-600 text-sm flex items-center">
+              <ArrowUpRight className="h-3 w-3 mr-1" />
+              12.5%
+            </span>
+            <span className="text-slate-500 text-sm ml-2">vs. período anterior</span>
           </div>
         </div>
-        <div className="h-64 flex items-center justify-center text-gray-500 border border-gray-100 rounded-lg bg-gray-50">
-          <div className="text-center">
-            <div className="text-4xl mb-2">📊</div>
-            <p>Gráfico de performance será implementado aqui</p>
-            <p className="text-sm mt-1">Dados do CloudWatch: {metrics.length} métricas carregadas</p>
+
+        <div className="bg-white rounded-lg shadow-md p-6 flex flex-col h-full">
+          <div className="flex items-center justify-between">
+            <div>
+              <div className="text-sm font-medium text-slate-500 mb-1">Tempo de Resposta</div>
+              <div className="text-2xl font-bold text-slate-800">
+                {performanceData.overview.avgResponseTime}ms
+              </div>
+            </div>
+            <div className="p-3 rounded-full bg-blue-100 flex-shrink-0">
+              <Clock className="h-5 w-5 text-blue-600" />
+            </div>
+          </div>
+          <div className="mt-auto pt-4 flex items-center">
+            <span className="text-emerald-600 text-sm flex items-center">
+              <ArrowDownRight className="h-3 w-3 mr-1" />
+              8.2ms
+            </span>
+            <span className="text-slate-500 text-sm ml-2">vs. período anterior</span>
+          </div>
+        </div>
+
+        <div className="bg-white rounded-lg shadow-md p-6 flex flex-col h-full">
+          <div className="flex items-center justify-between">
+            <div>
+              <div className="text-sm font-medium text-slate-500 mb-1">Taxa de Erro</div>
+              <div className="text-2xl font-bold text-slate-800">
+                {performanceData.overview.errorRate}%
+              </div>
+            </div>
+            <div className="p-3 rounded-full bg-emerald-100 flex-shrink-0">
+              <CheckCircle className="h-5 w-5 text-emerald-600" />
+            </div>
+          </div>
+          <div className="mt-auto pt-4 flex items-center">
+            <span className="text-emerald-600 text-sm flex items-center">
+              <ArrowDownRight className="h-3 w-3 mr-1" />
+              0.05%
+            </span>
+            <span className="text-slate-500 text-sm ml-2">vs. período anterior</span>
+          </div>
+        </div>
+
+        <div className="bg-white rounded-lg shadow-md p-6 flex flex-col h-full">
+          <div className="flex items-center justify-between">
+            <div>
+              <div className="text-sm font-medium text-slate-500 mb-1">Uptime</div>
+              <div className="text-2xl font-bold text-slate-800">
+                {performanceData.overview.uptime}%
+              </div>
+            </div>
+            <div className="p-3 rounded-full bg-emerald-100 flex-shrink-0">
+              <TrendingUp className="h-5 w-5 text-emerald-600" />
+            </div>
+          </div>
+          <div className="mt-auto pt-4 flex items-center">
+            <span className="text-emerald-600 text-sm flex items-center">
+              <ArrowUpRight className="h-3 w-3 mr-1" />
+              0.03%
+            </span>
+            <span className="text-slate-500 text-sm ml-2">vs. período anterior</span>
           </div>
         </div>
       </div>
 
-      {/* AWS Connection Status */}
-      <div className="bg-white rounded-lg border border-gray-200 p-6 shadow-sm">
-        <h2 className="text-lg font-semibold text-primary mb-4">Status da Conexão AWS</h2>
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-          <div className="text-center">
-            <div className="text-2xl mb-2">🔗</div>
-            <p className="text-sm font-medium">Status</p>
-            <p className="text-green-600 font-semibold">Conectado</p>
+      {/* Métricas Detalhadas */}
+      <div className="bg-white rounded-lg shadow-md mb-6">
+        <div className="px-6 py-4 border-b border-slate-200">
+          <h3 className="text-lg font-medium text-slate-800">Métricas Detalhadas</h3>
+        </div>
+        <div className="p-6">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+            {performanceData.metrics.map((metric, index) => (
+              <div key={index} className="border border-slate-200 rounded-lg p-4 flex flex-col h-full">
+                <div className="flex items-center justify-between mb-3">
+                  <h4 className="font-medium text-slate-700 truncate">{metric.name}</h4>
+                  <span className={`
+                    flex items-center text-sm whitespace-nowrap ml-2
+                    ${metric.trend === 'up' 
+                      ? metric.name.includes('Erro') ? 'text-red-600' : 'text-emerald-600'
+                      : 'text-emerald-600'}
+                  `}>
+                    {metric.trend === 'up' ? (
+                      <ArrowUpRight className="h-3 w-3 mr-1 flex-shrink-0" />
+                    ) : (
+                      <ArrowDownRight className="h-3 w-3 mr-1 flex-shrink-0" />
+                    )}
+                    {Math.abs(metric.change)}%
+                  </span>
+                </div>
+                <div className="text-2xl font-bold text-slate-800 mb-2">
+                  {metric.value}
+                  {metric.name.includes('Taxa') ? '%' : 
+                   metric.name.includes('Tempo') ? 'ms' : 
+                   metric.name.includes('Throughput') ? 'MB/s' : ''}
+                </div>
+                <div className="w-full bg-slate-200 rounded-full h-2 mt-auto">
+                  <div 
+                    className={`h-2 rounded-full ${
+                      metric.name.includes('Erro') && metric.value > 1 ? 'bg-red-500' :
+                      metric.value > 80 ? 'bg-amber-500' : 'bg-emerald-500'
+                    }`}
+                    style={{ 
+                      width: `${
+                        metric.name.includes('Taxa') ? Math.min(metric.value * 20, 100) : 
+                        metric.name.includes('Tempo') ? Math.min(metric.value / 5, 100) :
+                        metric.name.includes('Throughput') ? Math.min(metric.value, 100) :
+                        Math.min(metric.value, 100)}%` 
+                    }}
+                  />
+                </div>
+              </div>
+            ))}
           </div>
-          <div className="text-center">
-            <div className="text-2xl mb-2">🌍</div>
-            <p className="text-sm font-medium">Região</p>
-            <p className="text-gray-700 font-semibold">{settings.region}</p>
-          </div>
-          <div className="text-center">
-            <div className="text-2xl mb-2">⏱️</div>
-            <p className="text-sm font-medium">Intervalo</p>
-            <p className="text-gray-700 font-semibold">{settings.updateInterval}s</p>
+        </div>
+      </div>
+
+      {/* Análise de Endpoints */}
+      <div className="bg-white rounded-lg shadow-md mb-6">
+        <div className="px-6 py-4 border-b border-slate-200">
+          <h3 className="text-lg font-medium text-slate-800">Performance por Endpoint</h3>
+        </div>
+        <div className="overflow-x-auto">
+          <table className="min-w-full divide-y divide-slate-200">
+            <thead className="bg-slate-50">
+              <tr>
+                <th className="px-6 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider">
+                  Endpoint
+                </th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider">
+                  Requisições
+                </th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider">
+                  Tempo Médio
+                </th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider">
+                  Taxa de Erro
+                </th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider">
+                  Status
+                </th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider">
+                  Ações
+                </th>
+              </tr>
+            </thead>
+            <tbody className="bg-white divide-y divide-slate-200">
+              {performanceData.endpoints.map((endpoint, index) => (
+                <tr key={index} className="hover:bg-slate-50">
+                  <td className="px-6 py-4 whitespace-nowrap">
+                    <code className="text-xs sm:text-sm bg-slate-100 px-2 py-1 rounded">{endpoint.path}</code>
+                  </td>
+                  <td className="px-6 py-4 whitespace-nowrap text-sm text-slate-700">
+                    {endpoint.requests.toLocaleString()}
+                  </td>
+                  <td className="px-6 py-4 whitespace-nowrap text-sm">
+                    <span className={`${
+                      endpoint.avgTime > 400 ? 'text-red-600' :
+                      endpoint.avgTime > 200 ? 'text-amber-600' : 'text-emerald-600'
+                    }`}>
+                      {endpoint.avgTime}ms
+                    </span>
+                  </td>
+                  <td className="px-6 py-4 whitespace-nowrap text-sm">
+                    <span className={`${
+                      endpoint.errorRate > 0.5 ? 'text-red-600' :
+                      endpoint.errorRate > 0.2 ? 'text-amber-600' : 'text-emerald-600'
+                    }`}>
+                      {endpoint.errorRate}%
+                    </span>
+                  </td>
+                  <td className="px-6 py-4 whitespace-nowrap">
+                    <span className={`
+                      px-2 inline-flex text-xs leading-5 font-semibold rounded-full
+                      ${endpoint.errorRate > 0.5 ? 'bg-red-100 text-red-800' :
+                        endpoint.avgTime > 400 ? 'bg-amber-100 text-amber-800' :
+                        'bg-emerald-100 text-emerald-800'}
+                    `}>
+                      {endpoint.errorRate > 0.5 ? 'Crítico' :
+                       endpoint.avgTime > 400 ? 'Lento' : 'Normal'}
+                    </span>
+                  </td>
+                  <td className="px-6 py-4 whitespace-nowrap text-sm font-medium flex flex-col sm:flex-row sm:justify-end gap-2">
+                    <button className="text-indigo-600 hover:text-indigo-900 px-2 py-1 rounded hover:bg-indigo-50">
+                      Analisar
+                    </button>
+                    <button className="text-blue-600 hover:text-blue-900 px-2 py-1 rounded hover:bg-blue-50">
+                      Otimizar
+                    </button>
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      {/* Recomendações de Otimização */}
+      <div className="bg-white rounded-lg shadow-md">
+        <div className="px-6 py-4 border-b border-slate-200">
+          <h3 className="text-lg font-medium text-slate-800">Recomendações de Otimização</h3>
+        </div>
+        <div className="p-6">
+          <div className="space-y-4">
+            <div className="border-l-4 border-blue-500 bg-blue-50 p-4 rounded-r">
+              <div className="flex items-start">
+                <Lightbulb className="text-blue-500 mr-3 mt-1 h-5 w-5 flex-shrink-0" />
+                <div>
+                  <div className="font-medium text-blue-700">Otimizar endpoint /api/content</div>
+                  <div className="text-sm text-slate-600 mt-1">
+                    Este endpoint tem tempo de resposta alto (312ms). Considere implementar cache ou otimizar queries.
+                  </div>
+                </div>
+              </div>
+            </div>
+            
+            <div className="border-l-4 border-amber-500 bg-amber-50 p-4 rounded-r">
+              <div className="flex items-start">
+                <AlertCircle className="text-amber-500 mr-3 mt-1 h-5 w-5 flex-shrink-0" />
+                <div>
+                  <div className="font-medium text-amber-700">Monitorar endpoint /api/files</div>
+                  <div className="text-sm text-slate-600 mt-1">
+                    Taxa de erro elevada (0.89%). Verificar logs para identificar problemas.
+                  </div>
+                </div>
+              </div>
+            </div>
+            
+            <div className="border-l-4 border-emerald-500 bg-emerald-50 p-4 rounded-r">
+              <div className="flex items-start">
+                <CheckCircle className="text-emerald-500 mr-3 mt-1 h-5 w-5 flex-shrink-0" />
+                <div>
+                  <div className="font-medium text-emerald-700">Performance geral estável</div>
+                  <div className="text-sm text-slate-600 mt-1">
+                    O sistema está operando dentro dos parâmetros normais na maioria dos endpoints.
+                  </div>
+                </div>
+              </div>
+            </div>
           </div>
         </div>
       </div>

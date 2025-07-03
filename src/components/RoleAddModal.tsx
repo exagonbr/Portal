@@ -36,10 +36,10 @@ export default function RoleAddModal({ isOpen, onClose }: RoleAddModalProps) {
     {
       name: 'Usuários',
       permissions: [
-        { id: 'users.view', name: 'Visualizar Usuários', description: 'Permite visualizar lista de usuários' },
-        { id: 'users.create', name: 'Criar Usuários', description: 'Permite criar novos usuários' },
-        { id: 'users.edit', name: 'Editar Usuários', description: 'Permite editar dados de usuários' },
-        { id: 'users.delete', name: 'Excluir Usuários', description: 'Permite excluir usuários' }
+        { id: 'user.view', name: 'Visualizar Usuários', description: 'Permite visualizar lista de usuários' },
+        { id: 'user.create', name: 'Criar Usuários', description: 'Permite criar novos usuários' },
+        { id: 'user.edit', name: 'Editar Usuários', description: 'Permite editar dados de usuários' },
+        { id: 'user.delete', name: 'Excluir Usuários', description: 'Permite excluir usuários' }
       ]
     },
     {

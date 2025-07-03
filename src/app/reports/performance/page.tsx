@@ -6,10 +6,10 @@ export default function PerformanceReportsPage() {
   const { user } = useAuth()
 
   return (
-    <div className="container mx-auto px-4 py-8">
-      <div className="flex justify-between items-center mb-6">
+    <div className="space-y-6">
+      <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-2xl font-bold text-gray-800">Relatório de Desempenho</h1>
+          <h1 className="text-2xl font-bold text-gray-600">Relatório de Desempenho</h1>
           <p className="text-gray-600">Análise detalhada do desempenho institucional</p>
         </div>
         <div className="space-x-4">
@@ -46,7 +46,7 @@ export default function PerformanceReportsPage() {
       <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-6">
         <div className="bg-white rounded-lg shadow-md p-6">
           <div className="text-sm font-medium text-gray-500 mb-1">Taxa de Conclusão</div>
-          <div className="text-2xl font-bold text-gray-800">85%</div>
+          <div className="text-2xl font-bold text-gray-600">85%</div>
           <div className="mt-4 flex items-center">
             <span className="text-green-500 text-sm">↑ 5%</span>
             <span className="text-gray-500 text-sm ml-2">vs. período anterior</span>
@@ -54,7 +54,7 @@ export default function PerformanceReportsPage() {
         </div>
         <div className="bg-white rounded-lg shadow-md p-6">
           <div className="text-sm font-medium text-gray-500 mb-1">Engajamento</div>
-          <div className="text-2xl font-bold text-gray-800">78%</div>
+          <div className="text-2xl font-bold text-gray-600">78%</div>
           <div className="mt-4 flex items-center">
             <span className="text-green-500 text-sm">↑ 3%</span>
             <span className="text-gray-500 text-sm ml-2">vs. período anterior</span>
@@ -62,7 +62,7 @@ export default function PerformanceReportsPage() {
         </div>
         <div className="bg-white rounded-lg shadow-md p-6">
           <div className="text-sm font-medium text-gray-500 mb-1">Satisfação</div>
-          <div className="text-2xl font-bold text-gray-800">4.5/5.0</div>
+          <div className="text-2xl font-bold text-gray-600">4.5/5.0</div>
           <div className="mt-4 flex items-center">
             <span className="text-green-500 text-sm">↑ 0.2</span>
             <span className="text-gray-500 text-sm ml-2">vs. período anterior</span>
@@ -70,7 +70,7 @@ export default function PerformanceReportsPage() {
         </div>
         <div className="bg-white rounded-lg shadow-md p-6">
           <div className="text-sm font-medium text-gray-500 mb-1">Retenção</div>
-          <div className="text-2xl font-bold text-gray-800">92%</div>
+          <div className="text-2xl font-bold text-gray-600">92%</div>
           <div className="mt-4 flex items-center">
             <span className="text-blue-500 text-sm">=</span>
             <span className="text-gray-500 text-sm ml-2">vs. período anterior</span>
@@ -81,7 +81,7 @@ export default function PerformanceReportsPage() {
       {/* Performance Charts */}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
         <div className="bg-white rounded-lg shadow-md p-6">
-          <h3 className="text-lg font-semibold text-gray-800 mb-4">Tendência de Desempenho</h3>
+          <h3 className="text-lg font-semibold text-gray-600 mb-4">Tendência de Desempenho</h3>
           <div className="h-64 bg-gray-50 rounded-lg">
             {/* Placeholder for line chart */}
             <div className="w-full h-full flex items-center justify-center text-gray-400">
@@ -90,7 +90,7 @@ export default function PerformanceReportsPage() {
           </div>
         </div>
         <div className="bg-white rounded-lg shadow-md p-6">
-          <h3 className="text-lg font-semibold text-gray-800 mb-4">Distribuição por Área</h3>
+          <h3 className="text-lg font-semibold text-gray-600 mb-4">Distribuição por Área</h3>
           <div className="h-64 bg-gray-50 rounded-lg">
             {/* Placeholder for pie chart */}
             <div className="w-full h-full flex items-center justify-center text-gray-400">
@@ -129,21 +129,21 @@ export default function PerformanceReportsPage() {
             <tbody className="bg-white divide-y divide-gray-200">
               <tr>
                 <td className="px-6 py-4">
-                  <div className="text-sm font-medium text-gray-900">Taxa de Aprovação</div>
+                  <div className="text-sm font-medium text-gray-700">Taxa de Aprovação</div>
                   <div className="text-sm text-gray-500">Geral</div>
                 </td>
                 <td className="px-6 py-4 whitespace-nowrap">
-                  <div className="text-sm text-gray-900">85%</div>
+                  <div className="text-sm text-gray-700">85%</div>
                 </td>
                 <td className="px-6 py-4 whitespace-nowrap">
-                  <div className="text-sm text-gray-900">80%</div>
+                  <div className="text-sm text-gray-700">80%</div>
                 </td>
                 <td className="px-6 py-4 whitespace-nowrap">
                   <span className="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-green-100 text-green-800">
                     +5%
                   </span>
                 </td>
-                <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-700">
                   85%
                 </td>
                 <td className="px-6 py-4 whitespace-nowrap">

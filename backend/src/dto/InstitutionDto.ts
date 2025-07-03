@@ -63,8 +63,8 @@ export interface InstitutionFilterDto {
   sortOrder?: 'asc' | 'desc';
 }
 
-export interface PaginatedInstitutionsDto {
-  institutions: InstitutionDto[];
+export interface PaginatedInstitutionDto {
+  institution: InstitutionDto[];
   pagination: PaginationResult;
 }
 

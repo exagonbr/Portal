@@ -25,7 +25,7 @@ export default function LiveClassesPage() {
       const classRecordings = await recordingService.getClassroomRecordings(activeClass.id)
       setRecordings(classRecordings)
     } catch (error) {
-      console.error('Failed to load recordings:', error)
+      console.log('Failed to load recordings:', error)
     }
   }
 
@@ -60,7 +60,7 @@ export default function LiveClassesPage() {
     <div className="container mx-auto px-4 py-8">
       <div className="flex justify-between items-center mb-8">
         <div>
-          <h1 className="text-2xl font-bold text-primary-dark">Aulas ao Vivo</h1>
+          <h1 className="text-3xl font-bold text-gray-700 dark:text-gray-800-dark">Aulas ao Vivo</h1>
           <p className="text-gray-600">Participe das aulas ao vivo e interaja com professores</p>
         </div>
         <div className="flex space-x-4">
@@ -69,13 +69,13 @@ export default function LiveClassesPage() {
               onClick={() => setShowRecordings(!showRecordings)}
               className="bg-gray-100 text-gray-700 px-4 py-2 rounded-lg hover:bg-gray-200 transition-colors duration-200"
             >
-              <span className="material-icons text-sm mr-2">video_library</span>
+              <span className="material-symbols-outlined text-sm mr-2">video_library</span>
               {showRecordings ? 'Voltar à Aula' : 'Ver Gravações'}
             </button>
           )}
           {user?.role === 'teacher' && (
             <button className="bg-primary text-white px-4 py-2 rounded-lg hover:bg-primary-dark transition-colors duration-200">
-              <span className="material-icons text-sm mr-2">video_call</span>
+              <span className="material-symbols-outlined text-sm mr-2">video_call</span>
               Nova Aula
             </button>
           )}
@@ -130,7 +130,7 @@ export default function LiveClassesPage() {
                         rel="noopener noreferrer"
                         className="bg-primary text-white px-4 py-2 rounded-lg hover:bg-primary-dark transition-colors duration-200"
                       >
-                        <span className="material-icons text-sm">play_circle</span>
+                        <span className="material-symbols-outlined text-sm">play_circle</span>
                       </a>
                     )}
                   </div>

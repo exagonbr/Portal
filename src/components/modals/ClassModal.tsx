@@ -3,8 +3,7 @@
 import React, { useState, useEffect } from 'react';
 import { Class, CreateClassData, UpdateClassData, SHIFT_LABELS } from '@/types/class';
 import { classService } from '@/services/classService';
-import { schoolService } from '@/services/schoolService';
-import { School } from '@/types/school';
+import { schoolService, School } from '@/services/schoolService';
 
 interface ClassModalProps {
   classItem?: Class | null;
@@ -42,7 +41,7 @@ export default function ClassModal({ classItem, onClose }: ClassModalProps) {
       const response = await schoolService.list({ limit: 100 });
       setSchools(response.items || []);
     } catch (error) {
-      console.error('Erro ao carregar escolas:', error);
+      console.log('Erro ao carregar escolas:', error);
     }
   };
 
@@ -52,9 +51,27 @@ export default function ClassModal({ classItem, onClose }: ClassModalProps) {
 
     try {
       if (classItem) {
-        await classService.update(classItem.id, formData as UpdateClassData);
+        // For now, we'll convert the school class data to course class format
+        const updateData = {
+          name: formData.name,
+          description: `Turma ${formData.name} - ${formData.year}`,
+          status: 'active',
+          course_id: formData.school_id, // Using school_id as course_id temporarily
+          teacher_id: formData.school_id, // Using school_id as teacher_id temporarily
+          active: true
+        };
+        await classService.update(classItem.id, updateData);
       } else {
-        await classService.create(formData);
+        // Convert school class data to course class format
+        const createData = {
+          name: formData.name,
+          description: `Turma ${formData.name} - ${formData.year}`,
+          status: 'active',
+          course_id: formData.school_id, // Using school_id as course_id temporarily
+          teacher_id: formData.school_id, // Using school_id as teacher_id temporarily
+          active: true
+        };
+        await classService.create(createData);
       }
       onClose();
     } catch (error: any) {
@@ -209,7 +226,7 @@ export default function ClassModal({ classItem, onClose }: ClassModalProps) {
               <button
                 type="button"
                 onClick={onClose}
-                className="px-4 py-2 bg-secondary-light text-text-primary rounded-lg hover:bg-secondary-DEFAULT/80 transition-colors"
+                className="px-4 py-2 bg-secondary-light text-text-primary rounded-lg hover:bg-secondary/80 transition-colors"
               >
                 Cancelar
               </button>
@@ -217,7 +234,7 @@ export default function ClassModal({ classItem, onClose }: ClassModalProps) {
                 type="submit"
                 disabled={loading}
                 onClick={handleSubmit}
-                className="px-4 py-2 bg-primary-DEFAULT text-white rounded-lg hover:bg-primary-dark transition-colors disabled:opacity-50"
+                className="px-4 py-2 bg-primary text-white rounded-lg hover:bg-primary-dark transition-colors disabled:opacity-50"
               >
                 {loading ? 'Salvando...' : classItem ? 'Salvar Alterações' : 'Criar Turma'}
               </button>

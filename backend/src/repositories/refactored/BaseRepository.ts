@@ -1,7 +1,7 @@
 import { Knex } from 'knex';
 import db from '../../config/database';
 import { Logger } from '../../utils/Logger';
-import { PaginationParams, FilterOptions, RepositoryOptions } from '../../types/common';
+import { PaginationParams, RepositoryOptions } from '../../types/common';
 
 export abstract class BaseRepository<T> {
   protected db: Knex;

@@ -50,12 +50,12 @@ QUEUE_REDIS_PASSWORD=
 QUEUE_REDIS_DB=1
 
 # CORS SETTINGS
-CORS_ORIGIN=http://localhost:3000
+CORS_ORIGIN=https://portal.sabercon.com.br
 CORS_CREDENTIALS=true
 
 # ADMIN USER SETTINGS
 ADMIN_EMAIL=admin@portal.com
-ADMIN_PASSWORD=admin123
+ADMIN_PASSWORD=password123
 
 # QUEUE CONCURRENCY SETTINGS
 EMAIL_QUEUE_CONCURRENCY=3
@@ -108,7 +108,7 @@ function main() {
       fs.writeFileSync(envExamplePath, envTemplate);
       console.log('✅ Arquivo .env.example criado/atualizado com sucesso!');
     } catch (error) {
-      console.error('❌ Erro ao criar .env.example:', error.message);
+      console.log('❌ Erro ao criar .env.example:', error.message);
       process.exit(1);
     }
     
@@ -147,7 +147,7 @@ function main() {
     console.log('\n📚 Documentação completa em: docs/ENVIRONMENT_VARIABLES.md');
     
   } catch (error) {
-    console.error('❌ Erro ao criar arquivo .env:', error.message);
+    console.log('❌ Erro ao criar arquivo .env:', error.message);
     process.exit(1);
   }
 }

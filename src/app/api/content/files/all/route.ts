@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { S3Client, ListObjectsV2Command, GetObjectCommand } from '@aws-sdk/client-s3'
 import { getSignedUrl } from '@aws-sdk/s3-request-presigner'
+import { createCorsOptionsResponse, getCorsHeaders } from '@/config/cors'
 import { S3FileInfo, FileRecord } from '@/types/files'
 
 const s3Client = new S3Client({
@@ -70,7 +71,7 @@ async function listS3Files(bucket: string, category: string): Promise<S3FileInfo
           const signedUrl = await getSignedUrl(s3Client, getObjectCommand, { expiresIn: 3600 })
 
           const fileInfo: S3FileInfo = {
-            id: `${category}_${object.Key.replace(/[^a-zA-Z0-9]/g, '_')}`,
+            id: `${category}_${object.Key?.replace(/[^a-zA-Z0-9]/g, '_') || 'unknown_id'}`,
             name: object.Key.split('/').pop() || object.Key,
             type: object.Key.split('.').pop()?.toUpperCase() || 'UNKNOWN',
             size: formatFileSize(object.Size),
@@ -89,9 +90,16 @@ async function listS3Files(bucket: string, category: string): Promise<S3FileInfo
 
     return files
   } catch (error) {
-    console.error(`Erro ao listar arquivos S3 do bucket ${bucket}:`, error)
+    console.log(`Erro ao listar arquivos S3 do bucket ${bucket}:`, error)
     return []
   }
+}
+
+
+// Handler para requisições OPTIONS (preflight)
+export async function OPTIONS(request: NextRequest) {
+  const origin = request.headers.get('origin') || undefined;
+  return createCorsOptionsResponse(origin);
 }
 
 export async function GET(request: NextRequest) {
@@ -103,13 +111,15 @@ export async function GET(request: NextRequest) {
       allFiles[category] = await listS3Files(bucket, category)
     }
 
-    return NextResponse.json(allFiles)
+    return NextResponse.json(allFiles, {
+      headers: getCorsHeaders(request.headers.get('origin') || undefined)
+    })
 
   } catch (error) {
-    console.error('Erro ao buscar todos os arquivos:', error)
-    return NextResponse.json(
-      { error: 'Erro interno do servidor' },
-      { status: 500 }
-    )
+    console.log('Erro ao buscar todos os arquivos:', error)
+    return NextResponse.json({ error: 'Erro interno do servidor' }, { 
+      status: 500,
+      headers: getCorsHeaders(request.headers.get('origin') || undefined)
+    })
   }
 } 

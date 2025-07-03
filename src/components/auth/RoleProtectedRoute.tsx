@@ -4,6 +4,7 @@ import { ReactNode, useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { useAuth } from '../../contexts/AuthContext';
 import { isValidRole, getDashboardPath } from '../../utils/roleRedirect';
+import { clearAllDataForUnauthorized } from '../../utils/clearAllData';
 
 interface RoleProtectedRouteProps {
   children: ReactNode;
@@ -20,7 +21,7 @@ interface RoleProtectedRouteProps {
 export function RoleProtectedRoute({
   children,
   allowedRoles,
-  fallbackPath = '/login',
+  fallbackPath = '/auth/login',
   showLoading = true,
   loadingComponent,
   unauthorizedComponent
@@ -40,16 +41,40 @@ export function RoleProtectedRoute({
       // Se não há usuário, redireciona para login
       if (!user) {
         console.log('Usuário não autenticado, redirecionando para login');
-        router.push(fallbackPath);
+        
+        // Se redirecionando para login, limpar dados primeiro
+        if (fallbackPath.includes('/login')) {
+          clearAllDataForUnauthorized().then(() => {
+            router.push(fallbackPath + '?error=unauthorized');
+          }).catch((error) => {
+            console.log('❌ Erro durante limpeza de dados:', error);
+            router.push(fallbackPath + '?error=unauthorized');
+          });
+        } else {
+          router.push(fallbackPath);
+        }
+        
         setIsAuthorized(false);
         return;
       }
 
       // Verifica se a role é válida
       if (!isValidRole(user.role)) {
-        console.error(`Role inválida detectada: ${user.role}`);
+        console.log(`Role inválida detectada: ${user.role}`);
         await logout();
-        router.push(fallbackPath);
+        
+        // Se redirecionando para login, limpar dados primeiro
+        if (fallbackPath.includes('/login')) {
+          clearAllDataForUnauthorized().then(() => {
+            router.push(fallbackPath + '?error=unauthorized');
+          }).catch((error) => {
+            console.log('❌ Erro durante limpeza de dados:', error);
+            router.push(fallbackPath + '?error=unauthorized');
+          });
+        } else {
+          router.push(fallbackPath);
+        }
+        
         setIsAuthorized(false);
         return;
       }
@@ -58,8 +83,13 @@ export function RoleProtectedRoute({
       const normalizedUserRole = user.role.toLowerCase();
       const normalizedAllowedRoles = allowedRoles.map(role => role.toLowerCase());
       
+      // SYSTEM_ADMIN tem acesso COMPLETO a todas as rotas
+      const isSystemAdmin = normalizedUserRole === 'system_admin' || 
+                           normalizedUserRole === 'administrador do sistema' ||
+                           normalizedUserRole === 'administrador';
+      
       // Verifica se o usuário tem permissão para acessar a rota
-      const hasPermission = normalizedAllowedRoles.includes(normalizedUserRole);
+      const hasPermission = isSystemAdmin || normalizedAllowedRoles.includes(normalizedUserRole);
 
       if (!hasPermission) {
         console.warn(`Usuário ${user.name} (${user.role}) tentou acessar rota não autorizada. Roles permitidas: ${allowedRoles.join(', ')}`);
@@ -77,7 +107,11 @@ export function RoleProtectedRoute({
         return;
       }
 
-      console.log(`Acesso autorizado para usuário ${user.name} (${user.role})`);
+      if (isSystemAdmin) {
+        console.log(`✅ SYSTEM_ADMIN ${user.name} tem acesso completo à rota`);
+      } else {
+        console.log(`Acesso autorizado para usuário ${user.name} (${user.role})`);
+      }
       setIsAuthorized(true);
     };
 

@@ -1,21 +1,11 @@
-interface AuthTokenPayload {
-  userId: string;
-  email?: string;
-  name?: string;
-  role: string;
-  permissions?: string[];
-  institutionId?: string;
-  sessionId?: string;
-  iat?: number;
-  exp?: number;
-}
+import { AccessTokenPayload } from '../config/jwt';
 
 declare global {
   namespace Express {
     interface Request {
-      user?: AuthTokenPayload;
+      user?: AccessTokenPayload;
     }
   }
 }
 
-export { AuthTokenPayload };
+export {};

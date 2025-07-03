@@ -18,7 +18,7 @@ export class UserService extends BaseService<User, CreateUserDto, UpdateUserDto>
 
   constructor() {
     const userRepository = new UserRepository();
-    super(userRepository, 'User');
+    super(userRepository, 'users');
     this.userRepository = userRepository;
   }
 
@@ -44,13 +44,53 @@ export class UserService extends BaseService<User, CreateUserDto, UpdateUserDto>
       } else if (filters.institution_id) {
         users = await this.userRepository.findByInstitution(filters.institution_id);
       } else {
-        users = await this.userRepository.getUsersWithRoleAndInstitution();
+        users = await this.userRepository.findAll();
+      }
+
+      // Aplicar filtros adicionais no resultado
+      if (filters.name) {
+        users = users.filter(user => 
+          user.name.toLowerCase().includes(filters.name!.toLowerCase())
+        );
+      }
+      
+      if (filters.email) {
+        users = users.filter(user => 
+          user.email.toLowerCase().includes(filters.email!.toLowerCase())
+        );
+      }
+      
+      if (filters.role_id) {
+        users = users.filter(user => user.role_id === filters.role_id);
+      }
+      
+      if (filters.is_active !== undefined) {
+        users = users.filter(user => user.is_active === filters.is_active);
+      }
+      
+      // Ordenar os resultados
+      if (filters.sortBy) {
+        const sortField = filters.sortBy;
+        const sortDir = filters.sortOrder === 'desc' ? -1 : 1;
+        
+        users.sort((a, b) => {
+          if (a[sortField] < b[sortField]) return -1 * sortDir;
+          if (a[sortField] > b[sortField]) return 1 * sortDir;
+          return 0;
+        });
       }
 
       // Sanitizar dados sensíveis
       const sanitizedUsers = users.map(user => this.sanitizeData(user)) as UserResponseDto[];
 
       const total = sanitizedUsers.length;
+      
+      // Aplicar paginação após a filtragem
+      const paginatedUsers = sanitizedUsers.slice(
+        pagination.offset, 
+        pagination.offset + pagination.limit
+      );
+      
       const paginationResult = {
         page: pagination.page,
         limit: pagination.limit,
@@ -60,12 +100,12 @@ export class UserService extends BaseService<User, CreateUserDto, UpdateUserDto>
         hasPrev: pagination.page > 1
       };
 
-      this.logger.info(`Found ${sanitizedUsers.length} users with filters`);
+      this.logger.info(`Found ${paginatedUsers.length} users of total ${total} with filters`);
 
       return {
         success: true,
         data: {
-          users: sanitizedUsers,
+          users: paginatedUsers,
           pagination: paginationResult
         }
       };
@@ -207,6 +247,12 @@ export class UserService extends BaseService<User, CreateUserDto, UpdateUserDto>
       }
 
       // Verifica senha atual
+      if (!user.password) {
+        return {
+          success: false,
+          error: 'User has no password set'
+        };
+      }
       const isCurrentPasswordValid = await bcrypt.compare(passwordData.currentPassword, user.password);
       if (!isCurrentPasswordValid) {
         return {
@@ -360,7 +406,7 @@ export class UserService extends BaseService<User, CreateUserDto, UpdateUserDto>
   protected override async afterCreate(entity: User, userId?: string): Promise<void> {
     this.logger.businessLogic('User created', entity.id, {
       email: entity.email,
-      name: entity.name,
+      name: entity.full_name,
       createdBy: userId
     });
   }
@@ -375,7 +421,7 @@ export class UserService extends BaseService<User, CreateUserDto, UpdateUserDto>
   protected override async afterDelete(entity: User, userId?: string): Promise<void> {
     this.logger.businessLogic('User deleted', entity.id, {
       email: entity.email,
-      name: entity.name,
+      name: entity.full_name,
       deletedBy: userId
     });
   }

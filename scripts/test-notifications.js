@@ -1,6 +1,6 @@
 const fetch = require('node-fetch');
 
-const API_BASE = process.env.API_BASE || 'http://localhost:3001/api';
+const API_BASE = process.env.API_BASE || 'https://portal.sabercon.com.br/api';
 const TEST_EMAIL = process.env.TEST_EMAIL || 'test@example.com';
 const AUTH_TOKEN = process.env.AUTH_TOKEN; // Token JWT para autenticação
 
@@ -122,4 +122,4 @@ async function runTests() {
   console.log('- Verifique os logs do backend para mais detalhes');
 }
 
-runTests().catch(console.error); 
+runTests().catch(console.log); 

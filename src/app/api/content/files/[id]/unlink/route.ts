@@ -1,11 +1,21 @@
 import { NextRequest, NextResponse } from 'next/server'
+import { createCorsOptionsResponse, getCorsHeaders } from '@/config/cors'
+
+
+
+// Handler para requisições OPTIONS (preflight)
+export async function OPTIONS(request: NextRequest) {
+  const origin = request.headers.get('origin') || undefined;
+  return createCorsOptionsResponse(origin);
+}
 
 export async function POST(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
-    const fileId = params.id
+    const resolvedParams = await params
+    const fileId = resolvedParams.id
 
     // Por enquanto, simular sucesso
     // Aqui você deve implementar a lógica real de banco de dados para desvincular
@@ -23,13 +33,15 @@ export async function POST(
       success: true,
       file: mockUpdatedFile,
       message: 'Arquivo desvinculado do conteúdo com sucesso'
+    }, {
+      headers: getCorsHeaders(request.headers.get('origin') || undefined)
     })
 
   } catch (error) {
-    console.error('Erro ao desvincular arquivo do conteúdo:', error)
-    return NextResponse.json(
-      { error: 'Erro interno do servidor' },
-      { status: 500 }
-    )
+    console.log('Erro ao desvincular arquivo do conteúdo:', error)
+    return NextResponse.json({ error: 'Erro interno do servidor' }, { 
+      status: 500,
+      headers: getCorsHeaders(request.headers.get('origin') || undefined)
+    })
   }
 } 

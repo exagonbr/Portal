@@ -29,6 +29,7 @@ export class CourseController {
       return res.json({
         success: true,
         data: courses,
+        message: 'Courses retrieved successfully',
         pagination: {
           page: parseInt(page as string),
           limit: parseInt(limit as string),
@@ -65,7 +66,8 @@ export class CourseController {
 
       return res.json({
         success: true,
-        data: course
+        data: course,
+        message: 'Course retrieved successfully'
       });
     } catch (error) {
       return res.status(500).json({
@@ -177,6 +179,7 @@ export class CourseController {
 
       return res.json({
         success: true,
+        data: null,
         message: 'Course deleted successfully'
       });
     } catch (error) {
@@ -202,7 +205,8 @@ export class CourseController {
 
       return res.json({
         success: true,
-        data: modules
+        data: modules,
+        message: 'Course modules retrieved successfully'
       });
     } catch (error) {
       return res.status(500).json({
@@ -227,7 +231,8 @@ export class CourseController {
 
       return res.json({
         success: true,
-        data: books
+        data: books,
+        message: 'Course books retrieved successfully'
       });
     } catch (error) {
       return res.status(500).json({
@@ -252,7 +257,8 @@ export class CourseController {
 
       return res.json({
         success: true,
-        data: videos
+        data: videos,
+        message: 'Course videos retrieved successfully'
       });
     } catch (error) {
       return res.status(500).json({
@@ -277,7 +283,8 @@ export class CourseController {
 
       return res.json({
         success: true,
-        data: teachers
+        data: teachers,
+        message: 'Course teachers retrieved successfully'
       });
     } catch (error) {
       return res.status(500).json({
@@ -302,7 +309,8 @@ export class CourseController {
 
       return res.json({
         success: true,
-        data: students
+        data: students,
+        message: 'Course students retrieved successfully'
       });
     } catch (error) {
       return res.status(500).json({
@@ -336,6 +344,7 @@ export class CourseController {
 
       return res.json({
         success: true,
+        data: null,
         message: 'Teacher added to course successfully'
       });
     } catch (error) {
@@ -376,6 +385,7 @@ export class CourseController {
 
       return res.json({
         success: true,
+        data: null,
         message: 'Teacher removed from course successfully'
       });
     } catch (error) {
@@ -410,6 +420,7 @@ export class CourseController {
 
       return res.json({
         success: true,
+        data: null,
         message: 'Student added to course successfully'
       });
     } catch (error) {
@@ -499,6 +510,26 @@ export class CourseController {
         message: 'Error updating student progress',
         error: error instanceof Error ? error.message : 'Unknown error'
       });
+    }
+  }
+
+  async getCoursesByTeacher(teacherId: string): Promise<any[]> {
+    try {
+      const courses = await this.courseRepository.getCoursesByTeacher(teacherId);
+      return courses;
+    } catch (error) {
+      console.log(`Error retrieving teacher courses: ${error instanceof Error ? error.message : 'Unknown error'}`);
+      throw new Error('Failed to retrieve teacher courses');
+    }
+  }
+
+  async getCoursesByStudent(studentId: string): Promise<any[]> {
+    try {
+      const courses = await this.courseRepository.getCoursesByStudent(studentId);
+      return courses;
+    } catch (error) {
+      console.log(`Error retrieving student courses: ${error instanceof Error ? error.message : 'Unknown error'}`);
+      throw new Error('Failed to retrieve student courses');
     }
   }
 }

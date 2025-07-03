@@ -62,7 +62,7 @@ export const StatCard = ({ title, value, type, trend }: StatCardProps) => {
           <div>
             <h3 className="text-sm font-medium text-gray-600">{title}</h3>
             <div className="flex items-baseline space-x-2">
-              <p className="text-2xl font-bold text-gray-900">{value}</p>
+              <p className="text-2xl font-bold text-gray-700">{value}</p>
               {trend !== undefined && (
                 <span className={`text-sm font-medium ${
                   trend >= 0 ? 'text-green-600' : 'text-red-600'

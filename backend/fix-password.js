@@ -68,8 +68,8 @@ async function fixPassword() {
     console.log('🎉 Senha corrigida com sucesso!');
     
   } catch (error) {
-    console.error('❌ Erro ao corrigir senha:', error.message);
-    console.error('Stack:', error.stack);
+    console.log('❌ Erro ao corrigir senha:', error.message);
+    console.log('Stack:', error.stack);
   } finally {
     await db.destroy();
   }

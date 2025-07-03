@@ -20,7 +20,7 @@ export async function registerServiceWorker(): Promise<ServiceWorkerRegistration
 
     return registration;
   } catch (error) {
-    console.error('Service worker registration failed:', error);
+    console.log('Service worker registration failed:', error);
     return null;
   }
 }
@@ -39,7 +39,7 @@ export async function clearServiceWorkerCache(): Promise<void> {
     const keys = await caches.keys();
     await Promise.all(keys.map(key => caches.delete(key)));
   } catch (error) {
-    console.error('Failed to clear cache:', error);
+    console.log('Failed to clear cache:', error);
   }
 }
 
@@ -86,7 +86,7 @@ export async function promptInstall(deferredPrompt: BeforeInstallPromptEvent): P
     const choiceResult = await deferredPrompt.userChoice;
     return choiceResult.outcome === 'accepted';
   } catch (error) {
-    console.error('Error installing PWA:', error);
+    console.log('Error installing PWA:', error);
     return false;
   }
 }

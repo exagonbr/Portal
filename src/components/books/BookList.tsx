@@ -1,52 +1,107 @@
 'use client';
 
-import React from 'react';
-import BookCard from '@/components/BookCard';
-
-interface Book {
-  id: string;
-  thumbnail?: string;
-  title: string;
-  duration?: string;
-  progress?: number;
-  author?: string;
-  publisher?: string;
-  synopsis?: string;
-  format?: string;
-}
+import React, { useState } from 'react';
+import { Book } from '../../constants/mockData';
+import BookViewer from './BookViewer';
+import Link from 'next/link';
 
 interface BookListProps {
   books: Book[];
-  title: string;
-  emptyMessage: string;
+  showViewer?: boolean;
 }
 
-export default function BookList({ books, title, emptyMessage }: BookListProps) {
+const BookList: React.FC<BookListProps> = ({ books, showViewer = true }) => {
+  const [selectedBook, setSelectedBook] = useState<Book | null>(null);
+  
+  const handleBookClick = (book: Book) => {
+    if (showViewer) {
+      setSelectedBook(book);
+    }
+  };
+  
+  const handleCloseViewer = () => {
+    setSelectedBook(null);
+  };
+  
   return (
-    <div className="p-6">
-      <h1 className="text-2xl font-bold mb-6 text-gray-800">{title}</h1>
-      {books.length === 0 ? (
-        <div className="text-center py-10">
-          <p className="text-gray-500">{emptyMessage}</p>
-        </div>
-      ) : (
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
-          {books.map((book) => (
-            <BookCard
-              key={book.id}
-              id={book.id}
-              thumbnail={book.thumbnail ?? ''}
-              title={book.title}
-              duration={book.duration ?? ''}
-              progress={book.progress}
-              author={book.author ?? ''}
-              publisher={book.publisher ?? ''}
-              synopsis={book.synopsis ?? ''}
-              format={book.format ?? ''}
-            />
-          ))}
-        </div>
+    <div>
+      <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
+        {books.map((book) => (
+          <div 
+            key={book.id}
+            className="bg-white dark:bg-gray-800 rounded-lg shadow-md overflow-hidden transition-transform hover:shadow-lg hover:-translate-y-1 cursor-pointer"
+          >
+            {showViewer ? (
+              <div onClick={() => handleBookClick(book)}>
+                <div className="aspect-[3/4] bg-gray-200 dark:bg-gray-700 relative">
+                  {book.coverImage ? (
+                    <img 
+                      src={book.coverImage} 
+                      alt={book.title} 
+                      className="w-full h-full object-cover"
+                    />
+                  ) : (
+                    <div className="w-full h-full flex items-center justify-center text-gray-500 dark:text-gray-400">
+                      <span className="text-3xl">📚</span>
+                    </div>
+                  )}
+                  <div className="absolute bottom-0 right-0 bg-blue-600 text-white text-xs px-2 py-1 rounded-tl-md">
+                    {book.format.toUpperCase()}
+                  </div>
+                </div>
+                <div className="p-4">
+                  <h3 className="font-semibold text-gray-800 dark:text-gray-200 mb-1 line-clamp-2">
+                    {book.title}
+                  </h3>
+                  {book.author && (
+                    <p className="text-sm text-gray-600 dark:text-gray-400 mb-2">
+                      {book.author}
+                    </p>
+                  )}
+                </div>
+              </div>
+            ) : (
+              <Link href={`/books/view/${book.id}?title=${encodeURIComponent(book.title)}`}>
+                <div className="aspect-[3/4] bg-gray-200 dark:bg-gray-700 relative">
+                  {book.coverImage ? (
+                    <img 
+                      src={book.coverImage} 
+                      alt={book.title} 
+                      className="w-full h-full object-cover"
+                    />
+                  ) : (
+                    <div className="w-full h-full flex items-center justify-center text-gray-500 dark:text-gray-400">
+                      <span className="text-3xl">📚</span>
+                    </div>
+                  )}
+                  <div className="absolute bottom-0 right-0 bg-blue-600 text-white text-xs px-2 py-1 rounded-tl-md">
+                    {book.format.toUpperCase()}
+                  </div>
+                </div>
+                <div className="p-4">
+                  <h3 className="font-semibold text-gray-800 dark:text-gray-200 mb-1 line-clamp-2">
+                    {book.title}
+                  </h3>
+                  {book.author && (
+                    <p className="text-sm text-gray-600 dark:text-gray-400 mb-2">
+                      {book.author}
+                    </p>
+                  )}
+                </div>
+              </Link>
+            )}
+          </div>
+        ))}
+      </div>
+      
+      {selectedBook && showViewer && (
+        <BookViewer 
+          book={selectedBook}
+          onBack={handleCloseViewer}
+        />
       )}
     </div>
   );
-}
+};
+
+export default BookList;

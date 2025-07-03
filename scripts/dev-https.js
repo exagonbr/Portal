@@ -29,16 +29,16 @@ async function start() {
         // Handle Next.js routing
         await handle(req, res);
       } catch (err) {
-        console.error('Error occurred handling', req.url, err);
+        console.log('Error occurred handling', req.url, err);
         res.statusCode = 500;
         res.end('Internal Server Error');
       }
     }).listen(3000, (err) => {
       if (err) throw err;
-      console.log('> Ready on https://localhost:3000');
+      console.log('> Ready on https://portal.sabercon.com.br');
     });
   } catch (err) {
-    console.error('Error starting server:', err);
+    console.log('Error starting server:', err);
     process.exit(1);
   }
 }

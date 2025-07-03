@@ -153,14 +153,14 @@ export class UserClassRepository extends BaseRepository<UserClass> {
     const result = await this.db(this.tableName)
       .select(
         'user_classes.*',
-        'users.name as user_name',
-        'users.email as user_email',
+        'User.name as user_name',
+        'User.email as user_email',
         'classes.name as class_name',
         'classes.code as class_code',
         'schools.name as school_name',
         'schools.id as school_id'
       )
-      .join('users', 'user_classes.user_id', 'users.id')
+      .join('User', 'user_classes.user_id', 'User.id')
       .join('classes', 'user_classes.class_id', 'classes.id')
       .join('schools', 'classes.school_id', 'schools.id')
       .where('user_classes.id', userClassId)
@@ -229,7 +229,7 @@ export class UserClassRepository extends BaseRepository<UserClass> {
   }
 
   async getUserEnrollmentHistory(userId: string): Promise<UserEnrollmentHistoryDto> {
-    const userInfo = await this.db('users')
+            const userInfo = await this.db('users')
       .where({ id: userId })
       .first();
 

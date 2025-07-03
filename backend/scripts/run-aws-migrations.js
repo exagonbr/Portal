@@ -6,7 +6,7 @@ async function runAwsMigrations() {
   const config = knexConfig[environment];
   
   if (!config) {
-    console.error(`❌ Configuração não encontrada para ambiente: ${environment}`);
+    console.log(`❌ Configuração não encontrada para ambiente: ${environment}`);
     process.exit(1);
   }
 
@@ -33,7 +33,7 @@ async function runAwsMigrations() {
     console.log('✅ Seeds AWS executados com sucesso!');
     
   } catch (error) {
-    console.error('❌ Erro ao executar migrations/seeds AWS:', error);
+    console.log('❌ Erro ao executar migrations/seeds AWS:', error);
     process.exit(1);
   } finally {
     await db.destroy();

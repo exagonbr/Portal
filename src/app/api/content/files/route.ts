@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { S3Client, ListObjectsV2Command, GetObjectCommand, PutObjectCommand, DeleteObjectCommand, CopyObjectCommand } from '@aws-sdk/client-s3'
 import { getSignedUrl } from '@aws-sdk/s3-request-presigner'
+import { createCorsOptionsResponse, getCorsHeaders } from '@/config/cors'
 import { FileRecord, S3FileInfo } from '@/types/files'
 
 // Configuração S3 (você deve configurar com suas credenciais)
@@ -75,7 +76,7 @@ async function listS3Files(bucket: string): Promise<S3FileInfo[]> {
           const signedUrl = await getSignedUrl(s3Client, getObjectCommand, { expiresIn: 3600 })
 
           const fileInfo: S3FileInfo = {
-            id: object.Key.replace(/[^a-zA-Z0-9]/g, '_'),
+            id: object.Key?.replace(/[^a-zA-Z0-9]/g, '_') || 'unknown_id',
             name: object.Key.split('/').pop() || object.Key,
             type: object.Key.split('.').pop()?.toUpperCase() || 'UNKNOWN',
             size: formatFileSize(object.Size),
@@ -94,12 +95,19 @@ async function listS3Files(bucket: string): Promise<S3FileInfo[]> {
 
     return files
   } catch (error) {
-    console.error('Erro ao listar arquivos S3:', error)
+    console.log('Erro ao listar arquivos S3:', error)
     return []
   }
 }
 
 // GET - Listar arquivos por categoria
+
+// Handler para requisições OPTIONS (preflight)
+export async function OPTIONS(request: NextRequest) {
+  const origin = request.headers.get('origin') || undefined;
+  return createCorsOptionsResponse(origin);
+}
+
 export async function GET(request: NextRequest) {
   try {
     const { searchParams } = new URL(request.url)
@@ -108,21 +116,23 @@ export async function GET(request: NextRequest) {
     if (category) {
       const bucket = BUCKETS[category]
       const files = await listS3Files(bucket)
-      return NextResponse.json(files)
+      return NextResponse.json(files, {
+      headers: getCorsHeaders(request.headers.get('origin') || undefined)
+    })
     }
 
     // Se não especificar categoria, retorna erro
-    return NextResponse.json(
-      { error: 'Categoria é obrigatória' },
-      { status: 400 }
-    )
+    return NextResponse.json({ error: 'Categoria é obrigatória' }, { 
+      status: 400,
+      headers: getCorsHeaders(request.headers.get('origin') || undefined)
+    })
 
   } catch (error) {
-    console.error('Erro na API:', error)
-    return NextResponse.json(
-      { error: 'Erro interno do servidor' },
-      { status: 500 }
-    )
+    console.log('Erro na API:', error)
+    return NextResponse.json({ error: 'Erro interno do servidor' }, { 
+      status: 500,
+      headers: getCorsHeaders(request.headers.get('origin') || undefined)
+    })
   }
 }
 
@@ -136,18 +146,18 @@ export async function POST(request: NextRequest) {
     const tags = formData.get('tags') as string
 
     if (!file || !category) {
-      return NextResponse.json(
-        { error: 'Arquivo e categoria são obrigatórios' },
-        { status: 400 }
-      )
+      return NextResponse.json({ error: 'Arquivo e categoria são obrigatórios' }, { 
+      status: 400,
+      headers: getCorsHeaders(request.headers.get('origin') || undefined)
+    })
     }
 
     const bucket = BUCKETS[category as keyof typeof BUCKETS]
     if (!bucket) {
-      return NextResponse.json(
-        { error: 'Categoria inválida' },
-        { status: 400 }
-      )
+      return NextResponse.json({ error: 'Categoria inválida' }, { 
+      status: 400,
+      headers: getCorsHeaders(request.headers.get('origin') || undefined)
+    })
     }
 
     // Upload para S3
@@ -186,14 +196,17 @@ export async function POST(request: NextRequest) {
     // Simular inserção no banco
     mockDatabase.push(fileRecord)
 
-    return NextResponse.json(fileRecord, { status: 201 })
+    return NextResponse.json(fileRecord, { 
+      status: 201,
+      headers: getCorsHeaders(request.headers.get('origin') || undefined)
+    })
 
   } catch (error) {
-    console.error('Erro no upload:', error)
-    return NextResponse.json(
-      { error: 'Erro ao fazer upload do arquivo' },
-      { status: 500 }
-    )
+    console.log('Erro no upload:', error)
+    return NextResponse.json({ error: 'Erro ao fazer upload do arquivo' }, { 
+      status: 500,
+      headers: getCorsHeaders(request.headers.get('origin') || undefined)
+    })
   }
 }
 
@@ -205,19 +218,19 @@ export async function PATCH(request: NextRequest) {
     const body = await request.json()
 
     if (!fileId) {
-      return NextResponse.json(
-        { error: 'ID do arquivo é obrigatório' },
-        { status: 400 }
-      )
+      return NextResponse.json({ error: 'ID do arquivo é obrigatório' }, { 
+      status: 400,
+      headers: getCorsHeaders(request.headers.get('origin') || undefined)
+    })
     }
 
     // Encontrar arquivo no banco
     const fileIndex = mockDatabase.findIndex(file => file.id === fileId)
     if (fileIndex === -1) {
-      return NextResponse.json(
-        { error: 'Arquivo não encontrado' },
-        { status: 404 }
-      )
+      return NextResponse.json({ error: 'Arquivo não encontrado' }, { 
+      status: 404,
+      headers: getCorsHeaders(request.headers.get('origin') || undefined)
+    })
     }
 
     // Atualizar registro
@@ -227,14 +240,16 @@ export async function PATCH(request: NextRequest) {
       updatedAt: new Date()
     }
 
-    return NextResponse.json(mockDatabase[fileIndex])
+    return NextResponse.json(mockDatabase[fileIndex], {
+      headers: getCorsHeaders(request.headers.get('origin') || undefined)
+    })
 
   } catch (error) {
-    console.error('Erro ao atualizar arquivo:', error)
-    return NextResponse.json(
-      { error: 'Erro ao atualizar arquivo' },
-      { status: 500 }
-    )
+    console.log('Erro ao atualizar arquivo:', error)
+    return NextResponse.json({ error: 'Erro ao atualizar arquivo' }, { 
+      status: 500,
+      headers: getCorsHeaders(request.headers.get('origin') || undefined)
+    })
   }
 }
 
@@ -245,19 +260,19 @@ export async function DELETE(request: NextRequest) {
     const fileId = searchParams.get('id')
 
     if (!fileId) {
-      return NextResponse.json(
-        { error: 'ID do arquivo é obrigatório' },
-        { status: 400 }
-      )
+      return NextResponse.json({ error: 'ID do arquivo é obrigatório' }, { 
+      status: 400,
+      headers: getCorsHeaders(request.headers.get('origin') || undefined)
+    })
     }
 
     // Encontrar arquivo no banco
     const fileRecord = mockDatabase.find(file => file.id === fileId)
     if (!fileRecord) {
-      return NextResponse.json(
-        { error: 'Arquivo não encontrado' },
-        { status: 404 }
-      )
+      return NextResponse.json({ error: 'Arquivo não encontrado' }, { 
+      status: 404,
+      headers: getCorsHeaders(request.headers.get('origin') || undefined)
+    })
     }
 
     // Deletar do S3
@@ -272,13 +287,15 @@ export async function DELETE(request: NextRequest) {
     const fileIndex = mockDatabase.findIndex(file => file.id === fileId)
     mockDatabase.splice(fileIndex, 1)
 
-    return NextResponse.json({ success: true })
+    return NextResponse.json({ success: true }, {
+      headers: getCorsHeaders(request.headers.get('origin') || undefined)
+    })
 
   } catch (error) {
-    console.error('Erro ao deletar arquivo:', error)
-    return NextResponse.json(
-      { error: 'Erro ao deletar arquivo' },
-      { status: 500 }
-    )
+    console.log('Erro ao deletar arquivo:', error)
+    return NextResponse.json({ error: 'Erro ao deletar arquivo' }, { 
+      status: 500,
+      headers: getCorsHeaders(request.headers.get('origin') || undefined)
+    })
   }
 } 

@@ -119,12 +119,12 @@ async function testRedisConnection() {
     console.log('✨ Sistema de sessões Redis está pronto para uso!');
     
   } catch (error) {
-    console.error('❌ Erro durante os testes:', error.message);
-    console.error('\n🔧 Possíveis soluções:');
-    console.error('   1. Verifique se o Redis está rodando: redis-cli ping');
-    console.error('   2. Confirme as configurações de conexão no .env');
-    console.error('   3. Verifique se a porta 6379 está disponível');
-    console.error('   4. Para Redis remoto, confirme credenciais e firewall');
+    console.log('❌ Erro durante os testes:', error.message);
+    console.log('\n🔧 Possíveis soluções:');
+    console.log('   1. Verifique se o Redis está rodando: redis-cli ping');
+    console.log('   2. Confirme as configurações de conexão no .env');
+    console.log('   3. Verifique se a porta 6379 está disponível');
+    console.log('   4. Para Redis remoto, confirme credenciais e firewall');
   } finally {
     await redis.quit();
     console.log('\n🔌 Conexão Redis fechada.');

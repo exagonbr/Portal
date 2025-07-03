@@ -43,9 +43,9 @@ export class Logger {
     switch (level) {
       case LogLevel.ERROR:
         if (error) {
-          console.error(formattedMessage, error);
+          console.log(formattedMessage, error);
         } else {
-          console.error(formattedMessage);
+          console.log(formattedMessage);
         }
         break;
       case LogLevel.WARN:

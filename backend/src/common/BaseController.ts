@@ -123,14 +123,14 @@ export abstract class BaseController {
    * Extrai o ID do usuário autenticado
    */
   protected getUserId(req: Request): string | null {
-    return req.user?.userId || null;
+    return (req.user as any)?.userId || null;
   }
 
   /**
    * Verifica se o usuário está autenticado
    */
   protected isAuthenticated(req: Request): boolean {
-    return !!req.user?.userId;
+    return !!(req.user as any)?.userId;
   }
 
   /**

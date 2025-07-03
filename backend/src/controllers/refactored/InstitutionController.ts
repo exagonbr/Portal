@@ -16,7 +16,7 @@ export class InstitutionController extends BaseController {
   }
 
   getAll = this.asyncHandler(async (req: Request, res: Response) => {
-    this.logger.apiRequest('GET', '/api/institutions', this.getUserId(req) || undefined, req.query);
+    this.logger.apiRequest('GET', '/api/institution', this.getUserId(req) || undefined, req.query);
 
     const page = parseInt(req.query.page as string) || 1;
     const limit = parseInt(req.query.limit as string) || 10;
@@ -49,16 +49,17 @@ export class InstitutionController extends BaseController {
     const result = await this.institutionService.findInstitutionsWithFilters(filters);
 
     if (!result.success) {
-      return this.error(res, result.error || 'Failed to retrieve institutions');
+      return this.error(res, result.error || 'Failed to retrieve institution');
     }
     
     // O ServiceResult já contém os dados paginados corretamente
-    return this.success(res, result.data!.institutions, 'Institutions retrieved successfully', 200, result.data!.pagination);
+    // O frontend espera que 'data' seja diretamente o array de instituições
+    return this.success(res, result.data!.institution, 'Institutions retrieved successfully', 200, result.data!.pagination);
   });
 
   getById = this.asyncHandler(async (req: Request, res: Response) => {
     const { id } = req.params;
-    this.logger.apiRequest('GET', `/api/institutions/${id}`, this.getUserId(req) || undefined);
+    this.logger.apiRequest('GET', `/api/institution/${id}`, this.getUserId(req) || undefined);
 
     if (!id || !this.validateId(id)) {
       return this.error(res, 'Invalid institution ID format', 400);
@@ -76,7 +77,7 @@ export class InstitutionController extends BaseController {
 
   getByCode = this.asyncHandler(async (req: Request, res: Response) => {
     const { code } = req.params;
-    this.logger.apiRequest('GET', `/api/institutions/code/${code}`, this.getUserId(req) || undefined);
+    this.logger.apiRequest('GET', `/api/institution/code/${code}`, this.getUserId(req) || undefined);
 
     if (!code) {
       return this.error(res, 'Institution code is required', 400);
@@ -93,7 +94,7 @@ export class InstitutionController extends BaseController {
   });
 
   create = this.asyncHandler(async (req: Request, res: Response) => {
-    this.logger.apiRequest('POST', '/api/institutions', this.getUserId(req) || undefined, req.body);
+    this.logger.apiRequest('POST', '/api/institution', this.getUserId(req) || undefined, req.body);
 
     const validationErrors = this.validateRequest(req); // Supondo que as validações estão nas rotas
     if (validationErrors) {
@@ -112,7 +113,7 @@ export class InstitutionController extends BaseController {
 
   update = this.asyncHandler(async (req: Request, res: Response) => {
     const { id } = req.params;
-    this.logger.apiRequest('PUT', `/api/institutions/${id}`, this.getUserId(req) || undefined, req.body);
+    this.logger.apiRequest('PUT', `/api/institution/${id}`, this.getUserId(req) || undefined, req.body);
 
     if (!id || !this.validateId(id)) {
       return this.error(res, 'Invalid institution ID format', 400);
@@ -136,7 +137,7 @@ export class InstitutionController extends BaseController {
 
   delete = this.asyncHandler(async (req: Request, res: Response) => {
     const { id } = req.params;
-    this.logger.apiRequest('DELETE', `/api/institutions/${id}`, this.getUserId(req) || undefined);
+    this.logger.apiRequest('DELETE', `/api/institution/${id}`, this.getUserId(req) || undefined);
 
     if (!id || !this.validateId(id)) {
       return this.error(res, 'Invalid institution ID format', 400);
@@ -154,7 +155,7 @@ export class InstitutionController extends BaseController {
 
   getStats = this.asyncHandler(async (req: Request, res: Response) => {
     const { id } = req.params;
-    this.logger.apiRequest('GET', `/api/institutions/${id}/stats`, this.getUserId(req) || undefined);
+    this.logger.apiRequest('GET', `/api/institution/${id}/stats`, this.getUserId(req) || undefined);
 
     if (!id || !this.validateId(id)) {
       return this.error(res, 'Invalid institution ID format', 400);
