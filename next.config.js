@@ -33,14 +33,8 @@ const nextConfig = {
   // Configurações de desenvolvimento
   reactStrictMode: true, // Habilitado - react-quill agora é compatível com React 18
   productionBrowserSourceMaps: false,
-  swcMinify: true, // Habilitar minificação SWC
-
-  // Desativar o botão de "dev tools" do Next.js
-  devIndicators: {
-    buildActivity: false,
-    buildActivityPosition: false,
-    appIsrStatus: false
-  },
+  // Desativar completamente os indicadores de desenvolvimento
+  devIndicators: false,
   
   // ESLint
   eslint: {
@@ -52,14 +46,29 @@ const nextConfig = {
   experimental: {
     // Otimizações modernas
     optimizePackageImports: [
-      'react-hot-toast', 
-      'lucide-react', 
+      'react-hot-toast',
+      'lucide-react',
       '@radix-ui/react-dialog',
       '@radix-ui/react-dropdown-menu',
       'date-fns',
     ],
-    // Melhorar performance de compilação
+    turbo: {
+      // Habilitar o modo turbo
+      enabled: true,
+    },
+    // Configurações de workers e multi-threading
     webpackBuildWorker: true,
+    cpus: 10, // Usar 10 cores para compilação
+    workerThreads: true, // Habilitar worker threads
+    
+    // Pacotes externos para componentes do servidor
+    serverExternalPackages: [
+      'epubjs',
+      'sharp',
+      'canvas',
+      'jsdom',
+      'puppeteer',
+    ],
   },
 
   // Pacotes externos para componentes do servidor
@@ -210,9 +219,12 @@ const nextConfig = {
       level: dev ? 'warn' : 'error',
     };
     config.performance = {
-      hints: isProd ? 'warning' : false,  
+      hints: isProd ? 'warning' : false,
     }
 
+    // Configurações de paralelização para 10 cores
+    config.parallelism = 10;
+    
     fastRefresh = true;
     // Configuração de cache
     config.cache = {
@@ -418,6 +430,27 @@ const nextConfig = {
         resourceRegExp: /cloudflare:sockets/,
       })
     );
+
+    // Configurações de paralelização para TerserPlugin (apenas em produção)
+    if (isProd && !isServer) {
+      const TerserPlugin = require('terser-webpack-plugin');
+      
+      config.optimization = {
+        ...config.optimization,
+        minimizer: [
+          new TerserPlugin({
+            parallel: 10, // Usar 10 workers para minificação
+            terserOptions: {
+              compress: {
+                drop_console: true,
+                drop_debugger: true,
+              },
+              mangle: true,
+            },
+          }),
+        ],
+      };
+    }
 
     // Configurações específicas para desenvolvimento
     if (dev) {

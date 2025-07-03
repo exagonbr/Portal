@@ -53,13 +53,14 @@ export async function GET(
     const session = await getServerSession(authOptions)
     
     if (!session?.user) {
-      return NextResponse.json({ error: 'Unauthorized' }, { 
+      return NextResponse.json({ error: 'Unauthorized' }, {
       status: 401,
       headers: getCorsHeaders(request.headers.get('origin') || undefined)
     })
     }
 
-    const response = await fetch(getInternalApiUrl(`/api/units/${resolvedParams.id}`), {
+    const resolvedParams = await params
+    const response = await fetch(`http://localhost:3001/api/units/${resolvedParams.id}`, {
       method: 'GET',
       headers: {
         'Content-Type': 'application/json',
@@ -96,15 +97,16 @@ export async function PUT(
     const session = await getServerSession(authOptions)
     
     if (!session?.user) {
-      return NextResponse.json({ error: 'Unauthorized' }, { 
+      return NextResponse.json({ error: 'Unauthorized' }, {
       status: 401,
       headers: getCorsHeaders(request.headers.get('origin') || undefined)
     })
     }
 
+    const resolvedParams = await params
     const body = await request.json()
 
-    const response = await fetch(getInternalApiUrl(`/api/units/${resolvedParams.id}`), {
+    const response = await fetch(`http://localhost:3001/api/units/${resolvedParams.id}`, {
       method: 'PUT',
       headers: {
         'Content-Type': 'application/json',
@@ -142,13 +144,14 @@ export async function DELETE(
     const session = await getServerSession(authOptions)
     
     if (!session?.user) {
-      return NextResponse.json({ error: 'Unauthorized' }, { 
+      return NextResponse.json({ error: 'Unauthorized' }, {
       status: 401,
       headers: getCorsHeaders(request.headers.get('origin') || undefined)
     })
     }
 
-    const response = await fetch(getInternalApiUrl(`/api/units/${resolvedParams.id}`), {
+    const resolvedParams = await params
+    const response = await fetch(`http://localhost:3001/api/units/${resolvedParams.id}`, {
       method: 'DELETE',
       headers: {
         'Content-Type': 'application/json',

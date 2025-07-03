@@ -1,323 +1,197 @@
-import { NextRequest, NextResponse } from 'next/server'
-import { z } from 'zod'
-import { getAuthentication, hasRequiredRole } from '@/lib/auth-utils'
-import { createCorsOptionsResponse, getCorsHeaders } from '@/config/cors'
+import { NextRequest, NextResponse } from 'next/server';
+import { requireAuth } from '@/middleware/auth';
 
-// Funções CORS
-function getCorsHeaders(origin?: string) {
-  return {
-    'Access-Control-Allow-Origin': origin || '*',
-    'Access-Control-Allow-Methods': 'GET, POST, PUT, DELETE, OPTIONS',
-    'Access-Control-Allow-Headers': 'Content-Type, Authorization',
-    'Access-Control-Allow-Credentials': 'true',
-  }
-}
-
-function createCorsOptionsResponse(origin?: string) {
-  return new NextResponse(null, {
-    status: 200,
-    headers: getCorsHeaders(origin)
-  })
-}
-
-// Schema de validação para criação de tarefa
-const createAssignmentSchema = z.object({
-  title: z.string().min(3, 'Título deve ter pelo menos 3 caracteres'),
-  description: z.string().min(10, 'Descrição deve ter pelo menos 10 caracteres'),
-  lesson_id: z.string().uuid('ID de aula inválido'),
-  class_id: z.string().uuid('ID de turma inválido'),
-  type: z.enum(['HOMEWORK', 'PROJECT', 'ESSAY', 'PRESENTATION', 'EXAM', 'QUIZ', 'RESEARCH']),
-  points: z.number().int().min(0, 'Pontos devem ser positivos'),
-  due_date: z.string().datetime(),
-  available_from: z.string().datetime().optional(),
-  instructions: z.string().optional(),
-  rubric: z.array(z.object({
-    criteria: z.string(),
-    description: z.string(),
-    points: z.number().int().min(0)
-  })).optional(),
-  attachments: z.array(z.object({
-    type: z.enum(['FILE', 'LINK', 'VIDEO']),
-    title: z.string(),
-    url: z.string().url(),
-    description: z.string().optional()
-  })).optional(),
-  submission_type: z.enum(['FILE_UPLOAD', 'TEXT_ENTRY', 'URL', 'MEDIA_RECORDING', 'MULTIPLE']),
-  allowed_file_types: z.array(z.string()).optional(),
-  max_file_size_mb: z.number().int().positive().default(10),
-  attempts_allowed: z.number().int().positive().default(1),
-  group_assignment: z.boolean().default(false),
-  group_size: z.number().int().min(2).optional(),
-  peer_review: z.boolean().default(false),
-  peer_review_count: z.number().int().min(1).optional(),
-  is_published: z.boolean().default(false),
-  settings: z.object({
-    late_submission_allowed: z.boolean().default(false),
-    late_penalty_percent: z.number().min(0).max(100).optional(),
-    plagiarism_check: z.boolean().default(true),
-    anonymous_grading: z.boolean().default(false),
-    show_grade_immediately: z.boolean().default(false)
-  }).optional()
-})
-
-// Mock database - substituir por Prisma/banco real
-const mockAssignments = new Map()
-
-// GET - Listar tarefas
-
-// Handler para requisições OPTIONS (preflight)
-export async function OPTIONS(request: NextRequest) {
-  const origin = request.headers.get('origin') || undefined;
-  return createCorsOptionsResponse(origin);
-}
-
-export async function GET(request: NextRequest) {
+export const GET = requireAuth(async (request: NextRequest, auth) => {
   try {
-    const session = await getAuthentication(request)
-    
-    if (!session) {
-      return NextResponse.json({ error: 'Não autorizado' }, { 
-      status: 401,
-      headers: getCorsHeaders(request.headers.get('origin') || undefined)
-    })
+    const url = new URL(request.url);
+    const limit = parseInt(url.searchParams.get('limit') || '50');
+    const status = url.searchParams.get('status');
+    const courseId = url.searchParams.get('courseId');
+    const search = url.searchParams.get('search');
+
+    console.log('📚 [ASSIGNMENTS] Buscando tarefas para:', auth.user.email);
+
+    // Simular dados de tarefas
+    const assignments = [
+      {
+        id: '1',
+        title: 'Exercícios de Matemática - Capítulo 5',
+        description: 'Resolver os exercícios 1 a 20 do capítulo 5 sobre equações quadráticas',
+        courseId: 'course_1',
+        courseName: 'Matemática Avançada',
+        teacherId: 'teacher_1',
+        teacherName: 'Prof. João Silva',
+        dueDate: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString(),
+        createdAt: new Date().toISOString(),
+        updatedAt: new Date().toISOString(),
+        status: 'ACTIVE',
+        type: 'HOMEWORK',
+        maxScore: 100,
+        submissions: 15,
+        totalStudents: 25,
+        metadata: {
+          difficulty: 'MEDIUM',
+          estimatedTime: 120,
+          resources: ['textbook_chapter_5.pdf', 'calculator']
+        }
+      },
+      {
+        id: '2',
+        title: 'Ensaio sobre Literatura Brasileira',
+        description: 'Escrever um ensaio de 1000 palavras sobre o Romantismo no Brasil',
+        courseId: 'course_2',
+        courseName: 'Literatura Brasileira',
+        teacherId: 'teacher_2',
+        teacherName: 'Prof. Maria Santos',
+        dueDate: new Date(Date.now() + 14 * 24 * 60 * 60 * 1000).toISOString(),
+        createdAt: new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString(),
+        updatedAt: new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString(),
+        status: 'ACTIVE',
+        type: 'ESSAY',
+        maxScore: 100,
+        submissions: 8,
+        totalStudents: 20,
+        metadata: {
+          difficulty: 'HIGH',
+          estimatedTime: 300,
+          resources: ['romantismo_brasil.pdf', 'obras_recomendadas.txt']
+        }
+      },
+      {
+        id: '3',
+        title: 'Laboratório de Química - Reações Ácido-Base',
+        description: 'Realizar experimentos práticos sobre reações ácido-base',
+        courseId: 'course_3',
+        courseName: 'Química Geral',
+        teacherId: 'teacher_3',
+        teacherName: 'Prof. Carlos Lima',
+        dueDate: new Date(Date.now() - 2 * 24 * 60 * 60 * 1000).toISOString(),
+        createdAt: new Date(Date.now() - 10 * 24 * 60 * 60 * 1000).toISOString(),
+        updatedAt: new Date(Date.now() - 10 * 24 * 60 * 60 * 1000).toISOString(),
+        status: 'EXPIRED',
+        type: 'LAB',
+        maxScore: 100,
+        submissions: 18,
+        totalStudents: 22,
+        metadata: {
+          difficulty: 'MEDIUM',
+          estimatedTime: 180,
+          resources: ['roteiro_lab.pdf', 'tabela_ph.pdf']
+        }
+      }
+    ];
+
+    // Filtrar tarefas baseado nos parâmetros
+    let filteredAssignments = assignments;
+
+    if (status) {
+      filteredAssignments = filteredAssignments.filter(assignment => assignment.status === status);
     }
 
-    // Parâmetros de query
-    const { searchParams } = new URL(request.url)
-    const page = parseInt(searchParams.get('page') || '1')
-    const limit = parseInt(searchParams.get('limit') || '10')
-    const search = searchParams.get('search') || ''
-    const lesson_id = searchParams.get('lesson_id')
-    const class_id = searchParams.get('class_id')
-    const type = searchParams.get('type')
-    const status = searchParams.get('status') // pending, submitted, graded
-    const is_published = searchParams.get('is_published')
-    const due_date_from = searchParams.get('due_date_from')
-    const due_date_to = searchParams.get('due_date_to')
-
-    // Buscar tarefas (substituir por query real)
-    let assignments = Array.from(mockAssignments.values())
-
-    // Aplicar filtros baseados no role do usuário
-    const userRole = session.user?.role
-    if (userRole === 'TEACHER') {
-      // Professor vê apenas tarefas das turmas que leciona
-      // Implementar lógica de verificação
-    } else if (userRole === 'STUDENT') {
-      // Aluno vê apenas tarefas publicadas das turmas matriculadas
-      assignments = assignments.filter(assignment => 
-        assignment.is_published && 
-        // verificar se está matriculado na turma
-        true
-      )
+    if (courseId) {
+      filteredAssignments = filteredAssignments.filter(assignment => assignment.courseId === courseId);
     }
 
-    // Aplicar filtros de busca
     if (search) {
-      const searchLower = search.toLowerCase()
-      assignments = assignments.filter(assignment => 
-        assignment.title.toLowerCase().includes(searchLower) ||
-        assignment.description.toLowerCase().includes(searchLower)
-      )
+      filteredAssignments = filteredAssignments.filter(assignment => 
+        assignment.title.toLowerCase().includes(search.toLowerCase()) ||
+        assignment.description.toLowerCase().includes(search.toLowerCase())
+      );
     }
-
-    if (lesson_id) {
-      assignments = assignments.filter(assignment => assignment.lesson_id === lesson_id)
-    }
-
-    if (class_id) {
-      assignments = assignments.filter(assignment => assignment.class_id === class_id)
-    }
-
-    if (type) {
-      assignments = assignments.filter(assignment => assignment.type === type)
-    }
-
-    if (is_published !== null) {
-      assignments = assignments.filter(assignment => assignment.is_published === (is_published === 'true'))
-    }
-
-    // Filtrar por período de entrega
-    if (due_date_from || due_date_to) {
-      assignments = assignments.filter(assignment => {
-        const dueDate = new Date(assignment.due_date)
-        if (due_date_from && dueDate < new Date(due_date_from)) return false
-        if (due_date_to && dueDate > new Date(due_date_to)) return false
-        return true
-      })
-    }
-
-    // Para alunos, adicionar status da tarefa
-    if (userRole === 'STUDENT' && status) {
-      assignments = assignments.filter(assignment => {
-        // Simular status baseado em submissões
-        const userSubmission = assignment.submissions?.find((s: any) => s.student_id === session.user?.id)
-        if (status === 'pending' && !userSubmission) return true
-        if (status === 'submitted' && userSubmission && !userSubmission.grade) return true
-        if (status === 'graded' && userSubmission && userSubmission.grade) return true
-        return false
-      })
-    }
-
-    // Ordenar por data de entrega
-    assignments.sort((a, b) => new Date(a.due_date).getTime() - new Date(b.due_date).getTime())
-
-    // Paginação
-    const startIndex = (page - 1) * limit
-    const endIndex = page * limit
-    const paginatedAssignments = assignments.slice(startIndex, endIndex)
-
-    // Adicionar informações extras
-    const assignmentsWithInfo = paginatedAssignments.map(assignment => {
-      const now = new Date()
-      const dueDate = new Date(assignment.due_date)
-      
-      const info: any = {
-        ...assignment,
-        submissions_count: assignment.submissions?.length || 0,
-        graded_count: assignment.submissions?.filter((s: any) => s.grade).length || 0,
-        average_grade: assignment.average_grade || 0,
-        is_overdue: dueDate < now,
-        days_until_due: Math.ceil((dueDate.getTime() - now.getTime()) / (1000 * 60 * 60 * 24))
-      }
-
-      // Para alunos, adicionar informações pessoais
-      if (userRole === 'STUDENT') {
-        const userSubmission = assignment.submissions?.find((s: any) => s.student_id === session.user?.id)
-        info.user_submission = userSubmission || null
-        info.user_status = userSubmission ? (userSubmission.grade ? 'graded' : 'submitted') : 'pending'
-      }
-
-      return info
-    })
 
     return NextResponse.json({
       success: true,
-      data: {
-        items: assignmentsWithInfo,
-        pagination: {
-          page,
-          limit,
-          total: assignments.length,
-          totalPages: Math.ceil(assignments.length / limit)
-        }
+      data: filteredAssignments.slice(0, limit),
+      meta: {
+        total: filteredAssignments.length,
+        limit,
+        filters: { status, courseId, search },
+        requestedBy: auth.user.email,
+        userRole: auth.user.role
       }
-    }, {
-      headers: getCorsHeaders(request.headers.get('origin') || undefined)
-    })
+    });
 
-  } catch (error) {
-    console.log('Erro ao listar tarefas:', error)
-    return NextResponse.json({ error: 'Erro interno do servidor' }, { 
-      status: 500,
-      headers: getCorsHeaders(request.headers.get('origin') || undefined)
-    })
+  } catch (error: any) {
+    console.error('❌ [ASSIGNMENTS] Erro:', error);
+    return NextResponse.json(
+      { 
+        success: false, 
+        message: 'Erro interno do servidor',
+        code: 'INTERNAL_ERROR'
+      },
+      { status: 500 }
+    );
   }
-}
+});
 
-// POST - Criar tarefa
-export async function POST(request: NextRequest) {
+export const POST = requireAuth(async (request: NextRequest, auth) => {
   try {
-    const session = await getAuthentication(request)
-    
-    if (!session) {
-      return NextResponse.json({ error: 'Não autorizado' }, { 
-      status: 401,
-      headers: getCorsHeaders(request.headers.get('origin') || undefined)
-    })
-    }
+    const body = await request.json();
+    const { title, description, courseId, dueDate, type = 'HOMEWORK', maxScore = 100 } = body;
 
-    // Verificar permissões
-    const userRole = session.user?.role
-    if (!hasRequiredRole(userRole, ['SYSTEM_ADMIN', 'INSTITUTION_MANAGER', 'TEACHER'])) {
-      return NextResponse.json({ error: 'Sem permissão para criar tarefas' }, { 
-      status: 403,
-      headers: getCorsHeaders(request.headers.get('origin') || undefined)
-    })
-    }
-
-    const body = await request.json()
-
-    // Validar dados
-    const validationResult = createAssignmentSchema.safeParse(body)
-    if (!validationResult.success) {
-      return NextResponse.json({
-          error: 'Dados inválidos',
-          errors: validationResult.error.flatten().fieldErrors
+    if (!title || !description || !courseId || !dueDate) {
+      return NextResponse.json(
+        { 
+          success: false, 
+          message: 'Campos obrigatórios: title, description, courseId, dueDate',
+          code: 'VALIDATION_ERROR'
         },
-        {
-          status: 400,
-          headers: getCorsHeaders(request.headers.get('origin') || undefined)
-        }
-      )
+        { status: 400 }
+      );
     }
 
-    const assignmentData = validationResult.data
+    console.log('📝 [ASSIGNMENTS] Criando tarefa:', title);
 
-    // Validar datas
-    const now = new Date()
-    const dueDate = new Date(assignmentData.due_date)
-    const availableFrom = assignmentData.available_from ? new Date(assignmentData.available_from) : now
-
-    if (dueDate <= now) {
-      return NextResponse.json({ error: 'Data de entrega deve ser futura' }, { 
-      status: 400,
-      headers: getCorsHeaders(request.headers.get('origin') || undefined)
-    })
-    }
-
-    if (availableFrom > dueDate) {
-      return NextResponse.json({ error: 'Data de disponibilidade deve ser anterior à data de entrega' }, { 
-      status: 400,
-      headers: getCorsHeaders(request.headers.get('origin') || undefined)
-    })
-    }
-
-    // Validar configurações de grupo
-    if (assignmentData.group_assignment && !assignmentData.group_size) {
-      return NextResponse.json({ error: 'Tamanho do grupo é obrigatório para tarefas em grupo' }, { 
-      status: 400,
-      headers: getCorsHeaders(request.headers.get('origin') || undefined)
-    })
-    }
-
-    // Validar configurações de revisão por pares
-    if (assignmentData.peer_review && !assignmentData.peer_review_count) {
-      return NextResponse.json({ error: 'Número de revisões é obrigatório para revisão por pares' }, { 
-      status: 400,
-      headers: getCorsHeaders(request.headers.get('origin') || undefined)
-    })
-    }
-
-    // Se for professor, verificar se tem permissão na turma
-    if (userRole === 'TEACHER') {
-      // Implementar verificação se o professor leciona na turma
-      // Por enquanto, permitir
-    }
-
-    // Criar tarefa
-    const newAssignment = {
+    // Simular criação de tarefa
+    const assignment = {
       id: `assignment_${Date.now()}`,
-      ...assignmentData,
-      submissions: [],
-      created_at: new Date().toISOString(),
-      updated_at: new Date().toISOString(),
-      created_by: session.user?.id
-    }
-
-    mockAssignments.set(newAssignment.id, newAssignment)
+      title,
+      description,
+      courseId,
+      courseName: 'Curso Exemplo',
+      teacherId: auth.user.id,
+      teacherName: auth.user.name,
+      dueDate,
+      createdAt: new Date().toISOString(),
+      updatedAt: new Date().toISOString(),
+      status: 'ACTIVE',
+      type,
+      maxScore,
+      submissions: 0,
+      totalStudents: 0,
+      metadata: {
+        createdBy: auth.user.email,
+        difficulty: 'MEDIUM',
+        estimatedTime: 120
+      }
+    };
 
     return NextResponse.json({
       success: true,
-      data: newAssignment,
-      message: 'Tarefa criada com sucesso'
-    }, { status: 201 })
+      message: 'Tarefa criada com sucesso',
+      data: assignment
+    });
 
-  } catch (error) {
-    console.log('Erro ao criar tarefa:', error)
-    return NextResponse.json({ error: 'Erro interno do servidor' }, { 
-      status: 500,
-      headers: getCorsHeaders(request.headers.get('origin') || undefined)
-    })
+  } catch (error: any) {
+    console.error('❌ [ASSIGNMENTS] Erro ao criar:', error);
+    return NextResponse.json(
+      { 
+        success: false, 
+        message: 'Erro interno do servidor',
+        code: 'INTERNAL_ERROR'
+      },
+      { status: 500 }
+    );
   }
-} 
+});
+
+export async function OPTIONS() {
+  return NextResponse.json(
+    { 
+      success: true,
+      message: 'API de tarefas ativa',
+      methods: ['GET', 'POST', 'OPTIONS'],
+      timestamp: new Date().toISOString()
+    }
+  );
+}

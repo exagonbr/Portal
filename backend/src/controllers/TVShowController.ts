@@ -105,7 +105,15 @@ export class TVShowController {
    */
   static async getPopularCollections(req: Request, res: Response): Promise<void> {
     try {
-      const limit = parseInt(req.query.limit as string) || 10;
+      const limitParam = req.query.limit as string;
+      let limit = 10; // valor padrão
+      
+      if (limitParam) {
+        const parsedLimit = parseInt(limitParam);
+        if (!isNaN(parsedLimit)) {
+          limit = parsedLimit;
+        }
+      }
       
       if (limit < 1 || limit > 50) {
         res.status(400).json({
@@ -138,7 +146,15 @@ export class TVShowController {
    */
   static async getTopRatedCollections(req: Request, res: Response): Promise<void> {
     try {
-      const limit = parseInt(req.query.limit as string) || 10;
+      const limitParam = req.query.limit as string;
+      let limit = 10; // valor padrão
+      
+      if (limitParam) {
+        const parsedLimit = parseInt(limitParam);
+        if (!isNaN(parsedLimit)) {
+          limit = parsedLimit;
+        }
+      }
       
       if (limit < 1 || limit > 50) {
         res.status(400).json({
@@ -171,7 +187,15 @@ export class TVShowController {
    */
   static async getRecentCollections(req: Request, res: Response): Promise<void> {
     try {
-      const limit = parseInt(req.query.limit as string) || 10;
+      const limitParam = req.query.limit as string;
+      let limit = 10; // valor padrão
+      
+      if (limitParam) {
+        const parsedLimit = parseInt(limitParam);
+        if (!isNaN(parsedLimit)) {
+          limit = parsedLimit;
+        }
+      }
       
       if (limit < 1 || limit > 50) {
         res.status(400).json({

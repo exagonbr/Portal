@@ -34,7 +34,7 @@ const getBaseUrls = () => {
   
   // Desenvolvimento - usar backend local
   return {
-    FRONTEND_URL: 'http://localhost:3001/api',
+    FRONTEND_URL: 'http://localhost:3001',
     BACKEND_URL: 'http://localhost:3001/api',
     API_BASE_URL: 'http://localhost:3001/api',
     INTERNAL_API_URL: 'http://localhost:3001/api'

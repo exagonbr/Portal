@@ -1,334 +1,184 @@
-import { NextRequest, NextResponse } from 'next/server'
-import { getServerSession } from 'next-auth'
-import { authOptions } from '@/lib/auth'
-import { z } from 'zod'
-import { createCorsOptionsResponse, getCorsHeaders } from '@/config/cors'
+import { NextRequest, NextResponse } from 'next/server';
+import { requireAuth, AuthSession } from '@/middleware/auth';
 
-// Funções CORS
-function getCorsHeaders(origin?: string) {
-  return {
-    'Access-Control-Allow-Origin': origin || '*',
-    'Access-Control-Allow-Methods': 'GET, POST, PUT, DELETE, OPTIONS',
-    'Access-Control-Allow-Headers': 'Content-Type, Authorization',
-    'Access-Control-Allow-Credentials': 'true',
-  }
-}
+export async function GET(request: NextRequest, { params }: { params: { id: string } }) {
+  return requireAuth(async (req: NextRequest, auth: AuthSession) => {
+    try {
+      const assignmentId = params.id;
 
-function createCorsOptionsResponse(origin?: string) {
-  return new NextResponse(null, {
-    status: 200,
-    headers: getCorsHeaders(origin)
-  })
-}
+      console.log('📖 [ASSIGNMENT-DETAIL] Buscando tarefa:', assignmentId);
 
-// Schema de validação para atualização de tarefa
-const updateAssignmentSchema = z.object({
-  title: z.string().min(3, 'Título deve ter pelo menos 3 caracteres').optional(),
-  description: z.string().min(10, 'Descrição deve ter pelo menos 10 caracteres').optional(),
-  type: z.enum(['HOMEWORK', 'PROJECT', 'ESSAY', 'PRESENTATION', 'EXAM', 'QUIZ', 'RESEARCH']).optional(),
-  points: z.number().int().min(0, 'Pontos devem ser positivos').optional(),
-  due_date: z.string().datetime().optional(),
-  available_from: z.string().datetime().optional(),
-  instructions: z.string().optional(),
-  rubric: z.array(z.object({
-    criteria: z.string(),
-    description: z.string(),
-    points: z.number().int().min(0)
-  })).optional(),
-  attachments: z.array(z.object({
-    type: z.enum(['FILE', 'LINK', 'VIDEO']),
-    title: z.string(),
-    url: z.string().url(),
-    description: z.string().optional()
-  })).optional(),
-  submission_type: z.enum(['FILE_UPLOAD', 'TEXT_ENTRY', 'URL', 'MEDIA_RECORDING', 'MULTIPLE']).optional(),
-  allowed_file_types: z.array(z.string()).optional(),
-  max_file_size_mb: z.number().int().positive().optional(),
-  attempts_allowed: z.number().int().positive().optional(),
-  group_assignment: z.boolean().optional(),
-  group_size: z.number().int().min(2).optional(),
-  peer_review: z.boolean().optional(),
-  peer_review_count: z.number().int().min(1).optional(),
-  is_published: z.boolean().optional(),
-  settings: z.object({
-    late_submission_allowed: z.boolean().optional(),
-    late_penalty_percent: z.number().min(0).max(100).optional(),
-    plagiarism_check: z.boolean().optional(),
-    anonymous_grading: z.boolean().optional(),
-    show_grade_immediately: z.boolean().optional()
-  }).optional()
-})
-
-// Mock database - substituir por Prisma/banco real
-const mockAssignments = new Map()
-
-// GET - Buscar tarefa por ID
-
-// Handler para requisições OPTIONS (preflight)
-export async function OPTIONS(request: NextRequest) {
-  const origin = request.headers.get('origin') || undefined;
-  return createCorsOptionsResponse(origin);
-}
-
-export async function GET(
-  request: NextRequest,
-  context: { params: Promise<{ id: string }> }
-) {
-  try {
-    const session = await getServerSession(authOptions)
-    
-    if (!session) {
-      return NextResponse.json({ error: 'Não autorizado' }, { 
-      status: 401,
-      headers: getCorsHeaders(request.headers.get('origin') || undefined)
-    })
-    }
-
-    const params = await context.params
-    const assignmentId = params.id
-
-    // Buscar tarefa
-    const assignment = mockAssignments.get(assignmentId)
-
-    if (!assignment) {
-      return NextResponse.json({ error: 'Tarefa não encontrada' }, { 
-      status: 404,
-      headers: getCorsHeaders(request.headers.get('origin') || undefined)
-    })
-    }
-
-    // Verificar permissões
-    const userRole = session.user?.role
-    const canViewDetails =
-      userRole === 'SYSTEM_ADMIN' ||
-      userRole === 'INSTITUTION_MANAGER' ||
-      userRole === 'TEACHER' ||
-      (userRole === 'STUDENT' && assignment.is_published)
-
-    if (!canViewDetails) {
-      return NextResponse.json({ error: 'Sem permissão para visualizar esta tarefa' }, { 
-      status: 403,
-      headers: getCorsHeaders(request.headers.get('origin') || undefined)
-    })
-    }
-
-    // Adicionar informações específicas do usuário
-    let assignmentWithUserInfo = { ...assignment }
-    
-    const now = new Date()
-    const dueDate = new Date(assignment.due_date)
-    
-    assignmentWithUserInfo.is_overdue = dueDate < now
-    assignmentWithUserInfo.days_until_due = Math.ceil((dueDate.getTime() - now.getTime()) / (1000 * 60 * 60 * 24))
-    
-    if (userRole === 'STUDENT') {
-      // Buscar submissão do aluno
-      const userSubmission = assignment.submissions?.find((s: any) => s.student_id === session.user?.id)
-      assignmentWithUserInfo.user_submission = userSubmission || null
-      assignmentWithUserInfo.user_status = userSubmission ? (userSubmission.grade ? 'graded' : 'submitted') : 'pending'
-      assignmentWithUserInfo.can_submit = !assignment.is_overdue || assignment.settings?.late_submission_allowed
-      
-      // Remover submissões de outros alunos
-      delete assignmentWithUserInfo.submissions
-    } else if (userRole === 'TEACHER') {
-      // Adicionar estatísticas para professor
-      assignmentWithUserInfo.submissions_count = assignment.submissions?.length || 0
-      assignmentWithUserInfo.graded_count = assignment.submissions?.filter((s: any) => s.grade).length || 0
-      assignmentWithUserInfo.pending_count = assignmentWithUserInfo.submissions_count - assignmentWithUserInfo.graded_count
-    }
-
-    return NextResponse.json({
-      success: true,
-      data: assignmentWithUserInfo
-    }, {
-      headers: getCorsHeaders(request.headers.get('origin') || undefined)
-    })
-
-  } catch (error) {
-    console.log('Erro ao buscar tarefa:', error)
-    return NextResponse.json({ error: 'Erro interno do servidor' }, { 
-      status: 500,
-      headers: getCorsHeaders(request.headers.get('origin') || undefined)
-    })
-  }
-}
-
-// PUT - Atualizar tarefa
-export async function PUT(
-  request: NextRequest,
-  context: { params: Promise<{ id: string }> }
-) {
-  try {
-    const session = await getServerSession(authOptions)
-    
-    if (!session) {
-      return NextResponse.json({ error: 'Não autorizado' }, { 
-      status: 401,
-      headers: getCorsHeaders(request.headers.get('origin') || undefined)
-    })
-    }
-
-    const params = await context.params
-    const assignmentId = params.id
-    const body = await request.json()
-
-    // Validar dados
-    const validationResult = updateAssignmentSchema.safeParse(body)
-    if (!validationResult.success) {
-      return NextResponse.json({
-          error: 'Dados inválidos',
-          errors: validationResult.error.flatten().fieldErrors
+      // Simular busca de tarefa específica
+      const assignment = {
+        id: assignmentId,
+        title: 'Exercícios de Matemática - Capítulo 5',
+        description: 'Resolver os exercícios 1 a 20 do capítulo 5 sobre equações quadráticas. Esta tarefa visa consolidar o conhecimento sobre resolução de equações do segundo grau.',
+        courseId: 'course_1',
+        courseName: 'Matemática Avançada',
+        teacherId: 'teacher_1',
+        teacherName: 'Prof. João Silva',
+        dueDate: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString(),
+        createdAt: new Date(Date.now() - 3 * 24 * 60 * 60 * 1000).toISOString(),
+        updatedAt: new Date().toISOString(),
+        status: 'ACTIVE',
+        type: 'HOMEWORK',
+        maxScore: 100,
+        submissions: 15,
+        totalStudents: 25,
+        instructions: [
+          'Leia atentamente o capítulo 5 antes de iniciar',
+          'Use calculadora apenas quando necessário',
+          'Mostre todos os cálculos',
+          'Entregue em formato PDF'
+        ],
+        resources: [
+          {
+            id: 'res_1',
+            name: 'Capítulo 5 - Equações Quadráticas',
+            type: 'PDF',
+            url: '/resources/chapter_5.pdf',
+            size: '2.5MB'
+          },
+          {
+            id: 'res_2',
+            name: 'Fórmulas de Referência',
+            type: 'PDF',
+            url: '/resources/formulas.pdf',
+            size: '500KB'
+          }
+        ],
+        rubric: {
+          criteria: [
+            { name: 'Correção dos Cálculos', weight: 40, description: 'Precisão matemática' },
+            { name: 'Apresentação', weight: 20, description: 'Organização e clareza' },
+            { name: 'Completude', weight: 30, description: 'Todos os exercícios resolvidos' },
+            { name: 'Pontualidade', weight: 10, description: 'Entrega no prazo' }
+          ]
         },
-        {
-          status: 400,
-          headers: getCorsHeaders(request.headers.get('origin') || undefined)
+        metadata: {
+          difficulty: 'MEDIUM',
+          estimatedTime: 120,
+          tags: ['matemática', 'equações', 'álgebra'],
+          allowLateSubmission: true,
+          latePenalty: 10
         }
-      )
+      };
+
+      return NextResponse.json({
+        success: true,
+        data: assignment,
+        meta: {
+          requestedBy: auth.user.email,
+          userRole: auth.user.role,
+          timestamp: new Date().toISOString()
+        }
+      });
+
+    } catch (error: any) {
+      console.error('❌ [ASSIGNMENT-DETAIL] Erro:', error);
+      return NextResponse.json(
+        { 
+          success: false, 
+          message: 'Erro interno do servidor',
+          code: 'INTERNAL_ERROR'
+        },
+        { status: 500 }
+      );
     }
-
-    const updateData = validationResult.data
-
-    // Buscar tarefa existente
-    const existingAssignment = mockAssignments.get(assignmentId)
-    if (!existingAssignment) {
-      return NextResponse.json({ error: 'Tarefa não encontrada' }, { 
-      status: 404,
-      headers: getCorsHeaders(request.headers.get('origin') || undefined)
-    })
-    }
-
-    // Verificar permissões
-    const userRole = session.user?.role
-    const canEdit =
-      userRole === 'SYSTEM_ADMIN' ||
-      userRole === 'INSTITUTION_MANAGER' ||
-      (userRole === 'TEACHER' && existingAssignment.created_by === session.user?.id)
-
-    if (!canEdit) {
-      return NextResponse.json({ error: 'Sem permissão para editar esta tarefa' }, { 
-      status: 403,
-      headers: getCorsHeaders(request.headers.get('origin') || undefined)
-    })
-    }
-
-    // Validar datas se estiverem sendo alteradas
-    if (updateData.due_date || updateData.available_from) {
-      const dueDate = updateData.due_date ? new Date(updateData.due_date) : new Date(existingAssignment.due_date)
-      const availableFrom = updateData.available_from ? new Date(updateData.available_from) : 
-                           (existingAssignment.available_from ? new Date(existingAssignment.available_from) : null)
-
-      if (availableFrom && availableFrom > dueDate) {
-        return NextResponse.json({ error: 'Data de disponibilidade deve ser anterior à data de entrega' }, { 
-      status: 400,
-      headers: getCorsHeaders(request.headers.get('origin') || undefined)
-    })
-      }
-    }
-
-    // Não permitir certas alterações se já houver submissões
-    if (existingAssignment.submissions && existingAssignment.submissions.length > 0) {
-      const restrictedFields = ['points', 'rubric', 'submission_type', 'group_assignment']
-      const hasRestrictedChanges = restrictedFields.some(field => (updateData as any)[field] !== undefined)
-      
-      if (hasRestrictedChanges) {
-        return NextResponse.json({ error: 'Não é possível alterar configurações estruturais após receber submissões' }, { 
-      status: 409,
-      headers: getCorsHeaders(request.headers.get('origin') || undefined)
-    })
-      }
-    }
-
-    // Atualizar tarefa
-    const updatedAssignment = {
-      ...existingAssignment,
-      ...updateData,
-      updated_at: new Date().toISOString(),
-      updated_by: session.user?.id
-    }
-
-    mockAssignments.set(assignmentId, updatedAssignment)
-
-    return NextResponse.json({
-      success: true,
-      data: updatedAssignment,
-      message: 'Tarefa atualizada com sucesso'
-    }, {
-      headers: getCorsHeaders(request.headers.get('origin') || undefined)
-    })
-
-  } catch (error) {
-    console.log('Erro ao atualizar tarefa:', error)
-    return NextResponse.json({ error: 'Erro interno do servidor' }, { 
-      status: 500,
-      headers: getCorsHeaders(request.headers.get('origin') || undefined)
-    })
-  }
+  })(request);
 }
 
-// DELETE - Remover tarefa
-export async function DELETE(
-  request: NextRequest,
-  context: { params: Promise<{ id: string }> }
-) {
-  try {
-    const session = await getServerSession(authOptions)
-    
-    if (!session) {
-      return NextResponse.json({ error: 'Não autorizado' }, { 
-      status: 401,
-      headers: getCorsHeaders(request.headers.get('origin') || undefined)
-    })
+export async function PUT(request: NextRequest, { params }: { params: { id: string } }) {
+  return requireAuth(async (req: NextRequest, auth: AuthSession) => {
+    try {
+      const assignmentId = params.id;
+      const body = await req.json();
+      const { title, description, dueDate, status, maxScore } = body;
+
+      console.log('✏️ [ASSIGNMENT-DETAIL] Atualizando tarefa:', assignmentId);
+
+      // Simular atualização da tarefa
+      const updatedAssignment = {
+        id: assignmentId,
+        title: title || 'Exercícios de Matemática - Capítulo 5',
+        description: description || 'Descrição atualizada',
+        dueDate: dueDate || new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString(),
+        status: status || 'ACTIVE',
+        maxScore: maxScore || 100,
+        updatedAt: new Date().toISOString(),
+        updatedBy: auth.user.email
+      };
+
+      return NextResponse.json({
+        success: true,
+        message: 'Tarefa atualizada com sucesso',
+        data: updatedAssignment
+      });
+
+    } catch (error: any) {
+      console.error('❌ [ASSIGNMENT-DETAIL] Erro ao atualizar:', error);
+      return NextResponse.json(
+        { 
+          success: false, 
+          message: 'Erro interno do servidor',
+          code: 'INTERNAL_ERROR'
+        },
+        { status: 500 }
+      );
     }
+  })(request);
+}
 
-    const params = await context.params
-    const assignmentId = params.id
+export async function DELETE(request: NextRequest, { params }: { params: { id: string } }) {
+  return requireAuth(async (req: NextRequest, auth: AuthSession) => {
+    try {
+      const assignmentId = params.id;
 
-    // Buscar tarefa
-    const existingAssignment = mockAssignments.get(assignmentId)
-    if (!existingAssignment) {
-      return NextResponse.json({ error: 'Tarefa não encontrada' }, { 
-      status: 404,
-      headers: getCorsHeaders(request.headers.get('origin') || undefined)
-    })
+      console.log('🗑️ [ASSIGNMENT-DETAIL] Removendo tarefa:', assignmentId);
+
+      // Verificar se o usuário tem permissão para deletar
+      if (!['TEACHER', 'ADMIN', 'SYSTEM_ADMIN'].includes(auth.user.role)) {
+        return NextResponse.json(
+          { 
+            success: false, 
+            message: 'Permissão insuficiente para deletar tarefas',
+            code: 'FORBIDDEN'
+          },
+          { status: 403 }
+        );
+      }
+
+      return NextResponse.json({
+        success: true,
+        message: 'Tarefa removida com sucesso',
+        data: { 
+          id: assignmentId, 
+          deletedAt: new Date().toISOString(),
+          deletedBy: auth.user.email
+        }
+      });
+
+    } catch (error: any) {
+      console.error('❌ [ASSIGNMENT-DETAIL] Erro ao remover:', error);
+      return NextResponse.json(
+        { 
+          success: false, 
+          message: 'Erro interno do servidor',
+          code: 'INTERNAL_ERROR'
+        },
+        { status: 500 }
+      );
     }
+  })(request);
+}
 
-    // Verificar permissões
-    const userRole = session.user?.role
-    const canDelete =
-      userRole === 'SYSTEM_ADMIN' ||
-      userRole === 'INSTITUTION_MANAGER' ||
-      (userRole === 'TEACHER' && existingAssignment.created_by === session.user?.id)
-
-    if (!canDelete) {
-      return NextResponse.json({ error: 'Sem permissão para deletar esta tarefa' }, { 
-      status: 403,
-      headers: getCorsHeaders(request.headers.get('origin') || undefined)
-    })
-    }
-
-    // Não permitir deletar se houver submissões
-    if (existingAssignment.submissions && existingAssignment.submissions.length > 0) {
-      return NextResponse.json({ error: 'Não é possível deletar tarefa com submissões. Archive a tarefa ao invés de deletar.' }, { 
-      status: 409,
-      headers: getCorsHeaders(request.headers.get('origin') || undefined)
-    })
-    }
-
-    // Deletar tarefa (em produção, seria soft delete)
-    mockAssignments.delete(assignmentId)
-
-    return NextResponse.json({
+export async function OPTIONS() {
+  return NextResponse.json(
+    { 
       success: true,
-      message: 'Tarefa removida com sucesso'
-    }, {
-      headers: getCorsHeaders(request.headers.get('origin') || undefined)
-    })
-
-  } catch (error) {
-    console.log('Erro ao deletar tarefa:', error)
-    return NextResponse.json({ error: 'Erro interno do servidor' }, { 
-      status: 500,
-      headers: getCorsHeaders(request.headers.get('origin') || undefined)
-    })
-  }
-} 
+      message: 'API de tarefa específica ativa',
+      methods: ['GET', 'PUT', 'DELETE', 'OPTIONS'],
+      timestamp: new Date().toISOString()
+    }
+  );
+}

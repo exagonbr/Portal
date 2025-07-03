@@ -3,7 +3,17 @@ import { getServerSession } from 'next-auth'
 import { authOptions } from '@/lib/auth'
 import { z } from 'zod'
 import { getInternalApiUrl } from '@/config/env'
-import { createCorsOptionsResponse, getCorsHeaders } from '@/config/cors'
+import { createCorsOptionsResponse } from '@/config/cors'
+
+// Funções CORS
+function getCorsHeaders(origin?: string) {
+  return {
+    'Access-Control-Allow-Origin': origin || '*',
+    'Access-Control-Allow-Methods': 'GET, POST, PUT, DELETE, OPTIONS',
+    'Access-Control-Allow-Headers': 'Content-Type, Authorization',
+    'Access-Control-Allow-Credentials': 'true',
+  }
+}
 
 // Schema de validação para criação de unidade
 const createUnitSchema = z.object({
@@ -60,7 +70,7 @@ export async function GET(request: NextRequest) {
     const { searchParams } = new URL(request.url)
     const queryString = searchParams.toString()
 
-    const response = await fetch(getInternalApiUrl(`/api/units${queryString ? `?${queryString}` : ''}`), {
+    const response = await fetch(`http://localhost:3000/api/units${queryString ? `?${queryString}` : ''}`, {
       method: 'GET',
       headers: {
         'Content-Type': 'application/json',
@@ -102,7 +112,7 @@ export async function POST(request: NextRequest) {
 
     const body = await request.json()
 
-    const response = await fetch(getInternalApiUrl('/units'), {
+    const response = await fetch('http://localhost:3000/api/units', {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',

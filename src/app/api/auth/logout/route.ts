@@ -1,155 +1,92 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { cookies } from 'next/headers';
-import { getInternalApiUrl } from '../../../../config/env';
-import { createCorsOptionsResponse, getCorsHeaders } from '@/config/cors'
+import { requireAuth, logoutUser, AuthSession } from '@/middleware/auth';
 
-
-// Handler para requisições OPTIONS (preflight)
-export async function OPTIONS(request: NextRequest) {
-  const origin = request.headers.get('origin') || undefined;
-  return createCorsOptionsResponse(origin);
-}
-
-export async function POST(request: NextRequest) {
+export const POST = requireAuth(async (request: NextRequest, auth: AuthSession) => {
   try {
-    console.log('🚪 LOGOUT: Iniciando processo de logout');
-    
-    // Limpar todos os cookies relacionados à autenticação
-    const cookieStore = await cookies();
-    
-    // Lista de cookies para limpar
-    const cookiesToClear = [
-      'auth_token',
-      'refresh_token', 
-      'session_id',
-      'user_data',
-      'authToken', // fallback names
-      'token',
-      'sessionId'
-    ];
+    console.log('🚪 [LOGOUT] Realizando logout:', auth.user.email);
 
-    cookiesToClear.forEach(cookieName => {
-      cookieStore.set(cookieName, '', {
-        httpOnly: false, // Para user_data que precisa ser acessível via JS
-        secure: process.env.NODE_ENV === 'production',
-        sameSite: 'lax',
-        maxAge: 0,
-        path: '/',
-        expires: new Date(0)
-      });
-      
-      // Também limpar versão httpOnly
-      cookieStore.set(cookieName, '', {
-        httpOnly: true,
-        secure: process.env.NODE_ENV === 'production',
-        sameSite: 'lax',
-        maxAge: 0,
-        path: '/',
-        expires: new Date(0)
-      });
-    });
+    // Fazer logout (adicionar token à blacklist e remover sessão)
+    const logoutResult = await logoutUser(auth.token);
 
-    const authToken = cookieStore.get('auth_token')?.value;
-    const sessionId = cookieStore.get('session_id')?.value;
-
-    // 1. Se houver token, notificar o backend sobre o logout
-    if (authToken) {
-      try {
-        const response = await fetch(getInternalApiUrl('/auth/optimized/logout'), {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-            'Authorization': `Bearer ${authToken}`,
-          },
-          body: JSON.stringify({ sessionId }),
-        });
-
-        if (!response.ok && response.status !== 401) {
-          console.warn(`⚠️ API: Resposta inesperada do backend durante logout: ${response.status}`);
-        }
-      } catch (error) {
-        console.log('⚠️ API: Erro ao notificar backend sobre logout:', error);
-        // Continuamos com o logout mesmo se falhar a comunicação com o backend
-      }
+    if (!logoutResult.success) {
+      return NextResponse.json(
+        { 
+          success: false, 
+          message: logoutResult.message,
+          code: 'LOGOUT_ERROR'
+        },
+        { status: 400 }
+      );
     }
 
-    // Criar resposta antes de limpar cookies
-    const response = NextResponse.json(
-      { success: true, message: 'Logout realizado com sucesso' },
-      { 
-        status: 200,
-        headers: {
-          // Adicionar headers para garantir que o cache seja limpo
-          'Cache-Control': 'no-store, no-cache, must-revalidate',
-          'Pragma': 'no-cache',
-          'Expires': '0',
-          'X-Logout-Success': 'true',
-          'X-Clear-All-Data': 'true'
-        },
-      }
-    );
+    console.log('✅ [LOGOUT] Logout realizado com sucesso:', auth.user.email);
 
-    // Limpar cookies na resposta
-    cookiesToClear.forEach(cookieName => {
-      // Limpar para diferentes configurações
-      response.cookies.set(cookieName, '', {
-        expires: new Date(0),
-        path: '/',
-        httpOnly: false,
-        secure: process.env.NODE_ENV === 'production',
-        sameSite: 'lax'
-      });
-      
-      // Limpar também com httpOnly true para cookies que podem ter sido definidos assim
-      response.cookies.set(cookieName, '', {
-        expires: new Date(0),
-        path: '/',
-        httpOnly: true,
-        secure: process.env.NODE_ENV === 'production',
-        sameSite: 'lax'
-      });
-      
-      // Em produção, limpar também para domínio específico se necessário
-      if (process.env.NODE_ENV === 'production' && process.env.COOKIE_DOMAIN) {
-        response.cookies.set(cookieName, '', {
-          expires: new Date(0),
-          path: '/',
-          domain: process.env.COOKIE_DOMAIN,
-          httpOnly: false,
-          secure: true,
-          sameSite: 'lax'
-        });
-      }
-    });
-
-    return response;
-  } catch (error) {
-    console.log('❌ API: Erro crítico no logout:', error);
-    
-    // Mesmo com erro, tentamos limpar os cookies
-    const errorResponse = NextResponse.json(
-      { success: true, message: 'Logout realizado com sucesso (com erros recuperáveis)' },
-      { 
-        status: 200,
-        headers: {
-          'X-Logout-Success': 'true',
-          'X-Clear-All-Data': 'true'
+    // Criar resposta removendo cookies
+    const response = NextResponse.json({
+      success: true,
+      message: 'Logout realizado com sucesso',
+      data: {
+        loggedOut: true,
+        logoutTime: new Date().toISOString(),
+        user: {
+          email: auth.user.email,
+          name: auth.user.name
         }
       }
-    );
-    
-    // Limpar cookies mesmo em caso de erro
-    const cookiesToClear = ['auth_token', 'refresh_token', 'session_id', 'user_data', 'redirect_count'];
-    cookiesToClear.forEach(cookieName => {
-      errorResponse.cookies.set(cookieName, '', {
-        expires: new Date(0),
-        path: '/',
-        httpOnly: false,
-        secure: process.env.NODE_ENV === 'production',
-        sameSite: 'lax'
-      });
     });
 
-    return errorResponse;
+    // Remover todos os cookies de autenticação
+    const cookieOptions = {
+      httpOnly: true,
+      secure: process.env.NODE_ENV === 'production',
+      sameSite: 'strict' as const,
+      path: '/',
+      maxAge: 0 // Remove o cookie
+    };
+
+    const publicCookieOptions = {
+      ...cookieOptions,
+      httpOnly: false
+    };
+
+    // Remover todos os cookies de token
+    response.cookies.set('token', '', cookieOptions);
+    response.cookies.set('auth_token', '', cookieOptions);
+    response.cookies.set('authToken', '', publicCookieOptions);
+    response.cookies.set('refreshToken', '', cookieOptions);
+    
+    // Remover cookies de dados do usuário
+    response.cookies.set('user', '', publicCookieOptions);
+    response.cookies.set('sessionId', '', publicCookieOptions);
+
+    // Headers para limpar tokens do lado cliente
+    response.headers.set('X-Auth-Token', '');
+    response.headers.set('X-Refresh-Token', '');
+    response.headers.set('X-Session-Expires', '');
+    response.headers.set('Clear-Site-Data', '"cookies", "storage"');
+
+    return response;
+
+  } catch (error: any) {
+    console.error('❌ [LOGOUT] Erro interno:', error);
+    return NextResponse.json(
+      { 
+        success: false, 
+        message: 'Erro interno do servidor',
+        code: 'INTERNAL_ERROR'
+      },
+      { status: 500 }
+    );
   }
+});
+
+export async function OPTIONS() {
+  return NextResponse.json(
+    { 
+      success: true,
+      message: 'API de logout ativa',
+      methods: ['POST', 'OPTIONS'],
+      timestamp: new Date().toISOString()
+    }
+  );
 }
