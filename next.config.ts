@@ -15,7 +15,7 @@ const ContentSecurityPolicy: string = `
   style-src 'self' 'unsafe-inline';
   img-src 'self' data: blob: *.openlibrary.org *.unsplash.com *.ssl-images-amazon.com *.youtube.com;
   font-src 'self' data:;
-  connect-src 'self' *.sabercon.com.br ws: wss:;
+  connect-src 'self' ${process.env.FRONTEND_URL?.replace('https://', '').replace('http://', '') || '*.sabercon.com.br'} ws: wss:;
   media-src 'self' blob:;
   object-src 'none';
   base-uri 'self';
@@ -118,7 +118,7 @@ const nextConfig: NextConfig = {
       // Configuração para produção
       {
         protocol: 'https',
-        hostname: 'portal.sabercon.com.br'
+        hostname: process.env.FRONTEND_URL?.replace('https://', '').replace('http://', '') || 'portal.sabercon.com.br'
       }
     ]
   },
@@ -497,7 +497,7 @@ const nextConfig: NextConfig = {
   async rewrites() {
     const backendUrl = process.env.BACKEND_URL || (
       isProd
-        ? 'https://portal.sabercon.com.br'
+        ? process.env.FRONTEND_URL || 'https://portal.sabercon.com.br'
         : 'http://localhost:3001'
     );
 
@@ -557,7 +557,7 @@ const nextConfig: NextConfig = {
     NEXT_PUBLIC_NODE_ENV: process.env.NODE_ENV || 'production',
     NEXT_PUBLIC_API_URL: process.env.BACKEND_URL || (
       isProd
-        ? 'https://portal.sabercon.com.br/api'
+        ? `${process.env.FRONTEND_URL || 'https://portal.sabercon.com.br'}/api`
         : 'http://localhost:3001/api'
     ),
   },

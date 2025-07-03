@@ -3,6 +3,7 @@ import type { JWT } from 'next-auth/jwt';
 import type { Session } from 'next-auth';
 import GoogleProvider from 'next-auth/providers/google';
 import CredentialsProvider from 'next-auth/providers/credentials';
+import { getInternalApiUrl } from '@/config/urls';
 
 export const authOptions: NextAuthOptions = {
   providers: [
@@ -23,11 +24,7 @@ export const authOptions: NextAuthOptions = {
 
         try {
           // Fazer requisição para o backend de autenticação
-          const backendUrl = process.env.FORCE_PRODUCTION_BACKEND === 'true'
-            ? 'https://portal.sabercon.com.br/api'
-            : 'https://portal.sabercon.com.br/api';
-          
-          const response = await fetch(`${backendUrl}/auth/optimized/login`, {
+          const response = await fetch(getInternalApiUrl('/auth/optimized/login'), {
             method: 'POST',
             headers: {
               'Content-Type': 'application/json',

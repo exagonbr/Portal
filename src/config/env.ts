@@ -17,27 +17,30 @@ const isDevelopment = NODE_ENV === 'development';
 
 // URLs otimizadas para comunicação direta
 const getBaseUrls = () => {
+  // Obter FRONTEND_URL da variável de ambiente
+  const frontendUrl = process.env.FRONTEND_URL || 'https://portal.sabercon.com.br';
+  
   if (isProduction) {
     return {
       // Frontend público
-      FRONTEND_URL: 'https://portal.sabercon.com.br',
+      FRONTEND_URL: frontendUrl,
       
       // Backend - comunicação direta via Nginx (sem proxy Next.js)
       // Cliente (browser): usa URL pública do Nginx
-      BACKEND_URL: 'https://portal.sabercon.com.br/api',
-      API_BASE_URL: 'https://portal.sabercon.com.br/api',
+      BACKEND_URL: `${frontendUrl}/api`,
+      API_BASE_URL: `${frontendUrl}/api`,
       
       // Servidor (SSR): usa URL interna direta
-      INTERNAL_API_URL: 'https://portal.sabercon.com.br/api'
+      INTERNAL_API_URL: `${frontendUrl}/api`
     };
   }
   
   // Desenvolvimento - usar backend local
   return {
-    FRONTEND_URL: 'https://portal.sabercon.com.br',
-    BACKEND_URL: 'https://portal.sabercon.com.br/api',
-    API_BASE_URL: 'https://portal.sabercon.com.br/api',
-    INTERNAL_API_URL: 'https://portal.sabercon.com.br/api'
+    FRONTEND_URL: frontendUrl,
+    BACKEND_URL: `${frontendUrl}/api`,
+    API_BASE_URL: `${frontendUrl}/api`,
+    INTERNAL_API_URL: `${frontendUrl}/api`
   };
 };
 
@@ -47,11 +50,12 @@ try {
   BASE_URLS = getBaseUrls();
 } catch (error) {
   console.warn('Erro ao inicializar URLs base, usando fallback:', error);
+  const fallbackUrl = process.env.FRONTEND_URL || 'https://portal.sabercon.com.br';
   BASE_URLS = {
-    FRONTEND_URL: 'https://portal.sabercon.com.br',
-    BACKEND_URL: 'https://portal.sabercon.com.br/api',
-    API_BASE_URL: 'https://portal.sabercon.com.br/api',
-    INTERNAL_API_URL: 'https://portal.sabercon.com.br/api'
+    FRONTEND_URL: fallbackUrl,
+    BACKEND_URL: `${fallbackUrl}/api`,
+    API_BASE_URL: `${fallbackUrl}/api`,
+    INTERNAL_API_URL: `${fallbackUrl}/api`
   };
 }
 
@@ -91,7 +95,8 @@ export const getApiUrl = (path: string = '') => {
     return `${baseUrl}${cleanPath}`;
   } catch (error) {
     console.warn('Erro ao obter API URL, usando fallback:', error);
-    return `https://portal.sabercon.com.br/api${path.startsWith('/') ? path : `/${path}`}`;
+    const fallbackUrl = process.env.FRONTEND_URL || 'https://portal.sabercon.com.br';
+    return `${fallbackUrl}/api${path.startsWith('/') ? path : `/${path}`}`;
   }
 };
 
@@ -103,7 +108,8 @@ export const getInternalApiUrl = (path: string = '') => {
     return `${baseUrl}${cleanPath}`;
   } catch (error) {
     console.warn('Erro ao obter Internal API URL, usando fallback:', error);
-    return `https://portal.sabercon.com.br/api${path.startsWith('/') ? path : `/${path}`}`;
+    const fallbackUrl = process.env.FRONTEND_URL || 'https://portal.sabercon.com.br';
+    return `${fallbackUrl}/api${path.startsWith('/') ? path : `/${path}`}`;
   }
 };
 

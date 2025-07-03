@@ -4,6 +4,7 @@ import React, { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { EnhancedLoadingState } from './LoadingStates';
 import { buildLoginUrl } from '../../utils/urlBuilder';
+import { getApiUrl } from '@/config/urls';
 
 interface LogoutHandlerProps {
   onLogout?: () => Promise<void>;
@@ -64,8 +65,7 @@ export function LogoutHandler({ onLogout, children }: LogoutHandlerProps) {
 
       // 3. Chamar API de logout para limpar Redis/Backend
       try {
-        const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001/api';
-        await fetch(`${apiUrl}/auth/logout`, {
+        await fetch(`${getApiUrl()}/auth/logout`, {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',
@@ -81,8 +81,7 @@ export function LogoutHandler({ onLogout, children }: LogoutHandlerProps) {
       try {
         const sessionId = localStorage.getItem('session_id');
         if (sessionId) {
-          const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001/api';
-          await fetch(`${apiUrl}/sessions/invalidate`, {
+          await fetch(`${getApiUrl()}/sessions/invalidate`, {
             method: 'POST',
             headers: {
               'Content-Type': 'application/json',

@@ -28,7 +28,7 @@ export const JWT_CONFIG: {
   REFRESH_TOKEN_EXPIRES_IN: '7d',
 
   // Issuer da aplicação
-  ISSUER: 'portal.sabercon.com.br',
+  ISSUER: process.env.FRONTEND_URL?.replace('https://', '').replace('http://', '') || 'portal.sabercon.com.br',
 
   // Audience
   AUDIENCE: 'portal-users'

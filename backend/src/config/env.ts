@@ -20,7 +20,7 @@ export const env = {
     SMTP_PASS: process.env.SMTP_PASS,
     SMTP_TLS_REJECT_UNAUTHORIZED: process.env.SMTP_TLS_REJECT_UNAUTHORIZED || 'true',
     EMAIL_FROM: process.env.EMAIL_FROM || 'noreply@portal.sabercon.com',
-    FRONTEND_URL: 'https://portal.sabercon.com.br',
+    FRONTEND_URL: process.env.FRONTEND_URL || 'https://portal.sabercon.com.br',
     
     // Redis configuration
     REDIS_HOST: process.env.REDIS_HOST || 'localhost',

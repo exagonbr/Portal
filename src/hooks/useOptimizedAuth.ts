@@ -1,6 +1,7 @@
 import { useState, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
 import { buildLoginUrl, buildUrl } from '../utils/urlBuilder';
+import { getApiUrl } from '@/config/urls';
 
 interface LoginData {
   email: string;
@@ -42,8 +43,7 @@ export function useOptimizedAuth() {
     try {
       console.log('🔐 Iniciando login otimizado...');
       
-      const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001/api';
-      const response = await fetch(`${apiUrl}/auth/login`, {
+      const response = await fetch(`${getApiUrl()}/auth/login`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -93,8 +93,7 @@ export function useOptimizedAuth() {
       
       const token = localStorage.getItem('accessToken');
       
-      const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001/api';
-      const response = await fetch(`${apiUrl}/auth/logout`, {
+      const response = await fetch(`${getApiUrl()}/auth/logout`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -145,8 +144,7 @@ export function useOptimizedAuth() {
         return false;
       }
 
-      const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001/api';
-      const response = await fetch(`${apiUrl}/auth/validate`, {
+      const response = await fetch(`${getApiUrl()}/auth/validate`, {
         method: 'GET',
         headers: {
           'Authorization': `Bearer ${token}`,
@@ -169,8 +167,7 @@ export function useOptimizedAuth() {
         return false;
       }
 
-      const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001/api';
-      const response = await fetch(`${apiUrl}/auth/refresh`, {
+      const response = await fetch(`${getApiUrl()}/auth/refresh`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',

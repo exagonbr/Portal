@@ -4,19 +4,18 @@
  */
 
 import { ApiResponse, ApiError } from '@/types/api';
-import { 
-  isFirefox, 
-  FirefoxUtils, 
-  firefoxErrorHandler, 
+import {
+  isFirefox,
+  FirefoxUtils,
+  firefoxErrorHandler,
   FIREFOX_CONFIG,
   initializeFirefoxCompatibility
 } from '../utils/firefox-compatibility';
 import { CORS_HEADERS } from '@/config/cors';
+import { getApiUrl } from '@/config/urls';
 
 // Configuração otimizada para comunicação direta
 const API_CONFIG = {
-  // URL base única - comunicação direta via Nginx
-  baseUrl: 'https://portal.sabercon.com.br/api',
   timeout: 40000, // Reduzido para melhor UX
   retryAttempts: 2, // Reduzido para evitar sobrecarga
   retryDelay: 800,
@@ -66,7 +65,7 @@ class ApiClient {
   private refreshPromise: Promise<boolean> | null = null;
 
   constructor() {
-    this.baseURL = API_CONFIG.baseUrl;
+    this.baseURL = getApiUrl();
     this.timeout = API_CONFIG.timeout;
     
     // Log de inicialização apenas em desenvolvimento
@@ -197,8 +196,6 @@ class ApiClient {
    */
   private buildURL(endpoint: string, params?: Record<string, string | number | boolean>): string {
     let url: string;
-    
-    endpoint = "http://localhost:3000";
 
     if (endpoint.startsWith('http')) {
       url = endpoint;
@@ -269,7 +266,8 @@ class ApiClient {
     this.isRefreshing = true;
     this.refreshPromise = (async () => {
       try {
-        const response = await fetch(`${this.baseURL}/auth/refresh`, {
+        const refreshUrl = `${this.baseURL}/auth/refresh`;
+        const response = await fetch(refreshUrl, {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',

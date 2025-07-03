@@ -1,4 +1,5 @@
 import { ApiResponse, PaginatedResponseDto } from '@/types/api';
+import { buildApiUrl } from '@/config/urls';
 
 // Definir interface local para compatibilidade
 export interface PaginatedResponse<T> {
@@ -104,7 +105,7 @@ export interface UserStats {
 }
 
 class UserService {
-  private baseUrl = '/api/users';
+  private baseUrl = '/users';
 
   /**
    * Obtém estatísticas de usuários
@@ -113,7 +114,7 @@ class UserService {
     try {
       console.log('📊 [UserService] Obtendo estatísticas de usuários');
       
-      const response = await fetch(`${this.baseUrl}/stats`, {
+      const response = await fetch(buildApiUrl(`${this.baseUrl}/stats`), {
         method: 'GET',
         headers: {
           'Content-Type': 'application/json',
@@ -157,7 +158,7 @@ class UserService {
       if (filters.sortBy) params.append('sortBy', filters.sortBy);
       if (filters.sortOrder) params.append('sortOrder', filters.sortOrder);
 
-      const response = await fetch(`${this.baseUrl}?${params.toString()}`, {
+      const response = await fetch(buildApiUrl(`${this.baseUrl}?${params.toString()}`), {
         method: 'GET',
         headers: {
           'Content-Type': 'application/json',
@@ -197,7 +198,7 @@ class UserService {
     try {
       console.log('🔍 [UserService] Buscando usuário por ID:', id);
       
-      const response = await fetch(`${this.baseUrl}/${id}`, {
+      const response = await fetch(buildApiUrl(`${this.baseUrl}/${id}`), {
         method: 'GET',
         headers: {
           'Content-Type': 'application/json',
@@ -233,7 +234,7 @@ class UserService {
     try {
       console.log('👤 [UserService] Obtendo perfil do usuário atual');
       
-      const response = await fetch(`${this.baseUrl}/me`, {
+      const response = await fetch(buildApiUrl(`${this.baseUrl}/me`), {
         method: 'GET',
         headers: {
           'Content-Type': 'application/json',
@@ -266,7 +267,7 @@ class UserService {
     try {
       console.log('📝 [UserService] Atualizando perfil do usuário atual');
       
-      const response = await fetch(`${this.baseUrl}/me`, {
+      const response = await fetch(buildApiUrl(`${this.baseUrl}/me`), {
         method: 'PUT',
         headers: {
           'Content-Type': 'application/json',
@@ -300,7 +301,7 @@ class UserService {
     try {
       console.log('🆕 [UserService] Criando usuário:', data.email);
       
-      const response = await fetch(this.baseUrl, {
+      const response = await fetch(buildApiUrl(this.baseUrl), {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -337,7 +338,7 @@ class UserService {
     try {
       console.log('📝 [UserService] Atualizando usuário:', id);
       
-      const response = await fetch(`${this.baseUrl}/${id}`, {
+      const response = await fetch(buildApiUrl(`${this.baseUrl}/${id}`), {
         method: 'PUT',
         headers: {
           'Content-Type': 'application/json',
@@ -377,7 +378,7 @@ class UserService {
     try {
       console.log('🗑️ [UserService] Removendo usuário:', id);
       
-      const response = await fetch(`${this.baseUrl}/${id}`, {
+      const response = await fetch(buildApiUrl(`${this.baseUrl}/${id}`), {
         method: 'DELETE',
         headers: {
           'Content-Type': 'application/json',
@@ -412,7 +413,7 @@ class UserService {
     try {
       console.log('🔓 [UserService] Ativando usuário:', id);
       
-      const response = await fetch(`${this.baseUrl}/${id}/activate`, {
+      const response = await fetch(buildApiUrl(`${this.baseUrl}/${id}/activate`), {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -444,7 +445,7 @@ class UserService {
     try {
       console.log('🔒 [UserService] Desativando usuário:', id);
       
-      const response = await fetch(`${this.baseUrl}/${id}/deactivate`, {
+      const response = await fetch(buildApiUrl(`${this.baseUrl}/${id}/deactivate`), {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -476,7 +477,7 @@ class UserService {
     try {
       console.log('🔑 [UserService] Resetando senha do usuário:', id);
       
-      const response = await fetch(`${this.baseUrl}/${id}/reset-password`, {
+      const response = await fetch(buildApiUrl(`${this.baseUrl}/${id}/reset-password`), {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -514,7 +515,7 @@ class UserService {
       if (filters.page) params.append('page', filters.page.toString());
       if (filters.limit) params.append('limit', filters.limit.toString());
 
-      const response = await fetch(`${this.baseUrl}/search?${params.toString()}`, {
+      const response = await fetch(buildApiUrl(`${this.baseUrl}/search?${params.toString()}`), {
         method: 'GET',
         headers: {
           'Content-Type': 'application/json',
@@ -554,7 +555,7 @@ class UserService {
     try {
       console.log('🔍 [UserService] Buscando usuários por role:', roleId);
       
-      const response = await fetch(`${this.baseUrl}/role/${roleId}`, {
+      const response = await fetch(buildApiUrl(`${this.baseUrl}/role/${roleId}`), {
         method: 'GET',
         headers: {
           'Content-Type': 'application/json',
@@ -587,7 +588,7 @@ class UserService {
     try {
       console.log('🔍 [UserService] Buscando usuários por instituição:', institutionId);
       
-      const response = await fetch(`${this.baseUrl}/institution/${institutionId}`, {
+      const response = await fetch(buildApiUrl(`${this.baseUrl}/institution/${institutionId}`), {
         method: 'GET',
         headers: {
           'Content-Type': 'application/json',
