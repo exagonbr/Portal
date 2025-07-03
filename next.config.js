@@ -176,55 +176,26 @@ const nextConfig = {
     ];
 
     return [
-      // Headers gerais com cache normal
       {
-        source: '/:path*',
-        headers: securityHeaders
+        // Aplica cache para todas as rotas de página (não API, não assets)
+        source: '/((?!api|_next/static|_next/image|images/|favicon.ico).*)',
+        headers: [
+          ...securityHeaders,
+          {
+            key: 'Cache-Control',
+            value: 'public, max-age=3600'
+          }
+        ]
       },
-      // No-cache apenas para dados específicos: sessão, token, user, userData, refreshToken, roles, permissions
       {
-        source: '/api/auth/:path*',
+        // Desativa o cache para todas as rotas de API
+        source: '/api/:path*',
         headers: [
           ...securityHeaders,
           ...authNoCacheHeaders
         ]
       },
-      {
-        source: '/api/user/:path*',
-        headers: [
-          ...securityHeaders,
-          ...authNoCacheHeaders
-        ]
-      },
-      {
-        source: '/api/session/:path*',
-        headers: [
-          ...securityHeaders,
-          ...authNoCacheHeaders
-        ]
-      },
-      {
-        source: '/api/token/:path*',
-        headers: [
-          ...securityHeaders,
-          ...authNoCacheHeaders
-        ]
-      },
-      {
-        source: '/api/roles/:path*',
-        headers: [
-          ...securityHeaders,
-          ...authNoCacheHeaders
-        ]
-      },
-      {
-        source: '/api/permissions/:path*',
-        headers: [
-          ...securityHeaders,
-          ...authNoCacheHeaders
-        ]
-      },
-      // Cache normal para assets estáticos
+      // Mantém o cache para assets estáticos
       {
         source: '/_next/static/:path*',
         headers: [
@@ -234,7 +205,7 @@ const nextConfig = {
           }
         ]
       },
-      // Cache para imagens
+      // Mantém o cache para imagens
       {
         source: '/(.*\\.(?:png|jpg|jpeg|gif|webp|svg|ico|woff|woff2)$)',
         headers: [
