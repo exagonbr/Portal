@@ -1,0 +1,248 @@
+/* Otimizações de Performance para Menu e Navegação */
+
+/* Reset de cache para elementos críticos */
+* {
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+/* GPU Acceleration para elementos do menu */
+.gpu-accelerated,
+nav,
+aside,
+[role="navigation"],
+.menu-container,
+.sidebar {
+  -webkit-transform: translateZ(0);
+  transform: translateZ(0);
+  -webkit-backface-visibility: hidden;
+  backface-visibility: hidden;
+  -webkit-perspective: 1000px;
+  perspective: 1000px;
+  will-change: transform, opacity;
+}
+
+/* Otimizar transições do menu */
+.menu-transition {
+  transition: transform 0.2s cubic-bezier(0.4, 0, 0.2, 1),
+              opacity 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+  transition-delay: 0ms;
+}
+
+/* Desabilitar animações complexas em dispositivos lentos */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}
+
+/* Otimizar hover states */
+nav button,
+nav a,
+.menu-item {
+  position: relative;
+  contain: layout style paint;
+  -webkit-tap-highlight-color: transparent;
+  touch-action: manipulation;
+}
+
+nav button::before,
+nav a::before,
+.menu-item::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: currentColor;
+  opacity: 0;
+  transition: opacity 0.15s ease;
+  pointer-events: none;
+  border-radius: inherit;
+}
+
+nav button:hover::before,
+nav a:hover::before,
+.menu-item:hover::before {
+  opacity: 0.08;
+}
+
+nav button:active::before,
+nav a:active::before,
+.menu-item:active::before {
+  opacity: 0.12;
+}
+
+/* Otimizar scrolling */
+nav,
+.scrollable-menu {
+  -webkit-overflow-scrolling: touch;
+  scroll-behavior: smooth;
+  overscroll-behavior: contain;
+}
+
+/* Reduzir repaints */
+.menu-icon,
+.material-symbols-outlined {
+  contain: strict;
+  font-display: block;
+}
+
+/* Lazy loading para ícones */
+.icon-loaded {
+  opacity: 1;
+  transition: opacity 0.2s ease;
+}
+
+.material-symbols-outlined:not(.icon-loaded) {
+  opacity: 0;
+}
+
+/* Otimizar layout shifts */
+nav img,
+.menu-icon img {
+  aspect-ratio: 1;
+  width: 24px;
+  height: 24px;
+}
+
+/* Performance para mobile */
+@media (max-width: 768px) {
+  nav,
+  aside {
+    /* Desabilitar sombras complexas em mobile */
+    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+  }
+  
+  /* Simplificar transições em mobile */
+  .menu-transition {
+    transition-duration: 0.15s;
+  }
+}
+
+/* Otimizar focus states */
+:focus-visible {
+  outline: 2px solid currentColor;
+  outline-offset: 2px;
+}
+
+/* Remover outline para mouse users */
+:focus:not(:focus-visible) {
+  outline: none;
+}
+
+/* Container queries para menu responsivo */
+@container (min-width: 768px) {
+  .menu-container {
+    contain: layout style;
+  }
+}
+
+/* Otimizar animações de entrada */
+@keyframes menuSlideIn {
+  from {
+    transform: translateX(-100%) translateZ(0);
+    opacity: 0;
+  }
+  to {
+    transform: translateX(0) translateZ(0);
+    opacity: 1;
+  }
+}
+
+@keyframes menuFadeIn {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+.menu-animate-in {
+  animation: menuSlideIn 0.2s cubic-bezier(0.4, 0, 0.2, 1) forwards;
+}
+
+.menu-fade-in {
+  animation: menuFadeIn 0.15s ease-out forwards;
+}
+
+/* Desabilitar seleção em elementos do menu */
+nav,
+.menu-container {
+  -webkit-user-select: none;
+  -moz-user-select: none;
+  -ms-user-select: none;
+  user-select: none;
+}
+
+/* Otimizar cliques em mobile */
+nav button,
+nav a {
+  min-height: 44px;
+  min-width: 44px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+/* Prevenir layout thrashing */
+.menu-open body {
+  overflow: hidden;
+  position: fixed;
+  width: 100%;
+}
+
+/* CSS Containment para performance */
+.menu-section {
+  contain: layout style;
+}
+
+.menu-header {
+  contain: layout style paint;
+  position: sticky;
+  top: 0;
+  z-index: 10;
+}
+
+/* Otimizar backdrop */
+.menu-backdrop {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.5);
+  -webkit-backdrop-filter: blur(4px);
+  backdrop-filter: blur(4px);
+  will-change: opacity;
+  contain: strict;
+}
+
+/* Desabilitar blur em dispositivos lentos */
+@media (prefers-reduced-motion: reduce) {
+  .menu-backdrop {
+    -webkit-backdrop-filter: none;
+    backdrop-filter: none;
+    background: rgba(0, 0, 0, 0.7);
+  }
+}
+
+/* Otimizar z-index stacking */
+.menu-container {
+  z-index: 1000;
+  isolation: isolate;
+}
+
+/* Performance para listas grandes */
+.menu-list {
+  contain: layout style;
+  content-visibility: auto;
+}
+
+.menu-list-item {
+  contain-intrinsic-size: 0 48px;
+}

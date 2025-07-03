@@ -1,0 +1,269 @@
+/* Otimizações de Performance para Menu e Navegação */
+
+/* Reset de cache para elementos críticos */
+* {
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+/* GPU Acceleration para elementos do menu */
+.gpu-accelerated,
+nav,
+aside,
+[role="navigation"],
+.menu-container,
+.sidebar {
+  -webkit-transform: translateZ(0);
+  transform: translateZ(0);
+  -webkit-backface-visibility: hidden;
+  backface-visibility: hidden;
+  -webkit-perspective: 1000px;
+  perspective: 1000px;
+  will-change: transform, opacity;
+}
+
+/* Otimizar transições do menu */
+.menu-transition {
+  transition: transform 0.2s cubic-bezier(0.4, 0, 0.2, 1),
+              opacity 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+  transition-delay: 0ms;
+}
+
+/* Desabilitar animações complexas em dispositivos lentos */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}
+
+/* Otimizar hover states */
+nav button,
+nav a,
+.menu-item {
+  position: relative;
+  contain: layout style paint;
+  -webkit-tap-highlight-color: transparent;
+  touch-action: manipulation;
+}
+
+nav button::before,
+nav a::before,
+.menu-item::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: currentColor;
+  opacity: 0;
+  transition: opacity 0.15s ease;
+  pointer-events: none;
+  border-radius: inherit;
+}
+
+nav button:hover::before,
+nav a:hover::before,
+.menu-item:hover::before {
+  opacity: 0.08;
+}
+
+nav button:active::before,
+nav a:active::before,
+.menu-item:active::before {
+  opacity: 0.12;
+}
+
+/* Otimizar scrolling */
+nav,
+.scrollable-menu {
+  -webkit-overflow-scrolling: touch;
+  scroll-behavior: smooth;
+  overscroll-behavior: contain;
+}
+
+/* Reduzir repaints */
+.menu-icon,
+.material-symbols-outlined {
+  contain: strict;
+  font-display: block;
+}
+
+/* Lazy loading para ícones */
+.icon-loaded {
+  opacity: 1;
+  transition: opacity 0.2s ease;
+}
+
+.material-symbols-outlined:not(.icon-loaded) {
+  opacity: 0;
+}
+
+/* Otimizar layout shifts */
+nav img,
+.menu-icon img {
+  aspect-ratio: 1;
+  width: 24px;
+  height: 24px;
+}
+
+/* Performance para mobile */
+@media (max-width: 768px) {
+  nav,
+  aside {
+    /* Desabilitar sombras complexas em mobile */
+@keyframes skeleton-loading {
+  0% {
+    background-position: 200% 0;
+  }
+  100% {
+    background-position: -200% 0;
+  }
+}
+
+/* Otimizar modais e overlays */
+.modal-backdrop {
+  contain: strict;
+  will-change: opacity;
+}
+
+.modal-content {
+  contain: layout style paint;
+  will-change: transform, opacity;
+}
+
+/* Prevenir layout shift */
+.aspect-ratio-box {
+  position: relative;
+  width: 100%;
+  padding-bottom: 56.25%; /* 16:9 */
+}
+
+.aspect-ratio-box > * {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+}
+
+/* Otimizar formulários */
+input,
+textarea,
+select {
+  -webkit-appearance: none;
+  -moz-appearance: none;
+  appearance: none;
+  font-size: 16px; /* Prevenir zoom no iOS */
+}
+
+/* Desabilitar seleção em elementos UI */
+.no-select {
+  -webkit-user-select: none;
+  -moz-user-select: none;
+  -ms-user-select: none;
+  user-select: none;
+  -webkit-touch-callout: none;
+}
+
+/* Otimizar tabelas grandes */
+.optimized-table {
+  contain: layout style paint;
+  table-layout: fixed;
+}
+
+/* Virtual scrolling container */
+.virtual-scroll {
+  contain: strict;
+  overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
+}
+
+/* Prevenir text rendering issues */
+body {
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  text-rendering: optimizeLegibility;
+}
+
+/* Otimizar print */
+@media print {
+  * {
+    -webkit-print-color-adjust: exact;
+    print-color-adjust: exact;
+  }
+  
+  .no-print {
+    display: none !important;
+  }
+}
+
+/* Critical CSS para above-the-fold */
+.critical {
+  /* Estilos críticos devem ser inline no HTML */
+}
+
+/* Lazy sections */
+.lazy-section {
+  content-visibility: auto;
+  contain-intrinsic-size: 0 500px;
+}
+
+/* Otimizar animações de entrada */
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.fade-in {
+  animation: fadeIn 300ms ease-out forwards;
+}
+
+/* Desabilitar pointer events durante transições */
+.transitioning {
+  pointer-events: none;
+}
+
+/* Otimizar z-index stacking */
+.z-base { z-index: 0; }
+.z-dropdown { z-index: 1000; }
+.z-sticky { z-index: 1020; }
+.z-fixed { z-index: 1030; }
+.z-modal-backdrop { z-index: 1040; }
+.z-modal { z-index: 1050; }
+.z-popover { z-index: 1060; }
+.z-tooltip { z-index: 1070; }
+.z-notification { z-index: 1080; }
+
+/* Melhorar performance de blur */
+.optimized-blur {
+  -webkit-backdrop-filter: blur(10px);
+  backdrop-filter: blur(10px);
+  will-change: backdrop-filter;
+}
+
+/* Reduzir complexidade de sombras */
+.optimized-shadow {
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+.optimized-shadow-lg {
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+}
+
+/* Otimizar gradientes */
+.optimized-gradient {
+  background-image: linear-gradient(to bottom, var(--gradient-start), var(--gradient-end));
+  will-change: background-position;
+}

@@ -1,0 +1,130 @@
+import { NextRequest, NextResponse } from 'next/server';
+
+const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001';
+
+export async function GET(
+  request: NextRequest,
+  { params }: { params: Promise<{ id: string }> }
+) {
+  try {
+    const resolvedParams = await params;
+    const { id } = resolvedParams;
+
+    const response = await fetch(`${API_BASE_URL}/api/certificates/${id}`, {
+      method: 'GET',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+    });
+
+    if (!response.ok) {
+      if (response.status === 404) {
+        return NextResponse.json(
+          { success: false, message: 'Certificado não encontrado' },
+          { status: 404 }
+        );
+      }
+      throw new Error(`HTTP error! status: ${response.status}`);
+    }
+
+    const data = await response.json();
+    return NextResponse.json(data);
+
+  } catch (error) {
+    console.error('Erro ao buscar certificado:', error);
+    return NextResponse.json(
+      { 
+        success: false, 
+        message: 'Erro ao buscar certificado',
+        error: error instanceof Error ? error.message : 'Erro desconhecido'
+      },
+      { status: 500 }
+    );
+  }
+}
+
+export async function PUT(
+  request: NextRequest,
+  { params }: { params: Promise<{ id: string }> }
+) {
+  try {
+    const resolvedParams = await params;
+    const { id } = resolvedParams;
+    const body = await request.json();
+
+    const response = await fetch(`${API_BASE_URL}/api/certificates/${id}`, {
+      method: 'PUT',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify(body),
+    });
+
+    if (!response.ok) {
+      if (response.status === 404) {
+        return NextResponse.json(
+          { success: false, message: 'Certificado não encontrado' },
+          { status: 404 }
+        );
+      }
+      const errorData = await response.json();
+      throw new Error(errorData.message || `HTTP error! status: ${response.status}`);
+    }
+
+    const data = await response.json();
+    return NextResponse.json(data);
+
+  } catch (error) {
+    console.error('Erro ao atualizar certificado:', error);
+    return NextResponse.json(
+      { 
+        success: false, 
+        message: 'Erro ao atualizar certificado',
+        error: error instanceof Error ? error.message : 'Erro desconhecido'
+      },
+      { status: 500 }
+    );
+  }
+}
+
+export async function DELETE(
+  request: NextRequest,
+  { params }: { params: Promise<{ id: string }> }
+) {
+  try {
+    const resolvedParams = await params;
+    const { id } = resolvedParams;
+
+    const response = await fetch(`${API_BASE_URL}/api/certificates/${id}`, {
+      method: 'DELETE',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+    });
+
+    if (!response.ok) {
+      if (response.status === 404) {
+        return NextResponse.json(
+          { success: false, message: 'Certificado não encontrado' },
+          { status: 404 }
+        );
+      }
+      const errorData = await response.json();
+      throw new Error(errorData.message || `HTTP error! status: ${response.status}`);
+    }
+
+    const data = await response.json();
+    return NextResponse.json(data);
+
+  } catch (error) {
+    console.error('Erro ao excluir certificado:', error);
+    return NextResponse.json(
+      { 
+        success: false, 
+        message: 'Erro ao excluir certificado',
+        error: error instanceof Error ? error.message : 'Erro desconhecido'
+      },
+      { status: 500 }
+    );
+  }
+}

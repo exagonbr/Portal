@@ -1,0 +1,1833 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model TVShow {
+  id                  BigInt        @id @default(autoincrement())
+  version             BigInt?
+  api_id              String?       @db.VarChar(255)
+  backdrop_image_id   BigInt?
+  backdrop_path       String?       @db.VarChar(255)
+  contract_term_end   DateTime      @db.Timestamp(6)
+  date_created        DateTime      @db.Timestamp(6)
+  deleted             Boolean?
+  first_air_date      DateTime      @db.Timestamp(6)
+  imdb_id             String?       @db.VarChar(255)
+  last_updated        DateTime      @db.Timestamp(6)
+  manual_input        Boolean?
+  manual_support_id   BigInt?
+  manual_support_path String?       @db.VarChar(255)
+  name                String        @db.VarChar(255)
+  original_language   String?       @db.VarChar(255)
+  overview            String?
+  popularity          Float?
+  poster_image_id     BigInt?
+  poster_path         String?       @db.VarChar(255)
+  producer            String?
+  vote_average        Float?
+  vote_count          Int?
+  total_load          String?       @db.VarChar(255)
+
+  // Relations
+  certificates        certificate[]
+
+  @@map("tv_show")
+}
+
+/// This table contains check constraints and requires additional setup for migrations. Visit https://pris.ly/d/check-constraints for more info.
+model activities {
+  id                    String                 @id @default(dbgenerated("public.gen_random_uuid()")) @db.Uuid
+  title                 String                 @db.VarChar(255)
+  description           String?
+  type                  String
+  course_id             String?                @db.Uuid
+  class_id              String?                @db.Uuid
+  teacher_id            String?                @db.Uuid
+  due_date              DateTime               @db.Timestamptz(6)
+  points                Int                    @default(100)
+  instructions          String?
+  attachments           Json?                  @db.Json
+  allow_late_submission Boolean?               @default(false)
+  active                Boolean?               @default(true)
+  created_at            DateTime               @default(now()) @db.Timestamptz(6)
+  updated_at            DateTime               @default(now()) @db.Timestamptz(6)
+  activity_submissions  activity_submissions[]
+  grades                grades[]
+}
+
+model activity_sessions {
+  id               String    @id @default(dbgenerated("public.gen_random_uuid()")) @db.Uuid
+  session_id       String    @unique(map: "activity_sessions_session_id_unique") @db.VarChar(255)
+  user_id          String    @db.VarChar(255)
+  start_time       DateTime? @default(now()) @db.Timestamptz(6)
+  end_time         DateTime? @db.Timestamptz(6)
+  duration_seconds Int?
+  page_views       Int?      @default(0)
+  actions_count    Int?      @default(0)
+  ip_address       String?   @db.VarChar(255)
+  user_agent       String?   @db.VarChar(255)
+  device_info      Json?     @db.Json
+  is_active        Boolean?  @default(true)
+  last_activity    DateTime? @default(now()) @db.Timestamptz(6)
+  created_at       DateTime  @default(now()) @db.Timestamptz(6)
+  updated_at       DateTime  @default(now()) @db.Timestamptz(6)
+
+  @@index([is_active], map: "activity_sessions_is_active_index")
+  @@index([last_activity], map: "activity_sessions_last_activity_index")
+  @@index([session_id], map: "activity_sessions_session_id_index")
+  @@index([start_time], map: "activity_sessions_start_time_index")
+  @@index([user_id], map: "activity_sessions_user_id_index")
+}
+
+/// This table contains check constraints and requires additional setup for migrations. Visit https://pris.ly/d/check-constraints for more info.
+model activity_submissions {
+  id               String      @id @default(dbgenerated("public.gen_random_uuid()")) @db.Uuid
+  activity_id      String?     @db.Uuid
+  student_id       String?     @db.Uuid
+  content          String?
+  attachments      Json?       @db.Json
+  submitted_at     DateTime    @db.Timestamptz(6)
+  last_modified_at DateTime?   @db.Timestamptz(6)
+  status           String?     @default("submitted")
+  created_at       DateTime    @default(now()) @db.Timestamptz(6)
+  updated_at       DateTime    @default(now()) @db.Timestamptz(6)
+  activities       activities? @relation(fields: [activity_id], references: [id], onDelete: Cascade, onUpdate: NoAction, map: "activity_submissions_activity_id_foreign")
+  grades           grades[]
+
+  @@unique([activity_id, student_id], map: "activity_submissions_activity_id_student_id_unique")
+}
+
+model activity_summaries {
+  id                    String   @id @default(dbgenerated("public.gen_random_uuid()")) @db.Uuid
+  user_id               String   @db.VarChar(255)
+  date                  DateTime @db.Date
+  total_time_seconds    Int?     @default(0)
+  page_views            Int?     @default(0)
+  video_time_seconds    Int?     @default(0)
+  videos_watched        Int?     @default(0)
+  quizzes_attempted     Int?     @default(0)
+  assignments_submitted Int?     @default(0)
+  login_count           Int?     @default(0)
+  unique_sessions       Int?     @default(0)
+  created_at            DateTime @default(now()) @db.Timestamptz(6)
+  updated_at            DateTime @default(now()) @db.Timestamptz(6)
+
+  @@unique([user_id, date], map: "activity_summaries_user_id_date_unique")
+  @@index([date], map: "activity_summaries_date_index")
+  @@index([user_id, date], map: "activity_summaries_user_id_date_index")
+  @@index([user_id], map: "activity_summaries_user_id_index")
+}
+
+/// This table contains check constraints and requires additional setup for migrations. Visit https://pris.ly/d/check-constraints for more info.
+model announcements {
+  id             String    @id @default(dbgenerated("public.gen_random_uuid()")) @db.Uuid
+  title          String    @db.VarChar(255)
+  content        String
+  type           String?   @default("general")
+  author_id      String?   @db.Uuid
+  institution_id String?   @db.Uuid
+  school_id      String?   @db.Uuid
+  class_id       String?   @db.Uuid
+  is_published   Boolean?  @default(false)
+  published_at   DateTime? @db.Timestamptz(6)
+  expires_at     DateTime? @db.Timestamptz(6)
+  created_at     DateTime  @default(now()) @db.Timestamptz(6)
+  updated_at     DateTime  @default(now()) @db.Timestamptz(6)
+}
+
+model answer {
+  id           BigInt    @id @default(autoincrement())
+  version      BigInt?
+  date_created DateTime  @db.Timestamp(6)
+  deleted      Boolean?
+  is_correct   Boolean?
+  last_updated DateTime? @db.Timestamp(6)
+  question_id  BigInt?
+  reply        String?
+}
+
+model assignments {
+  id             Int            @id @default(autoincrement())
+  lesson_id      Int?
+  class_id       Int?
+  title          String
+  description    String
+  type           AssignmentType
+  points         Int
+  due_date       DateTime
+  available_from DateTime?
+  instructions   String?
+  rubric         Json?
+  attachments    Json?
+  settings       Json?
+  is_published   Boolean        @default(false)
+  created_by     Int
+  created_at     DateTime       @default(now())
+  updated_at     DateTime
+  classes        classes?       @relation(fields: [class_id], references: [id])
+  lessons        lessons?       @relation(fields: [lesson_id], references: [id])
+  submissions    submissions[]
+
+  @@index([class_id])
+  @@index([due_date])
+  @@index([lesson_id])
+}
+
+/// This table contains check constraints and requires additional setup for migrations. Visit https://pris.ly/d/check-constraints for more info.
+model attendance {
+  id          String   @id @default(dbgenerated("public.gen_random_uuid()")) @db.Uuid
+  class_id    String?  @db.Uuid
+  student_id  String?  @db.Uuid
+  date        DateTime @db.Date
+  status      String
+  notes       String?
+  recorded_by String?  @db.Uuid
+  created_at  DateTime @default(now()) @db.Timestamptz(6)
+  updated_at  DateTime @default(now()) @db.Timestamptz(6)
+
+  @@unique([class_id, student_id, date], map: "attendance_class_id_student_id_date_unique")
+}
+
+/// This model or at least one of its fields has comments in the database, and requires an additional setup for migrations: Read more: https://pris.ly/d/database-comments
+model audit_logs {
+  id             String   @id @default(dbgenerated("public.gen_random_uuid()")) @db.Uuid
+  user_id        String?  @db.Uuid
+  action         String   @db.VarChar(255)
+  entity_type    String   @db.VarChar(255)
+  entity_id      String?  @db.Uuid
+  old_values     Json?    @db.Json
+  new_values     Json?    @db.Json
+  ip_address     String?  @db.VarChar(255)
+  user_agent     String?  @db.VarChar(255)
+  user_id_legacy Int?
+  created_at     DateTime @default(now()) @db.Timestamptz(6)
+  updated_at     DateTime @default(now()) @db.Timestamptz(6)
+
+  @@index([user_id_legacy], map: "audit_logs_user_id_legacy_index")
+}
+
+model author {
+  id          BigInt   @id @default(autoincrement())
+  version     BigInt?
+  description String
+  email       String?  @db.VarChar(255)
+  is_active   Boolean? @default(true)
+  name        String   @db.VarChar(255)
+
+  @@index([email], map: "idx_author_email")
+}
+
+/// This table contains check constraints and requires additional setup for migrations. Visit https://pris.ly/d/check-constraints for more info.
+model aws_connection_logs {
+  id             String   @id @default(dbgenerated("public.gen_random_uuid()")) @db.Uuid
+  service_name   String   @db.VarChar(255)
+  operation      String   @db.VarChar(255)
+  status         String
+  error_message  String?
+  request_data   Json?    @db.Json
+  response_data  Json?    @db.Json
+  duration_ms    Int?
+  aws_request_id String?  @db.VarChar(255)
+  created_at     DateTime @default(now()) @db.Timestamptz(6)
+  updated_at     DateTime @default(now()) @db.Timestamptz(6)
+}
+
+model aws_settings {
+  id            String   @id @default(dbgenerated("public.gen_random_uuid()")) @db.Uuid
+  setting_key   String   @unique(map: "aws_settings_setting_key_unique") @db.VarChar(255)
+  setting_value String
+  description   String?
+  is_encrypted  Boolean? @default(false)
+  is_active     Boolean? @default(true)
+  created_at    DateTime @default(now()) @db.Timestamptz(6)
+  updated_at    DateTime @default(now()) @db.Timestamptz(6)
+}
+
+model books {
+  id          Int      @id @default(autoincrement())
+  unit_id     Int
+  title       String
+  description String?
+  author      String?
+  isbn        String?  @unique(map: "books_isbn_unique")
+  cover_url   String?
+  file_url    String?
+  pages       Int?
+  is_required Boolean  @default(false)
+  created_at  DateTime @default(now())
+  updated_at  DateTime
+  units       units    @relation(fields: [unit_id], references: [id])
+
+  @@index([unit_id])
+}
+
+model certificate {
+  id           BigInt    @id @default(autoincrement())
+  version      BigInt?
+  date_created DateTime  @db.Timestamp(6)
+  last_updated DateTime? @db.Timestamp(6)
+  path         String?   @db.VarChar(255)
+  score        BigInt?
+  tv_show_id   BigInt?
+  user_id      BigInt?
+  document     String?   @db.VarChar(255)
+  license_code String?   @db.VarChar(255)
+  tv_show_name String?   @db.VarChar(255)
+  recreate     Boolean?  @default(true)
+
+  // Relations
+  user     users?   @relation(fields: [user_id], references: [id], map: "certificate_user_fk")
+  tv_show  TVShow?  @relation(fields: [tv_show_id], references: [id], map: "certificate_tv_show_fk")
+
+  @@index([user_id], map: "idx_certificate_user_id")
+  @@index([tv_show_id], map: "idx_certificate_tv_show_id")
+}
+
+model certificates {
+  id                Int       @id @default(autoincrement())
+  user_id           Int
+  course_id         Int?
+  title             String
+  description       String?
+  certificate_type  String    @default("COURSE_COMPLETION")
+  issued_date       DateTime  @default(now())
+  expiry_date       DateTime?
+  certificate_url   String?
+  verification_code String    @unique
+  metadata          Json?
+  is_active         Boolean   @default(true)
+  created_at        DateTime  @default(now())
+  updated_at        DateTime
+  courses           courses?  @relation(fields: [course_id], references: [id])
+
+  @@index([certificate_type])
+  @@index([course_id])
+  @@index([issued_date])
+  @@index([user_id])
+  @@index([verification_code])
+}
+
+model classes {
+  id           Int           @id @default(autoincrement())
+  school_id    Int
+  course_id    Int
+  name         String
+  code         String        @unique
+  start_date   DateTime
+  end_date     DateTime
+  schedule     Json?
+  max_students Int           @default(30)
+  is_active    Boolean       @default(true)
+  created_at   DateTime      @default(now())
+  updated_at   DateTime
+  assignments  assignments[]
+  courses      courses       @relation(fields: [course_id], references: [id])
+  enrollments  enrollments[]
+
+  @@index([code])
+  @@index([course_id])
+  @@index([school_id])
+}
+
+model collections {
+  id                  BigInt   @id @default(autoincrement())
+  version             BigInt?
+  api_id              String?  @db.VarChar(255)
+  backdrop_image_id   BigInt?
+  backdrop_path       String?  @db.VarChar(255)
+  contract_term_end   DateTime @db.Timestamp(6)
+  date_created        DateTime @db.Timestamp(6)
+  deleted             Boolean?
+  first_air_date      DateTime @db.Timestamp(6)
+  imdb_id             String?  @db.VarChar(255)
+  last_updated        DateTime @db.Timestamp(6)
+  manual_input        Boolean?
+  manual_support_id   BigInt?
+  manual_support_path String?  @db.VarChar(255)
+  name                String   @db.VarChar(255)
+  original_language   String?  @db.VarChar(255)
+  overview            String?
+  popularity          Float?
+  poster_image_id     BigInt?
+  poster_path         String?  @db.VarChar(255)
+  producer            String?
+  vote_average        Float?
+  vote_count          Int?
+  total_load          String?  @db.VarChar(255)
+}
+
+/// This table contains check constraints and requires additional setup for migrations. Visit https://pris.ly/d/check-constraints for more info.
+model content {
+  id               String   @id @default(dbgenerated("public.gen_random_uuid()")) @db.Uuid
+  title            String   @db.VarChar(255)
+  description      String?
+  type             String
+  content_data     String?
+  file_url         String?  @db.VarChar(255)
+  file_type        String?  @db.VarChar(255)
+  file_size        Int?
+  duration_seconds Int?
+  order_index      Int
+  module_id        String?  @db.Uuid
+  status           String?  @default("active")
+  created_at       DateTime @default(now()) @db.Timestamptz(6)
+  updated_at       DateTime @default(now()) @db.Timestamptz(6)
+  modules          modules? @relation(fields: [module_id], references: [id], onDelete: Cascade, onUpdate: NoAction, map: "content_module_id_foreign")
+}
+
+/// This table contains check constraints and requires additional setup for migrations. Visit https://pris.ly/d/check-constraints for more info.
+model contextual_permissions {
+  id             String    @id @default(dbgenerated("public.gen_random_uuid()")) @db.Uuid
+  user_id        String?   @db.Uuid
+  permission_key String    @db.VarChar(100)
+  allowed        Boolean
+  context_type   String
+  context_id     String?   @db.VarChar(255)
+  source         String?   @default("direct")
+  source_id      String?   @db.VarChar(255)
+  created_at     DateTime? @default(now()) @db.Timestamptz(6)
+  updated_at     DateTime? @default(now()) @db.Timestamptz(6)
+
+  @@unique([user_id, permission_key, context_type, context_id, source, source_id], map: "contextual_permissions_user_id_permission_key_context_type_cont")
+  @@index([context_type, context_id], map: "contextual_permissions_context_type_context_id_index")
+  @@index([permission_key], map: "contextual_permissions_permission_key_index")
+  @@index([source, source_id], map: "contextual_permissions_source_source_id_index")
+  @@index([user_id], map: "contextual_permissions_user_id_index")
+}
+
+model cookie_signed {
+  id     BigInt  @id @default(autoincrement())
+  cookie String? @db.VarChar(1000)
+}
+
+model course_modules {
+  id               String             @id @default(dbgenerated("public.gen_random_uuid()")) @db.Uuid
+  name             String             @db.VarChar(255)
+  description      String?
+  course_id        String?            @db.Uuid
+  order_index      Int                @default(0)
+  duration_hours   Int?               @default(0)
+  active           Boolean?           @default(true)
+  created_at       DateTime           @default(now()) @db.Timestamptz(6)
+  updated_at       DateTime           @default(now()) @db.Timestamptz(6)
+  student_progress student_progress[]
+}
+
+model courses {
+  id             Int            @id @default(autoincrement())
+  institution_id Int
+  title          String
+  slug           String         @unique
+  description    String
+  thumbnail      String?
+  status         CourseStatus   @default(DRAFT)
+  price          Decimal?       @db.Decimal(10, 2)
+  duration_hours Int?
+  level          String?
+  prerequisites  String[]
+  objectives     String[]
+  tags           String[]
+  settings       Json?
+  created_by     Int
+  created_at     DateTime       @default(now())
+  updated_at     DateTime
+  certificates   certificates[]
+  classes        classes[]
+  enrollments    enrollments[]
+  units          units[]
+
+  @@index([institution_id])
+  @@index([slug])
+  @@index([status])
+}
+
+/// This table contains check constraints and requires additional setup for migrations. Visit https://pris.ly/d/check-constraints for more info.
+model education_cycles {
+  id             String   @id @default(dbgenerated("public.gen_random_uuid()")) @db.Uuid
+  name           String   @db.VarChar(255)
+  code           String   @db.VarChar(255)
+  description    String?
+  min_age        Int?
+  max_age        Int?
+  duration_years Int?
+  institution_id String?  @db.Uuid
+  status         String?  @default("active")
+  created_at     DateTime @default(now()) @db.Timestamptz(6)
+  updated_at     DateTime @default(now()) @db.Timestamptz(6)
+
+  @@unique([code, institution_id], map: "education_cycles_code_institution_id_unique")
+}
+
+model education_period {
+  id          BigInt   @id @default(autoincrement())
+  version     BigInt?
+  description String   @db.VarChar(255)
+  is_active   Boolean? @default(true)
+}
+
+model educational_stage {
+  id           BigInt    @id @default(autoincrement())
+  version      BigInt?
+  date_created DateTime? @db.Timestamp(6)
+  deleted      Boolean
+  grade_1      Boolean?
+  grade_2      Boolean?
+  grade_3      Boolean?
+  grade_4      Boolean?
+  grade_5      Boolean?
+  grade_6      Boolean?
+  grade_7      Boolean?
+  grade_8      Boolean?
+  grade_9      Boolean?
+  last_updated DateTime? @db.Timestamp(6)
+  name         String    @db.VarChar(255)
+  uuid         String?   @db.VarChar(255)
+}
+
+/// The underlying table does not contain a valid unique identifier and can therefore currently not be handled by Prisma Client.
+model educational_stage_institution {
+  educational_stage_institions_id BigInt
+  institution_id                  BigInt?
+
+  @@ignore
+}
+
+/// The underlying table does not contain a valid unique identifier and can therefore currently not be handled by Prisma Client.
+model educational_stage_unit {
+  educational_stage_units_id BigInt
+  unit_id                    BigInt?
+
+  @@ignore
+}
+
+/// The underlying table does not contain a valid unique identifier and can therefore currently not be handled by Prisma Client.
+model educational_stage_user {
+  educational_stage_users_id BigInt
+  user_id                    BigInt?
+
+  @@index([user_id], map: "idx_educational_stage_user_user_id")
+  @@ignore
+}
+
+model enrollments {
+  id           Int       @id @default(autoincrement())
+  student_id   Int
+  course_id    Int
+  class_id     Int?
+  status       String    @default("ACTIVE")
+  enrolled_at  DateTime  @default(now())
+  completed_at DateTime?
+  grade        Decimal?  @db.Decimal(5, 2)
+  progress     Int       @default(0)
+  classes      classes?  @relation(fields: [class_id], references: [id])
+  courses      courses   @relation(fields: [course_id], references: [id])
+
+  @@unique([student_id, course_id])
+  @@index([class_id])
+  @@index([course_id])
+  @@index([student_id])
+}
+
+model file {
+  id                BigInt   @id @default(autoincrement())
+  version           BigInt?
+  content_type      String?  @db.VarChar(255)
+  date_created      DateTime @db.Timestamp(6)
+  extension         String?  @db.VarChar(255)
+  external_link     String?  @db.VarChar(255)
+  is_default        Boolean?
+  is_public         Boolean?
+  label             String?  @db.VarChar(255)
+  last_updated      DateTime @db.Timestamp(6)
+  local_file        String?  @db.VarChar(255)
+  name              String?  @db.VarChar(255)
+  original_filename String?  @db.VarChar(255)
+  quality           String?  @db.VarChar(4)
+  sha256hex         String?  @db.VarChar(64)
+  size              BigInt?
+  subtitle_label    String?  @db.VarChar(255)
+  subtitle_src_lang String?  @db.VarChar(255)
+  is_subtitled      Boolean?
+}
+
+model files {
+  id                BigInt   @id @default(autoincrement())
+  version           BigInt?
+  content_type      String?  @db.VarChar(255)
+  date_created      DateTime @db.Timestamp(6)
+  extension         String?  @db.VarChar(255)
+  external_link     String?  @db.VarChar(255)
+  is_default        Boolean?
+  is_public         Boolean?
+  label             String?  @db.VarChar(255)
+  last_updated      DateTime @db.Timestamp(6)
+  local_file        String?  @db.VarChar(255)
+  name              String?  @db.VarChar(255)
+  original_filename String?  @db.VarChar(255)
+  quality           String?  @db.VarChar(4)
+  sha256hex         String?  @db.VarChar(64)
+  size              BigInt?
+  subtitle_label    String?  @db.VarChar(255)
+  subtitle_src_lang String?  @db.VarChar(255)
+  is_subtitled      Boolean?
+}
+
+model forgot_password {
+  id      BigInt  @id @default(autoincrement())
+  version BigInt?
+  email   String? @db.VarChar(255)
+
+  @@index([email], map: "idx_forgot_password_email")
+}
+
+model forum_categories {
+  id           Int            @id @default(autoincrement())
+  name         String
+  slug         String         @unique
+  description  String?
+  icon         String?
+  order        Int            @default(0)
+  is_active    Boolean        @default(true)
+  created_at   DateTime       @default(now())
+  updated_at   DateTime
+  forum_topics forum_topics[]
+
+  @@index([slug])
+}
+
+model forum_replies {
+  id           Int          @id @default(autoincrement())
+  topic_id     Int
+  author_id    Int
+  content      String
+  is_answer    Boolean      @default(false)
+  created_at   DateTime     @default(now())
+  updated_at   DateTime
+  forum_topics forum_topics @relation(fields: [topic_id], references: [id])
+
+  @@index([author_id])
+  @@index([topic_id])
+}
+
+/// This table contains check constraints and requires additional setup for migrations. Visit https://pris.ly/d/check-constraints for more info.
+model forum_threads {
+  id            String   @id @default(dbgenerated("public.gen_random_uuid()")) @db.Uuid
+  title         String   @db.VarChar(255)
+  content       String
+  author_id     String?  @db.Uuid
+  course_id     String?  @db.Uuid
+  is_pinned     Boolean? @default(false)
+  is_locked     Boolean? @default(false)
+  views_count   Int?     @default(0)
+  replies_count Int?     @default(0)
+  status        String?  @default("active")
+  created_at    DateTime @default(now()) @db.Timestamptz(6)
+  updated_at    DateTime @default(now()) @db.Timestamptz(6)
+}
+
+model forum_topics {
+  id               Int              @id @default(autoincrement())
+  category_id      Int
+  author_id        Int
+  title            String
+  content          String
+  type             String           @default("DISCUSSION")
+  visibility       String           @default("PUBLIC")
+  tags             String[]
+  view_count       Int              @default(0)
+  is_pinned        Boolean          @default(false)
+  is_locked        Boolean          @default(false)
+  is_solved        Boolean          @default(false)
+  created_at       DateTime         @default(now())
+  updated_at       DateTime
+  forum_replies    forum_replies[]
+  forum_categories forum_categories @relation(fields: [category_id], references: [id])
+
+  @@index([author_id])
+  @@index([category_id])
+  @@index([type])
+}
+
+/// The underlying table does not contain a valid unique identifier and can therefore currently not be handled by Prisma Client.
+model generic_video_genre {
+  generic_video_genre_id BigInt
+  genre_id               BigInt?
+
+  @@ignore
+}
+
+/// The underlying table does not contain a valid unique identifier and can therefore currently not be handled by Prisma Client.
+model generic_video_tag {
+  generic_video_tags_id BigInt
+  tag_id                BigInt?
+
+  @@ignore
+}
+
+model genre {
+  id      BigInt  @id @default(autoincrement())
+  version BigInt?
+  api_id  Int
+  name    String  @db.VarChar(255)
+}
+
+/// The underlying table does not contain a valid unique identifier and can therefore currently not be handled by Prisma Client.
+model genre_movie {
+  genre_movies_id BigInt
+  movie_id        BigInt?
+
+  @@ignore
+}
+
+/// The underlying table does not contain a valid unique identifier and can therefore currently not be handled by Prisma Client.
+model genre_tv_show {
+  genre_tv_show_id BigInt
+  tv_show_id       BigInt?
+
+  @@ignore
+}
+
+model grades {
+  id                   String                @id @default(dbgenerated("public.gen_random_uuid()")) @db.Uuid
+  activity_id          String?               @db.Uuid
+  student_id           String?               @db.Uuid
+  submission_id        String?               @db.Uuid
+  graded_by            String?               @db.Uuid
+  points_earned        Decimal               @db.Decimal(8, 2)
+  points_possible      Decimal               @db.Decimal(8, 2)
+  percentage           Decimal               @db.Decimal(5, 2)
+  grade_letter         String?               @db.VarChar(2)
+  feedback             String?
+  graded_at            DateTime              @db.Timestamptz(6)
+  created_at           DateTime              @default(now()) @db.Timestamptz(6)
+  updated_at           DateTime              @default(now()) @db.Timestamptz(6)
+  activities           activities?           @relation(fields: [activity_id], references: [id], onDelete: Cascade, onUpdate: NoAction, map: "grades_activity_id_foreign")
+  activity_submissions activity_submissions? @relation(fields: [submission_id], references: [id], onDelete: Cascade, onUpdate: NoAction, map: "grades_submission_id_foreign")
+
+  @@unique([activity_id, student_id], map: "grades_activity_id_student_id_unique")
+}
+
+model group_members {
+  id           Int          @id @default(autoincrement())
+  group_id     Int
+  user_id      Int
+  role         String       @default("MEMBER")
+  status       String       @default("ACTIVE")
+  joined_at    DateTime     @default(now())
+  study_groups study_groups @relation(fields: [group_id], references: [id])
+
+  @@unique([group_id, user_id])
+  @@unique([group_id, user_id], map: "group_members_group_id_user_id_unique")
+  @@index([group_id])
+  @@index([group_id], map: "group_members_group_id_index")
+  @@index([role], map: "group_members_role_index")
+  @@index([user_id])
+  @@index([user_id], map: "group_members_user_id_index")
+}
+
+/// This table contains check constraints and requires additional setup for migrations. Visit https://pris.ly/d/check-constraints for more info.
+model group_permissions {
+  id             String       @id @default(dbgenerated("public.gen_random_uuid()")) @db.Uuid
+  group_id       String?      @db.Uuid
+  permission_key String       @db.VarChar(100)
+  allowed        Boolean
+  context_type   String
+  context_id     String?      @db.VarChar(255)
+  created_at     DateTime?    @default(now()) @db.Timestamptz(6)
+  updated_at     DateTime?    @default(now()) @db.Timestamptz(6)
+  user_groups    user_groups? @relation(fields: [group_id], references: [id], onDelete: Cascade, onUpdate: NoAction, map: "group_permissions_group_id_foreign")
+
+  @@unique([group_id, permission_key, context_type, context_id], map: "group_permissions_group_id_permission_key_context_type_context_")
+  @@index([context_type, context_id], map: "group_permissions_context_type_context_id_index")
+  @@index([group_id], map: "group_permissions_group_id_index")
+  @@index([permission_key], map: "group_permissions_permission_key_index")
+}
+
+model institution {
+  id                     BigInt    @id @default(autoincrement())
+  version                BigInt?
+  accountable_contact    String    @db.VarChar(255)
+  accountable_name       String    @db.VarChar(255)
+  company_name           String    @db.VarChar(255)
+  complement             String?   @db.VarChar(255)
+  contract_disabled      Boolean
+  contract_invoice_num   String?   @db.VarChar(255)
+  contract_num           BigInt?
+  contract_term_end      DateTime  @db.Timestamp(6)
+  contract_term_start    DateTime  @db.Timestamp(6)
+  date_created           DateTime? @db.Timestamp(6)
+  deleted                Boolean
+  district               String    @db.VarChar(255)
+  document               String    @db.VarChar(255)
+  invoice_date           DateTime? @db.Timestamp(6)
+  last_updated           DateTime? @db.Timestamp(6)
+  name                   String    @db.VarChar(255)
+  postal_code            String    @db.VarChar(255)
+  state                  String    @db.VarChar(255)
+  street                 String    @db.VarChar(255)
+  score                  BigInt?
+  has_library_platform   Boolean
+  has_principal_platform Boolean
+  has_student_platform   Boolean
+}
+
+model institution_tv_show {
+  tv_show_id     BigInt
+  institution_id BigInt
+
+  @@id([tv_show_id, institution_id])
+}
+
+/// The underlying table does not contain a valid unique identifier and can therefore currently not be handled by Prisma Client.
+model institution_user {
+  institution_users_id BigInt
+  user_id              BigInt?
+
+  @@index([user_id], map: "idx_institution_user_user_id")
+  @@ignore
+}
+
+model institutions {
+  id                     BigInt    @id @default(autoincrement())
+  version                BigInt?
+  accountable_contact    String    @db.VarChar(255)
+  accountable_name       String    @db.VarChar(255)
+  company_name           String    @db.VarChar(255)
+  complement             String?   @db.VarChar(255)
+  contract_disabled      Boolean
+  contract_invoice_num   String?   @db.VarChar(255)
+  contract_num           BigInt?
+  contract_term_end      DateTime  @db.Timestamp(6)
+  contract_term_start    DateTime  @db.Timestamp(6)
+  date_created           DateTime? @db.Timestamp(6)
+  deleted                Boolean
+  district               String    @db.VarChar(255)
+  document               String    @db.VarChar(255)
+  invoice_date           DateTime? @db.Timestamp(6)
+  last_updated           DateTime? @db.Timestamp(6)
+  name                   String    @db.VarChar(255)
+  postal_code            String    @db.VarChar(255)
+  state                  String    @db.VarChar(255)
+  street                 String    @db.VarChar(255)
+  score                  BigInt?
+  has_library_platform   Boolean
+  has_principal_platform Boolean
+  has_student_platform   Boolean
+}
+
+model knex_migrations {
+  id             Int       @id @default(autoincrement())
+  name           String?   @db.VarChar(255)
+  batch          Int?
+  migration_time DateTime? @db.Timestamptz(6)
+}
+
+model knex_migrations_lock {
+  index     Int  @id @default(autoincrement())
+  is_locked Int?
+}
+
+model lessons {
+  id               Int           @id @default(autoincrement())
+  unit_id          Int
+  title            String
+  description      String?
+  order            Int
+  type             LessonType
+  duration_minutes Int?
+  scheduled_date   DateTime?
+  meeting_url      String?
+  recording_url    String?
+  content          Json?
+  attachments      Json?
+  is_active        Boolean       @default(true)
+  is_published     Boolean       @default(false)
+  created_by       Int
+  created_at       DateTime      @default(now())
+  updated_at       DateTime
+  assignments      assignments[]
+  units            units         @relation(fields: [unit_id], references: [id])
+  quizzes          quizzes[]
+
+  @@unique([unit_id, order])
+  @@index([type])
+  @@index([unit_id])
+}
+
+model migration_log {
+  id             String    @id @default(dbgenerated("public.gen_random_uuid()")) @db.Uuid
+  source_table   String    @db.VarChar(50)
+  source_id      Int
+  target_table   String    @db.VarChar(50)
+  target_id      String    @db.Uuid
+  migration_data Json?     @db.Json
+  notes          String?
+  migrated_at    DateTime? @default(now()) @db.Timestamptz(6)
+
+  @@index([source_table, source_id], map: "migration_log_source_table_source_id_index")
+  @@index([target_id], map: "migration_log_target_id_index")
+}
+
+/// This table contains check constraints and requires additional setup for migrations. Visit https://pris.ly/d/check-constraints for more info.
+model modules {
+  id               String    @id @default(dbgenerated("public.gen_random_uuid()")) @db.Uuid
+  title            String    @db.VarChar(255)
+  description      String?
+  order_index      Int
+  duration_minutes Int?
+  course_id        String?   @db.Uuid
+  status           String?   @default("active")
+  created_at       DateTime  @default(now()) @db.Timestamptz(6)
+  updated_at       DateTime  @default(now()) @db.Timestamptz(6)
+  content          content[]
+}
+
+/// The underlying table does not contain a valid unique identifier and can therefore currently not be handled by Prisma Client.
+model movie_tag {
+  movie_tags_id BigInt
+  tag_id        BigInt?
+
+  @@ignore
+}
+
+model notification_queue {
+  id               BigInt   @id @default(autoincrement())
+  version          BigInt?
+  date_created     DateTime @db.Timestamp(6)
+  description      String?  @db.VarChar(255)
+  is_completed     Boolean?
+  last_updated     DateTime @db.Timestamp(6)
+  movie_id         BigInt?
+  tv_show_id       BigInt?
+  type             String?  @db.VarChar(255)
+  video_to_play_id BigInt?
+}
+
+model notifications {
+  id                 Int                  @id @default(autoincrement())
+  title              String
+  message            String
+  type               NotificationType
+  priority           String               @default("MEDIUM")
+  sender_id          String?
+  sender_type        String               @default("USER")
+  action_url         String?
+  action_text        String?
+  icon               String?
+  metadata           Json?
+  expires_at         DateTime?
+  created_at         DateTime             @default(now())
+  user_notifications user_notifications[]
+}
+
+model permissions {
+  id               String             @id @default(dbgenerated("public.gen_random_uuid()")) @db.Uuid
+  name             String             @unique(map: "permissions_name_unique") @db.VarChar(255)
+  resource         String             @db.VarChar(255)
+  action           String             @db.VarChar(255)
+  description      String?
+  created_at       DateTime           @default(now()) @db.Timestamptz(6)
+  updated_at       DateTime           @default(now()) @db.Timestamptz(6)
+  role_permissions role_permissions[]
+}
+
+model profile {
+  id               BigInt   @id @default(autoincrement())
+  version          BigInt?
+  avatar_color     String?  @db.VarChar(255)
+  is_child         Boolean?
+  is_deleted       Boolean?
+  profile_language String?  @db.VarChar(255)
+  profile_name     String?  @db.VarChar(255)
+  user_id          BigInt?
+
+  @@index([user_id], map: "idx_profile_user_id")
+}
+
+/// The underlying table does not contain a valid unique identifier and can therefore currently not be handled by Prisma Client.
+model profile_target_audience {
+  profile_target_audiences_id BigInt?
+  target_audience_id          BigInt?
+
+  @@ignore
+}
+
+/// This model has been renamed to 'Renamedpublic' during introspection, because the original name 'public' is reserved.
+model Renamedpublic {
+  id      BigInt  @id @default(autoincrement())
+  version BigInt?
+  api_id  Int
+  name    String  @db.VarChar(255)
+
+  @@map("public")
+}
+
+/// The underlying table does not contain a valid unique identifier and can therefore currently not be handled by Prisma Client.
+model public_tv_show {
+  public_tv_show_id BigInt
+  tv_show_id        BigInt?
+
+  @@ignore
+}
+
+model push_subscriptions {
+  id         String    @id @default(dbgenerated("public.gen_random_uuid()")) @db.Uuid
+  user_id    String?   @db.Uuid
+  endpoint   String
+  p256dh_key String
+  auth_key   String
+  user_agent String?   @db.VarChar(255)
+  is_active  Boolean?  @default(true)
+  last_used  DateTime? @db.Timestamptz(6)
+  created_at DateTime  @default(now()) @db.Timestamptz(6)
+  updated_at DateTime  @default(now()) @db.Timestamptz(6)
+
+  @@unique([user_id, endpoint], map: "push_subscriptions_user_id_endpoint_unique")
+}
+
+model question {
+  id           BigInt    @id @default(autoincrement())
+  version      BigInt?
+  date_created DateTime  @db.Timestamp(6)
+  deleted      Boolean?
+  file_id      BigInt?
+  last_updated DateTime? @db.Timestamp(6)
+  test         String?
+  tv_show_id   BigInt?
+  episode_id   BigInt?
+}
+
+/// This table contains check constraints and requires additional setup for migrations. Visit https://pris.ly/d/check-constraints for more info.
+model questions {
+  id              String   @id @default(dbgenerated("public.gen_random_uuid()")) @db.Uuid
+  question_text   String
+  type            String
+  options         Json?    @db.Json
+  correct_answers Json?    @db.Json
+  points          Decimal? @default(1) @db.Decimal(5, 2)
+  explanation     String?
+  order_index     Int
+  quiz_id         String?  @db.Uuid
+  created_at      DateTime @default(now()) @db.Timestamptz(6)
+  updated_at      DateTime @default(now()) @db.Timestamptz(6)
+}
+
+/// This table contains check constraints and requires additional setup for migrations. Visit https://pris.ly/d/check-constraints for more info.
+model queue_jobs {
+  id            String    @id @default(dbgenerated("public.gen_random_uuid()")) @db.Uuid
+  queue_name    String    @db.VarChar(255)
+  job_type      String    @db.VarChar(255)
+  job_data      Json?     @db.Json
+  status        String?   @default("pending")
+  error_message String?
+  attempts      Int?      @default(0)
+  max_attempts  Int?      @default(3)
+  scheduled_at  DateTime? @default(now()) @db.Timestamptz(6)
+  started_at    DateTime? @db.Timestamptz(6)
+  completed_at  DateTime? @db.Timestamptz(6)
+  created_at    DateTime  @default(now()) @db.Timestamptz(6)
+  updated_at    DateTime  @default(now()) @db.Timestamptz(6)
+}
+
+model quiz_attempts {
+  id           Int       @id @default(autoincrement())
+  quiz_id      Int
+  student_id   Int
+  answers      Json
+  score        Decimal   @db.Decimal(5, 2)
+  percentage   Decimal   @db.Decimal(5, 2)
+  time_spent   Int
+  started_at   DateTime  @default(now())
+  completed_at DateTime?
+  quizzes      quizzes   @relation(fields: [quiz_id], references: [id])
+
+  @@index([quiz_id])
+  @@index([student_id])
+}
+
+model quizzes {
+  id                 Int             @id @default(autoincrement())
+  lesson_id          Int?
+  title              String
+  description        String
+  type               QuizType
+  difficulty         String          @default("MEDIUM")
+  time_limit_minutes Int?
+  passing_score      Int             @default(60)
+  max_attempts       Int             @default(1)
+  questions          Json
+  settings           Json?
+  availability       Json?
+  is_published       Boolean         @default(false)
+  created_by         Int
+  created_at         DateTime        @default(now())
+  updated_at         DateTime
+  quiz_attempts      quiz_attempts[]
+  lessons            lessons?        @relation(fields: [lesson_id], references: [id])
+
+  @@index([lesson_id])
+  @@index([type])
+}
+
+model report {
+  id            BigInt   @id @default(autoincrement())
+  version       BigInt?
+  created_by_id BigInt?
+  date_created  DateTime @db.Timestamp(6)
+  error_code    String?  @db.VarChar(255)
+  last_updated  DateTime @db.Timestamp(6)
+  resolved      Boolean?
+  video_id      BigInt?
+}
+
+model reports {
+  id           Int       @id @default(autoincrement())
+  type         String
+  title        String
+  description  String?
+  filters      Json
+  format       String    @default("PDF")
+  status       String    @default("PENDING")
+  progress     Int       @default(0)
+  file_url     String?
+  file_size    Int?
+  visibility   String    @default("PRIVATE")
+  share_with   String[]
+  created_by   Int
+  created_at   DateTime  @default(now())
+  completed_at DateTime?
+  expires_at   DateTime?
+
+  @@index([created_by])
+  @@index([status])
+  @@index([type])
+}
+
+model role {
+  id           BigInt  @id @default(autoincrement())
+  version      BigInt?
+  authority    String? @unique(map: "idx_role_authority_unique") @db.VarChar(255)
+  display_name String? @db.VarChar(255)
+}
+
+model role_permissions {
+  role_id       String      @db.Uuid
+  permission_id String      @db.Uuid
+  created_at    DateTime    @default(now()) @db.Timestamptz(6)
+  updated_at    DateTime    @default(now()) @db.Timestamptz(6)
+  permissions   permissions @relation(fields: [permission_id], references: [id], onDelete: Cascade, onUpdate: NoAction, map: "role_permissions_permission_id_foreign")
+
+  @@id([role_id, permission_id])
+}
+
+model roles {
+  id           BigInt  @id @default(autoincrement())
+  version      BigInt?
+  authority    String? @unique(map: "idx_roles_authority_unique") @db.VarChar(255)
+  display_name String? @db.VarChar(255)
+}
+
+/// This table contains check constraints and requires additional setup for migrations. Visit https://pris.ly/d/check-constraints for more info.
+model school_managers {
+  id         String    @id @default(dbgenerated("public.gen_random_uuid()")) @db.Uuid
+  user_id    String?   @db.Uuid
+  school_id  String?   @db.Uuid
+  role       String?   @default("coordinator")
+  start_date DateTime? @default(now()) @db.Date
+  end_date   DateTime? @db.Date
+  status     String?   @default("active")
+  created_at DateTime  @default(now()) @db.Timestamptz(6)
+  updated_at DateTime  @default(now()) @db.Timestamptz(6)
+
+  @@unique([user_id, school_id], map: "school_managers_user_id_school_id_unique")
+}
+
+model schools {
+  id               BigInt    @id @default(autoincrement())
+  version          BigInt?
+  date_created     DateTime? @db.Timestamp(6)
+  deleted          Boolean?
+  institution_id   BigInt
+  last_updated     DateTime? @db.Timestamp(6)
+  name             String    @db.VarChar(255)
+  institution_name String?   @db.VarChar(255)
+}
+
+model settings {
+  id                  BigInt   @id @default(autoincrement())
+  version             BigInt?
+  default_value       String?  @db.VarChar(255)
+  description         String?
+  name                String?  @db.VarChar(255)
+  required            Boolean?
+  settings_key        String   @db.VarChar(255)
+  settings_type       String?  @db.VarChar(255)
+  validation_required Boolean?
+  value               String?  @db.VarChar(255)
+}
+
+/// This table contains check constraints and requires additional setup for migrations. Visit https://pris.ly/d/check-constraints for more info.
+/// This model or at least one of its fields has comments in the database, and requires an additional setup for migrations: Read more: https://pris.ly/d/database-comments
+model student_progress {
+  id                    String          @id @default(dbgenerated("public.gen_random_uuid()")) @db.Uuid
+  student_id            String?         @db.Uuid
+  course_id             String?         @db.Uuid
+  module_id             String?         @db.Uuid
+  lesson_id             String?         @db.Uuid
+  status                String?         @default("not_started")
+  completion_percentage Decimal?        @default(0) @db.Decimal(5, 2)
+  started_at            DateTime?       @db.Timestamptz(6)
+  completed_at          DateTime?       @db.Timestamptz(6)
+  time_spent_minutes    Int?            @default(0)
+  student_id_legacy     Int?
+  created_at            DateTime        @default(now()) @db.Timestamptz(6)
+  updated_at            DateTime        @default(now()) @db.Timestamptz(6)
+  course_modules        course_modules? @relation(fields: [module_id], references: [id], onDelete: Cascade, onUpdate: NoAction, map: "student_progress_module_id_foreign")
+
+  @@unique([student_id, lesson_id], map: "student_progress_student_id_lesson_id_unique")
+  @@index([student_id_legacy], map: "student_progress_student_id_legacy_index")
+}
+
+model study_groups {
+  id               Int             @id @default(autoincrement())
+  name             String
+  description      String
+  subject          String
+  type             String
+  visibility       String
+  max_members      Int             @default(10)
+  meeting_schedule Json?
+  goals            String[]
+  rules            String[]
+  resources        Json?
+  tags             String[]
+  settings         Json?
+  creator_id       Int
+  is_active        Boolean         @default(true)
+  created_at       DateTime        @default(now())
+  updated_at       DateTime
+  group_members    group_members[]
+
+  @@index([creator_id])
+  @@index([visibility])
+}
+
+model submissions {
+  id            Int         @id @default(autoincrement())
+  assignment_id Int
+  student_id    Int
+  content       Json?
+  attachments   Json?
+  grade         Decimal?    @db.Decimal(5, 2)
+  feedback      String?
+  status        String      @default("SUBMITTED")
+  submitted_at  DateTime    @default(now())
+  graded_at     DateTime?
+  graded_by     String?
+  assignments   assignments @relation(fields: [assignment_id], references: [id])
+
+  @@unique([assignment_id, student_id])
+  @@index([assignment_id])
+  @@index([status])
+  @@index([student_id])
+}
+
+/// This model or at least one of its fields has comments in the database, and requires an additional setup for migrations: Read more: https://pris.ly/d/database-comments
+model system_settings {
+  id           String   @id @default(dbgenerated("public.gen_random_uuid()")) @db.Uuid
+  key          String   @unique(map: "system_settings_key_unique") @db.VarChar(255)
+  value        String?
+  type         String?  @default("string") @db.VarChar(255)
+  description  String?
+  category     String?  @default("general") @db.VarChar(255)
+  is_public    Boolean? @default(false)
+  created_at   DateTime @default(now()) @db.Timestamptz(6)
+  updated_at   DateTime @default(now()) @db.Timestamptz(6)
+  is_encrypted Boolean? @default(false)
+}
+
+model tag {
+  id           BigInt   @id @default(autoincrement())
+  version      BigInt?
+  date_created DateTime @db.Timestamp(6)
+  deleted      Boolean?
+  last_updated DateTime @db.Timestamp(6)
+  name         String?  @unique(map: "idx_tag_name_unique") @db.VarChar(255)
+}
+
+model target_audience {
+  id          BigInt   @id @default(autoincrement())
+  version     BigInt?
+  description String   @db.VarChar(255)
+  is_active   Boolean? @default(true)
+  name        String   @db.VarChar(255)
+}
+
+model teacher_subject {
+  id         BigInt   @id @default(autoincrement())
+  version    BigInt?
+  is_child   Boolean?
+  is_deleted Boolean?
+  name       String?  @db.VarChar(255)
+  uuid       String?  @unique(map: "idx_teacher_subject_uuid_unique") @db.VarChar(255)
+}
+
+model theme {
+  id          BigInt   @id @default(autoincrement())
+  version     BigInt?
+  description String   @db.VarChar(255)
+  is_active   Boolean? @default(true)
+  name        String   @db.VarChar(255)
+}
+
+model tv_show_author {
+  tv_show_authors_id BigInt
+  author_id          BigInt?
+  id                 Int     @id @default(autoincrement())
+}
+
+/// The underlying table does not contain a valid unique identifier and can therefore currently not be handled by Prisma Client.
+model tv_show_target_audience {
+  tv_show_target_audiences_id BigInt?
+  target_audience_id          BigInt?
+
+  @@ignore
+}
+
+model unit {
+  id               BigInt    @id @default(autoincrement())
+  version          BigInt?
+  date_created     DateTime? @db.Timestamp(6)
+  deleted          Boolean?
+  institution_id   BigInt
+  last_updated     DateTime? @db.Timestamp(6)
+  name             String    @db.VarChar(255)
+  institution_name String?   @db.VarChar(255)
+}
+
+model unit_class {
+  id               BigInt    @id @default(autoincrement())
+  version          BigInt?
+  date_created     DateTime? @db.Timestamp(6)
+  deleted          Boolean
+  institution_id   BigInt
+  last_updated     DateTime? @db.Timestamp(6)
+  name             String    @db.VarChar(255)
+  unit_id          BigInt
+  institution_name String?   @db.VarChar(255)
+  unit_name        String?   @db.VarChar(255)
+}
+
+model units {
+  id          Int       @id @default(autoincrement())
+  course_id   Int
+  title       String
+  description String?
+  order       Int
+  is_active   Boolean   @default(true)
+  created_at  DateTime  @default(now())
+  updated_at  DateTime
+  books       books[]
+  lessons     lessons[]
+  courses     courses   @relation(fields: [course_id], references: [id])
+
+  @@unique([course_id, order])
+  @@index([course_id])
+}
+
+model user {
+  id                      BigInt    @id @default(autoincrement())
+  version                 BigInt?
+  account_expired         Boolean?
+  account_locked          Boolean?
+  address                 String?   @db.VarChar(255)
+  amount_of_media_entries Int?
+  date_created            DateTime? @db.Timestamp(6)
+  deleted                 Boolean?
+  email                   String    @db.VarChar(255)
+  enabled                 Boolean?
+  full_name               String    @db.VarChar(255)
+  invitation_sent         Boolean?
+  is_admin                Boolean
+  language                String?   @db.VarChar(255)
+  last_updated            DateTime? @db.Timestamp(6)
+  password                String?   @db.VarChar(255)
+  password_expired        Boolean?
+  pause_video_on_click    Boolean?
+  phone                   String?   @db.VarChar(255)
+  reset_password          Boolean   @default(true)
+  username                String?   @unique(map: "idx_user_username_unique") @db.VarChar(255)
+  uuid                    String?   @db.VarChar(255)
+  is_manager              Boolean
+  type                    Int?
+  certificate_path        String?   @db.VarChar(255)
+  is_certified            Boolean?  @default(false)
+  is_student              Boolean
+  is_teacher              Boolean
+  institution_id          BigInt?
+  subject                 String?   @db.VarChar(255)
+  subject_data_id         BigInt?
+
+  @@index([email], map: "idx_user_email")
+}
+
+model user_activity {
+  id               BigInt    @id @default(autoincrement())
+  version          BigInt?
+  browser          String?   @db.VarChar(255)
+  date_created     DateTime  @db.Timestamp(6)
+  device           String?   @db.VarChar(255)
+  ip_address       String?   @db.VarChar(255)
+  last_updated     DateTime? @db.Timestamp(6)
+  operating_system String?   @db.VarChar(255)
+  type             String?   @db.VarChar(255)
+  user_id          BigInt?
+  video_id         BigInt?
+  institution_id   BigInt?
+  unit_id          BigInt?
+  fullname         String?   @db.VarChar(255)
+  institution_name String?   @db.VarChar(255)
+  is_certified     Boolean?
+  username         String?   @db.VarChar(255)
+  units_data       String?
+  user_data        String?
+  populated        Boolean
+  role             String?   @db.VarChar(255)
+
+  @@index([user_id], map: "idx_user_activity_user_id")
+}
+
+model user_answer {
+  answer_id    BigInt
+  question_id  BigInt
+  version      BigInt?
+  date_created DateTime  @db.Timestamp(6)
+  is_correct   Boolean?
+  last_updated DateTime? @db.Timestamp(6)
+  score        BigInt?
+  user_id      BigInt?
+  id           Int       @id @default(autoincrement())
+
+  @@index([user_id], map: "idx_user_answer_user_id")
+}
+
+/// This table contains check constraints and requires additional setup for migrations. Visit https://pris.ly/d/check-constraints for more info.
+model user_classes {
+  id              String    @id @default(dbgenerated("public.gen_random_uuid()")) @db.Uuid
+  user_id         String?   @db.Uuid
+  class_id        String?   @db.Uuid
+  role            String?   @default("student")
+  enrollment_date DateTime? @default(now()) @db.Date
+  status          String?   @default("active")
+  created_at      DateTime  @default(now()) @db.Timestamptz(6)
+  updated_at      DateTime  @default(now()) @db.Timestamptz(6)
+
+  @@unique([user_id, class_id], map: "user_classes_user_id_class_id_unique")
+}
+
+/// The underlying table does not contain a valid unique identifier and can therefore currently not be handled by Prisma Client.
+model user_genre {
+  user_favorite_genres_id BigInt
+  genre_id                BigInt?
+
+  @@ignore
+}
+
+model user_groups {
+  id                String              @id @default(dbgenerated("public.gen_random_uuid()")) @db.Uuid
+  name              String              @db.VarChar(255)
+  description       String?
+  color             String?             @db.VarChar(7)
+  institution_id    String?             @db.Uuid
+  school_id         String?             @db.Uuid
+  is_active         Boolean?            @default(true)
+  member_count      Int?                @default(0)
+  created_at        DateTime?           @default(now()) @db.Timestamptz(6)
+  updated_at        DateTime?           @default(now()) @db.Timestamptz(6)
+  group_permissions group_permissions[]
+
+  @@index([institution_id], map: "user_groups_institution_id_index")
+  @@index([is_active], map: "user_groups_is_active_index")
+  @@index([name], map: "user_groups_name_index")
+  @@index([school_id], map: "user_groups_school_id_index")
+}
+
+model user_notifications {
+  id              Int           @id @default(autoincrement())
+  notification_id Int
+  user_id         Int
+  read            Boolean       @default(false)
+  read_at         DateTime?
+  archived        Boolean       @default(false)
+  archived_at     DateTime?
+  notifications   notifications @relation(fields: [notification_id], references: [id])
+
+  @@unique([notification_id, user_id])
+  @@index([read])
+  @@index([user_id])
+}
+
+model user_role {
+  role_id BigInt
+  user_id BigInt
+
+  @@id([role_id, user_id])
+}
+
+model email_templates {
+  id         Int      @id @default(autoincrement())
+  name       String   @unique @db.VarChar(255)
+  subject    String   @db.Text
+  html       String   @db.Text
+  text       String?  @db.Text
+  category   String?  @default("general") @db.VarChar(100)
+  is_active  Boolean  @default(true)
+  created_at DateTime @default(now()) @db.Timestamptz(6)
+  updated_at DateTime @default(now()) @db.Timestamptz(6)
+
+  @@index([category])
+  @@index([is_active])
+}
+
+model user_unit {
+  unit_id BigInt
+  user_id BigInt
+
+  @@id([unit_id, user_id])
+}
+
+model user_unit_class {
+  unit_class_id BigInt
+  user_id       BigInt
+
+  @@id([unit_class_id, user_id])
+}
+
+/// This model or at least one of its fields has comments in the database, and requires an additional setup for migrations: Read more: https://pris.ly/d/database-comments
+model users {
+  id                      BigInt        @id @default(autoincrement())
+  version                 BigInt?
+  account_expired         Boolean?
+  account_locked          Boolean?
+  address                 String?       @db.VarChar(255)
+  amount_of_media_entries Int?
+  date_created            DateTime?     @db.Timestamp(6)
+  deleted                 Boolean?
+  email                   String        @db.VarChar(255)
+  enabled                 Boolean?
+  full_name               String        @db.VarChar(255)
+  invitation_sent         Boolean?
+  is_admin                Boolean
+  language                String?       @db.VarChar(255)
+  last_updated            DateTime?     @db.Timestamp(6)
+  password                String?       @db.VarChar(255)
+  password_expired        Boolean?
+  pause_video_on_click    Boolean?
+  phone                   String?       @db.VarChar(255)
+  reset_password          Boolean       @default(true)
+  username                String?       @unique(map: "idx_users_username_unique") @db.VarChar(255)
+  uuid                    String?       @db.VarChar(255)
+  is_manager              Boolean
+  type                    Int?
+  certificate_path        String?       @db.VarChar(255)
+  is_certified            Boolean?      @default(false)
+  is_student              Boolean
+  is_teacher              Boolean
+  institution_id          BigInt?
+  subject                 String?       @db.VarChar(255)
+  subject_data_id         BigInt?
+  is_institution_manager  Boolean?      @default(false)
+  is_coordinator          Boolean?      @default(false)
+  is_guardian             Boolean?      @default(false)
+
+  // Relations
+  certificates            certificate[]
+
+  @@index([email], map: "idx_users_email")
+}
+
+model video {
+  id                    BigInt    @id @default(autoincrement())
+  version               BigInt?
+  api_id                String?   @db.VarChar(255)
+  date_created          DateTime? @db.Timestamp(6)
+  deleted               Boolean?
+  imdb_id               String?   @db.VarChar(255)
+  intro_end             Int?
+  intro_start           Int?
+  last_updated          DateTime? @db.Timestamp(6)
+  original_language     String?   @db.VarChar(255)
+  outro_start           Int?
+  overview              String?
+  popularity            Float?
+  report_count          Int?
+  vote_average          Float?
+  vote_count            Int?
+  class                 String    @db.VarChar(255)
+  backdrop_path         String?   @db.VarChar(255)
+  poster_image_id       BigInt?
+  poster_path           String?   @db.VarChar(255)
+  release_date          String?   @db.VarChar(255)
+  title                 String?   @db.VarChar(255)
+  trailer_key           String?   @db.VarChar(255)
+  backdrop_image_id     BigInt?
+  air_date              String?   @db.VarChar(255)
+  episode_string        String?   @db.VarChar(255)
+  episode_number        Int?
+  name                  String?   @db.VarChar(255)
+  season_episode_merged Int?
+  season_number         Int?
+  show_id               BigInt?
+  still_image_id        BigInt?
+  still_path            String?   @db.VarChar(255)
+  duration              String?   @db.VarChar(255)
+}
+
+/// The underlying table does not contain a valid unique identifier and can therefore currently not be handled by Prisma Client.
+model video_author {
+  video_authors_id BigInt
+  author_id        BigInt?
+
+  @@ignore
+}
+
+/// This model or at least one of its fields has comments in the database, and requires an additional setup for migrations: Read more: https://pris.ly/d/database-comments
+model video_collections {
+  id                           String          @id @default(dbgenerated("public.gen_random_uuid()")) @db.Uuid
+  mysql_id                     Int?
+  name                         String          @db.VarChar(255)
+  synopsis                     String?
+  producer                     String?         @db.VarChar(255)
+  release_date                 DateTime?       @db.Date
+  contract_expiry_date         DateTime?       @db.Date
+  authors                      String[]        @default([])
+  target_audience              String[]        @default([])
+  total_hours                  String?         @default("00:00:00") @db.VarChar(20)
+  poster_image_url             String?         @db.VarChar(500)
+  carousel_image_url           String?         @db.VarChar(500)
+  ebook_file_url               String?         @db.VarChar(500)
+  use_default_cover_for_videos Boolean?        @default(true)
+  popularity                   Float?
+  vote_average                 Float?
+  vote_count                   Int?
+  poster_path                  String?         @db.VarChar(255)
+  backdrop_path                String?         @db.VarChar(255)
+  total_load                   String?         @db.VarChar(255)
+  manual_support_path          String?         @db.VarChar(255)
+  deleted                      Boolean?        @default(false)
+  created_at                   DateTime        @default(now()) @db.Timestamptz(6)
+  updated_at                   DateTime        @default(now()) @db.Timestamptz(6)
+  video_modules                video_modules[]
+
+  @@index([deleted, popularity], map: "video_collections_deleted_popularity_index")
+  @@index([mysql_id], map: "video_collections_mysql_id_index")
+  @@index([name], map: "video_collections_name_index")
+  @@index([producer], map: "video_collections_producer_index")
+}
+
+/// The underlying table does not contain a valid unique identifier and can therefore currently not be handled by Prisma Client.
+model video_education_period {
+  video_periods_id    BigInt
+  education_period_id BigInt?
+
+  @@ignore
+}
+
+/// The underlying table does not contain a valid unique identifier and can therefore currently not be handled by Prisma Client.
+model video_educational_stage {
+  video_stages_id      BigInt
+  educational_stage_id BigInt?
+
+  @@ignore
+}
+
+model video_file {
+  video_files_id BigInt
+  file_id        BigInt?
+  id             Int     @id @default(autoincrement())
+}
+
+model video_modules {
+  id                String            @id @default(dbgenerated("public.gen_random_uuid()")) @db.Uuid
+  collection_id     String            @db.Uuid
+  module_number     Int
+  title             String            @db.VarChar(255)
+  synopsis          String
+  release_year      Int
+  duration          String            @default("00:00:00") @db.VarChar(20)
+  education_cycle   String            @db.VarChar(100)
+  poster_image_url  String?           @db.VarChar(500)
+  video_url         String?           @db.VarChar(500)
+  order_in_module   Int               @default(1)
+  created_at        DateTime          @default(now()) @db.Timestamptz(6)
+  updated_at        DateTime          @default(now()) @db.Timestamptz(6)
+  video_collections video_collections @relation(fields: [collection_id], references: [id], onDelete: Cascade, onUpdate: NoAction, map: "video_modules_collection_id_foreign")
+
+  @@unique([collection_id, module_number, order_in_module], map: "video_modules_collection_id_module_number_order_in_module_uniqu")
+  @@index([collection_id, module_number], map: "video_modules_collection_id_module_number_index")
+  @@index([collection_id, module_number, order_in_module], map: "video_modules_collection_id_module_number_order_in_module_index")
+}
+
+/// The underlying table does not contain a valid unique identifier and can therefore currently not be handled by Prisma Client.
+model video_theme {
+  video_themes_id BigInt
+  theme_id        BigInt?
+
+  @@ignore
+}
+
+model videos {
+  id                    BigInt    @id @default(autoincrement())
+  version               BigInt?
+  api_id                String?   @db.VarChar(255)
+  date_created          DateTime? @db.Timestamp(6)
+  deleted               Boolean?
+  imdb_id               String?   @db.VarChar(255)
+  intro_end             Int?
+  intro_start           Int?
+  last_updated          DateTime? @db.Timestamp(6)
+  original_language     String?   @db.VarChar(255)
+  outro_start           Int?
+  overview              String?
+  popularity            Float?
+  report_count          Int?
+  vote_average          Float?
+  vote_count            Int?
+  class                 String    @db.VarChar(255)
+  backdrop_path         String?   @db.VarChar(255)
+  poster_image_id       BigInt?
+  poster_path           String?   @db.VarChar(255)
+  release_date          String?   @db.VarChar(255)
+  title                 String?   @db.VarChar(255)
+  trailer_key           String?   @db.VarChar(255)
+  backdrop_image_id     BigInt?
+  air_date              String?   @db.VarChar(255)
+  episode_string        String?   @db.VarChar(255)
+  episode_number        Int?
+  name                  String?   @db.VarChar(255)
+  season_episode_merged Int?
+  season_number         Int?
+  show_id               BigInt?
+  still_image_id        BigInt?
+  still_path            String?   @db.VarChar(255)
+  duration              String?   @db.VarChar(255)
+}
+
+model viewing_status {
+  id                BigInt    @id @default(autoincrement())
+  version           BigInt?
+  completed         Boolean?
+  current_play_time Int
+  date_created      DateTime? @db.Timestamp(6)
+  last_updated      DateTime? @db.Timestamp(6)
+  profile_id        BigInt?
+  runtime           Int?
+  tv_show_id        BigInt?
+  user_id           BigInt?
+  video_id          BigInt
+
+  @@index([user_id], map: "idx_viewing_status_user_id")
+}
+
+model watchlist_entry {
+  id           BigInt    @id @default(autoincrement())
+  version      BigInt?
+  date_created DateTime? @db.Timestamp(6)
+  is_deleted   Boolean
+  last_updated DateTime? @db.Timestamp(6)
+  profile_id   BigInt
+  tv_show_id   BigInt?
+  user_id      BigInt
+  video_id     BigInt?
+
+  @@index([user_id], map: "idx_watchlist_entry_user_id")
+}
+
+model security_policies {
+  id                                    Int      @id @default(autoincrement())
+  
+  // Política de Senhas
+  password_min_length                   Int      @default(8)
+  password_require_uppercase            Boolean  @default(true)
+  password_require_lowercase            Boolean  @default(true)
+  password_require_numbers              Boolean  @default(true)
+  password_require_special_chars        Boolean  @default(true)
+  password_expiry_days                  Int      @default(90)
+  password_prevent_reuse                Int      @default(5)
+  
+  // Política de Contas e Sessões
+  account_max_login_attempts            Int      @default(5)
+  account_lockout_duration_minutes      Int      @default(30)
+  account_session_timeout_minutes       Int      @default(30)
+  account_require_mfa                   Boolean  @default(false)
+  account_inactivity_lockout_days       Int      @default(60)
+  
+  // Política de Dados e Privacidade
+  data_retention_months                 Int      @default(36)
+  data_encrypt_sensitive_data           Boolean  @default(true)
+  data_anonymize_deleted_users          Boolean  @default(true)
+  data_enable_audit_logging             Boolean  @default(true)
+  
+  // Metadados
+  created_by                            String?
+  updated_by                            String?
+  created_at                            DateTime @default(now())
+  updated_at                            DateTime @default(now())
+}
+
+enum UserRole {
+  SYSTEM_ADMIN
+  INSTITUTION_MANAGER
+  COORDINATOR
+  TEACHER
+  STUDENT
+  GUARDIAN
+}
+
+enum CourseStatus {
+  DRAFT
+  PUBLISHED
+  ARCHIVED
+}
+
+enum LessonType {
+  LIVE
+  RECORDED
+  HYBRID
+  SELF_PACED
+}
+
+enum AssignmentType {
+  HOMEWORK
+  PROJECT
+  ESSAY
+  PRESENTATION
+  EXAM
+  QUIZ
+  RESEARCH
+}
+
+enum QuizType {
+  PRACTICE
+  GRADED
+  SURVEY
+  DIAGNOSTIC
+  COMPETITIVE
+}
+
+enum NotificationType {
+  INFO
+  SUCCESS
+  WARNING
+  ERROR
+  ANNOUNCEMENT
+  REMINDER
+  ASSIGNMENT
+  GRADE
+  MESSAGE
+}
