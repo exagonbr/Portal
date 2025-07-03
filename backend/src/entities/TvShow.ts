@@ -6,8 +6,7 @@ import {
   UpdateDateColumn,
   ManyToOne,
   OneToMany,
-  JoinColumn,
-  Index
+  JoinColumn
 } from 'typeorm';
 import { Institution } from './Institution';
 import { TvShowVideo } from './TvShowVideo';
@@ -61,7 +60,6 @@ export class TvShow {
   @Column({ nullable: true })
   created_by?: string;
 
-  @Index()
   @Column()
   institution_id: string;
 
