@@ -1,9 +1,18 @@
 'use client'
 
-export default function TeacherDashboardLayout({
+import DashboardPageLayout from '@/components/dashboard/DashboardPageLayout'
+
+export default function TeacherLayout({
   children,
 }: {
   children: React.ReactNode
 }) {
-  return children
+  return (
+    <DashboardPageLayout
+      title="Dashboard do Professor"
+      subtitle="Gerencie suas turmas e alunos"
+    >
+      {children}
+    </DashboardPageLayout>
+  )
 }

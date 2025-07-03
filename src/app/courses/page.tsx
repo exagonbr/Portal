@@ -1,120 +1,148 @@
 'use client'
 
+import { useState, useEffect } from 'react'
+import { useRouter } from 'next/navigation'
 import { useAuth } from '@/contexts/AuthContext'
-import { mockCourses, mockTeachers, mockStudents } from '@/constants/mockData'
-import Link from 'next/link'
-import { redirect } from 'next/navigation'
+import { courseService, getCoursesByTeacher, getCoursesByStudent } from '@/services/courseService'
+import CourseCard from '@/components/CourseCard'
+import { BookOpen, PlusCircle } from 'lucide-react'
+import { Button } from '@/components/ui/Button'
+import { CourseResponseDto } from '@/types/api'
+import { useToast } from '@/components/ToastManager'
+import { CourseAddModal } from '@/components/CourseAddModal'
+import AuthenticatedLayout from '@/components/AuthenticatedLayout'
 
 export default function Courses() {
-  const { user, loading } = useAuth()
+  const { user } = useAuth()
+  const router = useRouter()
+  const { showSuccess, showError } = useToast()
+  const [courses, setCourses] = useState<CourseResponseDto[]>([])
+  const [loading, setLoading] = useState(true)
+  const [addModalOpen, setAddModalOpen] = useState(false)
 
-  if (loading) {
-    return (
-      <div className="flex justify-center items-center min-h-screen">
-        <div className="loading-spinner h-8 w-8"></div>
-      </div>
-    )
-  }
+  const loadCourses = async () => {
+    if (!user) return
 
-  if (!user) {
-    redirect('/login')
-  }
+    setLoading(true)
+    try {
+      let coursesData: CourseResponseDto[] = []
 
-  const userCourses = mockCourses.filter(course => {
-    if (user.type === 'teacher') {
-      const teacher = mockTeachers.find(t => t.id === user.id)
-      return teacher?.courses.includes(course.id)
-    } else {
-      const student = mockStudents.find(s => s.id === user.id)
-      return student?.enrolledCourses.includes(course.id)
+      if ((user.role as string) === 'TEACHER' || (user.role as string) === 'SYSTEM_ADMIN') {
+        // Professores e admins veem cursos onde são instrutores
+        const response = await getCoursesByTeacher(user.id)
+        coursesData = response
+      } else if ((user.role as string) === 'STUDENT') {
+        // Estudantes veem cursos em que estão matriculados
+        const response = await getCoursesByStudent(user.id)
+        coursesData = response
+      }
+
+      setCourses(coursesData)
+    } catch (error) {
+      showError("Erro", "Não foi possível carregar os cursos");
+    } finally {
+      setLoading(false)
     }
-  })
+  }
+
+  useEffect(() => {
+    if (user) {
+      loadCourses()
+    }
+  }, [user])
+
+  const handleCreateCourse = () => {
+    setAddModalOpen(true)
+  }
+
+  const handleSaveCourse = async (data: any) => {
+    try {
+      await courseService.createCourse(data)
+      showSuccess("Sucesso", "Curso criado com sucesso");
+      loadCourses()
+      setAddModalOpen(false)
+    } catch (error) {
+      showError("Erro", "Não foi possível criar o curso");
+    }
+  }
+
+  const handleAccessCourse = (course: CourseResponseDto) => {
+    router.push(`/courses/${course.id}`)
+  }
+
+  const handleManageCourse = (course: CourseResponseDto) => {
+    router.push(`/courses/manage/${course.id}`)
+  }
+
+  if (!user) return null
 
   return (
-    <div className="dashboard-container">
-      <aside className="dashboard-sidebar">
-        <div className="mb-8">
-          <h2 className="text-xl font-bold mb-2">
-            Portal do {user.type === 'teacher' ? 'Professor' : 'Aluno'}
-          </h2>
-          <p className="text-sm opacity-75">{user.name}</p>
-        </div>
-        <nav className="space-y-4">
-          <Link href={`/dashboard/${user.type}`} className="nav-link block">
-            Dashboard
-          </Link>
-          <Link href="/courses" className="nav-link active block">
-            {user.type === 'teacher' ? 'Meus Cursos' : 'Cursos'}
-          </Link>
-          {user.type === 'teacher' && (
-            <Link href="/students" className="nav-link block">
-              Alunos
-            </Link>
-          )}
-          <Link href="/assignments" className="nav-link block">
-            Atividades
-          </Link>
-          <Link href="/live" className="nav-link block">
-            Aulas ao Vivo
-          </Link>
-          {user.type === 'student' && (
-            <Link href="/chat" className="nav-link block">
-              Chat
-            </Link>
-          )}
-        </nav>
-      </aside>
+    <AuthenticatedLayout>
+      <div className="container mx-auto py-8">
+        <div className="flex items-center justify-between mb-8">
+          <div>
+            <h1 className="text-3xl font-bold text-gray-800 mb-2 flex items-center gap-3">
+              <BookOpen className="w-8 h-8 text-blue-600" />
+              {(user.role as string) === 'TEACHER' || (user.role as string) === 'SYSTEM_ADMIN' ? 'Painel do Professor' : 'Meus Cursos'}
+            </h1>
+            <p className="text-gray-600">
+              Bem-vindo(a), {user?.name}! {(user.role as string) === 'TEACHER' || (user.role as string) === 'SYSTEM_ADMIN' ? 'Acompanhe o progresso dos seus alunos.' : 'Acesse seus cursos e continue estudando.'}
+            </p>
+          </div>
 
-      <main className="dashboard-content">
-        <header className="dashboard-header flex justify-between items-center">
-          <h1 className="text-2xl font-bold text-[#1B365D]">
-            {user.type === 'teacher' ? 'Meus Cursos' : 'Cursos Disponíveis'}
-          </h1>
-          {user.type === 'teacher' && (
-            <button className="btn-primary">Criar Novo Curso</button>
+          {((user.role as string) === 'TEACHER' || (user.role as string) === 'SYSTEM_ADMIN') && (
+            <Button onClick={handleCreateCourse}>
+              <PlusCircle className="w-4 h-4 mr-2" />
+              Criar Novo Curso
+            </Button>
           )}
-        </header>
-
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mt-6">
-          {userCourses.map((course) => (
-            <div key={course.id} className="card hover:shadow-lg transition-shadow">
-              <div className="h-40 bg-[#1B365D] rounded-t-lg flex items-center justify-center">
-                <span className="text-white text-4xl font-bold opacity-20">
-                  {course.name[0]}
-                </span>
-              </div>
-              <div className="p-6">
-                <h3 className="text-xl font-semibold text-[#1B365D] mb-2">
-                  {course.name}
-                </h3>
-                <p className="text-gray-600 text-sm mb-4">{course.description}</p>
-                <div className="space-y-2">
-                  <div className="flex items-center text-sm text-gray-600">
-                    <span className="font-medium">Nível:</span>
-                    <span className="ml-2">{course.level}</span>
-                  </div>
-                  <div className="flex items-center text-sm text-gray-600">
-                    <span className="font-medium">Ciclo:</span>
-                    <span className="ml-2">{course.cycle}</span>
-                  </div>
-                  <div className="flex items-center text-sm text-gray-600">
-                    <span className="font-medium">Duração:</span>
-                    <span className="ml-2">{course.duration}</span>
-                  </div>
-                </div>
-                <div className="mt-6 flex justify-end">
-                  <Link
-                    href={`/courses/${course.id}`}
-                    className="btn-primary"
-                  >
-                    {user.type === 'teacher' ? 'Gerenciar' : 'Acessar'}
-                  </Link>
-                </div>
-              </div>
-            </div>
-          ))}
         </div>
-      </main>
-    </div>
+
+        {loading ? (
+          <div className="flex justify-center items-center py-12">
+            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"></div>
+          </div>
+        ) : courses.length === 0 ? (
+          <div className="flex flex-col items-center justify-center py-16 bg-white rounded-xl border border-gray-100 shadow-sm">
+            <BookOpen className="w-16 h-16 text-gray-300 mb-4" />
+            <h3 className="text-xl font-medium text-gray-700 mb-2">
+              {(user.role as string) === 'TEACHER' || (user.role as string) === 'SYSTEM_ADMIN' ? 'Você ainda não tem cursos cadastrados' : 'Você não está matriculado em nenhum curso'}
+            </h3>
+            <p className="text-gray-500 mb-6 text-center max-w-md">
+              {(user.role as string) === 'TEACHER' || (user.role as string) === 'SYSTEM_ADMIN'
+                ? 'Crie seu primeiro curso para começar a gerenciar suas aulas e alunos.'
+                : 'Entre em contato com sua instituição para se matricular em cursos disponíveis.'}
+            </p>
+            {((user.role as string) === 'TEACHER' || (user.role as string) === 'SYSTEM_ADMIN') && (
+              <Button onClick={handleCreateCourse}>
+                <PlusCircle className="w-4 h-4 mr-2" />
+                Criar Primeiro Curso
+              </Button>
+            )}
+          </div>
+        ) : (
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            {courses.map(course => (
+              <CourseCard
+                key={course.id}
+                course={course}
+                userType={(user.role as string) === 'STUDENT' ? 'student' : 'teacher'}
+                onAccess={() => handleAccessCourse(course)}
+                onManage={() => handleManageCourse(course)}
+              />
+            ))}
+          </div>
+        )}
+
+        {addModalOpen && (
+          <CourseAddModal
+            isOpen={addModalOpen}
+            onClose={() => setAddModalOpen(false)}
+            onSave={handleSaveCourse}
+            title="Adicionar Curso"
+          />
+        )}
+      </div>
+    </AuthenticatedLayout>
   )
 }

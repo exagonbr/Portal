@@ -1,198 +1,493 @@
-'use client'
+'use client';
 
-import { useState } from 'react'
-import { useRouter } from 'next/navigation'
-import { useAuth } from '../../contexts/AuthContext'
-import { useToast } from '../../components/Toast'
-import { useForm, patterns } from '../../hooks/useForm'
-import { Input, FormGroup, SubmitButton } from '../../components/forms/FormComponents'
+import { useState, useEffect, useCallback, useRef } from 'react';
+import { useRouter } from 'next/navigation';
+import { useForm } from '../../hooks/useForm';
+import { useAuth } from '../../contexts/AuthContext';
+import { getDashboardPath, isValidRole } from '../../utils/roleRedirect';
+import { useTheme } from '@/contexts/ThemeContext';
+import { LicenseValidationModal } from './LicenseValidationModal';
+import { MotionDiv, MotionSpan, MotionP, ClientOnly } from '@/components/ui/MotionWrapper';
 
 interface LoginFormData {
-  email: string
-  password: string
-  rememberMe: boolean
+  email: string;
+  password: string;
 }
 
 const initialValues: LoginFormData = {
   email: '',
-  password: '',
-  rememberMe: false
-}
+  password: ''
+};
 
 const validationRules = {
-  email: {
-    required: 'E-mail é obrigatório',
-    pattern: patterns.email
+  email: (value: string) => {
+    if (!value) return 'O email é obrigatório';
+    if (!/\S+@\S+\.\S+/.test(value)) return 'Formato de email inválido';
+    return '';
   },
-  password: {
-    required: 'Senha é obrigatória',
-    minLength: { value: 6, message: 'Senha deve ter no mínimo 6 caracteres' }
+  password: (value: string) => {
+    if (!value) return 'A senha é obrigatória';
+    if (value.length < 6) return 'A senha deve ter pelo menos 6 caracteres';
+    return '';
   }
-}
+};
 
-export default function LoginForm() {
-  const router = useRouter()
-  const { login } = useAuth()
-  const { showToast } = useToast()
-  const [showPassword, setShowPassword] = useState(false)
+export function LoginForm() {
+  const { login } = useAuth();
+  const router = useRouter();
+  const { theme } = useTheme();
+  const [submitError, setSubmitError] = useState<string>('');
+  const [retryAfter, setRetryAfter] = useState(0);
+  const [isGoogleLoading, setIsGoogleLoading] = useState(false);
+  const [isModalOpen, setIsModalOpen] = useState(false);
+  const [showPassword, setShowPassword] = useState(false);
 
+  // Detectar se é dispositivo móvel
+  const [isMobile, setIsMobile] = useState(false);
+  
+  useEffect(() => {
+    const checkMobile = () => {
+      const userAgent = navigator.userAgent.toLowerCase();
+      const isMobileDevice = /mobile|android|iphone|ipad|ipod|blackberry|windows phone/i.test(userAgent);
+      const isTouchDevice = 'ontouchstart' in window || navigator.maxTouchPoints > 0;
+      setIsMobile(isMobileDevice || isTouchDevice);
+    };
+    
+    checkMobile();
+    window.addEventListener('resize', checkMobile);
+    return () => window.removeEventListener('resize', checkMobile);
+  }, []);
+
+  useEffect(() => {
+    if (retryAfter > 0) {
+      const timer = setTimeout(() => setRetryAfter(retryAfter - 1), 1000);
+      return () => clearTimeout(timer);
+    }
+  }, [retryAfter]);
+
+  // Flag para rastrear se estamos em processo de login
+  const [loginAttemptInProgress, setLoginAttemptInProgress] = useState(false);
+  
+  // Throttle ajustado para mobile (menos restritivo)
+  const lastLoginAttemptRef = useRef<number>(0);
+  const MIN_LOGIN_INTERVAL_MS = isMobile ? 1000 : 2000; // 1s para mobile, 2s para desktop
+  
+  // Função para resetar o formulário - será conectada depois
+  const resetFormRef = useRef<(() => void) | null>(null);
+  
   const {
     values,
     errors,
+    touched,
     isSubmitting,
     handleChange,
     handleBlur,
-    handleSubmit
-  } = useForm<LoginFormData>(
+    handleSubmit,
+    resetForm
+  } = useForm<LoginFormData>({
     initialValues,
     validationRules,
-    async (formData) => {
+    onSubmit: useCallback(async (formValues) => {
       try {
-        console.log('LoginForm: Attempting login with:', formData.email);
-        const response = await login(formData.email, formData.password)
-        showToast({
-          type: 'success',
-          message: 'Login realizado com sucesso!'
-        })
-        // Redirect based on user role
-        if (response.user?.role === 'student') {
-          router.push('/dashboard/student')
-        } else if (response.user?.role === 'teacher') {
-          router.push('/dashboard/teacher')
-        } else {
-          router.push('/dashboard')
+        // Verificar se já está em andamento
+        if (loginAttemptInProgress) {
+          console.log('Tentativa de login já em andamento, ignorando requisição duplicada');
+          return;
         }
-      } catch (error: any) {
-        console.error('LoginForm: Login failed:', error);
-        showToast({
-          type: 'error',
-          message: error.message || 'Erro ao fazer login. Verifique suas credenciais.'
-        })
+        
+        // Verificar throttle (mais permissivo para mobile)
+        const now = Date.now();
+        const timeSinceLastAttempt = now - lastLoginAttemptRef.current;
+        if (timeSinceLastAttempt < MIN_LOGIN_INTERVAL_MS) {
+          const waitTime = ((MIN_LOGIN_INTERVAL_MS - timeSinceLastAttempt) / 1000).toFixed(1);
+          console.log(`Aguarde ${waitTime}s antes de tentar novamente`);
+          setSubmitError(`Por favor, aguarde ${waitTime}s antes de tentar novamente.`);
+          return;
+        }
+        
+        // Marcar início da tentativa
+        setLoginAttemptInProgress(true);
+        lastLoginAttemptRef.current = now;
+        setSubmitError('');
+        
+        // Timeout ajustado para mobile (mais tempo)
+        const timeoutMs = isMobile ? 20000 : 15000; // 20s para mobile, 15s para desktop
+        const timeoutId = setTimeout(() => {
+          if (loginAttemptInProgress) {
+            setLoginAttemptInProgress(false);
+            setSubmitError('Tempo limite de login excedido. Por favor, tente novamente.');
+          }
+        }, timeoutMs);
+        
+        try {
+          await login(formValues.email, formValues.password);
+          clearTimeout(timeoutId);
+        } catch (error: any) {
+          clearTimeout(timeoutId);
+          console.error('Erro durante o login:', error);
+          
+          // Verificar se é erro de rate limit
+          if (error.message && error.message.includes('Too Many Requests')) {
+            // Tentar extrair o tempo de retry do erro, ou usar valor padrão
+            let retrySeconds = 60;
+            try {
+              const retryMatch = error.message.match(/(\d+)\s*segundo/);
+              if (retryMatch && retryMatch[1]) {
+                retrySeconds = parseInt(retryMatch[1], 10);
+              } else if (error.retryAfter) {
+                retrySeconds = parseInt(error.retryAfter, 10);
+              }
+            } catch (e) {
+              console.error('Erro ao extrair tempo de retry:', e);
+            }
+            
+            setRetryAfter(retrySeconds);
+            setSubmitError(`Muitas tentativas de login. Tente novamente em ${retrySeconds} segundos.`);
+            // Limpar o formulário para evitar novas tentativas com os mesmos dados
+            if (resetFormRef.current) {
+              resetFormRef.current();
+            }
+          } else {
+            setSubmitError(error.message || 'Email ou senha incorretos. Por favor, tente novamente.');
+          }
+        } finally {
+          setLoginAttemptInProgress(false);
+        }
+      } catch (outerError) {
+        console.error('Erro externo durante processo de login:', outerError);
+        setSubmitError('Ocorreu um erro inesperado. Por favor, tente novamente mais tarde.');
+        setLoginAttemptInProgress(false);
       }
-    }
-  )
+    }, [login, loginAttemptInProgress, MIN_LOGIN_INTERVAL_MS, isMobile])
+  });
+
+  // Atualizar a referência à função resetForm após a inicialização do formulário
+  useEffect(() => {
+    resetFormRef.current = resetForm;
+  }, [resetForm]);
+  
+  const handleGoogleLogin = async () => {
+    // Login Google temporariamente desabilitado para evitar erros 404
+    setSubmitError('Login com Google temporariamente desabilitado. Use email e senha.');
+  };
 
   return (
-    <div className="bg-white py-8 px-4 shadow sm:rounded-lg sm:px-10">
-      <form onSubmit={handleSubmit} className="space-y-6">
-        <FormGroup>
-          <Input
-            label="E-mail"
-            type="email"
-            name="email"
-            id="email"
-            autoComplete="email"
-            value={values.email}
-            onChange={handleChange}
-            onBlur={handleBlur}
-            error={errors.email}
-            placeholder="seu@email.com"
-          />
-
-          <div className="relative">
-            <Input
-              label="Senha"
-              type={showPassword ? 'text' : 'password'}
-              name="password"
-              id="password"
-              autoComplete="current-password"
-              value={values.password}
-              onChange={handleChange}
-              onBlur={handleBlur}
-              error={errors.password}
-              placeholder="••••••••"
-            />
-            <button
-              type="button"
-              className="absolute inset-y-0 right-0 pr-3 flex items-center top-6"
-              onClick={() => setShowPassword(!showPassword)}
+    <>
+      <div className="space-y-6 mt-8" role="form" aria-label="Formulário de login">
+        <form onSubmit={handleSubmit} className="space-y-6" noValidate>
+          <MotionDiv
+            initial={{ opacity: 0, x: -20 }}
+            animate={{ opacity: 1, x: 0 }}
+            transition={{ delay: 0.1 }}
+          >
+            <label 
+              htmlFor="email" 
+              className="block text-sm font-medium mb-2"
+              style={{ color: theme.colors.text.secondary }}
             >
-              {showPassword ? (
-                <svg className="h-5 w-5 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
-                </svg>
+              Email
+            </label>
+            <div className="relative">
+              <span 
+                className="absolute left-3 top-1/2 transform -translate-y-1/2 material-symbols-outlined text-xl"
+                style={{ color: theme.colors.text.tertiary }}
+              >
+                mail
+              </span>
+              <input
+                id="email"
+                name="email"
+                type="email"
+                autoComplete="email"
+                required
+                value={values.email}
+                onChange={handleChange}
+                onBlur={handleBlur}
+                // Melhorias específicas para mobile
+                inputMode="email"
+                autoCapitalize="none"
+                autoCorrect="off"
+                spellCheck="false"
+                // Prevenir zoom automático no iOS
+                style={{
+                  fontSize: isMobile ? '16px' : '14px', // 16px previne zoom no iOS
+                  backgroundColor: theme.colors.background.secondary,
+                  borderColor: touched.email && errors.email ? theme.colors.status.error : theme.colors.border.DEFAULT,
+                  color: theme.colors.text.primary,
+                }}
+                aria-invalid={touched.email && errors.email ? 'true' : 'false'}
+                aria-describedby={touched.email && errors.email ? 'email-error' : undefined}
+                className={`appearance-none block w-full pl-10 pr-3 py-3 rounded-lg shadow-sm placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-offset-0 transition-all duration-200 ${
+                  touched.email && errors.email
+                    ? 'border-2 border-red-500 focus:ring-red-500 focus:border-red-500'
+                    : 'border-2 focus:ring-2'
+                }`}
+                placeholder="seu@email.com"
+              />
+              {touched.email && errors.email && (
+                <MotionP 
+                  initial={{ opacity: 0, y: -10 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  className="mt-2 text-sm flex items-center gap-1" 
+                  style={{ color: theme.colors.status.error }}
+                  id="email-error" 
+                  role="alert"
+                >
+                  <span className="material-symbols-outlined text-base">error</span>
+                  {errors.email}
+                </MotionP>
+              )}
+            </div>
+          </MotionDiv>
+
+          <MotionDiv
+            initial={{ opacity: 0, x: -20 }}
+            animate={{ opacity: 1, x: 0 }}
+            transition={{ delay: 0.2 }}
+          >
+            <label 
+              htmlFor="password" 
+              className="block text-sm font-medium mb-2"
+              style={{ color: theme.colors.text.secondary }}
+            >
+              Senha
+            </label>
+            <div className="relative">
+              <span 
+                className="absolute left-3 top-1/2 transform -translate-y-1/2 material-symbols-outlined text-xl"
+                style={{ color: theme.colors.text.tertiary }}
+              >
+                lock
+              </span>
+              <input
+                id="password"
+                name="password"
+                type={showPassword ? "text" : "password"}
+                autoComplete="current-password"
+                required
+                value={values.password}
+                onChange={handleChange}
+                onBlur={handleBlur}
+                // Melhorias específicas para mobile
+                autoCapitalize="none"
+                autoCorrect="off"
+                spellCheck="false"
+                // Prevenir zoom automático no iOS
+                style={{
+                  fontSize: isMobile ? '16px' : '14px', // 16px previne zoom no iOS
+                  backgroundColor: theme.colors.background.secondary,
+                  borderColor: touched.password && errors.password ? theme.colors.status.error : theme.colors.border.DEFAULT,
+                  color: theme.colors.text.primary,
+                }}
+                aria-invalid={touched.password && errors.password ? 'true' : 'false'}
+                aria-describedby={touched.password && errors.password ? 'password-error' : undefined}
+                className={`appearance-none block w-full pl-10 pr-10 py-3 rounded-lg shadow-sm placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-offset-0 transition-all duration-200 ${
+                  touched.password && errors.password
+                    ? 'border-2 border-red-500 focus:ring-red-500 focus:border-red-500'
+                    : 'border-2 focus:ring-2'
+                }`}
+                placeholder="••••••••"
+              />
+              <button
+                type="button"
+                onClick={() => setShowPassword(!showPassword)}
+                // Melhor área de toque para mobile
+                className={`absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-500 hover:text-gray-700 focus:outline-none ${
+                  isMobile ? 'p-1 -m-1' : ''
+                }`}
+                style={{ 
+                  color: theme.colors.text.tertiary,
+                  minWidth: isMobile ? '44px' : 'auto', // Área mínima de toque recomendada
+                  minHeight: isMobile ? '44px' : 'auto'
+                }}
+                aria-label={showPassword ? 'Ocultar senha' : 'Mostrar senha'}
+              >
+                <span className="material-symbols-outlined text-xl">
+                  {showPassword ? 'visibility_off' : 'visibility'}
+                </span>
+              </button>
+              {touched.password && errors.password && (
+                <MotionP 
+                  initial={{ opacity: 0, y: -10 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  className="mt-2 text-sm flex items-center gap-1" 
+                  style={{ color: theme.colors.status.error }}
+                  id="password-error" 
+                  role="alert"
+                >
+                  <span className="material-symbols-outlined text-base">error</span>
+                  {errors.password}
+                </MotionP>
+              )}
+            </div>
+          </MotionDiv>
+
+          {submitError && (
+            <MotionDiv 
+              initial={{ opacity: 0, scale: 0.95 }}
+              animate={{ opacity: 1, scale: 1 }}
+              className="rounded-lg p-4 flex items-start gap-3" 
+              style={{
+                backgroundColor: `${theme.colors.status.error}20`,
+                border: `1px solid ${theme.colors.status.error}40`
+              }}
+              role="alert"
+            >
+              <span 
+                className="material-symbols-outlined text-xl mt-0.5" 
+                style={{ color: theme.colors.status.error }}
+                aria-hidden="true"
+              >
+                error
+              </span>
+              <div className="flex-1">
+                <h3 className="text-sm font-medium" style={{ color: theme.colors.status.error }}>
+                  {submitError}
+                  {retryAfter > 0 && (
+                    <span className="block mt-1 text-xs">
+                      Aguarde {retryAfter}s...
+                    </span>
+                  )}
+                </h3>
+              </div>
+            </MotionDiv>
+          )}
+
+          <MotionDiv
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.3 }}
+          >
+            <button
+              type="submit"
+              disabled={isSubmitting || loginAttemptInProgress || retryAfter > 0}
+              // Melhor área de toque para mobile
+              className={`w-full flex justify-center items-center gap-2 rounded-lg shadow-lg text-sm font-medium transition-all duration-200 transform hover:scale-105 active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed disabled:transform-none ${
+                isMobile ? 'py-4 px-4' : 'py-3 px-4'
+              }`}
+              style={{
+                backgroundColor: theme.colors.primary.DEFAULT,
+                color: theme.colors.primary.contrast,
+                boxShadow: theme.shadows.md,
+                minHeight: isMobile ? '48px' : 'auto', // Altura mínima recomendada para mobile
+                fontSize: isMobile ? '16px' : '14px' // Prevenir zoom no iOS
+              }}
+            >
+              {isSubmitting || loginAttemptInProgress ? (
+                <>
+                  <MotionSpan
+                    animate={{ rotate: 360 }}
+                    transition={{ duration: 1, repeat: Infinity, ease: "linear" }}
+                    className="material-symbols-outlined"
+                  >
+                    progress_activity
+                  </MotionSpan>
+                  Acessando...
+                </>
               ) : (
-                <svg className="h-5 w-5 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13.875 18.825A10.05 10.05 0 0112 19c-4.478 0-8.268-2.943-9.543-7a9.97 9.97 0 011.563-3.029m5.858.908a3 3 0 114.243 4.243M9.878 9.878l4.242 4.242M9.88 9.88l-3.29-3.29m7.532 7.532l3.29 3.29M3 3l3.59 3.59m0 0A9.953 9.953 0 0112 5c4.478 0 8.268 2.943 9.543 7a10.025 10.025 0 01-4.132 5.411m0 0L21 21" />
-                </svg>
+                <>
+                  <span className="material-symbols-outlined">login</span>
+                  Acessar
+                </>
               )}
             </button>
+          </MotionDiv>
+        </form>
+
+        <MotionDiv 
+          className="relative"
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          transition={{ delay: 0.4 }}
+        >
+          <div className="absolute inset-0 flex items-center">
+            <div className="w-full border-t" style={{ borderColor: theme.colors.border.light }} />
           </div>
-        </FormGroup>
-
-        <div className="flex items-center justify-between">
-          <div className="flex items-center">
-            <input
-              id="rememberMe"
-              name="rememberMe"
-              type="checkbox"
-              checked={values.rememberMe}
-              onChange={handleChange}
-              className="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
-            />
-            <label htmlFor="rememberMe" className="ml-2 block text-sm text-gray-900">
-              Lembrar-me
-            </label>
-          </div>
-
-          <div className="text-sm">
-            <a href="/forgot-password" className="font-medium text-blue-600 hover:text-blue-500">
-              Esqueceu sua senha?
-            </a>
-          </div>
-        </div>
-
-        <SubmitButton loading={isSubmitting}>
-          {isSubmitting ? 'Entrando...' : 'Entrar'}
-        </SubmitButton>
-
-        <div className="mt-6">
-          <div className="relative">
-            <div className="absolute inset-0 flex items-center">
-              <div className="w-full border-t border-gray-300" />
-            </div>
-            <div className="relative flex justify-center text-sm">
-              <span className="px-2 bg-white text-gray-500">Ou continue com</span>
-            </div>
-          </div>
-
-          <div className="mt-6 grid grid-cols-2 gap-3">
-            <button
-              type="button"
-              className="w-full inline-flex justify-center py-2 px-4 border border-gray-300 rounded-md shadow-sm bg-white text-sm font-medium text-gray-500 hover:bg-gray-50"
+          <div className="relative flex justify-center text-sm">
+            <span 
+              className="px-2" 
+              style={{ 
+                backgroundColor: theme.type === 'modern' ? theme.colors.background.card : theme.colors.background.primary,
+                color: theme.colors.text.tertiary 
+              }}
             >
-              <span className="sr-only">Entrar com Google</span>
-              <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 24 24">
-                <path d="M12.48 10.92v3.28h7.84c-.24 1.84-.853 3.187-1.787 4.133-1.147 1.147-2.933 2.4-6.053 2.4-4.827 0-8.6-3.893-8.6-8.72s3.773-8.72 8.6-8.72c2.6 0 4.507 1.027 5.907 2.347l2.307-2.307C18.747 1.44 16.133 0 12.48 0 5.867 0 .307 5.387.307 12s5.56 12 12.173 12c3.573 0 6.267-1.173 8.373-3.36 2.16-2.16 2.84-5.213 2.84-7.667 0-.76-.053-1.467-.173-2.053H12.48z" />
-              </svg>
-            </button>
-
-            <button
-              type="button"
-              className="w-full inline-flex justify-center py-2 px-4 border border-gray-300 rounded-md shadow-sm bg-white text-sm font-medium text-gray-500 hover:bg-gray-50"
-            >
-              <span className="sr-only">Entrar com Facebook</span>
-              <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 24 24">
-                <path fillRule="evenodd" d="M22 12c0-5.523-4.477-10-10-10S2 6.477 2 12c0 4.991 3.657 9.128 8.438 9.878v-6.987h-2.54V12h2.54V9.797c0-2.506 1.492-3.89 3.777-3.89 1.094 0 2.238.195 2.238.195v2.46h-1.26c-1.243 0-1.63.771-1.63 1.562V12h2.773l-.443 2.89h-2.33v6.988C18.343 21.128 22 16.991 22 12z" clipRule="evenodd" />
-              </svg>
-            </button>
+              ou continue com
+            </span>
           </div>
-        </div>
+        </MotionDiv>
 
-        <div className="mt-6">
-          <div className="relative">
-            <div className="relative flex justify-center text-sm">
-              <span className="text-gray-500">
-                Não tem uma conta?{' '}
-                <a href="/register" className="font-medium text-blue-600 hover:text-blue-500">
-                  Cadastre-se
-                </a>
-              </span>
-            </div>
-          </div>
-        </div>
-      </form>
-    </div>
-  )
+        <MotionDiv 
+          className="space-y-3"
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.5 }}
+        >
+          <button
+            type="button"
+            onClick={handleGoogleLogin}
+            disabled={isGoogleLoading}
+            className="w-full flex items-center justify-center gap-3 py-3 px-4 rounded-lg shadow-sm text-sm font-medium transition-all duration-200 transform hover:scale-105 active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed disabled:transform-none"
+            style={{
+              backgroundColor: theme.colors.background.card,
+              border: `2px solid ${theme.colors.border.DEFAULT}`,
+              color: theme.colors.text.primary
+            }}
+            aria-busy={isGoogleLoading}
+          >
+            <svg className="h-5 w-5" viewBox="0 0 24 24" aria-hidden="true">
+              <path
+                d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"
+                fill="#4285F4"
+              />
+              <path
+                d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"
+                fill="#34A853"
+              />
+              <path
+                d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z"
+                fill="#FBBC05"
+              />
+              <path
+                d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"
+                fill="#EA4335"
+              />
+            </svg>
+            {isGoogleLoading ? (
+              <>
+                <MotionSpan
+                  animate={{ rotate: 360 }}
+                  transition={{ duration: 1, repeat: Infinity, ease: "linear" }}
+                  className="material-symbols-outlined"
+                >
+                  progress_activity
+                </MotionSpan>
+                Conectando...
+              </>
+            ) : (
+              'Acessar com Google'
+            )}
+          </button>
+
+          <button
+            type="button"
+            onClick={() => setIsModalOpen(true)}
+            className="w-full flex items-center justify-center gap-3 py-3 px-4 rounded-lg shadow-sm text-sm font-medium transition-all duration-200 transform hover:scale-105 active:scale-95"
+            style={{
+              backgroundColor: theme.colors.secondary.DEFAULT,
+              color: theme.colors.secondary.contrast,
+              boxShadow: theme.shadows.md
+            }}
+          >
+            <span className="material-symbols-outlined" aria-hidden="true">verified</span>
+            Validar Licença
+          </button>
+        </MotionDiv>
+      </div>
+
+      <LicenseValidationModal 
+        isOpen={isModalOpen} 
+        onClose={() => setIsModalOpen(false)} 
+      />
+    </>
+  );
 }

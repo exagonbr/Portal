@@ -1,180 +1,620 @@
-'use client'
+'use client';
 
-import { useAuth } from '@/contexts/AuthContext'
-import { mockChats, mockTeachers, mockStudents } from '@/constants/mockData'
-import Link from 'next/link'
-import { redirect } from 'next/navigation'
-import { useState } from 'react'
+import React, { useState, useEffect, useRef } from 'react';
+import { 
+  Send, 
+  Search, 
+  MoreVertical,
+  Phone,
+  Video,
+  Paperclip,
+  Smile,
+  Check,
+  CheckCheck,
+  Circle,
+  Users,
+  Hash,
+  Bell,
+  BellOff,
+  Star,
+  Archive,
+  Trash2,
+  Settings,
+  Plus,
+  MessageSquare
+} from 'lucide-react';
+import { useAuth } from '@/contexts/AuthContext';
+import Image from 'next/image';
 
-export default function Chat() {
-  const { user, loading } = useAuth()
-  const [selectedChat, setSelectedChat] = useState<string | null>(null)
+interface ChatUser {
+  id: string;
+  name: string;
+  avatar?: string;
+  status: 'online' | 'offline' | 'away' | 'busy';
+  lastSeen?: Date;
+  role?: string;
+}
 
-  if (loading) {
-    return (
-      <div className="flex justify-center items-center min-h-screen">
-        <div className="loading-spinner h-8 w-8"></div>
-      </div>
-    )
-  }
+interface ChatMessage {
+  id: string;
+  senderId: string;
+  content: string;
+  timestamp: Date;
+  status: 'sent' | 'delivered' | 'read';
+  attachments?: Array<{
+    type: 'image' | 'file' | 'audio';
+    url: string;
+    name: string;
+  }>;
+}
 
-  if (!user || user.type !== 'student') {
-    redirect('/dashboard')
-  }
+interface ChatConversation {
+  id: string;
+  type: 'direct' | 'group';
+  name: string;
+  avatar?: string;
+  participants: ChatUser[];
+  lastMessage?: {
+    content: string;
+    timestamp: Date;
+    senderId: string;
+  };
+  unreadCount: number;
+  isPinned: boolean;
+  isMuted: boolean;
+}
 
-  const userChats = mockChats.filter(chat => 
-    chat.participants.includes(user.id)
-  )
+export default function ChatPage() {
+  const { user } = useAuth();
+  const [conversations, setConversations] = useState<ChatConversation[]>([]);
+  const [selectedConversation, setSelectedConversation] = useState<ChatConversation | null>(null);
+  const [messages, setMessages] = useState<ChatMessage[]>([]);
+  const [newMessage, setNewMessage] = useState('');
+  const [searchTerm, setSearchTerm] = useState('');
+  const [isTyping, setIsTyping] = useState(false);
+  const messagesEndRef = useRef<HTMLDivElement>(null);
+  const [showUserInfo, setShowUserInfo] = useState(false);
 
-  const getParticipantInfo = (participantId: string) => {
-    if (participantId.startsWith('t')) {
-      return mockTeachers.find(t => t.id === participantId)
+  // Efeito para ajustar altura em dispositivos móveis
+  useEffect(() => {
+    const setVh = () => {
+      const vh = window.innerHeight * 0.01;
+      document.documentElement.style.setProperty('--vh', `${vh}px`);
+    };
+    
+    setVh();
+    window.addEventListener('resize', setVh);
+    
+    return () => {
+      window.removeEventListener('resize', setVh);
+    };
+  }, []);
+
+  useEffect(() => {
+    loadConversations();
+  }, []);
+
+  useEffect(() => {
+    scrollToBottom();
+  }, [messages]);
+
+  const scrollToBottom = () => {
+    messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+  };
+
+  const loadConversations = async () => {
+    // Dados simulados
+    const mockConversations: ChatConversation[] = [
+      {
+        id: '1',
+        type: 'direct',
+        name: 'Prof. Ana Silva',
+        avatar: '/avatars/ana.jpg',
+        participants: [
+          { id: '1', name: 'Prof. Ana Silva', status: 'online', role: 'Professor' }
+        ],
+        lastMessage: {
+          content: 'Não esqueça da prova amanhã!',
+          timestamp: new Date(),
+          senderId: '1'
+        },
+        unreadCount: 2,
+        isPinned: true,
+        isMuted: false
+      },
+      {
+        id: '2',
+        type: 'group',
+        name: '5º Ano A - Turma',
+        participants: [
+          { id: '1', name: 'Prof. Ana Silva', status: 'online', role: 'Professor' },
+          { id: '2', name: 'João Pedro', status: 'online', role: 'Aluno' },
+          { id: '3', name: 'Maria Clara', status: 'away', role: 'Aluno' }
+        ],
+        lastMessage: {
+          content: 'João: Obrigado pela explicação!',
+          timestamp: new Date(Date.now() - 3600000),
+          senderId: '2'
+        },
+        unreadCount: 0,
+        isPinned: false,
+        isMuted: false
+      },
+      {
+        id: '3',
+        type: 'direct',
+        name: 'Coordenação',
+        participants: [
+          { id: '4', name: 'Coordenação', status: 'busy', role: 'Coordenador' }
+        ],
+        lastMessage: {
+          content: 'Reunião confirmada para sexta',
+          timestamp: new Date(Date.now() - 86400000),
+          senderId: '4'
+        },
+        unreadCount: 0,
+        isPinned: false,
+        isMuted: true
+      }
+    ];
+
+    setConversations(mockConversations);
+    
+    // Selecionar primeira conversa por padrão
+    if (mockConversations.length > 0) {
+      handleSelectConversation(mockConversations[0]);
     }
-    return mockStudents.find(s => s.id === participantId)
-  }
+  };
 
-  const selectedChatData = userChats.find(chat => chat.id === selectedChat)
+  const handleSelectConversation = (conversation: ChatConversation) => {
+    setSelectedConversation(conversation);
+    loadMessages(conversation.id);
+    
+    // Marcar mensagens como lidas
+    setConversations(prev => prev.map(conv => 
+      conv.id === conversation.id ? { ...conv, unreadCount: 0 } : conv
+    ));
+  };
+
+  const loadMessages = (conversationId: string) => {
+    // Dados simulados
+    const mockMessages: ChatMessage[] = [
+      {
+        id: '1',
+        senderId: '1',
+        content: 'Olá! Como você está?',
+        timestamp: new Date(Date.now() - 7200000),
+        status: 'read'
+      },
+      {
+        id: '2',
+        senderId: 'current',
+        content: 'Oi professora! Estou bem, obrigado!',
+        timestamp: new Date(Date.now() - 7000000),
+        status: 'read'
+      },
+      {
+        id: '3',
+        senderId: '1',
+        content: 'Que bom! Queria lembrá-lo sobre a prova de matemática amanhã.',
+        timestamp: new Date(Date.now() - 3600000),
+        status: 'read'
+      },
+      {
+        id: '4',
+        senderId: '1',
+        content: 'Não esqueça de revisar os capítulos 5 e 6 do livro.',
+        timestamp: new Date(Date.now() - 3500000),
+        status: 'read'
+      },
+      {
+        id: '5',
+        senderId: 'current',
+        content: 'Pode deixar! Já estou estudando.',
+        timestamp: new Date(Date.now() - 1800000),
+        status: 'delivered'
+      },
+      {
+        id: '6',
+        senderId: '1',
+        content: 'Não esqueça da prova amanhã!',
+        timestamp: new Date(),
+        status: 'sent'
+      }
+    ];
+
+    setMessages(mockMessages);
+  };
+
+  const handleSendMessage = (e: React.FormEvent) => {
+    e.preventDefault();
+    
+    if (!newMessage.trim() || !selectedConversation) return;
+
+    const message: ChatMessage = {
+      id: Date.now().toString(),
+      senderId: 'current',
+      content: newMessage,
+      timestamp: new Date(),
+      status: 'sent'
+    };
+
+    setMessages([...messages, message]);
+    setNewMessage('');
+
+    // Simular mudança de status da mensagem
+    setTimeout(() => {
+      setMessages(prev => prev.map(msg => 
+        msg.id === message.id ? { ...msg, status: 'delivered' } : msg
+      ));
+    }, 1000);
+
+    setTimeout(() => {
+      setMessages(prev => prev.map(msg => 
+        msg.id === message.id ? { ...msg, status: 'read' } : msg
+      ));
+    }, 2000);
+  };
+
+  const formatTime = (date: Date) => {
+    return date.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' });
+  };
+
+  const formatDate = (date: Date) => {
+    const today = new Date();
+    const yesterday = new Date(today);
+    yesterday.setDate(yesterday.getDate() - 1);
+
+    if (date.toDateString() === today.toDateString()) {
+      return 'Hoje';
+    } else if (date.toDateString() === yesterday.toDateString()) {
+      return 'Ontem';
+    } else {
+      return date.toLocaleDateString('pt-BR');
+    }
+  };
+
+  const getStatusColor = (status: ChatUser['status']) => {
+    switch (status) {
+      case 'online': return 'bg-emerald-500';
+      case 'away': return 'bg-amber-500';
+      case 'busy': return 'bg-rose-500';
+      default: return 'bg-gray-400';
+    }
+  };
+
+  const getStatusIcon = (status: ChatMessage['status']) => {
+    switch (status) {
+      case 'sent': return <Check className="w-4 h-4" />;
+      case 'delivered': return <CheckCheck className="w-4 h-4" />;
+      case 'read': return <CheckCheck className="w-4 h-4 text-blue-600" />;
+    }
+  };
+
+  const filteredConversations = conversations.filter(conv =>
+    conv.name.toLowerCase().includes(searchTerm.toLowerCase())
+  );
 
   return (
-    <div className="dashboard-container">
-      <aside className="dashboard-sidebar">
-        <div className="mb-8">
-          <h2 className="text-xl font-bold mb-2">Portal do Aluno</h2>
-          <p className="text-sm opacity-75">{user.name}</p>
+    <div className="flex w-full h-full overflow-hidden" >
+      {/* Lista de Conversas */}
+      <div className="w-64 lg:w-80 max-w-[320px] bg-white flex flex-col h-full border-r border-gray-200 overflow-hidden">
+        {/* Cabeçalho */}
+        <div className="p-3 lg:p-4 flex-shrink-0 border-b border-gray-100">
+          <div className="flex items-center justify-between mb-3 lg:mb-4">
+            <h2 className="text-lg lg:text-xl font-bold text-gray-700 flex items-center gap-2">
+              <MessageSquare className="w-5 h-5 lg:w-6 lg:h-6 text-primary" />
+              <span className="hidden sm:inline">Mensagens</span>
+            </h2>
+            <button className="p-1.5 lg:p-2 hover:bg-gray-100 rounded-lg transition-colors">
+              <Plus className="w-4 h-4 lg:w-5 lg:h-5 text-gray-600" />
+            </button>
+          </div>
+          
+          {/* Busca */}
+          <div className="relative">
+            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4 lg:w-5 lg:h-5" />
+            <input
+              type="text"
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+              placeholder="Buscar..."
+              className="w-full pl-9 lg:pl-10 pr-3 lg:pr-4 py-1.5 lg:py-2 bg-gray-100 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary text-gray-700 text-sm"
+            />
+          </div>
         </div>
-        <nav className="space-y-4">
-          <Link href="/dashboard/student" className="nav-link block">
-            Dashboard
-          </Link>
-          <Link href="/courses" className="nav-link block">
-            Cursos
-          </Link>
-          <Link href="/assignments" className="nav-link block">
-            Atividades
-          </Link>
-          <Link href="/live" className="nav-link block">
-            Aulas ao Vivo
-          </Link>
-          <Link href="/chat" className="nav-link active block">
-            Chat
-          </Link>
-        </nav>
-      </aside>
 
-      <main className="dashboard-content">
-        <header className="dashboard-header">
-          <h1 className="text-2xl font-bold text-[#1B365D]">Mensagens</h1>
-        </header>
+        {/* Lista de Conversas */}
+        <div className="flex-1 overflow-y-auto">
+          {filteredConversations.map((conversation) => (
+            <div
+              key={conversation.id}
+              onClick={() => handleSelectConversation(conversation)}
+              className={`p-3 lg:p-4 hover:bg-blue-50 cursor-pointer transition-all duration-200 border-l-4 ${
+                selectedConversation?.id === conversation.id 
+                  ? 'bg-blue-50 border-primary' 
+                  : 'border-transparent hover:border-blue-300'
+              }`}
+            >
+              <div className="flex items-start gap-2 lg:gap-3">
+                {/* Avatar */}
+                <div className="relative flex-shrink-0">
+                  <div className={`w-8 h-8 lg:w-10 lg:h-10 rounded-full flex items-center justify-center font-semibold text-white ${
+                    conversation.type === 'group' ? 'bg-purple-500' : 'bg-blue-500'
+                  }`}>
+                    {conversation.type === 'group' ? (
+                      <Users className="w-4 h-4 lg:w-5 lg:h-5" />
+                    ) : (
+                      <span className="text-xs lg:text-sm">
+                        {conversation.name.charAt(0).toUpperCase()}
+                      </span>
+                    )}
+                  </div>
+                  {conversation.type === 'direct' && (
+                    <div className={`absolute bottom-0 right-0 w-2 h-2 lg:w-2.5 lg:h-2.5 rounded-full border-2 border-white ${
+                      getStatusColor(conversation.participants[0]?.status || 'offline')
+                    }`} />
+                  )}
+                </div>
 
-        <div className="mt-6 grid grid-cols-3 gap-6 h-[calc(100vh-12rem)]">
-          {/* Chat List */}
-          <div className="col-span-1 bg-white rounded-lg shadow-lg overflow-hidden">
-            <div className="p-4 border-b border-gray-200">
-              <input
-                type="text"
-                placeholder="Buscar conversas..."
-                className="input-field w-full"
-              />
-            </div>
-            <div className="overflow-y-auto h-[calc(100%-4rem)]">
-              {userChats.map(chat => {
-                const otherParticipant = getParticipantInfo(
-                  chat.participants.find(p => p !== user.id) || ''
-                )
-                const lastMessage = chat.messages[chat.messages.length - 1]
-
-                return (
-                  <button
-                    key={chat.id}
-                    onClick={() => setSelectedChat(chat.id)}
-                    className={`w-full text-left p-4 border-b border-gray-100 hover:bg-gray-50 transition-colors
-                      ${selectedChat === chat.id ? 'bg-[#F7FAFC]' : ''}`}
-                  >
-                    <div className="flex items-center">
-                      <div className="flex-1 min-w-0">
-                        <p className="text-sm font-medium text-[#1B365D] truncate">
-                          {otherParticipant?.name}
-                        </p>
-                        <p className="text-sm text-gray-500 truncate">
-                          {lastMessage?.content}
-                        </p>
-                      </div>
-                      <div className="text-xs text-gray-400">
-                        {new Date(lastMessage?.timestamp).toLocaleTimeString([], {
-                          hour: '2-digit',
-                          minute: '2-digit'
-                        })}
-                      </div>
+                {/* Conteúdo */}
+                <div className="flex-1 min-w-0">
+                  <div className="flex items-center justify-between mb-1">
+                    <h3 className="text-sm font-medium text-gray-700 truncate flex items-center gap-1">
+                      {conversation.isPinned && <Star className="w-3 h-3 text-amber-500 fill-current" />}
+                      {conversation.name}
+                    </h3>
+                    <span className="text-xs text-gray-500 flex-shrink-0 ml-2">
+                      {conversation.lastMessage && formatTime(conversation.lastMessage.timestamp)}
+                    </span>
+                  </div>
+                  <div className="flex items-center justify-between">
+                    <p className="text-xs text-gray-600 truncate">
+                      {conversation.lastMessage?.content}
+                    </p>
+                    <div className="flex items-center gap-2 flex-shrink-0 ml-2">
+                      {conversation.isMuted && <BellOff className="w-3 h-3 text-gray-400" />}
+                      {conversation.unreadCount > 0 && (
+                        <span className="px-1.5 py-0.5 text-xs bg-primary text-white rounded-full font-medium min-w-[20px] text-center">
+                          {conversation.unreadCount}
+                        </span>
+                      )}
                     </div>
-                  </button>
-                )
-              })}
+                  </div>
+                </div>
+              </div>
+            </div>
+          ))}
+        </div>
+      </div>
+
+      {/* Área de Chat */}
+      {selectedConversation ? (
+        <div className="flex-1 flex flex-col h-full min-w-0">
+          {/* Cabeçalho do Chat */}
+          <div className="bg-white p-4 flex-shrink-0 border-b border-gray-200">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-3 min-w-0">
+                <div className="relative flex-shrink-0">
+                  <div className={`w-9 h-9 rounded-full flex items-center justify-center font-semibold text-white ${
+                    selectedConversation.type === 'group' ? 'bg-purple-500' : 'bg-blue-500'
+                  }`}>
+                    {selectedConversation.type === 'group' ? (
+                      <Users className="w-4 h-4" />
+                    ) : (
+                      <span className="text-sm">
+                        {selectedConversation.name.charAt(0).toUpperCase()}
+                      </span>
+                    )}
+                  </div>
+                  {selectedConversation.type === 'direct' && (
+                    <div className={`absolute bottom-0 right-0 w-2 h-2 rounded-full border-2 border-white ${
+                      getStatusColor(selectedConversation.participants[0]?.status || 'offline')
+                    }`} />
+                  )}
+                </div>
+                <div className="min-w-0">
+                  <h3 className="text-sm font-medium text-gray-700 truncate">{selectedConversation.name}</h3>
+                  <p className="text-xs text-gray-500">
+                    {selectedConversation.type === 'group' 
+                      ? `${selectedConversation.participants.length} participantes`
+                      : selectedConversation.participants[0]?.status === 'online' 
+                        ? 'Online agora' 
+                        : 'Offline'
+                    }
+                  </p>
+                </div>
+              </div>
+              
+              <div className="flex items-center gap-2">
+                <button className="p-2 hover:bg-gray-100 rounded-lg transition-colors">
+                  <Phone className="w-5 h-5 text-gray-600" />
+                </button>
+                <button className="p-2 hover:bg-gray-100 rounded-lg transition-colors">
+                  <Video className="w-5 h-5 text-gray-600" />
+                </button>
+                <button 
+                  onClick={() => setShowUserInfo(!showUserInfo)}
+                  className="p-2 hover:bg-gray-100 rounded-lg transition-colors"
+                >
+                  <MoreVertical className="w-5 h-5 text-gray-600" />
+                </button>
+              </div>
             </div>
           </div>
 
-          {/* Chat Messages */}
-          <div className="col-span-2 bg-white rounded-lg shadow-lg overflow-hidden">
-            {selectedChatData ? (
-              <>
-                <div className="p-4 border-b border-gray-200">
-                  <h2 className="text-lg font-semibold text-[#1B365D]">
-                    {getParticipantInfo(
-                      selectedChatData.participants.find(p => p !== user.id) || ''
-                    )?.name}
-                  </h2>
-                </div>
-                <div className="h-[calc(100%-8rem)] overflow-y-auto p-4 space-y-4">
-                  {selectedChatData.messages.map(message => {
-                    const isOwn = message.sender === user.id
-                    return (
-                      <div
-                        key={message.id}
-                        className={`flex ${isOwn ? 'justify-end' : 'justify-start'}`}
-                      >
-                        <div
-                          className={`max-w-[70%] rounded-lg p-3 ${
-                            isOwn
-                              ? 'bg-[#1B365D] text-white'
-                              : 'bg-gray-100 text-gray-900'
-                          }`}
-                        >
-                          <p className="text-sm">{message.content}</p>
-                          <p
-                            className={`text-xs mt-1 ${
-                              isOwn ? 'text-blue-200' : 'text-gray-500'
-                            }`}
-                          >
-                            {new Date(message.timestamp).toLocaleTimeString([], {
-                              hour: '2-digit',
-                              minute: '2-digit'
-                            })}
-                          </p>
-                        </div>
+          {/* Mensagens */}
+          <div className="flex-1 overflow-y-auto p-4 space-y-4 bg-gray-50">
+            {messages.map((message, index) => {
+              const isCurrentUser = message.senderId === 'current';
+              const showDate = index === 0 || 
+                formatDate(message.timestamp) !== formatDate(messages[index - 1].timestamp);
+
+              return (
+                <React.Fragment key={message.id}>
+                  {showDate && (
+                    <div className="text-center my-4">
+                      <span className="px-3 py-1 text-xs bg-white text-gray-600 rounded-full shadow-sm">
+                        {formatDate(message.timestamp)}
+                      </span>
+                    </div>
+                  )}
+                  
+                  <div className={`flex ${isCurrentUser ? 'justify-end' : 'justify-start'}`}>
+                    <div className={`max-w-xs lg:max-w-md rounded-2xl px-4 py-2 shadow-sm ${
+                      isCurrentUser 
+                        ? 'bg-primary text-white' 
+                        : 'bg-white text-gray-600'
+                    }`}>
+                      <p className="text-sm">{message.content}</p>
+                      <div className={`flex items-center justify-end gap-1 mt-1 ${
+                        isCurrentUser ? 'text-blue-100' : 'text-gray-500'
+                      }`}>
+                        <span className="text-xs">{formatTime(message.timestamp)}</span>
+                        {isCurrentUser && getStatusIcon(message.status)}
                       </div>
-                    )
-                  })}
+                    </div>
+                  </div>
+                </React.Fragment>
+              );
+            })}
+            
+            {isTyping && (
+              <div className="flex justify-start">
+                <div className="bg-white rounded-2xl px-4 py-2 shadow-sm">
+                  <div className="flex gap-1">
+                    <Circle className="w-2 h-2 fill-gray-400 animate-bounce" />
+                    <Circle className="w-2 h-2 fill-gray-400 animate-bounce delay-100" />
+                    <Circle className="w-2 h-2 fill-gray-400 animate-bounce delay-200" />
+                  </div>
                 </div>
-                <div className="p-4 border-t border-gray-200">
-                  <form className="flex space-x-2">
-                    <input
-                      type="text"
-                      placeholder="Digite sua mensagem..."
-                      className="input-field flex-1"
-                    />
-                    <button type="submit" className="btn-primary">
-                      Enviar
-                    </button>
-                  </form>
+              </div>
+            )}
+            
+            <div ref={messagesEndRef} />
+          </div>
+
+          {/* Input de Mensagem */}
+          <form onSubmit={handleSendMessage} className="bg-white p-4 flex-shrink-0 border-t border-gray-200">
+            <div className="flex items-end gap-2">
+              <button
+                type="button"
+                className="p-2 hover:bg-gray-100 rounded-lg transition-colors"
+              >
+                <Paperclip className="w-5 h-5 text-gray-600" />
+              </button>
+              
+              <div className="flex-1">
+                <input
+                  type="text"
+                  value={newMessage}
+                  onChange={(e) => setNewMessage(e.target.value)}
+                  placeholder="Digite uma mensagem..."
+                  className="w-full px-4 py-2 bg-gray-100 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent text-gray-700"
+                />
+              </div>
+              
+              <button
+                type="button"
+                className="p-2 hover:bg-gray-100 rounded-lg transition-colors"
+              >
+                <Smile className="w-5 h-5 text-gray-600" />
+              </button>
+              
+              <button
+                type="submit"
+                disabled={!newMessage.trim()}
+                className="p-2 bg-primary text-white rounded-lg hover:bg-primary-dark transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+              >
+                <Send className="w-5 h-5" />
+              </button>
+            </div>
+          </form>
+        </div>
+      ) : (
+        <div className="flex-1 flex items-center justify-center bg-gray-50 h-full">
+          <div className="text-center">
+            <MessageSquare className="w-16 h-16 text-gray-400 mx-auto mb-4" />
+            <p className="text-gray-500 text-lg">Selecione uma conversa para começar</p>
+            <p className="text-gray-400 text-sm mt-2">Suas mensagens aparecerão aqui</p>
+          </div>
+        </div>
+      )}
+
+      {/* Painel de Informações */}
+      {showUserInfo && selectedConversation && (
+        <div className="w-64 lg:w-80 max-w-[320px] bg-white flex flex-col h-full border-l border-gray-200 overflow-hidden">
+          <div className="p-3 lg:p-4 overflow-y-auto h-full">
+            <div className="text-center mb-4 lg:mb-6">
+              <div className={`w-14 h-14 lg:w-16 lg:h-16 rounded-full mx-auto mb-2 lg:mb-3 flex items-center justify-center font-semibold text-white ${
+                selectedConversation.type === 'group' ? 'bg-purple-500' : 'bg-blue-500'
+              }`}>
+                {selectedConversation.type === 'group' ? (
+                  <Users className="w-7 h-7 lg:w-8 lg:h-8" />
+                ) : (
+                  <span className="text-lg lg:text-xl">
+                    {selectedConversation.name.charAt(0).toUpperCase()}
+                  </span>
+                )}
+              </div>
+              <h3 className="font-medium text-sm lg:text-base text-gray-700">{selectedConversation.name}</h3>
+              {selectedConversation.type === 'direct' && (
+                <p className="text-xs lg:text-sm text-gray-600">
+                  {selectedConversation.participants[0]?.role}
+                </p>
+              )}
+            </div>
+
+            <div className="space-y-1 lg:space-y-2">
+              <button className="w-full p-2 lg:p-3 hover:bg-gray-50 rounded-lg flex items-center gap-2 lg:gap-3 transition-colors text-gray-700">
+                {selectedConversation.isMuted ? <Bell className="w-4 h-4" /> : <BellOff className="w-4 h-4" />}
+                <span className="text-xs lg:text-sm">{selectedConversation.isMuted ? 'Ativar notificações' : 'Silenciar'}</span>
+              </button>
+              
+              <button className="w-full p-2 lg:p-3 hover:bg-gray-50 rounded-lg flex items-center gap-2 lg:gap-3 transition-colors text-gray-700">
+                <Star className="w-4 h-4" />
+                <span className="text-xs lg:text-sm">{selectedConversation.isPinned ? 'Desafixar' : 'Fixar'} conversa</span>
+              </button>
+              
+              <button className="w-full p-2 lg:p-3 hover:bg-gray-50 rounded-lg flex items-center gap-2 lg:gap-3 transition-colors text-gray-700">
+                <Archive className="w-4 h-4" />
+                <span className="text-xs lg:text-sm">Arquivar conversa</span>
+              </button>
+              
+              <button className="w-full p-2 lg:p-3 hover:bg-red-50 rounded-lg flex items-center gap-2 lg:gap-3 transition-colors text-red-600">
+                <Trash2 className="w-4 h-4" />
+                <span className="text-xs lg:text-sm">Apagar conversa</span>
+              </button>
+            </div>
+
+            {selectedConversation.type === 'group' && (
+              <div className="mt-4 lg:mt-6">
+                <h4 className="text-xs lg:text-sm font-medium text-gray-700 mb-2 lg:mb-3">Participantes ({selectedConversation.participants.length})</h4>
+                <div className="space-y-1 lg:space-y-2">
+                  {selectedConversation.participants.map((participant) => (
+                    <div key={participant.id} className="flex items-center gap-2 lg:gap-3 p-1.5 lg:p-2 rounded-lg hover:bg-gray-50 transition-colors">
+                      <div className="relative">
+                        <div className="w-7 h-7 lg:w-8 lg:h-8 bg-gray-300 rounded-full flex items-center justify-center text-white bg-gradient-to-br from-blue-400 to-blue-600">
+                          <span className="text-xs font-medium">
+                            {participant.name.charAt(0).toUpperCase()}
+                          </span>
+                        </div>
+                        <div className={`absolute bottom-0 right-0 w-1.5 h-1.5 lg:w-2 lg:h-2 rounded-full border border-white ${
+                          getStatusColor(participant.status)
+                        }`} />
+                      </div>
+                      <div className="flex-1 min-w-0">
+                        <p className="text-xs lg:text-sm font-medium text-gray-700 truncate">{participant.name}</p>
+                        <p className="text-xs text-gray-500">{participant.role}</p>
+                      </div>
+                    </div>
+                  ))}
                 </div>
-              </>
-            ) : (
-              <div className="h-full flex items-center justify-center text-gray-500">
-                Selecione uma conversa para começar
               </div>
             )}
           </div>
         </div>
-      </main>
+      )}
     </div>
-  )
+  );
 }

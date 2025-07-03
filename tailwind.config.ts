@@ -1,30 +1,191 @@
 import type { Config } from 'tailwindcss'
 
 const config: Config = {
-  content: [
-    './src/**/*.{js,ts,jsx,tsx,mdx}',
+    darkMode: ['class'],
+    content: [
+    './src/pages/**/*.{js,ts,jsx,tsx,mdx}',
+    './src/components/**/*.{js,ts,jsx,tsx,mdx}',
+    './src/app/**/*.{js,ts,jsx,tsx,mdx}',
   ],
   theme: {
-    extend: {
-      colors: {
-        // Educational Colors
-        primary: '#3B82F6',    // Blue 500 - Main brand color
-        secondary: '#2563EB',  // Blue 600 - Secondary actions
-        accent: '#60A5FA',     // Blue 400 - Highlights
-        success: '#4CAF50',    // Green - Positive feedback
-        warning: '#FBBF24',    // Amber - Attention/caution
-        info: '#2196F3',       // Light Blue - Information
-        error: '#FF5252',      // Red - Error states
-        
-        // Text and Background
-        background: '#FFFFFF',
-        'background-alt': '#DBEAFE',
-        text: '#212121',
-        'text-secondary': '#757575'
-      }
-    },
+  	extend: {
+  		colors: {
+  			primary: {
+  				DEFAULT: 'hsl(var(--primary))',
+  				dark: '#357ABD',
+  				light: '#7BB6F3',
+  				foreground: 'hsl(var(--primary-foreground))'
+  			},
+  			secondary: {
+  				DEFAULT: 'hsl(var(--secondary))',
+  				dark: '#718096',
+  				light: '#E2E8F0',
+  				foreground: 'hsl(var(--secondary-foreground))'
+  			},
+  			accent: {
+  				blue: {
+  					DEFAULT: '#3B82F6',
+  					dark: '#2563EB',
+  					light: '#60A5FA'
+  				},
+  				green: {
+  					DEFAULT: '#10B981',
+  					dark: '#059669',
+  					light: '#34D399'
+  				},
+  				orange: {
+  					DEFAULT: '#F59E0B',
+  					dark: '#D97706',
+  					light: '#FBBF24'
+  				},
+  				purple: {
+  					DEFAULT: '#8B5CF6',
+  					dark: '#7C3AED',
+  					light: '#A78BFA'
+  				},
+  				yellow: {
+  					DEFAULT: '#FBBF24',
+  					dark: '#F59E0B',
+  					light: '#FCD34D'
+  				},
+  				DEFAULT: 'hsl(var(--accent))',
+  				foreground: 'hsl(var(--accent-foreground))'
+  			},
+  			success: {
+  				DEFAULT: '#10B981',
+  				dark: '#059669',
+  				light: '#34D399',
+  				text: '#065F46'
+  			},
+  			warning: {
+  				DEFAULT: '#F59E0B',
+  				dark: '#D97706',
+  				light: '#FBBF24',
+  				text: '#9A3412'
+  			},
+  			error: {
+  				DEFAULT: '#EF4444',
+  				dark: '#DC2626',
+  				light: '#F87171',
+  				text: '#991B1B'
+  			},
+  			info: {
+  				DEFAULT: '#3B82F6',
+  				dark: '#2563EB',
+  				light: '#60A5FA',
+  				text: '#1E40AF'
+  			},
+  			background: 'hsl(var(--background))',
+  			text: {
+  				primary: '#374151',
+  				secondary: '#6B7280',
+  				tertiary: '#9CA3AF',
+  				disabled: '#D1D5DB'
+  			},
+  			border: 'hsl(var(--border))',
+  			sidebar: {
+  				bg: '#0f3460',
+  				hover: '#1e4d82',
+  				active: '#1e40af',
+  				text: '#e2e8f0',
+  				textActive: '#ffffff',
+  				border: '#E2E8F0'
+  			},
+  			foreground: 'hsl(var(--foreground))',
+  			card: {
+  				DEFAULT: 'hsl(var(--card))',
+  				foreground: 'hsl(var(--card-foreground))'
+  			},
+  			popover: {
+  				DEFAULT: 'hsl(var(--popover))',
+  				foreground: 'hsl(var(--popover-foreground))'
+  			},
+  			muted: {
+  				DEFAULT: 'hsl(var(--muted))',
+  				foreground: 'hsl(var(--muted-foreground))'
+  			},
+  			destructive: {
+  				DEFAULT: 'hsl(var(--destructive))',
+  				foreground: 'hsl(var(--destructive-foreground))'
+  			},
+  			input: 'hsl(var(--input))',
+  			ring: 'hsl(var(--ring))',
+  			chart: {
+  				'1': 'hsl(var(--chart-1))',
+  				'2': 'hsl(var(--chart-2))',
+  				'3': 'hsl(var(--chart-3))',
+  				'4': 'hsl(var(--chart-4))',
+  				'5': 'hsl(var(--chart-5))'
+  			}
+  		},
+  		animation: {
+  			'fade-in': 'fadeIn 0.3s ease-in-out',
+  			'slide-up': 'slideUp 0.3s ease-out',
+  			'slide-down': 'slideDown 0.3s ease-out',
+  			'shimmer': 'shimmer 3s ease-in-out infinite',
+  			'wave-slow': 'wave 8s ease-in-out infinite',
+  			'wave-fast': 'wave 6s ease-in-out infinite 0.5s'
+  		},
+  		keyframes: {
+  			fadeIn: {
+  				'0%': {
+  					opacity: '0'
+  				},
+  				'100%': {
+  					opacity: '1'
+  				}
+  			},
+  			slideUp: {
+  				'0%': {
+  					transform: 'translateY(100%)',
+  					opacity: '0'
+  				},
+  				'100%': {
+  					transform: 'translateY(0)',
+  					opacity: '1'
+  				}
+  			},
+  			slideDown: {
+  				'0%': {
+  					transform: 'translateY(-100%)',
+  					opacity: '0'
+  				},
+  				'100%': {
+  					transform: 'translateY(0)',
+  					opacity: '1'
+  				}
+  			},
+  			shimmer: {
+  				'0%': {
+  					transform: 'translateX(-100%) skewX(-15deg)'
+  				},
+  				'50%': {
+  					transform: 'translateX(100%) skewX(-15deg)'
+  				},
+  				'100%': {
+  					transform: 'translateX(100%) skewX(-15deg)'
+  				}
+  			},
+  			wave: {
+  				'0%': {
+  					transform: 'translateY(10%) translateX(-5%) scaleY(0.5)'
+  				},
+  				'50%': {
+  					transform: 'translateY(10%) translateX(5%) scaleY(0.7)'
+  				},
+  				'100%': {
+  					transform: 'translateY(10%) translateX(-5%) scaleY(0.5)'
+  				}
+  			}
+  		},
+  		borderRadius: {
+  			lg: 'var(--radius)',
+  			md: 'calc(var(--radius) - 2px)',
+  			sm: 'calc(var(--radius) - 4px)'
+  		}
+  	}
   },
-  plugins: []
+  plugins: [require("tailwindcss-animate")],
 }
 
 export default config

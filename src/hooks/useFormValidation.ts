@@ -68,18 +68,18 @@ export function useFormValidation<T extends Record<string, any>>(
 
   const validateForm = useCallback((): boolean => {
     const newErrors: FormErrors<T> = {}
-    let isValid = true
+    let formIsValid = true
 
-    (Object.keys(values) as Array<keyof T>).forEach((key) => {
+    for (const key in values) {
       const error = validateField(key, values[key])
       if (error) {
         newErrors[key] = error
-        isValid = false
+        formIsValid = false
       }
-    })
+    }
 
     setErrors(newErrors)
-    return isValid
+    return formIsValid
   }, [values, validateField])
 
   const handleChange = useCallback((

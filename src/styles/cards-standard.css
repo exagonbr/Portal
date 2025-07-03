@@ -1,0 +1,500 @@
+/* Estilos padronizados para cards da aplicação Portal */
+
+/* Cards de Estatísticas Premium - Versão Ultra Compacta */
+.stat-card {
+  @apply relative overflow-hidden rounded-lg shadow-sm hover:shadow-md transition-all duration-200 border transform hover:-translate-y-0.5 hover:scale-[1.01];
+}
+
+.stat-card-blue {
+  @apply bg-gradient-to-br from-blue-500 via-indigo-600 to-purple-700 border-blue-300;
+}
+
+.stat-card-green {
+  @apply bg-gradient-to-br from-green-500 via-emerald-600 to-teal-700 border-green-300;
+}
+
+.stat-card-purple {
+  @apply bg-gradient-to-br from-purple-500 via-violet-600 to-fuchsia-700 border-purple-300;
+}
+
+.stat-card-amber {
+  @apply bg-gradient-to-br from-amber-500 via-orange-600 to-red-700 border-amber-300;
+}
+
+.stat-card-red {
+  @apply bg-gradient-to-br from-red-500 via-pink-600 to-rose-700 border-red-300;
+}
+
+.stat-card-cyan {
+  @apply bg-gradient-to-br from-cyan-500 via-sky-600 to-blue-700 border-cyan-300;
+}
+
+.stat-card-emerald {
+  @apply bg-gradient-to-br from-emerald-500 via-green-600 to-teal-700 border-emerald-300;
+}
+
+.stat-card-violet {
+  @apply bg-gradient-to-br from-violet-500 via-purple-600 to-indigo-700 border-violet-300;
+}
+
+/* Efeito de brilho animado - Muito sutil */
+.stat-card-shine {
+  @apply absolute inset-0 bg-gradient-to-r from-transparent via-white/5 to-transparent -skew-x-12 transform translate-x-[-100%] transition-transform duration-500;
+}
+
+.stat-card:hover .stat-card-shine {
+  transform: translateX(100%) skewX(-12deg);
+}
+
+/* Partículas de fundo animadas - Muito discretas */
+.stat-card-particles {
+  @apply absolute inset-0 opacity-10;
+}
+
+.stat-card-particle-1 {
+  @apply absolute top-2 left-4 w-1 h-1 bg-white rounded-full animate-pulse;
+}
+
+.stat-card-particle-2 {
+  @apply absolute top-4 right-6 w-0.5 h-0.5 bg-white/60 rounded-full animate-ping;
+}
+
+.stat-card-particle-3 {
+  @apply absolute bottom-4 left-6 w-0.5 h-0.5 bg-white/40 rounded-full animate-pulse;
+  animation-delay: 300ms;
+}
+
+.stat-card-particle-4 {
+  @apply absolute bottom-6 right-4 w-0.5 h-0.5 bg-white/50 rounded-full animate-ping;
+  animation-delay: 500ms;
+}
+
+/* Conteúdo do card - Ultra compacto */
+.stat-card-content {
+  @apply relative p-3 text-white;
+}
+
+.stat-card-icon-wrapper {
+  @apply p-1.5 bg-white/20 backdrop-blur-sm rounded-md shadow-sm transition-all duration-200 border border-white/30;
+}
+
+.stat-card:hover .stat-card-icon-wrapper {
+  transform: scale(1.03) rotate(2deg);
+}
+
+.stat-card-icon {
+  @apply w-4 h-4 text-white drop-shadow-lg;
+}
+
+.stat-card-value {
+  @apply text-lg font-bold text-white drop-shadow-lg tracking-tight;
+}
+
+.stat-card-indicator {
+  @apply w-1.5 h-1.5 bg-white/60 rounded-full animate-pulse shadow-sm;
+}
+
+.stat-card-label {
+  @apply text-xs text-white/80 font-medium tracking-wide;
+}
+
+.stat-card-title {
+  @apply text-xs font-bold text-white mb-0.5 drop-shadow-md;
+}
+
+.stat-card-subtitle {
+  @apply text-white/80 text-xs font-normal;
+}
+
+/* Cards de Conteúdo Modernos - Ultra compactos */
+.content-card {
+  @apply bg-white rounded-lg shadow-sm hover:shadow-md transition-all duration-200 overflow-hidden cursor-pointer border border-gray-100 hover:border-blue-200 transform hover:-translate-y-0.5;
+}
+
+.content-card-header {
+  @apply relative;
+}
+
+.content-card-header-gradient {
+  @apply h-auto py-3 bg-gradient-to-r from-gray-800 to-gray-900 relative overflow-hidden;
+}
+
+.content-card-header-particles {
+  @apply absolute inset-0 opacity-5;
+}
+
+.content-card-header-particle-1 {
+  @apply absolute top-1 left-3 w-1 h-1 bg-white rounded-full animate-pulse;
+}
+
+.content-card-header-particle-2 {
+  @apply absolute top-3 right-4 w-0.5 h-0.5 bg-white/60 rounded-full animate-ping;
+}
+
+.content-card-header-particle-3 {
+  @apply absolute bottom-3 left-4 w-0.5 h-0.5 bg-white/40 rounded-full animate-pulse;
+  animation-delay: 300ms;
+}
+
+.content-card-header-particle-4 {
+  @apply absolute bottom-4 right-3 w-0.5 h-0.5 bg-white/50 rounded-full animate-ping;
+  animation-delay: 500ms;
+}
+
+.content-card-header-content {
+  @apply relative z-10 p-3 text-white;
+}
+
+.content-card-icon-wrapper {
+  @apply p-1.5 rounded-md shadow-sm transition-all duration-200 border border-white/30;
+}
+
+.content-card:hover .content-card-icon-wrapper {
+  transform: scale(1.03) rotate(2deg);
+}
+
+.content-card-icon {
+  @apply w-4 h-4 text-white drop-shadow-lg;
+}
+
+.content-card-title {
+  @apply text-sm font-bold text-white drop-shadow-md;
+}
+
+.content-card-subtitle {
+  @apply text-white/80 text-xs;
+}
+
+.content-card-body {
+  @apply p-3;
+}
+
+.content-card-footer {
+  @apply px-3 py-2 bg-gradient-to-r from-gray-50 to-gray-100 border-t border-gray-100;
+}
+
+/* Badge de Status - Ultra compacto */
+.status-badge {
+  @apply inline-flex items-center px-1.5 py-0.5 text-xs font-medium rounded-full cursor-pointer transition-transform;
+}
+
+.content-card:hover .status-badge {
+  transform: scale(1.02);
+}
+
+.status-badge-active {
+  @apply bg-green-100 text-green-800;
+}
+
+.status-badge-inactive {
+  @apply bg-red-100 text-red-800;
+}
+
+/* Descrição com citação */
+.description-box {
+  @apply relative bg-gradient-to-br from-gray-50 to-gray-100 rounded-md p-2 border border-gray-200;
+}
+
+.description-quote-icon {
+  @apply absolute top-1 right-1 w-3 h-3 text-gray-300;
+}
+
+.description-text {
+  @apply text-sm text-gray-700 leading-relaxed pr-6;
+}
+
+/* Seção de estatísticas destacada */
+.stats-highlight {
+  @apply flex items-center gap-3 p-3 bg-gradient-to-r rounded-xl border;
+}
+
+.stats-highlight-blue {
+  @apply from-blue-50 to-indigo-50 border-blue-100;
+}
+
+.stats-highlight-green {
+  @apply from-green-50 to-emerald-50 border-green-100;
+}
+
+.stats-highlight-purple {
+  @apply from-purple-50 to-violet-50 border-purple-100;
+}
+
+.stats-highlight-amber {
+  @apply from-amber-50 to-orange-50 border-amber-100;
+}
+
+.stats-highlight-icon {
+  @apply p-2 rounded-lg;
+}
+
+.stats-highlight-icon-blue {
+  @apply bg-blue-500;
+}
+
+.stats-highlight-icon-green {
+  @apply bg-green-500;
+}
+
+.stats-highlight-icon-purple {
+  @apply bg-purple-500;
+}
+
+.stats-highlight-icon-amber {
+  @apply bg-amber-500;
+}
+
+.stats-highlight-text {
+  @apply font-semibold text-sm;
+}
+
+.stats-highlight-text-blue {
+  @apply text-blue-700;
+}
+
+.stats-highlight-text-green {
+  @apply text-green-700;
+}
+
+.stats-highlight-text-purple {
+  @apply text-purple-700;
+}
+
+.stats-highlight-text-amber {
+  @apply text-amber-700;
+}
+
+.stats-highlight-subtext {
+  @apply text-xs;
+}
+
+.stats-highlight-subtext-blue {
+  @apply text-blue-600;
+}
+
+.stats-highlight-subtext-green {
+  @apply text-green-600;
+}
+
+.stats-highlight-subtext-purple {
+  @apply text-purple-600;
+}
+
+.stats-highlight-subtext-amber {
+  @apply text-amber-600;
+}
+
+/* Botões de ação do footer */
+.footer-action-text {
+  @apply flex items-center gap-1 text-xs font-medium transition-colors;
+}
+
+.footer-action-text-blue {
+  @apply text-blue-600;
+}
+
+.content-card:hover .footer-action-text {
+  @apply text-blue-700;
+}
+
+.footer-action-indicator {
+  @apply w-1 h-1 bg-blue-400 rounded-full;
+}
+
+.content-card:hover .footer-action-indicator {
+  animation: bounce 1s infinite;
+}
+
+/* Elementos específicos dos cards de estatísticas */
+.stat-card-particles {
+  @apply absolute inset-0 opacity-30;
+}
+
+.stat-card-particle-1 {
+  @apply absolute top-4 left-8 w-2 h-2 bg-white rounded-full animate-pulse;
+}
+
+.stat-card-particle-2 {
+  @apply absolute top-8 right-12 w-1 h-1 bg-white/60 rounded-full animate-ping;
+}
+
+.stat-card-particle-3 {
+  @apply absolute bottom-8 left-12 w-1.5 h-1.5 bg-white/40 rounded-full animate-pulse;
+  animation-delay: 300ms;
+}
+
+.stat-card-particle-4 {
+  @apply absolute bottom-12 right-8 w-1 h-1 bg-white/50 rounded-full animate-ping;
+  animation-delay: 500ms;
+}
+
+.stat-card-content {
+  @apply relative p-6 text-white;
+}
+
+.stat-card-value {
+  @apply text-5xl font-bold text-white drop-shadow-lg tracking-tight;
+}
+
+.stat-card-label {
+  @apply text-sm text-white/80 font-semibold tracking-wide;
+}
+
+.stat-card-indicator {
+  @apply w-3 h-3 bg-white/60 rounded-full animate-pulse shadow-lg;
+}
+
+.stat-card-title {
+  @apply text-xl font-bold text-white mb-1 drop-shadow-md;
+}
+
+.stat-card-subtitle {
+  @apply text-white/80 text-sm font-medium;
+}
+
+.stat-card-icon {
+  @apply w-7 h-7 text-white drop-shadow-lg;
+}
+
+/* Elementos específicos dos cards de conteúdo */
+.content-card-header {
+  @apply relative;
+}
+
+.content-card-header-gradient {
+  @apply h-auto py-8 bg-gradient-to-r from-gray-800 to-gray-900 relative overflow-hidden;
+}
+
+.content-card-header-particles {
+  @apply absolute inset-0 opacity-10;
+}
+
+.content-card-header-particle-1 {
+  @apply absolute top-4 left-8 w-2 h-2 bg-white rounded-full animate-pulse;
+}
+
+.content-card-header-particle-2 {
+  @apply absolute top-8 right-12 w-1 h-1 bg-white/60 rounded-full animate-ping;
+}
+
+.content-card-header-particle-3 {
+  @apply absolute bottom-8 left-12 w-1.5 h-1.5 bg-white/40 rounded-full animate-pulse;
+  animation-delay: 300ms;
+}
+
+.content-card-header-particle-4 {
+  @apply absolute bottom-12 right-8 w-1 h-1 bg-white/50 rounded-full animate-ping;
+  animation-delay: 500ms;
+}
+
+.content-card-header-content {
+  @apply relative z-10 p-6 text-white;
+}
+
+.content-card-title {
+  @apply text-lg font-bold text-white drop-shadow-md;
+}
+
+.content-card-subtitle {
+  @apply text-white/80 text-sm;
+}
+
+.content-card-body {
+  @apply p-6;
+}
+
+.content-card-footer {
+  @apply px-6 py-4 bg-gradient-to-r from-gray-50 to-gray-100 border-t border-gray-100;
+}
+
+.content-card-icon {
+  @apply w-6 h-6 text-white drop-shadow-lg;
+}
+
+/* Badges de status */
+.status-badge-active {
+  @apply bg-green-100 text-green-800;
+}
+
+.status-badge-inactive {
+  @apply bg-red-100 text-red-800;
+}
+
+/* Caixa de descrição */
+.description-box {
+  @apply relative bg-gradient-to-br from-gray-50 to-gray-100 rounded-xl p-4 border border-gray-200;
+}
+
+.description-quote-icon {
+  @apply absolute top-3 right-3 w-4 h-4 text-gray-300;
+}
+
+.description-text {
+  @apply text-sm text-gray-700 leading-relaxed pr-6;
+}
+
+/* Botões de ação */
+.action-button {
+  @apply p-2 rounded-lg transition-colors;
+}
+
+.action-button-edit {
+  @apply text-gray-600 hover:text-blue-600 hover:bg-blue-50;
+}
+
+.action-button-delete {
+  @apply text-gray-600 hover:text-red-600 hover:bg-red-50;
+}
+
+.action-button {
+  @apply p-2 rounded-lg transition-colors;
+}
+
+.action-button-edit {
+  @apply text-gray-600 hover:text-blue-600 hover:bg-blue-50;
+}
+
+.action-button-delete {
+  @apply text-gray-600 hover:text-red-600 hover:bg-red-50;
+}
+
+/* Animações personalizadas */
+@keyframes fade-in {
+  from { 
+    opacity: 0; 
+    transform: translateY(-10px); 
+  }
+  to { 
+    opacity: 1; 
+    transform: translateY(0); 
+  }
+}
+
+.animate-fade-in {
+  animation: fade-in 0.3s ease-out;
+}
+
+/* Responsividade */
+@media (max-width: 640px) {
+  .stat-card-value {
+    @apply text-3xl;
+  }
+  
+  .stat-card-title {
+    @apply text-lg;
+  }
+  
+  .content-card-title {
+    @apply text-base;
+  }
+}
+
+@media (max-width: 768px) {
+  .stat-card-value {
+    @apply text-4xl;
+  }
+  
+  .stat-card-title {
+    @apply text-lg;
+  }
+} 
