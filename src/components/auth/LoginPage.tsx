@@ -11,6 +11,7 @@ import { getDashboardPath } from '@/utils/roleRedirect';
 import { MotionDiv, MotionH1, MotionP } from '@/components/ui/MotionWrapper';
 import { getTheme } from '@/config/themes';
 import { useEffect, useState } from 'react';
+import { FRONTEND_URL, buildUrl } from '@/config/urls';
 
 export function LoginPage() {
   const router = useRouter();
@@ -160,10 +161,11 @@ export function LoginPage() {
       
       console.log(`🎯 Redirecionando usuário autenticado para: ${targetPath}`);
       
-      // CORREÇÃO: Usar window.location.href para redirecionamento mais confiável
+      // CORREÇÃO: Usar FRONTEND_URL para redirecionamento mais confiável
       setTimeout(() => {
-        const baseUrl = process.env.NEXT_PUBLIC_API_URL?.replace('/api', '') || '';
-        window.location.href = `${baseUrl}${targetPath}`;
+        const fullUrl = buildUrl(FRONTEND_URL, targetPath!);
+        console.log(`🌐 Redirecionando para URL completa: ${fullUrl}`);
+        window.location.href = fullUrl;
       }, 300);
     }
   }, [authContext, router, mounted]);

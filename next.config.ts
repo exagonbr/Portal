@@ -560,6 +560,12 @@ const nextConfig: NextConfig = {
         ? `${process.env.FRONTEND_URL || 'https://portal.sabercon.com.br'}/api`
         : 'http://localhost:3001/api'
     ),
+    // Expor FRONTEND_URL para o cliente
+    NEXT_PUBLIC_FRONTEND_URL: process.env.FRONTEND_URL || (
+      isProd
+        ? 'https://portal.sabercon.com.br'
+        : 'http://localhost:3000'
+    ),
   },
 
   // Configurações de proxy HTTP
