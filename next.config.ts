@@ -161,6 +161,40 @@ const nextConfig: NextConfig = {
     ];
 
     return [
+      // Headers para a API (Proxy) com cache diferenciado
+      {
+        source: '/api/:path*',
+        headers: [
+          {
+            key: 'Cache-Control',
+            value: isDev
+              ? 'no-store, no-cache, must-revalidate'
+              : 'public, s-maxage=300, max-age=60, stale-while-revalidate=3600',
+          },
+          {
+            key: 'X-Proxy-Cache',
+            value: isDev ? 'BYPASS' : 'HIT',
+          },
+          {
+            key: 'Vary',
+            value: 'Accept-Encoding, Authorization',
+          },
+        ],
+      },
+      // Headers específicos para uploads
+      {
+        source: '/uploads/:path*',
+        headers: [
+          {
+            key: 'Cache-Control',
+            value: 'public, max-age=31536000, immutable',
+          },
+          {
+            key: 'X-Content-Type-Options',
+            value: 'nosniff',
+          },
+        ],
+      },
       // Headers específicos para arquivos JavaScript
       {
         source: '/:path*.js',
@@ -459,27 +493,78 @@ const nextConfig: NextConfig = {
     ];
   },
 
-  // Configuração de rewrites - DESABILITADO em produção para evitar loops
+  // Configuração de rewrites - Proxy para backend
   async rewrites() {
-    // Em produção, o Nginx faz o roteamento - não usar proxy interno
-    if (isProd) {
-      return [];
-    }
-    
-    // Apenas em desenvolvimento usar proxy para backend
-    return [
-      {
-        source: '/api/:path*',
-        destination: 'https://portal.sabercon.com.br/api/:path*'
-      }
-    ];
+    const backendUrl = process.env.BACKEND_URL || (
+      isProd
+        ? 'https://portal.sabercon.com.br'
+        : 'http://localhost:3001'
+    );
+
+    return {
+      beforeFiles: [
+        // Proxy para API com cache headers
+        {
+          source: '/api/:path*',
+          destination: `${backendUrl}/api/:path*`,
+          has: [
+            {
+              type: 'header',
+              key: 'x-no-cache',
+              value: '(?<hasNoCache>.*)',
+            },
+          ],
+        },
+        // Proxy padrão para API
+        {
+          source: '/api/:path*',
+          destination: `${backendUrl}/api/:path*`,
+        },
+      ],
+      afterFiles: [
+        // Proxy para assets estáticos do backend
+        {
+          source: '/uploads/:path*',
+          destination: `${backendUrl}/uploads/:path*`,
+        },
+        // Proxy para arquivos públicos
+        {
+          source: '/public/:path*',
+          destination: `${backendUrl}/public/:path*`,
+        },
+      ],
+      fallback: [
+        // Fallback para rotas não encontradas
+        {
+          source: '/:path*',
+          destination: `${backendUrl}/:path*`,
+          has: [
+            {
+              type: 'header',
+              key: 'x-proxy-fallback',
+              value: '(?<hasFallback>.*)',
+            },
+          ],
+        },
+      ],
+    };
   },
 
   // Configuração para PWA (se aplicável)
   env: {
     CUSTOM_KEY: 'my-value',
     CACHE_VERSION: cacheVersion,
-    NEXT_PUBLIC_NODE_ENV: 'production'
+    NEXT_PUBLIC_NODE_ENV: process.env.NODE_ENV || 'production',
+    NEXT_PUBLIC_API_URL: process.env.BACKEND_URL || (
+      isProd
+        ? 'https://portal.sabercon.com.br/api'
+        : 'http://localhost:3001/api'
+    ),
+  },
+
+  // Configurações de proxy HTTP
+  httpAgentOptions: {
+    keepAlive: true,
   },
 };
 
