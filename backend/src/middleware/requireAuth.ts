@@ -2,9 +2,6 @@ import { Request, Response, NextFunction, RequestHandler } from 'express';
 import jwt from 'jsonwebtoken';
 import { JWT_CONFIG, AccessTokenPayload } from '../config/jwt';
 import db from '../config/database';
-import { user } from '@prisma/client';
-
-type User = user;
 
 declare global {
   namespace Express {
