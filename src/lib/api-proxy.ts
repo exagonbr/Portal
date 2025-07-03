@@ -6,6 +6,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { getServerSession } from 'next-auth';
 import { authOptions } from '@/lib/auth';
 import { API_CONFIG } from '@/config/constants';
+import { getCurrentToken } from '@/utils/token-validator';
 
 export interface ProxyOptions {
   requireAuth?: boolean;
@@ -75,6 +76,7 @@ async function handleProxyRequest(
 
     // Prepara headers
     const headers: Record<string, string> = {
+      Authorization: 'Bearer ' + getCurrentToken(),
       'Content-Type': 'application/json',
     };
 
@@ -161,6 +163,7 @@ export async function backendRequest<T = any>(
 
     // Prepara headers
     const headers: Record<string, string> = {
+      Authorization: 'Bearer ' + getCurrentToken(),
       'Content-Type': 'application/json',
       ...customHeaders,
     };

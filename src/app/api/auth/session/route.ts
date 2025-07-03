@@ -1,121 +1,89 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { requireAuth, extractToken, verifyToken, redisGet, redisDel, redisSet } from '@/middleware/auth';
+import { extractToken, verifyToken, redisGet, MOCK_USERS } from '@/middleware/auth';
 
 /**
  * Obter informações da sessão atual
- * GET /api/auth/session
- */
-export const GET = requireAuth(async (request: NextRequest, auth) => {
-  try {
-    return NextResponse.json({
-      success: true,
-      message: 'Sessão obtida com sucesso',
-      data: {
-        user: auth.user,
-        sessionId: auth.sessionId,
-        expiresAt: auth.expiresAt,
-        permissions: auth.permissions,
-        deviceInfo: auth.deviceInfo,
-        ipAddress: auth.ipAddress
-      }
-    });
-  } catch (error) {
-    console.error('Erro ao obter sessão:', error);
-    return NextResponse.json(
-      { success: false, message: 'Erro interno do servidor' },
-      { status: 500 }
-    );
-  }
-});
-
-/**
- * Criar nova sessão (login alternativo)
  * POST /api/auth/session
  */
 export async function POST(request: NextRequest) {
   try {
-    const body = await request.json();
-    const { email, password } = body;
+    const token = extractToken(request);
 
-    if (!email || !password) {
-      return NextResponse.json(
-        { success: false, message: 'Email e senha são obrigatórios' },
-        { status: 400 }
-      );
+    if (!token) {
+      return NextResponse.json({
+        success: false,
+        message: 'Token de acesso requerido'
+      }, { status: 401 });
     }
 
-    // Redirecionar para o endpoint de login
+    // Verificar token
+    const decoded = verifyToken(token);
+    if (!decoded) {
+      return NextResponse.json({
+        success: false,
+        message: 'Token inválido ou expirado'
+      }, { status: 401 });
+    }
+
+    // Buscar usuário
+    const user = MOCK_USERS[decoded.email];
+    if (!user || user.status !== 'ACTIVE') {
+      return NextResponse.json({
+        success: false,
+        message: 'Usuário não encontrado ou inativo'
+      }, { status: 401 });
+    }
+
+    // Verificar se a sessão existe no Redis
+    const sessionKey = `session:${user.id}:${decoded.sessionId}`;
+    const sessionData = await redisGet(sessionKey);
+    
+    if (!sessionData) {
+      return NextResponse.json({
+        success: false,
+        message: 'Sessão expirada'
+      }, { status: 401 });
+    }
+
     return NextResponse.json({
-      success: false,
-      message: 'Use o endpoint /api/auth/login para fazer login',
-      redirect: '/api/auth/login'
-    }, { status: 302 });
+      success: true,
+      message: 'Sessão válida',
+      data: {
+        user: {
+          id: user.id,
+          email: user.email,
+          name: user.name,
+          role: user.role,
+          permissions: user.permissions,
+          status: user.status,
+          avatar: user.avatar,
+          lastLogin: user.lastLogin,
+          institutionId: user.institutionId,
+          department: user.department
+        },
+        session: {
+          sessionId: decoded.sessionId,
+          expiresAt: new Date(decoded.exp * 1000).toISOString(),
+          createdAt: sessionData.createdAt,
+          lastAccess: sessionData.lastAccess,
+          deviceInfo: sessionData.deviceInfo,
+          ipAddress: sessionData.ipAddress
+        }
+      }
+    });
 
   } catch (error) {
-    console.error('Erro ao criar sessão:', error);
-    return NextResponse.json(
-      { success: false, message: 'Erro interno do servidor' },
-      { status: 500 }
-    );
+    console.error('Erro ao obter sessão:', error);
+    return NextResponse.json({
+      success: false,
+      message: 'Erro interno do servidor'
+    }, { status: 500 });
   }
 }
 
 /**
- * Atualizar sessão
- * PUT /api/auth/session
+ * OPTIONS para CORS
  */
-export const PUT = requireAuth(async (request: NextRequest, auth) => {
-  try {
-    const body = await request.json();
-    const { deviceInfo, preferences } = body;
-
-    // TODO: Implementar atualização de sessão
-    return NextResponse.json({
-      success: true,
-      message: 'Sessão atualizada com sucesso',
-      data: {
-        sessionId: auth.sessionId,
-        updatedAt: new Date().toISOString()
-      }
-    });
-  } catch (error) {
-    console.error('Erro ao atualizar sessão:', error);
-    return NextResponse.json(
-      { success: false, message: 'Erro interno do servidor' },
-      { status: 500 }
-    );
-  }
-});
-
-/**
- * Encerrar sessão (logout)
- * DELETE /api/auth/session
- */
-export const DELETE = requireAuth(async (request: NextRequest, auth) => {
-  try {
-    const token = extractToken(request);
-    if (token) {
-      // Adicionar token à blacklist
-      await redisSet(`blacklist:${token}`, true, 15 * 60);
-      
-      // Remover sessão do Redis
-      const sessionKey = `session:${auth.user.id}:${auth.sessionId}`;
-      await redisDel(sessionKey);
-    }
-
-    return NextResponse.json({
-      success: true,
-      message: 'Sessão encerrada com sucesso'
-    });
-  } catch (error) {
-    console.error('Erro ao encerrar sessão:', error);
-    return NextResponse.json(
-      { success: false, message: 'Erro interno do servidor' },
-      { status: 500 }
-    );
-  }
-});
-
 export async function OPTIONS() {
-  return new NextResponse(null, { status: 204 });
+  return NextResponse.json({}, { status: 204 });
 }

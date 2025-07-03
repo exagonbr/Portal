@@ -3,6 +3,7 @@ import { isAuthenticated, getCurrentToken, validateToken, syncTokenWithApiClient
 import { runAuthDiagnostics, debugAuth } from '@/utils/auth-diagnostics';
 import { autoRefreshToken, withAutoRefresh } from '@/utils/token-refresh';
 import { CORS_HEADERS } from '@/config/cors';
+import { FRONTEND_URL } from '@/config/env';
 
 // Interfaces para dados do dashboard do sistema
 export interface SystemDashboardData {
@@ -165,7 +166,7 @@ export interface AnalyticsData {
 }
 
 class SystemAdminService {
-  private baseUrl = '';
+  private baseUrl = FRONTEND_URL;
 
   /**
    * Verifica e prepara autenticação antes de fazer requisições
@@ -290,8 +291,12 @@ class SystemAdminService {
    * Função utilitária para fazer requisições fetch com CORS padronizado
    */
   private async fetchWithCors(url: string, options: RequestInit = {}): Promise<Response> {
+    
+    url = `${this.baseUrl}${url}`;
+    
     // Preparar headers com CORS
     const headers: Record<string, string> = {
+      Authorization: 'Bearer ' + getCurrentToken(),
       'Content-Type': 'application/json',
       ...CORS_HEADERS,
       ...(options.headers as Record<string, string> || {})
@@ -487,7 +492,7 @@ class SystemAdminService {
     
     try {
       console.log('🧪 [SYSTEM-ADMIN] Testando requisição para users/stats...');
-      const response = await apiClient.get<any>('users/stats');
+      const response = await apiClient.get<any>(`${FRONTEND_URL}/api/users/stats`);
       
       if (response.success) {
         apiWorking = true;
@@ -541,7 +546,7 @@ class SystemAdminService {
    */
   async getUsersByRole(): Promise<Record<string, number>> {
     try {
-      const response = await apiClient.get<any>(`/users/stats`);
+      const response = await apiClient.get<any>(`${FRONTEND_URL}/api/users/stats`);
       if (response.success && response.data?.users_by_role) {
         return response.data.users_by_role;
       }
@@ -558,7 +563,7 @@ class SystemAdminService {
    */
   async getSystemAnalytics(): Promise<any> {
     try {
-      const response = await apiClient.get<any>(`/dashboard/analytics`);
+      const response = await apiClient.get<any>(`${FRONTEND_URL}/api/dashboard/analytics`);
       if (response.success && response.data) {
         return response.data;
       }
@@ -575,7 +580,7 @@ class SystemAdminService {
    */
   async getUserEngagementMetrics(): Promise<any> {
     try {
-      const response = await apiClient.get<any>(`/dashboard/engagement`);
+      const response = await apiClient.get<any>(`${FRONTEND_URL}/api/dashboard/engagement`);
       if (response.success && response.data) {
         return response.data;
       }
@@ -594,7 +599,7 @@ class SystemAdminService {
     try {
       console.log('🔍 [SYSTEM-ADMIN] Iniciando carregamento do dashboard do sistema...');
       
-      const response = await apiClient.get<{ data: SystemDashboardData }>(`/dashboard/system`);
+      const response = await apiClient.get<{ data: SystemDashboardData }>(`${FRONTEND_URL}/api/dashboard/system`);
       
       console.log('🔍 [SYSTEM-ADMIN] Resposta recebida:', {
         success: response.success,
@@ -620,7 +625,7 @@ class SystemAdminService {
         // Tentar novamente com retry
         try {
           const retryResponse = await this.retryApiCall(() =>
-            apiClient.get<{ data: SystemDashboardData }>(`/dashboard/system`)
+            apiClient.get<{ data: SystemDashboardData }>(`${FRONTEND_URL}/api/dashboard/system`)
           );
           
           if (retryResponse.data) {
@@ -650,7 +655,7 @@ class SystemAdminService {
         
         try {
           const retryResponse = await this.retryApiCall(() =>
-            apiClient.get<{ data: SystemDashboardData }>(`/dashboard/system`)
+            apiClient.get<{ data: SystemDashboardData }>(`${FRONTEND_URL}/api/dashboard/system`)
           );
           
           if (retryResponse.data) {
@@ -708,7 +713,7 @@ class SystemAdminService {
       await syncTokenWithApiClient(token);
       
       // Tentar primeiro a rota do backend
-      const response = await apiClient.get<{ data: RealTimeMetrics }>(`/dashboard/metrics/realtime`);
+      const response = await apiClient.get<{ data: RealTimeMetrics }>(`${FRONTEND_URL}/api/dashboard/metrics/realtime`);
       
       if (response.success && response.data) {
         return response.data.data || response.data;
@@ -723,7 +728,7 @@ class SystemAdminService {
         
         try {
           const retryResponse = await this.retryApiCall(() =>
-            apiClient.get<{ data: RealTimeMetrics }>(`/dashboard/metrics/realtime`)
+            apiClient.get<{ data: RealTimeMetrics }>(`${FRONTEND_URL}/api/dashboard/metrics/realtime`)
           );
           
           if (retryResponse.success && retryResponse.data) {
@@ -835,7 +840,7 @@ class SystemAdminService {
     try {
       console.log('🔍 [SYSTEM-ADMIN] Iniciando carregamento do status de saúde...');
       
-      const response = await apiClient.get<{ data: SystemHealth }>(`/dashboard/health`);
+      const response = await apiClient.get<{ data: SystemHealth }>(`${FRONTEND_URL}/api/dashboard/health`);
       
       console.log('🔍 [SYSTEM-ADMIN] Resposta de saúde recebida:', {
         success: response.success,
@@ -859,7 +864,7 @@ class SystemAdminService {
         
         try {
           const retryResponse = await this.retryApiCall(() =>
-            apiClient.get<{ data: SystemHealth }>(`/dashboard/health`)
+            apiClient.get<{ data: SystemHealth }>(`${FRONTEND_URL}/api/dashboard/health`)
           );
           
           if (retryResponse.data) {
@@ -910,7 +915,7 @@ class SystemAdminService {
         
         try {
           const retryResponse = await this.retryApiCall(() =>
-            apiClient.get<{ data: SystemHealth }>(`/dashboard/health`)
+            apiClient.get<{ data: SystemHealth }>(`${FRONTEND_URL}/api/dashboard/health`)
           );
           
           if (retryResponse.data) {
@@ -965,7 +970,10 @@ class SystemAdminService {
   async getAnalyticsData(type: 'users' | 'sessions' | 'activity', period: 'day' | 'week' | 'month' = 'week'): Promise<AnalyticsData> {
     return withAutoRefresh(async () => {
       try {
-        const response = await apiClient.get<{ success: boolean; data: AnalyticsData; message?: string }>(`/dashboard/analytics`, { type, period });
+        const response = await apiClient.get<{ success: boolean; data: AnalyticsData; message?: string }>(
+          `${FRONTEND_URL}/api/dashboard/analytics`, 
+          { type, period }
+        );
         
         // Add debug logging
         console.log('Analytics data response:', response);
@@ -992,7 +1000,7 @@ class SystemAdminService {
   async getDashboardSummary(): Promise<any> {
     return withAutoRefresh(async () => {
       try {
-        const response = await apiClient.get<{ data: any }>(`/dashboard/summary`);
+        const response = await apiClient.get<{ data: any }>(`${FRONTEND_URL}/api/dashboard/summary`);
         
         if (response.success && response.data) {
           return response.data;
@@ -1313,7 +1321,7 @@ class SystemAdminService {
         }
 
         console.log('📊 [ROLE-STATS] Fazendo requisição para /roles/stats...');
-        const response = await apiClient.get<any>(`/roles/stats`);
+        const response = await apiClient.get<any>(`${FRONTEND_URL}/api/roles/stats`);
         
         if (response.success && response.data) {
           console.log('✅ [ROLE-STATS] Dados obtidos com sucesso');
@@ -1350,7 +1358,7 @@ class SystemAdminService {
 
   async getAwsConnectionStats(): Promise<any> {
     try {
-      const response = await apiClient.get<any>(`/aws/connection-logs/stats`);
+      const response = await apiClient.get<any>(`${FRONTEND_URL}/api/aws/connection-logs/stats`);
       if (response.success && response.data) {
         return response.data;
       }
@@ -1364,7 +1372,7 @@ class SystemAdminService {
 
   async getRealUserStats(): Promise<any> {
     try {
-      const response = await apiClient.get<any>(`/users/stats`);
+      const response = await apiClient.get<any>(`${FRONTEND_URL}/api/users/stats`);
       if (response.success && response.data) {
         return response.data;
       }

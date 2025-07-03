@@ -41,7 +41,7 @@ export async function validateJWTToken(token: string) {
     return null;
   }
 
-  const secret = process.env.JWT_SECRET;
+  const secret = 'SaberconPortal2025_SuperSecretKey_ProductionReady_XYZ789';
   if (!secret) {
     console.log('JWT_SECRET not configured');
     return null;

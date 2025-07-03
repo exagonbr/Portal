@@ -222,3 +222,44 @@ export function clearTokenData(): void {
   sessionStorage.removeItem('accessToken');
   sessionStorage.removeItem('refreshToken');
 }
+
+/**
+ * Wrapper para executar funções com auto-refresh de token
+ */
+export async function withAutoRefresh<T>(
+  fn: () => Promise<T>,
+  options: RefreshTokenOptions = {}
+): Promise<T> {
+  try {
+    // Tentar executar a função
+    return await fn();
+  } catch (error: any) {
+    // Verificar se é erro de autenticação
+    const isAuthError =
+      error?.status === 401 ||
+      error?.message?.includes('401') ||
+      error?.message?.includes('Unauthorized') ||
+      error?.message?.includes('Token') ||
+      error?.message?.includes('autenticação');
+    
+    if (isAuthError) {
+      console.log('🔄 [AUTO-REFRESH] Erro de autenticação detectado, tentando renovar token...');
+      
+      // Tentar renovar o token
+      const refreshResult = await refreshAuthToken(options);
+      
+      if (refreshResult.success) {
+        console.log('✅ [AUTO-REFRESH] Token renovado com sucesso, tentando novamente...');
+        
+        // Tentar executar a função novamente
+        return await fn();
+      } else {
+        console.error('❌ [AUTO-REFRESH] Falha ao renovar token:', refreshResult.error);
+        throw error;
+      }
+    }
+    
+    // Se não for erro de autenticação, propagar o erro
+    throw error;
+  }
+}

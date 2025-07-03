@@ -57,9 +57,19 @@ export class TvShowCompleteController {
       });
     } catch (error) {
       console.log('Erro no controller getTvShowById:', error);
+      
+      // Se o erro for "TV Show não encontrado", retornar 404
+      if (error instanceof Error && error.message === 'TV Show não encontrado') {
+        return res.status(404).json({
+          success: false,
+          message: 'TV Show não encontrado'
+        });
+      }
+      
       return res.status(500).json({
         success: false,
-        message: error instanceof Error ? error.message : 'Erro interno do servidor'
+        message: 'Erro interno do servidor',
+        error: error instanceof Error ? error.message : String(error)
       });
     }
   }
@@ -101,6 +111,15 @@ export class TvShowCompleteController {
       });
     } catch (error) {
       console.log('Erro no controller updateTvShow:', error);
+      
+      // Se o erro for "TV Show não encontrado", retornar 404
+      if (error instanceof Error && error.message === 'TV Show não encontrado') {
+        return res.status(404).json({
+          success: false,
+          message: 'TV Show não encontrado'
+        });
+      }
+      
       return res.status(500).json({
         success: false,
         message: 'Erro interno do servidor',
@@ -128,6 +147,15 @@ export class TvShowCompleteController {
       });
     } catch (error) {
       console.log('Erro no controller deleteTvShow:', error);
+      
+      // Se o erro for "TV Show não encontrado", retornar 404
+      if (error instanceof Error && error.message === 'TV Show não encontrado') {
+        return res.status(404).json({
+          success: false,
+          message: 'TV Show não encontrado'
+        });
+      }
+      
       return res.status(500).json({
         success: false,
         message: 'Erro interno do servidor',

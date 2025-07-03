@@ -1,7 +1,7 @@
 export const dynamic = 'force-dynamic';
 import { NextRequest, NextResponse } from 'next/server';
-import { getAuthentication, hasRequiredRole } from '@/lib/auth-utils';
-import { createCorsOptionsResponse, getCorsHeaders } from '@/config/cors'
+import { createCorsOptionsResponse, getCorsHeaders } from '@/config/cors';
+import { withAuth, AuthenticatedRequest } from '@/middleware/auth-middleware';
 
 // Função para gerar dados de engajamento baseados no horário
 function generateEngagementData() {
@@ -174,25 +174,10 @@ export async function OPTIONS(request: NextRequest) {
   return createCorsOptionsResponse(origin);
 }
 
-export async function GET(request: NextRequest) {
+export const GET = withAuth(async (request: AuthenticatedRequest) => {
   try {
-    const session = await getAuthentication(request);
+    console.log('📊 [/api/dashboard/engagement] Buscando métricas de engajamento...');
     
-    if (!session) {
-      return NextResponse.json(
-        { success: false, message: 'Authorization required' },
-        { status: 401 }
-      );
-    }
-
-    // Verificar se tem permissão para ver métricas de engajamento
-    if (!hasRequiredRole(session.user.role, ['SYSTEM_ADMIN', 'INSTITUTION_MANAGER', 'ACADEMIC_COORDINATOR'])) {
-      return NextResponse.json(
-        { success: false, message: 'Insufficient permissions' },
-        { status: 403 }
-      );
-    }
-
     const engagementData = generateEngagementData();
 
     return NextResponse.json({
@@ -203,10 +188,19 @@ export async function GET(request: NextRequest) {
     });
 
   } catch (error) {
-    console.log('Erro ao buscar métricas de engajamento:', error);
+    console.log('❌ [/api/dashboard/engagement] Erro ao buscar métricas de engajamento:', error);
     return NextResponse.json(
-      { success: false, message: 'Erro interno do servidor' },
-      { status: 500 }
+      {
+        success: false,
+        message: 'Erro interno do servidor',
+        error: error instanceof Error ? error.message : 'Unknown error'
+      },
+      {
+        status: 500,
+        headers: getCorsHeaders(request.headers.get('origin') || undefined)
+      }
     );
   }
-} 
+}, {
+  requiredRoles: ['SYSTEM_ADMIN', 'INSTITUTION_MANAGER', 'ACADEMIC_COORDINATOR']
+});

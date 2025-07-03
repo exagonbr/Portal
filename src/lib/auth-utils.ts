@@ -218,6 +218,33 @@ export async function validateJWTToken(token: string) {
   }
 }
 
+// Helper function to refresh authentication token
+export async function refreshAuthToken(refreshToken: string): Promise<string | null> {
+  try {
+    console.log('🔄 Tentando renovar token com refresh token...');
+    
+    const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL || ''}/api/auth/refresh`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({ refreshToken }),
+    });
+
+    if (response.ok) {
+      const data = await response.json();
+      console.log('✅ Token renovado com sucesso');
+      return data.accessToken || data.token;
+    }
+    
+    console.log('❌ Falha ao renovar token:', response.status);
+    return null;
+  } catch (error) {
+    console.error('❌ Erro ao renovar token:', error);
+    return null;
+  }
+}
+
 // Helper function to get authentication from JWT or cookies
 export async function getAuthentication(request: NextRequest) {
   console.log('🔐 Iniciando processo de autenticação...')
@@ -270,7 +297,27 @@ export async function getAuthentication(request: NextRequest) {
     console.log('❌ Token dos cookies inválido')
   }
 
-  console.log('❌ Nenhum token válido encontrado')
+  // Try refresh token if no valid access token found
+  const refreshToken = request.cookies.get('refresh_token')?.value;
+  if (refreshToken && refreshToken !== 'null' && refreshToken !== 'undefined') {
+    console.log('🔄 Nenhum token válido encontrado, tentando refresh token...');
+    const newToken = await refreshAuthToken(refreshToken);
+    
+    if (newToken) {
+      const jwtSession = await validateJWTToken(newToken);
+      if (jwtSession) {
+        console.log('✅ Autenticação via refresh token bem-sucedida');
+        
+        // Opcionalmente, definir o novo token nos cookies da resposta
+        // Isso precisaria ser feito no endpoint que chama esta função
+        (jwtSession as any).newToken = newToken;
+        
+        return jwtSession;
+      }
+    }
+  }
+
+  console.log('❌ Nenhum token válido encontrado (incluindo refresh token)')
   return null;
 }
 

@@ -1,62 +1,23 @@
 export const dynamic = 'force-dynamic';
 import { NextRequest, NextResponse } from 'next/server';
-import { getAuthentication, hasRequiredRole } from '@/lib/auth-utils';
 import { getInternalApiUrl } from '@/config/env';
+import { createCorsOptionsResponse, getCorsHeaders } from '@/config/cors';
+import { withAuth, AuthenticatedRequest } from '@/middleware/auth-middleware';
 
-// Handler para requisições OPTIONS (preflight) - SIMPLIFICADO
+// Handler para requisições OPTIONS (preflight)
 export async function OPTIONS(request: NextRequest) {
-  return new NextResponse(null, {
-    status: 200,
-    headers: {
-      'Access-Control-Allow-Origin': '*',
-      'Access-Control-Allow-Methods': 'GET, POST, PUT, DELETE, PATCH, OPTIONS, HEAD',
-      'Access-Control-Allow-Headers': 'Content-Type, Authorization, X-Requested-With, X-CSRF-Token, Cache-Control, Pragma, Accept, Origin, Cookie',
-      'Access-Control-Allow-Credentials': 'false',
-      'Access-Control-Max-Age': '86400',
-      'Content-Length': '0',
-    },
-  });
+  const origin = request.headers.get('origin') || undefined;
+  return createCorsOptionsResponse(origin);
 }
 
-export async function GET(request: NextRequest) {
+export const GET = withAuth(async (request: AuthenticatedRequest) => {
   try {
-    const session = await getAuthentication(request);
+    console.log('📊 [/api/aws/connection-logs/stats] Buscando estatísticas AWS...');
     
-    if (!session) {
-      return NextResponse.json(
-        { success: false, message: 'Authorization required' },
-        { 
-          status: 401,
-          headers: {
-            'Access-Control-Allow-Origin': '*',
-            'Access-Control-Allow-Methods': 'GET, POST, PUT, DELETE, PATCH, OPTIONS, HEAD',
-            'Access-Control-Allow-Headers': 'Content-Type, Authorization, X-Requested-With',
-            'Access-Control-Allow-Credentials': 'false',
-          }
-        }
-      );
-    }
-
-    // Verificar se é admin
-    if (!hasRequiredRole(session.user.role, ['SYSTEM_ADMIN', 'INSTITUTION_MANAGER'])) {
-      return NextResponse.json(
-        { success: false, message: 'Insufficient permissions' },
-        { 
-          status: 403,
-          headers: {
-            'Access-Control-Allow-Origin': '*',
-            'Access-Control-Allow-Methods': 'GET, POST, PUT, DELETE, PATCH, OPTIONS, HEAD',
-            'Access-Control-Allow-Headers': 'Content-Type, Authorization, X-Requested-With',
-            'Access-Control-Allow-Credentials': 'false',
-          }
-        }
-      );
-    }
-
     const { searchParams } = new URL(request.url);
     const queryString = searchParams.toString();
 
-    const apiUrl = queryString 
+    const apiUrl = queryString
       ? `${getInternalApiUrl('/aws/connection-logs/stats')}?${queryString}`
       : getInternalApiUrl('/aws/connection-logs/stats');
 
@@ -69,6 +30,8 @@ export async function GET(request: NextRequest) {
     });
 
     if (!response.ok) {
+      console.log('⚠️ [/api/aws/connection-logs/stats] Backend indisponível, usando dados mock');
+      
       // Se o backend não estiver disponível, retornar dados mock
       const mockStats = {
         total_connections: 1247,
@@ -83,30 +46,21 @@ export async function GET(request: NextRequest) {
 
       return NextResponse.json({
         success: true,
-        data: mockStats
+        data: mockStats,
+        source: 'mock'
       }, {
-        headers: {
-          'Access-Control-Allow-Origin': '*',
-          'Access-Control-Allow-Methods': 'GET, POST, PUT, DELETE, PATCH, OPTIONS, HEAD',
-          'Access-Control-Allow-Headers': 'Content-Type, Authorization, X-Requested-With',
-          'Access-Control-Allow-Credentials': 'false',
-        }
+        headers: getCorsHeaders(request.headers.get('origin') || undefined)
       });
     }
 
     const data = await response.json();
-    return NextResponse.json(data, { 
+    return NextResponse.json(data, {
       status: response.status,
-      headers: {
-        'Access-Control-Allow-Origin': '*',
-        'Access-Control-Allow-Methods': 'GET, POST, PUT, DELETE, PATCH, OPTIONS, HEAD',
-        'Access-Control-Allow-Headers': 'Content-Type, Authorization, X-Requested-With',
-        'Access-Control-Allow-Credentials': 'false',
-      }
+      headers: getCorsHeaders(request.headers.get('origin') || undefined)
     });
 
   } catch (error) {
-    console.log('Erro ao buscar estatísticas de conexão AWS:', error);
+    console.log('❌ [/api/aws/connection-logs/stats] Erro ao buscar estatísticas:', error);
     
     // Fallback com dados mock em caso de erro
     const mockStats = {
@@ -122,14 +76,13 @@ export async function GET(request: NextRequest) {
 
     return NextResponse.json({
       success: true,
-      data: mockStats
+      data: mockStats,
+      source: 'mock',
+      error: error instanceof Error ? error.message : 'Unknown error'
     }, {
-      headers: {
-        'Access-Control-Allow-Origin': '*',
-        'Access-Control-Allow-Methods': 'GET, POST, PUT, DELETE, PATCH, OPTIONS, HEAD',
-        'Access-Control-Allow-Headers': 'Content-Type, Authorization, X-Requested-With',
-        'Access-Control-Allow-Credentials': 'false',
-      }
+      headers: getCorsHeaders(request.headers.get('origin') || undefined)
     });
   }
-} 
+}, {
+  requiredRoles: ['SYSTEM_ADMIN', 'INSTITUTION_MANAGER']
+});

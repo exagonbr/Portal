@@ -1,240 +1,131 @@
 /**
- * Utilitário para diagnósticos avançados de autenticação
+ * Diagnóstico de autenticação
  */
 
-import { validateToken } from './token-validator';
-import { getLoginDebugInfo } from './debug-login';
-
-export interface AuthDiagnosticResult {
-  status: 'healthy' | 'warning' | 'error';
-  issues: string[];
-  recommendations: string[];
-  details: {
-    tokenStatus: 'valid' | 'expired' | 'invalid' | 'missing';
-    storageStatus: 'ok' | 'partial' | 'empty';
-    networkStatus: 'unknown' | 'online' | 'offline';
-    browserCompatibility: 'supported' | 'limited' | 'unsupported';
-  };
-  timestamp: string;
-}
+import { SimpleAuthDiagnostic } from './auth-types';
 
 /**
- * Executa diagnóstico completo do sistema de autenticação
+ * Executa diagnóstico de autenticação
  */
-export function runAuthDiagnostics(): AuthDiagnosticResult {
-  const result: AuthDiagnosticResult = {
-    status: 'healthy',
-    issues: [],
-    recommendations: [],
-    details: {
-      tokenStatus: 'missing',
-      storageStatus: 'empty',
-      networkStatus: 'unknown',
-      browserCompatibility: 'supported'
-    },
-    timestamp: new Date().toISOString()
-  };
-
-  // Verificar ambiente
+export function runAuthDiagnostics(): SimpleAuthDiagnostic {
+  const issues: string[] = [];
+  const recommendations: string[] = [];
+  
+  // Verificar se estamos no cliente
   if (typeof window === 'undefined') {
-    result.status = 'error';
-    result.issues.push('Executando em ambiente servidor - localStorage não disponível');
-    result.recommendations.push('Execute este diagnóstico no lado cliente');
-    return result;
+    return {
+      hasAuth: false,
+      hasAccessToken: false,
+      hasRefreshToken: false,
+      hasUserData: false,
+      cookies: 0,
+      issues: ['Executando no servidor - localStorage não disponível'],
+      recommendations: ['Execute este diagnóstico no navegador']
+    };
   }
-
-  // Verificar compatibilidade do browser
-  checkBrowserCompatibility(result);
-
-  // Verificar status do token
-  checkTokenStatus(result);
-
-  // Verificar storage
-  checkStorageStatus(result);
-
-  // Verificar conectividade de rede
-  checkNetworkStatus(result);
-
-  // Determinar status geral
-  if (result.issues.length === 0) {
-    result.status = 'healthy';
-  } else if (result.issues.some(issue => issue.includes('crítico') || issue.includes('erro'))) {
-    result.status = 'error';
-  } else {
-    result.status = 'warning';
+  
+  // Verificar tokens diretamente no localStorage
+  const accessToken = localStorage.getItem('accessToken') || localStorage.getItem('auth_token');
+  const refreshToken = localStorage.getItem('refreshToken') || localStorage.getItem('refresh_token');
+  const userData = localStorage.getItem('user') || localStorage.getItem('userData');
+  
+  const hasAccessToken = !!accessToken;
+  const hasRefreshToken = !!refreshToken;
+  const hasUserData = !!userData;
+  
+  // Verificar tokens
+  if (!hasAccessToken) {
+    issues.push('Token de acesso não encontrado');
+    recommendations.push('Faça login para obter um token de acesso');
   }
-
-  return result;
-}
-
-function checkBrowserCompatibility(result: AuthDiagnosticResult): void {
-  try {
-    // Verificar localStorage
-    if (!window.localStorage) {
-      result.issues.push('LocalStorage não suportado pelo navegador');
-      result.details.browserCompatibility = 'unsupported';
-      result.recommendations.push('Use um navegador moderno que suporte localStorage');
-      return;
-    }
-
-    // Verificar sessionStorage
-    if (!window.sessionStorage) {
-      result.issues.push('SessionStorage não suportado pelo navegador');
-      result.details.browserCompatibility = 'limited';
-      result.recommendations.push('Funcionalidade limitada - sessionStorage não disponível');
-    }
-
-    // Verificar fetch API
-    if (!window.fetch) {
-      result.issues.push('Fetch API não suportada pelo navegador');
-      result.details.browserCompatibility = 'limited';
-      result.recommendations.push('Use um navegador moderno ou adicione um polyfill para fetch');
-    }
-
-    // Verificar JSON
-    if (!window.JSON) {
-      result.issues.push('JSON não suportado pelo navegador');
-      result.details.browserCompatibility = 'unsupported';
-      result.recommendations.push('Use um navegador moderno que suporte JSON');
-    }
-
-  } catch (error) {
-    result.issues.push('Erro ao verificar compatibilidade do navegador');
-    result.details.browserCompatibility = 'unsupported';
+  
+  if (!hasRefreshToken) {
+    issues.push('Token de refresh não encontrado');
+    recommendations.push('Faça login novamente para obter um refresh token');
   }
-}
-
-function checkTokenStatus(result: AuthDiagnosticResult): void {
-  try {
-    const debugInfo = getLoginDebugInfo();
-    
-    if (!debugInfo.hasToken) {
-      result.details.tokenStatus = 'missing';
-      result.issues.push('Nenhum token de autenticação encontrado');
-      result.recommendations.push('Faça login para obter um token válido');
-      return;
-    }
-
-    if (debugInfo.tokenExpired) {
-      result.details.tokenStatus = 'expired';
-      result.issues.push('Token de autenticação expirado');
-      result.recommendations.push('Faça login novamente para renovar o token');
-      return;
-    }
-
-    if (!debugInfo.tokenValid) {
-      result.details.tokenStatus = 'invalid';
-      result.issues.push('Token de autenticação inválido');
-      result.recommendations.push('Limpe os dados de autenticação e faça login novamente');
-      return;
-    }
-
-    result.details.tokenStatus = 'valid';
-    
-    // Verificar se o token está próximo do vencimento
-    if (debugInfo.tokenPayload?.exp) {
-      const now = Math.floor(Date.now() / 1000);
-      const timeUntilExpiry = debugInfo.tokenPayload.exp - now;
-      
-      if (timeUntilExpiry < 300) { // Menos de 5 minutos
-        result.issues.push('Token expirará em breve (menos de 5 minutos)');
-        result.recommendations.push('Considere renovar o token em breve');
-      }
-    }
-
-  } catch (error) {
-    result.issues.push('Erro ao verificar status do token');
-    result.details.tokenStatus = 'invalid';
-  }
-}
-
-function checkStorageStatus(result: AuthDiagnosticResult): void {
-  try {
-    const debugInfo = getLoginDebugInfo();
-    let storageItems = 0;
-
-    // Contar itens no localStorage
-    if (debugInfo.localStorage.accessToken) storageItems++;
-    if (debugInfo.localStorage.refreshToken) storageItems++;
-
-    // Contar itens no sessionStorage
-    if (debugInfo.sessionStorage.accessToken) storageItems++;
-    if (debugInfo.sessionStorage.refreshToken) storageItems++;
-
-    if (storageItems === 0) {
-      result.details.storageStatus = 'empty';
-      result.issues.push('Nenhum dado de autenticação encontrado no storage');
-    } else if (storageItems < 2) {
-      result.details.storageStatus = 'partial';
-      result.issues.push('Dados de autenticação incompletos no storage');
-      result.recommendations.push('Verifique se todos os tokens foram salvos corretamente');
-    } else {
-      result.details.storageStatus = 'ok';
-    }
-
-    // Testar se consegue escrever no localStorage
+  
+  // Verificar expiração do token
+  let tokenInfo: SimpleAuthDiagnostic['tokenInfo'];
+  if (accessToken) {
     try {
-      const testKey = '__auth_diagnostic_test__';
-      localStorage.setItem(testKey, 'test');
-      localStorage.removeItem(testKey);
-    } catch (error) {
-      result.issues.push('Não é possível escrever no localStorage');
-      result.recommendations.push('Verifique se o localStorage não está cheio ou bloqueado');
-    }
-
-  } catch (error) {
-    result.issues.push('Erro ao verificar status do storage');
-    result.details.storageStatus = 'empty';
-  }
-}
-
-function checkNetworkStatus(result: AuthDiagnosticResult): void {
-  try {
-    if (navigator.onLine !== undefined) {
-      result.details.networkStatus = navigator.onLine ? 'online' : 'offline';
+      const payload = JSON.parse(atob(accessToken.split('.')[1]));
+      const now = Math.floor(Date.now() / 1000);
+      const isExpired = payload.exp ? payload.exp < now : false;
+      const expiresIn = payload.exp 
+        ? `${Math.floor((payload.exp - now) / 60)} minutos`
+        : 'desconhecido';
       
-      if (!navigator.onLine) {
-        result.issues.push('Dispositivo está offline');
-        result.recommendations.push('Verifique sua conexão com a internet');
+      tokenInfo = {
+        isExpired,
+        expiresIn: isExpired ? '0 minutos' : expiresIn,
+        role: payload.role,
+        email: payload.email
+      };
+      
+      if (isExpired) {
+        issues.push('Token expirado');
+        recommendations.push('Faça login novamente ou use o refresh token');
+      } else if (payload.exp && (payload.exp - now) < 300) {
+        issues.push('Token expirando em breve');
+        recommendations.push('Considere renovar o token');
       }
-    } else {
-      result.details.networkStatus = 'unknown';
+    } catch (e) {
+      issues.push('Token inválido ou corrompido');
+      recommendations.push('Faça login novamente');
     }
-  } catch (error) {
-    result.details.networkStatus = 'unknown';
   }
+  
+  // Contar cookies relacionados à autenticação
+  const cookies = document.cookie.split(';')
+    .map(c => c.trim())
+    .filter(c => {
+      const name = c.split('=')[0].toLowerCase();
+      return name.includes('token') || name.includes('auth') || name.includes('session');
+    });
+  
+  return {
+    hasAuth: hasAccessToken || hasRefreshToken,
+    hasAccessToken,
+    hasRefreshToken,
+    hasUserData,
+    tokenInfo,
+    cookies: cookies.length,
+    issues,
+    recommendations
+  };
 }
 
 /**
- * Imprime o resultado do diagnóstico no console
+ * Imprime diagnóstico no console
  */
 export function logAuthDiagnostics(): void {
-  const result = runAuthDiagnostics();
+  const diagnostic = runAuthDiagnostics();
   
-  console.group('🏥 Diagnóstico de Autenticação');
-  console.log('📊 Status Geral:', result.status.toUpperCase());
-  console.log('📅 Timestamp:', result.timestamp);
+  console.group('🔐 Diagnóstico de Autenticação');
+  console.log('✅ Autenticado:', diagnostic.hasAuth ? 'Sim' : 'Não');
+  console.log('🔑 Access Token:', diagnostic.hasAccessToken ? 'Presente' : 'Ausente');
+  console.log('🔄 Refresh Token:', diagnostic.hasRefreshToken ? 'Presente' : 'Ausente');
+  console.log('👤 Dados do Usuário:', diagnostic.hasUserData ? 'Presente' : 'Ausente');
+  console.log('🍪 Cookies:', diagnostic.cookies);
   
-  console.group('📋 Detalhes');
-  console.log('🔑 Token:', result.details.tokenStatus);
-  console.log('💾 Storage:', result.details.storageStatus);
-  console.log('🌐 Rede:', result.details.networkStatus);
-  console.log('🌍 Navegador:', result.details.browserCompatibility);
-  console.groupEnd();
-  
-  if (result.issues.length > 0) {
-    console.group('⚠️ Problemas Encontrados');
-    result.issues.forEach((issue, index) => {
-      console.log(`${index + 1}. ${issue}`);
-    });
+  if (diagnostic.tokenInfo) {
+    console.group('📋 Informações do Token');
+    console.log('Expirado:', diagnostic.tokenInfo.isExpired ? 'Sim' : 'Não');
+    console.log('Expira em:', diagnostic.tokenInfo.expiresIn);
+    console.log('Role:', diagnostic.tokenInfo.role || 'N/A');
+    console.log('Email:', diagnostic.tokenInfo.email || 'N/A');
     console.groupEnd();
   }
   
-  if (result.recommendations.length > 0) {
+  if (diagnostic.issues.length > 0) {
+    console.group('⚠️ Problemas');
+    diagnostic.issues.forEach((issue: string) => console.log(`- ${issue}`));
+    console.groupEnd();
+  }
+  
+  if (diagnostic.recommendations.length > 0) {
     console.group('💡 Recomendações');
-    result.recommendations.forEach((rec, index) => {
-      console.log(`${index + 1}. ${rec}`);
-    });
+    diagnostic.recommendations.forEach((rec: string) => console.log(`- ${rec}`));
     console.groupEnd();
   }
   
@@ -242,40 +133,98 @@ export function logAuthDiagnostics(): void {
 }
 
 /**
- * Gera relatório de diagnóstico em formato texto
+ * Alias para compatibilidade
  */
-export function generateDiagnosticReport(): string {
-  const result = runAuthDiagnostics();
+export const debugAuth = logAuthDiagnostics;
+export const logSimpleAuthDiagnostic = logAuthDiagnostics;
+
+/**
+ * Limpa todos os dados de autenticação
+ */
+export function clearAllAuthData(): void {
+  if (typeof window === 'undefined') return;
   
-  let report = `RELATÓRIO DE DIAGNÓSTICO DE AUTENTICAÇÃO\n`;
-  report += `=========================================\n\n`;
-  report += `Status Geral: ${result.status.toUpperCase()}\n`;
-  report += `Timestamp: ${result.timestamp}\n\n`;
+  // Lista de possíveis chaves de autenticação
+  const authKeys = [
+    'accessToken',
+    'auth_token',
+    'token',
+    'authToken',
+    'refreshToken',
+    'refresh_token',
+    'user',
+    'userData',
+    'userInfo',
+    'session',
+    'sessionId'
+  ];
   
-  report += `DETALHES:\n`;
-  report += `---------\n`;
-  report += `Token: ${result.details.tokenStatus}\n`;
-  report += `Storage: ${result.details.storageStatus}\n`;
-  report += `Rede: ${result.details.networkStatus}\n`;
-  report += `Navegador: ${result.details.browserCompatibility}\n\n`;
+  // Limpar localStorage
+  authKeys.forEach(key => {
+    localStorage.removeItem(key);
+  });
   
-  if (result.issues.length > 0) {
-    report += `PROBLEMAS ENCONTRADOS:\n`;
-    report += `----------------------\n`;
-    result.issues.forEach((issue, index) => {
-      report += `${index + 1}. ${issue}\n`;
-    });
-    report += `\n`;
+  // Limpar sessionStorage
+  authKeys.forEach(key => {
+    sessionStorage.removeItem(key);
+  });
+  
+  // Limpar cookies relacionados à autenticação
+  const authCookies = ['accessToken', 'refreshToken', 'session', 'auth', 'token', 'sessionId'];
+  authCookies.forEach(cookieName => {
+    document.cookie = `${cookieName}=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;`;
+    document.cookie = `${cookieName}=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/; domain=${window.location.hostname}`;
+  });
+  
+  console.log('🧹 Todos os dados de autenticação foram limpos');
+}
+
+/**
+ * Obtém informações de debug sobre o estado do login
+ */
+export function getLoginDebugInfo() {
+  if (typeof window === 'undefined') {
+    return {
+      hasAccessToken: false,
+      hasRefreshToken: false,
+      hasUserData: false,
+      cookies: []
+    };
   }
   
-  if (result.recommendations.length > 0) {
-    report += `RECOMENDAÇÕES:\n`;
-    report += `--------------\n`;
-    result.recommendations.forEach((rec, index) => {
-      report += `${index + 1}. ${rec}\n`;
-    });
-    report += `\n`;
+  const accessToken = localStorage.getItem('accessToken') || localStorage.getItem('auth_token');
+  const refreshToken = localStorage.getItem('refreshToken') || localStorage.getItem('refresh_token');
+  const userData = localStorage.getItem('user') || localStorage.getItem('userData');
+  
+  let tokenInfo = undefined;
+  if (accessToken) {
+    try {
+      const payload = JSON.parse(atob(accessToken.split('.')[1]));
+      tokenInfo = {
+        exp: payload.exp,
+        iat: payload.iat,
+        userId: payload.userId || payload.sub,
+        email: payload.email,
+        role: payload.role
+      };
+    } catch (e) {
+      console.error('Erro ao decodificar token:', e);
+    }
   }
   
-  return report;
+  // Listar cookies relevantes
+  const cookies = document.cookie.split(';')
+    .map(c => c.trim())
+    .filter(c => {
+      const name = c.split('=')[0].toLowerCase();
+      return name.includes('token') || name.includes('auth') || name.includes('session');
+    });
+  
+  return {
+    hasAccessToken: !!accessToken,
+    hasRefreshToken: !!refreshToken,
+    hasUserData: !!userData,
+    tokenInfo,
+    cookies
+  };
 }

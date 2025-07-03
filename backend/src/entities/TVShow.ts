@@ -21,8 +21,8 @@ export class TVShow {
   @Column({ type: 'varchar', length: 255, nullable: true })
   backdrop_path?: string;
 
-  @Column({ type: 'datetime' })
-  contract_term_end: Date;
+  @Column({ type: 'datetime', nullable: true })
+  contract_term_end?: Date;
 
   @Column({ type: 'datetime' })
   date_created: Date;

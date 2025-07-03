@@ -11,36 +11,44 @@ export async function POST(request: NextRequest) {
     const { refreshToken } = body;
 
     if (!refreshToken) {
-      return NextResponse.json(
-        { success: false, message: 'Refresh token é obrigatório' },
-        { status: 400 }
-      );
+      return NextResponse.json({
+        success: false,
+        message: 'Refresh token é obrigatório'
+      }, { status: 400 });
     }
 
+    // Usar a função do middleware para renovar o token
     const result = await refreshAccessToken(refreshToken);
 
     if (!result.success) {
-      return NextResponse.json(
-        { success: false, message: result.message },
-        { status: 401 }
-      );
+      return NextResponse.json({
+        success: false,
+        message: result.message
+      }, { status: 401 });
     }
 
     return NextResponse.json({
       success: true,
-      message: 'Token renovado com sucesso',
+      message: 'Tokens renovados com sucesso',
       data: result.data
     });
 
   } catch (error) {
     console.error('Erro ao renovar token:', error);
-    return NextResponse.json(
-      { success: false, message: 'Erro interno do servidor' },
-      { status: 500 }
-    );
+    return NextResponse.json({
+      success: false,
+      message: 'Erro interno do servidor'
+    }, { status: 500 });
   }
 }
 
 export async function OPTIONS() {
-  return new NextResponse(null, { status: 204 });
+  return new NextResponse(null, { 
+    status: 204,
+    headers: {
+      'Access-Control-Allow-Origin': '*',
+      'Access-Control-Allow-Methods': 'POST, OPTIONS',
+      'Access-Control-Allow-Headers': 'Content-Type, Authorization'
+    }
+  });
 }

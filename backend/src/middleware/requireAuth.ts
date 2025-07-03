@@ -3,13 +3,8 @@ import jwt from 'jsonwebtoken';
 import { JWT_CONFIG, AccessTokenPayload } from '../config/jwt';
 import db from '../config/database';
 
-interface AuthenticatedRequest extends Request {
-  user?: AccessTokenPayload;
-}
-
 export const requireAuth: RequestHandler = async (req: Request, res: Response, next: NextFunction) => {
-  const authReq = req as AuthenticatedRequest;
-  const authHeader = authReq.headers.authorization;
+  const authHeader = req.headers.authorization;
 
   if (!authHeader || !authHeader.startsWith('Bearer ')) {
     res.status(401).json({ success: false, message: 'No token provided or invalid format.' });
@@ -34,7 +29,7 @@ export const requireAuth: RequestHandler = async (req: Request, res: Response, n
 
     // Verify if the user still exists and is active in the database
     const user = await db('users')
-      .where({ id: decoded.id, is_active: true })
+      .where({ id: parseInt(decoded.id), is_active: true })
       .first();
 
     if (!user) {
@@ -42,7 +37,7 @@ export const requireAuth: RequestHandler = async (req: Request, res: Response, n
       return;
     }
 
-    authReq.user = decoded;
+    req.user = decoded;
     next();
 
   } catch (error) {

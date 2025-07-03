@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
+import { authenticateUser, extractDeviceInfo, extractClientIP } from '@/middleware/auth';
 
 /**
  * Registrar novo usuário
@@ -7,41 +8,55 @@ import { NextRequest, NextResponse } from 'next/server';
 export async function POST(request: NextRequest) {
   try {
     const body = await request.json();
-    const { name, email, password, role = 'STUDENT' } = body;
+    const { email, password, name, role = 'STUDENT' } = body;
 
-    if (!name || !email || !password) {
-      return NextResponse.json(
-        { success: false, message: 'Nome, email e senha são obrigatórios' },
-        { status: 400 }
-      );
+    if (!email || !password || !name) {
+      return NextResponse.json({
+        success: false,
+        message: 'Email, senha e nome são obrigatórios'
+      }, { status: 400 });
     }
 
-    // TODO: Implementar lógica de registro
-    // Por enquanto, retorna um mock
+    // Validar formato do email
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!emailRegex.test(email)) {
+      return NextResponse.json({
+        success: false,
+        message: 'Formato de email inválido'
+      }, { status: 400 });
+    }
+
+    // Validar senha (mínimo 6 caracteres)
+    if (password.length < 6) {
+      return NextResponse.json({
+        success: false,
+        message: 'Senha deve ter pelo menos 6 caracteres'
+      }, { status: 400 });
+    }
+
+    // Extrair informações do dispositivo e IP
+    const deviceInfo = extractDeviceInfo(request);
+    const ipAddress = extractClientIP(request);
+
+    // Simular registro (em produção, criar usuário no banco)
+    // Por enquanto, retornar erro pois não temos sistema de registro implementado
     return NextResponse.json({
-      success: true,
-      message: 'Usuário registrado com sucesso',
-      data: {
-        user: {
-          id: 'new_user_id',
-          name,
-          email,
-          role,
-          status: 'ACTIVE',
-          createdAt: new Date().toISOString()
-        }
-      }
-    }, { status: 201 });
+      success: false,
+      message: 'Registro de novos usuários não está disponível no momento'
+    }, { status: 501 });
 
   } catch (error) {
-    console.error('Erro ao registrar usuário:', error);
-    return NextResponse.json(
-      { success: false, message: 'Erro interno do servidor' },
-      { status: 500 }
-    );
+    console.error('Erro no registro:', error);
+    return NextResponse.json({
+      success: false,
+      message: 'Erro interno do servidor'
+    }, { status: 500 });
   }
 }
 
+/**
+ * OPTIONS para CORS
+ */
 export async function OPTIONS() {
-  return new NextResponse(null, { status: 204 });
+  return NextResponse.json({}, { status: 204 });
 }

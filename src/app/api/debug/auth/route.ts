@@ -1,79 +1,151 @@
-import { NextRequest, NextResponse } from 'next/server'
-import { createCorsOptionsResponse, getCorsHeaders } from '@/config/cors'
+import { NextRequest, NextResponse } from 'next/server';
+import { verifyToken } from '@/middleware/auth';
 
-
-// Handler para requisições OPTIONS (preflight)
-export async function OPTIONS(request: NextRequest) {
-  const origin = request.headers.get('origin') || undefined;
-  return createCorsOptionsResponse(origin);
-}
-
-export async function GET(req: NextRequest) {
+/**
+ * Debug endpoint para verificar informações de autenticação
+ * GET /api/debug/auth
+ */
+export async function GET(request: NextRequest) {
   try {
-    // Capturar todos os headers
-    const headers = Object.fromEntries(req.headers.entries())
+    // Extrair token de diferentes fontes
+    const authHeader = request.headers.get('authorization');
+    const xAuthToken = request.headers.get('x-auth-token');
+    const cookieHeader = request.headers.get('cookie');
     
-    // Extrair token do header Authorization
-    const authHeader = req.headers.get('authorization')
-    const token = authHeader?.replace('Bearer ', '')
+    let bearerToken = null;
+    let cookieTokens = {};
     
-    // Informações de debug
-    const debugInfo: any = {
-      timestamp: new Date().toISOString(),
-      url: req.url,
-      method: req.method,
-      headers: {
-        authorization: authHeader,
-        'content-type': req.headers.get('content-type'),
-        'user-agent': req.headers.get('user-agent'),
-        cookie: req.headers.get('cookie'),
-      },
-      token: {
-        present: !!token,
-        length: token?.length || 0,
-        preview: token ? token.substring(0, 20) + '...' : null,
-        isJWT: token ? token.split('.').length === 3 : false,
-      },
-      allHeaders: headers
+    // Extrair Bearer token
+    if (authHeader && authHeader.startsWith('Bearer ')) {
+      bearerToken = authHeader.substring(7);
     }
     
-    // Tentar decodificar JWT se presente
-    if (token && token.split('.').length === 3) {
-      try {
-        const payload = JSON.parse(atob(token.split('.')[1]))
-        debugInfo.token = {
-          ...debugInfo.token,
-          payload: {
-            userId: payload.userId,
-            email: payload.email,
-            role: payload.role,
-            exp: payload.exp,
-            isExpired: payload.exp && payload.exp < Math.floor(Date.now() / 1000)
+    // Extrair tokens dos cookies
+    if (cookieHeader) {
+      const cookies = cookieHeader.split(';').reduce((acc, cookie) => {
+        const [key, value] = cookie.trim().split('=');
+        if (key && value) {
+          acc[key] = value;
+        }
+        return acc;
+      }, {} as Record<string, string>);
+      
+      cookieTokens = {
+        auth_token: cookies.auth_token,
+        token: cookies.token,
+        authToken: cookies.authToken,
+        sessionId: cookies.sessionId
+      };
+    }
+
+    const debugInfo = {
+      timestamp: new Date().toISOString(),
+      headers: {
+        authorization: authHeader ? `${authHeader.substring(0, 20)}...` : null,
+        'x-auth-token': xAuthToken ? `${xAuthToken.substring(0, 20)}...` : null,
+        'user-agent': request.headers.get('user-agent'),
+        'content-type': request.headers.get('content-type'),
+        'accept': request.headers.get('accept')
+      },
+      tokens: {
+        bearerToken: bearerToken ? {
+          present: true,
+          length: bearerToken.length,
+          preview: `${bearerToken.substring(0, 20)}...`,
+          format: bearerToken.includes('.') ? 'JWT-like' : 'opaque'
+        } : null,
+        xAuthToken: xAuthToken ? {
+          present: true,
+          length: xAuthToken.length,
+          preview: `${xAuthToken.substring(0, 20)}...`
+        } : null,
+        cookies: Object.keys(cookieTokens).reduce((acc, key) => {
+          const value = (cookieTokens as any)[key];
+          if (value) {
+            acc[key] = {
+              present: true,
+              length: value.length,
+              preview: `${value.substring(0, 20)}...`
+            };
           }
+          return acc;
+        }, {} as Record<string, any>)
+      },
+      validation: {
+        hasAnyToken: !!(bearerToken || xAuthToken || Object.values(cookieTokens).some(Boolean)),
+        tokenSources: [] as string[],
+        tokenValid: false,
+        tokenError: null as string | null,
+        tokenPayload: null as any,
+        tokenExpiry: null as string | null,
+        tokenAge: null as number | null
+      },
+      request: {
+        method: '',
+        url: '',
+        ip: '',
+        userAgent: null as string | null,
+        referer: null as string | null
+      }
+    };
+
+    // Identificar fontes de token disponíveis
+    if (bearerToken) debugInfo.validation.tokenSources.push('Bearer Authorization');
+    if (xAuthToken) debugInfo.validation.tokenSources.push('X-Auth-Token Header');
+    if ((cookieTokens as any).auth_token) debugInfo.validation.tokenSources.push('auth_token Cookie');
+    if ((cookieTokens as any).token) debugInfo.validation.tokenSources.push('token Cookie');
+    if ((cookieTokens as any).authToken) debugInfo.validation.tokenSources.push('authToken Cookie');
+
+    // Tentar validar o token principal
+    const primaryToken = bearerToken || xAuthToken || (cookieTokens as any).auth_token || (cookieTokens as any).token || (cookieTokens as any).authToken;
+    
+    if (primaryToken) {
+      try {
+        const tokenValidation = await verifyToken(primaryToken);
+        if (tokenValidation) {
+          debugInfo.validation.tokenValid = true;
+          debugInfo.validation.tokenPayload = {
+            userId: tokenValidation.userId,
+            email: tokenValidation.email,
+            role: tokenValidation.role,
+            institutionId: tokenValidation.institutionId,
+            exp: tokenValidation.exp,
+            iat: tokenValidation.iat
+          };
+          debugInfo.validation.tokenExpiry = tokenValidation.exp ?
+            new Date(tokenValidation.exp * 1000).toISOString() : null;
+          debugInfo.validation.tokenAge = tokenValidation.iat ?
+            Math.floor((Date.now() / 1000) - tokenValidation.iat) : null;
         }
       } catch (error) {
-        debugInfo.token = {
-          ...debugInfo.token,
-          decodeError: 'Erro ao decodificar JWT payload'
-        }
+        debugInfo.validation.tokenValid = false;
+        debugInfo.validation.tokenError = error instanceof Error ? error.message : 'Erro desconhecido';
       }
     }
-    
+
+    // Informações da requisição
+    debugInfo.request.method = request.method;
+    debugInfo.request.url = request.url;
+    debugInfo.request.ip = request.headers.get('x-forwarded-for') || request.headers.get('x-real-ip') || 'unknown';
+    debugInfo.request.userAgent = request.headers.get('user-agent');
+    debugInfo.request.referer = request.headers.get('referer');
+
     return NextResponse.json({
       success: true,
-      message: 'Debug de autenticação - Frontend',
-      debug: debugInfo
-    }, {
-      headers: getCorsHeaders(request.headers.get('origin') || undefined)
-    })
-  } catch (error: any) {
-    return NextResponse.json(
-      { 
-        success: false, 
-        message: 'Erro no debug de autenticação',
-        error: error.message 
-      },
-      { status: 500 }
-    )
+      message: 'Informações de debug de autenticação',
+      data: debugInfo
+    });
+
+  } catch (error) {
+    console.error('Erro no debug de autenticação:', error);
+    return NextResponse.json({
+      success: false,
+      message: 'Erro no debug de autenticação',
+      error: error instanceof Error ? error.message : 'Erro desconhecido'
+    }, { status: 500 });
   }
+}
+
+export async function OPTIONS() {
+  return new NextResponse(null, { status: 204 });
 }

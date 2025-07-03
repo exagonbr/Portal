@@ -1,336 +1,325 @@
-import { NextRequest, NextResponse } from 'next/server'
-import { getServerSession } from 'next-auth'
-import { authOptions } from '@/lib/auth'
-import { z } from 'zod'
-import { createCorsOptionsResponse, getCorsHeaders } from '@/config/cors'
+import { NextRequest, NextResponse } from 'next/server';
+import { extractToken, verifyToken, MOCK_USERS } from '@/middleware/auth';
 
-// Funções CORS
-function getCorsHeaders(origin?: string) {
-  return {
-    'Access-Control-Allow-Origin': origin || '*',
-    'Access-Control-Allow-Methods': 'GET, POST, PUT, DELETE, OPTIONS',
-    'Access-Control-Allow-Headers': 'Content-Type, Authorization',
-    'Access-Control-Allow-Credentials': 'true',
-  }
-}
-
-function createCorsOptionsResponse(origin?: string) {
-  return new NextResponse(null, {
-    status: 200,
-    headers: getCorsHeaders(origin)
-  })
-}
-
-// Schema de validação para atualização de grupo
-const updateStudyGroupSchema = z.object({
-  name: z.string().min(3, 'Nome deve ter pelo menos 3 caracteres').optional(),
-  description: z.string().min(10, 'Descrição deve ter pelo menos 10 caracteres').optional(),
-  subject: z.string().min(2, 'Assunto deve ter pelo menos 2 caracteres').optional(),
-  type: z.enum(['STUDY', 'PROJECT', 'RESEARCH', 'DISCUSSION', 'TUTORING']).optional(),
-  visibility: z.enum(['PUBLIC', 'PRIVATE', 'CLASS_ONLY', 'INVITE_ONLY']).optional(),
-  max_members: z.number().int().min(2).max(50).optional(),
-  meeting_schedule: z.object({
-    frequency: z.enum(['DAILY', 'WEEKLY', 'BIWEEKLY', 'MONTHLY', 'AS_NEEDED']).optional(),
-    day_of_week: z.number().int().min(0).max(6).optional(),
-    time: z.string().regex(/^([0-1]?[0-9]|2[0-3]):[0-5][0-9]$/).optional(),
-    duration_minutes: z.number().int().positive().optional(),
-    location: z.string().optional(),
-    online_meeting_url: z.string().url().optional()
-  }).optional(),
-  goals: z.array(z.string()).optional(),
-  rules: z.array(z.string()).optional(),
-  resources: z.array(z.object({
-    title: z.string(),
-    type: z.enum(['DOCUMENT', 'LINK', 'VIDEO', 'BOOK', 'ARTICLE']),
-    url: z.string().url().optional(),
-    description: z.string().optional()
-  })).optional(),
-  tags: z.array(z.string()).optional(),
-  is_active: z.boolean().optional(),
-  settings: z.object({
-    auto_accept_members: z.boolean().optional(),
-    require_approval: z.boolean().optional(),
-    allow_member_invites: z.boolean().optional(),
-    enable_chat: z.boolean().optional(),
-    enable_forum: z.boolean().optional(),
-    enable_file_sharing: z.boolean().optional(),
-    notify_new_content: z.boolean().optional()
-  }).optional()
-})
-
-// Mock database - substituir por Prisma/banco real
-const mockStudyGroups = new Map()
-const mockGroupMembers = new Map()
-
-// GET - Buscar grupo por ID
-
-// Handler para requisições OPTIONS (preflight)
-export async function OPTIONS(request: NextRequest) {
-  const origin = request.headers.get('origin') || undefined;
-  return createCorsOptionsResponse(origin);
-}
-
-export async function GET(
-  request: NextRequest,
-  { params }: { params: Promise<{ id: string }> }
-) {
+/**
+ * Obter grupo de estudo por ID
+ * GET /api/study-groups/[id]
+ */
+export async function GET(request: NextRequest, { params }: { params: { id: string } }) {
   try {
-    const session = await getServerSession(authOptions)
-    
-    if (!session) {
-      return NextResponse.json({ error: 'Não autorizado' }, { 
-      status: 401,
-      headers: getCorsHeaders(request.headers.get('origin') || undefined)
-    })
+    // Verificar autenticação
+    const token = extractToken(request);
+    if (!token) {
+      return NextResponse.json(
+        { success: false, message: 'Token de acesso requerido' },
+        { status: 401 }
+      );
     }
 
-    const resolvedParams = await params
-    const id = resolvedParams.id
-
-    // Buscar grupo
-    const group = mockStudyGroups.get(groupId)
-
-    if (!group) {
-      return NextResponse.json({ error: 'Grupo não encontrado' }, { 
-      status: 404,
-      headers: getCorsHeaders(request.headers.get('origin') || undefined)
-    })
+    const decoded = verifyToken(token);
+    if (!decoded) {
+      return NextResponse.json(
+        { success: false, message: 'Token inválido' },
+        { status: 401 }
+      );
     }
 
-    // Buscar membros
-    const members = mockGroupMembers.get(groupId) || []
-    const userMembership = members.find((m: any) => m.user_id === session.user?.id)
-
-    // Verificar permissões de visualização
-    const userRole = session.user?.role
-    const canView =
-      group.visibility === 'PUBLIC' ||
-      userRole === 'SYSTEM_ADMIN' ||
-      userRole === 'INSTITUTION_MANAGER' ||
-      !!userMembership ||
-      (group.visibility === 'CLASS_ONLY' && group.class_id) // Verificar se está na turma
-
-    if (!canView) {
-      return NextResponse.json({ error: 'Sem permissão para visualizar este grupo' }, { 
-      status: 403,
-      headers: getCorsHeaders(request.headers.get('origin') || undefined)
-    })
+    const user = MOCK_USERS[decoded.email];
+    if (!user) {
+      return NextResponse.json(
+        { success: false, message: 'Usuário não encontrado' },
+        { status: 401 }
+      );
     }
 
-    // Preparar informações do grupo
-    const groupWithDetails = {
-      ...group,
-      member_count: members.length,
-      members: userMembership ? members.map((m: any) => ({
-        user_id: m.user_id,
-        user_name: m.user_name,
-        role: m.role,
-        joined_at: m.joined_at,
-        is_active: m.is_active,
-        contribution_points: m.contribution_points
-      })) : null,
-      is_member: !!userMembership,
-      user_role: userMembership?.role || null,
-      user_joined_at: userMembership?.joined_at || null,
-      is_full: members.length >= group.max_members,
-      active_members: members.filter((m: any) => m.is_active).length,
-      pending_requests: members.filter((m: any) => m.status === 'pending').length,
-      can_join: !userMembership && members.length < group.max_members && group.is_active,
-      can_edit: userMembership?.role === 'LEADER' || userRole === 'SYSTEM_ADMIN',
-      can_delete: group.creator_id === session.user?.id || userRole === 'SYSTEM_ADMIN'
+    const { id } = params;
+
+    if (!id) {
+      return NextResponse.json(
+        { success: false, message: 'ID do grupo é obrigatório' },
+        { status: 400 }
+      );
     }
 
-    // Se não for membro, remover informações sensíveis
-    if (!userMembership && userRole !== 'SYSTEM_ADMIN') {
-      delete groupWithDetails.resources
-      delete groupWithDetails.meeting_schedule?.online_meeting_url
-    }
-
-    return NextResponse.json({
-      success: true,
-      data: groupWithDetails
-    }, {
-      headers: getCorsHeaders(request.headers.get('origin') || undefined)
-    })
-
-  } catch (error) {
-    console.log('Erro ao buscar grupo:', error)
-    return NextResponse.json({ error: 'Erro interno do servidor' }, { 
-      status: 500,
-      headers: getCorsHeaders(request.headers.get('origin') || undefined)
-    })
-  }
-}
-
-// PUT - Atualizar grupo
-export async function PUT(
-  request: NextRequest,
-  { params }: { params: Promise<{ id: string }> }
-) {
-  try {
-    const session = await getServerSession(authOptions)
-    
-    if (!session) {
-      return NextResponse.json({ error: 'Não autorizado' }, { 
-      status: 401,
-      headers: getCorsHeaders(request.headers.get('origin') || undefined)
-    })
-    }
-
-    const resolvedParams = await params
-    const id = resolvedParams.id
-    const body = await request.json()
-
-    // Validar dados
-    const validationResult = updateStudyGroupSchema.safeParse(body)
-    if (!validationResult.success) {
-      return NextResponse.json({
-          error: 'Dados inválidos',
-          errors: validationResult.error.flatten().fieldErrors
+    // Mock de grupo específico
+    const mockGroup = {
+      id,
+      name: 'Grupo de Matemática Avançada',
+      description: 'Estudo colaborativo de cálculo diferencial e integral. Focamos em resolver exercícios complexos e discutir conceitos teóricos.',
+      courseId: '1',
+      courseName: 'Matemática Avançada',
+      createdBy: '2',
+      createdByName: 'Prof. João Silva',
+      status: 'ACTIVE',
+      privacy: 'PUBLIC',
+      maxMembers: 15,
+      currentMembers: 8,
+      members: [
+        { 
+          id: '2', 
+          name: 'Prof. João Silva', 
+          role: 'OWNER', 
+          joinedAt: '2024-12-15T10:00:00Z',
+          avatar: '/avatars/prof-joao.jpg',
+          status: 'ONLINE'
+        },
+        { 
+          id: '3', 
+          name: 'Maria Santos', 
+          role: 'MODERATOR', 
+          joinedAt: '2025-01-01T10:00:00Z',
+          avatar: '/avatars/maria.jpg',
+          status: 'OFFLINE'
+        },
+        { 
+          id: '4', 
+          name: 'Pedro Costa', 
+          role: 'MEMBER', 
+          joinedAt: '2025-01-02T14:30:00Z',
+          avatar: '/avatars/pedro.jpg',
+          status: 'ONLINE'
+        },
+        { 
+          id: '5', 
+          name: 'Ana Silva', 
+          role: 'MEMBER', 
+          joinedAt: '2025-01-03T09:15:00Z',
+          avatar: '/avatars/ana.jpg',
+          status: 'AWAY'
+        }
+      ],
+      schedule: {
+        meetingDay: 'WEDNESDAY',
+        meetingTime: '19:00',
+        duration: 120,
+        location: 'Sala Virtual 1',
+        timezone: 'America/Sao_Paulo',
+        recurring: true,
+        nextMeeting: '2025-01-08T22:00:00Z'
+      },
+      activities: [
+        {
+          id: '1',
+          type: 'MEETING',
+          title: 'Revisão de Limites',
+          description: 'Discussão sobre conceitos de limites e continuidade',
+          scheduledFor: '2025-01-08T22:00:00Z',
+          duration: 120,
+          status: 'SCHEDULED'
         },
         {
-          status: 400,
-          headers: getCorsHeaders(request.headers.get('origin') || undefined)
+          id: '2',
+          type: 'ASSIGNMENT',
+          title: 'Lista de Exercícios 3',
+          description: 'Resolver exercícios 15-25 do capítulo 4',
+          dueDate: '2025-01-10T23:59:59Z',
+          status: 'ACTIVE'
         }
-      )
-    }
-
-    const updateData = validationResult.data
-
-    // Buscar grupo existente
-    const existingGroup = mockStudyGroups.get(groupId)
-    if (!existingGroup) {
-      return NextResponse.json({ error: 'Grupo não encontrado' }, { 
-      status: 404,
-      headers: getCorsHeaders(request.headers.get('origin') || undefined)
-    })
-    }
-
-    // Verificar permissões
-    const members = mockGroupMembers.get(groupId) || []
-    const userMembership = members.find((m: any) => m.user_id === session.user?.id)
-    const userRole = session.user?.role
-    
-    const canEdit = 
-      userRole === 'SYSTEM_ADMIN' ||
-      (userMembership?.role === 'LEADER') ||
-      (userMembership?.role === 'MODERATOR' && !['visibility', 'max_members'].some(field => (updateData as any)[field] !== undefined))
-
-    if (!canEdit) {
-      return NextResponse.json({ error: 'Sem permissão para editar este grupo' }, { 
-      status: 403,
-      headers: getCorsHeaders(request.headers.get('origin') || undefined)
-    })
-    }
-
-    // Validar alteração de max_members
-    if (updateData.max_members && updateData.max_members < members.length) {
-      return NextResponse.json({ error: `Não é possível reduzir o limite para menos que o número atual de membros (${members.length}, {
-      headers: getCorsHeaders(request.headers.get('origin') || undefined)
-    })` }, { 
-      status: 400,
-      headers: getCorsHeaders(request.headers.get('origin') || undefined)
-    })
-    }
-
-    // Atualizar grupo
-    const updatedGroup = {
-      ...existingGroup,
-      ...updateData,
-      updated_at: new Date().toISOString(),
-      last_activity_at: new Date().toISOString()
-    }
-
-    mockStudyGroups.set(groupId, updatedGroup)
+      ],
+      resources: [
+        {
+          id: '1',
+          name: 'Notas da Aula - Derivadas',
+          type: 'PDF',
+          url: '/resources/derivadas-notas.pdf',
+          uploadedBy: '2',
+          uploadedAt: '2025-01-05T14:30:00Z',
+          size: 1024000
+        },
+        {
+          id: '2',
+          name: 'Exercícios Resolvidos',
+          type: 'PDF',
+          url: '/resources/exercicios-resolvidos.pdf',
+          uploadedBy: '3',
+          uploadedAt: '2025-01-06T16:45:00Z',
+          size: 2048000
+        }
+      ],
+      discussions: [
+        {
+          id: '1',
+          title: 'Dúvida sobre regra da cadeia',
+          author: 'Pedro Costa',
+          authorId: '4',
+          createdAt: '2025-01-07T10:30:00Z',
+          replies: 3,
+          lastReply: '2025-01-07T15:20:00Z'
+        },
+        {
+          id: '2',
+          title: 'Material complementar sobre integrais',
+          author: 'Maria Santos',
+          authorId: '3',
+          createdAt: '2025-01-06T20:15:00Z',
+          replies: 7,
+          lastReply: '2025-01-07T12:45:00Z'
+        }
+      ],
+      tags: ['matemática', 'cálculo', 'estudo-grupo', 'derivadas', 'integrais'],
+      settings: {
+        allowMemberInvites: true,
+        requireApproval: false,
+        allowFileSharing: true,
+        allowDiscussions: true,
+        notificationsEnabled: true
+      },
+      stats: {
+        totalMeetings: 12,
+        totalDiscussions: 45,
+        totalResources: 23,
+        avgAttendance: 85.5,
+        memberSatisfaction: 4.7
+      },
+      createdAt: '2024-12-15T10:00:00Z',
+      updatedAt: '2025-01-07T15:30:00Z'
+    };
 
     return NextResponse.json({
       success: true,
-      data: updatedGroup,
-      message: 'Grupo atualizado com sucesso'
-    }, {
-      headers: getCorsHeaders(request.headers.get('origin') || undefined)
-    })
+      message: 'Grupo de estudo obtido com sucesso',
+      data: mockGroup
+    });
 
   } catch (error) {
-    console.log('Erro ao atualizar grupo:', error)
-    return NextResponse.json({ error: 'Erro interno do servidor' }, { 
-      status: 500,
-      headers: getCorsHeaders(request.headers.get('origin') || undefined)
-    })
+    console.error('Erro ao obter grupo de estudo:', error);
+    return NextResponse.json(
+      { success: false, message: 'Erro interno do servidor' },
+      { status: 500 }
+    );
   }
 }
 
-// DELETE - Remover grupo
-export async function DELETE(
-  request: NextRequest,
-  { params }: { params: Promise<{ id: string }> }
-) {
+/**
+ * Atualizar grupo de estudo
+ * PUT /api/study-groups/[id]
+ */
+export async function PUT(request: NextRequest, { params }: { params: { id: string } }) {
   try {
-    const session = await getServerSession(authOptions)
-    
-    if (!session) {
-      return NextResponse.json({ error: 'Não autorizado' }, { 
-      status: 401,
-      headers: getCorsHeaders(request.headers.get('origin') || undefined)
-    })
+    // Verificar autenticação
+    const token = extractToken(request);
+    if (!token) {
+      return NextResponse.json(
+        { success: false, message: 'Token de acesso requerido' },
+        { status: 401 }
+      );
     }
 
-    const resolvedParams = await params
-    const id = resolvedParams.id
-
-    // Buscar grupo
-    const existingGroup = mockStudyGroups.get(groupId)
-    if (!existingGroup) {
-      return NextResponse.json({ error: 'Grupo não encontrado' }, { 
-      status: 404,
-      headers: getCorsHeaders(request.headers.get('origin') || undefined)
-    })
+    const decoded = verifyToken(token);
+    if (!decoded) {
+      return NextResponse.json(
+        { success: false, message: 'Token inválido' },
+        { status: 401 }
+      );
     }
 
-    // Verificar permissões
-    const userRole = session.user?.role
-    const canDelete = 
-      userRole === 'SYSTEM_ADMIN' ||
-      existingGroup.creator_id === session.user?.id
-
-    if (!canDelete) {
-      return NextResponse.json({ error: 'Sem permissão para deletar este grupo' }, { 
-      status: 403,
-      headers: getCorsHeaders(request.headers.get('origin') || undefined)
-    })
+    const user = MOCK_USERS[decoded.email];
+    if (!user || !user.permissions.includes('study-groups.edit')) {
+      return NextResponse.json(
+        { success: false, message: 'Permissão insuficiente' },
+        { status: 403 }
+      );
     }
 
-    // Verificar se há atividade recente
-    const lastActivity = new Date(existingGroup.last_activity_at)
-    const daysSinceActivity = (new Date().getTime() - lastActivity.getTime()) / (1000 * 60 * 60 * 24)
-    
-    if (daysSinceActivity < 7) {
-      return NextResponse.json({ error: 'Não é possível deletar grupo com atividade recente. Desative o grupo primeiro.' }, { 
-      status: 409,
-      headers: getCorsHeaders(request.headers.get('origin') || undefined)
-    })
+    const { id } = params;
+    const body = await request.json();
+    const { name, description, schedule, privacy, maxMembers, tags } = body;
+
+    if (!id) {
+      return NextResponse.json(
+        { success: false, message: 'ID do grupo é obrigatório' },
+        { status: 400 }
+      );
     }
 
-    // Notificar membros (em produção)
-    const members = mockGroupMembers.get(groupId) || []
-    // Enviar notificações para membros sobre exclusão do grupo
-
-    // Deletar grupo e membros
-    mockStudyGroups.delete(groupId)
-    mockGroupMembers.delete(groupId)
+    // Mock de atualização
+    const updatedGroup = {
+      id,
+      name: name || 'Grupo Atualizado',
+      description: description || 'Descrição atualizada',
+      schedule: schedule || {},
+      privacy: privacy || 'PUBLIC',
+      maxMembers: maxMembers || 15,
+      tags: tags || [],
+      updatedAt: new Date().toISOString(),
+      updatedBy: user.id
+    };
 
     return NextResponse.json({
       success: true,
-      message: 'Grupo removido com sucesso'
-    }, {
-      headers: getCorsHeaders(request.headers.get('origin') || undefined)
-    })
+      message: 'Grupo de estudo atualizado com sucesso',
+      data: updatedGroup
+    });
 
   } catch (error) {
-    console.log('Erro ao deletar grupo:', error)
-    return NextResponse.json({ error: 'Erro interno do servidor' }, { 
-      status: 500,
-      headers: getCorsHeaders(request.headers.get('origin') || undefined)
-    })
+    console.error('Erro ao atualizar grupo de estudo:', error);
+    return NextResponse.json(
+      { success: false, message: 'Erro interno do servidor' },
+      { status: 500 }
+    );
   }
-} 
+}
+
+/**
+ * Deletar grupo de estudo
+ * DELETE /api/study-groups/[id]
+ */
+export async function DELETE(request: NextRequest, { params }: { params: { id: string } }) {
+  try {
+    // Verificar autenticação
+    const token = extractToken(request);
+    if (!token) {
+      return NextResponse.json(
+        { success: false, message: 'Token de acesso requerido' },
+        { status: 401 }
+      );
+    }
+
+    const decoded = verifyToken(token);
+    if (!decoded) {
+      return NextResponse.json(
+        { success: false, message: 'Token inválido' },
+        { status: 401 }
+      );
+    }
+
+    const user = MOCK_USERS[decoded.email];
+    if (!user || !user.permissions.includes('study-groups.delete')) {
+      return NextResponse.json(
+        { success: false, message: 'Permissão insuficiente' },
+        { status: 403 }
+      );
+    }
+
+    const { id } = params;
+
+    if (!id) {
+      return NextResponse.json(
+        { success: false, message: 'ID do grupo é obrigatório' },
+        { status: 400 }
+      );
+    }
+
+    // Mock de deleção
+    return NextResponse.json({
+      success: true,
+      message: 'Grupo de estudo deletado com sucesso',
+      data: {
+        id,
+        deletedAt: new Date().toISOString(),
+        deletedBy: user.id
+      }
+    });
+
+  } catch (error) {
+    console.error('Erro ao deletar grupo de estudo:', error);
+    return NextResponse.json(
+      { success: false, message: 'Erro interno do servidor' },
+      { status: 500 }
+    );
+  }
+}
+
+export async function OPTIONS() {
+  return new NextResponse(null, { status: 204 });
+}

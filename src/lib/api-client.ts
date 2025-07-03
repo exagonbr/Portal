@@ -12,6 +12,7 @@ import {
   initializeFirefoxCompatibility
 } from '../utils/firefox-compatibility';
 import { CORS_HEADERS } from '@/config/cors';
+import { getCurrentToken } from '@/utils/token-validator';
 
 // Configuração otimizada para comunicação direta
 const API_CONFIG = {
@@ -66,7 +67,7 @@ class ApiClient {
   private refreshPromise: Promise<boolean> | null = null;
 
   constructor() {
-    this.baseURL = API_CONFIG.baseUrl;
+    this.baseURL = process.env.FRONTEND_URL || 'http://localhost:3000/api';
     this.timeout = API_CONFIG.timeout;
     
     // Log de inicialização apenas em desenvolvimento
@@ -221,6 +222,7 @@ class ApiClient {
    */
   private prepareHeaders(customHeaders?: Record<string, string>, skipAuth = false): Record<string, string> {
     const headers: Record<string, string> = {
+      Authorization: 'Bearer ' + getCurrentToken(),
       'Content-Type': 'application/json',
       ...CORS_HEADERS,
       ...customHeaders
@@ -268,6 +270,7 @@ class ApiClient {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',
+            Authorization: 'Bearer ' + getCurrentToken(),
             ...CORS_HEADERS
           },
           credentials: 'include'
@@ -400,9 +403,15 @@ class ApiClient {
       });
     }
 
+    const headers: Record<string, string> = {
+      Authorization: 'Bearer ' + getCurrentToken(),
+      ...CORS_HEADERS
+    };
+
     return this.makeRequest<T>(endpoint, {
       method: 'POST',
       body: formData,
+      headers
     });
   }
 

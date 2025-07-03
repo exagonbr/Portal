@@ -7,6 +7,7 @@ import {
   AlertCircle, Check, ChevronDown, ChevronUp, Settings, MoreVertical
 } from 'lucide-react'
 import DashboardLayout from '@/components/dashboard/DashboardLayout'
+import { getCurrentToken } from '@/utils/token-validator'
 
 interface TVShow {
   id: number
@@ -110,8 +111,9 @@ export default function TVShowAdminPage() {
 
       const token = getAuthToken()
       const headers: Record<string, string> = {
+        Authorization: 'Bearer ' + getCurrentToken(),
         'Content-Type': 'application/json',
-      }
+      };
       
       if (token) {
         headers['Authorization'] = `Bearer ${token}`

@@ -67,10 +67,10 @@ export interface SessionData {
 }
 
 // Configurações JWT
-const JWT_SECRET = process.env.JWT_SECRET || 'your-super-secret-jwt-key-change-in-production';
-const JWT_REFRESH_SECRET = process.env.JWT_REFRESH_SECRET || 'your-super-secret-refresh-key-change-in-production';
-const JWT_EXPIRES_IN = process.env.JWT_EXPIRES_IN || '15m';
-const JWT_REFRESH_EXPIRES_IN = process.env.JWT_REFRESH_EXPIRES_IN || '7d';
+const JWT_SECRET = 'SaberconPortal2025_SuperSecretKey_ProductionReady_XYZ789';
+const JWT_REFRESH_SECRET = 'SaberconPortal2025_SuperSecretKey_ProductionReady';
+const JWT_EXPIRES_IN = '15m';
+const JWT_REFRESH_EXPIRES_IN = '7d';
 
 // Simulação de dados de usuários (em produção, viria do banco de dados)
 const MOCK_USERS: Record<string, User> = {

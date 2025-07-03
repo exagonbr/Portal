@@ -193,7 +193,11 @@ export async function POST(request: NextRequest) {
 
   } catch (error) {
     console.log('Erro ao criar role:', error)
-    return NextResponse.json({ error: 'Erro interno do servidor' }, { 
+    return NextResponse.json({
+      success: false,
+      message: 'Failed to create Role',
+      error: error instanceof Error ? error.message : 'Erro desconhecido'
+    }, {
       status: 500,
       headers: getCorsHeaders(request.headers.get('origin') || undefined)
     })

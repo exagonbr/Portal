@@ -1,7 +1,7 @@
 export const dynamic = 'force-dynamic';
 import { NextRequest, NextResponse } from 'next/server';
-import { getAuthentication, hasRequiredRole } from '@/lib/auth-utils';
-import { createCorsOptionsResponse, getCorsHeaders } from '@/config/cors'
+import { createCorsOptionsResponse, getCorsHeaders } from '@/config/cors';
+import { requireSystemAdmin, AuthenticatedRequest } from '@/middleware/auth-middleware';
 
 // Função para gerar dados do sistema baseados no horário
 function generateSystemData() {
@@ -176,25 +176,10 @@ export async function OPTIONS(request: NextRequest) {
   return createCorsOptionsResponse(origin);
 }
 
-export async function GET(request: NextRequest) {
+export const GET = requireSystemAdmin(async (request: AuthenticatedRequest) => {
   try {
-    const session = await getAuthentication(request);
+    console.log('📊 [/api/dashboard/system] Buscando dados do sistema...');
     
-    if (!session) {
-      return NextResponse.json(
-        { success: false, message: 'Authorization required' },
-        { status: 401 }
-      );
-    }
-
-    // Verificar se tem permissão para ver dados do sistema
-    if (!hasRequiredRole(session.user.role, ['SYSTEM_ADMIN'])) {
-      return NextResponse.json(
-        { success: false, message: 'Insufficient permissions' },
-        { status: 403 }
-      );
-    }
-
     const systemData = generateSystemData();
 
     return NextResponse.json({
@@ -205,10 +190,17 @@ export async function GET(request: NextRequest) {
     });
 
   } catch (error) {
-    console.log('Erro ao buscar dados do sistema:', error);
+    console.log('❌ [/api/dashboard/system] Erro ao buscar dados do sistema:', error);
     return NextResponse.json(
-      { success: false, message: 'Erro interno do servidor' },
-      { status: 500 }
+      {
+        success: false,
+        message: 'Erro interno do servidor',
+        error: error instanceof Error ? error.message : 'Unknown error'
+      },
+      {
+        status: 500,
+        headers: getCorsHeaders(request.headers.get('origin') || undefined)
+      }
     );
   }
-} 
+});
