@@ -42,10 +42,26 @@ export class SessionService {
    * Cria uma nova sessão para o usuário
    */
   static async createSession(
-    user: any, 
+    user: any,
     clientInfo: ClientInfo,
     remember: boolean = false
   ): Promise<{ sessionId: string; refreshToken: string }> {
+    if (process.env.REDIS_DISABLED === 'true') {
+      console.warn('🔴 Redis desabilitado. Criando sessão JWT stateless.');
+      const sessionTTL = remember ? TTL.REFRESH_TOKEN : TTL.SESSION;
+      const payload = {
+        userId: user.id,
+        email: user.email,
+        name: user.name,
+        role: user.role_name || user.role?.name,
+        institutionId: user.institution_id,
+        permissions: user.permissions || user.role?.permissions || [],
+      };
+      const token = jwt.sign(payload, process.env.JWT_SECRET || 'default_secret', { expiresIn: sessionTTL });
+      // O refreshToken não é usado em modo stateless, mas a assinatura do método o exige.
+      return { sessionId: token, refreshToken: 'stateless' };
+    }
+
     const sessionId = uuidv4();
     const refreshToken = uuidv4();
     const now = Date.now();
@@ -107,6 +123,16 @@ export class SessionService {
    * Valida e retorna dados da sessão
    */
   static async validateSession(sessionId: string, userId?: any): Promise<SessionData | null> {
+    if (process.env.REDIS_DISABLED === 'true') {
+      try {
+        const decoded = jwt.verify(sessionId, process.env.JWT_SECRET || 'default_secret');
+        return decoded as SessionData;
+      } catch (error) {
+        console.log('Erro ao validar sessão JWT stateless:', error);
+        return null;
+      }
+    }
+
     try {
       const sessionDataStr = await this.redis.get(`${this.SESSION_PREFIX}${sessionId}`);
       
@@ -155,6 +181,11 @@ export class SessionService {
    * Destrói uma sessão específica
    */
   static async destroySession(sessionId: string): Promise<boolean> {
+    if (process.env.REDIS_DISABLED === 'true') {
+      // Em modo stateless, o logout é gerenciado pelo cliente (descartando o token)
+      return true;
+    }
+
     try {
       const sessionDataStr = await this.redis.get(`${this.SESSION_PREFIX}${sessionId}`);
       
