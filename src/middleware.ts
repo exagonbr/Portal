@@ -72,14 +72,16 @@ function isPublicRoute(pathname: string): boolean {
   return false;
 }
 
+const isDev = process.env.NODE_ENV === 'development';
+
 /**
  * Middleware principal - Simplificado para evitar loops
  */
 export async function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl;
-
+  
   // Log apenas para debug quando necessário
-  if (process.env.NODE_ENV === 'development') {
+  if (isDev) {
     console.log(`🔧 Middleware: ${pathname}`);
   }
 
@@ -88,33 +90,27 @@ export async function middleware(request: NextRequest) {
     return NextResponse.next();
   }
 
-  // Para todas as outras rotas, a proteção é feita pelos componentes do lado do cliente
-  // Isso evita loops e problemas de SSR
-  return NextResponse.next();
-}
-
-const isDev = process.env.NODE_ENV === 'development';
-
-export function middleware(request: NextRequest) {
   const response = NextResponse.next();
 
-  // Desabilitar cache sempre
-  response.headers.set('Cache-Control', 'no-store, no-cache, must-revalidate, proxy-revalidate');
-  response.headers.set('Pragma', 'no-cache');
-  response.headers.set('Expires', '0');
-
-  // Permitir todas as origens
-  response.headers.set('Access-Control-Allow-Origin', '*');
-  response.headers.set('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, OPTIONS');
-  response.headers.set('Access-Control-Allow-Headers', 'Content-Type, Authorization, X-Requested-With, X-CSRF-Token, Cache-Control, Pragma, Accept, Origin, Cookie');
-  response.headers.set('Access-Control-Allow-Credentials', 'true');
+  // Desabilitar cache em desenvolvimento
+  if (isDev) {
+    response.headers.set('Cache-Control', 'no-store, no-cache, must-revalidate, proxy-revalidate');
+    response.headers.set('Pragma', 'no-cache');
+  } else {
+    // Em produção, configurar cache apropriadamente
+    if (request.nextUrl.pathname.startsWith('/_next/')) {
+      if (request.nextUrl.pathname.includes('/_next/static/')) {
+        response.headers.set('Cache-Control', 'public, max-age=31536000, immutable');
+      } else {
+        response.headers.set('Cache-Control', 'no-cache, no-store, must-revalidate');
+      }
+    }
+  }
 
   return response;
 }
 
-/**
- * Configuração do matcher - Apenas para rotas que realmente precisam de verificação
- */
+// Configurar em quais rotas o middleware deve rodar
 export const config = {
   matcher: [
     /*
@@ -122,7 +118,9 @@ export const config = {
      * - _next/static (static files)
      * - _next/image (image optimization files)
      * - favicon.ico (favicon file)
+     * - public folder
      */
-    '/((?!_next/static|_next/image|favicon.ico).*)',
+    '/((?!_next/static|_next/image|favicon.ico|.*\\.(?:svg|png|jpg|jpeg|gif|webp|ico|woff|woff2)$).*)',
+    '/api/:path*',
   ],
 }; 
