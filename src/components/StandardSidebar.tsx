@@ -5,18 +5,19 @@ import Link from 'next/link'
 import { usePathname } from 'next/navigation'
 import { useAuth } from '@/contexts/AuthContext'
 import { useState, useEffect, useCallback, memo, useMemo, useRef } from 'react'
-import { UserRole, ROLE_PERMISSIONS, ROLE_LABELS, hasPermission, getAccessibleRoutes } from '@/types/roles'
+import { UserRole, ROLE_PERMISSIONS, ROLE_LABELS, hasPermission, getAccessibleRoutes, RolePermissions } from '@/types/roles'
 import { useTheme } from '@/contexts/ThemeContext'
 import { motion, AnimatePresence } from 'framer-motion'
 import { getSystemAdminMenuItems } from '@/components/admin/SystemAdminMenu'
 import { EnhancedLoadingState } from './ui/LoadingStates'
 import { useNavigationWithLoading } from '@/hooks/useNavigationWithLoading'
+import { useMenuPermissions, useMenuSectionPermissions } from '@/hooks/useMenuPermissions'
 
 interface NavItem {
   href: string
   icon: string
   label: string
-  permission?: keyof typeof ROLE_PERMISSIONS[UserRole.SYSTEM_ADMIN]
+  permission?: keyof RolePermissions
 }
 
 interface NavSection {
@@ -186,27 +187,41 @@ const NavItem = memo(({ item, isActive, isCollapsed, onClick, theme }: {
 });
 NavItem.displayName = 'NavItem';
 
-const NavSection = memo(({ section, items, pathname, isCollapsed, onItemClick, userRole, theme }: { 
-  section: string, 
-  items: NavItem[], 
+const NavSection = memo(({ section, items, pathname, isCollapsed, onItemClick, userRole, theme }: {
+  section: string,
+  items: NavItem[],
   pathname: string | null,
   isCollapsed: boolean,
   onItemClick?: () => void,
   userRole: UserRole,
   theme: any
 }) => {
-  // Filter items based on user permissions
-  const filteredItems = items.filter(item => {
-    if (!item.permission) return true;
-    return hasPermission(userRole, item.permission);
-  });
+  // Usar o hook de permissões com cache inteligente (sem cache para dados sensíveis)
+  const { filteredMenuItems } = useMenuPermissions(
+    items.map(item => ({
+      href: item.href,
+      label: item.label,
+      permission: item.permission
+    })),
+    {
+      autoRevalidate: true,
+      onPermissionsUpdate: (permissions) => {
+        console.log(`🔐 [NavSection] Permissões atualizadas para seção "${section}":`, permissions);
+      }
+    }
+  );
 
-  if (filteredItems.length === 0) return null;
+  if (filteredMenuItems.length === 0) return null;
+
+  // Mapear de volta para NavItem
+  const filteredNavItems = items.filter(item =>
+    filteredMenuItems.some(filtered => filtered.href === item.href)
+  );
 
   return (
     <div className="mb-3">
       {!isCollapsed && (
-        <p 
+        <p
           className="px-2 py-1 text-[10px] font-bold uppercase tracking-wider opacity-75"
           style={{ color: theme.colors.text.tertiary }}
         >
@@ -214,7 +229,7 @@ const NavSection = memo(({ section, items, pathname, isCollapsed, onItemClick, u
         </p>
       )}
       <div className="space-y-0.5">
-        {filteredItems.map((item) => (
+        {filteredNavItems.map((item) => (
           <NavItem
             key={item.href}
             item={item}
@@ -519,6 +534,35 @@ export default function StandardSidebar() {
     return [...commonItems, ...roleSpecificItems];
   }, [userRole]);
 
+  // Usar o hook de permissões de seções para filtrar todo o menu
+  const { filteredSections, stats } = useMenuSectionPermissions(
+    navItems.map(section => ({
+      section: section.section,
+      items: section.items.map(item => ({
+        href: item.href,
+        label: item.label,
+        permission: item.permission
+      }))
+    })),
+    {
+      autoRevalidate: true,
+      onPermissionsUpdate: (permissions) => {
+        console.log(`🔐 [StandardSidebar] Permissões de menu atualizadas:`, permissions);
+        console.log(`📊 [StandardSidebar] Estatísticas: ${stats.allowed}/${stats.total} itens permitidos (${stats.percentage}%)`);
+      }
+    }
+  );
+
+  // Mapear de volta para NavSection
+  const finalNavItems = useMemo(() => {
+    return filteredSections.map(section => ({
+      section: section.section,
+      items: navItems
+        .find(nav => nav.section === section.section)?.items
+        .filter(item => section.items.some(filtered => filtered.href === item.href)) || []
+    }));
+  }, [filteredSections, navItems]);
+
   return (
     <>
       {/* Loading State para Logout */}
@@ -644,7 +688,7 @@ export default function StandardSidebar() {
             }}
           >
             <div className="space-y-1">
-              {navItems.map((section: NavSection, idx: number) => (
+              {finalNavItems.map((section: NavSection, idx: number) => (
                 <NavSection
                   key={`${section.section}-${idx}`}
                   section={section.section}

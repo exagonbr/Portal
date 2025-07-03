@@ -95,7 +95,8 @@ self.addEventListener('fetch', (event) => {
         ...Object.fromEntries(noCacheHeaders.entries())
       },
       body: request.body,
-      mode: request.mode,
+      // Corrigir o modo para evitar erro com 'navigate' no service worker
+      mode: request.mode === 'navigate' ? 'cors' : request.mode,
       credentials: request.credentials,
       cache: 'no-store',
       redirect: 'follow',

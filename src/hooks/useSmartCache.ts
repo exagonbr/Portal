@@ -12,6 +12,7 @@ export interface UseSmartCacheOptions<T> {
   retryOnError?: boolean;
   retryDelay?: number;
   maxRetries?: number;
+  bypassCache?: boolean; // Nova opção para forçar bypass do cache
 }
 
 export interface UseSmartCacheReturn<T> {
@@ -25,7 +26,32 @@ export interface UseSmartCacheReturn<T> {
 }
 
 /**
+ * Detecta se a chave está relacionada a menus, roles ou permissions
+ * Essas funcionalidades devem sempre buscar dados frescos para garantir segurança
+ */
+function shouldBypassCache(key: string): boolean {
+  const sensitiveKeys = [
+    'menu',
+    'nav',
+    'sidebar',
+    'role',
+    'permission',
+    'auth',
+    'user-role',
+    'user-permissions',
+    'navigation',
+    'access-control',
+    'system-admin-menu',
+    'dashboard-menu'
+  ];
+  
+  const lowerKey = key.toLowerCase();
+  return sensitiveKeys.some(sensitiveKey => lowerKey.includes(sensitiveKey));
+}
+
+/**
  * Hook para cache inteligente com stale-while-revalidate
+ * Automaticamente desabilita cache para dados sensíveis de menu/roles/permissions
  */
 export function useSmartCache<T>({
   key,
@@ -37,7 +63,8 @@ export function useSmartCache<T>({
   onError,
   retryOnError = true,
   retryDelay = 1000,
-  maxRetries = 3
+  maxRetries = 3,
+  bypassCache = false
 }: UseSmartCacheOptions<T>): UseSmartCacheReturn<T> {
   const [data, setData] = useState<T | null>(null);
   const [isLoading, setIsLoading] = useState(false);
@@ -55,6 +82,16 @@ export function useSmartCache<T>({
     };
   }, []);
 
+  // Detectar se deve fazer bypass do cache
+  const shouldBypass = bypassCache || shouldBypassCache(key);
+  
+  // Log para debug quando cache é desabilitado para dados sensíveis
+  useEffect(() => {
+    if (shouldBypassCache(key)) {
+      console.log(`🔒 [useSmartCache] Cache desabilitado para chave sensível: "${key}"`);
+    }
+  }, [key]);
+
   // Função para buscar dados
   const fetchData = useCallback(async (forceRefresh = false): Promise<T | null> => {
     if (!enabled || !mountedRef.current) return null;
@@ -69,15 +106,21 @@ export function useSmartCache<T>({
       }
 
       // Evitar múltiplas requisições simultâneas
-      if (lastFetchRef.current && !forceRefresh) {
+      if (lastFetchRef.current && !forceRefresh && !shouldBypass) {
         return await lastFetchRef.current;
       }
 
-      const fetchPromise = withSmartCache(key, fetcher, {
-        ttl,
-        forceRefresh,
-        skipCache: !staleWhileRevalidate && forceRefresh
-      });
+      // Para dados sensíveis, sempre forçar refresh e pular cache
+      const effectiveForceRefresh = forceRefresh || shouldBypass;
+      const effectiveSkipCache = !staleWhileRevalidate && effectiveForceRefresh || shouldBypass;
+
+      const fetchPromise = shouldBypass
+        ? fetcher() // Busca direta sem cache para dados sensíveis
+        : withSmartCache(key, fetcher, {
+            ttl,
+            forceRefresh: effectiveForceRefresh,
+            skipCache: effectiveSkipCache
+          });
 
       lastFetchRef.current = fetchPromise;
 
@@ -118,7 +161,7 @@ export function useSmartCache<T>({
       }
       lastFetchRef.current = null;
     }
-  }, [key, fetcher, ttl, enabled, staleWhileRevalidate, data, onSuccess, onError, retryOnError, retryDelay, maxRetries]);
+  }, [key, fetcher, ttl, enabled, staleWhileRevalidate, data, onSuccess, onError, retryOnError, retryDelay, maxRetries, shouldBypass]);
 
   // Fetch inicial
   useEffect(() => {
@@ -131,13 +174,15 @@ export function useSmartCache<T>({
   const mutate = useCallback(async (newData?: T): Promise<void> => {
     if (newData !== undefined) {
       setData(newData);
-      // Atualizar cache
-      await cacheManager.revalidate(key, () => Promise.resolve(newData), ttl);
+      // Para dados sensíveis, não atualizar cache
+      if (!shouldBypass) {
+        await cacheManager.revalidate(key, () => Promise.resolve(newData), ttl);
+      }
     } else {
       // Revalidar do servidor
       await fetchData(true);
     }
-  }, [key, ttl, fetchData]);
+  }, [key, ttl, fetchData, shouldBypass]);
 
   // Função para revalidar
   const revalidate = useCallback(async (): Promise<void> => {
@@ -148,8 +193,11 @@ export function useSmartCache<T>({
   const clear = useCallback(async (): Promise<void> => {
     setData(null);
     setError(null);
-    await cacheManager.invalidate(key);
-  }, [key]);
+    // Para dados sensíveis, não há cache para limpar
+    if (!shouldBypass) {
+      await cacheManager.invalidate(key);
+    }
+  }, [key, shouldBypass]);
 
   return {
     data,
@@ -170,7 +218,8 @@ export function useSmartCacheList<T>({
   fetcher,
   ttl = 300,
   enabled = true,
-  dependencies = []
+  dependencies = [],
+  bypassCache = false
 }: UseSmartCacheOptions<T[]> & {
   dependencies?: string[];
 }): UseSmartCacheReturn<T[]> & {
@@ -181,7 +230,8 @@ export function useSmartCacheList<T>({
     fetcher,
     ttl,
     enabled,
-    staleWhileRevalidate: true
+    staleWhileRevalidate: true,
+    bypassCache
   });
 
   // Função para invalidar caches relacionados
@@ -213,7 +263,8 @@ export function useSmartCachePaginated<T>({
   ttl = 300,
   enabled = true,
   page = 1,
-  limit = 10
+  limit = 10,
+  bypassCache = false
 }: UseSmartCacheOptions<{ data: T[]; total: number; page: number; limit: number }> & {
   page?: number;
   limit?: number;
@@ -225,7 +276,8 @@ export function useSmartCachePaginated<T>({
     fetcher,
     ttl,
     enabled,
-    staleWhileRevalidate: true
+    staleWhileRevalidate: true,
+    bypassCache
   });
 }
 
@@ -250,4 +302,33 @@ export function useCacheInvalidation() {
     clearAll,
     getStats
   };
+}
+
+/**
+ * Hook especializado para dados de menu/permissões que sempre busca dados frescos
+ * Não utiliza cache para garantir que mudanças de role sejam refletidas imediatamente
+ */
+export function useMenuCache<T>({
+  key,
+  fetcher,
+  enabled = true,
+  onSuccess,
+  onError,
+  retryOnError = true,
+  retryDelay = 1000,
+  maxRetries = 3
+}: Omit<UseSmartCacheOptions<T>, 'ttl' | 'staleWhileRevalidate' | 'bypassCache'>): UseSmartCacheReturn<T> {
+  return useSmartCache({
+    key,
+    fetcher,
+    enabled,
+    onSuccess,
+    onError,
+    retryOnError,
+    retryDelay,
+    maxRetries,
+    bypassCache: true, // Sempre bypass cache para dados de menu/permissões
+    ttl: 0, // TTL zero para garantir que não seja cacheado
+    staleWhileRevalidate: false // Não usar stale-while-revalidate
+  });
 }
