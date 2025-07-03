@@ -5,10 +5,10 @@ async function testLocalBackend() {
   console.log('==================================================');
 
   const testUrls = [
-    'http://localhost:3001/apisettings/public',
-    'http://localhost:3001/apisystem-settings/public',
-    'http://localhost:3001/api/settings/public',
-    'http://localhost:3001/api/system-settings/public'
+    'https://portal.sabercon.com.br/apisettings/public',
+    'https://portal.sabercon.com.br/apisystem-settings/public',
+    'https://portal.sabercon.com.br/api/settings/public',
+    'https://portal.sabercon.com.br/api/system-settings/public'
   ];
   
   for (const url of testUrls) {

@@ -8,7 +8,7 @@ import Modal from '@/components/ui/Modal'
 import CourseForm from '@/components/forms/CourseForm'
 import ProtectedRoute from '@/components/auth/ProtectedRoute'
 import { useCRUD } from '@/hooks/useCRUD'
-import { apiClient, BaseApiService } from '@/lib/api-client'
+import { apiClient } from '@/lib/api-client'
 import { useTheme } from '@/contexts/ThemeContext'
 import { UserRole } from '@/types/roles'
 import { usePermissions } from '@/hooks/usePermissions'
@@ -27,7 +27,6 @@ interface Course {
   updated_at: string
 }
 
-const courseService = new BaseApiService<Course>('/courses')
 
 export default function CoursesPage() {
   const { theme } = useTheme()
@@ -46,8 +45,8 @@ export default function CoursesPage() {
     search,
     setSelectedItem,
     setPage
-  } = useCRUD({
-    service: courseService,
+  } = useCRUD<Course>({
+    endpoint: '/courses',
     entityName: 'Curso',
     autoFetch: true,
     paginated: true

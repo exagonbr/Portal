@@ -1,0 +1,133 @@
+# 🔧 Correção do Problema de CORS
+
+## Problema Identificado
+
+Você estava enfrentando o seguinte erro:
+```
+Requisição cross-origin bloqueada: A diretiva Same Origin (mesma origem) não permite a leitura do recurso remoto em https://portal.sabercon.com.br/api/auth/login (motivo: falha na requisição CORS). Código de status: (null).
+```
+
+## Solução Implementada
+
+### 1. **Correções Aplicadas**
+
+✅ **Arquivo alterado**: `backend/src/config/middlewares.ts`
+
+**Principais mudanças:**
+- Configuração de CORS mais permissiva em desenvolvimento
+- Headers CORS adicionais para melhor compatibilidade
+- Middleware adicional para garantir headers CORS em todas as respostas
+- Tratamento adequado de requisições OPTIONS (preflight)
+- Status code 200 para preflight (mais compatível que 204)
+
+### 2. **Headers CORS Configurados**
+
+```javascript
+Access-Control-Allow-Origin: * (ou origem específica)
+Access-Control-Allow-Methods: GET,PUT,POST,DELETE,OPTIONS,PATCH
+Access-Control-Allow-Headers: Content-Type, Authorization, Content-Length, X-Requested-With, Accept, Origin, Cache-Control, X-CSRF-Token, User-Agent, Referer, Host, Connection, Accept-Encoding, Accept-Language
+Access-Control-Allow-Credentials: true
+Access-Control-Max-Age: 86400
+```
+
+### 3. **Características da Correção**
+
+- ✅ **Desenvolvimento**: Permite todas as origens
+- ✅ **Produção**: Verifica lista de origens permitidas (mas não bloqueia completamente)
+- ✅ **Preflight**: Responde adequadamente a requisições OPTIONS
+- ✅ **Headers**: Inclui todos os headers necessários para compatibilidade
+- ✅ **Logging**: Registra todas as requisições CORS para debug
+
+## Como Testar a Correção
+
+### Opção 1: Servidor de Teste Simples
+```bash
+# Execute o servidor de teste CORS
+node backend/cors-fix.js
+```
+
+### Opção 2: Teste Automatizado
+```bash
+# Execute o script de teste
+node test-cors-fix.js
+```
+
+### Opção 3: Servidor Principal
+```bash
+# No diretório backend
+cd backend
+npm run dev
+# ou
+npm start
+```
+
+## Verificação Manual
+
+Você pode testar manualmente fazendo uma requisição do navegador:
+
+```javascript
+// No console do navegador (F12)
+fetch('https://portal.sabercon.com.br/api/auth/login', {
+  method: 'POST',
+  headers: {
+    'Content-Type': 'application/json'
+  },
+  body: JSON.stringify({
+    email: 'test@example.com',
+    password: 'test123'
+  })
+})
+.then(response => response.json())
+.then(data => console.log('✅ CORS funcionando:', data))
+.catch(error => console.error('❌ Erro CORS:', error));
+```
+
+## Arquivos Modificados
+
+1. **`backend/src/config/middlewares.ts`** - Configuração principal de CORS
+2. **`backend/cors-fix.js`** - Servidor de teste (criado)
+3. **`test-cors-fix.js`** - Script de teste (criado)
+
+## Próximos Passos
+
+1. **Reinicie o servidor backend**
+2. **Teste a aplicação** - O erro de CORS deve ter desaparecido
+3. **Monitore os logs** - Verifique se as requisições estão sendo aceitas
+4. **Remova arquivos de teste** (opcional) - Após confirmar que funciona
+
+## Logs Esperados
+
+Quando funcionando corretamente, você verá logs como:
+```
+🌐 CORS: Permitindo origem (dev): http://localhost:3000
+✅ CORS OPTIONS: /api/auth/login from http://localhost:3000
+🌐 CORS Request: POST /api/auth/login from http://localhost:3000
+```
+
+## Troubleshooting
+
+### Se ainda houver problemas:
+
+1. **Verifique se o servidor está rodando na porta 3001**
+2. **Confirme que as alterações foram salvas**
+3. **Reinicie completamente o servidor**
+4. **Verifique se não há cache do navegador interferindo**
+5. **Execute o teste: `node test-cors-fix.js`**
+
+### Comandos úteis:
+```bash
+# Verificar se a porta 3001 está em uso
+netstat -ano | findstr :3001
+
+# Matar processo na porta 3001 (se necessário)
+npx kill-port 3001
+
+# Reiniciar servidor
+cd backend && npm run dev
+```
+
+## Resultado Esperado
+
+Após aplicar esta correção, o erro de CORS deve desaparecer e você deve conseguir fazer requisições para `https://portal.sabercon.com.br/api/auth/login` sem problemas.
+
+A aplicação deve funcionar normalmente, permitindo login e outras operações que antes falhavam devido ao CORS. 

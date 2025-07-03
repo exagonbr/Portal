@@ -17,10 +17,10 @@ export interface CorsUsersConfig {
 export const corsUsersConfig: CorsUsersConfig = {
   // Origens permitidas para APIs gerais de usuários
   allowedOrigins: [
-    'https://portal.sabercon.com.br',
-    'http://localhost:3001',
-    'http://localhost:3001/api',
     'http://localhost:3000',
+    'http://localhost:3001',
+    process.env.FRONTEND_URL || 'https://portal.sabercon.com.br',
+    `${process.env.FRONTEND_URL || 'https://portal.sabercon.com.br'}/api`,
     'http://localhost:8080',
     'http://localhost:4200', // Angular dev server
     'http://localhost:5173', // Vite dev server
@@ -31,13 +31,12 @@ export const corsUsersConfig: CorsUsersConfig = {
     ...(process.env.ALLOWED_ORIGINS ? process.env.ALLOWED_ORIGINS.split(',').map(o => o.trim()) : [])
   ],
 
-
   // Origens permitidas apenas para operações administrativas
   adminOrigins: [
-    'https://portal.sabercon.com.br',
-    'https://portal.sabercon.com.br/api',
-    'https://portal.sabercon.com.br', // Para desenvolvimento
-    'https://portal.sabercon.com.br/api', // Para desenvolvimento alternativo
+    'http://localhost:3000',
+    'http://localhost:3001',
+    process.env.FRONTEND_URL || 'https://portal.sabercon.com.br',
+    `${process.env.FRONTEND_URL || 'https://portal.sabercon.com.br'}/api`,
     ...(process.env.ADMIN_ORIGINS ? process.env.ADMIN_ORIGINS.split(',').map(o => o.trim()) : [])
   ],
 

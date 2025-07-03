@@ -17,15 +17,18 @@ export const useNavigationWithLoading = () => {
     }
   ) => {
     const { 
-      message = 'Estamos preparando tudo para você',
-      delay = 800,
+      message = 'Carregando...', // Mensagem mais genérica
+      delay = 150, // Delay reduzido para navegação mais rápida
       replace = false
     } = options || {}
 
     // Mostrar loading
     showLoading(message)
 
-    // Aguardar um tempo para mostrar o loading antes de navegar
+    // Força a atualização dos dados da rota, limpando o cache do cliente.
+    router.refresh();
+
+    // Aguardar um tempo mínimo para a UI de loading ser visível
     setTimeout(() => {
       if (replace) {
         router.replace(href)
@@ -33,7 +36,7 @@ export const useNavigationWithLoading = () => {
         router.push(href)
       }
       
-      // Esconder loading após um pequeno delay para permitir que a página carregue
+      // Esconder loading após um pequeno delay para permitir que a página comece a renderizar
       setTimeout(() => {
         hideLoading()
       }, 300)

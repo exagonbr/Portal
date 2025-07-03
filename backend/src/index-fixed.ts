@@ -202,9 +202,9 @@ async function startServer() {
     app.listen(PORT, () => {
       console.log(`✅ Servidor rodando na porta ${PORT}`);
       console.log(`🌐 Ambiente: ${process.env.NODE_ENV || 'development'}`);
-      console.log(`📋 Health check: https://portal.sabercon.com.br/health`);
-      console.log(`🔗 API: https://portal.sabercon.com.br/api`);
-      console.log(`📚 Docs: https://portal.sabercon.com.br/backend/docs`);
+      console.log(`📋 Health check: ${process.env.FRONTEND_URL || 'https://portal.sabercon.com.br'}/health`);
+      console.log(`🔗 API: ${process.env.FRONTEND_URL || 'https://portal.sabercon.com.br'}/api`);
+      console.log(`📚 Docs: ${process.env.FRONTEND_URL || 'https://portal.sabercon.com.br'}/backend/docs`);
     });
     
   } catch (error) {

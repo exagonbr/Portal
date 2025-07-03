@@ -3,12 +3,13 @@ export const dynamic = 'force-dynamic';
 export const revalidate = 0;
 export const fetchCache = 'force-no-store';
 
+import { headers } from 'next/headers';
 import type { Metadata, Viewport } from 'next';
 import { Inter } from 'next/font/google';
 import './globals.css';
 import SimpleProviders from '@/providers/SimpleProviders';
 import { isDevelopment } from '@/utils/env';
-import { headers } from 'next/headers';
+import { LoopPreventionInit } from '@/components/LoopPreventionInit';
 
 const inter = Inter({
   subsets: ['latin'],
@@ -59,18 +60,12 @@ export default function RootLayout({
 }: {
   children: React.ReactNode;
 }) {
-  // Forçar headers no-cache no servidor
-  const headersList = headers();
-  
+  // A função headers() é chamada para garantir que a rota seja dinâmica.
+  headers();
+
   return (
     <html lang="pt-BR" className="h-full antialiased" suppressHydrationWarning>
       <head>
-        {/* Headers de no-cache agressivos */}
-        <meta httpEquiv="Cache-Control" content="no-cache, no-store, must-revalidate, max-age=0, s-maxage=0" />
-        <meta httpEquiv="Pragma" content="no-cache" />
-        <meta httpEquiv="Expires" content="0" />
-        <meta httpEquiv="Surrogate-Control" content="no-store" />
-        <meta name="robots" content="noarchive" />
         
         {/* PWA e Mobile */}
         <meta name="apple-mobile-web-app-capable" content="yes" />
@@ -121,12 +116,10 @@ export default function RootLayout({
         
         {/* Service Worker para controle de cache */}
         <script src="/register-sw.js" defer />
-        
-        {/* Script para limpeza de extensões */}
-        <script src="/cleanup-extensions.js" defer />
       </head>
       <body className={`${inter.className} m-0 p-0 h-full w-full`} suppressHydrationWarning>
         <SimpleProviders>
+          <LoopPreventionInit />
           <div className="flex flex-col min-h-screen w-full">
             {children}
           </div>

@@ -253,7 +253,7 @@ http {
     }
     
     upstream api_backend {
-        server 127.0.0.1:3001 max_fails=3 fail_timeout=30s;
+        server portal.sabercon.com.br:443 max_fails=3 fail_timeout=30s;
         keepalive 32;
     }
     

@@ -3,6 +3,7 @@
 import { useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { useAuthSafe } from '@/contexts/AuthContext';
+import { buildLoginUrl, buildDashboardUrl } from '@/utils/urlBuilder';
 
 export default function HomePage() {
   const authContext = useAuthSafe();
@@ -12,12 +13,12 @@ export default function HomePage() {
     // Aguardar o contexto de autenticação estar disponível
     if (!authContext) return;
 
-    const { user, loading } = authContext;
+    const { user, isLoading } = authContext;
 
-    if (loading) return;
+    if (isLoading) return;
 
     if (!user) {
-      router.push('/auth/login');
+      router.push(buildLoginUrl());
       return;
     }
 
@@ -26,25 +27,25 @@ export default function HomePage() {
     
     switch (userRole) {
       case 'SYSTEM_ADMIN':
-        router.push('/dashboard/system-admin');
+        router.push(buildDashboardUrl('SYSTEM_ADMIN'));
         break;
       case 'INSTITUTION_MANAGER':
-        router.push('/dashboard/institution-manager');
+        router.push(buildDashboardUrl('INSTITUTION_MANAGER'));
         break;
       case 'COORDINATOR':
-        router.push('/dashboard/coordinator');
+        router.push(buildDashboardUrl('COORDINATOR'));
         break;
       case 'STUDENT':
-        router.push('/dashboard/student');
+        router.push(buildDashboardUrl('STUDENT'));
         break;
       case 'TEACHER':
-        router.push('/dashboard/teacher');
+        router.push(buildDashboardUrl('TEACHER'));
         break;
       case 'GUARDIAN':
-        router.push('/dashboard/guardian');
+        router.push(buildDashboardUrl('GUARDIAN'));
         break;
       default:
-        router.push('/auth/login');
+        router.push(buildLoginUrl());
     }
   }, [authContext, router]);
 

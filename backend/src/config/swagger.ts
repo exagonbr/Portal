@@ -42,7 +42,7 @@ A API utiliza JWT (JSON Web Tokens) para autenticação. Para acessar endpoints 
   },
   servers: [
     {
-      url: `https://portal.sabercon.com.br`,
+      url: process.env.FRONTEND_URL || 'https://portal.sabercon.com.br',
       description: 'Development server',
     },
     {

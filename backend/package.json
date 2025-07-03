@@ -6,7 +6,7 @@
   "description": "Backend API para o Portal Sabercon - Sistema de Gestão Educacional com Redis Sessions e Dashboard Analytics",
   "main": "dist/index.js",
   "scripts": {
-    "dev": "npm run migrate:latest && nodemon src/index.ts",
+    "dev": "nodemon src/index.ts",
     "build": "tsc",
     "start": "node dist/index.js",
     "test": "jest",
@@ -43,7 +43,15 @@
     "assign-teacher-role": "node -r ts-node/register src/scripts/assignTeacherRole.ts",
     "test:cors": "node ../scripts/test-cors.js",
     "test:cors:dev": "set BACKEND_URL=https://portal.sabercon.com.br/api&& set FRONTEND_URL=https://portal.sabercon.com.br&& node ../scripts/test-cors.js",
-    "test:cors:prod": "set BACKEND_URL=https://portal.sabercon.com.br&& set FRONTEND_URL=https://portal.sabercon.com.br&& node ../scripts/test-cors.js"
+    "test:cors:prod": "set BACKEND_URL=https://portal.sabercon.com.br&& set FRONTEND_URL=https://portal.sabercon.com.br&& node ../scripts/test-cors.js",
+    "fix:institutions": "npx ts-node src/scripts/fix-institutions-error.ts",
+    "fix:units": "npx ts-node src/scripts/fix-units-error.ts",
+    "fix:users": "npx ts-node src/scripts/fix-users-error.ts",
+    "fix:all-apis": "npx ts-node src/scripts/fix-all-apis.ts",
+    "check:redis": "npx ts-node src/scripts/check-redis.ts",
+    "redis:start": "bash scripts/start-redis-docker.sh",
+    "redis:start:windows": "scripts/start-redis-docker.bat",
+    "redis:stop": "docker stop redis-portal && docker rm redis-portal"
   },
   "keywords": [
     "education",

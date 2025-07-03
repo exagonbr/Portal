@@ -26,6 +26,22 @@ interface CacheStats {
  * - Cleanup automático de itens expirados
  */
 export class CacheService {
+  setMemoryCacheEnabled(enableMemoryCache: boolean) {
+    this.enabled = enableMemoryCache;
+    if (!enableMemoryCache) {
+      // Limpa o cache quando desabilitado
+      this.memoryCache.clear();
+      this.resetStats();
+    }
+  }
+
+  setDefaultTTLMs(defaultTTL: number) {
+    if (defaultTTL <= 0) {
+      throw new Error('TTL deve ser maior que zero');
+    }
+    this.defaultTTL = defaultTTL;
+  }
+
   private memoryCache = new Map<string, CacheEntry<any>>();
   private defaultTTL = 300; // 5 minutos
   private keyPrefix = 'portal_sabercon:';

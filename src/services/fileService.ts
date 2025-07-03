@@ -1,73 +1,13 @@
 import { FileRecord, S3FileInfo, FileUploadRequest, FileMoveRequest, FileUpdateRequest } from '@/types/files'
+import { fetchWithAuth } from '@/lib/api-client';
 
 const API_BASE = '/api/content/files'
-
-// Função para obter o token de autenticação
-const getAuthToken = (): string | null => {
-  if (typeof window === 'undefined') return null;
-  
-  // 1. Tentar obter token de localStorage primeiro
-  let token = localStorage.getItem('auth_token') || 
-              localStorage.getItem('token') ||
-              localStorage.getItem('authToken') ||
-              sessionStorage.getItem('token') ||
-              sessionStorage.getItem('auth_token');
-  
-  // 2. Se não encontrar no storage, tentar obter dos cookies
-  if (!token) {
-    const cookies = document.cookie.split(';');
-    for (const cookie of cookies) {
-      const [name, value] = cookie.trim().split('=');
-      if (name === 'auth_token' || name === 'token' || name === 'authToken') {
-        token = decodeURIComponent(value);
-        break;
-      }
-    }
-  }
-  
-  // 3. Como último recurso, tentar obter da sessão de usuário (se houver)
-  if (!token) {
-    try {
-      const userCookie = document.cookie
-        .split(';')
-        .find(cookie => cookie.trim().startsWith('user_session='));
-      
-      if (userCookie) {
-        const userSessionValue = userCookie.split('=')[1];
-        const userData = JSON.parse(decodeURIComponent(userSessionValue));
-        if (userData && userData.token) {
-          token = userData.token;
-        }
-      }
-    } catch (error) {
-      console.warn('⚠️ Erro ao extrair token da sessão do usuário:', error);
-    }
-  }
-  
-  return token;
-};
-
-// Função para criar headers com autenticação
-const createAuthHeaders = (): Record<string, string> => {
-  const headers: Record<string, string> = {
-    'Content-Type': 'application/json',
-  };
-  
-  const token = getAuthToken();
-  if (token) {
-    headers.Authorization = `Bearer ${token}`;
-  }
-  
-  return headers;
-};
 
 export class FileService {
   // Listar arquivos de uma categoria específica
   static async getFilesByCategory(category: 'literario' | 'professor' | 'aluno'): Promise<S3FileInfo[]> {
     try {
-      const response = await fetch(`${API_BASE}?category=${category}`, {
-        headers: createAuthHeaders()
-      })
+      const response = await fetchWithAuth(`${API_BASE}?category=${category}`)
       if (!response.ok) {
         throw new Error('Erro ao buscar arquivos')
       }
@@ -89,9 +29,7 @@ export class FileService {
   // Buscar todos os arquivos
   static async getAllFiles(): Promise<Record<string, S3FileInfo[]>> {
     try {
-      const response = await fetch(`${API_BASE}/all`, {
-        headers: createAuthHeaders()
-      })
+      const response = await fetchWithAuth(`${API_BASE}/all`)
       if (!response.ok) {
         throw new Error('Erro ao buscar todos os arquivos')
       }
@@ -125,14 +63,9 @@ export class FileService {
         formData.append('tags', JSON.stringify(uploadData.tags))
       }
 
-      const headers = createAuthHeaders();
-      // Remove Content-Type header para FormData
-      delete headers['Content-Type'];
-
-      const response = await fetch(`${API_BASE}/upload`, {
+      const response = await fetchWithAuth(`${API_BASE}/upload`, {
         method: 'POST',
         body: formData,
-        headers
       })
 
       if (!response.ok) {
@@ -161,14 +94,9 @@ export class FileService {
       formData.append('file', newFile)
       formData.append('fileId', fileId)
 
-      const headers = createAuthHeaders();
-      // Remove Content-Type header para FormData
-      delete headers['Content-Type'];
-
-      const response = await fetch(`${API_BASE}/replace`, {
+      const response = await fetchWithAuth(`${API_BASE}/replace`, {
         method: 'PUT',
         body: formData,
-        headers
       })
 
       if (!response.ok) {
@@ -193,9 +121,8 @@ export class FileService {
   // Renomear arquivo
   static async renameFile(fileId: string, newName: string): Promise<FileRecord> {
     try {
-      const response = await fetch(`${API_BASE}/${fileId}/rename`, {
+      const response = await fetchWithAuth(`${API_BASE}/${fileId}/rename`, {
         method: 'PATCH',
-        headers: createAuthHeaders(),
         body: JSON.stringify({ name: newName })
       })
 
@@ -221,9 +148,8 @@ export class FileService {
   // Mover/Copiar arquivo
   static async moveFile(moveData: FileMoveRequest): Promise<FileRecord> {
     try {
-      const response = await fetch(`${API_BASE}/move`, {
+      const response = await fetchWithAuth(`${API_BASE}/move`, {
         method: 'POST',
-        headers: createAuthHeaders(),
         body: JSON.stringify(moveData)
       })
 
@@ -249,9 +175,8 @@ export class FileService {
   // Deletar arquivo
   static async deleteFile(fileId: string): Promise<boolean> {
     try {
-      const response = await fetch(`${API_BASE}/${fileId}`, {
+      const response = await fetchWithAuth(`${API_BASE}/${fileId}`, {
         method: 'DELETE',
-        headers: createAuthHeaders()
       })
 
       if (!response.ok) {
@@ -268,9 +193,8 @@ export class FileService {
   // Atualizar metadados do arquivo
   static async updateFile(updateData: FileUpdateRequest): Promise<FileRecord> {
     try {
-      const response = await fetch(`${API_BASE}/${updateData.fileId}`, {
+      const response = await fetchWithAuth(`${API_BASE}/${updateData.fileId}`, {
         method: 'PATCH',
-        headers: createAuthHeaders(),
         body: JSON.stringify(updateData)
       })
 
@@ -296,9 +220,8 @@ export class FileService {
   // Criar referência no banco para arquivo S3 existente
   static async createDatabaseReference(s3Key: string, category: string, metadata: Partial<FileRecord>): Promise<FileRecord> {
     try {
-      const response = await fetch(`${API_BASE}/create-reference`, {
+      const response = await fetchWithAuth(`${API_BASE}/create-reference`, {
         method: 'POST',
-        headers: createAuthHeaders(),
         body: JSON.stringify({ s3Key, category, ...metadata })
       })
 
@@ -324,9 +247,7 @@ export class FileService {
   // Buscar TODOS os arquivos do bucket (incluindo não vinculados)
   static async getAllBucketFiles(category: string): Promise<S3FileInfo[]> {
     try {
-      const response = await fetch(`${API_BASE}/bucket-files?category=${category}`, {
-        headers: createAuthHeaders()
-      })
+      const response = await fetchWithAuth(`${API_BASE}/bucket-files?category=${category}`)
       if (!response.ok) {
         throw new Error('Erro ao buscar arquivos do bucket')
       }
@@ -349,9 +270,8 @@ export class FileService {
   // Vincular arquivo a uma coleção
   static async linkToCollection(fileId: string, collectionId: string): Promise<FileRecord> {
     try {
-      const response = await fetch(`${API_BASE}/${fileId}/link-collection`, {
+      const response = await fetchWithAuth(`${API_BASE}/${fileId}/link-collection`, {
         method: 'POST',
-        headers: createAuthHeaders(),
         body: JSON.stringify({ collectionId })
       })
 
@@ -377,9 +297,8 @@ export class FileService {
   // Adicionar arquivo à biblioteca
   static async addToLibrary(fileId: string, libraryCategory: string): Promise<FileRecord> {
     try {
-      const response = await fetch(`${API_BASE}/${fileId}/add-library`, {
+      const response = await fetchWithAuth(`${API_BASE}/${fileId}/add-library`, {
         method: 'POST',
-        headers: createAuthHeaders(),
         body: JSON.stringify({ libraryCategory })
       })
 
@@ -405,9 +324,8 @@ export class FileService {
   // Desvincular arquivo do conteúdo
   static async unlinkFromContent(fileId: string): Promise<FileRecord> {
     try {
-      const response = await fetch(`${API_BASE}/${fileId}/unlink`, {
+      const response = await fetchWithAuth(`${API_BASE}/${fileId}/unlink`, {
         method: 'POST',
-        headers: createAuthHeaders()
       })
 
       if (!response.ok) {
@@ -442,9 +360,8 @@ export class FileService {
     description: string
   }): Promise<any> {
     try {
-      const response = await fetch(`${API_BASE}/${fileId}/add-book`, {
+      const response = await fetchWithAuth(`${API_BASE}/${fileId}/add-book`, {
         method: 'POST',
-        headers: createAuthHeaders(),
         body: JSON.stringify(bookData)
       })
 

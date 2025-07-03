@@ -39,7 +39,7 @@ export class UsersController {
         return;
       }
 
-      const user = await this.usersService.getUserById(id);
+      const user = await this.usersService.getUserById(id.toString());
       if (!user) {
         res.status(404).json({
           success: false,
@@ -122,7 +122,7 @@ export class UsersController {
         return;
       }
 
-      const users = await this.usersService.getUsersByInstitution(institutionId);
+      const users = await this.usersService.getUsersByInstitution(institutionId.toString());
       
       res.json({
         success: true,
@@ -289,7 +289,7 @@ export class UsersController {
       }
 
       const userData: UpdateUsersData = req.body;
-      const user = await this.usersService.updateUser(id, userData);
+      const user = await this.usersService.updateUser(id.toString(), userData);
       
       if (!user) {
         res.status(404).json({
@@ -325,7 +325,7 @@ export class UsersController {
         return;
       }
 
-      const deleted = await this.usersService.deleteUser(id);
+      const deleted = await this.usersService.deleteUser(id.toString());
       
       if (!deleted) {
         res.status(404).json({
@@ -360,7 +360,7 @@ export class UsersController {
         return;
       }
 
-      await this.usersService.softDeleteUser(id);
+      await this.usersService.softDeleteUser(id.toString());
       
       res.json({
         success: true,
@@ -387,7 +387,7 @@ export class UsersController {
         return;
       }
 
-      await this.usersService.activateUser(id);
+      await this.usersService.activateUser(id.toString());
       
       res.json({
         success: true,
@@ -414,7 +414,7 @@ export class UsersController {
         return;
       }
 
-      await this.usersService.deactivateUser(id);
+      await this.usersService.deactivateUser(id.toString());
       
       res.json({
         success: true,
@@ -441,7 +441,7 @@ export class UsersController {
         return;
       }
 
-      await this.usersService.resetUserPassword(id);
+      await this.usersService.resetUserPassword(id.toString());
       
       res.json({
         success: true,
@@ -478,7 +478,7 @@ export class UsersController {
         return;
       }
 
-      await this.usersService.changeUserPassword(id, currentPassword, newPassword);
+      await this.usersService.changeUserPassword(id.toString(), currentPassword, newPassword);
       
       res.json({
         success: true,
@@ -505,7 +505,7 @@ export class UsersController {
         return;
       }
 
-      await this.usersService.lockUserAccount(id);
+      await this.usersService.lockUserAccount(id.toString());
       
       res.json({
         success: true,
@@ -532,7 +532,7 @@ export class UsersController {
         return;
       }
 
-      await this.usersService.unlockUserAccount(id);
+      await this.usersService.unlockUserAccount(id.toString());
       
       res.json({
         success: true,

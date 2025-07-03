@@ -136,7 +136,10 @@ export const GET = withAuth(async (request: NextRequest) => {
         message: 'Erro interno do servidor',
         error: error instanceof Error ? error.message : 'Unknown error'
       },
-      { status: 500 }
+      { 
+        status: 500,
+        headers: getCorsHeaders(request.headers.get('origin') || undefined)
+      }
     );
   }
 }, {

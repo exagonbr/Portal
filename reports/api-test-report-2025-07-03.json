@@ -1,0 +1,6569 @@
+{
+  "timestamp": "2025-07-03T02:21:36.305Z",
+  "baseUrl": "http://localhost:3001",
+  "totalRoutes": 141,
+  "authSuccess": true,
+  "routes": [
+    {
+      "path": "activity/track",
+      "file": "c:\\Users\\estev\\IdeaProjects\\Portal\\src\\app\\api\\activity\\track\\route.ts",
+      "methods": [
+        "OPTIONS"
+      ],
+      "hasAuth": true,
+      "description": "",
+      "tests": [
+        {
+          "method": "OPTIONS",
+          "status": 204,
+          "statusText": "No Content",
+          "success": true,
+          "message": "No Content",
+          "hasData": true,
+          "responseTime": 2,
+          "authUsed": true,
+          "url": "http://localhost:3001/api/activity/track",
+          "dataSize": 0,
+          "stackTrace": null
+        }
+      ]
+    },
+    {
+      "path": "activity/viewing-status",
+      "file": "c:\\Users\\estev\\IdeaProjects\\Portal\\src\\app\\api\\activity\\viewing-status\\route.ts",
+      "methods": [
+        "OPTIONS"
+      ],
+      "hasAuth": true,
+      "description": "",
+      "tests": [
+        {
+          "method": "OPTIONS",
+          "status": 204,
+          "statusText": "No Content",
+          "success": true,
+          "message": "No Content",
+          "hasData": true,
+          "responseTime": 2,
+          "authUsed": true,
+          "url": "http://localhost:3001/api/activity/viewing-status",
+          "dataSize": 0,
+          "stackTrace": null
+        }
+      ]
+    },
+    {
+      "path": "activity/watchlist",
+      "file": "c:\\Users\\estev\\IdeaProjects\\Portal\\src\\app\\api\\activity\\watchlist\\route.ts",
+      "methods": [
+        "OPTIONS"
+      ],
+      "hasAuth": true,
+      "description": "",
+      "tests": [
+        {
+          "method": "OPTIONS",
+          "status": 204,
+          "statusText": "No Content",
+          "success": true,
+          "message": "No Content",
+          "hasData": true,
+          "responseTime": 2,
+          "authUsed": true,
+          "url": "http://localhost:3001/api/activity/watchlist",
+          "dataSize": 0,
+          "stackTrace": null
+        }
+      ]
+    },
+    {
+      "path": "admin/audit",
+      "file": "c:\\Users\\estev\\IdeaProjects\\Portal\\src\\app\\api\\admin\\audit\\route.ts",
+      "methods": [
+        "OPTIONS"
+      ],
+      "hasAuth": true,
+      "description": "",
+      "tests": [
+        {
+          "method": "OPTIONS",
+          "status": 204,
+          "statusText": "No Content",
+          "success": true,
+          "message": "No Content",
+          "hasData": true,
+          "responseTime": 2,
+          "authUsed": true,
+          "url": "http://localhost:3001/api/admin/audit",
+          "dataSize": 0,
+          "stackTrace": null
+        }
+      ]
+    },
+    {
+      "path": "admin/create-default-users",
+      "file": "c:\\Users\\estev\\IdeaProjects\\Portal\\src\\app\\api\\admin\\create-default-users\\route.ts",
+      "methods": [
+        "OPTIONS"
+      ],
+      "hasAuth": true,
+      "description": "Criar usuários padrão do sistema\r   POST /api/admin/create-default-users",
+      "tests": [
+        {
+          "method": "OPTIONS",
+          "status": 204,
+          "statusText": "No Content",
+          "success": true,
+          "message": "No Content",
+          "hasData": true,
+          "responseTime": 2,
+          "authUsed": true,
+          "url": "http://localhost:3001/api/admin/create-default-users",
+          "dataSize": 0,
+          "stackTrace": null
+        }
+      ]
+    },
+    {
+      "path": "admin/system/activities",
+      "file": "c:\\Users\\estev\\IdeaProjects\\Portal\\src\\app\\api\\admin\\system\\activities\\route.ts",
+      "methods": [
+        "OPTIONS"
+      ],
+      "hasAuth": true,
+      "description": "Obter atividades do sistema\r   GET /api/admin/system/activities",
+      "tests": [
+        {
+          "method": "OPTIONS",
+          "status": 204,
+          "statusText": "No Content",
+          "success": true,
+          "message": "No Content",
+          "hasData": true,
+          "responseTime": 2,
+          "authUsed": true,
+          "url": "http://localhost:3001/api/admin/system/activities",
+          "dataSize": 0,
+          "stackTrace": null
+        }
+      ]
+    },
+    {
+      "path": "admin/system/info",
+      "file": "c:\\Users\\estev\\IdeaProjects\\Portal\\src\\app\\api\\admin\\system\\info\\route.ts",
+      "methods": [
+        "OPTIONS"
+      ],
+      "hasAuth": true,
+      "description": "Obter informações do sistema\r   GET /api/admin/system/info",
+      "tests": [
+        {
+          "method": "OPTIONS",
+          "status": 204,
+          "statusText": "No Content",
+          "success": true,
+          "message": "No Content",
+          "hasData": true,
+          "responseTime": 2,
+          "authUsed": true,
+          "url": "http://localhost:3001/api/admin/system/info",
+          "dataSize": 0,
+          "stackTrace": null
+        }
+      ]
+    },
+    {
+      "path": "assignments",
+      "file": "c:\\Users\\estev\\IdeaProjects\\Portal\\src\\app\\api\\assignments\\route.ts",
+      "methods": [
+        "OPTIONS"
+      ],
+      "hasAuth": true,
+      "description": "",
+      "tests": [
+        {
+          "method": "OPTIONS",
+          "status": 204,
+          "statusText": "No Content",
+          "success": true,
+          "message": "No Content",
+          "hasData": true,
+          "responseTime": 2,
+          "authUsed": true,
+          "url": "http://localhost:3001/api/assignments",
+          "dataSize": 0,
+          "stackTrace": null
+        }
+      ]
+    },
+    {
+      "path": "assignments/:id",
+      "file": "c:\\Users\\estev\\IdeaProjects\\Portal\\src\\app\\api\\assignments\\[id]\\route.ts",
+      "methods": [
+        "GET",
+        "PUT",
+        "DELETE",
+        "OPTIONS"
+      ],
+      "hasAuth": true,
+      "description": "Obter assignment por ID\r   GET /api/assignments/[id]",
+      "tests": [
+        {
+          "method": "GET",
+          "status": 404,
+          "statusText": "Not Found",
+          "success": false,
+          "message": "Endpoint não encontrado",
+          "hasData": true,
+          "responseTime": 2,
+          "authUsed": true,
+          "url": "http://localhost:3001/api/assignments/1",
+          "dataSize": 81,
+          "stackTrace": null
+        },
+        {
+          "method": "PUT",
+          "status": 404,
+          "statusText": "Not Found",
+          "success": false,
+          "message": "Endpoint não encontrado",
+          "hasData": true,
+          "responseTime": 3,
+          "authUsed": true,
+          "url": "http://localhost:3001/api/assignments/1",
+          "dataSize": 81,
+          "stackTrace": null
+        },
+        {
+          "method": "DELETE",
+          "status": 404,
+          "statusText": "Not Found",
+          "success": false,
+          "message": "Endpoint não encontrado",
+          "hasData": true,
+          "responseTime": 3,
+          "authUsed": true,
+          "url": "http://localhost:3001/api/assignments/1",
+          "dataSize": 81,
+          "stackTrace": null
+        },
+        {
+          "method": "OPTIONS",
+          "status": 204,
+          "statusText": "No Content",
+          "success": true,
+          "message": "No Content",
+          "hasData": true,
+          "responseTime": 2,
+          "authUsed": true,
+          "url": "http://localhost:3001/api/assignments/1",
+          "dataSize": 0,
+          "stackTrace": null
+        }
+      ]
+    },
+    {
+      "path": "auth/login",
+      "file": "c:\\Users\\estev\\IdeaProjects\\Portal\\src\\app\\api\\auth\\login\\route.ts",
+      "methods": [
+        "POST",
+        "OPTIONS"
+      ],
+      "hasAuth": true,
+      "description": "",
+      "tests": [
+        {
+          "method": "POST",
+          "status": 400,
+          "statusText": "Bad Request",
+          "success": false,
+          "message": "Email e senha são obrigatórios.",
+          "hasData": true,
+          "responseTime": 3,
+          "authUsed": true,
+          "url": "http://localhost:3001/api/auth/login",
+          "dataSize": 61,
+          "stackTrace": null
+        },
+        {
+          "method": "OPTIONS",
+          "status": 204,
+          "statusText": "No Content",
+          "success": true,
+          "message": "No Content",
+          "hasData": true,
+          "responseTime": 2,
+          "authUsed": true,
+          "url": "http://localhost:3001/api/auth/login",
+          "dataSize": 0,
+          "stackTrace": null
+        }
+      ]
+    },
+    {
+      "path": "auth/logout",
+      "file": "c:\\Users\\estev\\IdeaProjects\\Portal\\src\\app\\api\\auth\\logout\\route.ts",
+      "methods": [
+        "OPTIONS"
+      ],
+      "hasAuth": true,
+      "description": "",
+      "tests": [
+        {
+          "method": "OPTIONS",
+          "status": 204,
+          "statusText": "No Content",
+          "success": true,
+          "message": "No Content",
+          "hasData": true,
+          "responseTime": 2,
+          "authUsed": true,
+          "url": "http://localhost:3001/api/auth/logout",
+          "dataSize": 0,
+          "stackTrace": null
+        }
+      ]
+    },
+    {
+      "path": "auth/me",
+      "file": "c:\\Users\\estev\\IdeaProjects\\Portal\\src\\app\\api\\auth\\me\\route.ts",
+      "methods": [
+        "OPTIONS"
+      ],
+      "hasAuth": true,
+      "description": "",
+      "tests": [
+        {
+          "method": "OPTIONS",
+          "status": 204,
+          "statusText": "No Content",
+          "success": true,
+          "message": "No Content",
+          "hasData": true,
+          "responseTime": 2,
+          "authUsed": true,
+          "url": "http://localhost:3001/api/auth/me",
+          "dataSize": 0,
+          "stackTrace": null
+        }
+      ]
+    },
+    {
+      "path": "auth/refresh",
+      "file": "c:\\Users\\estev\\IdeaProjects\\Portal\\src\\app\\api\\auth\\refresh\\route.ts",
+      "methods": [
+        "POST",
+        "OPTIONS"
+      ],
+      "hasAuth": true,
+      "description": "Renovar token de acesso usando refresh token\r   POST /api/auth/refresh",
+      "tests": [
+        {
+          "method": "POST",
+          "status": 404,
+          "statusText": "Not Found",
+          "success": false,
+          "message": "Endpoint não encontrado",
+          "hasData": true,
+          "responseTime": 2,
+          "authUsed": true,
+          "url": "http://localhost:3001/api/auth/refresh",
+          "dataSize": 80,
+          "stackTrace": null
+        },
+        {
+          "method": "OPTIONS",
+          "status": 204,
+          "statusText": "No Content",
+          "success": true,
+          "message": "No Content",
+          "hasData": true,
+          "responseTime": 2,
+          "authUsed": true,
+          "url": "http://localhost:3001/api/auth/refresh",
+          "dataSize": 0,
+          "stackTrace": null
+        }
+      ]
+    },
+    {
+      "path": "auth/register",
+      "file": "c:\\Users\\estev\\IdeaProjects\\Portal\\src\\app\\api\\auth\\register\\route.ts",
+      "methods": [
+        "POST",
+        "OPTIONS"
+      ],
+      "hasAuth": true,
+      "description": "Registrar novo usuário\r   POST /api/auth/register",
+      "tests": [
+        {
+          "method": "POST",
+          "status": 404,
+          "statusText": "Not Found",
+          "success": false,
+          "message": "Endpoint não encontrado",
+          "hasData": true,
+          "responseTime": 3,
+          "authUsed": true,
+          "url": "http://localhost:3001/api/auth/register",
+          "dataSize": 81,
+          "stackTrace": null
+        },
+        {
+          "method": "OPTIONS",
+          "status": 204,
+          "statusText": "No Content",
+          "success": true,
+          "message": "No Content",
+          "hasData": true,
+          "responseTime": 2,
+          "authUsed": true,
+          "url": "http://localhost:3001/api/auth/register",
+          "dataSize": 0,
+          "stackTrace": null
+        }
+      ]
+    },
+    {
+      "path": "auth/session",
+      "file": "c:\\Users\\estev\\IdeaProjects\\Portal\\src\\app\\api\\auth\\session\\route.ts",
+      "methods": [
+        "POST",
+        "OPTIONS"
+      ],
+      "hasAuth": true,
+      "description": "Obter informações da sessão atual\r   POST /api/auth/session",
+      "tests": [
+        {
+          "method": "POST",
+          "status": 404,
+          "statusText": "Not Found",
+          "success": false,
+          "message": "Endpoint não encontrado",
+          "hasData": true,
+          "responseTime": 2,
+          "authUsed": true,
+          "url": "http://localhost:3001/api/auth/session",
+          "dataSize": 80,
+          "stackTrace": null
+        },
+        {
+          "method": "OPTIONS",
+          "status": 204,
+          "statusText": "No Content",
+          "success": true,
+          "message": "No Content",
+          "hasData": true,
+          "responseTime": 2,
+          "authUsed": true,
+          "url": "http://localhost:3001/api/auth/session",
+          "dataSize": 0,
+          "stackTrace": null
+        }
+      ]
+    },
+    {
+      "path": "auth/validate",
+      "file": "c:\\Users\\estev\\IdeaProjects\\Portal\\src\\app\\api\\auth\\validate\\route.ts",
+      "methods": [
+        "POST",
+        "OPTIONS"
+      ],
+      "hasAuth": true,
+      "description": "Validar token de acesso\r   POST /api/auth/validate",
+      "tests": [
+        {
+          "method": "POST",
+          "status": 404,
+          "statusText": "Not Found",
+          "success": false,
+          "message": "Endpoint não encontrado",
+          "hasData": true,
+          "responseTime": 2,
+          "authUsed": true,
+          "url": "http://localhost:3001/api/auth/validate",
+          "dataSize": 81,
+          "stackTrace": null
+        },
+        {
+          "method": "OPTIONS",
+          "status": 204,
+          "statusText": "No Content",
+          "success": true,
+          "message": "No Content",
+          "hasData": true,
+          "responseTime": 2,
+          "authUsed": true,
+          "url": "http://localhost:3001/api/auth/validate",
+          "dataSize": 0,
+          "stackTrace": null
+        }
+      ]
+    },
+    {
+      "path": "auth/*",
+      "file": "c:\\Users\\estev\\IdeaProjects\\Portal\\src\\app\\api\\auth\\[...nextauth]\\route.ts",
+      "methods": [],
+      "hasAuth": true,
+      "description": "",
+      "tests": []
+    },
+    {
+      "path": "auth/_log",
+      "file": "c:\\Users\\estev\\IdeaProjects\\Portal\\src\\app\\api\\auth\\_log\\route.ts",
+      "methods": [
+        "OPTIONS"
+      ],
+      "hasAuth": true,
+      "description": "Obter logs de autenticação\r   GET /api/auth/_log",
+      "tests": [
+        {
+          "method": "OPTIONS",
+          "status": 204,
+          "statusText": "No Content",
+          "success": true,
+          "message": "No Content",
+          "hasData": true,
+          "responseTime": 2,
+          "authUsed": true,
+          "url": "http://localhost:3001/api/auth/_log",
+          "dataSize": 0,
+          "stackTrace": null
+        }
+      ]
+    },
+    {
+      "path": "aws/connection-logs",
+      "file": "c:\\Users\\estev\\IdeaProjects\\Portal\\src\\app\\api\\aws\\connection-logs\\route.ts",
+      "methods": [
+        "GET",
+        "OPTIONS"
+      ],
+      "hasAuth": true,
+      "description": "",
+      "tests": [
+        {
+          "method": "GET",
+          "status": 200,
+          "statusText": "OK",
+          "success": true,
+          "message": "OK",
+          "hasData": true,
+          "responseTime": 7,
+          "authUsed": true,
+          "url": "http://localhost:3001/api/aws/connection-logs",
+          "dataSize": 26,
+          "stackTrace": null
+        },
+        {
+          "method": "OPTIONS",
+          "status": 204,
+          "statusText": "No Content",
+          "success": true,
+          "message": "No Content",
+          "hasData": true,
+          "responseTime": 2,
+          "authUsed": true,
+          "url": "http://localhost:3001/api/aws/connection-logs",
+          "dataSize": 0,
+          "stackTrace": null
+        }
+      ]
+    },
+    {
+      "path": "aws/connection-logs/stats",
+      "file": "c:\\Users\\estev\\IdeaProjects\\Portal\\src\\app\\api\\aws\\connection-logs\\stats\\route.ts",
+      "methods": [
+        "GET",
+        "OPTIONS"
+      ],
+      "hasAuth": true,
+      "description": "",
+      "tests": [
+        {
+          "method": "GET",
+          "status": 200,
+          "statusText": "OK",
+          "success": true,
+          "message": "OK",
+          "hasData": true,
+          "responseTime": 8,
+          "authUsed": true,
+          "url": "http://localhost:3001/api/aws/connection-logs/stats",
+          "dataSize": 233,
+          "stackTrace": null
+        },
+        {
+          "method": "OPTIONS",
+          "status": 204,
+          "statusText": "No Content",
+          "success": true,
+          "message": "No Content",
+          "hasData": true,
+          "responseTime": 2,
+          "authUsed": true,
+          "url": "http://localhost:3001/api/aws/connection-logs/stats",
+          "dataSize": 0,
+          "stackTrace": null
+        }
+      ]
+    },
+    {
+      "path": "aws/settings",
+      "file": "c:\\Users\\estev\\IdeaProjects\\Portal\\src\\app\\api\\aws\\settings\\route.ts",
+      "methods": [
+        "GET",
+        "POST",
+        "DELETE",
+        "OPTIONS"
+      ],
+      "hasAuth": true,
+      "description": "",
+      "tests": [
+        {
+          "method": "GET",
+          "status": 200,
+          "statusText": "OK",
+          "success": true,
+          "message": "OK",
+          "hasData": true,
+          "responseTime": 7,
+          "authUsed": true,
+          "url": "http://localhost:3001/api/aws/settings",
+          "dataSize": 343,
+          "stackTrace": null
+        },
+        {
+          "method": "POST",
+          "status": 400,
+          "statusText": "Bad Request",
+          "success": false,
+          "message": "Access Key ID é obrigatório",
+          "hasData": true,
+          "responseTime": 5,
+          "authUsed": true,
+          "url": "http://localhost:3001/api/aws/settings",
+          "dataSize": 57,
+          "stackTrace": null
+        },
+        {
+          "method": "DELETE",
+          "status": 404,
+          "statusText": "Not Found",
+          "success": false,
+          "message": "Endpoint não encontrado",
+          "hasData": true,
+          "responseTime": 5,
+          "authUsed": true,
+          "url": "http://localhost:3001/api/aws/settings",
+          "dataSize": 80,
+          "stackTrace": null
+        },
+        {
+          "method": "OPTIONS",
+          "status": 204,
+          "statusText": "No Content",
+          "success": true,
+          "message": "No Content",
+          "hasData": true,
+          "responseTime": 2,
+          "authUsed": true,
+          "url": "http://localhost:3001/api/aws/settings",
+          "dataSize": 0,
+          "stackTrace": null
+        }
+      ]
+    },
+    {
+      "path": "aws/settings/:id",
+      "file": "c:\\Users\\estev\\IdeaProjects\\Portal\\src\\app\\api\\aws\\settings\\[id]\\route.ts",
+      "methods": [
+        "GET",
+        "PUT",
+        "DELETE",
+        "OPTIONS"
+      ],
+      "hasAuth": true,
+      "description": "",
+      "tests": [
+        {
+          "method": "GET",
+          "status": 500,
+          "statusText": "Internal Server Error",
+          "success": false,
+          "message": "Erro interno do servidor",
+          "hasData": true,
+          "responseTime": 6,
+          "authUsed": true,
+          "url": "http://localhost:3001/api/aws/settings/1",
+          "dataSize": 54,
+          "stackTrace": "{\"success\":false,\"message\":\"Erro interno do servidor\"}"
+        },
+        {
+          "method": "PUT",
+          "status": 400,
+          "statusText": "Bad Request",
+          "success": false,
+          "message": "select * from \"aws_settings\" where \"id\" = $1 limit $2 - sintaxe de entrada é inválida para tipo uuid: \"1\"",
+          "hasData": true,
+          "responseTime": 7,
+          "authUsed": true,
+          "url": "http://localhost:3001/api/aws/settings/1",
+          "dataSize": 141,
+          "stackTrace": null
+        },
+        {
+          "method": "DELETE",
+          "status": 400,
+          "statusText": "Bad Request",
+          "success": false,
+          "message": "select * from \"aws_settings\" where \"id\" = $1 limit $2 - sintaxe de entrada é inválida para tipo uuid: \"1\"",
+          "hasData": true,
+          "responseTime": 6,
+          "authUsed": true,
+          "url": "http://localhost:3001/api/aws/settings/1",
+          "dataSize": 141,
+          "stackTrace": null
+        },
+        {
+          "method": "OPTIONS",
+          "status": 204,
+          "statusText": "No Content",
+          "success": true,
+          "message": "No Content",
+          "hasData": true,
+          "responseTime": 2,
+          "authUsed": true,
+          "url": "http://localhost:3001/api/aws/settings/1",
+          "dataSize": 0,
+          "stackTrace": null
+        }
+      ]
+    },
+    {
+      "path": "aws/settings/:id/test-connection",
+      "file": "c:\\Users\\estev\\IdeaProjects\\Portal\\src\\app\\api\\aws\\settings\\[id]\\test-connection\\route.ts",
+      "methods": [
+        "POST",
+        "OPTIONS"
+      ],
+      "hasAuth": true,
+      "description": "",
+      "tests": [
+        {
+          "method": "POST",
+          "status": 400,
+          "statusText": "Bad Request",
+          "success": false,
+          "message": "select * from \"aws_settings\" where \"id\" = $1 limit $2 - sintaxe de entrada é inválida para tipo uuid: \"1\"",
+          "hasData": true,
+          "responseTime": 7,
+          "authUsed": true,
+          "url": "http://localhost:3001/api/aws/settings/1/test-connection",
+          "dataSize": 141,
+          "stackTrace": null
+        },
+        {
+          "method": "OPTIONS",
+          "status": 204,
+          "statusText": "No Content",
+          "success": true,
+          "message": "No Content",
+          "hasData": true,
+          "responseTime": 2,
+          "authUsed": true,
+          "url": "http://localhost:3001/api/aws/settings/1/test-connection",
+          "dataSize": 0,
+          "stackTrace": null
+        }
+      ]
+    },
+    {
+      "path": "aws/test",
+      "file": "c:\\Users\\estev\\IdeaProjects\\Portal\\src\\app\\api\\aws\\test\\route.ts",
+      "methods": [
+        "GET",
+        "OPTIONS"
+      ],
+      "hasAuth": true,
+      "description": "",
+      "tests": [
+        {
+          "method": "GET",
+          "status": 404,
+          "statusText": "Not Found",
+          "success": false,
+          "message": "Endpoint não encontrado",
+          "hasData": true,
+          "responseTime": 6,
+          "authUsed": true,
+          "url": "http://localhost:3001/api/aws/test",
+          "dataSize": 76,
+          "stackTrace": null
+        },
+        {
+          "method": "OPTIONS",
+          "status": 204,
+          "statusText": "No Content",
+          "success": true,
+          "message": "No Content",
+          "hasData": true,
+          "responseTime": 2,
+          "authUsed": true,
+          "url": "http://localhost:3001/api/aws/test",
+          "dataSize": 0,
+          "stackTrace": null
+        }
+      ]
+    },
+    {
+      "path": "books",
+      "file": "c:\\Users\\estev\\IdeaProjects\\Portal\\src\\app\\api\\books\\route.ts",
+      "methods": [
+        "OPTIONS"
+      ],
+      "hasAuth": true,
+      "description": "",
+      "tests": [
+        {
+          "method": "OPTIONS",
+          "status": 204,
+          "statusText": "No Content",
+          "success": true,
+          "message": "No Content",
+          "hasData": true,
+          "responseTime": 2,
+          "authUsed": true,
+          "url": "http://localhost:3001/api/books",
+          "dataSize": 0,
+          "stackTrace": null
+        }
+      ]
+    },
+    {
+      "path": "books/:id",
+      "file": "c:\\Users\\estev\\IdeaProjects\\Portal\\src\\app\\api\\books\\[id]\\route.ts",
+      "methods": [
+        "GET",
+        "PUT",
+        "DELETE",
+        "OPTIONS"
+      ],
+      "hasAuth": true,
+      "description": "",
+      "tests": [
+        {
+          "method": "GET",
+          "status": 200,
+          "statusText": "OK",
+          "success": true,
+          "message": "Book by ID endpoint - implementation pending",
+          "hasData": true,
+          "responseTime": 6,
+          "authUsed": true,
+          "url": "http://localhost:3001/api/books/1",
+          "dataSize": 85,
+          "stackTrace": null
+        },
+        {
+          "method": "PUT",
+          "status": 200,
+          "statusText": "OK",
+          "success": true,
+          "message": "Update book endpoint - implementation pending",
+          "hasData": true,
+          "responseTime": 6,
+          "authUsed": true,
+          "url": "http://localhost:3001/api/books/1",
+          "dataSize": 86,
+          "stackTrace": null
+        },
+        {
+          "method": "DELETE",
+          "status": 200,
+          "statusText": "OK",
+          "success": true,
+          "message": "Delete book endpoint - implementation pending",
+          "hasData": true,
+          "responseTime": 5,
+          "authUsed": true,
+          "url": "http://localhost:3001/api/books/1",
+          "dataSize": 74,
+          "stackTrace": null
+        },
+        {
+          "method": "OPTIONS",
+          "status": 204,
+          "statusText": "No Content",
+          "success": true,
+          "message": "No Content",
+          "hasData": true,
+          "responseTime": 2,
+          "authUsed": true,
+          "url": "http://localhost:3001/api/books/1",
+          "dataSize": 0,
+          "stackTrace": null
+        }
+      ]
+    },
+    {
+      "path": "cache/get",
+      "file": "c:\\Users\\estev\\IdeaProjects\\Portal\\src\\app\\api\\cache\\get\\route.ts",
+      "methods": [
+        "GET",
+        "POST",
+        "OPTIONS"
+      ],
+      "hasAuth": true,
+      "description": "",
+      "tests": [
+        {
+          "method": "GET",
+          "status": 400,
+          "statusText": "Bad Request",
+          "success": false,
+          "message": "Cache key is required",
+          "hasData": true,
+          "responseTime": 5,
+          "authUsed": true,
+          "url": "http://localhost:3001/api/cache/get",
+          "dataSize": 51,
+          "stackTrace": null
+        },
+        {
+          "method": "POST",
+          "status": 404,
+          "statusText": "Not Found",
+          "success": false,
+          "message": "Endpoint não encontrado",
+          "hasData": true,
+          "responseTime": 7,
+          "authUsed": true,
+          "url": "http://localhost:3001/api/cache/get",
+          "dataSize": 77,
+          "stackTrace": null
+        },
+        {
+          "method": "OPTIONS",
+          "status": 204,
+          "statusText": "No Content",
+          "success": true,
+          "message": "No Content",
+          "hasData": true,
+          "responseTime": 2,
+          "authUsed": true,
+          "url": "http://localhost:3001/api/cache/get",
+          "dataSize": 0,
+          "stackTrace": null
+        }
+      ]
+    },
+    {
+      "path": "cache/set",
+      "file": "c:\\Users\\estev\\IdeaProjects\\Portal\\src\\app\\api\\cache\\set\\route.ts",
+      "methods": [
+        "POST",
+        "PUT",
+        "PATCH",
+        "OPTIONS"
+      ],
+      "hasAuth": true,
+      "description": "",
+      "tests": [
+        {
+          "method": "POST",
+          "status": 400,
+          "statusText": "Bad Request",
+          "success": false,
+          "message": "Cache key is required",
+          "hasData": true,
+          "responseTime": 5,
+          "authUsed": true,
+          "url": "http://localhost:3001/api/cache/set",
+          "dataSize": 51,
+          "stackTrace": null
+        },
+        {
+          "method": "PUT",
+          "status": 404,
+          "statusText": "Not Found",
+          "success": false,
+          "message": "Endpoint não encontrado",
+          "hasData": true,
+          "responseTime": 6,
+          "authUsed": true,
+          "url": "http://localhost:3001/api/cache/set",
+          "dataSize": 77,
+          "stackTrace": null
+        },
+        {
+          "method": "PATCH",
+          "status": 404,
+          "statusText": "Not Found",
+          "success": false,
+          "message": "Endpoint não encontrado",
+          "hasData": true,
+          "responseTime": 5,
+          "authUsed": true,
+          "url": "http://localhost:3001/api/cache/set",
+          "dataSize": 77,
+          "stackTrace": null
+        },
+        {
+          "method": "OPTIONS",
+          "status": 204,
+          "statusText": "No Content",
+          "success": true,
+          "message": "No Content",
+          "hasData": true,
+          "responseTime": 2,
+          "authUsed": true,
+          "url": "http://localhost:3001/api/cache/set",
+          "dataSize": 0,
+          "stackTrace": null
+        }
+      ]
+    },
+    {
+      "path": "certificates",
+      "file": "c:\\Users\\estev\\IdeaProjects\\Portal\\src\\app\\api\\certificates\\route.ts",
+      "methods": [
+        "GET",
+        "POST"
+      ],
+      "hasAuth": true,
+      "description": "",
+      "tests": [
+        {
+          "method": "GET",
+          "status": 500,
+          "statusText": "Internal Server Error",
+          "success": false,
+          "message": "Erro interno do servidor",
+          "hasData": true,
+          "responseTime": 7,
+          "authUsed": true,
+          "url": "http://localhost:3001/api/certificates",
+          "dataSize": 54,
+          "stackTrace": "{\"success\":false,\"message\":\"Erro interno do servidor\"}"
+        },
+        {
+          "method": "POST",
+          "status": 400,
+          "statusText": "Bad Request",
+          "success": false,
+          "message": "Campos obrigatórios: user_id, tv_show_id, score",
+          "hasData": true,
+          "responseTime": 6,
+          "authUsed": true,
+          "url": "http://localhost:3001/api/certificates",
+          "dataSize": 77,
+          "stackTrace": null
+        }
+      ]
+    },
+    {
+      "path": "certificates/search",
+      "file": "c:\\Users\\estev\\IdeaProjects\\Portal\\src\\app\\api\\certificates\\search\\route.ts",
+      "methods": [
+        "GET",
+        "OPTIONS"
+      ],
+      "hasAuth": false,
+      "description": "",
+      "tests": [
+        {
+          "method": "GET",
+          "status": 401,
+          "statusText": "Unauthorized",
+          "success": false,
+          "message": "No token provided or invalid format.",
+          "hasData": true,
+          "responseTime": 2,
+          "authUsed": false,
+          "url": "http://localhost:3001/api/certificates/search",
+          "dataSize": 66,
+          "stackTrace": null
+        },
+        {
+          "method": "OPTIONS",
+          "status": 204,
+          "statusText": "No Content",
+          "success": true,
+          "message": "No Content",
+          "hasData": true,
+          "responseTime": 1,
+          "authUsed": false,
+          "url": "http://localhost:3001/api/certificates/search",
+          "dataSize": 0,
+          "stackTrace": null
+        }
+      ]
+    },
+    {
+      "path": "certificates/:id",
+      "file": "c:\\Users\\estev\\IdeaProjects\\Portal\\src\\app\\api\\certificates\\[id]\\route.ts",
+      "methods": [
+        "GET",
+        "PUT",
+        "DELETE"
+      ],
+      "hasAuth": true,
+      "description": "",
+      "tests": [
+        {
+          "method": "GET",
+          "status": 404,
+          "statusText": "Not Found",
+          "success": false,
+          "message": "Certificado não encontrado",
+          "hasData": true,
+          "responseTime": 6,
+          "authUsed": true,
+          "url": "http://localhost:3001/api/certificates/1",
+          "dataSize": 56,
+          "stackTrace": null
+        },
+        {
+          "method": "PUT",
+          "status": 404,
+          "statusText": "Not Found",
+          "success": false,
+          "message": "Certificado não encontrado",
+          "hasData": true,
+          "responseTime": 7,
+          "authUsed": true,
+          "url": "http://localhost:3001/api/certificates/1",
+          "dataSize": 56,
+          "stackTrace": null
+        },
+        {
+          "method": "DELETE",
+          "status": 404,
+          "statusText": "Not Found",
+          "success": false,
+          "message": "Certificado não encontrado",
+          "hasData": true,
+          "responseTime": 6,
+          "authUsed": true,
+          "url": "http://localhost:3001/api/certificates/1",
+          "dataSize": 56,
+          "stackTrace": null
+        }
+      ]
+    },
+    {
+      "path": "classes",
+      "file": "c:\\Users\\estev\\IdeaProjects\\Portal\\src\\app\\api\\classes\\route.ts",
+      "methods": [
+        "GET",
+        "POST",
+        "OPTIONS"
+      ],
+      "hasAuth": true,
+      "description": "",
+      "tests": [
+        {
+          "method": "GET",
+          "status": 404,
+          "statusText": "Not Found",
+          "success": false,
+          "message": "Endpoint não encontrado",
+          "hasData": true,
+          "responseTime": 2,
+          "authUsed": true,
+          "url": "http://localhost:3001/api/classes",
+          "dataSize": 75,
+          "stackTrace": null
+        },
+        {
+          "method": "POST",
+          "status": 404,
+          "statusText": "Not Found",
+          "success": false,
+          "message": "Endpoint não encontrado",
+          "hasData": true,
+          "responseTime": 3,
+          "authUsed": true,
+          "url": "http://localhost:3001/api/classes",
+          "dataSize": 75,
+          "stackTrace": null
+        },
+        {
+          "method": "OPTIONS",
+          "status": 204,
+          "statusText": "No Content",
+          "success": true,
+          "message": "No Content",
+          "hasData": true,
+          "responseTime": 2,
+          "authUsed": true,
+          "url": "http://localhost:3001/api/classes",
+          "dataSize": 0,
+          "stackTrace": null
+        }
+      ]
+    },
+    {
+      "path": "classes/:id",
+      "file": "c:\\Users\\estev\\IdeaProjects\\Portal\\src\\app\\api\\classes\\[id]\\route.ts",
+      "methods": [
+        "GET",
+        "PUT",
+        "DELETE",
+        "OPTIONS"
+      ],
+      "hasAuth": true,
+      "description": "",
+      "tests": [
+        {
+          "method": "GET",
+          "status": 404,
+          "statusText": "Not Found",
+          "success": false,
+          "message": "Endpoint não encontrado",
+          "hasData": true,
+          "responseTime": 2,
+          "authUsed": true,
+          "url": "http://localhost:3001/api/classes/1",
+          "dataSize": 77,
+          "stackTrace": null
+        },
+        {
+          "method": "PUT",
+          "status": 404,
+          "statusText": "Not Found",
+          "success": false,
+          "message": "Endpoint não encontrado",
+          "hasData": true,
+          "responseTime": 2,
+          "authUsed": true,
+          "url": "http://localhost:3001/api/classes/1",
+          "dataSize": 77,
+          "stackTrace": null
+        },
+        {
+          "method": "DELETE",
+          "status": 404,
+          "statusText": "Not Found",
+          "success": false,
+          "message": "Endpoint não encontrado",
+          "hasData": true,
+          "responseTime": 3,
+          "authUsed": true,
+          "url": "http://localhost:3001/api/classes/1",
+          "dataSize": 77,
+          "stackTrace": null
+        },
+        {
+          "method": "OPTIONS",
+          "status": 204,
+          "statusText": "No Content",
+          "success": true,
+          "message": "No Content",
+          "hasData": true,
+          "responseTime": 2,
+          "authUsed": true,
+          "url": "http://localhost:3001/api/classes/1",
+          "dataSize": 0,
+          "stackTrace": null
+        }
+      ]
+    },
+    {
+      "path": "collections/manage",
+      "file": "c:\\Users\\estev\\IdeaProjects\\Portal\\src\\app\\api\\collections\\manage\\route.ts",
+      "methods": [
+        "GET",
+        "POST",
+        "OPTIONS"
+      ],
+      "hasAuth": true,
+      "description": "",
+      "tests": [
+        {
+          "method": "GET",
+          "status": 200,
+          "statusText": "OK",
+          "success": true,
+          "message": "Coleções recuperadas com sucesso",
+          "hasData": true,
+          "responseTime": 167,
+          "authUsed": true,
+          "url": "http://localhost:3001/api/collections/manage",
+          "dataSize": 87,
+          "stackTrace": null
+        },
+        {
+          "method": "POST",
+          "status": 400,
+          "statusText": "Bad Request",
+          "success": false,
+          "message": "Nome e sinopse são obrigatórios",
+          "hasData": true,
+          "responseTime": 5,
+          "authUsed": true,
+          "url": "http://localhost:3001/api/collections/manage",
+          "dataSize": 61,
+          "stackTrace": null
+        },
+        {
+          "method": "OPTIONS",
+          "status": 204,
+          "statusText": "No Content",
+          "success": true,
+          "message": "No Content",
+          "hasData": true,
+          "responseTime": 1,
+          "authUsed": true,
+          "url": "http://localhost:3001/api/collections/manage",
+          "dataSize": 0,
+          "stackTrace": null
+        }
+      ]
+    },
+    {
+      "path": "collections/popular",
+      "file": "c:\\Users\\estev\\IdeaProjects\\Portal\\src\\app\\api\\collections\\popular\\route.ts",
+      "methods": [
+        "GET",
+        "OPTIONS"
+      ],
+      "hasAuth": true,
+      "description": "",
+      "tests": [
+        {
+          "method": "GET",
+          "status": 500,
+          "statusText": "Internal Server Error",
+          "success": false,
+          "message": "Erro interno do servidor ao buscar coleções populares",
+          "hasData": true,
+          "responseTime": 535,
+          "authUsed": true,
+          "url": "http://localhost:3001/api/collections/popular",
+          "dataSize": 146,
+          "stackTrace": "{\"success\":false,\"message\":\"Erro interno do servidor ao buscar coleções populares\",\"error\":\"Falha ao buscar coleções populares do banco de dados\"}"
+        },
+        {
+          "method": "OPTIONS",
+          "status": 204,
+          "statusText": "No Content",
+          "success": true,
+          "message": "No Content",
+          "hasData": true,
+          "responseTime": 2,
+          "authUsed": true,
+          "url": "http://localhost:3001/api/collections/popular",
+          "dataSize": 0,
+          "stackTrace": null
+        }
+      ]
+    },
+    {
+      "path": "collections/recent",
+      "file": "c:\\Users\\estev\\IdeaProjects\\Portal\\src\\app\\api\\collections\\recent\\route.ts",
+      "methods": [
+        "GET",
+        "OPTIONS"
+      ],
+      "hasAuth": true,
+      "description": "",
+      "tests": [
+        {
+          "method": "GET",
+          "status": 500,
+          "statusText": "Internal Server Error",
+          "success": false,
+          "message": "Erro interno do servidor ao buscar coleções recentes",
+          "hasData": true,
+          "responseTime": 63,
+          "authUsed": true,
+          "url": "http://localhost:3001/api/collections/recent",
+          "dataSize": 144,
+          "stackTrace": "{\"success\":false,\"message\":\"Erro interno do servidor ao buscar coleções recentes\",\"error\":\"Falha ao buscar coleções recentes do banco de dados\"}"
+        },
+        {
+          "method": "OPTIONS",
+          "status": 204,
+          "statusText": "No Content",
+          "success": true,
+          "message": "No Content",
+          "hasData": true,
+          "responseTime": 2,
+          "authUsed": true,
+          "url": "http://localhost:3001/api/collections/recent",
+          "dataSize": 0,
+          "stackTrace": null
+        }
+      ]
+    },
+    {
+      "path": "collections",
+      "file": "c:\\Users\\estev\\IdeaProjects\\Portal\\src\\app\\api\\collections\\route.ts",
+      "methods": [
+        "GET",
+        "POST",
+        "OPTIONS"
+      ],
+      "hasAuth": true,
+      "description": "",
+      "tests": [
+        {
+          "method": "GET",
+          "status": 200,
+          "statusText": "OK",
+          "success": true,
+          "message": "Coleções recuperadas com sucesso",
+          "hasData": true,
+          "responseTime": 83,
+          "authUsed": true,
+          "url": "http://localhost:3001/api/collections",
+          "dataSize": 106814,
+          "stackTrace": null
+        },
+        {
+          "method": "POST",
+          "status": 404,
+          "statusText": "Not Found",
+          "success": false,
+          "message": "Endpoint não encontrado",
+          "hasData": true,
+          "responseTime": 5,
+          "authUsed": true,
+          "url": "http://localhost:3001/api/collections",
+          "dataSize": 79,
+          "stackTrace": null
+        },
+        {
+          "method": "OPTIONS",
+          "status": 204,
+          "statusText": "No Content",
+          "success": true,
+          "message": "No Content",
+          "hasData": true,
+          "responseTime": 2,
+          "authUsed": true,
+          "url": "http://localhost:3001/api/collections",
+          "dataSize": 0,
+          "stackTrace": null
+        }
+      ]
+    },
+    {
+      "path": "collections/search",
+      "file": "c:\\Users\\estev\\IdeaProjects\\Portal\\src\\app\\api\\collections\\search\\route.ts",
+      "methods": [
+        "GET",
+        "OPTIONS"
+      ],
+      "hasAuth": true,
+      "description": "",
+      "tests": [
+        {
+          "method": "GET",
+          "status": 400,
+          "statusText": "Bad Request",
+          "success": false,
+          "message": "Termo de pesquisa é obrigatório",
+          "hasData": true,
+          "responseTime": 5,
+          "authUsed": true,
+          "url": "http://localhost:3001/api/collections/search",
+          "dataSize": 61,
+          "stackTrace": null
+        },
+        {
+          "method": "OPTIONS",
+          "status": 204,
+          "statusText": "No Content",
+          "success": true,
+          "message": "No Content",
+          "hasData": true,
+          "responseTime": 2,
+          "authUsed": true,
+          "url": "http://localhost:3001/api/collections/search",
+          "dataSize": 0,
+          "stackTrace": null
+        }
+      ]
+    },
+    {
+      "path": "collections/top-rated",
+      "file": "c:\\Users\\estev\\IdeaProjects\\Portal\\src\\app\\api\\collections\\top-rated\\route.ts",
+      "methods": [
+        "GET",
+        "OPTIONS"
+      ],
+      "hasAuth": true,
+      "description": "",
+      "tests": [
+        {
+          "method": "GET",
+          "status": 500,
+          "statusText": "Internal Server Error",
+          "success": false,
+          "message": "Erro interno do servidor ao buscar coleções mais bem avaliadas",
+          "hasData": true,
+          "responseTime": 59,
+          "authUsed": true,
+          "url": "http://localhost:3001/api/collections/top-rated",
+          "dataSize": 164,
+          "stackTrace": "{\"success\":false,\"message\":\"Erro interno do servidor ao buscar coleções mais bem avaliadas\",\"error\":\"Falha ao buscar coleções mais bem avaliadas do banco de dados\"}"
+        },
+        {
+          "method": "OPTIONS",
+          "status": 204,
+          "statusText": "No Content",
+          "success": true,
+          "message": "No Content",
+          "hasData": true,
+          "responseTime": 2,
+          "authUsed": true,
+          "url": "http://localhost:3001/api/collections/top-rated",
+          "dataSize": 0,
+          "stackTrace": null
+        }
+      ]
+    },
+    {
+      "path": "content/buckets",
+      "file": "c:\\Users\\estev\\IdeaProjects\\Portal\\src\\app\\api\\content\\buckets\\route.ts",
+      "methods": [
+        "GET",
+        "POST",
+        "OPTIONS"
+      ],
+      "hasAuth": false,
+      "description": "",
+      "tests": [
+        {
+          "method": "GET",
+          "status": 404,
+          "statusText": "Not Found",
+          "success": false,
+          "message": "Endpoint não encontrado",
+          "hasData": true,
+          "responseTime": 1,
+          "authUsed": false,
+          "url": "http://localhost:3001/api/content/buckets",
+          "dataSize": 83,
+          "stackTrace": null
+        },
+        {
+          "method": "POST",
+          "status": 404,
+          "statusText": "Not Found",
+          "success": false,
+          "message": "Endpoint não encontrado",
+          "hasData": true,
+          "responseTime": 2,
+          "authUsed": false,
+          "url": "http://localhost:3001/api/content/buckets",
+          "dataSize": 83,
+          "stackTrace": null
+        },
+        {
+          "method": "OPTIONS",
+          "status": 204,
+          "statusText": "No Content",
+          "success": true,
+          "message": "No Content",
+          "hasData": true,
+          "responseTime": 1,
+          "authUsed": false,
+          "url": "http://localhost:3001/api/content/buckets",
+          "dataSize": 0,
+          "stackTrace": null
+        }
+      ]
+    },
+    {
+      "path": "content/files/all",
+      "file": "c:\\Users\\estev\\IdeaProjects\\Portal\\src\\app\\api\\content\\files\\all\\route.ts",
+      "methods": [
+        "GET",
+        "OPTIONS"
+      ],
+      "hasAuth": false,
+      "description": "",
+      "tests": [
+        {
+          "method": "GET",
+          "status": 404,
+          "statusText": "Not Found",
+          "success": false,
+          "message": "Endpoint não encontrado",
+          "hasData": true,
+          "responseTime": 2,
+          "authUsed": false,
+          "url": "http://localhost:3001/api/content/files/all",
+          "dataSize": 85,
+          "stackTrace": null
+        },
+        {
+          "method": "OPTIONS",
+          "status": 204,
+          "statusText": "No Content",
+          "success": true,
+          "message": "No Content",
+          "hasData": true,
+          "responseTime": 1,
+          "authUsed": false,
+          "url": "http://localhost:3001/api/content/files/all",
+          "dataSize": 0,
+          "stackTrace": null
+        }
+      ]
+    },
+    {
+      "path": "content/files/bucket-files",
+      "file": "c:\\Users\\estev\\IdeaProjects\\Portal\\src\\app\\api\\content\\files\\bucket-files\\route.ts",
+      "methods": [
+        "GET",
+        "OPTIONS"
+      ],
+      "hasAuth": false,
+      "description": "",
+      "tests": [
+        {
+          "method": "GET",
+          "status": 404,
+          "statusText": "Not Found",
+          "success": false,
+          "message": "Endpoint não encontrado",
+          "hasData": true,
+          "responseTime": 1,
+          "authUsed": false,
+          "url": "http://localhost:3001/api/content/files/bucket-files",
+          "dataSize": 94,
+          "stackTrace": null
+        },
+        {
+          "method": "OPTIONS",
+          "status": 204,
+          "statusText": "No Content",
+          "success": true,
+          "message": "No Content",
+          "hasData": true,
+          "responseTime": 1,
+          "authUsed": false,
+          "url": "http://localhost:3001/api/content/files/bucket-files",
+          "dataSize": 0,
+          "stackTrace": null
+        }
+      ]
+    },
+    {
+      "path": "content/files/check-references",
+      "file": "c:\\Users\\estev\\IdeaProjects\\Portal\\src\\app\\api\\content\\files\\check-references\\route.ts",
+      "methods": [
+        "GET",
+        "POST",
+        "OPTIONS"
+      ],
+      "hasAuth": true,
+      "description": "",
+      "tests": [
+        {
+          "method": "GET",
+          "status": 404,
+          "statusText": "Not Found",
+          "success": false,
+          "message": "Endpoint não encontrado",
+          "hasData": true,
+          "responseTime": 3,
+          "authUsed": true,
+          "url": "http://localhost:3001/api/content/files/check-references",
+          "dataSize": 98,
+          "stackTrace": null
+        },
+        {
+          "method": "POST",
+          "status": 404,
+          "statusText": "Not Found",
+          "success": false,
+          "message": "Endpoint não encontrado",
+          "hasData": true,
+          "responseTime": 3,
+          "authUsed": true,
+          "url": "http://localhost:3001/api/content/files/check-references",
+          "dataSize": 98,
+          "stackTrace": null
+        },
+        {
+          "method": "OPTIONS",
+          "status": 204,
+          "statusText": "No Content",
+          "success": true,
+          "message": "No Content",
+          "hasData": true,
+          "responseTime": 2,
+          "authUsed": true,
+          "url": "http://localhost:3001/api/content/files/check-references",
+          "dataSize": 0,
+          "stackTrace": null
+        }
+      ]
+    },
+    {
+      "path": "content/files",
+      "file": "c:\\Users\\estev\\IdeaProjects\\Portal\\src\\app\\api\\content\\files\\route.ts",
+      "methods": [
+        "GET",
+        "POST",
+        "DELETE",
+        "PATCH",
+        "OPTIONS"
+      ],
+      "hasAuth": false,
+      "description": "",
+      "tests": [
+        {
+          "method": "GET",
+          "status": 404,
+          "statusText": "Not Found",
+          "success": false,
+          "message": "Endpoint não encontrado",
+          "hasData": true,
+          "responseTime": 1,
+          "authUsed": false,
+          "url": "http://localhost:3001/api/content/files",
+          "dataSize": 81,
+          "stackTrace": null
+        },
+        {
+          "method": "POST",
+          "status": 404,
+          "statusText": "Not Found",
+          "success": false,
+          "message": "Endpoint não encontrado",
+          "hasData": true,
+          "responseTime": 2,
+          "authUsed": false,
+          "url": "http://localhost:3001/api/content/files",
+          "dataSize": 81,
+          "stackTrace": null
+        },
+        {
+          "method": "DELETE",
+          "status": 404,
+          "statusText": "Not Found",
+          "success": false,
+          "message": "Endpoint não encontrado",
+          "hasData": true,
+          "responseTime": 2,
+          "authUsed": false,
+          "url": "http://localhost:3001/api/content/files",
+          "dataSize": 81,
+          "stackTrace": null
+        },
+        {
+          "method": "PATCH",
+          "status": 404,
+          "statusText": "Not Found",
+          "success": false,
+          "message": "Endpoint não encontrado",
+          "hasData": true,
+          "responseTime": 2,
+          "authUsed": false,
+          "url": "http://localhost:3001/api/content/files",
+          "dataSize": 81,
+          "stackTrace": null
+        },
+        {
+          "method": "OPTIONS",
+          "status": 0,
+          "statusText": "Connection Error",
+          "success": false,
+          "message": "",
+          "hasData": false,
+          "responseTime": 2283,
+          "authUsed": false,
+          "url": "http://localhost:3001/apicontent/files",
+          "error": "",
+          "dataSize": 0,
+          "stackTrace": "AggregateError [ETIMEDOUT]: \n    at internalConnectMultiple (node:net:1134:18)\n    at afterConnectMultiple (node:net:1715:7)"
+        }
+      ]
+    },
+    {
+      "path": "content/files/:id/add-book",
+      "file": "c:\\Users\\estev\\IdeaProjects\\Portal\\src\\app\\api\\content\\files\\[id]\\add-book\\route.ts",
+      "methods": [
+        "POST",
+        "OPTIONS"
+      ],
+      "hasAuth": true,
+      "description": "",
+      "tests": [
+        {
+          "method": "POST",
+          "status": 0,
+          "statusText": "Connection Error",
+          "success": false,
+          "message": "",
+          "hasData": false,
+          "responseTime": 2285,
+          "authUsed": true,
+          "url": "http://localhost:3001/apicontent/files/:id/add-book",
+          "error": "",
+          "dataSize": 0,
+          "stackTrace": "AggregateError [ETIMEDOUT]: \n    at internalConnectMultiple (node:net:1134:18)\n    at afterConnectMultiple (node:net:1715:7)"
+        },
+        {
+          "method": "OPTIONS",
+          "status": 0,
+          "statusText": "Connection Error",
+          "success": false,
+          "message": "",
+          "hasData": false,
+          "responseTime": 2303,
+          "authUsed": true,
+          "url": "http://localhost:3001/apicontent/files/:id/add-book",
+          "error": "",
+          "dataSize": 0,
+          "stackTrace": "AggregateError [ETIMEDOUT]: \n    at internalConnectMultiple (node:net:1134:18)\n    at afterConnectMultiple (node:net:1715:7)"
+        }
+      ]
+    },
+    {
+      "path": "content/files/:id/add-library",
+      "file": "c:\\Users\\estev\\IdeaProjects\\Portal\\src\\app\\api\\content\\files\\[id]\\add-library\\route.ts",
+      "methods": [
+        "POST",
+        "OPTIONS"
+      ],
+      "hasAuth": true,
+      "description": "",
+      "tests": [
+        {
+          "method": "POST",
+          "status": 0,
+          "statusText": "Connection Error",
+          "success": false,
+          "message": "",
+          "hasData": false,
+          "responseTime": 2318,
+          "authUsed": true,
+          "url": "http://localhost:3001/apicontent/files/:id/add-library",
+          "error": "",
+          "dataSize": 0,
+          "stackTrace": "AggregateError [ETIMEDOUT]: \n    at internalConnectMultiple (node:net:1134:18)\n    at afterConnectMultiple (node:net:1715:7)"
+        },
+        {
+          "method": "OPTIONS",
+          "status": 0,
+          "statusText": "Connection Error",
+          "success": false,
+          "message": "",
+          "hasData": false,
+          "responseTime": 2265,
+          "authUsed": true,
+          "url": "http://localhost:3001/apicontent/files/:id/add-library",
+          "error": "",
+          "dataSize": 0,
+          "stackTrace": "AggregateError [ETIMEDOUT]: \n    at internalConnectMultiple (node:net:1134:18)\n    at afterConnectMultiple (node:net:1715:7)"
+        }
+      ]
+    },
+    {
+      "path": "content/files/:id/link-collection",
+      "file": "c:\\Users\\estev\\IdeaProjects\\Portal\\src\\app\\api\\content\\files\\[id]\\link-collection\\route.ts",
+      "methods": [
+        "POST",
+        "OPTIONS"
+      ],
+      "hasAuth": false,
+      "description": "",
+      "tests": [
+        {
+          "method": "POST",
+          "status": 0,
+          "statusText": "Connection Error",
+          "success": false,
+          "message": "",
+          "hasData": false,
+          "responseTime": 2283,
+          "authUsed": false,
+          "url": "http://localhost:3001/apicontent/files/:id/link-collection",
+          "error": "",
+          "dataSize": 0,
+          "stackTrace": "AggregateError [ETIMEDOUT]: \n    at internalConnectMultiple (node:net:1134:18)\n    at afterConnectMultiple (node:net:1715:7)"
+        },
+        {
+          "method": "OPTIONS",
+          "status": 0,
+          "statusText": "Connection Error",
+          "success": false,
+          "message": "",
+          "hasData": false,
+          "responseTime": 2281,
+          "authUsed": false,
+          "url": "http://localhost:3001/apicontent/files/:id/link-collection",
+          "error": "",
+          "dataSize": 0,
+          "stackTrace": "AggregateError [ETIMEDOUT]: \n    at internalConnectMultiple (node:net:1134:18)\n    at afterConnectMultiple (node:net:1715:7)"
+        }
+      ]
+    },
+    {
+      "path": "content/files/:id/rename",
+      "file": "c:\\Users\\estev\\IdeaProjects\\Portal\\src\\app\\api\\content\\files\\[id]\\rename\\route.ts",
+      "methods": [
+        "PATCH",
+        "OPTIONS"
+      ],
+      "hasAuth": false,
+      "description": "",
+      "tests": [
+        {
+          "method": "PATCH",
+          "status": 0,
+          "statusText": "Connection Error",
+          "success": false,
+          "message": "",
+          "hasData": false,
+          "responseTime": 2276,
+          "authUsed": false,
+          "url": "http://localhost:3001/apicontent/files/:id/rename",
+          "error": "",
+          "dataSize": 0,
+          "stackTrace": "AggregateError [ETIMEDOUT]: \n    at internalConnectMultiple (node:net:1134:18)\n    at afterConnectMultiple (node:net:1715:7)"
+        },
+        {
+          "method": "OPTIONS",
+          "status": 0,
+          "statusText": "Connection Error",
+          "success": false,
+          "message": "",
+          "hasData": false,
+          "responseTime": 2284,
+          "authUsed": false,
+          "url": "http://localhost:3001/apicontent/files/:id/rename",
+          "error": "",
+          "dataSize": 0,
+          "stackTrace": "AggregateError [ETIMEDOUT]: \n    at internalConnectMultiple (node:net:1134:18)\n    at afterConnectMultiple (node:net:1715:7)"
+        }
+      ]
+    },
+    {
+      "path": "content/files/:id/unlink",
+      "file": "c:\\Users\\estev\\IdeaProjects\\Portal\\src\\app\\api\\content\\files\\[id]\\unlink\\route.ts",
+      "methods": [
+        "POST",
+        "OPTIONS"
+      ],
+      "hasAuth": false,
+      "description": "",
+      "tests": [
+        {
+          "method": "POST",
+          "status": 0,
+          "statusText": "Connection Error",
+          "success": false,
+          "message": "",
+          "hasData": false,
+          "responseTime": 2290,
+          "authUsed": false,
+          "url": "http://localhost:3001/apicontent/files/:id/unlink",
+          "error": "",
+          "dataSize": 0,
+          "stackTrace": "AggregateError [ETIMEDOUT]: \n    at internalConnectMultiple (node:net:1134:18)\n    at afterConnectMultiple (node:net:1715:7)"
+        },
+        {
+          "method": "OPTIONS",
+          "status": 0,
+          "statusText": "Connection Error",
+          "success": false,
+          "message": "",
+          "hasData": false,
+          "responseTime": 2275,
+          "authUsed": false,
+          "url": "http://localhost:3001/apicontent/files/:id/unlink",
+          "error": "",
+          "dataSize": 0,
+          "stackTrace": "AggregateError [ETIMEDOUT]: \n    at internalConnectMultiple (node:net:1134:18)\n    at afterConnectMultiple (node:net:1715:7)"
+        }
+      ]
+    },
+    {
+      "path": "content/search",
+      "file": "c:\\Users\\estev\\IdeaProjects\\Portal\\src\\app\\api\\content\\search\\route.ts",
+      "methods": [
+        "POST",
+        "OPTIONS"
+      ],
+      "hasAuth": false,
+      "description": "",
+      "tests": [
+        {
+          "method": "POST",
+          "status": 0,
+          "statusText": "Connection Error",
+          "success": false,
+          "message": "",
+          "hasData": false,
+          "responseTime": 2291,
+          "authUsed": false,
+          "url": "http://localhost:3001/apicontent/search",
+          "error": "",
+          "dataSize": 0,
+          "stackTrace": "AggregateError [ETIMEDOUT]: \n    at internalConnectMultiple (node:net:1134:18)\n    at afterConnectMultiple (node:net:1715:7)"
+        },
+        {
+          "method": "OPTIONS",
+          "status": 0,
+          "statusText": "Connection Error",
+          "success": false,
+          "message": "",
+          "hasData": false,
+          "responseTime": 2297,
+          "authUsed": false,
+          "url": "http://localhost:3001/apicontent/search",
+          "error": "",
+          "dataSize": 0,
+          "stackTrace": "AggregateError [ETIMEDOUT]: \n    at internalConnectMultiple (node:net:1134:18)\n    at afterConnectMultiple (node:net:1715:7)"
+        }
+      ]
+    },
+    {
+      "path": "content/upload",
+      "file": "c:\\Users\\estev\\IdeaProjects\\Portal\\src\\app\\api\\content\\upload\\route.ts",
+      "methods": [
+        "POST",
+        "OPTIONS"
+      ],
+      "hasAuth": true,
+      "description": "",
+      "tests": [
+        {
+          "method": "POST",
+          "status": 0,
+          "statusText": "Connection Error",
+          "success": false,
+          "message": "",
+          "hasData": false,
+          "responseTime": 2277,
+          "authUsed": true,
+          "url": "http://localhost:3001/apicontent/upload",
+          "error": "",
+          "dataSize": 0,
+          "stackTrace": "AggregateError [ETIMEDOUT]: \n    at internalConnectMultiple (node:net:1134:18)\n    at afterConnectMultiple (node:net:1715:7)"
+        },
+        {
+          "method": "OPTIONS",
+          "status": 0,
+          "statusText": "Connection Error",
+          "success": false,
+          "message": "",
+          "hasData": false,
+          "responseTime": 2287,
+          "authUsed": true,
+          "url": "http://localhost:3001/apicontent/upload",
+          "error": "",
+          "dataSize": 0,
+          "stackTrace": "AggregateError [ETIMEDOUT]: \n    at internalConnectMultiple (node:net:1134:18)\n    at afterConnectMultiple (node:net:1715:7)"
+        }
+      ]
+    },
+    {
+      "path": "courses",
+      "file": "c:\\Users\\estev\\IdeaProjects\\Portal\\src\\app\\api\\courses\\route.ts",
+      "methods": [
+        "OPTIONS"
+      ],
+      "hasAuth": true,
+      "description": "",
+      "tests": [
+        {
+          "method": "OPTIONS",
+          "status": 204,
+          "statusText": "No Content",
+          "success": true,
+          "message": "No Content",
+          "hasData": true,
+          "responseTime": 1806,
+          "authUsed": true,
+          "url": "http://localhost:3001/api/courses",
+          "dataSize": 0,
+          "stackTrace": null
+        }
+      ]
+    },
+    {
+      "path": "courses/:id",
+      "file": "c:\\Users\\estev\\IdeaProjects\\Portal\\src\\app\\api\\courses\\[id]\\route.ts",
+      "methods": [
+        "GET",
+        "PUT",
+        "DELETE",
+        "OPTIONS"
+      ],
+      "hasAuth": true,
+      "description": "",
+      "tests": [
+        {
+          "method": "GET",
+          "status": 404,
+          "statusText": "Not Found",
+          "success": false,
+          "message": "Course not found",
+          "hasData": true,
+          "responseTime": 96,
+          "authUsed": true,
+          "url": "http://localhost:3001/api/courses/1",
+          "dataSize": 46,
+          "stackTrace": null
+        },
+        {
+          "method": "PUT",
+          "status": 404,
+          "statusText": "Not Found",
+          "success": false,
+          "message": "Course not found",
+          "hasData": true,
+          "responseTime": 18,
+          "authUsed": true,
+          "url": "http://localhost:3001/api/courses/1",
+          "dataSize": 46,
+          "stackTrace": null
+        },
+        {
+          "method": "DELETE",
+          "status": 404,
+          "statusText": "Not Found",
+          "success": false,
+          "message": "Course not found",
+          "hasData": true,
+          "responseTime": 6,
+          "authUsed": true,
+          "url": "http://localhost:3001/api/courses/1",
+          "dataSize": 46,
+          "stackTrace": null
+        },
+        {
+          "method": "OPTIONS",
+          "status": 204,
+          "statusText": "No Content",
+          "success": true,
+          "message": "No Content",
+          "hasData": true,
+          "responseTime": 2,
+          "authUsed": true,
+          "url": "http://localhost:3001/api/courses/1",
+          "dataSize": 0,
+          "stackTrace": null
+        }
+      ]
+    },
+    {
+      "path": "courses/:id/students",
+      "file": "c:\\Users\\estev\\IdeaProjects\\Portal\\src\\app\\api\\courses\\[id]\\students\\route.ts",
+      "methods": [
+        "GET",
+        "POST",
+        "OPTIONS"
+      ],
+      "hasAuth": true,
+      "description": "",
+      "tests": [
+        {
+          "method": "GET",
+          "status": 500,
+          "statusText": "Internal Server Error",
+          "success": false,
+          "message": "Error retrieving course students",
+          "hasData": true,
+          "responseTime": 8,
+          "authUsed": true,
+          "url": "http://localhost:3001/api/courses/1/students",
+          "dataSize": 405,
+          "stackTrace": "{\"success\":false,\"message\":\"Error retrieving course students\",\"error\":\"select \\\"User\\\".\\\"id\\\", \\\"User\\\".\\\"name\\\", \\\"User\\\".\\\"email\\\", \\\"User\\\".\\\"usuario\\\", \\\"course_students\\\".\\\"progress\\\", \\\"course_students\\\".\\\"grades\\\" from \\\"course_students\\\" left join \\\"User\\\" on \\\"course_students\\\".\\\"user_id\\\" = \\\"User\\\".\\\"id\\\" where \\\"course_students\\\".\\\"course_id\\\" = $1 - relação \\\"course_students\\\" não existe\"}"
+        },
+        {
+          "method": "POST",
+          "status": 400,
+          "statusText": "Bad Request",
+          "success": false,
+          "message": "User ID is required",
+          "hasData": true,
+          "responseTime": 6,
+          "authUsed": true,
+          "url": "http://localhost:3001/api/courses/1/students",
+          "dataSize": 49,
+          "stackTrace": null
+        },
+        {
+          "method": "OPTIONS",
+          "status": 204,
+          "statusText": "No Content",
+          "success": true,
+          "message": "No Content",
+          "hasData": true,
+          "responseTime": 2,
+          "authUsed": true,
+          "url": "http://localhost:3001/api/courses/1/students",
+          "dataSize": 0,
+          "stackTrace": null
+        }
+      ]
+    },
+    {
+      "path": "custom-auth/login",
+      "file": "c:\\Users\\estev\\IdeaProjects\\Portal\\src\\app\\api\\custom-auth\\login\\route.ts",
+      "methods": [
+        "GET",
+        "POST"
+      ],
+      "hasAuth": true,
+      "description": "",
+      "tests": [
+        {
+          "method": "GET",
+          "status": 404,
+          "statusText": "Not Found",
+          "success": false,
+          "message": "Endpoint não encontrado",
+          "hasData": true,
+          "responseTime": 4,
+          "authUsed": true,
+          "url": "http://localhost:3001/api/custom-auth/login",
+          "dataSize": 85,
+          "stackTrace": null
+        },
+        {
+          "method": "POST",
+          "status": 404,
+          "statusText": "Not Found",
+          "success": false,
+          "message": "Endpoint não encontrado",
+          "hasData": true,
+          "responseTime": 3,
+          "authUsed": true,
+          "url": "http://localhost:3001/api/custom-auth/login",
+          "dataSize": 85,
+          "stackTrace": null
+        }
+      ]
+    },
+    {
+      "path": "dashboard/analytics",
+      "file": "c:\\Users\\estev\\IdeaProjects\\Portal\\src\\app\\api\\dashboard\\analytics\\route.ts",
+      "methods": [
+        "GET",
+        "OPTIONS"
+      ],
+      "hasAuth": true,
+      "description": "",
+      "tests": [
+        {
+          "method": "GET",
+          "status": 400,
+          "statusText": "Bad Request",
+          "success": false,
+          "message": "Bad Request",
+          "hasData": true,
+          "responseTime": 8,
+          "authUsed": true,
+          "url": "http://localhost:3001/api/dashboard/analytics",
+          "dataSize": 128,
+          "stackTrace": null
+        },
+        {
+          "method": "OPTIONS",
+          "status": 204,
+          "statusText": "No Content",
+          "success": true,
+          "message": "No Content",
+          "hasData": true,
+          "responseTime": 2,
+          "authUsed": true,
+          "url": "http://localhost:3001/api/dashboard/analytics",
+          "dataSize": 0,
+          "stackTrace": null
+        }
+      ]
+    },
+    {
+      "path": "dashboard/engagement",
+      "file": "c:\\Users\\estev\\IdeaProjects\\Portal\\src\\app\\api\\dashboard\\engagement\\route.ts",
+      "methods": [
+        "GET",
+        "OPTIONS"
+      ],
+      "hasAuth": true,
+      "description": "",
+      "tests": [
+        {
+          "method": "GET",
+          "status": 404,
+          "statusText": "Not Found",
+          "success": false,
+          "message": "Endpoint não encontrado",
+          "hasData": true,
+          "responseTime": 6,
+          "authUsed": true,
+          "url": "http://localhost:3001/api/dashboard/engagement",
+          "dataSize": 88,
+          "stackTrace": null
+        },
+        {
+          "method": "OPTIONS",
+          "status": 204,
+          "statusText": "No Content",
+          "success": true,
+          "message": "No Content",
+          "hasData": true,
+          "responseTime": 2,
+          "authUsed": true,
+          "url": "http://localhost:3001/api/dashboard/engagement",
+          "dataSize": 0,
+          "stackTrace": null
+        }
+      ]
+    },
+    {
+      "path": "dashboard/health",
+      "file": "c:\\Users\\estev\\IdeaProjects\\Portal\\src\\app\\api\\dashboard\\health\\route.ts",
+      "methods": [
+        "GET",
+        "OPTIONS"
+      ],
+      "hasAuth": true,
+      "description": "",
+      "tests": [
+        {
+          "method": "GET",
+          "status": 200,
+          "statusText": "OK",
+          "success": true,
+          "message": "OK",
+          "hasData": true,
+          "responseTime": 9,
+          "authUsed": true,
+          "url": "http://localhost:3001/api/dashboard/health",
+          "dataSize": 381,
+          "stackTrace": null
+        },
+        {
+          "method": "OPTIONS",
+          "status": 204,
+          "statusText": "No Content",
+          "success": true,
+          "message": "No Content",
+          "hasData": true,
+          "responseTime": 2,
+          "authUsed": true,
+          "url": "http://localhost:3001/api/dashboard/health",
+          "dataSize": 0,
+          "stackTrace": null
+        }
+      ]
+    },
+    {
+      "path": "dashboard/metrics/realtime",
+      "file": "c:\\Users\\estev\\IdeaProjects\\Portal\\src\\app\\api\\dashboard\\metrics\\realtime\\route.ts",
+      "methods": [
+        "GET",
+        "OPTIONS"
+      ],
+      "hasAuth": true,
+      "description": "",
+      "tests": [
+        {
+          "method": "GET",
+          "status": 200,
+          "statusText": "OK",
+          "success": true,
+          "message": "OK",
+          "hasData": true,
+          "responseTime": 7,
+          "authUsed": true,
+          "url": "http://localhost:3001/api/dashboard/metrics/realtime",
+          "dataSize": 121,
+          "stackTrace": null
+        },
+        {
+          "method": "OPTIONS",
+          "status": 204,
+          "statusText": "No Content",
+          "success": true,
+          "message": "No Content",
+          "hasData": true,
+          "responseTime": 2,
+          "authUsed": true,
+          "url": "http://localhost:3001/api/dashboard/metrics/realtime",
+          "dataSize": 0,
+          "stackTrace": null
+        }
+      ]
+    },
+    {
+      "path": "dashboard/summary",
+      "file": "c:\\Users\\estev\\IdeaProjects\\Portal\\src\\app\\api\\dashboard\\summary\\route.ts",
+      "methods": [
+        "GET",
+        "OPTIONS"
+      ],
+      "hasAuth": true,
+      "description": "",
+      "tests": [
+        {
+          "method": "GET",
+          "status": 500,
+          "statusText": "Internal Server Error",
+          "success": false,
+          "message": "Erro interno do servidor",
+          "hasData": true,
+          "responseTime": 16,
+          "authUsed": true,
+          "url": "http://localhost:3001/api/dashboard/summary",
+          "dataSize": 54,
+          "stackTrace": "{\"success\":false,\"message\":\"Erro interno do servidor\"}"
+        },
+        {
+          "method": "OPTIONS",
+          "status": 204,
+          "statusText": "No Content",
+          "success": true,
+          "message": "No Content",
+          "hasData": true,
+          "responseTime": 2,
+          "authUsed": true,
+          "url": "http://localhost:3001/api/dashboard/summary",
+          "dataSize": 0,
+          "stackTrace": null
+        }
+      ]
+    },
+    {
+      "path": "dashboard/system",
+      "file": "c:\\Users\\estev\\IdeaProjects\\Portal\\src\\app\\api\\dashboard\\system\\route.ts",
+      "methods": [
+        "GET",
+        "OPTIONS"
+      ],
+      "hasAuth": true,
+      "description": "",
+      "tests": [
+        {
+          "method": "GET",
+          "status": 200,
+          "statusText": "OK",
+          "success": true,
+          "message": "OK",
+          "hasData": true,
+          "responseTime": 17,
+          "authUsed": true,
+          "url": "http://localhost:3001/api/dashboard/system",
+          "dataSize": 527,
+          "stackTrace": null
+        },
+        {
+          "method": "OPTIONS",
+          "status": 204,
+          "statusText": "No Content",
+          "success": true,
+          "message": "No Content",
+          "hasData": true,
+          "responseTime": 3,
+          "authUsed": true,
+          "url": "http://localhost:3001/api/dashboard/system",
+          "dataSize": 0,
+          "stackTrace": null
+        }
+      ]
+    },
+    {
+      "path": "debug/auth",
+      "file": "c:\\Users\\estev\\IdeaProjects\\Portal\\src\\app\\api\\debug\\auth\\route.ts",
+      "methods": [
+        "GET",
+        "OPTIONS"
+      ],
+      "hasAuth": true,
+      "description": "Debug endpoint para verificar informações de autenticação\r   GET /api/debug/auth",
+      "tests": [
+        {
+          "method": "GET",
+          "status": 404,
+          "statusText": "Not Found",
+          "success": false,
+          "message": "Endpoint não encontrado",
+          "hasData": true,
+          "responseTime": 3,
+          "authUsed": true,
+          "url": "http://localhost:3001/api/debug/auth",
+          "dataSize": 78,
+          "stackTrace": null
+        },
+        {
+          "method": "OPTIONS",
+          "status": 204,
+          "statusText": "No Content",
+          "success": true,
+          "message": "No Content",
+          "hasData": true,
+          "responseTime": 2,
+          "authUsed": true,
+          "url": "http://localhost:3001/api/debug/auth",
+          "dataSize": 0,
+          "stackTrace": null
+        }
+      ]
+    },
+    {
+      "path": "forum/topics",
+      "file": "c:\\Users\\estev\\IdeaProjects\\Portal\\src\\app\\api\\forum\\topics\\route.ts",
+      "methods": [
+        "GET",
+        "POST",
+        "OPTIONS"
+      ],
+      "hasAuth": true,
+      "description": "",
+      "tests": [
+        {
+          "method": "GET",
+          "status": 404,
+          "statusText": "Not Found",
+          "success": false,
+          "message": "Endpoint não encontrado",
+          "hasData": true,
+          "responseTime": 10,
+          "authUsed": true,
+          "url": "http://localhost:3001/api/forum/topics",
+          "dataSize": 80,
+          "stackTrace": null
+        },
+        {
+          "method": "POST",
+          "status": 404,
+          "statusText": "Not Found",
+          "success": false,
+          "message": "Endpoint não encontrado",
+          "hasData": true,
+          "responseTime": 7,
+          "authUsed": true,
+          "url": "http://localhost:3001/api/forum/topics",
+          "dataSize": 80,
+          "stackTrace": null
+        },
+        {
+          "method": "OPTIONS",
+          "status": 204,
+          "statusText": "No Content",
+          "success": true,
+          "message": "No Content",
+          "hasData": true,
+          "responseTime": 2,
+          "authUsed": true,
+          "url": "http://localhost:3001/api/forum/topics",
+          "dataSize": 0,
+          "stackTrace": null
+        }
+      ]
+    },
+    {
+      "path": "forum/topics/:id",
+      "file": "c:\\Users\\estev\\IdeaProjects\\Portal\\src\\app\\api\\forum\\topics\\[id]\\route.ts",
+      "methods": [
+        "GET",
+        "PUT",
+        "DELETE",
+        "OPTIONS"
+      ],
+      "hasAuth": true,
+      "description": "",
+      "tests": [
+        {
+          "method": "GET",
+          "status": 404,
+          "statusText": "Not Found",
+          "success": false,
+          "message": "Endpoint não encontrado",
+          "hasData": true,
+          "responseTime": 6,
+          "authUsed": true,
+          "url": "http://localhost:3001/api/forum/topics/1",
+          "dataSize": 82,
+          "stackTrace": null
+        },
+        {
+          "method": "PUT",
+          "status": 404,
+          "statusText": "Not Found",
+          "success": false,
+          "message": "Endpoint não encontrado",
+          "hasData": true,
+          "responseTime": 5,
+          "authUsed": true,
+          "url": "http://localhost:3001/api/forum/topics/1",
+          "dataSize": 82,
+          "stackTrace": null
+        },
+        {
+          "method": "DELETE",
+          "status": 404,
+          "statusText": "Not Found",
+          "success": false,
+          "message": "Endpoint não encontrado",
+          "hasData": true,
+          "responseTime": 6,
+          "authUsed": true,
+          "url": "http://localhost:3001/api/forum/topics/1",
+          "dataSize": 82,
+          "stackTrace": null
+        },
+        {
+          "method": "OPTIONS",
+          "status": 204,
+          "statusText": "No Content",
+          "success": true,
+          "message": "No Content",
+          "hasData": true,
+          "responseTime": 2,
+          "authUsed": true,
+          "url": "http://localhost:3001/api/forum/topics/1",
+          "dataSize": 0,
+          "stackTrace": null
+        }
+      ]
+    },
+    {
+      "path": "gamification/badges",
+      "file": "c:\\Users\\estev\\IdeaProjects\\Portal\\src\\app\\api\\gamification\\badges\\route.ts",
+      "methods": [
+        "GET",
+        "POST",
+        "PUT",
+        "OPTIONS"
+      ],
+      "hasAuth": false,
+      "description": "",
+      "tests": [
+        {
+          "method": "GET",
+          "status": 404,
+          "statusText": "Not Found",
+          "success": false,
+          "message": "Endpoint não encontrado",
+          "hasData": true,
+          "responseTime": 2,
+          "authUsed": false,
+          "url": "http://localhost:3001/api/gamification/badges",
+          "dataSize": 87,
+          "stackTrace": null
+        },
+        {
+          "method": "POST",
+          "status": 404,
+          "statusText": "Not Found",
+          "success": false,
+          "message": "Endpoint não encontrado",
+          "hasData": true,
+          "responseTime": 2,
+          "authUsed": false,
+          "url": "http://localhost:3001/api/gamification/badges",
+          "dataSize": 87,
+          "stackTrace": null
+        },
+        {
+          "method": "PUT",
+          "status": 404,
+          "statusText": "Not Found",
+          "success": false,
+          "message": "Endpoint não encontrado",
+          "hasData": true,
+          "responseTime": 2,
+          "authUsed": false,
+          "url": "http://localhost:3001/api/gamification/badges",
+          "dataSize": 87,
+          "stackTrace": null
+        },
+        {
+          "method": "OPTIONS",
+          "status": 204,
+          "statusText": "No Content",
+          "success": true,
+          "message": "No Content",
+          "hasData": true,
+          "responseTime": 6,
+          "authUsed": false,
+          "url": "http://localhost:3001/api/gamification/badges",
+          "dataSize": 0,
+          "stackTrace": null
+        }
+      ]
+    },
+    {
+      "path": "gamification/leaderboard",
+      "file": "c:\\Users\\estev\\IdeaProjects\\Portal\\src\\app\\api\\gamification\\leaderboard\\route.ts",
+      "methods": [
+        "GET",
+        "POST",
+        "PUT",
+        "OPTIONS"
+      ],
+      "hasAuth": false,
+      "description": "",
+      "tests": [
+        {
+          "method": "GET",
+          "status": 404,
+          "statusText": "Not Found",
+          "success": false,
+          "message": "Endpoint não encontrado",
+          "hasData": true,
+          "responseTime": 2,
+          "authUsed": false,
+          "url": "http://localhost:3001/api/gamification/leaderboard",
+          "dataSize": 92,
+          "stackTrace": null
+        },
+        {
+          "method": "POST",
+          "status": 404,
+          "statusText": "Not Found",
+          "success": false,
+          "message": "Endpoint não encontrado",
+          "hasData": true,
+          "responseTime": 2,
+          "authUsed": false,
+          "url": "http://localhost:3001/api/gamification/leaderboard",
+          "dataSize": 92,
+          "stackTrace": null
+        },
+        {
+          "method": "PUT",
+          "status": 404,
+          "statusText": "Not Found",
+          "success": false,
+          "message": "Endpoint não encontrado",
+          "hasData": true,
+          "responseTime": 2,
+          "authUsed": false,
+          "url": "http://localhost:3001/api/gamification/leaderboard",
+          "dataSize": 92,
+          "stackTrace": null
+        },
+        {
+          "method": "OPTIONS",
+          "status": 204,
+          "statusText": "No Content",
+          "success": true,
+          "message": "No Content",
+          "hasData": true,
+          "responseTime": 1,
+          "authUsed": false,
+          "url": "http://localhost:3001/api/gamification/leaderboard",
+          "dataSize": 0,
+          "stackTrace": null
+        }
+      ]
+    },
+    {
+      "path": "gamification/rewards",
+      "file": "c:\\Users\\estev\\IdeaProjects\\Portal\\src\\app\\api\\gamification\\rewards\\route.ts",
+      "methods": [
+        "GET",
+        "POST",
+        "PUT",
+        "DELETE",
+        "OPTIONS"
+      ],
+      "hasAuth": true,
+      "description": "",
+      "tests": [
+        {
+          "method": "GET",
+          "status": 404,
+          "statusText": "Not Found",
+          "success": false,
+          "message": "Endpoint não encontrado",
+          "hasData": true,
+          "responseTime": 3,
+          "authUsed": true,
+          "url": "http://localhost:3001/api/gamification/rewards",
+          "dataSize": 88,
+          "stackTrace": null
+        },
+        {
+          "method": "POST",
+          "status": 404,
+          "statusText": "Not Found",
+          "success": false,
+          "message": "Endpoint não encontrado",
+          "hasData": true,
+          "responseTime": 3,
+          "authUsed": true,
+          "url": "http://localhost:3001/api/gamification/rewards",
+          "dataSize": 88,
+          "stackTrace": null
+        },
+        {
+          "method": "PUT",
+          "status": 404,
+          "statusText": "Not Found",
+          "success": false,
+          "message": "Endpoint não encontrado",
+          "hasData": true,
+          "responseTime": 2,
+          "authUsed": true,
+          "url": "http://localhost:3001/api/gamification/rewards",
+          "dataSize": 88,
+          "stackTrace": null
+        },
+        {
+          "method": "DELETE",
+          "status": 404,
+          "statusText": "Not Found",
+          "success": false,
+          "message": "Endpoint não encontrado",
+          "hasData": true,
+          "responseTime": 3,
+          "authUsed": true,
+          "url": "http://localhost:3001/api/gamification/rewards",
+          "dataSize": 88,
+          "stackTrace": null
+        },
+        {
+          "method": "OPTIONS",
+          "status": 204,
+          "statusText": "No Content",
+          "success": true,
+          "message": "No Content",
+          "hasData": true,
+          "responseTime": 2,
+          "authUsed": true,
+          "url": "http://localhost:3001/api/gamification/rewards",
+          "dataSize": 0,
+          "stackTrace": null
+        }
+      ]
+    },
+    {
+      "path": "gamification/xp",
+      "file": "c:\\Users\\estev\\IdeaProjects\\Portal\\src\\app\\api\\gamification\\xp\\route.ts",
+      "methods": [
+        "GET",
+        "POST",
+        "OPTIONS"
+      ],
+      "hasAuth": false,
+      "description": "",
+      "tests": [
+        {
+          "method": "GET",
+          "status": 404,
+          "statusText": "Not Found",
+          "success": false,
+          "message": "Endpoint não encontrado",
+          "hasData": true,
+          "responseTime": 1,
+          "authUsed": false,
+          "url": "http://localhost:3001/api/gamification/xp",
+          "dataSize": 83,
+          "stackTrace": null
+        },
+        {
+          "method": "POST",
+          "status": 404,
+          "statusText": "Not Found",
+          "success": false,
+          "message": "Endpoint não encontrado",
+          "hasData": true,
+          "responseTime": 2,
+          "authUsed": false,
+          "url": "http://localhost:3001/api/gamification/xp",
+          "dataSize": 83,
+          "stackTrace": null
+        },
+        {
+          "method": "OPTIONS",
+          "status": 204,
+          "statusText": "No Content",
+          "success": true,
+          "message": "No Content",
+          "hasData": true,
+          "responseTime": 1,
+          "authUsed": false,
+          "url": "http://localhost:3001/api/gamification/xp",
+          "dataSize": 0,
+          "stackTrace": null
+        }
+      ]
+    },
+    {
+      "path": "groups",
+      "file": "c:\\Users\\estev\\IdeaProjects\\Portal\\src\\app\\api\\groups\\route.ts",
+      "methods": [
+        "GET",
+        "POST",
+        "OPTIONS"
+      ],
+      "hasAuth": true,
+      "description": "",
+      "tests": [
+        {
+          "method": "GET",
+          "status": 200,
+          "statusText": "OK",
+          "success": true,
+          "message": "OK",
+          "hasData": true,
+          "responseTime": 13,
+          "authUsed": true,
+          "url": "http://localhost:3001/api/groups",
+          "dataSize": 36,
+          "stackTrace": null
+        },
+        {
+          "method": "POST",
+          "status": 400,
+          "statusText": "Bad Request",
+          "success": false,
+          "message": "insert into \"user_groups\" (\"is_active\", \"member_count\", \"test\", \"timestamp\") values ($1, $2, $3, $4) returning * - coluna \"test\" da relação \"user_groups\" não existe",
+          "hasData": true,
+          "responseTime": 9,
+          "authUsed": true,
+          "url": "http://localhost:3001/api/groups",
+          "dataSize": 206,
+          "stackTrace": null
+        },
+        {
+          "method": "OPTIONS",
+          "status": 204,
+          "statusText": "No Content",
+          "success": true,
+          "message": "No Content",
+          "hasData": true,
+          "responseTime": 2,
+          "authUsed": true,
+          "url": "http://localhost:3001/api/groups",
+          "dataSize": 0,
+          "stackTrace": null
+        }
+      ]
+    },
+    {
+      "path": "groups/stats",
+      "file": "c:\\Users\\estev\\IdeaProjects\\Portal\\src\\app\\api\\groups\\stats\\route.ts",
+      "methods": [
+        "GET",
+        "OPTIONS"
+      ],
+      "hasAuth": true,
+      "description": "",
+      "tests": [
+        {
+          "method": "GET",
+          "status": 200,
+          "statusText": "OK",
+          "success": true,
+          "message": "OK",
+          "hasData": true,
+          "responseTime": 10,
+          "authUsed": true,
+          "url": "http://localhost:3001/api/groups/stats",
+          "dataSize": 100,
+          "stackTrace": null
+        },
+        {
+          "method": "OPTIONS",
+          "status": 204,
+          "statusText": "No Content",
+          "success": true,
+          "message": "No Content",
+          "hasData": true,
+          "responseTime": 2,
+          "authUsed": true,
+          "url": "http://localhost:3001/api/groups/stats",
+          "dataSize": 0,
+          "stackTrace": null
+        }
+      ]
+    },
+    {
+      "path": "groups/:id/members",
+      "file": "c:\\Users\\estev\\IdeaProjects\\Portal\\src\\app\\api\\groups\\[id]\\members\\route.ts",
+      "methods": [
+        "GET",
+        "POST",
+        "OPTIONS"
+      ],
+      "hasAuth": true,
+      "description": "",
+      "tests": [
+        {
+          "method": "GET",
+          "status": 500,
+          "statusText": "Internal Server Error",
+          "success": false,
+          "message": "Erro interno do servidor",
+          "hasData": true,
+          "responseTime": 6,
+          "authUsed": true,
+          "url": "http://localhost:3001/api/groups/1/members",
+          "dataSize": 52,
+          "stackTrace": "{\"success\":false,\"error\":\"Erro interno do servidor\"}"
+        },
+        {
+          "method": "POST",
+          "status": 400,
+          "statusText": "Bad Request",
+          "success": false,
+          "message": "select * from \"user_groups\" where \"id\" = $1 limit $2 - sintaxe de entrada é inválida para tipo uuid: \"1\"",
+          "hasData": true,
+          "responseTime": 7,
+          "authUsed": true,
+          "url": "http://localhost:3001/api/groups/1/members",
+          "dataSize": 138,
+          "stackTrace": null
+        },
+        {
+          "method": "OPTIONS",
+          "status": 204,
+          "statusText": "No Content",
+          "success": true,
+          "message": "No Content",
+          "hasData": true,
+          "responseTime": 2,
+          "authUsed": true,
+          "url": "http://localhost:3001/api/groups/1/members",
+          "dataSize": 0,
+          "stackTrace": null
+        }
+      ]
+    },
+    {
+      "path": "groups/:id/permissions",
+      "file": "c:\\Users\\estev\\IdeaProjects\\Portal\\src\\app\\api\\groups\\[id]\\permissions\\route.ts",
+      "methods": [
+        "GET",
+        "PUT",
+        "DELETE",
+        "OPTIONS"
+      ],
+      "hasAuth": true,
+      "description": "",
+      "tests": [
+        {
+          "method": "GET",
+          "status": 500,
+          "statusText": "Internal Server Error",
+          "success": false,
+          "message": "Erro interno do servidor",
+          "hasData": true,
+          "responseTime": 6,
+          "authUsed": true,
+          "url": "http://localhost:3001/api/groups/1/permissions",
+          "dataSize": 52,
+          "stackTrace": "{\"success\":false,\"error\":\"Erro interno do servidor\"}"
+        },
+        {
+          "method": "PUT",
+          "status": 400,
+          "statusText": "Bad Request",
+          "success": false,
+          "message": "permission_key é obrigatório",
+          "hasData": true,
+          "responseTime": 6,
+          "authUsed": true,
+          "url": "http://localhost:3001/api/groups/1/permissions",
+          "dataSize": 56,
+          "stackTrace": null
+        },
+        {
+          "method": "DELETE",
+          "status": 400,
+          "statusText": "Bad Request",
+          "success": false,
+          "message": "permission_key é obrigatório",
+          "hasData": true,
+          "responseTime": 5,
+          "authUsed": true,
+          "url": "http://localhost:3001/api/groups/1/permissions",
+          "dataSize": 56,
+          "stackTrace": null
+        },
+        {
+          "method": "OPTIONS",
+          "status": 204,
+          "statusText": "No Content",
+          "success": true,
+          "message": "No Content",
+          "hasData": true,
+          "responseTime": 2,
+          "authUsed": true,
+          "url": "http://localhost:3001/api/groups/1/permissions",
+          "dataSize": 0,
+          "stackTrace": null
+        }
+      ]
+    },
+    {
+      "path": "groups/:id",
+      "file": "c:\\Users\\estev\\IdeaProjects\\Portal\\src\\app\\api\\groups\\[id]\\route.ts",
+      "methods": [
+        "GET",
+        "PUT",
+        "DELETE",
+        "OPTIONS"
+      ],
+      "hasAuth": true,
+      "description": "",
+      "tests": [
+        {
+          "method": "GET",
+          "status": 500,
+          "statusText": "Internal Server Error",
+          "success": false,
+          "message": "Erro interno do servidor",
+          "hasData": true,
+          "responseTime": 7,
+          "authUsed": true,
+          "url": "http://localhost:3001/api/groups/1",
+          "dataSize": 52,
+          "stackTrace": "{\"success\":false,\"error\":\"Erro interno do servidor\"}"
+        },
+        {
+          "method": "PUT",
+          "status": 400,
+          "statusText": "Bad Request",
+          "success": false,
+          "message": "update \"user_groups\" set \"test\" = $1, \"timestamp\" = $2 where \"id\" = $3 returning * - coluna \"test\" da relação \"user_groups\" não existe",
+          "hasData": true,
+          "responseTime": 7,
+          "authUsed": true,
+          "url": "http://localhost:3001/api/groups/1",
+          "dataSize": 174,
+          "stackTrace": null
+        },
+        {
+          "method": "DELETE",
+          "status": 400,
+          "statusText": "Bad Request",
+          "success": false,
+          "message": "select \"group_members\".*, \"users\".\"name\" as \"user_name\", \"users\".\"email\" as \"user_email\", \"users\".\"role_id\" as \"user_role\" from \"group_members\" left join \"users\" on \"group_members\".\"user_id\" = \"users\".\"id\" where \"group_members\".\"group_id\" = $1 order by \"group_members\".\"joined_at\" desc - coluna users.name não existe",
+          "hasData": true,
+          "responseTime": 8,
+          "authUsed": true,
+          "url": "http://localhost:3001/api/groups/1",
+          "dataSize": 384,
+          "stackTrace": null
+        },
+        {
+          "method": "OPTIONS",
+          "status": 204,
+          "statusText": "No Content",
+          "success": true,
+          "message": "No Content",
+          "hasData": true,
+          "responseTime": 2,
+          "authUsed": true,
+          "url": "http://localhost:3001/api/groups/1",
+          "dataSize": 0,
+          "stackTrace": null
+        }
+      ]
+    },
+    {
+      "path": "health",
+      "file": "c:\\Users\\estev\\IdeaProjects\\Portal\\src\\app\\api\\health\\route.ts",
+      "methods": [
+        "GET",
+        "OPTIONS"
+      ],
+      "hasAuth": false,
+      "description": "",
+      "tests": [
+        {
+          "method": "GET",
+          "status": 200,
+          "statusText": "OK",
+          "success": true,
+          "message": "OK",
+          "hasData": true,
+          "responseTime": 1,
+          "authUsed": false,
+          "url": "http://localhost:3001/api/health",
+          "dataSize": 54,
+          "stackTrace": null
+        },
+        {
+          "method": "OPTIONS",
+          "status": 204,
+          "statusText": "No Content",
+          "success": true,
+          "message": "No Content",
+          "hasData": true,
+          "responseTime": 2,
+          "authUsed": false,
+          "url": "http://localhost:3001/api/health",
+          "dataSize": 0,
+          "stackTrace": null
+        }
+      ]
+    },
+    {
+      "path": "health-check",
+      "file": "c:\\Users\\estev\\IdeaProjects\\Portal\\src\\app\\api\\health-check\\route.ts",
+      "methods": [
+        "GET",
+        "POST",
+        "OPTIONS"
+      ],
+      "hasAuth": false,
+      "description": "Health check endpoint para monitoramento do sistema\r   GET /api/health-check",
+      "tests": [
+        {
+          "method": "GET",
+          "status": 404,
+          "statusText": "Not Found",
+          "success": false,
+          "message": "Endpoint não encontrado",
+          "hasData": true,
+          "responseTime": 2,
+          "authUsed": false,
+          "url": "http://localhost:3001/api/health-check",
+          "dataSize": 80,
+          "stackTrace": null
+        },
+        {
+          "method": "POST",
+          "status": 404,
+          "statusText": "Not Found",
+          "success": false,
+          "message": "Endpoint não encontrado",
+          "hasData": true,
+          "responseTime": 2,
+          "authUsed": false,
+          "url": "http://localhost:3001/api/health-check",
+          "dataSize": 80,
+          "stackTrace": null
+        },
+        {
+          "method": "OPTIONS",
+          "status": 204,
+          "statusText": "No Content",
+          "success": true,
+          "message": "No Content",
+          "hasData": true,
+          "responseTime": 1,
+          "authUsed": false,
+          "url": "http://localhost:3001/api/health-check",
+          "dataSize": 0,
+          "stackTrace": null
+        }
+      ]
+    },
+    {
+      "path": "institutions",
+      "file": "c:\\Users\\estev\\IdeaProjects\\Portal\\src\\app\\api\\institutions\\route.ts",
+      "methods": [
+        "GET",
+        "POST",
+        "OPTIONS"
+      ],
+      "hasAuth": true,
+      "description": "",
+      "tests": [
+        {
+          "method": "GET",
+          "status": 200,
+          "statusText": "OK",
+          "success": true,
+          "message": "Institutions retrieved successfully",
+          "hasData": true,
+          "responseTime": 9,
+          "authUsed": true,
+          "url": "http://localhost:3001/api/institutions",
+          "dataSize": 535,
+          "stackTrace": null
+        },
+        {
+          "method": "POST",
+          "status": 400,
+          "statusText": "Bad Request",
+          "success": false,
+          "message": "Validation failed",
+          "hasData": true,
+          "responseTime": 12,
+          "authUsed": true,
+          "url": "http://localhost:3001/api/institutions",
+          "dataSize": 236,
+          "stackTrace": null
+        },
+        {
+          "method": "OPTIONS",
+          "status": 204,
+          "statusText": "No Content",
+          "success": true,
+          "message": "No Content",
+          "hasData": true,
+          "responseTime": 2,
+          "authUsed": true,
+          "url": "http://localhost:3001/api/institutions",
+          "dataSize": 0,
+          "stackTrace": null
+        }
+      ]
+    },
+    {
+      "path": "institutions/:id",
+      "file": "c:\\Users\\estev\\IdeaProjects\\Portal\\src\\app\\api\\institutions\\[id]\\route.ts",
+      "methods": [
+        "GET",
+        "PUT",
+        "DELETE",
+        "OPTIONS"
+      ],
+      "hasAuth": true,
+      "description": "",
+      "tests": [
+        {
+          "method": "GET",
+          "status": 400,
+          "statusText": "Bad Request",
+          "success": false,
+          "message": "Invalid institution ID format",
+          "hasData": true,
+          "responseTime": 5,
+          "authUsed": true,
+          "url": "http://localhost:3001/api/institutions/1",
+          "dataSize": 59,
+          "stackTrace": null
+        },
+        {
+          "method": "PUT",
+          "status": 400,
+          "statusText": "Bad Request",
+          "success": false,
+          "message": "Invalid institution ID format",
+          "hasData": true,
+          "responseTime": 6,
+          "authUsed": true,
+          "url": "http://localhost:3001/api/institutions/1",
+          "dataSize": 59,
+          "stackTrace": null
+        },
+        {
+          "method": "DELETE",
+          "status": 400,
+          "statusText": "Bad Request",
+          "success": false,
+          "message": "Invalid institution ID format",
+          "hasData": true,
+          "responseTime": 6,
+          "authUsed": true,
+          "url": "http://localhost:3001/api/institutions/1",
+          "dataSize": 59,
+          "stackTrace": null
+        },
+        {
+          "method": "OPTIONS",
+          "status": 204,
+          "statusText": "No Content",
+          "success": true,
+          "message": "No Content",
+          "hasData": true,
+          "responseTime": 1,
+          "authUsed": true,
+          "url": "http://localhost:3001/api/institutions/1",
+          "dataSize": 0,
+          "stackTrace": null
+        }
+      ]
+    },
+    {
+      "path": "lessons",
+      "file": "c:\\Users\\estev\\IdeaProjects\\Portal\\src\\app\\api\\lessons\\route.ts",
+      "methods": [
+        "GET",
+        "POST",
+        "OPTIONS"
+      ],
+      "hasAuth": true,
+      "description": "",
+      "tests": [
+        {
+          "method": "GET",
+          "status": 200,
+          "statusText": "OK",
+          "success": true,
+          "message": "Lessons list - implementação pendente",
+          "hasData": true,
+          "responseTime": 5,
+          "authUsed": true,
+          "url": "http://localhost:3001/api/lessons",
+          "dataSize": 76,
+          "stackTrace": null
+        },
+        {
+          "method": "POST",
+          "status": 201,
+          "statusText": "Created",
+          "success": true,
+          "message": "Create lesson - implementação pendente",
+          "hasData": true,
+          "responseTime": 7,
+          "authUsed": true,
+          "url": "http://localhost:3001/api/lessons",
+          "dataSize": 79,
+          "stackTrace": null
+        },
+        {
+          "method": "OPTIONS",
+          "status": 204,
+          "statusText": "No Content",
+          "success": true,
+          "message": "No Content",
+          "hasData": true,
+          "responseTime": 2,
+          "authUsed": true,
+          "url": "http://localhost:3001/api/lessons",
+          "dataSize": 0,
+          "stackTrace": null
+        }
+      ]
+    },
+    {
+      "path": "lessons/:id",
+      "file": "c:\\Users\\estev\\IdeaProjects\\Portal\\src\\app\\api\\lessons\\[id]\\route.ts",
+      "methods": [
+        "GET",
+        "PUT",
+        "DELETE",
+        "OPTIONS"
+      ],
+      "hasAuth": true,
+      "description": "",
+      "tests": [
+        {
+          "method": "GET",
+          "status": 200,
+          "statusText": "OK",
+          "success": true,
+          "message": "Lesson by ID - implementação pendente",
+          "hasData": true,
+          "responseTime": 5,
+          "authUsed": true,
+          "url": "http://localhost:3001/api/lessons/1",
+          "dataSize": 78,
+          "stackTrace": null
+        },
+        {
+          "method": "PUT",
+          "status": 200,
+          "statusText": "OK",
+          "success": true,
+          "message": "Update lesson - implementação pendente",
+          "hasData": true,
+          "responseTime": 5,
+          "authUsed": true,
+          "url": "http://localhost:3001/api/lessons/1",
+          "dataSize": 79,
+          "stackTrace": null
+        },
+        {
+          "method": "DELETE",
+          "status": 200,
+          "statusText": "OK",
+          "success": true,
+          "message": "Delete lesson - implementação pendente",
+          "hasData": true,
+          "responseTime": 6,
+          "authUsed": true,
+          "url": "http://localhost:3001/api/lessons/1",
+          "dataSize": 67,
+          "stackTrace": null
+        },
+        {
+          "method": "OPTIONS",
+          "status": 204,
+          "statusText": "No Content",
+          "success": true,
+          "message": "No Content",
+          "hasData": true,
+          "responseTime": 2,
+          "authUsed": true,
+          "url": "http://localhost:3001/api/lessons/1",
+          "dataSize": 0,
+          "stackTrace": null
+        }
+      ]
+    },
+    {
+      "path": "migration/execute",
+      "file": "c:\\Users\\estev\\IdeaProjects\\Portal\\src\\app\\api\\migration\\execute\\route.ts",
+      "methods": [
+        "POST",
+        "OPTIONS"
+      ],
+      "hasAuth": true,
+      "description": "",
+      "tests": [
+        {
+          "method": "POST",
+          "status": 404,
+          "statusText": "Not Found",
+          "success": false,
+          "message": "Endpoint não encontrado",
+          "hasData": true,
+          "responseTime": 2,
+          "authUsed": true,
+          "url": "http://localhost:3001/api/migration/execute",
+          "dataSize": 85,
+          "stackTrace": null
+        },
+        {
+          "method": "OPTIONS",
+          "status": 204,
+          "statusText": "No Content",
+          "success": true,
+          "message": "No Content",
+          "hasData": true,
+          "responseTime": 1,
+          "authUsed": true,
+          "url": "http://localhost:3001/api/migration/execute",
+          "dataSize": 0,
+          "stackTrace": null
+        }
+      ]
+    },
+    {
+      "path": "migration/generate-seed",
+      "file": "c:\\Users\\estev\\IdeaProjects\\Portal\\src\\app\\api\\migration\\generate-seed\\route.ts",
+      "methods": [
+        "POST",
+        "OPTIONS"
+      ],
+      "hasAuth": true,
+      "description": "",
+      "tests": [
+        {
+          "method": "POST",
+          "status": 404,
+          "statusText": "Not Found",
+          "success": false,
+          "message": "Endpoint não encontrado",
+          "hasData": true,
+          "responseTime": 3,
+          "authUsed": true,
+          "url": "http://localhost:3001/api/migration/generate-seed",
+          "dataSize": 91,
+          "stackTrace": null
+        },
+        {
+          "method": "OPTIONS",
+          "status": 204,
+          "statusText": "No Content",
+          "success": true,
+          "message": "No Content",
+          "hasData": true,
+          "responseTime": 2,
+          "authUsed": true,
+          "url": "http://localhost:3001/api/migration/generate-seed",
+          "dataSize": 0,
+          "stackTrace": null
+        }
+      ]
+    },
+    {
+      "path": "migration/get-env-config",
+      "file": "c:\\Users\\estev\\IdeaProjects\\Portal\\src\\app\\api\\migration\\get-env-config\\route.ts",
+      "methods": [
+        "GET",
+        "OPTIONS"
+      ],
+      "hasAuth": false,
+      "description": "",
+      "tests": [
+        {
+          "method": "GET",
+          "status": 404,
+          "statusText": "Not Found",
+          "success": false,
+          "message": "Endpoint não encontrado",
+          "hasData": true,
+          "responseTime": 2,
+          "authUsed": false,
+          "url": "http://localhost:3001/api/migration/get-env-config",
+          "dataSize": 92,
+          "stackTrace": null
+        },
+        {
+          "method": "OPTIONS",
+          "status": 204,
+          "statusText": "No Content",
+          "success": true,
+          "message": "No Content",
+          "hasData": true,
+          "responseTime": 1,
+          "authUsed": false,
+          "url": "http://localhost:3001/api/migration/get-env-config",
+          "dataSize": 0,
+          "stackTrace": null
+        }
+      ]
+    },
+    {
+      "path": "migration/get-postgres-roles",
+      "file": "c:\\Users\\estev\\IdeaProjects\\Portal\\src\\app\\api\\migration\\get-postgres-roles\\route.ts",
+      "methods": [
+        "GET",
+        "OPTIONS"
+      ],
+      "hasAuth": false,
+      "description": "",
+      "tests": [
+        {
+          "method": "GET",
+          "status": 404,
+          "statusText": "Not Found",
+          "success": false,
+          "message": "Endpoint não encontrado",
+          "hasData": true,
+          "responseTime": 1,
+          "authUsed": false,
+          "url": "http://localhost:3001/api/migration/get-postgres-roles",
+          "dataSize": 96,
+          "stackTrace": null
+        },
+        {
+          "method": "OPTIONS",
+          "status": 204,
+          "statusText": "No Content",
+          "success": true,
+          "message": "No Content",
+          "hasData": true,
+          "responseTime": 1,
+          "authUsed": false,
+          "url": "http://localhost:3001/api/migration/get-postgres-roles",
+          "dataSize": 0,
+          "stackTrace": null
+        }
+      ]
+    },
+    {
+      "path": "migration/mysql-columns",
+      "file": "c:\\Users\\estev\\IdeaProjects\\Portal\\src\\app\\api\\migration\\mysql-columns\\route.ts",
+      "methods": [
+        "POST",
+        "OPTIONS"
+      ],
+      "hasAuth": false,
+      "description": "",
+      "tests": [
+        {
+          "method": "POST",
+          "status": 404,
+          "statusText": "Not Found",
+          "success": false,
+          "message": "Endpoint não encontrado",
+          "hasData": true,
+          "responseTime": 2,
+          "authUsed": false,
+          "url": "http://localhost:3001/api/migration/mysql-columns",
+          "dataSize": 91,
+          "stackTrace": null
+        },
+        {
+          "method": "OPTIONS",
+          "status": 204,
+          "statusText": "No Content",
+          "success": true,
+          "message": "No Content",
+          "hasData": true,
+          "responseTime": 1,
+          "authUsed": false,
+          "url": "http://localhost:3001/api/migration/mysql-columns",
+          "dataSize": 0,
+          "stackTrace": null
+        }
+      ]
+    },
+    {
+      "path": "migration/mysql-tables",
+      "file": "c:\\Users\\estev\\IdeaProjects\\Portal\\src\\app\\api\\migration\\mysql-tables\\route.ts",
+      "methods": [
+        "POST",
+        "OPTIONS"
+      ],
+      "hasAuth": false,
+      "description": "",
+      "tests": [
+        {
+          "method": "POST",
+          "status": 404,
+          "statusText": "Not Found",
+          "success": false,
+          "message": "Endpoint não encontrado",
+          "hasData": true,
+          "responseTime": 2,
+          "authUsed": false,
+          "url": "http://localhost:3001/api/migration/mysql-tables",
+          "dataSize": 90,
+          "stackTrace": null
+        },
+        {
+          "method": "OPTIONS",
+          "status": 204,
+          "statusText": "No Content",
+          "success": true,
+          "message": "No Content",
+          "hasData": true,
+          "responseTime": 1,
+          "authUsed": false,
+          "url": "http://localhost:3001/api/migration/mysql-tables",
+          "dataSize": 0,
+          "stackTrace": null
+        }
+      ]
+    },
+    {
+      "path": "migration/test-mysql-connection",
+      "file": "c:\\Users\\estev\\IdeaProjects\\Portal\\src\\app\\api\\migration\\test-mysql-connection\\route.ts",
+      "methods": [
+        "POST",
+        "OPTIONS"
+      ],
+      "hasAuth": false,
+      "description": "",
+      "tests": [
+        {
+          "method": "POST",
+          "status": 404,
+          "statusText": "Not Found",
+          "success": false,
+          "message": "Endpoint não encontrado",
+          "hasData": true,
+          "responseTime": 2,
+          "authUsed": false,
+          "url": "http://localhost:3001/api/migration/test-mysql-connection",
+          "dataSize": 99,
+          "stackTrace": null
+        },
+        {
+          "method": "OPTIONS",
+          "status": 204,
+          "statusText": "No Content",
+          "success": true,
+          "message": "No Content",
+          "hasData": true,
+          "responseTime": 1,
+          "authUsed": false,
+          "url": "http://localhost:3001/api/migration/test-mysql-connection",
+          "dataSize": 0,
+          "stackTrace": null
+        }
+      ]
+    },
+    {
+      "path": "notifications",
+      "file": "c:\\Users\\estev\\IdeaProjects\\Portal\\src\\app\\api\\notifications\\route.ts",
+      "methods": [
+        "GET",
+        "POST",
+        "OPTIONS"
+      ],
+      "hasAuth": true,
+      "description": "",
+      "tests": [
+        {
+          "method": "GET",
+          "status": 500,
+          "statusText": "Internal Server Error",
+          "success": false,
+          "message": "Erro interno do servidor",
+          "hasData": true,
+          "responseTime": 9,
+          "authUsed": true,
+          "url": "http://localhost:3001/api/notifications",
+          "dataSize": 54,
+          "stackTrace": "{\"success\":false,\"message\":\"Erro interno do servidor\"}"
+        },
+        {
+          "method": "POST",
+          "status": 400,
+          "statusText": "Bad Request",
+          "success": false,
+          "message": "Dados inválidos",
+          "hasData": true,
+          "responseTime": 6,
+          "authUsed": true,
+          "url": "http://localhost:3001/api/notifications",
+          "dataSize": 556,
+          "stackTrace": null
+        },
+        {
+          "method": "OPTIONS",
+          "status": 204,
+          "statusText": "No Content",
+          "success": true,
+          "message": "No Content",
+          "hasData": true,
+          "responseTime": 1,
+          "authUsed": true,
+          "url": "http://localhost:3001/api/notifications",
+          "dataSize": 0,
+          "stackTrace": null
+        }
+      ]
+    },
+    {
+      "path": "notifications/send",
+      "file": "c:\\Users\\estev\\IdeaProjects\\Portal\\src\\app\\api\\notifications\\send\\route.ts",
+      "methods": [
+        "POST",
+        "OPTIONS"
+      ],
+      "hasAuth": true,
+      "description": "",
+      "tests": [
+        {
+          "method": "POST",
+          "status": 400,
+          "statusText": "Bad Request",
+          "success": false,
+          "message": "Dados inválidos",
+          "hasData": true,
+          "responseTime": 6,
+          "authUsed": true,
+          "url": "http://localhost:3001/api/notifications/send",
+          "dataSize": 704,
+          "stackTrace": null
+        },
+        {
+          "method": "OPTIONS",
+          "status": 204,
+          "statusText": "No Content",
+          "success": true,
+          "message": "No Content",
+          "hasData": true,
+          "responseTime": 2,
+          "authUsed": true,
+          "url": "http://localhost:3001/api/notifications/send",
+          "dataSize": 0,
+          "stackTrace": null
+        }
+      ]
+    },
+    {
+      "path": "notifications/templates",
+      "file": "c:\\Users\\estev\\IdeaProjects\\Portal\\src\\app\\api\\notifications\\templates\\route.ts",
+      "methods": [
+        "GET",
+        "POST",
+        "OPTIONS"
+      ],
+      "hasAuth": true,
+      "description": "",
+      "tests": [
+        {
+          "method": "GET",
+          "status": 200,
+          "statusText": "OK",
+          "success": true,
+          "message": "OK",
+          "hasData": true,
+          "responseTime": 5,
+          "authUsed": true,
+          "url": "http://localhost:3001/api/notifications/templates",
+          "dataSize": 244,
+          "stackTrace": null
+        },
+        {
+          "method": "POST",
+          "status": 404,
+          "statusText": "Not Found",
+          "success": false,
+          "message": "Endpoint não encontrado",
+          "hasData": true,
+          "responseTime": 6,
+          "authUsed": true,
+          "url": "http://localhost:3001/api/notifications/templates",
+          "dataSize": 91,
+          "stackTrace": null
+        },
+        {
+          "method": "OPTIONS",
+          "status": 204,
+          "statusText": "No Content",
+          "success": true,
+          "message": "No Content",
+          "hasData": true,
+          "responseTime": 2,
+          "authUsed": true,
+          "url": "http://localhost:3001/api/notifications/templates",
+          "dataSize": 0,
+          "stackTrace": null
+        }
+      ]
+    },
+    {
+      "path": "notifications/templates/:id",
+      "file": "c:\\Users\\estev\\IdeaProjects\\Portal\\src\\app\\api\\notifications\\templates\\[id]\\route.ts",
+      "methods": [
+        "GET",
+        "PUT",
+        "DELETE",
+        "OPTIONS"
+      ],
+      "hasAuth": true,
+      "description": "",
+      "tests": [
+        {
+          "method": "GET",
+          "status": 404,
+          "statusText": "Not Found",
+          "success": false,
+          "message": "Endpoint não encontrado",
+          "hasData": true,
+          "responseTime": 5,
+          "authUsed": true,
+          "url": "http://localhost:3001/api/notifications/templates/1",
+          "dataSize": 93,
+          "stackTrace": null
+        },
+        {
+          "method": "PUT",
+          "status": 404,
+          "statusText": "Not Found",
+          "success": false,
+          "message": "Endpoint não encontrado",
+          "hasData": true,
+          "responseTime": 6,
+          "authUsed": true,
+          "url": "http://localhost:3001/api/notifications/templates/1",
+          "dataSize": 93,
+          "stackTrace": null
+        },
+        {
+          "method": "DELETE",
+          "status": 404,
+          "statusText": "Not Found",
+          "success": false,
+          "message": "Endpoint não encontrado",
+          "hasData": true,
+          "responseTime": 6,
+          "authUsed": true,
+          "url": "http://localhost:3001/api/notifications/templates/1",
+          "dataSize": 93,
+          "stackTrace": null
+        },
+        {
+          "method": "OPTIONS",
+          "status": 204,
+          "statusText": "No Content",
+          "success": true,
+          "message": "No Content",
+          "hasData": true,
+          "responseTime": 2,
+          "authUsed": true,
+          "url": "http://localhost:3001/api/notifications/templates/1",
+          "dataSize": 0,
+          "stackTrace": null
+        }
+      ]
+    },
+    {
+      "path": "notifications/:id",
+      "file": "c:\\Users\\estev\\IdeaProjects\\Portal\\src\\app\\api\\notifications\\[id]\\route.ts",
+      "methods": [
+        "GET",
+        "PUT",
+        "DELETE",
+        "OPTIONS"
+      ],
+      "hasAuth": true,
+      "description": "",
+      "tests": [
+        {
+          "method": "GET",
+          "status": 200,
+          "statusText": "OK",
+          "success": true,
+          "message": "OK",
+          "hasData": true,
+          "responseTime": 5,
+          "authUsed": true,
+          "url": "http://localhost:3001/api/notifications/1",
+          "dataSize": 241,
+          "stackTrace": null
+        },
+        {
+          "method": "PUT",
+          "status": 404,
+          "statusText": "Not Found",
+          "success": false,
+          "message": "Endpoint não encontrado",
+          "hasData": true,
+          "responseTime": 6,
+          "authUsed": true,
+          "url": "http://localhost:3001/api/notifications/1",
+          "dataSize": 83,
+          "stackTrace": null
+        },
+        {
+          "method": "DELETE",
+          "status": 200,
+          "statusText": "OK",
+          "success": true,
+          "message": "Notificação deletada com sucesso",
+          "hasData": true,
+          "responseTime": 5,
+          "authUsed": true,
+          "url": "http://localhost:3001/api/notifications/1",
+          "dataSize": 61,
+          "stackTrace": null
+        },
+        {
+          "method": "OPTIONS",
+          "status": 204,
+          "statusText": "No Content",
+          "success": true,
+          "message": "No Content",
+          "hasData": true,
+          "responseTime": 2,
+          "authUsed": true,
+          "url": "http://localhost:3001/api/notifications/1",
+          "dataSize": 0,
+          "stackTrace": null
+        }
+      ]
+    },
+    {
+      "path": "proxy-pdf",
+      "file": "c:\\Users\\estev\\IdeaProjects\\Portal\\src\\app\\api\\proxy-pdf\\route.ts",
+      "methods": [
+        "GET",
+        "POST",
+        "OPTIONS"
+      ],
+      "hasAuth": true,
+      "description": "Proxy para servir PDFs com autenticação\r   GET /api/proxy-pdf?url=<pdf_url>",
+      "tests": [
+        {
+          "method": "GET",
+          "status": 404,
+          "statusText": "Not Found",
+          "success": false,
+          "message": "Endpoint não encontrado",
+          "hasData": true,
+          "responseTime": 3,
+          "authUsed": true,
+          "url": "http://localhost:3001/api/proxy-pdf",
+          "dataSize": 77,
+          "stackTrace": null
+        },
+        {
+          "method": "POST",
+          "status": 404,
+          "statusText": "Not Found",
+          "success": false,
+          "message": "Endpoint não encontrado",
+          "hasData": true,
+          "responseTime": 3,
+          "authUsed": true,
+          "url": "http://localhost:3001/api/proxy-pdf",
+          "dataSize": 77,
+          "stackTrace": null
+        },
+        {
+          "method": "OPTIONS",
+          "status": 204,
+          "statusText": "No Content",
+          "success": true,
+          "message": "No Content",
+          "hasData": true,
+          "responseTime": 2,
+          "authUsed": true,
+          "url": "http://localhost:3001/api/proxy-pdf",
+          "dataSize": 0,
+          "stackTrace": null
+        }
+      ]
+    },
+    {
+      "path": "queue/pause",
+      "file": "c:\\Users\\estev\\IdeaProjects\\Portal\\src\\app\\api\\queue\\pause\\route.ts",
+      "methods": [
+        "POST",
+        "OPTIONS"
+      ],
+      "hasAuth": true,
+      "description": "",
+      "tests": [
+        {
+          "method": "POST",
+          "status": 200,
+          "statusText": "OK",
+          "success": true,
+          "message": "Queue pause - implementação pendente",
+          "hasData": true,
+          "responseTime": 5,
+          "authUsed": true,
+          "url": "http://localhost:3001/api/queue/pause",
+          "dataSize": 65,
+          "stackTrace": null
+        },
+        {
+          "method": "OPTIONS",
+          "status": 204,
+          "statusText": "No Content",
+          "success": true,
+          "message": "No Content",
+          "hasData": true,
+          "responseTime": 1,
+          "authUsed": true,
+          "url": "http://localhost:3001/api/queue/pause",
+          "dataSize": 0,
+          "stackTrace": null
+        }
+      ]
+    },
+    {
+      "path": "queue/resume",
+      "file": "c:\\Users\\estev\\IdeaProjects\\Portal\\src\\app\\api\\queue\\resume\\route.ts",
+      "methods": [
+        "POST",
+        "OPTIONS"
+      ],
+      "hasAuth": true,
+      "description": "",
+      "tests": [
+        {
+          "method": "POST",
+          "status": 200,
+          "statusText": "OK",
+          "success": true,
+          "message": "Queue resume - implementação pendente",
+          "hasData": true,
+          "responseTime": 6,
+          "authUsed": true,
+          "url": "http://localhost:3001/api/queue/resume",
+          "dataSize": 66,
+          "stackTrace": null
+        },
+        {
+          "method": "OPTIONS",
+          "status": 204,
+          "statusText": "No Content",
+          "success": true,
+          "message": "No Content",
+          "hasData": true,
+          "responseTime": 2,
+          "authUsed": true,
+          "url": "http://localhost:3001/api/queue/resume",
+          "dataSize": 0,
+          "stackTrace": null
+        }
+      ]
+    },
+    {
+      "path": "queue",
+      "file": "c:\\Users\\estev\\IdeaProjects\\Portal\\src\\app\\api\\queue\\route.ts",
+      "methods": [
+        "GET",
+        "POST",
+        "OPTIONS"
+      ],
+      "hasAuth": true,
+      "description": "",
+      "tests": [
+        {
+          "method": "GET",
+          "status": 404,
+          "statusText": "Not Found",
+          "success": false,
+          "message": "Endpoint não encontrado",
+          "hasData": true,
+          "responseTime": 5,
+          "authUsed": true,
+          "url": "http://localhost:3001/api/queue",
+          "dataSize": 73,
+          "stackTrace": null
+        },
+        {
+          "method": "POST",
+          "status": 404,
+          "statusText": "Not Found",
+          "success": false,
+          "message": "Endpoint não encontrado",
+          "hasData": true,
+          "responseTime": 6,
+          "authUsed": true,
+          "url": "http://localhost:3001/api/queue",
+          "dataSize": 73,
+          "stackTrace": null
+        },
+        {
+          "method": "OPTIONS",
+          "status": 204,
+          "statusText": "No Content",
+          "success": true,
+          "message": "No Content",
+          "hasData": true,
+          "responseTime": 2,
+          "authUsed": true,
+          "url": "http://localhost:3001/api/queue",
+          "dataSize": 0,
+          "stackTrace": null
+        }
+      ]
+    },
+    {
+      "path": "queue-simple",
+      "file": "c:\\Users\\estev\\IdeaProjects\\Portal\\src\\app\\api\\queue-simple\\route.ts",
+      "methods": [],
+      "hasAuth": true,
+      "description": "Rotas simplificadas para queue usando o utilitário de proxy",
+      "tests": []
+    },
+    {
+      "path": "quizzes",
+      "file": "c:\\Users\\estev\\IdeaProjects\\Portal\\src\\app\\api\\quizzes\\route.ts",
+      "methods": [
+        "GET",
+        "POST",
+        "OPTIONS"
+      ],
+      "hasAuth": true,
+      "description": "",
+      "tests": [
+        {
+          "method": "GET",
+          "status": 200,
+          "statusText": "OK",
+          "success": true,
+          "message": "Quizzes list - implementação pendente",
+          "hasData": true,
+          "responseTime": 6,
+          "authUsed": true,
+          "url": "http://localhost:3001/api/quizzes",
+          "dataSize": 76,
+          "stackTrace": null
+        },
+        {
+          "method": "POST",
+          "status": 201,
+          "statusText": "Created",
+          "success": true,
+          "message": "Create quiz - implementação pendente",
+          "hasData": true,
+          "responseTime": 6,
+          "authUsed": true,
+          "url": "http://localhost:3001/api/quizzes",
+          "dataSize": 77,
+          "stackTrace": null
+        },
+        {
+          "method": "OPTIONS",
+          "status": 204,
+          "statusText": "No Content",
+          "success": true,
+          "message": "No Content",
+          "hasData": true,
+          "responseTime": 2,
+          "authUsed": true,
+          "url": "http://localhost:3001/api/quizzes",
+          "dataSize": 0,
+          "stackTrace": null
+        }
+      ]
+    },
+    {
+      "path": "quizzes/:id",
+      "file": "c:\\Users\\estev\\IdeaProjects\\Portal\\src\\app\\api\\quizzes\\[id]\\route.ts",
+      "methods": [
+        "GET",
+        "PUT",
+        "DELETE",
+        "OPTIONS"
+      ],
+      "hasAuth": true,
+      "description": "",
+      "tests": [
+        {
+          "method": "GET",
+          "status": 200,
+          "statusText": "OK",
+          "success": true,
+          "message": "Quiz by ID - implementação pendente",
+          "hasData": true,
+          "responseTime": 4,
+          "authUsed": true,
+          "url": "http://localhost:3001/api/quizzes/1",
+          "dataSize": 76,
+          "stackTrace": null
+        },
+        {
+          "method": "PUT",
+          "status": 200,
+          "statusText": "OK",
+          "success": true,
+          "message": "Update quiz - implementação pendente",
+          "hasData": true,
+          "responseTime": 7,
+          "authUsed": true,
+          "url": "http://localhost:3001/api/quizzes/1",
+          "dataSize": 77,
+          "stackTrace": null
+        },
+        {
+          "method": "DELETE",
+          "status": 200,
+          "statusText": "OK",
+          "success": true,
+          "message": "Delete quiz - implementação pendente",
+          "hasData": true,
+          "responseTime": 5,
+          "authUsed": true,
+          "url": "http://localhost:3001/api/quizzes/1",
+          "dataSize": 65,
+          "stackTrace": null
+        },
+        {
+          "method": "OPTIONS",
+          "status": 204,
+          "statusText": "No Content",
+          "success": true,
+          "message": "No Content",
+          "hasData": true,
+          "responseTime": 2,
+          "authUsed": true,
+          "url": "http://localhost:3001/api/quizzes/1",
+          "dataSize": 0,
+          "stackTrace": null
+        }
+      ]
+    },
+    {
+      "path": "reports",
+      "file": "c:\\Users\\estev\\IdeaProjects\\Portal\\src\\app\\api\\reports\\route.ts",
+      "methods": [
+        "GET",
+        "POST",
+        "OPTIONS"
+      ],
+      "hasAuth": true,
+      "description": "Listar relatórios disponíveis\r   GET /api/reports",
+      "tests": [
+        {
+          "method": "GET",
+          "status": 404,
+          "statusText": "Not Found",
+          "success": false,
+          "message": "Endpoint não encontrado",
+          "hasData": true,
+          "responseTime": 2,
+          "authUsed": true,
+          "url": "http://localhost:3001/api/reports",
+          "dataSize": 75,
+          "stackTrace": null
+        },
+        {
+          "method": "POST",
+          "status": 404,
+          "statusText": "Not Found",
+          "success": false,
+          "message": "Endpoint não encontrado",
+          "hasData": true,
+          "responseTime": 3,
+          "authUsed": true,
+          "url": "http://localhost:3001/api/reports",
+          "dataSize": 75,
+          "stackTrace": null
+        },
+        {
+          "method": "OPTIONS",
+          "status": 204,
+          "statusText": "No Content",
+          "success": true,
+          "message": "No Content",
+          "hasData": true,
+          "responseTime": 2,
+          "authUsed": true,
+          "url": "http://localhost:3001/api/reports",
+          "dataSize": 0,
+          "stackTrace": null
+        }
+      ]
+    },
+    {
+      "path": "reports/usage",
+      "file": "c:\\Users\\estev\\IdeaProjects\\Portal\\src\\app\\api\\reports\\usage\\route.ts",
+      "methods": [
+        "GET",
+        "POST",
+        "OPTIONS"
+      ],
+      "hasAuth": true,
+      "description": "Obter relatórios de uso\r   GET /api/reports/usage",
+      "tests": [
+        {
+          "method": "GET",
+          "status": 404,
+          "statusText": "Not Found",
+          "success": false,
+          "message": "Endpoint não encontrado",
+          "hasData": true,
+          "responseTime": 3,
+          "authUsed": true,
+          "url": "http://localhost:3001/api/reports/usage",
+          "dataSize": 81,
+          "stackTrace": null
+        },
+        {
+          "method": "POST",
+          "status": 404,
+          "statusText": "Not Found",
+          "success": false,
+          "message": "Endpoint não encontrado",
+          "hasData": true,
+          "responseTime": 2,
+          "authUsed": true,
+          "url": "http://localhost:3001/api/reports/usage",
+          "dataSize": 81,
+          "stackTrace": null
+        },
+        {
+          "method": "OPTIONS",
+          "status": 204,
+          "statusText": "No Content",
+          "success": true,
+          "message": "No Content",
+          "hasData": true,
+          "responseTime": 2,
+          "authUsed": true,
+          "url": "http://localhost:3001/api/reports/usage",
+          "dataSize": 0,
+          "stackTrace": null
+        }
+      ]
+    },
+    {
+      "path": "reports/:id",
+      "file": "c:\\Users\\estev\\IdeaProjects\\Portal\\src\\app\\api\\reports\\[id]\\route.ts",
+      "methods": [
+        "GET",
+        "PUT",
+        "DELETE",
+        "OPTIONS"
+      ],
+      "hasAuth": true,
+      "description": "Obter relatório por ID\r   GET /api/reports/[id]",
+      "tests": [
+        {
+          "method": "GET",
+          "status": 404,
+          "statusText": "Not Found",
+          "success": false,
+          "message": "Endpoint não encontrado",
+          "hasData": true,
+          "responseTime": 2,
+          "authUsed": true,
+          "url": "http://localhost:3001/api/reports/1",
+          "dataSize": 77,
+          "stackTrace": null
+        },
+        {
+          "method": "PUT",
+          "status": 404,
+          "statusText": "Not Found",
+          "success": false,
+          "message": "Endpoint não encontrado",
+          "hasData": true,
+          "responseTime": 3,
+          "authUsed": true,
+          "url": "http://localhost:3001/api/reports/1",
+          "dataSize": 77,
+          "stackTrace": null
+        },
+        {
+          "method": "DELETE",
+          "status": 404,
+          "statusText": "Not Found",
+          "success": false,
+          "message": "Endpoint não encontrado",
+          "hasData": true,
+          "responseTime": 2,
+          "authUsed": true,
+          "url": "http://localhost:3001/api/reports/1",
+          "dataSize": 77,
+          "stackTrace": null
+        },
+        {
+          "method": "OPTIONS",
+          "status": 204,
+          "statusText": "No Content",
+          "success": true,
+          "message": "No Content",
+          "hasData": true,
+          "responseTime": 3,
+          "authUsed": true,
+          "url": "http://localhost:3001/api/reports/1",
+          "dataSize": 0,
+          "stackTrace": null
+        }
+      ]
+    },
+    {
+      "path": "roles",
+      "file": "c:\\Users\\estev\\IdeaProjects\\Portal\\src\\app\\api\\roles\\route.ts",
+      "methods": [
+        "GET",
+        "POST",
+        "PUT",
+        "OPTIONS"
+      ],
+      "hasAuth": true,
+      "description": "",
+      "tests": [
+        {
+          "method": "GET",
+          "status": 200,
+          "statusText": "OK",
+          "success": true,
+          "message": "Roles recuperadas com sucesso",
+          "hasData": true,
+          "responseTime": 7,
+          "authUsed": true,
+          "url": "http://localhost:3001/api/roles",
+          "dataSize": 2670,
+          "stackTrace": null
+        },
+        {
+          "method": "POST",
+          "status": 500,
+          "statusText": "Internal Server Error",
+          "success": false,
+          "message": "Failed to create Role",
+          "hasData": true,
+          "responseTime": 7,
+          "authUsed": true,
+          "url": "http://localhost:3001/api/roles",
+          "dataSize": 51,
+          "stackTrace": "{\"success\":false,\"message\":\"Failed to create Role\"}"
+        },
+        {
+          "method": "PUT",
+          "status": 404,
+          "statusText": "Not Found",
+          "success": false,
+          "message": "Endpoint não encontrado",
+          "hasData": true,
+          "responseTime": 5,
+          "authUsed": true,
+          "url": "http://localhost:3001/api/roles",
+          "dataSize": 73,
+          "stackTrace": null
+        },
+        {
+          "method": "OPTIONS",
+          "status": 204,
+          "statusText": "No Content",
+          "success": true,
+          "message": "No Content",
+          "hasData": true,
+          "responseTime": 2,
+          "authUsed": true,
+          "url": "http://localhost:3001/api/roles",
+          "dataSize": 0,
+          "stackTrace": null
+        }
+      ]
+    },
+    {
+      "path": "roles/search",
+      "file": "c:\\Users\\estev\\IdeaProjects\\Portal\\src\\app\\api\\roles\\search\\route.ts",
+      "methods": [
+        "GET",
+        "POST",
+        "OPTIONS"
+      ],
+      "hasAuth": true,
+      "description": "",
+      "tests": [
+        {
+          "method": "GET",
+          "status": 200,
+          "statusText": "OK",
+          "success": true,
+          "message": "Roles recuperadas com sucesso",
+          "hasData": true,
+          "responseTime": 6,
+          "authUsed": true,
+          "url": "http://localhost:3001/api/roles/search",
+          "dataSize": 2726,
+          "stackTrace": null
+        },
+        {
+          "method": "POST",
+          "status": 404,
+          "statusText": "Not Found",
+          "success": false,
+          "message": "Endpoint não encontrado",
+          "hasData": true,
+          "responseTime": 5,
+          "authUsed": true,
+          "url": "http://localhost:3001/api/roles/search",
+          "dataSize": 80,
+          "stackTrace": null
+        },
+        {
+          "method": "OPTIONS",
+          "status": 204,
+          "statusText": "No Content",
+          "success": true,
+          "message": "No Content",
+          "hasData": true,
+          "responseTime": 1,
+          "authUsed": true,
+          "url": "http://localhost:3001/api/roles/search",
+          "dataSize": 0,
+          "stackTrace": null
+        }
+      ]
+    },
+    {
+      "path": "roles/stats",
+      "file": "c:\\Users\\estev\\IdeaProjects\\Portal\\src\\app\\api\\roles\\stats\\route.ts",
+      "methods": [
+        "GET",
+        "OPTIONS"
+      ],
+      "hasAuth": true,
+      "description": "",
+      "tests": [
+        {
+          "method": "GET",
+          "status": 400,
+          "statusText": "Bad Request",
+          "success": false,
+          "message": "Invalid role ID format",
+          "hasData": true,
+          "responseTime": 7,
+          "authUsed": true,
+          "url": "http://localhost:3001/api/roles/stats",
+          "dataSize": 52,
+          "stackTrace": null
+        },
+        {
+          "method": "OPTIONS",
+          "status": 204,
+          "statusText": "No Content",
+          "success": true,
+          "message": "No Content",
+          "hasData": true,
+          "responseTime": 2,
+          "authUsed": true,
+          "url": "http://localhost:3001/api/roles/stats",
+          "dataSize": 0,
+          "stackTrace": null
+        }
+      ]
+    },
+    {
+      "path": "roles/:id/can-delete",
+      "file": "c:\\Users\\estev\\IdeaProjects\\Portal\\src\\app\\api\\roles\\[id]\\can-delete\\route.ts",
+      "methods": [
+        "GET",
+        "OPTIONS"
+      ],
+      "hasAuth": true,
+      "description": "",
+      "tests": [
+        {
+          "method": "GET",
+          "status": 404,
+          "statusText": "Not Found",
+          "success": false,
+          "message": "Endpoint não encontrado",
+          "hasData": true,
+          "responseTime": 5,
+          "authUsed": true,
+          "url": "http://localhost:3001/api/roles/1/can-delete",
+          "dataSize": 86,
+          "stackTrace": null
+        },
+        {
+          "method": "OPTIONS",
+          "status": 204,
+          "statusText": "No Content",
+          "success": true,
+          "message": "No Content",
+          "hasData": true,
+          "responseTime": 3,
+          "authUsed": true,
+          "url": "http://localhost:3001/api/roles/1/can-delete",
+          "dataSize": 0,
+          "stackTrace": null
+        }
+      ]
+    },
+    {
+      "path": "roles/:id/duplicate",
+      "file": "c:\\Users\\estev\\IdeaProjects\\Portal\\src\\app\\api\\roles\\[id]\\duplicate\\route.ts",
+      "methods": [
+        "POST",
+        "OPTIONS"
+      ],
+      "hasAuth": true,
+      "description": "",
+      "tests": [
+        {
+          "method": "POST",
+          "status": 404,
+          "statusText": "Not Found",
+          "success": false,
+          "message": "Endpoint não encontrado",
+          "hasData": true,
+          "responseTime": 6,
+          "authUsed": true,
+          "url": "http://localhost:3001/api/roles/1/duplicate",
+          "dataSize": 85,
+          "stackTrace": null
+        },
+        {
+          "method": "OPTIONS",
+          "status": 204,
+          "statusText": "No Content",
+          "success": true,
+          "message": "No Content",
+          "hasData": true,
+          "responseTime": 2,
+          "authUsed": true,
+          "url": "http://localhost:3001/api/roles/1/duplicate",
+          "dataSize": 0,
+          "stackTrace": null
+        }
+      ]
+    },
+    {
+      "path": "roles/:id/permissions",
+      "file": "c:\\Users\\estev\\IdeaProjects\\Portal\\src\\app\\api\\roles\\[id]\\permissions\\route.ts",
+      "methods": [
+        "GET",
+        "OPTIONS"
+      ],
+      "hasAuth": true,
+      "description": "",
+      "tests": [
+        {
+          "method": "GET",
+          "status": 404,
+          "statusText": "Not Found",
+          "success": false,
+          "message": "Endpoint não encontrado",
+          "hasData": true,
+          "responseTime": 5,
+          "authUsed": true,
+          "url": "http://localhost:3001/api/roles/1/permissions",
+          "dataSize": 87,
+          "stackTrace": null
+        },
+        {
+          "method": "OPTIONS",
+          "status": 204,
+          "statusText": "No Content",
+          "success": true,
+          "message": "No Content",
+          "hasData": true,
+          "responseTime": 2,
+          "authUsed": true,
+          "url": "http://localhost:3001/api/roles/1/permissions",
+          "dataSize": 0,
+          "stackTrace": null
+        }
+      ]
+    },
+    {
+      "path": "roles/:id",
+      "file": "c:\\Users\\estev\\IdeaProjects\\Portal\\src\\app\\api\\roles\\[id]\\route.ts",
+      "methods": [
+        "GET",
+        "PUT",
+        "DELETE",
+        "OPTIONS"
+      ],
+      "hasAuth": true,
+      "description": "",
+      "tests": [
+        {
+          "method": "GET",
+          "status": 400,
+          "statusText": "Bad Request",
+          "success": false,
+          "message": "Invalid role ID format",
+          "hasData": true,
+          "responseTime": 5,
+          "authUsed": true,
+          "url": "http://localhost:3001/api/roles/1",
+          "dataSize": 52,
+          "stackTrace": null
+        },
+        {
+          "method": "PUT",
+          "status": 400,
+          "statusText": "Bad Request",
+          "success": false,
+          "message": "Invalid role ID format",
+          "hasData": true,
+          "responseTime": 5,
+          "authUsed": true,
+          "url": "http://localhost:3001/api/roles/1",
+          "dataSize": 52,
+          "stackTrace": null
+        },
+        {
+          "method": "DELETE",
+          "status": 400,
+          "statusText": "Bad Request",
+          "success": false,
+          "message": "Invalid role ID format",
+          "hasData": true,
+          "responseTime": 8,
+          "authUsed": true,
+          "url": "http://localhost:3001/api/roles/1",
+          "dataSize": 52,
+          "stackTrace": null
+        },
+        {
+          "method": "OPTIONS",
+          "status": 204,
+          "statusText": "No Content",
+          "success": true,
+          "message": "No Content",
+          "hasData": true,
+          "responseTime": 2,
+          "authUsed": true,
+          "url": "http://localhost:3001/api/roles/1",
+          "dataSize": 0,
+          "stackTrace": null
+        }
+      ]
+    },
+    {
+      "path": "roles/:id/status",
+      "file": "c:\\Users\\estev\\IdeaProjects\\Portal\\src\\app\\api\\roles\\[id]\\status\\route.ts",
+      "methods": [
+        "PATCH",
+        "OPTIONS"
+      ],
+      "hasAuth": true,
+      "description": "",
+      "tests": [
+        {
+          "method": "PATCH",
+          "status": 404,
+          "statusText": "Not Found",
+          "success": false,
+          "message": "Endpoint não encontrado",
+          "hasData": true,
+          "responseTime": 6,
+          "authUsed": true,
+          "url": "http://localhost:3001/api/roles/1/status",
+          "dataSize": 82,
+          "stackTrace": null
+        },
+        {
+          "method": "OPTIONS",
+          "status": 204,
+          "statusText": "No Content",
+          "success": true,
+          "message": "No Content",
+          "hasData": true,
+          "responseTime": 2,
+          "authUsed": true,
+          "url": "http://localhost:3001/api/roles/1/status",
+          "dataSize": 0,
+          "stackTrace": null
+        }
+      ]
+    },
+    {
+      "path": "schools",
+      "file": "c:\\Users\\estev\\IdeaProjects\\Portal\\src\\app\\api\\schools\\route.ts",
+      "methods": [
+        "GET",
+        "POST",
+        "OPTIONS"
+      ],
+      "hasAuth": true,
+      "description": "",
+      "tests": [
+        {
+          "method": "GET",
+          "status": 200,
+          "statusText": "OK",
+          "success": true,
+          "message": "Schools list - implementação pendente",
+          "hasData": true,
+          "responseTime": 5,
+          "authUsed": true,
+          "url": "http://localhost:3001/api/schools",
+          "dataSize": 76,
+          "stackTrace": null
+        },
+        {
+          "method": "POST",
+          "status": 201,
+          "statusText": "Created",
+          "success": true,
+          "message": "Create school - implementação pendente",
+          "hasData": true,
+          "responseTime": 5,
+          "authUsed": true,
+          "url": "http://localhost:3001/api/schools",
+          "dataSize": 79,
+          "stackTrace": null
+        },
+        {
+          "method": "OPTIONS",
+          "status": 204,
+          "statusText": "No Content",
+          "success": true,
+          "message": "No Content",
+          "hasData": true,
+          "responseTime": 2,
+          "authUsed": true,
+          "url": "http://localhost:3001/api/schools",
+          "dataSize": 0,
+          "stackTrace": null
+        }
+      ]
+    },
+    {
+      "path": "schools/:id",
+      "file": "c:\\Users\\estev\\IdeaProjects\\Portal\\src\\app\\api\\schools\\[id]\\route.ts",
+      "methods": [
+        "GET",
+        "PUT",
+        "DELETE",
+        "OPTIONS"
+      ],
+      "hasAuth": true,
+      "description": "",
+      "tests": [
+        {
+          "method": "GET",
+          "status": 200,
+          "statusText": "OK",
+          "success": true,
+          "message": "School by ID - implementação pendente",
+          "hasData": true,
+          "responseTime": 4,
+          "authUsed": true,
+          "url": "http://localhost:3001/api/schools/1",
+          "dataSize": 78,
+          "stackTrace": null
+        },
+        {
+          "method": "PUT",
+          "status": 200,
+          "statusText": "OK",
+          "success": true,
+          "message": "Update school - implementação pendente",
+          "hasData": true,
+          "responseTime": 6,
+          "authUsed": true,
+          "url": "http://localhost:3001/api/schools/1",
+          "dataSize": 79,
+          "stackTrace": null
+        },
+        {
+          "method": "DELETE",
+          "status": 200,
+          "statusText": "OK",
+          "success": true,
+          "message": "Delete school - implementação pendente",
+          "hasData": true,
+          "responseTime": 6,
+          "authUsed": true,
+          "url": "http://localhost:3001/api/schools/1",
+          "dataSize": 67,
+          "stackTrace": null
+        },
+        {
+          "method": "OPTIONS",
+          "status": 204,
+          "statusText": "No Content",
+          "success": true,
+          "message": "No Content",
+          "hasData": true,
+          "responseTime": 2,
+          "authUsed": true,
+          "url": "http://localhost:3001/api/schools/1",
+          "dataSize": 0,
+          "stackTrace": null
+        }
+      ]
+    },
+    {
+      "path": "screenshots/*",
+      "file": "c:\\Users\\estev\\IdeaProjects\\Portal\\src\\app\\api\\screenshots\\[...path]\\route.ts",
+      "methods": [
+        "GET",
+        "OPTIONS"
+      ],
+      "hasAuth": false,
+      "description": "",
+      "tests": [
+        {
+          "method": "GET",
+          "status": 404,
+          "statusText": "Not Found",
+          "success": false,
+          "message": "Endpoint não encontrado",
+          "hasData": true,
+          "responseTime": 2,
+          "authUsed": false,
+          "url": "http://localhost:3001/api/screenshots/test",
+          "dataSize": 84,
+          "stackTrace": null
+        },
+        {
+          "method": "OPTIONS",
+          "status": 204,
+          "statusText": "No Content",
+          "success": true,
+          "message": "No Content",
+          "hasData": true,
+          "responseTime": 1,
+          "authUsed": false,
+          "url": "http://localhost:3001/api/screenshots/test",
+          "dataSize": 0,
+          "stackTrace": null
+        }
+      ]
+    },
+    {
+      "path": "sessions/validate",
+      "file": "c:\\Users\\estev\\IdeaProjects\\Portal\\src\\app\\api\\sessions\\validate\\route.ts",
+      "methods": [
+        "POST",
+        "PUT",
+        "OPTIONS"
+      ],
+      "hasAuth": true,
+      "description": "",
+      "tests": [
+        {
+          "method": "POST",
+          "status": 404,
+          "statusText": "Not Found",
+          "success": false,
+          "message": "Endpoint não encontrado",
+          "hasData": true,
+          "responseTime": 7,
+          "authUsed": true,
+          "url": "http://localhost:3001/api/sessions/validate",
+          "dataSize": 85,
+          "stackTrace": null
+        },
+        {
+          "method": "PUT",
+          "status": 404,
+          "statusText": "Not Found",
+          "success": false,
+          "message": "Endpoint não encontrado",
+          "hasData": true,
+          "responseTime": 6,
+          "authUsed": true,
+          "url": "http://localhost:3001/api/sessions/validate",
+          "dataSize": 85,
+          "stackTrace": null
+        },
+        {
+          "method": "OPTIONS",
+          "status": 204,
+          "statusText": "No Content",
+          "success": true,
+          "message": "No Content",
+          "hasData": true,
+          "responseTime": 2,
+          "authUsed": true,
+          "url": "http://localhost:3001/api/sessions/validate",
+          "dataSize": 0,
+          "stackTrace": null
+        }
+      ]
+    },
+    {
+      "path": "settings/admin",
+      "file": "c:\\Users\\estev\\IdeaProjects\\Portal\\src\\app\\api\\settings\\admin\\route.ts",
+      "methods": [
+        "GET",
+        "POST",
+        "PUT",
+        "OPTIONS"
+      ],
+      "hasAuth": true,
+      "description": "",
+      "tests": [
+        {
+          "method": "GET",
+          "status": 404,
+          "statusText": "Not Found",
+          "success": false,
+          "message": "Endpoint não encontrado",
+          "hasData": true,
+          "responseTime": 4,
+          "authUsed": true,
+          "url": "http://localhost:3001/api/settings/admin",
+          "dataSize": 82,
+          "stackTrace": null
+        },
+        {
+          "method": "POST",
+          "status": 404,
+          "statusText": "Not Found",
+          "success": false,
+          "message": "Endpoint não encontrado",
+          "hasData": true,
+          "responseTime": 6,
+          "authUsed": true,
+          "url": "http://localhost:3001/api/settings/admin",
+          "dataSize": 82,
+          "stackTrace": null
+        },
+        {
+          "method": "PUT",
+          "status": 404,
+          "statusText": "Not Found",
+          "success": false,
+          "message": "Endpoint não encontrado",
+          "hasData": true,
+          "responseTime": 5,
+          "authUsed": true,
+          "url": "http://localhost:3001/api/settings/admin",
+          "dataSize": 82,
+          "stackTrace": null
+        },
+        {
+          "method": "OPTIONS",
+          "status": 204,
+          "statusText": "No Content",
+          "success": true,
+          "message": "No Content",
+          "hasData": true,
+          "responseTime": 2,
+          "authUsed": true,
+          "url": "http://localhost:3001/api/settings/admin",
+          "dataSize": 0,
+          "stackTrace": null
+        }
+      ]
+    },
+    {
+      "path": "settings/aws",
+      "file": "c:\\Users\\estev\\IdeaProjects\\Portal\\src\\app\\api\\settings\\aws\\route.ts",
+      "methods": [
+        "GET",
+        "POST",
+        "PUT",
+        "DELETE",
+        "OPTIONS"
+      ],
+      "hasAuth": true,
+      "description": "",
+      "tests": [
+        {
+          "method": "GET",
+          "status": 404,
+          "statusText": "Not Found",
+          "success": false,
+          "message": "Endpoint não encontrado",
+          "hasData": true,
+          "responseTime": 6,
+          "authUsed": true,
+          "url": "http://localhost:3001/api/settings/aws",
+          "dataSize": 80,
+          "stackTrace": null
+        },
+        {
+          "method": "POST",
+          "status": 404,
+          "statusText": "Not Found",
+          "success": false,
+          "message": "Endpoint não encontrado",
+          "hasData": true,
+          "responseTime": 6,
+          "authUsed": true,
+          "url": "http://localhost:3001/api/settings/aws",
+          "dataSize": 80,
+          "stackTrace": null
+        },
+        {
+          "method": "PUT",
+          "status": 404,
+          "statusText": "Not Found",
+          "success": false,
+          "message": "Endpoint não encontrado",
+          "hasData": true,
+          "responseTime": 5,
+          "authUsed": true,
+          "url": "http://localhost:3001/api/settings/aws",
+          "dataSize": 80,
+          "stackTrace": null
+        },
+        {
+          "method": "DELETE",
+          "status": 404,
+          "statusText": "Not Found",
+          "success": false,
+          "message": "Endpoint não encontrado",
+          "hasData": true,
+          "responseTime": 5,
+          "authUsed": true,
+          "url": "http://localhost:3001/api/settings/aws",
+          "dataSize": 80,
+          "stackTrace": null
+        },
+        {
+          "method": "OPTIONS",
+          "status": 204,
+          "statusText": "No Content",
+          "success": true,
+          "message": "No Content",
+          "hasData": true,
+          "responseTime": 2,
+          "authUsed": true,
+          "url": "http://localhost:3001/api/settings/aws",
+          "dataSize": 0,
+          "stackTrace": null
+        }
+      ]
+    },
+    {
+      "path": "settings/background",
+      "file": "c:\\Users\\estev\\IdeaProjects\\Portal\\src\\app\\api\\settings\\background\\route.ts",
+      "methods": [
+        "GET",
+        "POST",
+        "PUT",
+        "DELETE",
+        "OPTIONS"
+      ],
+      "hasAuth": true,
+      "description": "",
+      "tests": [
+        {
+          "method": "GET",
+          "status": 404,
+          "statusText": "Not Found",
+          "success": false,
+          "message": "Endpoint não encontrado",
+          "hasData": true,
+          "responseTime": 4,
+          "authUsed": true,
+          "url": "http://localhost:3001/api/settings/background",
+          "dataSize": 87,
+          "stackTrace": null
+        },
+        {
+          "method": "POST",
+          "status": 404,
+          "statusText": "Not Found",
+          "success": false,
+          "message": "Endpoint não encontrado",
+          "hasData": true,
+          "responseTime": 5,
+          "authUsed": true,
+          "url": "http://localhost:3001/api/settings/background",
+          "dataSize": 87,
+          "stackTrace": null
+        },
+        {
+          "method": "PUT",
+          "status": 404,
+          "statusText": "Not Found",
+          "success": false,
+          "message": "Endpoint não encontrado",
+          "hasData": true,
+          "responseTime": 5,
+          "authUsed": true,
+          "url": "http://localhost:3001/api/settings/background",
+          "dataSize": 87,
+          "stackTrace": null
+        },
+        {
+          "method": "DELETE",
+          "status": 404,
+          "statusText": "Not Found",
+          "success": false,
+          "message": "Endpoint não encontrado",
+          "hasData": true,
+          "responseTime": 5,
+          "authUsed": true,
+          "url": "http://localhost:3001/api/settings/background",
+          "dataSize": 87,
+          "stackTrace": null
+        },
+        {
+          "method": "OPTIONS",
+          "status": 204,
+          "statusText": "No Content",
+          "success": true,
+          "message": "No Content",
+          "hasData": true,
+          "responseTime": 1,
+          "authUsed": true,
+          "url": "http://localhost:3001/api/settings/background",
+          "dataSize": 0,
+          "stackTrace": null
+        }
+      ]
+    },
+    {
+      "path": "settings/email",
+      "file": "c:\\Users\\estev\\IdeaProjects\\Portal\\src\\app\\api\\settings\\email\\route.ts",
+      "methods": [
+        "GET",
+        "POST",
+        "PUT",
+        "DELETE",
+        "OPTIONS"
+      ],
+      "hasAuth": true,
+      "description": "Obter configurações de email\r   GET /api/settings/email",
+      "tests": [
+        {
+          "method": "GET",
+          "status": 404,
+          "statusText": "Not Found",
+          "success": false,
+          "message": "Endpoint não encontrado",
+          "hasData": true,
+          "responseTime": 5,
+          "authUsed": true,
+          "url": "http://localhost:3001/api/settings/email",
+          "dataSize": 82,
+          "stackTrace": null
+        },
+        {
+          "method": "POST",
+          "status": 404,
+          "statusText": "Not Found",
+          "success": false,
+          "message": "Endpoint não encontrado",
+          "hasData": true,
+          "responseTime": 7,
+          "authUsed": true,
+          "url": "http://localhost:3001/api/settings/email",
+          "dataSize": 82,
+          "stackTrace": null
+        },
+        {
+          "method": "PUT",
+          "status": 404,
+          "statusText": "Not Found",
+          "success": false,
+          "message": "Endpoint não encontrado",
+          "hasData": true,
+          "responseTime": 6,
+          "authUsed": true,
+          "url": "http://localhost:3001/api/settings/email",
+          "dataSize": 82,
+          "stackTrace": null
+        },
+        {
+          "method": "DELETE",
+          "status": 404,
+          "statusText": "Not Found",
+          "success": false,
+          "message": "Endpoint não encontrado",
+          "hasData": true,
+          "responseTime": 4,
+          "authUsed": true,
+          "url": "http://localhost:3001/api/settings/email",
+          "dataSize": 82,
+          "stackTrace": null
+        },
+        {
+          "method": "OPTIONS",
+          "status": 204,
+          "statusText": "No Content",
+          "success": true,
+          "message": "No Content",
+          "hasData": true,
+          "responseTime": 2,
+          "authUsed": true,
+          "url": "http://localhost:3001/api/settings/email",
+          "dataSize": 0,
+          "stackTrace": null
+        }
+      ]
+    },
+    {
+      "path": "settings/general",
+      "file": "c:\\Users\\estev\\IdeaProjects\\Portal\\src\\app\\api\\settings\\general\\route.ts",
+      "methods": [
+        "GET",
+        "PUT",
+        "OPTIONS"
+      ],
+      "hasAuth": true,
+      "description": "Obter configurações gerais do sistema\r   GET /api/settings/general",
+      "tests": [
+        {
+          "method": "GET",
+          "status": 404,
+          "statusText": "Not Found",
+          "success": false,
+          "message": "Endpoint não encontrado",
+          "hasData": true,
+          "responseTime": 5,
+          "authUsed": true,
+          "url": "http://localhost:3001/api/settings/general",
+          "dataSize": 84,
+          "stackTrace": null
+        },
+        {
+          "method": "PUT",
+          "status": 404,
+          "statusText": "Not Found",
+          "success": false,
+          "message": "Endpoint não encontrado",
+          "hasData": true,
+          "responseTime": 6,
+          "authUsed": true,
+          "url": "http://localhost:3001/api/settings/general",
+          "dataSize": 84,
+          "stackTrace": null
+        },
+        {
+          "method": "OPTIONS",
+          "status": 204,
+          "statusText": "No Content",
+          "success": true,
+          "message": "No Content",
+          "hasData": true,
+          "responseTime": 2,
+          "authUsed": true,
+          "url": "http://localhost:3001/api/settings/general",
+          "dataSize": 0,
+          "stackTrace": null
+        }
+      ]
+    },
+    {
+      "path": "settings/public",
+      "file": "c:\\Users\\estev\\IdeaProjects\\Portal\\src\\app\\api\\settings\\public\\route.ts",
+      "methods": [
+        "GET",
+        "OPTIONS"
+      ],
+      "hasAuth": true,
+      "description": "",
+      "tests": [
+        {
+          "method": "GET",
+          "status": 404,
+          "statusText": "Not Found",
+          "success": false,
+          "message": "Endpoint não encontrado",
+          "hasData": true,
+          "responseTime": 5,
+          "authUsed": true,
+          "url": "http://localhost:3001/api/settings/public",
+          "dataSize": 83,
+          "stackTrace": null
+        },
+        {
+          "method": "OPTIONS",
+          "status": 204,
+          "statusText": "No Content",
+          "success": true,
+          "message": "No Content",
+          "hasData": true,
+          "responseTime": 1,
+          "authUsed": true,
+          "url": "http://localhost:3001/api/settings/public",
+          "dataSize": 0,
+          "stackTrace": null
+        }
+      ]
+    },
+    {
+      "path": "settings/reconfigure-email",
+      "file": "c:\\Users\\estev\\IdeaProjects\\Portal\\src\\app\\api\\settings\\reconfigure-email\\route.ts",
+      "methods": [
+        "POST",
+        "OPTIONS"
+      ],
+      "hasAuth": true,
+      "description": "",
+      "tests": [
+        {
+          "method": "POST",
+          "status": 404,
+          "statusText": "Not Found",
+          "success": false,
+          "message": "Endpoint não encontrado",
+          "hasData": true,
+          "responseTime": 5,
+          "authUsed": true,
+          "url": "http://localhost:3001/api/settings/reconfigure-email",
+          "dataSize": 94,
+          "stackTrace": null
+        },
+        {
+          "method": "OPTIONS",
+          "status": 204,
+          "statusText": "No Content",
+          "success": true,
+          "message": "No Content",
+          "hasData": true,
+          "responseTime": 2,
+          "authUsed": true,
+          "url": "http://localhost:3001/api/settings/reconfigure-email",
+          "dataSize": 0,
+          "stackTrace": null
+        }
+      ]
+    },
+    {
+      "path": "settings",
+      "file": "c:\\Users\\estev\\IdeaProjects\\Portal\\src\\app\\api\\settings\\route.ts",
+      "methods": [
+        "GET",
+        "POST",
+        "PUT",
+        "OPTIONS"
+      ],
+      "hasAuth": true,
+      "description": "",
+      "tests": [
+        {
+          "method": "GET",
+          "status": 200,
+          "statusText": "OK",
+          "success": true,
+          "message": "Simple settings - implementação pendente",
+          "hasData": true,
+          "responseTime": 6,
+          "authUsed": true,
+          "url": "http://localhost:3001/api/settings",
+          "dataSize": 150,
+          "stackTrace": null
+        },
+        {
+          "method": "POST",
+          "status": 404,
+          "statusText": "Not Found",
+          "success": false,
+          "message": "Endpoint não encontrado",
+          "hasData": true,
+          "responseTime": 7,
+          "authUsed": true,
+          "url": "http://localhost:3001/api/settings",
+          "dataSize": 76,
+          "stackTrace": null
+        },
+        {
+          "method": "PUT",
+          "status": 404,
+          "statusText": "Not Found",
+          "success": false,
+          "message": "Endpoint não encontrado",
+          "hasData": true,
+          "responseTime": 7,
+          "authUsed": true,
+          "url": "http://localhost:3001/api/settings",
+          "dataSize": 76,
+          "stackTrace": null
+        },
+        {
+          "method": "OPTIONS",
+          "status": 204,
+          "statusText": "No Content",
+          "success": true,
+          "message": "No Content",
+          "hasData": true,
+          "responseTime": 2,
+          "authUsed": true,
+          "url": "http://localhost:3001/api/settings",
+          "dataSize": 0,
+          "stackTrace": null
+        }
+      ]
+    },
+    {
+      "path": "settings/s3-buckets",
+      "file": "c:\\Users\\estev\\IdeaProjects\\Portal\\src\\app\\api\\settings\\s3-buckets\\route.ts",
+      "methods": [
+        "GET",
+        "OPTIONS"
+      ],
+      "hasAuth": true,
+      "description": "",
+      "tests": [
+        {
+          "method": "GET",
+          "status": 404,
+          "statusText": "Not Found",
+          "success": false,
+          "message": "Endpoint não encontrado",
+          "hasData": true,
+          "responseTime": 5,
+          "authUsed": true,
+          "url": "http://localhost:3001/api/settings/s3-buckets",
+          "dataSize": 87,
+          "stackTrace": null
+        },
+        {
+          "method": "OPTIONS",
+          "status": 204,
+          "statusText": "No Content",
+          "success": true,
+          "message": "No Content",
+          "hasData": true,
+          "responseTime": 2,
+          "authUsed": true,
+          "url": "http://localhost:3001/api/settings/s3-buckets",
+          "dataSize": 0,
+          "stackTrace": null
+        }
+      ]
+    },
+    {
+      "path": "settings/security",
+      "file": "c:\\Users\\estev\\IdeaProjects\\Portal\\src\\app\\api\\settings\\security\\route.ts",
+      "methods": [
+        "GET",
+        "POST",
+        "PUT",
+        "DELETE",
+        "OPTIONS"
+      ],
+      "hasAuth": true,
+      "description": "Obter configurações de segurança\r   GET /api/settings/security",
+      "tests": [
+        {
+          "method": "GET",
+          "status": 404,
+          "statusText": "Not Found",
+          "success": false,
+          "message": "Endpoint não encontrado",
+          "hasData": true,
+          "responseTime": 4,
+          "authUsed": true,
+          "url": "http://localhost:3001/api/settings/security",
+          "dataSize": 85,
+          "stackTrace": null
+        },
+        {
+          "method": "POST",
+          "status": 404,
+          "statusText": "Not Found",
+          "success": false,
+          "message": "Endpoint não encontrado",
+          "hasData": true,
+          "responseTime": 6,
+          "authUsed": true,
+          "url": "http://localhost:3001/api/settings/security",
+          "dataSize": 85,
+          "stackTrace": null
+        },
+        {
+          "method": "PUT",
+          "status": 404,
+          "statusText": "Not Found",
+          "success": false,
+          "message": "Endpoint não encontrado",
+          "hasData": true,
+          "responseTime": 5,
+          "authUsed": true,
+          "url": "http://localhost:3001/api/settings/security",
+          "dataSize": 85,
+          "stackTrace": null
+        },
+        {
+          "method": "DELETE",
+          "status": 404,
+          "statusText": "Not Found",
+          "success": false,
+          "message": "Endpoint não encontrado",
+          "hasData": true,
+          "responseTime": 5,
+          "authUsed": true,
+          "url": "http://localhost:3001/api/settings/security",
+          "dataSize": 85,
+          "stackTrace": null
+        },
+        {
+          "method": "OPTIONS",
+          "status": 204,
+          "statusText": "No Content",
+          "success": true,
+          "message": "No Content",
+          "hasData": true,
+          "responseTime": 2,
+          "authUsed": true,
+          "url": "http://localhost:3001/api/settings/security",
+          "dataSize": 0,
+          "stackTrace": null
+        }
+      ]
+    },
+    {
+      "path": "settings/test-aws",
+      "file": "c:\\Users\\estev\\IdeaProjects\\Portal\\src\\app\\api\\settings\\test-aws\\route.ts",
+      "methods": [
+        "POST",
+        "OPTIONS"
+      ],
+      "hasAuth": true,
+      "description": "",
+      "tests": [
+        {
+          "method": "POST",
+          "status": 404,
+          "statusText": "Not Found",
+          "success": false,
+          "message": "Endpoint não encontrado",
+          "hasData": true,
+          "responseTime": 5,
+          "authUsed": true,
+          "url": "http://localhost:3001/api/settings/test-aws",
+          "dataSize": 85,
+          "stackTrace": null
+        },
+        {
+          "method": "OPTIONS",
+          "status": 204,
+          "statusText": "No Content",
+          "success": true,
+          "message": "No Content",
+          "hasData": true,
+          "responseTime": 2,
+          "authUsed": true,
+          "url": "http://localhost:3001/api/settings/test-aws",
+          "dataSize": 0,
+          "stackTrace": null
+        }
+      ]
+    },
+    {
+      "path": "settings/test-email",
+      "file": "c:\\Users\\estev\\IdeaProjects\\Portal\\src\\app\\api\\settings\\test-email\\route.ts",
+      "methods": [
+        "POST",
+        "OPTIONS"
+      ],
+      "hasAuth": true,
+      "description": "",
+      "tests": [
+        {
+          "method": "POST",
+          "status": 404,
+          "statusText": "Not Found",
+          "success": false,
+          "message": "Endpoint não encontrado",
+          "hasData": true,
+          "responseTime": 5,
+          "authUsed": true,
+          "url": "http://localhost:3001/api/settings/test-email",
+          "dataSize": 87,
+          "stackTrace": null
+        },
+        {
+          "method": "OPTIONS",
+          "status": 204,
+          "statusText": "No Content",
+          "success": true,
+          "message": "No Content",
+          "hasData": true,
+          "responseTime": 2,
+          "authUsed": true,
+          "url": "http://localhost:3001/api/settings/test-email",
+          "dataSize": 0,
+          "stackTrace": null
+        }
+      ]
+    },
+    {
+      "path": "settings/test-s3",
+      "file": "c:\\Users\\estev\\IdeaProjects\\Portal\\src\\app\\api\\settings\\test-s3\\route.ts",
+      "methods": [
+        "POST",
+        "OPTIONS"
+      ],
+      "hasAuth": true,
+      "description": "",
+      "tests": [
+        {
+          "method": "POST",
+          "status": 404,
+          "statusText": "Not Found",
+          "success": false,
+          "message": "Endpoint não encontrado",
+          "hasData": true,
+          "responseTime": 5,
+          "authUsed": true,
+          "url": "http://localhost:3001/api/settings/test-s3",
+          "dataSize": 84,
+          "stackTrace": null
+        },
+        {
+          "method": "OPTIONS",
+          "status": 204,
+          "statusText": "No Content",
+          "success": true,
+          "message": "No Content",
+          "hasData": true,
+          "responseTime": 2,
+          "authUsed": true,
+          "url": "http://localhost:3001/api/settings/test-s3",
+          "dataSize": 0,
+          "stackTrace": null
+        }
+      ]
+    },
+    {
+      "path": "status",
+      "file": "c:\\Users\\estev\\IdeaProjects\\Portal\\src\\app\\api\\status\\route.ts",
+      "methods": [
+        "GET",
+        "OPTIONS"
+      ],
+      "hasAuth": false,
+      "description": "Status do sistema (endpoint público)\r   GET /api/status",
+      "tests": [
+        {
+          "method": "GET",
+          "status": 404,
+          "statusText": "Not Found",
+          "success": false,
+          "message": "Endpoint não encontrado",
+          "hasData": true,
+          "responseTime": 2,
+          "authUsed": false,
+          "url": "http://localhost:3001/api/status",
+          "dataSize": 74,
+          "stackTrace": null
+        },
+        {
+          "method": "OPTIONS",
+          "status": 204,
+          "statusText": "No Content",
+          "success": true,
+          "message": "No Content",
+          "hasData": true,
+          "responseTime": 1,
+          "authUsed": false,
+          "url": "http://localhost:3001/api/status",
+          "dataSize": 0,
+          "stackTrace": null
+        }
+      ]
+    },
+    {
+      "path": "study-groups",
+      "file": "c:\\Users\\estev\\IdeaProjects\\Portal\\src\\app\\api\\study-groups\\route.ts",
+      "methods": [
+        "GET",
+        "POST",
+        "OPTIONS"
+      ],
+      "hasAuth": true,
+      "description": "Obter grupos de estudo\r   GET /api/study-groups",
+      "tests": [
+        {
+          "method": "GET",
+          "status": 404,
+          "statusText": "Not Found",
+          "success": false,
+          "message": "Endpoint não encontrado",
+          "hasData": true,
+          "responseTime": 2,
+          "authUsed": true,
+          "url": "http://localhost:3001/api/study-groups",
+          "dataSize": 80,
+          "stackTrace": null
+        },
+        {
+          "method": "POST",
+          "status": 404,
+          "statusText": "Not Found",
+          "success": false,
+          "message": "Endpoint não encontrado",
+          "hasData": true,
+          "responseTime": 3,
+          "authUsed": true,
+          "url": "http://localhost:3001/api/study-groups",
+          "dataSize": 80,
+          "stackTrace": null
+        },
+        {
+          "method": "OPTIONS",
+          "status": 204,
+          "statusText": "No Content",
+          "success": true,
+          "message": "No Content",
+          "hasData": true,
+          "responseTime": 3,
+          "authUsed": true,
+          "url": "http://localhost:3001/api/study-groups",
+          "dataSize": 0,
+          "stackTrace": null
+        }
+      ]
+    },
+    {
+      "path": "study-groups/:id",
+      "file": "c:\\Users\\estev\\IdeaProjects\\Portal\\src\\app\\api\\study-groups\\[id]\\route.ts",
+      "methods": [
+        "GET",
+        "PUT",
+        "DELETE",
+        "OPTIONS"
+      ],
+      "hasAuth": true,
+      "description": "Obter grupo de estudo por ID\r   GET /api/study-groups/[id]",
+      "tests": [
+        {
+          "method": "GET",
+          "status": 404,
+          "statusText": "Not Found",
+          "success": false,
+          "message": "Endpoint não encontrado",
+          "hasData": true,
+          "responseTime": 3,
+          "authUsed": true,
+          "url": "http://localhost:3001/api/study-groups/1",
+          "dataSize": 82,
+          "stackTrace": null
+        },
+        {
+          "method": "PUT",
+          "status": 404,
+          "statusText": "Not Found",
+          "success": false,
+          "message": "Endpoint não encontrado",
+          "hasData": true,
+          "responseTime": 3,
+          "authUsed": true,
+          "url": "http://localhost:3001/api/study-groups/1",
+          "dataSize": 82,
+          "stackTrace": null
+        },
+        {
+          "method": "DELETE",
+          "status": 404,
+          "statusText": "Not Found",
+          "success": false,
+          "message": "Endpoint não encontrado",
+          "hasData": true,
+          "responseTime": 2,
+          "authUsed": true,
+          "url": "http://localhost:3001/api/study-groups/1",
+          "dataSize": 82,
+          "stackTrace": null
+        },
+        {
+          "method": "OPTIONS",
+          "status": 204,
+          "statusText": "No Content",
+          "success": true,
+          "message": "No Content",
+          "hasData": true,
+          "responseTime": 3,
+          "authUsed": true,
+          "url": "http://localhost:3001/api/study-groups/1",
+          "dataSize": 0,
+          "stackTrace": null
+        }
+      ]
+    },
+    {
+      "path": "test-auth",
+      "file": "c:\\Users\\estev\\IdeaProjects\\Portal\\src\\app\\api\\test-auth\\route.ts",
+      "methods": [
+        "GET",
+        "OPTIONS"
+      ],
+      "hasAuth": true,
+      "description": "Testar autenticação\r   GET /api/test-auth",
+      "tests": [
+        {
+          "method": "GET",
+          "status": 404,
+          "statusText": "Not Found",
+          "success": false,
+          "message": "Endpoint não encontrado",
+          "hasData": true,
+          "responseTime": 3,
+          "authUsed": true,
+          "url": "http://localhost:3001/api/test-auth",
+          "dataSize": 77,
+          "stackTrace": null
+        },
+        {
+          "method": "OPTIONS",
+          "status": 204,
+          "statusText": "No Content",
+          "success": true,
+          "message": "No Content",
+          "hasData": true,
+          "responseTime": 2,
+          "authUsed": true,
+          "url": "http://localhost:3001/api/test-auth",
+          "dataSize": 0,
+          "stackTrace": null
+        }
+      ]
+    },
+    {
+      "path": "tv-shows",
+      "file": "c:\\Users\\estev\\IdeaProjects\\Portal\\src\\app\\api\\tv-shows\\route.ts",
+      "methods": [
+        "GET",
+        "POST",
+        "OPTIONS"
+      ],
+      "hasAuth": true,
+      "description": "",
+      "tests": [
+        {
+          "method": "GET",
+          "status": 200,
+          "statusText": "OK",
+          "success": true,
+          "message": "OK",
+          "hasData": true,
+          "responseTime": 65,
+          "authUsed": true,
+          "url": "http://localhost:3001/api/tv-shows",
+          "dataSize": 13717,
+          "stackTrace": null
+        },
+        {
+          "method": "POST",
+          "status": 500,
+          "statusText": "Internal Server Error",
+          "success": false,
+          "message": "Erro interno do servidor",
+          "hasData": true,
+          "responseTime": 32,
+          "authUsed": true,
+          "url": "http://localhost:3001/api/tv-shows",
+          "dataSize": 157,
+          "stackTrace": "{\"success\":false,\"message\":\"Erro interno do servidor\",\"error\":\"o valor nulo na coluna \\\"date_created\\\" da relação \\\"tv_show\\\" viola a restrição de não-nulo\"}"
+        },
+        {
+          "method": "OPTIONS",
+          "status": 204,
+          "statusText": "No Content",
+          "success": true,
+          "message": "No Content",
+          "hasData": true,
+          "responseTime": 2,
+          "authUsed": true,
+          "url": "http://localhost:3001/api/tv-shows",
+          "dataSize": 0,
+          "stackTrace": null
+        }
+      ]
+    },
+    {
+      "path": "tv-shows/:id/modules",
+      "file": "c:\\Users\\estev\\IdeaProjects\\Portal\\src\\app\\api\\tv-shows\\[id]\\modules\\route.ts",
+      "methods": [
+        "GET",
+        "OPTIONS"
+      ],
+      "hasAuth": true,
+      "description": "",
+      "tests": [
+        {
+          "method": "GET",
+          "status": 404,
+          "statusText": "Not Found",
+          "success": false,
+          "message": "Endpoint não encontrado",
+          "hasData": true,
+          "responseTime": 5,
+          "authUsed": true,
+          "url": "http://localhost:3001/api/tv-shows/1/modules",
+          "dataSize": 86,
+          "stackTrace": null
+        },
+        {
+          "method": "OPTIONS",
+          "status": 204,
+          "statusText": "No Content",
+          "success": true,
+          "message": "No Content",
+          "hasData": true,
+          "responseTime": 2,
+          "authUsed": true,
+          "url": "http://localhost:3001/api/tv-shows/1/modules",
+          "dataSize": 0,
+          "stackTrace": null
+        }
+      ]
+    },
+    {
+      "path": "tv-shows/:id",
+      "file": "c:\\Users\\estev\\IdeaProjects\\Portal\\src\\app\\api\\tv-shows\\[id]\\route.ts",
+      "methods": [
+        "GET",
+        "PUT",
+        "DELETE",
+        "OPTIONS"
+      ],
+      "hasAuth": true,
+      "description": "",
+      "tests": [
+        {
+          "method": "GET",
+          "status": 404,
+          "statusText": "Not Found",
+          "success": false,
+          "message": "TV Show não encontrado",
+          "hasData": true,
+          "responseTime": 9,
+          "authUsed": true,
+          "url": "http://localhost:3001/api/tv-shows/1",
+          "dataSize": 52,
+          "stackTrace": null
+        },
+        {
+          "method": "PUT",
+          "status": 404,
+          "statusText": "Not Found",
+          "success": false,
+          "message": "TV Show não encontrado",
+          "hasData": true,
+          "responseTime": 7,
+          "authUsed": true,
+          "url": "http://localhost:3001/api/tv-shows/1",
+          "dataSize": 52,
+          "stackTrace": null
+        },
+        {
+          "method": "DELETE",
+          "status": 404,
+          "statusText": "Not Found",
+          "success": false,
+          "message": "TV Show não encontrado",
+          "hasData": true,
+          "responseTime": 6,
+          "authUsed": true,
+          "url": "http://localhost:3001/api/tv-shows/1",
+          "dataSize": 52,
+          "stackTrace": null
+        },
+        {
+          "method": "OPTIONS",
+          "status": 204,
+          "statusText": "No Content",
+          "success": true,
+          "message": "No Content",
+          "hasData": true,
+          "responseTime": 2,
+          "authUsed": true,
+          "url": "http://localhost:3001/api/tv-shows/1",
+          "dataSize": 0,
+          "stackTrace": null
+        }
+      ]
+    },
+    {
+      "path": "units",
+      "file": "c:\\Users\\estev\\IdeaProjects\\Portal\\src\\app\\api\\units\\route.ts",
+      "methods": [
+        "GET",
+        "POST",
+        "OPTIONS"
+      ],
+      "hasAuth": true,
+      "description": "",
+      "tests": [
+        {
+          "method": "GET",
+          "status": 200,
+          "statusText": "OK",
+          "success": true,
+          "message": "Units list - implementação pendente",
+          "hasData": true,
+          "responseTime": 5,
+          "authUsed": true,
+          "url": "http://localhost:3001/api/units",
+          "dataSize": 74,
+          "stackTrace": null
+        },
+        {
+          "method": "POST",
+          "status": 201,
+          "statusText": "Created",
+          "success": true,
+          "message": "Create unit - implementação pendente",
+          "hasData": true,
+          "responseTime": 6,
+          "authUsed": true,
+          "url": "http://localhost:3001/api/units",
+          "dataSize": 77,
+          "stackTrace": null
+        },
+        {
+          "method": "OPTIONS",
+          "status": 204,
+          "statusText": "No Content",
+          "success": true,
+          "message": "No Content",
+          "hasData": true,
+          "responseTime": 2,
+          "authUsed": true,
+          "url": "http://localhost:3001/api/units",
+          "dataSize": 0,
+          "stackTrace": null
+        }
+      ]
+    },
+    {
+      "path": "units/:id",
+      "file": "c:\\Users\\estev\\IdeaProjects\\Portal\\src\\app\\api\\units\\[id]\\route.ts",
+      "methods": [
+        "GET",
+        "PUT",
+        "DELETE",
+        "OPTIONS"
+      ],
+      "hasAuth": true,
+      "description": "",
+      "tests": [
+        {
+          "method": "GET",
+          "status": 200,
+          "statusText": "OK",
+          "success": true,
+          "message": "Unit by ID - implementação pendente",
+          "hasData": true,
+          "responseTime": 5,
+          "authUsed": true,
+          "url": "http://localhost:3001/api/units/1",
+          "dataSize": 76,
+          "stackTrace": null
+        },
+        {
+          "method": "PUT",
+          "status": 200,
+          "statusText": "OK",
+          "success": true,
+          "message": "Update unit - implementação pendente",
+          "hasData": true,
+          "responseTime": 5,
+          "authUsed": true,
+          "url": "http://localhost:3001/api/units/1",
+          "dataSize": 77,
+          "stackTrace": null
+        },
+        {
+          "method": "DELETE",
+          "status": 200,
+          "statusText": "OK",
+          "success": true,
+          "message": "Delete unit - implementação pendente",
+          "hasData": true,
+          "responseTime": 6,
+          "authUsed": true,
+          "url": "http://localhost:3001/api/units/1",
+          "dataSize": 65,
+          "stackTrace": null
+        },
+        {
+          "method": "OPTIONS",
+          "status": 204,
+          "statusText": "No Content",
+          "success": true,
+          "message": "No Content",
+          "hasData": true,
+          "responseTime": 2,
+          "authUsed": true,
+          "url": "http://localhost:3001/api/units/1",
+          "dataSize": 0,
+          "stackTrace": null
+        }
+      ]
+    },
+    {
+      "path": "units-debug",
+      "file": "c:\\Users\\estev\\IdeaProjects\\Portal\\src\\app\\api\\units-debug\\route.ts",
+      "methods": [
+        "GET",
+        "POST",
+        "OPTIONS"
+      ],
+      "hasAuth": true,
+      "description": "",
+      "tests": [
+        {
+          "method": "GET",
+          "status": 404,
+          "statusText": "Not Found",
+          "success": false,
+          "message": "Endpoint não encontrado",
+          "hasData": true,
+          "responseTime": 2,
+          "authUsed": true,
+          "url": "http://localhost:3001/api/units-debug",
+          "dataSize": 79,
+          "stackTrace": null
+        },
+        {
+          "method": "POST",
+          "status": 404,
+          "statusText": "Not Found",
+          "success": false,
+          "message": "Endpoint não encontrado",
+          "hasData": true,
+          "responseTime": 2,
+          "authUsed": true,
+          "url": "http://localhost:3001/api/units-debug",
+          "dataSize": 79,
+          "stackTrace": null
+        },
+        {
+          "method": "OPTIONS",
+          "status": 204,
+          "statusText": "No Content",
+          "success": true,
+          "message": "No Content",
+          "hasData": true,
+          "responseTime": 2,
+          "authUsed": true,
+          "url": "http://localhost:3001/api/units-debug",
+          "dataSize": 0,
+          "stackTrace": null
+        }
+      ]
+    },
+    {
+      "path": "users/by-role/:roleId",
+      "file": "c:\\Users\\estev\\IdeaProjects\\Portal\\src\\app\\api\\users\\by-role\\[roleId]\\route.ts",
+      "methods": [
+        "GET",
+        "OPTIONS"
+      ],
+      "hasAuth": true,
+      "description": "Obter usuários por papel/role\r   GET /api/users/by-role/[roleId]",
+      "tests": [
+        {
+          "method": "GET",
+          "status": 404,
+          "statusText": "Not Found",
+          "success": false,
+          "message": "Endpoint não encontrado",
+          "hasData": true,
+          "responseTime": 6,
+          "authUsed": true,
+          "url": "http://localhost:3001/api/users/by-role/1",
+          "dataSize": 83,
+          "stackTrace": null
+        },
+        {
+          "method": "OPTIONS",
+          "status": 204,
+          "statusText": "No Content",
+          "success": true,
+          "message": "No Content",
+          "hasData": true,
+          "responseTime": 2,
+          "authUsed": true,
+          "url": "http://localhost:3001/api/users/by-role/1",
+          "dataSize": 0,
+          "stackTrace": null
+        }
+      ]
+    },
+    {
+      "path": "users",
+      "file": "c:\\Users\\estev\\IdeaProjects\\Portal\\src\\app\\api\\users\\route.ts",
+      "methods": [
+        "OPTIONS"
+      ],
+      "hasAuth": true,
+      "description": "",
+      "tests": [
+        {
+          "method": "OPTIONS",
+          "status": 204,
+          "statusText": "No Content",
+          "success": true,
+          "message": "No Content",
+          "hasData": true,
+          "responseTime": 2,
+          "authUsed": true,
+          "url": "http://localhost:3001/api/users",
+          "dataSize": 0,
+          "stackTrace": null
+        }
+      ]
+    },
+    {
+      "path": "users/stats",
+      "file": "c:\\Users\\estev\\IdeaProjects\\Portal\\src\\app\\api\\users\\stats\\route.ts",
+      "methods": [
+        "GET",
+        "OPTIONS"
+      ],
+      "hasAuth": true,
+      "description": "",
+      "tests": [
+        {
+          "method": "GET",
+          "status": 200,
+          "statusText": "OK",
+          "success": true,
+          "message": "Estatísticas de usuários obtidas com sucesso",
+          "hasData": true,
+          "responseTime": 11,
+          "authUsed": true,
+          "url": "http://localhost:3001/api/users/stats",
+          "dataSize": 255,
+          "stackTrace": null
+        },
+        {
+          "method": "OPTIONS",
+          "status": 204,
+          "statusText": "No Content",
+          "success": true,
+          "message": "No Content",
+          "hasData": true,
+          "responseTime": 2,
+          "authUsed": true,
+          "url": "http://localhost:3001/api/users/stats",
+          "dataSize": 0,
+          "stackTrace": null
+        }
+      ]
+    },
+    {
+      "path": "users/:id",
+      "file": "c:\\Users\\estev\\IdeaProjects\\Portal\\src\\app\\api\\users\\[id]\\route.ts",
+      "methods": [
+        "GET",
+        "PUT",
+        "DELETE",
+        "OPTIONS"
+      ],
+      "hasAuth": true,
+      "description": "",
+      "tests": [
+        {
+          "method": "GET",
+          "status": 200,
+          "statusText": "OK",
+          "success": true,
+          "message": "Usuário encontrado com sucesso",
+          "hasData": true,
+          "responseTime": 13,
+          "authUsed": true,
+          "url": "http://localhost:3001/api/users/1",
+          "dataSize": 1209,
+          "stackTrace": null
+        },
+        {
+          "method": "PUT",
+          "status": 500,
+          "statusText": "Internal Server Error",
+          "success": false,
+          "message": "Erro interno do servidor",
+          "hasData": true,
+          "responseTime": 9,
+          "authUsed": true,
+          "url": "http://localhost:3001/api/users/1",
+          "dataSize": 221,
+          "stackTrace": "{\"success\":false,\"message\":\"Erro interno do servidor\",\"error\":\"update \\\"users\\\" set \\\"test\\\" = $1, \\\"timestamp\\\" = $2, \\\"lastUpdated\\\" = $3 where \\\"id\\\" = $4 returning * - coluna \\\"test\\\" da relação \\\"users\\\" não existe\"}"
+        },
+        {
+          "method": "DELETE",
+          "status": 400,
+          "statusText": "Bad Request",
+          "success": false,
+          "message": "Não é possível deletar seu próprio usuário",
+          "hasData": true,
+          "responseTime": 6,
+          "authUsed": true,
+          "url": "http://localhost:3001/api/users/1",
+          "dataSize": 72,
+          "stackTrace": null
+        },
+        {
+          "method": "OPTIONS",
+          "status": 204,
+          "statusText": "No Content",
+          "success": true,
+          "message": "No Content",
+          "hasData": true,
+          "responseTime": 2,
+          "authUsed": true,
+          "url": "http://localhost:3001/api/users/1",
+          "dataSize": 0,
+          "stackTrace": null
+        }
+      ]
+    },
+    {
+      "path": "video-file/:videoId",
+      "file": "c:\\Users\\estev\\IdeaProjects\\Portal\\src\\app\\api\\video-file\\[videoId]\\route.ts",
+      "methods": [
+        "GET",
+        "OPTIONS"
+      ],
+      "hasAuth": true,
+      "description": "",
+      "tests": [
+        {
+          "method": "GET",
+          "status": 404,
+          "statusText": "Not Found",
+          "success": false,
+          "message": "Arquivo do vídeo não encontrado",
+          "hasData": true,
+          "responseTime": 8,
+          "authUsed": true,
+          "url": "http://localhost:3001/api/video-file/1",
+          "dataSize": 61,
+          "stackTrace": null
+        },
+        {
+          "method": "OPTIONS",
+          "status": 204,
+          "statusText": "No Content",
+          "success": true,
+          "message": "No Content",
+          "hasData": true,
+          "responseTime": 1,
+          "authUsed": true,
+          "url": "http://localhost:3001/api/video-file/1",
+          "dataSize": 0,
+          "stackTrace": null
+        }
+      ]
+    }
+  ],
+  "summary": {
+    "total": 366,
+    "success": 174,
+    "failed": 192,
+    "authRequired": 120,
+    "byStatus": {
+      "0": 15,
+      "200": 42,
+      "201": 4,
+      "204": 128,
+      "400": 29,
+      "401": 1,
+      "404": 133,
+      "500": 14
+    }
+  }
+}

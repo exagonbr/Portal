@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback, useRef } from 'react'
+import { useState, useEffect, useCallback, useRef, useMemo } from 'react'
 import { usersService, UsersResponseDto, UsersFilterDto } from '@/services/usersService'
 import { roleService } from '@/services/roleService'
 import { institutionService } from '@/services/institutionService'
@@ -59,6 +59,7 @@ export function useUsers(options: UseUsersOptions = {}): UseUsersReturn {
   const { initialPageSize = 10 } = options
   const { showSuccess, showError } = useToast()
   const isMountedRef = useRef(true)
+  const loadingRef = useRef(false) // Prevent concurrent loads
 
   // Data state
   const [users, setUsers] = useState<UsersResponseDto[]>([])
@@ -86,6 +87,33 @@ export function useUsers(options: UseUsersOptions = {}): UseUsersReturn {
   // Error state
   const [auxiliaryDataError, setAuxiliaryDataError] = useState<string | null>(null)
 
+  // FIXED: Use stable references for filters to prevent re-renders
+  const filtersRef = useRef<UsersFilterDto>({})
+  const paramsRef = useRef<any>({})
+
+  // Update refs when state changes but don't trigger re-renders
+  useEffect(() => {
+    filtersRef.current = filters
+  }, [filters])
+
+  // Memoize params with stable reference
+  const memoizedParams = useMemo(() => {
+    const newParams = {
+      page: currentPage,
+      limit: itemsPerPage,
+      sortBy,
+      sortOrder,
+      ...filtersRef.current,
+    }
+    
+    // Only update if actually changed
+    if (JSON.stringify(newParams) !== JSON.stringify(paramsRef.current)) {
+      paramsRef.current = newParams
+    }
+    
+    return paramsRef.current
+  }, [currentPage, itemsPerPage, sortBy, sortOrder])
+
   // Cleanup on unmount
   useEffect(() => {
     return () => {
@@ -93,8 +121,11 @@ export function useUsers(options: UseUsersOptions = {}): UseUsersReturn {
     }
   }, [])
 
-  // Load auxiliary data (roles and institutions)
+  // Load auxiliary data (roles and institutions) - FIXED: Remove from dependencies to prevent loops
   const loadAuxiliaryData = useCallback(async () => {
+    if (auxiliaryDataLoaded || loadingRef.current) return // Prevent repeated fetches
+    
+    loadingRef.current = true
     setRolesLoading(true)
     setInstitutionsLoading(true)
     setAuxiliaryDataError(null)
@@ -102,72 +133,64 @@ export function useUsers(options: UseUsersOptions = {}): UseUsersReturn {
     try {
       console.log('🔄 Carregando dados auxiliares (roles e instituições)...')
 
-      // Load roles
-      try {
-        const rolesFromApi = await roleService.getActiveRoles()
-        console.log('✅ Roles carregadas:', rolesFromApi.length)
+      // Load roles and institutions in parallel
+      const [rolesResult, institutionsResult] = await Promise.allSettled([
+        roleService.getActiveRoles(),
+        institutionService.getActiveInstitutions()
+      ])
+
+      // Handle roles
+      if (rolesResult.status === 'fulfilled') {
+        console.log('✅ Roles carregadas:', rolesResult.value.length)
         if (isMountedRef.current) {
-          setRoles(rolesFromApi)
+          setRoles(rolesResult.value)
         }
-      } catch (error) {
-        console.log('❌ Erro ao carregar roles:', error)
+      } else {
+        console.log('❌ Erro ao carregar roles:', rolesResult.reason)
         setAuxiliaryDataError('Falha ao carregar funções.')
         if (isMountedRef.current) {
           setRoles([])
         }
-      } finally {
-        if (isMountedRef.current) {
-          setRolesLoading(false)
-        }
       }
 
-      // Load institutions
-      try {
-        const institutionsFromApi = await institutionService.getActiveInstitutions()
-        console.log('✅ Instituições carregadas:', institutionsFromApi.length)
+      // Handle institutions
+      if (institutionsResult.status === 'fulfilled') {
+        console.log('✅ Instituições carregadas:', institutionsResult.value.length)
         if (isMountedRef.current) {
-          setInstitutions(institutionsFromApi)
+          setInstitutions(institutionsResult.value)
         }
-      } catch (error) {
-        console.log('❌ Erro ao carregar instituições:', error)
+      } else {
+        console.log('❌ Erro ao carregar instituições:', institutionsResult.reason)
         setAuxiliaryDataError(prev => 
           prev ? `${prev} Falha ao carregar instituições.` : 'Falha ao carregar instituições.'
         )
         if (isMountedRef.current) {
           setInstitutions([])
         }
-      } finally {
-        if (isMountedRef.current) {
-          setInstitutionsLoading(false)
-        }
       }
     } finally {
       if (isMountedRef.current) {
+        setRolesLoading(false)
+        setInstitutionsLoading(false)
         setAuxiliaryDataLoaded(true)
       }
+      loadingRef.current = false
     }
-  }, [])
+  }, [auxiliaryDataLoaded]) // FIXED: Only depend on auxiliaryDataLoaded
 
-  // Load users with current filters and pagination
+  // FIXED: Load users with stable dependencies
   const loadUsers = useCallback(async (showLoadingIndicator = true) => {
-    if (!isMountedRef.current) return
+    if (!isMountedRef.current || loadingRef.current) return
 
+    loadingRef.current = true
     if (showLoadingIndicator) setLoading(true)
 
     try {
-      const params: UsersFilterDto = {
-        page: currentPage,
-        limit: itemsPerPage,
-        sortBy,
-        sortOrder,
-        ...filters,
-      }
-
-      console.log('🔍 [useUsers] Buscando usuários com parâmetros:', params)
+      console.log('🔍 [useUsers] Buscando usuários com parâmetros:', memoizedParams)
 
       const response = searchTerm
-        ? await usersService.searchUsers(searchTerm, params)
-        : await usersService.getUsers(params)
+        ? await usersService.searchUsers(searchTerm, memoizedParams)
+        : await usersService.getUsers(memoizedParams)
 
       if (!response || !response.items || !Array.isArray(response.items)) {
         console.log('❌ [useUsers] Resposta inválida do usersService:', response)
@@ -213,8 +236,9 @@ export function useUsers(options: UseUsersOptions = {}): UseUsersReturn {
       if (isMountedRef.current) {
         setLoading(false)
       }
+      loadingRef.current = false
     }
-  }, [currentPage, itemsPerPage, sortBy, sortOrder, filters, searchTerm, roles, institutions, showError])
+  }, [memoizedParams, searchTerm, roles, institutions, showError]) // FIXED: Stable dependencies
 
   // Refresh users (force reload)
   const refreshUsers = useCallback(async () => {
@@ -288,17 +312,23 @@ export function useUsers(options: UseUsersOptions = {}): UseUsersReturn {
     setCurrentPage(1) // Reset to first page when search changes
   }, [])
 
-  // Load auxiliary data on mount
+  // FIXED: Load auxiliary data on mount only once
   useEffect(() => {
-    loadAuxiliaryData()
-  }, [loadAuxiliaryData])
-
-  // Load users when auxiliary data is ready or dependencies change
-  useEffect(() => {
-    if (auxiliaryDataLoaded && isMountedRef.current) {
-      loadUsers()
+    if (!auxiliaryDataLoaded) {
+      loadAuxiliaryData()
     }
-  }, [loadUsers, auxiliaryDataLoaded])
+  }, []) // Empty dependency array - run only once
+
+  // FIXED: Load users when auxiliary data is ready or key dependencies change
+  useEffect(() => {
+    if (auxiliaryDataLoaded && !loadingRef.current) {
+      const timeoutId = setTimeout(() => {
+        loadUsers()
+      }, 100) // Small delay to prevent rapid calls
+      
+      return () => clearTimeout(timeoutId)
+    }
+  }, [auxiliaryDataLoaded, memoizedParams, searchTerm]) // FIXED: Stable dependencies
 
   return {
     // Data
