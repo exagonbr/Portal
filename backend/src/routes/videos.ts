@@ -1,5 +1,6 @@
 import express from 'express';
 import { requireAuth } from '../middleware/requireAuth';
+import { validateJWT, requireRole } from '../middleware/auth';
 
 const router = express.Router();
 

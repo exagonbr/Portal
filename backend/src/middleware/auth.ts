@@ -1,6 +1,6 @@
 import express from 'express';
 import jwt from 'jsonwebtoken';
-import { AuthTokenPayload } from '../types/express';
+import { AccessTokenPayload } from '../config/jwt';
 
 export const validateJWT = async (
   req: express.Request,
@@ -27,7 +27,7 @@ export const validateJWT = async (
     }
 
     try {
-      const decoded = jwt.verify(token, process.env.JWT_SECRET!) as AuthTokenPayload;
+      const decoded = jwt.verify(token, process.env.JWT_SECRET!) as AccessTokenPayload;
       
       // Verifica se é uma sessão de fallback (criada quando Redis não está disponível)
       if (decoded.sessionId && decoded.sessionId.startsWith('fallback-')) {
@@ -72,14 +72,16 @@ export const requireRole = (roles: string[]) => {
     res: express.Response,
     next: express.NextFunction
   ): express.Response | void => {
-    if (!req.user) {
+    const user = req.user as AccessTokenPayload | undefined;
+
+    if (!user) {
       return res.status(401).json({
         success: false,
         message: 'Acesso não autorizado. Por favor, faça login para continuar.'
       });
     }
 
-    if (!req.user.role || !roles.includes(req.user.role)) {
+    if (!user.role || !roles.includes(user.role)) {
       return res.status(403).json({
         success: false,
         message: 'Você não tem permissão para acessar este recurso.'
@@ -95,7 +97,9 @@ export const requireInstitution = (
   res: express.Response,
   next: express.NextFunction
 ): express.Response | void => {
-  if (!req.user?.institutionId) {
+  const user = req.user as AccessTokenPayload | undefined;
+
+  if (!user?.institutionId) {
     return res.status(403).json({
       success: false,
       message: 'Você precisa estar vinculado a uma instituição para acessar este recurso.'

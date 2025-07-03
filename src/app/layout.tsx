@@ -59,9 +59,6 @@ export default function RootLayout({
 }: {
   children: React.ReactNode;
 }) {
-  // Forçar headers no-cache no servidor
-  const headersList = headers();
-  
   return (
     <html lang="pt-BR" className="h-full antialiased" suppressHydrationWarning>
       <head>

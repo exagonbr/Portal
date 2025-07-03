@@ -217,13 +217,17 @@ router.get(
 router.get('/:id', async (req, res) => {
   try {
     const { id } = req.params;
+    const { role, institution_id, limit = '10', offset = '0' } = req.query;
+    
+    // Iniciar query base
+    let query = db('users')
+      .select('id', 'name', 'email', 'role', 'active', 'created_at', 'last_login');
     
     // Cache individual de usuário
     const user = await cacheService.getOrSet(
       CacheKeys.USER_BY_ID(id),
       async () => {
-        return db('users')
-          .select('id', 'name', 'email', 'role', 'active', 'created_at', 'last_login')
+        return query
           .where('id', id)
           .first();
       },
@@ -258,13 +262,21 @@ router.get('/:id', async (req, res) => {
     const users = await query
       .orderBy('users.name')
       .limit(Number(limit))
-      .offset(offset);
+      .offset(Number(offset));
 
     const totalPages = Math.ceil(total / Number(limit));
 
-    res.json({
+    return res.json({
       success: true,
-      data: user
+      data: {
+        user,
+        users,
+        pagination: {
+          total,
+          totalPages,
+          currentPage: Math.floor(Number(offset) / Number(limit)) + 1
+        }
+      }
     });
   } catch (error) {
     logger.error('Erro ao buscar usuário:', error);

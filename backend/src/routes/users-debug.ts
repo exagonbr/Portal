@@ -202,7 +202,7 @@ router.get('/full-diagnosis', async (req, res) => {
     const hasAuthHeader = !!authHeader;
     const token = authHeader?.substring(7);
     
-    let tokenInfo = null;
+    let tokenInfo: any = null;
     
     if (token) {
       try {
@@ -223,7 +223,7 @@ router.get('/full-diagnosis', async (req, res) => {
     }
     
     // Testar conexão com banco
-    let dbConnection = null;
+    let dbConnection: any = null;
     try {
       const testCount = await userRepository.count();
       dbConnection = {

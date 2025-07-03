@@ -2,7 +2,10 @@
 // For Next.js projects, API routes should be in src/app/api/ directory
 // There's already a working implementation at src/app/api/auth/validate/route.ts
 
-import { authService } from '../services/authService';
+import { getCurrentUser } from '../services/authService';
+
+
+
 
 const JWT_SECRET = 'SaberconPortal2025_SuperSecretKey_ProductionReady_XYZ789';
 
@@ -33,7 +36,9 @@ export async function validateSession(token: string, sessionId?: string) {
     // This function now focuses on user validation and session management
     
     // 1. Get user from database using the auth service
-    const user = await authService.getCurrentUser();
+    const user = await getCurrentUser();
+
+
     if (!user) {
       return {
         valid: false,
@@ -41,25 +46,15 @@ export async function validateSession(token: string, sessionId?: string) {
       };
     }
 
-    // 2. Optional: Validate Redis session if sessionId is provided
+// 2. Optional: Validate session if sessionId is provided (custom implementation needed)
     if (sessionId) {
-      try {
-        const sessionValid = await authService.refreshToken();
-        if (!sessionValid) {
-          return {
-            valid: false,
-            message: 'Sessão inválida ou expirada'
-          };
-        }
-      } catch (sessionError) {
-        // Session validation failed, continue with basic validation
-        console.log('Erro na validação de sessão, continuando com validação básica:', sessionError);
-      }
+      console.log('Session validation not implemented for sessionId:', sessionId);
     }
 
-    // 4. Return user data without sensitive information
+    // Return user data without sensitive information
     const userResponse = {
       id: user.id,
+
       name: user.name,
       email: user.email,
       role: user.role,

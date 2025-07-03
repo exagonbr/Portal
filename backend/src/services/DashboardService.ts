@@ -1,4 +1,3 @@
-import { getRedisClient } from '../config/redis';
 import { SessionService } from './SessionService';
 import { UserRepository } from '../repositories/UserRepository';
 
@@ -51,7 +50,6 @@ interface UserDashboard {
 }
 
 export class DashboardService {
-  private static redis = getRedisClient();
   private static userRepository = new UserRepository();
 
   /**
@@ -74,7 +72,10 @@ export class DashboardService {
 
       return {
         users: userStats,
-        sessions: sessionStats,
+        sessions: {
+          ...sessionStats,
+          averageSessionDuration: 0,
+        },
         system: systemStats,
         recent: recentActivity
       };
@@ -101,7 +102,7 @@ export class DashboardService {
   static async getUserDashboard(userId: number): Promise<UserDashboard> {
     try {
       // Busca dados do usuário
-      const user = await this.userRepository.getUserWithRoleAndInstitution(userId);
+      const user = await this.userRepository.getUserWithRoleAndInstitution(userId.toString());
 
       if (!user) {
         throw new Error('Usuário não encontrado');
@@ -194,62 +195,6 @@ export class DashboardService {
     };
   }
 
-  /**
-   * Calcula duração média de sessão
-   */
-  private static async getAverageSessionDuration(): Promise<number> {
-    try {
-      // Busca todas as sessões ativas
-      const sessionKeys = await this.redis.keys('session:*');
-      let totalDuration = 0;
-      let validSessions = 0;
-
-      for (const key of sessionKeys) {
-        const sessionDataStr = await this.redis.get(key);
-        if (sessionDataStr) {
-          const sessionData = JSON.parse(sessionDataStr);
-          const duration = sessionData.lastActivity - sessionData.createdAt;
-          if (duration > 0) {
-            totalDuration += duration;
-            validSessions++;
-          }
-        }
-      }
-
-      return validSessions > 0 ? Math.round(totalDuration / validSessions / 1000 / 60) : 0; // em minutos
-    } catch (error) {
-      console.log('Erro ao calcular duração média de sessão:', error);
-      return 0;
-    }
-  }
-
-  /**
-   * Obtém estatísticas pessoais do usuário
-   */
-  private static async getUserPersonalStats(userId: string) {
-    // Aqui você implementaria as consultas específicas baseadas no seu modelo de dados
-    // Por exemplo: cursos matriculados, cursos completados, tempo de estudo, etc.
-    
-    // Implementação simulada - substitua pelas consultas reais do seu sistema
-    return {
-      coursesEnrolled: 0, // await getCourseEnrollmentCount(userId)
-      coursesCompleted: 0, // await getCourseCompletionCount(userId)
-      totalStudyTime: 0, // await getTotalStudyTime(userId) - em minutos
-      achievements: 0 // await getAchievementCount(userId)
-    };
-  }
-
-  /**
-   * Obtém dados de cursos do usuário
-   */
-  private static async getUserCourseData(userId: string) {
-    // Implementação simulada - substitua pelas consultas reais do seu sistema
-    return {
-      inProgress: [], // await getCoursesInProgress(userId)
-      completed: [], // await getCompletedCourses(userId)
-      recent: [] // await getRecentCourses(userId)
-    };
-  }
 
   /**
    * Obtém dados de atividade do usuário
@@ -262,7 +207,7 @@ export class DashboardService {
     const studyStreak = 0;
     
     // Último acesso baseado na data de criação do usuário (temporário)
-    const user = await this.userRepository.findById(userId);
+    const user = await this.userRepository.findById(userId.toString());
 
     return {
       recentSessions: recentSessions.slice(0, 5),
@@ -276,7 +221,7 @@ export class DashboardService {
    */
   static async getRealTimeMetrics() {
     try {
-      const totalUsers = await UserRepository.count();
+      const totalUsers = await this.userRepository.count();
       
       // Obtém dados de sessões do SessionService
       const sessionStats = await SessionService.getSessionStats();
@@ -313,83 +258,4 @@ export class DashboardService {
     return `${Math.round(JSON.parse(info).heapUsed / 1024 / 1024)}MB`;
   }
 
-  /**
-   * Obtém dados analíticos
-   */
-  static async getAnalyticsData(type: 'users' | 'sessions' | 'activity', period: 'day' | 'week' | 'month' = 'week') {
-    const now = new Date();
-    let startDate: Date;
-
-      // Implementação baseada no tipo de analytics solicitado
-      switch (type) {
-        case 'users':
-          return await this.getUserAnalytics(startDate, endDate);
-        case 'sessions':
-          return await this.getSessionAnalytics(startDate, endDate);
-        case 'activity':
-          return await this.getActivityAnalytics(startDate, endDate);
-        default:
-          throw new Error('Tipo de analytics não suportado');
-      }
-    } catch (error) {
-      console.log('Erro ao obter dados de analytics:', error);
-      throw new Error('Erro ao obter dados de analytics');
-    }
-  }
-
-  /**
-   * Obtém dados analíticos de usuários
-   */
-  private static async getUserAnalytics(startDate: Date, endDate: Date) {
-    console.warn("getUserAnalytics is returning mock data as underlying repository method was removed for stability.");
-    return {
-      type: 'users',
-      data: []
-    };
-  }
-
-  /**
-   * Analytics de sessões (simulado)
-   */
-  private static async getSessionAnalytics(startDate: Date, endDate: Date) {
-    // Em uma implementação real, você teria logs de sessões em uma tabela
-    // Aqui retornamos dados simulados
-    const data = [];
-    const currentDate = new Date(startDate);
-    
-    while (currentDate <= endDate) {
-      data.push({
-        date: currentDate.toISOString().split('T')[0],
-        value: Math.floor(Math.random() * 100) + 10 // Dados simulados
-      });
-      currentDate.setDate(currentDate.getDate() + 1);
-    }
-
-    return {
-      type: 'sessions',
-      data
-    };
-  }
-
-  /**
-   * Analytics de atividade (simulado)
-   */
-  private static async getActivityAnalytics(startDate: Date, endDate: Date) {
-    // Implementação simulada
-    const data = [];
-    const currentDate = new Date(startDate);
-    
-    while (currentDate <= endDate) {
-      data.push({
-        date: currentDate.toISOString().split('T')[0],
-        value: Math.floor(Math.random() * 50) + 5 // Dados simulados
-      });
-      currentDate.setDate(currentDate.getDate() + 1);
-    }
-
-    return {
-      type: 'activity',
-      data
-    };
-  }
 } 

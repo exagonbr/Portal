@@ -17,8 +17,9 @@ import { VideoFile } from '../entities/VideoFile';
 import { File } from '../entities/File';
 import { Author } from '../entities/Author';
 import { ContentAuthor } from '../entities/ContentAuthor';
-import { TvShow } from '../entities/TvShow';
-import { TvShowVideo } from '../entities/TvShowVideo';
+import { TVShow } from '../entities/TVShow';
+
+// Removed duplicate import of TvShowVideo from '../entities/TvShowVideo'
 import { Book } from '../entities/Book';
 import { Quiz } from '../entities/Quiz';
 import { Question } from '../entities/Question';
@@ -26,12 +27,10 @@ import { ForumThread } from '../entities/ForumThread';
 import { ForumReply } from '../entities/ForumReply';
 import { ChatMessage } from '../entities/ChatMessage';
 import { Announcement } from '../entities/Announcement';
-import { File } from '../entities/File';
 import { VideoCollection } from '../entities/VideoCollection';
 import { VideoModule } from '../entities/VideoModule';
 import {
   TvShowComplete,
-  TvShowVideo,
   TvShowQuestion,
   TvShowAnswer,
   TvShowFile,
@@ -72,8 +71,7 @@ export const dataSourceOptions: DataSourceOptions = {
     File,
     Author,
     ContentAuthor,
-    TvShow,
-    TvShowVideo,
+    TVShow,
     Book,
     Quiz,
     Question,
@@ -81,11 +79,9 @@ export const dataSourceOptions: DataSourceOptions = {
     ForumReply,
     ChatMessage,
     Announcement,
-    File,
     VideoCollection,
     VideoModule,
     TvShowComplete,
-    TvShowVideo,
     TvShowQuestion,
     TvShowAnswer,
     TvShowFile,

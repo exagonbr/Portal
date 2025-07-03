@@ -1,10 +1,8 @@
 import { AccessTokenPayload } from '../config/jwt';
 
-declare global {
-  namespace Express {
-    interface Request {
-      user?: AccessTokenPayload;
-    }
+declare module 'express-serve-static-core' {
+  interface Request {
+    user?: AccessTokenPayload;
   }
 }
 

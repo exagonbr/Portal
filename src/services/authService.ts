@@ -1,4 +1,5 @@
-import { apiClient, handleApiError, ApiClientError, isAuthError } from '@/lib/api-client';
+import { apiClient, handleApiError, ApiClientError } from '@/lib/api-client';
+
 import { 
   LoginDto, 
   AuthResponseDto, 
@@ -32,8 +33,14 @@ export class AuthService {
       
       const response = await apiClient.post<AuthResponseDto>(`${this.baseEndpoint}/login`, loginData);
 
-      // Verifica se a resposta tem o formato esperado
-      const responseData = (response.data || response) as AuthResponseDto;
+      if (!response.data) {
+        return {
+          success: false,
+          message: 'Resposta do servidor vazia'
+        };
+      }
+
+      const responseData = response.data;
 
       if (!responseData.user || !responseData.token) {
         console.error('❌ AuthService: Resposta de login incompleta:', responseData);
@@ -43,7 +50,7 @@ export class AuthService {
         };
       }
 
-      const { user, token } = response.data;
+      const { user, token } = responseData;
 
       // Salva o token e dados do usuário
       if (typeof window !== 'undefined') {
@@ -51,7 +58,7 @@ export class AuthService {
       }
 
       // Converte UserResponseDto para User (compatibilidade)
-      const compatibleUser = this.convertToCompatibleUser(responseData.user);
+      const compatibleUser = this.convertToCompatibleUser(user);
       console.log(`✅ AuthService: Usuário convertido com role: "${compatibleUser.role}"`);
 
       return {
@@ -111,10 +118,10 @@ export class AuthService {
 
       const response = await apiClient.post<AuthResponseDto>(`${this.baseEndpoint}/register`, registerData);
 
-      if (!response.success || !response.data) {
+      if (!response.data) {
         return {
           success: false,
-          message: response.message || 'Falha no registro'
+          message: 'Resposta do servidor vazia'
         };
       }
 
@@ -164,7 +171,7 @@ export class AuthService {
     try {
       const response = await apiClient.get<UserWithRoleDto>('/user/me');
 
-      if (!response.success || !response.data) {
+      if (!response.data) {
         return null;
       }
 
@@ -260,26 +267,14 @@ export class AuthService {
   }
 
   private convertToCompatibleUser(apiUser: UserResponseDto): User {
-    // Mapear role_id para role baseado no UserWithRoleDto se disponível
-    let role: UserRole = UserRole.STUDENT; // default
-    if ('role_name' in apiUser) {
-      const roleMapping: Record<string, UserRole> = {
-        'Aluno': UserRole.STUDENT,
-        'Professor': UserRole.TEACHER,
-        'Gestor': UserRole.INSTITUTION_MANAGER,
-        'Administrador': UserRole.SYSTEM_ADMIN,
-        'Coordenador Acadêmico': UserRole.COORDINATOR,
-        'Responsável': UserRole.GUARDIAN
-      };
-      role = roleMapping[(apiUser as UserWithRoleDto).role_name] || 'student';
-    }
-
     return {
       id: apiUser.id,
       name: apiUser.name,
       email: apiUser.email,
-      role: apiUser.role?.name?.toLowerCase() as UserRole || 'student',
-      permissions: apiUser.role?.permissions || [],
+      role: UserRole.STUDENT, // Default role
+
+      permissions: [],
+
       institutionId: apiUser.institution_id,
       createdAt: apiUser.created_at,
       updatedAt: apiUser.updated_at

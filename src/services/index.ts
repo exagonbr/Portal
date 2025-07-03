@@ -29,7 +29,7 @@ export {
 
 // Serviços de autenticação
 export { 
-  authService,
+  AuthService,
   login,
   register,
   getCurrentUser,
@@ -40,6 +40,8 @@ export {
   updateUser,
   deleteUser
 } from './authService';
+
+
 
 // Serviços de usuários
 export {
@@ -91,6 +93,8 @@ export type {
   RegisterResponse
 } from './authService';
 
+
+
 export type {
   RoleFilters,
   RoleListOptions
@@ -115,8 +119,10 @@ export type {
 } from './queueService';
 
 // Importa as instâncias dos serviços
-import { authService } from './authService';
+import * as authService from './authService';
 import { userService } from './userService';
+
+
 import { roleService } from './roleService';
 import { institutionService } from './institutionService';
 import { courseService } from './courseService';
@@ -127,6 +133,8 @@ import { queueService } from './queueService';
 export const services = {
   auth: authService,
   user: userService,
+
+
   role: roleService,
   institution: institutionService,
   course: courseService,
@@ -176,9 +184,11 @@ export const configureServices = (config: {
 export const initializeServices = async () => {
   try {
     // Verifica se há token válido e tenta obter usuário atual
-    if (services.auth.isAuthenticated()) {
-      await services.auth.getCurrentUser();
-    }
+if (authService.isAuthenticated()) {
+  await authService.getCurrentUser();
+}
+
+
     
     // Pré-aquece cache com dados frequentemente acessados
     await warmupCache();
@@ -194,17 +204,18 @@ export const initializeServices = async () => {
   }
 };
 
-// Limpeza de dados (logout completo)
 export const clearAllData = async () => {
   try {
-    await services.auth.logout();
+    await authService.logout();
     await services.cache.clear();
+
     services.queue.stopProcessing();
     console.log('Dados limpos com sucesso');
   } catch (error) {
     console.log('Erro ao limpar dados:', error);
   }
 };
+
 
 // Verificação de saúde dos serviços
 export const checkServicesHealth = async () => {

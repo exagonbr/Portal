@@ -7,6 +7,7 @@ import { initializeFactoryDiagnostic } from '@/utils/factory-diagnostic'
 import { isDevelopment } from '@/utils/env'
 import { suppressHydrationWarnings } from '@/utils/suppressHydrationWarnings'
 import { ErrorBoundary } from 'react-error-boundary';
+import { useForceRevalidation } from '@/hooks/useForceRevalidation'
 
 // Dynamically import AuthProvider to ensure client-side rendering
 const AuthProvider = dynamic(() =>
@@ -157,6 +158,9 @@ export default function SimpleProviders({ children }: { children: ReactNode }) {
     
     return cleanup;
   }, []);
+
+  // Usar o hook de revalidação
+  useForceRevalidation()
 
   return (
     <ErrorBoundary 

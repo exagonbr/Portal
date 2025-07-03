@@ -4,8 +4,9 @@ import { AppDataSource } from '../config/typeorm.config';
 import { JWT_CONFIG, AccessTokenPayload, RefreshTokenPayload } from '../config/jwt';
 import { Role, UserRole } from '../entities/Role';
 import { Users } from '../entities/Users';
+import { UserWithRelations } from '../types/user';
 
-class AuthService {
+export class AuthService {
   private userRepository = AppDataSource.getRepository(Users);
   private roleRepository = AppDataSource.getRepository(Role);
 
@@ -185,16 +186,103 @@ class AuthService {
     return {
       id: user.id,
       email: user.email,
-      name: user.name,
+      name: user.fullName,
       role: {
         name: user.role?.name || 'user',
-        permissions: user.role?.permissions || []
+        permissions: Role.getDefaultPermissions(user.role?.name || UserRole.STUDENT)
       },
-      is_active: user.is_active,
-      created_at: user.created_at,
-      updated_at: user.updated_at
+      is_active: user.enabled,
+      created_at: user.dateCreated,
+      updated_at: user.lastUpdated
     };
+  }
+
+  /**
+   * Cria as roles padrão do sistema
+   */
+  static async createDefaultRoles(): Promise<void> {
+    const roleRepository = AppDataSource.getRepository(Role);
+    
+    const defaultRoles = [
+      {
+        name: UserRole.SYSTEM_ADMIN,
+        description: 'Administrador do Sistema'
+      },
+      {
+        name: UserRole.INSTITUTION_MANAGER,
+        description: 'Gestor da Instituição'
+      },
+      {
+        name: UserRole.ACADEMIC_COORDINATOR,
+        description: 'Coordenador Acadêmico'
+      },
+      {
+        name: UserRole.TEACHER,
+        description: 'Professor'
+      },
+      {
+        name: UserRole.STUDENT,
+        description: 'Estudante'
+      },
+      {
+        name: UserRole.GUARDIAN,
+        description: 'Responsável'
+      }
+    ];
+
+    for (const roleData of defaultRoles) {
+      const existingRole = await roleRepository.findOne({ where: { name: roleData.name as UserRole } });
+      if (!existingRole) {
+        const role = roleRepository.create({
+          name: roleData.name as UserRole,
+          description: roleData.description,
+          active: true
+        });
+        await roleRepository.save(role);
+      }
+    }
+  }
+
+  /**
+   * Cria o usuário admin padrão do sistema
+   */
+  static async createDefaultAdminUser(): Promise<void> {
+    const userRepository = AppDataSource.getRepository(Users);
+    const roleRepository = AppDataSource.getRepository(Role);
+
+    // Verificar se já existe um admin
+    const existingAdmin = await userRepository.findOne({
+      where: { email: 'admin@portal.com' }
+    });
+
+    if (existingAdmin) {
+      console.log('👤 Usuário admin já existe');
+      return;
+    }
+
+    // Buscar role admin
+    const adminRole = await roleRepository.findOne({
+      where: { name: UserRole.SYSTEM_ADMIN }
+    });
+
+    if (!adminRole) {
+      throw new Error('Role de administrador não encontrada');
+    }
+
+    // Criar usuário admin
+    const adminUser = userRepository.create({
+      email: 'admin@portal.com',
+      password: 'admin123', // Será hasheada automaticamente
+      fullName: 'Administrador do Sistema',
+      enabled: true,
+      role: adminRole
+    });
+
+    await userRepository.save(adminUser);
+    console.log('✅ Usuário admin criado com sucesso');
   }
 }
 
-export default new AuthService();
+// Exporta a instância padrão
+export const authService = new AuthService();
+export default authService;

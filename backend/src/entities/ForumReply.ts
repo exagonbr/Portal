@@ -7,6 +7,7 @@ import {
   ManyToOne,
   JoinColumn
 } from 'typeorm';
+import { User } from './User';
 import { ForumThread } from './ForumThread';
 
 @Entity('forum_replies')
@@ -19,6 +20,10 @@ export class ForumReply {
 
   @Column()
   author_id: string;
+
+  @ManyToOne(() => User, user => user.forumReplies)
+  @JoinColumn({ name: 'author_id' })
+  author: User;
 
   @Column()
   thread_id: string;

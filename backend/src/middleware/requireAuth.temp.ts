@@ -11,7 +11,7 @@ declare global {
   }
 }
 
-export const requireAuth: RequestHandler = async (req: Request, res: Response, next: NextFunction): Promise<Response | void> => {
+export const requireAuth: RequestHandler = async (req: Request, res: Response, next: NextFunction) => {
   try {
     const authHeader = req.headers.authorization;
 
@@ -42,7 +42,7 @@ export const requireAuth: RequestHandler = async (req: Request, res: Response, n
     }
 
     req.user = user;
-    return next();
+    next();
 
   } catch (error) {
     if (error instanceof jwt.TokenExpiredError) {

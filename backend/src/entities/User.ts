@@ -1,4 +1,4 @@
-  import {
+import {
   Entity,
   PrimaryGeneratedColumn,
   Column,
@@ -35,7 +35,6 @@ export class User {
 
   @Column({ name: 'full_name' })
   name: string;
-
 
   @Column({ name: 'enabled', default: true })
   is_active: boolean;
@@ -75,7 +74,6 @@ export class User {
   @OneToMany(() => Notification, notification => notification.sentBy)
   sentNotifications: Notification[];
 
-
   // Métodos para hash de senha
   @BeforeInsert()
   @BeforeUpdate()
@@ -92,15 +90,20 @@ export class User {
     }
     return bcrypt.compare(password, this.password);
   }
+}
 
-export interface UserWithRelations extends User {
-  role?: {
-    id: number;
-    name: string;
-    permissions?: string[];
-  };
-  institution?: {
-    id: number;
-    name: string;
-  };
+export interface UserWithRelations {
+  id: string;
+  email: string;
+  name: string;
+  is_active: boolean;
+  role?: Role;
+  institution?: Institution;
+  userClasses?: UserClass[];
+  schoolManagers?: SchoolManager[];
+  teachingCourses?: Course[];
+  sentMessages?: ChatMessage[];
+  forumThreads?: ForumThread[];
+  forumReplies?: ForumReply[];
+  sentNotifications?: Notification[];
 }

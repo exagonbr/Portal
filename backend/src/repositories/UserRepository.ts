@@ -1,6 +1,18 @@
- import { BaseRepository } from './BaseRepository';
-import { User, CreateUserData, UpdateUserData } from '../models/User';
+import { BaseRepository } from './BaseRepository';
+import { User } from '../models/User';
 import db from '../config/database';
+
+interface UserWithRelations extends Omit<User, 'role'> {
+  role?: {
+    id: string;
+    name: string;
+    permissions?: string[];
+  };
+  institution?: {
+    id: string;
+    name: string;
+  };
+}
 
 export class UserRepository extends BaseRepository<User> {
   protected tableName = 'users';
@@ -41,7 +53,7 @@ export class UserRepository extends BaseRepository<User> {
 
   static async delete(id: number): Promise<boolean> {
     try {
-      const deletedRows = await db(this.TABLE_NAME)
+      const deletedRows = await db('users')
         .where('id', id)
         .del();
 
@@ -54,7 +66,7 @@ export class UserRepository extends BaseRepository<User> {
 
   static async findAll(limit?: number, offset?: number): Promise<UserWithRelations[]> {
     try {
-      let query = db(this.TABLE_NAME)
+      let query = db('users')
         .leftJoin('roles', 'users.role_id', 'roles.id')
         .leftJoin('institutions', 'users.institution_id', 'institutions.id')
         .select(
@@ -76,7 +88,7 @@ export class UserRepository extends BaseRepository<User> {
       }
 
       const users = await query;
-      return users.map(user => this.mapUserWithRelations(user));
+      return users.map(user => UserRepository.mapUserWithRelations(user));
     } catch (error) {
       console.error('Erro ao buscar todos os usuários:', error);
       throw error;
@@ -85,7 +97,7 @@ export class UserRepository extends BaseRepository<User> {
 
   static async findByInstitution(institutionId: number): Promise<UserWithRelations[]> {
     try {
-      const users = await db(this.TABLE_NAME)
+      const users = await db('users')
         .leftJoin('roles', 'users.role_id', 'roles.id')
         .leftJoin('institutions', 'users.institution_id', 'institutions.id')
         .select(
@@ -99,11 +111,26 @@ export class UserRepository extends BaseRepository<User> {
         .where('users.institution_id', institutionId)
         .orderBy('users.created_at', 'desc');
 
-      return users.map(user => this.mapUserWithRelations(user));
+      return users.map(user => UserRepository.mapUserWithRelations(user));
     } catch (error) {
       console.error('Erro ao buscar usuários por instituição:', error);
       throw error;
     }
+  }
+
+  private static mapUserWithRelations(user: any): UserWithRelations {
+    return {
+      ...user,
+      role: user.role_id ? {
+        id: user.role_id,
+        name: user.role_name,
+        permissions: user.role_permissions || []
+      } : undefined,
+      institution: user.institution_id ? {
+        id: user.institution_id,
+        name: user.institution_name
+      } : undefined
+    };
   }
 
   async findById(id: string): Promise<User | null> {

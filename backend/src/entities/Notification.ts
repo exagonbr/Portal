@@ -3,8 +3,11 @@ import {
   PrimaryGeneratedColumn,
   Column,
   CreateDateColumn,
-  UpdateDateColumn
+  UpdateDateColumn,
+  ManyToOne,
+  JoinColumn
 } from 'typeorm';
+import { User } from './User';
 
 export enum NotificationType {
   ANNOUNCEMENT = 'ANNOUNCEMENT',
@@ -51,6 +54,10 @@ export class Notification {
 
   @Column({ nullable: true })
   sender_id?: string;
+
+  @ManyToOne(() => User, user => user.sentNotifications)
+  @JoinColumn({ name: 'sender_id' })
+  sentBy?: User;
 
   @Column({ type: 'jsonb', nullable: true })
   data?: Record<string, any>;

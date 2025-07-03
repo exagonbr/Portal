@@ -6,7 +6,6 @@
  */
 
 import express from 'express';
-import { query, validationResult } from 'express-validator';
 import { DashboardService } from '../services/DashboardService';
 import { requireAuth } from '../middleware/requireAuth';
 
@@ -453,40 +452,6 @@ router.get('/metrics/realtime',
  *             schema:
  *               $ref: '#/components/schemas/ErrorResponse'
  */
-router.get('/analytics',
-  (req: any, res: any, next: any) => validateJWTSmart(req as any, res, next),
-  (req: any, res: any, next: any) => requireRoleSmart(['admin', 'SYSTEM_ADMIN'])(req as any, res, next),
-  [
-    query('type').isIn(['users', 'sessions', 'activity']).withMessage('Tipo deve ser users, sessions ou activity'),
-    query('period').optional().isIn(['day', 'week', 'month']).withMessage('Período deve ser day, week ou month')
-  ],
-  async (req: any, res: express.Response) => {
-    try {
-      const errors = validationResult(req);
-      if (!errors.isEmpty()) {
-        return res.status(400).json({
-          success: false,
-          errors: errors.array(),
-        });
-      }
-
-      const { type, period = 'week' } = req.query as { type: 'users' | 'sessions' | 'activity', period?: 'day' | 'week' | 'month' };
-      
-      const analyticsData = await DashboardService.getAnalyticsData(type, period);
-
-      return res.json({
-        success: true,
-        data: analyticsData
-      });
-    } catch (error: any) {
-      console.log('Erro ao obter dados de analytics:', error);
-      return res.status(500).json({
-        success: false,
-        message: error.message || 'Erro interno do servidor'
-      });
-    }
-  }
-);
 
 /**
  * @swagger

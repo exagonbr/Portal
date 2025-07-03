@@ -3,23 +3,18 @@
  * Compartilhada entre Frontend e Backend
  */
 
+export interface AccessTokenPayload {
+  id: string;
+  type?: string;
+  iat?: number;
+  exp?: number;
+}
+
 export const JWT_CONFIG = {
-  // Secret único para toda aplicação
-  JWT_SECRET: 'SaberconPortal2025_SuperSecretKey_ProductionReady_XYZ789',
-  SECRET: 'SaberconPortal2025_SuperSecretKey_ProductionReady_XYZ789', // Alias para compatibilidade
-  
-  // Tempos de expiração
-  TOKEN_EXPIRY: '1h',        // Access token: 1 hora
-  REFRESH_TOKEN_EXPIRY: '7d', // Refresh token: 7 dias
-  ACCESS_TOKEN_EXPIRES_IN: '1h', // Alias para compatibilidade
-  
-  // Algoritmo padrão
-  ALGORITHM: 'HS256' as const,
-  
-  // Issuer e audience
-  ISSUER: 'portal.sabercon.com.br',
-  AUDIENCE: 'portal.sabercon.com.br',
-} as const;
+  SECRET: process.env.JWT_SECRET || 'your-secret-key',
+  ACCESS_TOKEN_EXPIRATION: process.env.JWT_ACCESS_TOKEN_EXPIRATION || '1h',
+  REFRESH_TOKEN_EXPIRATION: process.env.JWT_REFRESH_TOKEN_EXPIRATION || '7d'
+};
 
 // Interface para payload do Access Token
 export interface AccessTokenPayload {
@@ -46,17 +41,17 @@ export interface RefreshTokenPayload {
 
 // Função helper para obter o secret
 export const getJwtSecret = (): string => {
-  return JWT_CONFIG.JWT_SECRET;
+  return JWT_CONFIG.SECRET;
 };
 
 // Função helper para obter configurações
 export const getJwtConfig = () => {
   return {
-    secret: JWT_CONFIG.JWT_SECRET,
-    expiresIn: JWT_CONFIG.TOKEN_EXPIRY,
-    algorithm: JWT_CONFIG.ALGORITHM,
-    issuer: JWT_CONFIG.ISSUER,
-    audience: JWT_CONFIG.AUDIENCE
+    secret: JWT_CONFIG.SECRET,
+    expiresIn: JWT_CONFIG.ACCESS_TOKEN_EXPIRATION,
+    algorithm: 'HS256' as const,
+    issuer: 'portal.sabercon.com.br',
+    audience: 'portal.sabercon.com.br'
   };
 };
 

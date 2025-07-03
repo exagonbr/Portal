@@ -6,8 +6,10 @@ import {
   UpdateDateColumn,
   OneToMany
 } from 'typeorm';
+import { User } from './User';
 import { School } from './School';
-import { TvShow } from './TvShow';
+import { TVShow } from './TVShow';
+import { Course } from './Course';
 
 export enum InstitutionType {
   PUBLIC = 'PUBLIC',
@@ -66,8 +68,11 @@ export class Institution {
   @OneToMany(() => School, school => school.institution)
   schools: School[];
 
-  @OneToMany(() => TvShow, tvShow => tvShow.institution)
-  tvShows: TvShow[];
+  @OneToMany(() => TVShow, tvShow => tvShow.institution)
+  tvShows: TVShow[];
+
+  @OneToMany(() => Course, course => course.institution)
+  courses: Course[];
 
   @CreateDateColumn()
   created_at: Date;
@@ -75,7 +80,10 @@ export class Institution {
   @UpdateDateColumn()
   updated_at: Date;
 
+  @OneToMany(() => User, user => user.institution)
+  users: User[];
   // Propriedades computadas
+
   schools_count?: number;
   users_count?: number;
   active_courses?: number;

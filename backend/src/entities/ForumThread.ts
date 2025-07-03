@@ -4,8 +4,11 @@ import {
   Column,
   CreateDateColumn,
   UpdateDateColumn,
-  OneToMany
+  OneToMany,
+  ManyToOne,
+  JoinColumn
 } from 'typeorm';
+import { User } from './User';
 import { ForumReply } from './ForumReply';
 
 @Entity('forum_threads')
@@ -21,6 +24,10 @@ export class ForumThread {
 
   @Column()
   author_id: string;
+
+  @ManyToOne(() => User, user => user.forumThreads)
+  @JoinColumn({ name: 'author_id' })
+  author: User;
 
   @Column()
   class_id: string;

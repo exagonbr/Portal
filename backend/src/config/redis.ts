@@ -232,7 +232,7 @@ export const testStaticCacheRedisConnection = async (): Promise<boolean> => {
 
 // Função para fechar as conexões (útil para testes e shutdown)
 export const closeRedisConnections = async (): Promise<void> => {
-  const promises = [];
+  const promises: Promise<any>[] = [];
   
   if (redis) {
     promises.push(redis.quit());

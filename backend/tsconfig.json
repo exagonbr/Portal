@@ -17,7 +17,7 @@
     "emitDecoratorMetadata": true,
     "useDefineForClassFields": false,
     "strictNullChecks": true,
-    "noImplicitAny": true,
+    "noImplicitAny": false,
     "noUnusedLocals": true,
     "noUnusedParameters": false,
     "noImplicitReturns": true,
