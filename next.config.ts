@@ -1,7 +1,7 @@
 import type { NextConfig } from 'next';
 import webpack from 'webpack';
 
-const isDev: boolean = process.env.NODE_ENV === 'development';
+const isDev: boolean = false; // process.env.NODE_ENV === 'development';
 const isProd: boolean = process.env.NODE_ENV === 'production';
 
 // Gerar versão de cache única para cada build
@@ -35,10 +35,8 @@ const nextConfig: NextConfig = {
   reactStrictMode: true, // Habilitado - react-quill agora é compatível com React 18
   productionBrowserSourceMaps: false,
 
-  // Desativar o botão de "dev tools" do Next.js
-  devIndicators: {
-    position: 'bottom-right',
-  },
+  // Desativar o ícone de "dev tools" do Next.js
+  devIndicators: false,
   
   // ESLint
   eslint: {
@@ -60,8 +58,8 @@ const nextConfig: NextConfig = {
     webpackBuildWorker: true,
     // Aumentar timeout para processamento de erros
     // Configuração para melhorar o handling de erros
-    workerThreads: false,
-    cpus: 1,
+    workerThreads: true,
+    cpus: 10,
   },
 
   // Pacotes externos para componentes do servidor

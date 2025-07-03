@@ -1,8 +1,8 @@
-# Implementação do Redirecionamento com FRONTEND_URL
+# Implementação do Redirecionamento com FRONTEND_URL e Cache Cleaner
 
 ## Resumo das Alterações
 
-Este documento descreve as alterações implementadas para garantir que o redirecionamento do login para o dashboard use corretamente a variável de ambiente `FRONTEND_URL` e o proxy configurado no `next.config.ts`.
+Este documento descreve as alterações implementadas para garantir que o redirecionamento do login para o dashboard use corretamente a variável de ambiente `FRONTEND_URL`, o proxy configurado no `next.config.ts`, e um sistema de limpeza automática de cache para evitar problemas de navegação.
 
 ## Arquivos Modificados
 
@@ -145,6 +145,76 @@ NEXT_PUBLIC_FRONTEND_URL=http://localhost:3000
 - `src/contexts/AuthContext.tsx` - Já usa `buildUrl()` e `buildLoginUrl()`
 - Outros componentes que usam `router.push()` - Funcionam com rotas relativas
 
+## Sistema de Limpeza de Cache
+
+### 5. `src/hooks/useCacheCleaner.ts` (NOVO)
+Hook personalizado que implementa limpeza automática de cache para evitar problemas de navegação e redirecionamento.
+
+**Funcionalidades:**
+- Limpeza automática em mudanças de rota
+- Limpeza de cache de autenticação
+- Limpeza de cache de API
+- Limpeza de Service Worker
+- Invalidação de recursos estáticos
+
+```typescript
+// Uso automático
+useAutoCacheCleaner();
+
+// Uso com controle manual
+const { clearAllCaches, clearAuthCache, performCacheCleanup } = useCacheCleaner();
+
+// Uso com triggers personalizados
+useCacheCleanerWithTriggers([user, pathname]);
+```
+
+### 6. `src/components/layout/CacheCleanerProvider.tsx` (NOVO)
+Provider que aplica limpeza automática de cache em toda a aplicação.
+
+### 7. `src/providers/SimpleProviders.tsx`
+- Adicionado `CacheCleanerProvider` na hierarquia de providers
+- Garante que a limpeza de cache seja aplicada globalmente
+
+### 8. `src/contexts/AuthContext.tsx`
+- Integrado com o sistema de limpeza de cache
+- Limpeza automática durante login e logout
+- Limpeza em caso de erros de autenticação
+
+### 9. `src/components/auth/LoginPage.tsx`
+- Adicionado `useAutoCacheCleaner()` para limpeza automática
+
+## Tipos de Cache Limpos
+
+### 1. Cache de Autenticação
+- `accessToken`, `refreshToken`, `auth_token`
+- `user`, `user_data`, `auth_expires_at`
+- `session_id`, `login_redirect_loop_check`
+
+### 2. Cache de API
+- Chaves que começam com `api_cache_`
+- Chaves que começam com `query_cache_`
+- Chaves que começam com `swr-`
+
+### 3. Cache do Navegador
+- Service Worker caches
+- Cache dinâmico
+- Meta tags de cache-control
+- Invalidação de imagens
+
+### 4. Cache de Sessão
+- `auth_state`, `redirect_after_login`
+- Dados temporários de navegação
+
+## Eventos que Acionam Limpeza
+
+1. **Mudanças de Rota**: Automático em rotas importantes (`/auth/`, `/dashboard/`, `/login`, `/logout`)
+2. **Login**: Antes e após tentativas de login
+3. **Logout**: Durante o processo de logout
+4. **Erros de Autenticação**: Em falhas de login
+5. **Visibilidade da Página**: Quando a página fica visível novamente
+6. **Foco na Página**: Quando o usuário retorna à página
+7. **Saída da Página**: Antes de sair da aplicação
+
 ## Testes Recomendados
 
 1. **Login**: Verificar se o redirecionamento após login funciona
@@ -152,3 +222,6 @@ NEXT_PUBLIC_FRONTEND_URL=http://localhost:3000
 3. **Usuário Autenticado**: Verificar se usuário já logado é redirecionado corretamente
 4. **Diferentes Roles**: Testar redirecionamento para dashboards específicos
 5. **Ambientes**: Testar em desenvolvimento e produção
+6. **Cache**: Verificar se o cache é limpo corretamente em mudanças de rota
+7. **Performance**: Verificar se a limpeza de cache não impacta a performance
+8. **Navegação**: Testar navegação entre páginas após implementação do cache cleaner

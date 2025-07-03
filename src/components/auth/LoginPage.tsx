@@ -11,9 +11,13 @@ import { getDashboardPath } from '@/utils/roleRedirect';
 import { MotionDiv, MotionH1, MotionP } from '@/components/ui/MotionWrapper';
 import { getTheme } from '@/config/themes';
 import { useEffect, useState } from 'react';
+import { useAutoCacheCleaner } from '@/hooks/useCacheCleaner';
 import { FRONTEND_URL, buildUrl } from '@/config/urls';
 
 export function LoginPage() {
+  // Hook para limpeza automática de cache
+  useAutoCacheCleaner();
+  
   const router = useRouter();
   const authContext = useAuth();
   const searchParams = useSearchParams();

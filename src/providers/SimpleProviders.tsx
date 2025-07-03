@@ -87,6 +87,19 @@ const UpdateProvider = dynamic(() =>
   loading: () => null
 })
 
+const CacheCleanerProvider = dynamic(() =>
+  import('@/components/layout/CacheCleanerProvider')
+    .then(mod => mod.CacheCleanerProvider)
+    .catch(error => {
+      if (isDevelopment()) {
+        console.log('Error loading CacheCleanerProvider:', error);
+      }
+      return ({ children }: { children: ReactNode }) => <>{children}</>;
+    }), {
+  ssr: false,
+  loading: () => null
+})
+
 function ErrorBoundaryFallback({ error, resetErrorBoundary }: { error: Error, resetErrorBoundary?: () => void }) {
   return (
     <div className="min-h-screen flex items-center justify-center bg-gray-50 p-4">
@@ -154,19 +167,21 @@ export default function SimpleProviders({ children }: { children: ReactNode }) {
         }
       }}
     >
-      <AuthProvider>
-        <ThemeProvider>
-          <GamificationProvider>
-            <NavigationLoadingProvider>
-              <UpdateProvider>
-              <ToastManager>
-                {children}
-              </ToastManager>
-              </UpdateProvider>
-            </NavigationLoadingProvider>
-          </GamificationProvider>
-        </ThemeProvider>
-      </AuthProvider>
+      <CacheCleanerProvider>
+        <AuthProvider>
+          <ThemeProvider>
+            <GamificationProvider>
+              <NavigationLoadingProvider>
+                <UpdateProvider>
+                <ToastManager>
+                  {children}
+                </ToastManager>
+                </UpdateProvider>
+              </NavigationLoadingProvider>
+            </GamificationProvider>
+          </ThemeProvider>
+        </AuthProvider>
+      </CacheCleanerProvider>
     </ErrorBoundary>
   );
 }

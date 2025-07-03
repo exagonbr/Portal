@@ -6,6 +6,7 @@ import apiClient from '../lib/authFetch';
 import { jwtDecode } from 'jwt-decode';
 import { toast } from 'react-hot-toast';
 import { buildLoginUrl, buildDashboardUrl, buildUrl } from '../utils/urlBuilder';
+import { useCacheCleaner } from '../hooks/useCacheCleaner';
 
 // Tipagem para o usuário e o contexto
 interface User {
@@ -71,6 +72,9 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   const [isClient, setIsClient] = useState(false);
   const router = useRouter();
   const initializationRef = useRef(false);
+  
+  // Hook para limpeza de cache
+  const { clearAuthCache, performCacheCleanup } = useCacheCleaner();
 
   const isAuthenticated = !!user;
 
@@ -80,15 +84,23 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   }, []);
 
   // Função de logout centralizada
-  const logout = useCallback(() => {
+  const logout = useCallback(async () => {
     console.log('Logging out: removing token and user');
+    
+    // Limpar cache antes do logout
+    await performCacheCleanup('logout');
+    
     removeStoredToken();
     setUser(null);
     apiClient.defaults.headers.common['Authorization'] = '';
     apiClient.post('/auth/logout').catch(err => console.error("Logout API call failed:", err));
+    
+    // Limpar cache de autenticação após logout
+    clearAuthCache();
+    
     router.push(buildLoginUrl());
     toast.success('Você foi desconectado.');
-  }, [router]);
+  }, [router, performCacheCleanup, clearAuthCache]);
 
   // Função para validar e configurar usuário a partir do token
   const setupUserFromToken = useCallback((token: string): boolean => {
@@ -138,6 +150,9 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     
     setIsLoading(true);
     try {
+      // Limpar cache antes do login
+      await performCacheCleanup('login attempt');
+      
       const { data } = await apiClient.post('/auth/login', { email, password });
       const { accessToken } = data.data;
       
@@ -145,6 +160,9 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
       setStoredToken(accessToken);
       
       if (setupUserFromToken(accessToken)) {
+        // Limpar cache após login bem-sucedido
+        await performCacheCleanup('login success');
+        
         toast.success('Login realizado com sucesso!');
         router.push(buildUrl('/dashboard'));
       } else {
@@ -153,6 +171,10 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
 
     } catch (error: any) {
       console.error("Login failed:", error);
+      
+      // Limpar cache em caso de erro
+      clearAuthCache();
+      
       const message = error.response?.data?.message || 'Falha no login. Verifique suas credenciais.';
       toast.error(message, {
         duration: 4000,
