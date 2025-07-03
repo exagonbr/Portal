@@ -28,7 +28,7 @@ export default function AuthCallbackPage() {
 
     if (token) {
       console.log('✅ Token recebido, processando login...');
-      handleGoogleLogin(token).catch(error => {
+      handleGoogleLogin(token).catch((error: any) => {
         console.log("❌ Falha no login Google:", error);
         router.push('/auth/login?error=auth_failed');
       });

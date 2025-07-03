@@ -1,8 +1,8 @@
 import { useState, useCallback, useEffect } from 'react'
-import { BaseApiService, PaginatedResponse, handleApiError } from '@/lib/api-client'
+import { apiClient, handleApiError, ApiResponse } from '@/lib/api-client'
 
 interface UseCRUDOptions<T> {
-  service: BaseApiService<T>
+  endpoint: string
   entityName: string
   onSuccess?: (action: 'create' | 'update' | 'delete', data?: T) => void
   onError?: (action: 'create' | 'update' | 'delete' | 'fetch', error: any) => void
@@ -38,7 +38,7 @@ interface UseCRUDReturn<T> {
 }
 
 export function useCRUD<T extends { id: string | number }>({
-  service,
+  endpoint,
   entityName,
   onSuccess,
   onError,
@@ -65,27 +65,38 @@ export function useCRUD<T extends { id: string | number }>({
     
     try {
       if (paginated) {
-        const response = await service.getPaginated({
+        const response = await apiClient.get<ApiResponse<T[]>>(endpoint, {
           page: pagination.currentPage,
-          pageSize: pagination.pageSize,
+          limit: pagination.pageSize,
           search: searchQuery,
-          ...params
-        })
-        
-        setData(response.data)
-        setPagination(prev => ({
-          ...prev,
-          total: response.total,
-          totalPages: response.totalPages
-        }))
+          ...params,
+        });
+
+        if (response.data && Array.isArray(response.data.items) && response.pagination) {
+          setData(response.data.items);
+          setPagination((prev) => ({
+            ...prev,
+            total: response.pagination.total,
+            totalPages: response.pagination.totalPages,
+          }));
+        } else if (response.data && Array.isArray(response.data.items)) {
+          setData(response.data.items);
+          setPagination((prev) => ({
+            ...prev,
+            total: response.data && response.data.items ? response.data.items.length : 0,
+            totalPages: 1,
+          }));
+        }
       } else {
-        const response = await service.getAll(params)
-        setData(response)
-        setPagination(prev => ({
-          ...prev,
-          total: response.length,
-          totalPages: 1
-        }))
+        const response = await apiClient.get<T[]>(endpoint, params);
+        if (response.data && Array.isArray(response.data)) {
+          setData(response.data);
+          setPagination((prev) => ({
+            ...prev,
+            total: response.data ? response.data.length : 0,
+            totalPages: 1,
+          }));
+        }
       }
     } catch (err) {
       const errorMessage = handleApiError(err)
@@ -94,7 +105,7 @@ export function useCRUD<T extends { id: string | number }>({
     } finally {
       setLoading(false)
     }
-  }, [service, entityName, pagination.currentPage, pagination.pageSize, searchQuery, paginated, onError])
+  }, [endpoint, entityName, pagination.currentPage, pagination.pageSize, searchQuery, paginated, onError]);
 
   // Criar novo item
   const create = useCallback(async (data: Partial<T>): Promise<T | null> => {
@@ -102,8 +113,9 @@ export function useCRUD<T extends { id: string | number }>({
     setError(null)
     
     try {
-      const newItem = await service.create(data)
-      onSuccess?.('create', newItem)
+      const response = await apiClient.post<T>(endpoint, data);
+      const newItem = response.data!;
+      onSuccess?.('create', newItem);
       await fetchData()
       return newItem
     } catch (err) {
@@ -114,7 +126,7 @@ export function useCRUD<T extends { id: string | number }>({
     } finally {
       setLoading(false)
     }
-  }, [service, entityName, onSuccess, onError, fetchData])
+  }, [endpoint, entityName, onSuccess, onError, fetchData]);
 
   // Atualizar item
   const update = useCallback(async (id: string | number, data: Partial<T>): Promise<T | null> => {
@@ -122,8 +134,9 @@ export function useCRUD<T extends { id: string | number }>({
     setError(null)
     
     try {
-      const updatedItem = await service.update(id, data)
-      onSuccess?.('update', updatedItem)
+      const response = await apiClient.put<T>(`${endpoint}/${id}`, data);
+      const updatedItem = response.data!;
+      onSuccess?.('update', updatedItem);
       await fetchData()
       return updatedItem
     } catch (err) {
@@ -134,7 +147,7 @@ export function useCRUD<T extends { id: string | number }>({
     } finally {
       setLoading(false)
     }
-  }, [service, entityName, onSuccess, onError, fetchData])
+  }, [endpoint, entityName, onSuccess, onError, fetchData]);
 
   // Remover item
   const remove = useCallback(async (id: string | number): Promise<boolean> => {
@@ -142,8 +155,8 @@ export function useCRUD<T extends { id: string | number }>({
     setError(null)
     
     try {
-      await service.delete(id)
-      onSuccess?.('delete')
+      await apiClient.delete(`${endpoint}/${id}`);
+      onSuccess?.('delete');
       await fetchData()
       return true
     } catch (err) {
@@ -154,7 +167,7 @@ export function useCRUD<T extends { id: string | number }>({
     } finally {
       setLoading(false)
     }
-  }, [service, entityName, onSuccess, onError, fetchData])
+  }, [endpoint, entityName, onSuccess, onError, fetchData]);
 
   // Buscar
   const search = useCallback(async (query: string) => {

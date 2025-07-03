@@ -6,7 +6,7 @@ import { useTheme } from '@/contexts/ThemeContext'
 import { motion } from 'framer-motion'
 import ProtectedRoute from '@/components/auth/ProtectedRoute'
 import DashboardPageLayout from '@/components/dashboard/DashboardPageLayout'
-import { User, UserRole } from '@/types/auth'
+import { UserRole } from '@/types/roles'
 import { apiClient } from '@/lib/api-client'
 
 interface ProfileFormData {
@@ -43,9 +43,9 @@ export default function ProfilePage() {
       const userData = {
         name: user.name || '',
         email: user.email || '',
-        phone: (user as User).contact?.phone || (user as User).telefone || '',
-        address: (user as User).contact?.address || (user as User).endereco || '',
-        educationUnit: (user as User).contact?.educationUnit || (user as User).unidadeEnsino || ''
+        phone: user.contact?.phone || user.telefone || '',
+        address: user.contact?.address || user.endereco || '',
+        educationUnit: user.contact?.educationUnit || user.unidadeEnsino || ''
       }
       setFormData(userData)
       setOriginalData(userData)
@@ -424,7 +424,7 @@ export default function ProfilePage() {
                       {user.id}
                     </p>
                   </div>
-                  {(user as User).institution_name && (
+                  {user.institution_name && (
                     <div>
                       <p
                         className="text-sm font-medium"
@@ -436,7 +436,7 @@ export default function ProfilePage() {
                         className="text-sm"
                         style={{ color: theme.colors.text.primary }}
                       >
-                        {(user as User).institution_name}
+                        {user.institution_name}
                       </p>
                     </div>
                   )}

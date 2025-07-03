@@ -2,14 +2,20 @@ import { Request, Response, NextFunction, RequestHandler } from 'express';
 import jwt from 'jsonwebtoken';
 import { JWT_CONFIG, AccessTokenPayload } from '../config/jwt';
 import db from '../config/database';
+import { user } from '@prisma/client';
 
-interface AuthenticatedRequest extends Request {
-  user?: AccessTokenPayload;
+type User = user;
+
+declare global {
+  namespace Express {
+    interface Request {
+      user?: User;
+    }
+  }
 }
 
 export const requireAuth: RequestHandler = async (req: Request, res: Response, next: NextFunction) => {
-  const authReq = req as AuthenticatedRequest;
-  const authHeader = authReq.headers.authorization;
+  const authHeader = req.headers.authorization;
 
   if (!authHeader || !authHeader.startsWith('Bearer ')) {
     res.status(401).json({ success: false, message: 'No token provided or invalid format.' });
@@ -42,10 +48,7 @@ export const requireAuth: RequestHandler = async (req: Request, res: Response, n
       return;
     }
 
-    authReq.user = {
-      ...decoded,
-      id: decoded.id
-    } as AccessTokenPayload;
+    req.user = user;
     
     next();
 

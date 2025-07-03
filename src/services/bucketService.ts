@@ -1,4 +1,4 @@
-import { getAuthToken } from './auth';
+import { fetchWithAuth } from '@/lib/api-client';
 
 interface BucketInfo {
   name: string
@@ -19,27 +19,12 @@ interface BucketListResponse {
 
 const API_BASE = '/api/content/buckets'
 
-// Função para criar headers com autenticação
-const createAuthHeaders = (): Record<string, string> => {
-  const headers: Record<string, string> = {
-    'Content-Type': 'application/json',
-  };
-  
-  const token = getAuthToken();
-  if (token) {
-    headers.Authorization = `Bearer ${token}`;
-  }
-  
-  return headers;
-};
 
 export class BucketService {
   // Listar buckets configurados
   static async getConfiguredBuckets(): Promise<BucketInfo[]> {
     try {
-      const response = await fetch(API_BASE, {
-        headers: createAuthHeaders()
-      })
+      const response = await fetchWithAuth(API_BASE)
       if (!response.ok) {
         throw new Error('Erro ao buscar buckets configurados')
       }
@@ -62,9 +47,7 @@ export class BucketService {
   // Listar todos os buckets da conta AWS
   static async getAllBuckets(): Promise<BucketListResponse> {
     try {
-      const response = await fetch(`${API_BASE}?listAll=true`, {
-        headers: createAuthHeaders()
-      })
+      const response = await fetchWithAuth(`${API_BASE}?listAll=true`)
       if (!response.ok) {
         throw new Error('Erro ao buscar todos os buckets')
       }
@@ -86,9 +69,8 @@ export class BucketService {
   // Adicionar novo bucket à configuração
   static async addBucket(bucketData: Omit<BucketInfo, 'addedAt'>): Promise<BucketInfo> {
     try {
-      const response = await fetch(API_BASE, {
+      const response = await fetchWithAuth(API_BASE, {
         method: 'POST',
-        headers: createAuthHeaders(),
         body: JSON.stringify(bucketData)
       })
 

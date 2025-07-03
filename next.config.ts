@@ -1,7 +1,7 @@
 import type { NextConfig } from 'next';
 import webpack from 'webpack';
 
-const isDev: boolean = false; // process.env.NODE_ENV === 'development';
+const isDev: boolean = process.env.NODE_ENV === 'development';
 const isProd: boolean = process.env.NODE_ENV === 'production';
 
 // Gerar versão de cache única para cada build
@@ -15,7 +15,7 @@ const ContentSecurityPolicy: string = `
   style-src 'self' 'unsafe-inline';
   img-src 'self' data: blob: *.openlibrary.org *.unsplash.com *.ssl-images-amazon.com *.youtube.com;
   font-src 'self' data:;
-  connect-src 'self' ${process.env.FRONTEND_URL?.replace('https://', '').replace('http://', '') || '*.sabercon.com.br'} ws: wss:;
+  connect-src 'self' ${isDev ? 'localhost:* 127.0.0.1:*' : ''} ${process.env.FRONTEND_URL?.replace('https://', '').replace('http://', '') || '*.sabercon.com.br'} ws: wss:;
   media-src 'self' blob:;
   object-src 'none';
   base-uri 'self';
@@ -32,7 +32,7 @@ const nextConfig: NextConfig = {
   },
 
   // Configurações de desenvolvimento
-  reactStrictMode: true, // Habilitado - react-quill agora é compatível com React 18
+  reactStrictMode: true,
   productionBrowserSourceMaps: false,
 
   // Desativar o ícone de "dev tools" do Next.js
@@ -40,13 +40,12 @@ const nextConfig: NextConfig = {
   
   // ESLint
   eslint: {
-    ignoreDuringBuilds: true, // Ignorar erros de lint durante o build
+    ignoreDuringBuilds: true,
     dirs: ['src', 'pages', 'components', 'lib', 'utils'],
   },
 
   // Configurações experimentais
   experimental: {
-    // Otimizações modernas
     optimizePackageImports: [
       'react-hot-toast', 
       'lucide-react', 
@@ -54,10 +53,7 @@ const nextConfig: NextConfig = {
       '@radix-ui/react-dropdown-menu',
       'date-fns',
     ],
-    // Melhorar performance de compilação
     webpackBuildWorker: true,
-    // Aumentar timeout para processamento de erros
-    // Configuração para melhorar o handling de erros
     workerThreads: true,
     cpus: 10,
   },
@@ -73,11 +69,9 @@ const nextConfig: NextConfig = {
 
   // Configurações do compilador
   compiler: {
-    // Remover console.log em produção
     removeConsole: isProd ? {
       exclude: ['error', 'warn', 'info']
     } : false,
-    // Otimizar React
     reactRemoveProperties: isProd,
   },
 
@@ -113,150 +107,68 @@ const nextConfig: NextConfig = {
         protocol: 'https',
         hostname: 'img.youtube.com'
       },
-      // Configuração para produção
       {
         protocol: 'https',
         hostname: process.env.FRONTEND_URL?.replace('https://', '').replace('http://', '') || 'portal.sabercon.com.br'
-      }
+      },
+      // Adicionar padrão para localhost em desenvolvimento
+      ...(isDev ? [{
+        protocol: 'http' as const,
+        hostname: 'localhost',
+        port: '3001'
+      }] : [])
     ]
   },
 
   // Headers de segurança e performance
   async headers() {
     const securityHeaders = [
-      {
-        key: 'X-DNS-Prefetch-Control',
-        value: 'on'
-      },
-      {
-        key: 'Strict-Transport-Security',
-        value: 'max-age=63072000; includeSubDomains; preload'
-      },
-      {
-        key: 'X-Frame-Options',
-        value: 'DENY'
-      },
-      {
-        key: 'X-Content-Type-Options',
-        value: 'nosniff'
-      },
-      {
-        key: 'X-XSS-Protection',
-        value: '1; mode=block'
-      },
-      {
-        key: 'Referrer-Policy',
-        value: 'strict-origin-when-cross-origin'
-      },
-      {
-        key: 'Permissions-Policy',
-        value: 'camera=(), microphone=(), geolocation=(), browsing-topics=()'
-      },
-      ...(isProd ? [{
-        key: 'Content-Security-Policy',
-        value: ContentSecurityPolicy
-      }] : [])
+      { key: 'X-DNS-Prefetch-Control', value: 'on' },
+      { key: 'Strict-Transport-Security', value: 'max-age=63072000; includeSubDomains; preload' },
+      { key: 'X-Frame-Options', value: 'DENY' },
+      { key: 'X-Content-Type-Options', value: 'nosniff' },
+      { key: 'X-XSS-Protection', value: '1; mode=block' },
+      { key: 'Referrer-Policy', value: 'strict-origin-when-cross-origin' },
+      { key: 'Permissions-Policy', value: 'camera=(), microphone=(), geolocation=(), browsing-topics=()' },
+      ...(isProd ? [{ key: 'Content-Security-Policy', value: ContentSecurityPolicy }] : [])
     ];
 
     return [
-      // Headers para a API (Proxy) com cache diferenciado
+      // Headers para API
       {
         source: '/api/:path*',
         headers: [
-          {
-            key: 'Cache-Control',
-            value: isDev
-              ? 'no-store, no-cache, must-revalidate'
-              : 'public, s-maxage=300, max-age=60, stale-while-revalidate=3600',
+          { 
+            key: 'Cache-Control', 
+            value: isDev 
+              ? 'no-store, no-cache, must-revalidate' 
+              : 'public, s-maxage=300, max-age=60, stale-while-revalidate=3600' 
           },
-          {
-            key: 'X-Proxy-Cache',
-            value: isDev ? 'BYPASS' : 'HIT',
-          },
-          {
-            key: 'Vary',
-            value: 'Accept-Encoding, Authorization',
-          },
+          { key: 'Vary', value: 'Accept-Encoding, Authorization' },
         ],
       },
-      // Headers específicos para uploads
+      // Headers para uploads
       {
         source: '/uploads/:path*',
         headers: [
-          {
-            key: 'Cache-Control',
-            value: 'public, max-age=31536000, immutable',
-          },
-          {
-            key: 'X-Content-Type-Options',
-            value: 'nosniff',
-          },
+          { key: 'Cache-Control', value: 'public, max-age=31536000, immutable' },
+          { key: 'X-Content-Type-Options', value: 'nosniff' },
         ],
-      },
-      // Headers específicos para arquivos JavaScript
-      {
-        source: '/:path*.js',
-        headers: [
-          {
-            key: 'Content-Type',
-            value: 'application/javascript; charset=utf-8'
-          },
-          {
-            key: 'Cache-Control',
-            value: 'public, max-age=31536000, immutable'
-          },
-          {
-            key: 'X-Content-Type-Options',
-            value: 'nosniff'
-          }
-        ]
-      },
-      // Headers para livros EPUB
-      {
-        source: '/books/:path*',
-        headers: [
-          {
-            key: 'Content-Type',
-            value: 'application/epub+zip'
-          },
-          {
-            key: 'Cache-Control',
-            value: 'public, max-age=86400, s-maxage=31536000'
-          },
-          ...securityHeaders
-        ]
-      },
-      // Headers para assets estáticos
-      {
-        source: '/(.*\\.(?:js|css|png|jpg|jpeg|gif|webp|svg|ico|woff|woff2)$)',
-        headers: [
-          {
-            key: 'Cache-Control',
-            value: 'public, max-age=31536000, immutable'
-          },
-          {
-            key: 'X-Cache-Version',
-            value: cacheVersion
-          }
-        ]
       },
       // Headers gerais
       {
         source: '/((?!api/).*)',
         headers: [
           ...securityHeaders,
-          {
-            key: 'X-Cache-Version',
-            value: cacheVersion
-          }
+          { key: 'X-Cache-Version', value: cacheVersion }
         ]
       }
     ];
   },
 
-  // Configuração robusta do Webpack
-  webpack: (config, { buildId, dev, isServer, defaultLoaders, nextRuntime, webpack }) => {
-    // Configurações de logging otimizadas
+  // Configuração do Webpack
+  webpack: (config, { buildId, dev, isServer, webpack }) => {
+    // Configurações de logging
     config.stats = dev ? 'minimal' : 'errors-warnings';
     config.infrastructureLogging = {
       level: dev ? 'warn' : 'error',
@@ -271,18 +183,10 @@ const nextConfig: NextConfig = {
       buildDependencies: {
         config: [__filename],
       },
-      maxAge: isProd ? 24 * 60 * 60 * 1000  // 1 dia
-        : 60 * 60 * 1000, // 1 hora
-      store: 'pack',
-      compression: 'gzip',
-      idleTimeout: 5000, // 5 segundos
-      idleTimeoutForInitialStore: 1000, // 1 segundo
-      idleTimeoutAfterLargeChanges: 10000, // 10 segundos
-      profile: isProd, // Ativar profiling em produção
       version: cacheVersion,  
     };
 
-    // Plugin para versão de cache no Service Worker
+    // Plugin para versão de cache
     if (!isServer) {
       config.plugins.push(
         new webpack.DefinePlugin({
@@ -292,7 +196,7 @@ const nextConfig: NextConfig = {
       );
     }
 
-    // Configuração para diferentes tipos de arquivo
+    // Regras para diferentes tipos de arquivo
     config.module.rules.push(
       {
         test: /\.(pdf|epub)$/i,
@@ -310,152 +214,37 @@ const nextConfig: NextConfig = {
       }
     );
 
-    // Configurações específicas para o cliente
-    if (!isServer) {
-      // Otimizações de bundle splitting (apenas em produção para evitar problemas em dev)
-      if (isProd) {
-        config.optimization = {
-          ...config.optimization,
-          moduleIds: 'deterministic',
-          chunkIds: 'deterministic',
-          minimize: true,
-          usedExports: true,
-          sideEffects: false,
-          splitChunks: {
-            chunks: 'all',
-            minSize: 20000,
-            maxSize: 244000,
-            minChunks: 1,
-            maxAsyncRequests: 30,
-            maxInitialRequests: 30,
-            enforceSizeThreshold: 50000,
-            cacheGroups: {
-              // Framework chunk (React, Next.js)
-              framework: {
-                chunks: 'all',
-                name: 'framework',
-                test: /(?:react|react-dom|scheduler|prop-types|use-subscription)/,
-                priority: 40,
-                enforce: true,
-              },
-              // Vendor libraries
-              vendor: {
-                test: /[\\/]node_modules[\\/]/,
-                name: 'vendors',
-                chunks: 'all',
-                priority: 30,
-                enforce: true,
-              },
-              // UI components
-              ui: {
-                test: /[\\/]src[\\/]components[\\/]ui[\\/]/,
-                name: 'ui-components',
-                chunks: 'all',
-                priority: 25,
-                enforce: true,
-              },
-              // API client
-              apiClient: {
-                test: /[\\/]src[\\/]lib[\\/]api-client/,
-                name: 'api-client',
-                chunks: 'all',
-                priority: 20,
-                enforce: true,
-              },
-              // Auth services
-              auth: {
-                test: /[\\/]src[\\/](services|contexts)[\\/].*auth/i,
-                name: 'auth-services',
-                chunks: 'all',
-                priority: 15,
-                enforce: true,
-              },
-              // Common utilities
-              common: {
-                test: /[\\/]src[\\/](utils|lib|hooks)[\\/]/,
-                name: 'common',
-                chunks: 'all',
-                priority: 10,
-                minChunks: 2,
-              },
-              // Default
-              default: {
-                minChunks: 2,
-                priority: 5,
-                reuseExistingChunk: true,
-              },
-            },
-          },
-        };
-      }
-
-      // Configurações de output robustas
-      config.output = {
-        ...config.output,
-        crossOriginLoading: 'anonymous',
-        chunkLoadTimeout: 60000, // 60 segundos
-      };
-
-      // Configurar retry automático para chunks falhados (apenas em produção)
-      if (isProd) {
-        config.plugins.push(
-          new webpack.optimize.LimitChunkCountPlugin({
-            maxChunks: 50,
-          })
-        );
-      }
-    }
-
-    // Configurações para o servidor
+    // Configurações específicas para servidor
     if (isServer) {
-      config.externals = [
-        ...config.externals,
-        {
-          'oracledb': 'commonjs oracledb',
-          'mysql': 'commonjs mysql',
-          'mysql2': 'commonjs mysql2',
-          'sqlite3': 'commonjs sqlite3',
-          'better-sqlite3': 'commonjs better-sqlite3',
-          'tedious': 'commonjs tedious',
-          'pg': 'commonjs pg',
-          'pg-native': 'commonjs pg-native',
-          'sharp': 'commonjs sharp',
-        }
-      ];
+      config.externals.push(
+        'oracledb', 'mysql', 'mysql2', 'sqlite3', 'better-sqlite3', 
+        'tedious', 'pg', 'pg-native', 'sharp'
+      );
     } else {
       // Fallbacks para o cliente
       config.resolve.fallback = {
         ...config.resolve.fallback,
-        fs: false,
-        net: false,
-        tls: false,
-        crypto: false,
-        stream: false,
-        url: false,
-        zlib: false,
-        http: false,
-        https: false,
-        assert: false,
-        os: false,
-        path: false,
-        // Database-related
-        'pg': false,
-        'pg-native': false,
-        'pg-query-stream': false,
-        'oracledb': false,
-        'mysql': false,
-        'mysql2': false,
-        'sqlite3': false,
-        'better-sqlite3': false,
+        fs: false, 
+        net: false, 
+        tls: false, 
+        crypto: false, 
+        stream: false, 
+        url: false, 
+        zlib: false, 
+        http: false, 
+        https: false, 
+        assert: false, 
+        os: false, 
+        path: false, 
+        'pg': false, 
+        'pg-native': false, 
+        'pg-query-stream': false, 
+        'oracledb': false, 
+        'mysql': false, 
+        'mysql2': false, 
+        'sqlite3': false, 
+        'better-sqlite3': false, 
         'tedious': false,
-      };
-
-      // Aliases para evitar problemas
-      config.resolve.alias = {
-        ...config.resolve.alias,
-        'pg-cloudflare': false,
-        'knex': false,
-        'objection': false,
       };
     }
 
@@ -468,14 +257,6 @@ const nextConfig: NextConfig = {
         resourceRegExp: /cloudflare:sockets/,
       })
     );
-
-    // Configurações específicas para desenvolvimento
-    if (dev) {
-      config.watchOptions = {
-        poll: false,
-        ignored: /node_modules/,
-      };
-    }
 
     return config;
   },
@@ -491,79 +272,32 @@ const nextConfig: NextConfig = {
     ];
   },
 
-  // Configuração de rewrites - Proxy para backend
+  // Configuração de rewrites - Proxy para o backend
   async rewrites() {
-    const backendUrl = process.env.BACKEND_URL || (
-      isProd
-        ? process.env.FRONTEND_URL || 'https://portal.sabercon.com.br'
-        : 'http://localhost:3001'
-    );
+    // Obter URL do backend baseado no ambiente
+    const backendUrl = isDev 
+      ? (process.env.BACKEND_URL || 'http://localhost:3001')
+      : (process.env.BACKEND_URL || `${process.env.FRONTEND_URL || 'https://portal.sabercon.com.br'}/api`);
 
-    return {
-      beforeFiles: [
-        // Proxy para API com cache headers
-        {
-          source: '/api/:path*',
-          destination: `${backendUrl}/api/:path*`,
-          has: [
-            {
-              type: 'header',
-              key: 'x-no-cache',
-              value: '(?<hasNoCache>.*)',
-            },
-          ],
-        },
-        // Proxy padrão para API
-        {
-          source: '/api/:path*',
-          destination: `${backendUrl}/api/:path*`,
-        },
-      ],
-      afterFiles: [
-        // Proxy para assets estáticos do backend
-        {
-          source: '/uploads/:path*',
-          destination: `${backendUrl}/uploads/:path*`,
-        },
-        // Proxy para arquivos públicos
-        {
-          source: '/public/:path*',
-          destination: `${backendUrl}/public/:path*`,
-        },
-      ],
-      fallback: [
-        // Fallback para rotas não encontradas
-        {
-          source: '/:path*',
-          destination: `${backendUrl}/:path*`,
-          has: [
-            {
-              type: 'header',
-              key: 'x-proxy-fallback',
-              value: '(?<hasFallback>.*)',
-            },
-          ],
-        },
-      ],
-    };
-  },
+    console.log(`🔗 Configurando proxy para backend: ${backendUrl}`);
 
-  // Configuração para PWA (se aplicável)
-  env: {
-    CUSTOM_KEY: 'my-value',
-    CACHE_VERSION: cacheVersion,
-    NEXT_PUBLIC_NODE_ENV: process.env.NODE_ENV || 'production',
-    NEXT_PUBLIC_API_URL: process.env.BACKEND_URL || (
-      isProd
-        ? `${process.env.FRONTEND_URL || 'https://portal.sabercon.com.br'}/api`
-        : 'http://localhost:3001/api'
-    ),
-    // Expor FRONTEND_URL para o cliente
-    NEXT_PUBLIC_FRONTEND_URL: process.env.FRONTEND_URL || (
-      isProd
-        ? 'https://portal.sabercon.com.br'
-        : 'http://localhost:3000'
-    ),
+    return [
+      // Proxy para API
+      {
+        source: '/api/:path*',
+        destination: `${backendUrl}/:path*`,
+      },
+      // Proxy para uploads
+      {
+        source: '/uploads/:path*',
+        destination: `${backendUrl}/uploads/:path*`,
+      },
+      // Proxy para arquivos públicos
+      {
+        source: '/public/:path*',
+        destination: `${backendUrl}/public/:path*`,
+      },
+    ];
   },
 
   // Configurações de proxy HTTP
@@ -572,4 +306,4 @@ const nextConfig: NextConfig = {
   },
 };
 
-export default nextConfig; 
+export default nextConfig;

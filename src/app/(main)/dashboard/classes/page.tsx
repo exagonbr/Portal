@@ -8,7 +8,7 @@ import Modal from '@/components/ui/Modal'
 import ClassForm from '@/components/forms/ClassForm'
 import ProtectedRoute from '@/components/auth/ProtectedRoute'
 import { useCRUD } from '@/hooks/useCRUD'
-import { apiClient, BaseApiService } from '@/lib/api-client'
+import { apiClient } from '@/lib/api-client'
 import { useTheme } from '@/contexts/ThemeContext'
 import { UserRole } from '@/types/roles'
 import { usePermissions } from '@/hooks/usePermissions'
@@ -32,7 +32,6 @@ interface Class {
   updated_at: string
 }
 
-const classService = new BaseApiService<Class>('/classes')
 
 export default function ClassesPage() {
   const { theme } = useTheme()
@@ -53,8 +52,8 @@ export default function ClassesPage() {
     search,
     setSelectedItem,
     setPage
-  } = useCRUD({
-    service: classService,
+  } = useCRUD<Class>({
+    endpoint: '/classes',
     entityName: 'Turma',
     autoFetch: true,
     paginated: true

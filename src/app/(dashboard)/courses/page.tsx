@@ -28,11 +28,11 @@ export default function Courses() {
 
       if ((user.role as string) === 'TEACHER' || (user.role as string) === 'SYSTEM_ADMIN') {
         // Professores e admins veem cursos onde são instrutores
-        const response = await getCoursesByTeacher(user.id)
+        const response = await getCoursesByTeacher(String(user.id))
         coursesData = response
       } else if ((user.role as string) === 'STUDENT') {
         // Estudantes veem cursos em que estão matriculados
-        const response = await getCoursesByStudent(user.id)
+        const response = await getCoursesByStudent(String(user.id))
         coursesData = response
       }
 

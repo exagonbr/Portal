@@ -8,7 +8,7 @@ import Modal from '@/components/ui/Modal'
 import ModuleForm from '@/components/forms/ModuleForm'
 import ProtectedRoute from '@/components/auth/ProtectedRoute'
 import { useCRUD } from '@/hooks/useCRUD'
-import { apiClient, BaseApiService } from '@/lib/api-client'
+import { apiClient } from '@/lib/api-client'
 import { useTheme } from '@/contexts/ThemeContext'
 import { UserRole } from '@/types/roles'
 import { usePermissions } from '@/hooks/usePermissions'
@@ -32,7 +32,6 @@ interface Module {
   updated_at: string
 }
 
-const moduleService = new BaseApiService<Module>('/modules')
 
 export default function ModulesPage() {
   const { theme } = useTheme()
@@ -52,8 +51,8 @@ export default function ModulesPage() {
     search,
     setSelectedItem,
     setPage
-  } = useCRUD({
-    service: moduleService,
+  } = useCRUD<Module>({
+    endpoint: '/modules',
     entityName: 'Módulo',
     autoFetch: true,
     paginated: true

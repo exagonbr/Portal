@@ -15,14 +15,27 @@ interface User {
   email: string;
   role: string;
   permissions: string[];
+  contact?: {
+    phone?: string;
+    address?: string;
+    educationUnit?: string;
+  };
+  telefone?: string;
+  endereco?: string;
+  unidadeEnsino?: string;
+  institution_name?: string;
 }
 
 interface AuthContextType {
   user: User | null;
   isAuthenticated: boolean;
   isLoading: boolean;
+  loading: boolean;
+  error: string | null;
   login: (email: string, password: string) => Promise<void>;
   logout: () => void;
+  handleGoogleLogin: (token: string) => Promise<void>;
+  refreshUser: () => Promise<void>;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -185,12 +198,50 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     }
   };
 
+  const handleGoogleLogin = async (token: string) => {
+    if (!isClient) return;
+
+    setIsLoading(true);
+    try {
+      await performCacheCleanup('google-login');
+      
+      const { data } = await apiClient.post('/auth/google-login', { token });
+      const { accessToken } = data.data;
+      
+      setStoredToken(accessToken);
+      
+      if (setupUserFromToken(accessToken)) {
+        await performCacheCleanup('login success');
+        toast.success('Login com Google realizado com sucesso!');
+        router.push(buildUrl('/dashboard'));
+      } else {
+        throw new Error('Token inválido recebido do servidor');
+      }
+    } catch (error: any) {
+      console.error("Google login failed:", error);
+      clearAuthCache();
+      const message = error.response?.data?.message || 'Falha no login com Google.';
+      toast.error(message);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
   const value = {
     user,
     isAuthenticated,
     isLoading,
+    loading: isLoading,
+    error: null, // Placeholder, será implementado no futuro
     login,
     logout,
+    handleGoogleLogin,
+    refreshUser: async () => {
+      const token = getStoredToken();
+      if (token) {
+        setupUserFromToken(token);
+      }
+    },
   };
 
   return (
@@ -225,3 +276,4 @@ export const useAuth = () => {
   }
   return context;
 };
+

@@ -1,63 +1,49 @@
 /**
- * Configuração centralizada de URLs
- * Exporta funções para obter URLs da API usando variáveis de ambiente
+ * Arquivo central para constantes de rotas da API.
+ * As rotas devem ser relativas (ex: '/users').
+ * O `api-client` é responsável por adicionar a URL base.
  */
 
-import { ENV_CONFIG, getApiUrl, getInternalApiUrl } from './env';
+import { getApiUrl, getInternalApiUrl, ENV_CONFIG } from './env';
 
-// Re-exportar as funções principais do env.ts
+// Re-exportar funções para manter compatibilidade
 export { getApiUrl, getInternalApiUrl };
 
-// Re-exportar as URLs base
-export const {
-  FRONTEND_URL,
-  BACKEND_URL,
-  API_BASE_URL,
-  INTERNAL_API_URL
-} = ENV_CONFIG;
+// --- Constantes de Rotas da API ---
 
-// Função helper para construir URLs completas
-export const buildUrl = (baseUrl: string, path: string = '') => {
-  const cleanPath = path.startsWith('/') ? path : `/${path}`;
-  return `${baseUrl}${cleanPath}`;
-};
+export const API_ROUTES = {
+  AUTH: {
+    LOGIN: '/auth/optimized/login',
+    LOGOUT: '/auth/logout',
+    REGISTER: '/auth/register',
+    REFRESH: '/auth/refresh',
+    ME: '/auth/me',
+  },
+  USERS: {
+    BASE: '/users',
+    STATS: '/users/stats',
+    ME: '/users/me',
+    BY_ID: (id: string | number) => `/users/${id}`,
+    ACTIVATE: (id: string | number) => `/users/${id}/activate`,
+    DEACTIVATE: (id: string | number) => `/users/${id}/deactivate`,
+    RESET_PASSWORD: (id: string | number) => `/users/${id}/reset-password`,
+    SEARCH: '/users/search',
+    BY_ROLE: (roleId: string) => `/users/role/${roleId}`,
+    BY_INSTITUTION: (institutionId: number) => `/users/institution/${institutionId}`,
+  },
+  COURSES: '/courses',
+  ASSIGNMENTS: '/assignments',
+  // Adicione outras rotas base aqui
+} as const;
 
-// Função para construir URLs da API
-export const buildApiUrl = (path: string) => {
-  const baseUrl = getApiUrl();
-  const cleanPath = path.startsWith('/') ? path : `/${path}`;
-  
-  // Se o baseUrl já termina com /api, não adiciona novamente
-  if (baseUrl.endsWith('/api') && cleanPath.startsWith('/api')) {
-    return `${baseUrl}${cleanPath.substring(4)}`;
-  }
-  
-  return `${baseUrl}${cleanPath}`;
-};
-
-// URLs específicas para diferentes contextos
+// Para manter compatibilidade com o uso antigo de `URLS`
 export const URLS = {
-  // Frontend
   FRONTEND: ENV_CONFIG.FRONTEND_URL,
-  
-  // API endpoints
   API: {
     BASE: ENV_CONFIG.API_BASE_URL,
     INTERNAL: ENV_CONFIG.INTERNAL_API_URL,
-    
-    // Endpoints específicos
-    AUTH: {
-      LOGIN: getInternalApiUrl('/auth/optimized/login'),
-      LOGOUT: getInternalApiUrl('/auth/logout'),
-      REGISTER: getInternalApiUrl('/auth/register'),
-      REFRESH: getInternalApiUrl('/auth/refresh'),
-    },
-    
-    // Outros endpoints podem ser adicionados aqui
-    USERS: getApiUrl('/users'),
-    COURSES: getApiUrl('/courses'),
-    ASSIGNMENTS: getApiUrl('/assignments'),
-  }
-} as const;
+    ...API_ROUTES,
+  },
+};
 
 export default URLS;
