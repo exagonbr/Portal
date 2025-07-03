@@ -130,6 +130,7 @@ export class AuthService {
     // Find user
     const user = await db('users')
       .where('email', email)
+      .andWhere('enabled', true)
       .first();
 
     if (!user) {
