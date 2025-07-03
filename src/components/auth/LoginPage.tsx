@@ -12,7 +12,7 @@ import { MotionDiv, MotionH1, MotionP } from '@/components/ui/MotionWrapper';
 import { getTheme } from '@/config/themes';
 import { useEffect, useState } from 'react';
 import { useAutoCacheCleaner } from '@/hooks/useCacheCleaner';
-import { FRONTEND_URL, buildUrl } from '@/config/urls';
+import { buildUrl } from '@/utils/urlBuilder';
 
 export function LoginPage() {
   // Hook para limpeza automática de cache
@@ -167,7 +167,7 @@ export function LoginPage() {
       
       // CORREÇÃO: Usar FRONTEND_URL para redirecionamento mais confiável
       setTimeout(() => {
-        const fullUrl = buildUrl(FRONTEND_URL, targetPath!);
+        const fullUrl = buildUrl(targetPath!);
         console.log(`🌐 Redirecionando para URL completa: ${fullUrl}`);
         window.location.href = fullUrl;
       }, 300);

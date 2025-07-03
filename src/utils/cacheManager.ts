@@ -115,7 +115,7 @@ export class CacheManager {
     await cacheService.invalidatePattern(pattern);
     
     // Limpar revalidações pendentes relacionadas
-    for (const key of this.pendingRevalidations) {
+    for (const key of Array.from(this.pendingRevalidations)) {
       if (key.includes(pattern)) {
         this.pendingRevalidations.delete(key);
       }
@@ -170,7 +170,7 @@ export class CacheManager {
         reject(new Error('Timeout na limpeza de cache do Service Worker'));
       }, 10000);
       
-      navigator.serviceWorker.controller.postMessage(
+      navigator.serviceWorker.controller?.postMessage(
         {
           type: 'CLEAR_CACHE',
           payload: { reason: 'manual_clear_all' }
@@ -188,7 +188,11 @@ export class CacheManager {
     serviceWorker?: any;
     pendingRevalidations: number;
   }> {
-    const stats = {
+    const stats: {
+      memory: ReturnType<typeof cacheService.getStats>;
+      serviceWorker?: any;
+      pendingRevalidations: number;
+    } = {
       memory: cacheService.getStats(),
       pendingRevalidations: this.pendingRevalidations.size
     };
@@ -198,7 +202,7 @@ export class CacheManager {
       try {
         stats.serviceWorker = await this.getServiceWorkerStats();
       } catch (error) {
-        console.warn('⚠️ Falha ao obter stats do Service Worker:', error);
+        console.warn('⚠️ Failed to get Service Worker stats:', error);
       }
     }
 
@@ -239,11 +243,11 @@ export class CacheManager {
     
     // Aplicar configurações ao cacheService
     if (newConfig.enableMemoryCache !== undefined) {
-      cacheService.setEnabled(newConfig.enableMemoryCache);
+      cacheService.setMemoryCacheEnabled(newConfig.enableMemoryCache);
     }
     
     if (newConfig.defaultTTL !== undefined) {
-      cacheService.setDefaultTTL(newConfig.defaultTTL);
+      cacheService.setDefaultTTLMs(newConfig.defaultTTL);
     }
   }
 }
