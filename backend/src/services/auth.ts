@@ -155,13 +155,13 @@ export class AuthService {
       .first();
 
     if (!user || !user.is_active) {
-      throw new Error('Usuário não encontrado ou inativo');
+      throw new Error('Email ou senha incorretos');
     }
 
     // Verify password
     const isValidPassword = await this.comparePasswords(password, user.password);
     if (!isValidPassword) {
-      throw new Error('Invalid credentials');
+      throw new Error('Email ou senha incorretos');
     }
 
     // Buscar a role do usuário pelo role_id

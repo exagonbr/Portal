@@ -203,8 +203,7 @@ router.post(
       });
     } catch (error: any) {
       if (
-        error.message === 'Invalid credentials' ||
-        error.message === 'Usuário não encontrado ou inativo'
+        error.message === 'Email ou senha incorretos'
       ) {
         return res.status(401).json({
           success: false,
@@ -215,7 +214,7 @@ router.post(
       console.error('Erro no login:', error);
       return res.status(500).json({
         success: false,
-        message: 'Erro no login: ' + error.message,
+        message: 'Erro interno no servidor',
       });
     }
   }
