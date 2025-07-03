@@ -1,5 +1,4 @@
 import express from 'express';
-<<<<<<< HEAD
 import { requireAuth } from '../middleware/requireAuth';
 
 const router = express.Router();
@@ -136,20 +135,5 @@ router.post('/send', requireSendPermission, async (req, res) => {
     message: 'Send bulk notification - implementação pendente'
   });
 });
-=======
-import { validateJWT } from '../middleware/auth';
-import { pushSubscriptionController } from '../controllers/pushSubscriptionController';
-
-const router = express.Router();
-
-// Subscribe to push notifications
-router.post('/', validateJWT, pushSubscriptionController.subscribe.bind(pushSubscriptionController));
-
-// Unsubscribe from push notifications
-router.delete('/:endpoint', validateJWT, pushSubscriptionController.unsubscribe.bind(pushSubscriptionController));
-
-// Send bulk notification (admin only)
-router.post('/send', validateJWT, pushSubscriptionController.sendBulkNotification.bind(pushSubscriptionController));
->>>>>>> master
 
 export default router;

@@ -66,7 +66,6 @@ export interface ChangePasswordDto {
 export interface UserResponseDto {
   name: any | string;
   id: string;
-<<<<<<< HEAD
   full_name: string;
   email: string;
   role_id: string;
@@ -77,15 +76,6 @@ export interface UserResponseDto {
   cpf?: string;
   birth_date?: string;
   is_active: boolean;
-=======
-  name: string;
-  email: string;
-  role?: {
-    name: string;
-    permissions: string[];
-  };
-  institution_id?: string;
->>>>>>> master
   created_at: string;
   updated_at: string;
   role_name?: string;

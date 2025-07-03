@@ -1,11 +1,4 @@
-<<<<<<< HEAD
 import { getRedisClient } from '../config/redis';
-=======
-// import { AppDataSource } from '../config/typeorm.config'; // Removido - usando Knex agora
-// import { User } from '../entities/User'; // Removido - agora é interface
-import { UserRepository } from '../repositories/UserRepository';
-import db from '../config/database';
->>>>>>> master
 import { SessionService } from './SessionService';
 import { UserRepository } from '../repositories/UserRepository';
 
@@ -58,40 +51,20 @@ interface UserDashboard {
 }
 
 export class DashboardService {
-<<<<<<< HEAD
   private static redis = getRedisClient();
   private static userRepository = new UserRepository();
-=======
-  // private static redis = getRedisClient(); // Removido - não está sendo usado
-  // private static userRepository = new UserRepository(); // Removido - usando métodos estáticos agora
->>>>>>> master
 
   /**
    * Obtém estatísticas gerais do sistema para administradores
    */
   static async getSystemDashboard(): Promise<DashboardStats> {
     try {
-<<<<<<< HEAD
       const [userStats, sessionStats, recentActivity] = await Promise.all([
         this.getUserStats(),
         SessionService.getSessionStats(),
         this.getRecentActivity()
       ]);
 
-=======
-      // Stats de usuários
-      const userStats = await this.getUserStats();
-      
-      // Stats de sessões (simuladas)
-      const sessionStats = {
-        activeUsers: userStats.total,
-        totalActiveSessions: userStats.total,
-        sessionsByDevice: { 'web': userStats.total },
-        averageSessionDuration: 3600
-      };
-      
-      // Stats do sistema
->>>>>>> master
       const systemStats = {
         uptime: process.uptime(),
         memoryUsage: process.memoryUsage(),
@@ -128,11 +101,7 @@ export class DashboardService {
   static async getUserDashboard(userId: number): Promise<UserDashboard> {
     try {
       // Busca dados do usuário
-<<<<<<< HEAD
       const user = await this.userRepository.getUserWithRoleAndInstitution(userId);
-=======
-      const user = await UserRepository.findById(userId);
->>>>>>> master
 
       if (!user) {
         throw new Error('Usuário não encontrado');
@@ -195,7 +164,6 @@ export class DashboardService {
         this.userRepository.getUserStatsByInstitution()
       ]);
 
-<<<<<<< HEAD
       return {
         total: totalUsers,
         active: 0, // Placeholder for active users as last_login is not available
@@ -213,41 +181,12 @@ export class DashboardService {
         byInstitution: {}
       };
     }
-=======
-    // Total de usuários
-    const totalUsers = await UserRepository.count();
-
-    // Usuários ativos (simplificado - todos por enquanto)
-    const activeUsers = totalUsers; // TODO: implementar lógica de last_login
-
-    // Novos usuários este mês
-    const newThisMonthResult = await db('users')
-      .where('created_at', '>=', firstDayOfMonth)
-      .count('id as count')
-      .first();
-    const newThisMonth = parseInt(newThisMonthResult?.count as string) || 0;
-
-    // Usuários por role (simplificado)
-    const byRole: Record<string, number> = { 'Total': totalUsers };
-
-    // Usuários por instituição (simplificado)
-    const byInstitution: Record<string, number> = { 'Total': totalUsers };
-
-    return {
-      total: totalUsers,
-      active: activeUsers,
-      newThisMonth,
-      byRole,
-      byInstitution
-    };
->>>>>>> master
   }
 
   /**
    * Obtém atividades recentes
    */
   private static async getRecentActivity() {
-<<<<<<< HEAD
     console.warn("getRecentActivity is returning mock data as underlying repository methods were removed for stability.");
     return {
       registrations: [],
@@ -309,14 +248,6 @@ export class DashboardService {
       inProgress: [], // await getCoursesInProgress(userId)
       completed: [], // await getCompletedCourses(userId)
       recent: [] // await getRecentCourses(userId)
-=======
-    // Últimos registros (últimos 10)
-    const recentRegistrations = await UserRepository.findAll(10, 0);
-
-    return {
-      registrations: recentRegistrations.slice(0, 10),
-      logins: recentRegistrations.slice(0, 10)
->>>>>>> master
     };
   }
 
@@ -330,13 +261,8 @@ export class DashboardService {
     // Streak de estudo (simulado)
     const studyStreak = 0;
     
-<<<<<<< HEAD
     // Último acesso baseado na data de criação do usuário (temporário)
     const user = await this.userRepository.findById(userId);
-=======
-    // Último acesso baseado na data de criação do usuário
-    const user = await UserRepository.findById(userId);
->>>>>>> master
 
     return {
       recentSessions: recentSessions.slice(0, 5),
@@ -370,7 +296,6 @@ export class DashboardService {
         }
       };
     } catch (error) {
-<<<<<<< HEAD
       console.log('Erro ao obter métricas em tempo real:', error);
       return {
         activeUsers: 0,
@@ -378,10 +303,6 @@ export class DashboardService {
         redisMemory: '0MB',
         timestamp: new Date().toISOString()
       };
-=======
-      console.error('Erro ao obter métricas em tempo real:', error);
-      throw error;
->>>>>>> master
     }
   }
 
@@ -399,7 +320,6 @@ export class DashboardService {
     const now = new Date();
     let startDate: Date;
 
-<<<<<<< HEAD
       // Implementação baseada no tipo de analytics solicitado
       switch (type) {
         case 'users':
@@ -414,27 +334,6 @@ export class DashboardService {
     } catch (error) {
       console.log('Erro ao obter dados de analytics:', error);
       throw new Error('Erro ao obter dados de analytics');
-=======
-    switch (period) {
-      case 'day':
-        startDate = new Date(now.getTime() - 24 * 60 * 60 * 1000);
-        break;
-      case 'week':
-        startDate = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000);
-        break;
-      case 'month':
-        startDate = new Date(now.getTime() - 30 * 24 * 60 * 60 * 1000);
-        break;
-    }
-
-    switch (type) {
-      case 'users':
-        return this.getUserAnalytics(startDate, now);
-      case 'sessions':
-        return { sessions: [] }; // Simplificado
-      case 'activity':
-        return { activity: [] }; // Simplificado
->>>>>>> master
     }
   }
 
@@ -442,7 +341,6 @@ export class DashboardService {
    * Obtém dados analíticos de usuários
    */
   private static async getUserAnalytics(startDate: Date, endDate: Date) {
-<<<<<<< HEAD
     console.warn("getUserAnalytics is returning mock data as underlying repository method was removed for stability.");
     return {
       type: 'users',
@@ -492,18 +390,6 @@ export class DashboardService {
     return {
       type: 'activity',
       data
-=======
-    const registrations = await db('users')
-      .select(db.raw('DATE(created_at) as date'))
-      .count('id as count')
-      .where('created_at', '>=', startDate)
-      .where('created_at', '<=', endDate)
-      .groupBy(db.raw('DATE(created_at)'))
-      .orderBy('created_at');
-
-    return {
-      registrations
->>>>>>> master
     };
   }
 } 

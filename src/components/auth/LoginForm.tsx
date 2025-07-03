@@ -1,6 +1,5 @@
 'use client';
 
-<<<<<<< HEAD
 import { useState, useEffect, useCallback, useRef } from 'react';
 import Image from 'next/image';
 import { useRouter } from 'next/navigation';
@@ -10,14 +9,6 @@ import { getDashboardPath, isValidRole } from '../../utils/roleRedirect';
 import { useTheme } from '@/contexts/ThemeContext';
 import { LicenseValidationModal } from './LicenseValidationModal';
 import { MotionDiv, MotionSpan, MotionP, ClientOnly } from '@/components/ui/MotionWrapper';
-=======
-import React, { useState, useEffect } from 'react';
-import { signIn } from 'next-auth/react';
-import { useRouter } from 'next/navigation';
-import { useAuth } from '@/contexts/AuthContext';
-import { useForm } from '@/hooks/useForm';
-import { toast } from '@/components/Toast';
->>>>>>> master
 
 interface LoginFormData {
   email: string;
@@ -43,7 +34,6 @@ const validationRules = {
 };
 
 export function LoginForm() {
-<<<<<<< HEAD
   const { login } = useAuth();
   const router = useRouter();
   const { theme } = useTheme();
@@ -52,106 +42,6 @@ export function LoginForm() {
   const [isGoogleLoading, setIsGoogleLoading] = useState(false);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
-=======
-  const router = useRouter();
-  const [submitError, setSubmitError] = useState('');
-  const [isGoogleLoading, setIsGoogleLoading] = useState(false);
-  
-  // Usar try-catch para obter login do AuthContext de forma segura
-  let loginFn: ((email: string, password: string) => Promise<void>) | null = null;
-  
-  try {
-    const auth = useAuth();
-    if (auth && auth.login) {
-      loginFn = auth.login;
-    }
-  } catch (error) {
-    console.warn('⚠️ Erro ao usar AuthContext no LoginForm:', error);
-  }
-
-  const handleLoginSubmit = async (formValues: LoginFormData) => {
-    try {
-      setSubmitError('');
-      console.log('🔐 Iniciando login via formulário para:', formValues.email);
-      
-      if (loginFn) {
-        // Usar a função direta do contexto
-        await loginFn(formValues.email, formValues.password);
-        toast.success('Login realizado com sucesso!');
-      } else {
-        // Fallback para o caso do hook falhar
-        console.warn('⚠️ Usando método de login alternativo via API direta');
-        
-        // Implementar chamada direta à API
-        const response = await fetch('/api/auth/login', {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-          },
-          body: JSON.stringify({
-            email: formValues.email,
-            password: formValues.password,
-          }),
-        });
-        
-        if (!response.ok) {
-          const errorData = await response.json();
-          throw new Error(errorData.message || 'Falha na autenticação');
-        }
-        
-        const data = await response.json();
-        
-        if (data.token) {
-          // Salvar token e dados do usuário no localStorage
-          localStorage.setItem('auth_token', data.token);
-          if (data.user) {
-            localStorage.setItem('user_data', JSON.stringify(data.user));
-          }
-          if (data.refresh_token) {
-            localStorage.setItem('refresh_token', data.refresh_token);
-            
-            // Salvar também como cookie para redundância
-            const expiryDate = new Date();
-            expiryDate.setDate(expiryDate.getDate() + 30); // Expira em 30 dias
-            document.cookie = `refresh_token=${data.refresh_token}; expires=${expiryDate.toUTCString()}; path=/; secure; samesite=strict`;
-          }
-          if (data.expires_at) {
-            localStorage.setItem('auth_expires_at', data.expires_at);
-          }
-          
-          toast.success('Login realizado com sucesso!');
-          router.push('/dashboard');
-        } else {
-          throw new Error('Resposta inválida do servidor');
-        }
-      }
-    } catch (error: any) {
-      console.error('❌ Erro durante o login:', error);
-      
-      // Tratamento específico para erros conhecidos
-      let errorMessage = 'Email ou senha incorretos. Por favor, tente novamente.';
-      
-      if (error.message) {
-        if (error.message.includes('Falha ao atualizar token') || 
-            error.message.includes('Failed to refresh token') ||
-            error.message.includes('Sessão expirada')) {
-          errorMessage = 'Sua sessão expirou. Por favor, faça login novamente.';
-        } else if (error.message.includes('Email ou senha incorretos')) {
-          errorMessage = 'Email ou senha incorretos. Por favor, verifique suas credenciais.';
-        } else if (error.message.includes('Usuário não encontrado')) {
-          errorMessage = 'Usuário não encontrado. Verifique se o email está correto.';
-        } else if (error.message.includes('rede') || error.message.includes('network')) {
-          errorMessage = 'Erro de conexão. Verifique sua internet e tente novamente.';
-        } else {
-          errorMessage = error.message;
-        }
-      }
-      
-      setSubmitError(errorMessage);
-      toast.error(errorMessage);
-    }
-  };
->>>>>>> master
 
   // Verificar se há erro de Google OAuth na URL
   useEffect(() => {
@@ -221,7 +111,6 @@ export function LoginForm() {
     handleChange,
     handleBlur,
     handleSubmit,
-<<<<<<< HEAD
     resetForm
   } = useForm<LoginFormData>({
     initialValues,
@@ -298,12 +187,6 @@ export function LoginForm() {
         setLoginAttemptInProgress(false);
       }
     }, [login, loginAttemptInProgress, MIN_LOGIN_INTERVAL_MS, isMobile])
-=======
-  } = useForm<LoginFormData>({
-    initialValues,
-    validationRules,
-    onSubmit: handleLoginSubmit
->>>>>>> master
   });
 
   // Atualizar a referência à função resetForm após a inicialização do formulário
@@ -312,37 +195,8 @@ export function LoginForm() {
   }, [resetForm]);
   
   const handleGoogleLogin = async () => {
-<<<<<<< HEAD
     // Login Google temporariamente desabilitado para evitar erros 404
     setSubmitError('Login com Google temporariamente desabilitado. Use email e senha.');
-=======
-    try {
-      setIsGoogleLoading(true);
-      setSubmitError('');
-      console.log('🔐 Iniciando login via Google');
-      
-      const result = await signIn('google', { 
-        callbackUrl: '/dashboard',
-        redirect: false 
-      });
-
-      if (result?.error) {
-        throw new Error(result.error);
-      }
-
-      if (result?.ok) {
-        toast.success('Login com Google realizado com sucesso!');
-        router.push('/dashboard');
-      }
-    } catch (error: any) {
-      console.error('❌ Erro durante login Google:', error);
-      const errorMessage = error.message || 'Erro ao realizar login com Google. Por favor, tente novamente.';
-      setSubmitError(errorMessage);
-      toast.error(errorMessage);
-    } finally {
-      setIsGoogleLoading(false);
-    }
->>>>>>> master
   };
 
   return (
@@ -574,7 +428,6 @@ export function LoginForm() {
           animate={{ opacity: 1 }}
           transition={{ delay: 0.4 }}
         >
-<<<<<<< HEAD
           <div className="absolute inset-0 flex items-center">
             <div className="w-full border-t" style={{ borderColor: theme.colors.border.light }} />
           </div>
@@ -627,28 +480,6 @@ export function LoginForm() {
           </button>
         </MotionDiv>
 
-=======
-          <svg className="h-5 w-5" viewBox="0 0 24 24" aria-hidden="true">
-            <path
-              d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"
-              fill="#4285F4"
-            />
-            <path
-              d="M1 12.23c0-.78.07-1.53.2-2.25h5.92v4.26H4.56l-.01.07C4.13 15.36 2.62 17.25 1 12.23z"
-              fill="#34A853"
-            />
-            <path
-              d="M8.07 17.93c-3.09-.63-5.6-3.12-6.19-6.23L4.56 14.28c.63 1.73 2.04 3.16 3.51 3.65z"
-              fill="#EA4335"
-            />
-            <path
-              d="M8.07 6.07c3.09.63 5.6 3.12 6.19 6.23L11.58 9.72c-.63-1.73-2.04-3.16-3.51-3.65z"
-              fill="#FBBC05"
-            />
-          </svg>
-          {isGoogleLoading ? 'Conectando...' : 'Continuar com Google'}
-        </button>
->>>>>>> master
       </div>
 
       <LicenseValidationModal

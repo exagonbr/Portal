@@ -20,11 +20,7 @@ import modulesRouter from './modules';
 import lessonsRouter from './lessons';
 import booksRouter from './books';
 import videosRouter from './videos';
-<<<<<<< HEAD
 import videoFileRouter from './video-file';
-=======
-import tvshowsRouter from './tvshows';
->>>>>>> master
 import annotationsRouter from './annotations';
 import highlightsRouter from './highlights';
 import rolesRouter from './roles';
@@ -108,7 +104,6 @@ router.get('/docs.json', (req, res) => {
   res.send(swaggerSpec);
 });
 
-<<<<<<< HEAD
 // Public routes (no authentication required)
 router.use('/auth', authRouter); // Authentication routes (login, refresh, logout)
 router.use('/public', publicRouter); // General public routes
@@ -151,30 +146,5 @@ router.use('/schools', requireAuth, schoolsRouter);
 router.use('/units', requireAuth, unitsRouter);
 router.use('/notification-logs', requireAuth, notificationLogsRouter);
 router.use('/certificates', requireAuth, certificatesRouter);
-=======
-// API Routes
-router.use('/push-subscriptions', pushSubscriptionRoutes);
-router.use('/notifications', notificationsRoutes);
-router.use('/institutions', institutionsRouter);
-router.use('/users', usersRouter);
-router.use('/courses', coursesRouter);
-router.use('/modules', modulesRouter);
-router.use('/lessons', lessonsRouter);
-router.use('/books', booksRouter);
-router.use('/videos', videosRouter);
-router.use('/tvshows', tvshowsRouter);
-router.use('/annotations', annotationsRouter);
-router.use('/highlights', highlightsRouter);
-router.use('/roles', rolesRouter);
-router.use('/permissions', permissionsRouter);
-router.use('/quizzes', quizzesRouter);
-router.use('/chats', chatsRouter);
-router.use('/forum', forumRouter);
-router.use('/content-collections', contentCollectionsRouter);
-router.use('/auth', authRouter);
-router.use('/sessions', sessionsRouter);
-router.use('/dashboard', dashboardRouter);
-router.use('/aws', createAwsRoutes(db));
->>>>>>> master
 
 export default router;

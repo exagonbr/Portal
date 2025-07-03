@@ -9,21 +9,11 @@ import express from 'express';
 import { body, validationResult } from 'express-validator';
 import jwt from 'jsonwebtoken';
 import { SessionService } from '../services/SessionService';
-<<<<<<< HEAD
 import { AppDataSource } from '../config/typeorm.config';
 import { User } from '../entities/User';
 import { Role } from '../entities/Role';
 import { JWT_CONFIG } from '../config/jwt';
 import { requireAuth } from '../middleware/requireAuth';
-=======
-import { 
-  validateJWTAndSession, 
-  extractClientInfo, 
-  AuthenticatedRequest,
-  requireRole 
-} from '../middleware/sessionMiddleware';
-import { UserRepository } from '../repositories/UserRepository';
->>>>>>> master
 
 const router = express.Router();
 
@@ -321,7 +311,6 @@ router.post(
       }
 
       // Gera JWT com sessionId
-<<<<<<< HEAD
       const jwtPayload = {
         userId: user.id,
         email: user.email,
@@ -344,21 +333,6 @@ router.post(
       };
       
       const token = jwt.sign(jwtPayload, JWT_CONFIG.SECRET, jwtOptions);
-=======
-      const token = jwt.sign(
-        {
-          userId: user.id.toString(),
-          email: user.email,
-          name: user.name,
-          role: user.role?.name,
-          institutionId: user.institution_id,
-          permissions: user.role?.permissions || [],
-          sessionId
-        },
-        process.env.JWT_SECRET || 'default-secret-key',
-        { expiresIn: remember ? '7d' : '24h' }
-      );
->>>>>>> master
 
       return res.json({
         success: true,

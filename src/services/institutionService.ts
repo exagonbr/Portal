@@ -107,17 +107,8 @@ const createAuthHeaders = (): Record<string, string> => {
 };
 
 export class InstitutionService {
-<<<<<<< HEAD
   // Listar instituições com filtros e paginação
   static async getInstitutions(options: InstitutionFilter = {}): Promise<PaginatedResponse<InstitutionDto>> {
-=======
-  private readonly baseEndpoint = '/api/institutions';
-
-  /**
-   * Busca todas as instituições com paginação e filtros
-   */
-  async getInstitutions(options: InstitutionListOptions = {}): Promise<PaginatedResponseDto<InstitutionResponseDto>> {
->>>>>>> master
     try {
       const params = new URLSearchParams();
       

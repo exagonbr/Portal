@@ -16,7 +16,6 @@ declare global {
 
 export default function GlobalSetup() {
   useEffect(() => {
-<<<<<<< HEAD
     // Configurações globais do sistema
     
     // Configurar prevenção de erros de hidratação
@@ -61,14 +60,6 @@ export default function GlobalSetup() {
     // Configurar globalmente para evitar erros do ResizeObserver
     
     // Otimizar Chart.js se estiver disponível
-=======
-    // Evitar aplicar o patch múltiplas vezes
-    if (typeof window !== 'undefined' && window.__resizeObserverPatched) {
-      return;
-    }
-
-    // Configurar Chart.js de forma mais agressiva
->>>>>>> master
     if (typeof window !== 'undefined' && window.Chart) {
       window.Chart.defaults.responsive = true;
       window.Chart.defaults.maintainAspectRatio = false;
@@ -195,30 +186,11 @@ export default function GlobalSetup() {
       }
     }
 
-<<<<<<< HEAD
     // Cleanup
     return () => {
       window.removeEventListener('unhandledrejection', () => {});
       window.removeEventListener('online', () => {});
       window.removeEventListener('offline', () => {});
-=======
-    // Adicionar listener global para interceptar erros de resize
-    const handleGlobalError = (event: Event) => {
-      const errorEvent = event as ErrorEvent;
-      if (errorEvent.message && 
-          errorEvent.message.toLowerCase().includes('resizeobserver')) {
-        event.preventDefault();
-        event.stopPropagation();
-        return false;
-      }
-    };
-
-    window.addEventListener('error', handleGlobalError, true);
-
-    // Cleanup
-    return () => {
-      window.removeEventListener('error', handleGlobalError, true);
->>>>>>> master
     };
   }, []);
 

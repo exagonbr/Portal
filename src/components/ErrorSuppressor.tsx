@@ -4,7 +4,6 @@ import { useEffect } from 'react';
 
 export default function ErrorSuppressor() {
   useEffect(() => {
-<<<<<<< HEAD
     // Suprimir o erro específico do ResizeObserver que é benigno
     const originalError = console.log;
     console.log = (...args) => {
@@ -21,81 +20,6 @@ export default function ErrorSuppressor() {
       ) {
         // Ignorar este erro específico - é um problema conhecido e benigno
         return;
-=======
-    // Lista de padrões de erro relacionados ao ResizeObserver para suprimir
-    const resizeObserverErrorPatterns = [
-      'ResizeObserver loop completed with undelivered notifications',
-      'ResizeObserver loop limit exceeded',
-      'ResizeObserver loop',
-      'Script error',
-      'Non-Error promise rejection captured',
-      'ResizeObserver callback timeout',
-      'Unable to process ResizeObserver loop',
-      'ResizeObserver: callback timeout exceeded',
-      // Variações em inglês e português
-      'Erro do ResizeObserver',
-      'ResizeObserver erro',
-      'Observer loop error',
-      'Observation loop error'
-    ];
-
-    // Lista de erros relacionados à autenticação que podem ser suprimidos
-    const authErrorsToSuppress = [
-      'No active session',
-      'CLIENT_FETCH_ERROR',
-      '[next-auth][error]',
-      'Sessão inválida',
-      '401 (Unauthorized)',
-      'Unauthorized'
-    ];
-
-    // Lista de erros de token que NÃO devem ser suprimidos (importantes para debugging)
-    const tokenErrorsToLog = [
-      'Failed to refresh token',
-      'Falha ao atualizar token',
-      'refresh token',
-      'Refresh token',
-      'token expired',
-      'Token expired',
-      'token expirado',
-      'Token expirado'
-    ];
-
-    // Lista de erros de React Hooks que precisam ser tratados
-    const reactHookErrors = [
-      'Invalid hook call',
-      'Hooks can only be called inside',
-      'Rules of Hooks',
-      'more than one copy of React'
-    ];
-
-    // Lista de padrões que NÃO devem ser suprimidos (logs importantes)
-    const importantPatterns = [
-      'dashboard',
-      'redirect',
-      'role',
-      'permission',
-      'navigation',
-      'router',
-      '🔐', '🚀', '✅', '❌', '🔍', '🔄', // Emojis dos logs importantes
-      'API',
-      'login', // Adicionando 'login' como padrão importante
-      'Login',  // Adicionando 'Login' com maiúscula
-      'autenticação', // Adicionando autenticação em português
-      'não foi possível', // Adicionando mensagem comum de erro
-      'token' // Adicionando token como padrão importante
-    ];
-
-    // Função para verificar se o erro deve ser suprimido
-    const shouldSuppressError = (message: string): boolean => {
-      if (!message || typeof message !== 'string') return false;
-      
-      // Detectar erros de login específicos que NÃO devem ser suprimidos
-      if (message.includes('Erro no login') || 
-          message.includes('não foi possível realizar o login') ||
-          message.includes('Não foi possível realizar o login')) {
-        return false; // Nunca suprimir erros de login
->>>>>>> master
       }
       
       // Detectar erros de React Hooks - apenas registrar para diagnóstico,
@@ -281,7 +205,6 @@ export default function ErrorSuppressor() {
 
     // Capturar erros globais não tratados
     const handleError = (event: ErrorEvent) => {
-<<<<<<< HEAD
       if (
         event.message &&
         (event.message.includes('ResizeObserver loop completed with undelivered notifications') ||
@@ -289,9 +212,6 @@ export default function ErrorSuppressor() {
          event.message.includes('Script error'))
       ) {
         // Prevenir que o erro apareça no console
-=======
-      if (event.message && shouldSuppressError(event.message)) {
->>>>>>> master
         event.preventDefault();
         event.stopPropagation();
         return false;
@@ -327,16 +247,9 @@ export default function ErrorSuppressor() {
 
     // Cleanup
     return () => {
-<<<<<<< HEAD
       console.log = originalError;
       window.removeEventListener('error', handleError);
       window.removeEventListener('unhandledrejection', handleUnhandledRejection);
-=======
-      console.error = originalError;
-      console.warn = originalWarn;
-      window.removeEventListener('error', handleError, true);
-      window.removeEventListener('unhandledrejection', handleUnhandledRejection, true);
->>>>>>> master
     };
   }, []);
 

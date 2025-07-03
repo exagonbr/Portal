@@ -43,25 +43,12 @@ export class AuthService {
         };
       }
 
-<<<<<<< HEAD
       const { user, token } = response.data;
 
       // Salva o token e dados do usuário
       if (typeof window !== 'undefined') {
         localStorage.setItem('accessToken', token);
       }
-=======
-      console.log('✅ AuthService: Login bem-sucedido, salvando dados do usuário');
-      console.log(`🔍 AuthService: Role recebida do backend: "${responseData.user.role}"`);
-
-      // Salva o token e dados do usuário
-      this.saveAuthData(
-        responseData.token,
-        responseData.sessionId || '',
-        responseData.user,
-        responseData.expires_at || new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString()
-      );
->>>>>>> master
 
       // Converte UserResponseDto para User (compatibilidade)
       const compatibleUser = this.convertToCompatibleUser(responseData.user);
@@ -72,11 +59,7 @@ export class AuthService {
         user: compatibleUser
       };
     } catch (error) {
-<<<<<<< HEAD
       console.log('Erro no login:', error);
-=======
-      console.error('❌ AuthService: Erro no login:', error);
->>>>>>> master
       
       if (error instanceof ApiClientError) {
         if (error.status === 401) {
@@ -135,26 +118,12 @@ export class AuthService {
         };
       }
 
-<<<<<<< HEAD
       const { user, token } = response.data;
 
       // Salva o token e dados do usuário
       if (typeof window !== 'undefined') {
         localStorage.setItem('accessToken', token);
       }
-=======
-      const { user, token, sessionId, expires_at } = response.data;
-
-      if (!user || !token || !sessionId || !expires_at) {
-        return {
-          success: false,
-          message: 'Resposta do servidor incompleta'
-        };
-      }
-
-      // Salva o token e dados do usuário
-      this.saveAuthData(token, sessionId, user, expires_at);
->>>>>>> master
 
       // Converte UserResponseDto para User (compatibilidade)
       const compatibleUser = this.convertToCompatibleUser(user);
@@ -235,7 +204,6 @@ export class AuthService {
     const token = localStorage.getItem('accessToken');
     return !!token;
   }
-<<<<<<< HEAD
   
   /**
    * Altera senha do usuário
@@ -306,52 +274,6 @@ export class AuthService {
       role = roleMapping[(apiUser as UserWithRoleDto).role_name] || 'student';
     }
 
-=======
-
-  /**
-   * Salva dados de autenticação
-   */
-  private saveAuthData(token: string, refreshToken: string, user: UserResponseDto, expiresAt: string): void {
-    if (typeof window === 'undefined') return;
-
-    // Salva tokens
-    apiClient.setAuthToken(token, refreshToken, expiresAt);
-
-    // Salva dados do usuário
-    this.saveUserData(this.convertToCompatibleUser(user));
-  }
-
-  /**
-   * Salva dados do usuário
-   */
-  private saveUserData(user: User): void {
-    if (typeof window === 'undefined') return;
-    localStorage.setItem('user_data', JSON.stringify(user));
-  }
-
-  /**
-   * Limpa dados de autenticação
-   */
-  private clearAuthData(): void {
-    if (typeof window === 'undefined') return;
-    
-    apiClient.clearAuth();
-    localStorage.removeItem('user_data');
-  }
-
-  /**
-   * Obtém token armazenado
-   */
-  private getStoredToken(): string | null {
-    if (typeof window === 'undefined') return null;
-    return localStorage.getItem('auth_token');
-  }
-
-  /**
-   * Converte UserResponseDto para User
-   */
-  private convertToCompatibleUser(apiUser: UserResponseDto): User {
->>>>>>> master
     return {
       id: apiUser.id,
       name: apiUser.name,

@@ -1,10 +1,5 @@
 import express from 'express';
-<<<<<<< HEAD
 import { requireAuth } from '../middleware/requireAuth';
-=======
-import { validateJWT, requireRole } from '../middleware/auth';
-import db from '../config/database';
->>>>>>> master
 
 const router = express.Router();
 
@@ -80,7 +75,6 @@ const requireInstitution = (req: any, res: any, next: any) => {
  *       200:
  *         description: List of videos
  */
-<<<<<<< HEAD
 router.get('/', requireInstitution, async (req, res) => {
   // Implementation will be added in the controller
   res.json({
@@ -88,85 +82,6 @@ router.get('/', requireInstitution, async (req, res) => {
     message: 'Videos list - implementação pendente',
     data: []
   });
-=======
-router.get('/', validateJWT, async (req, res) => {
-  try {
-    const { module, course, search, page = 1, limit = 20 } = req.query;
-    const userInstitutionId = req.user?.institutionId;
-    const offset = (Number(page) - 1) * Number(limit);
-
-    let query = db('content')
-      .leftJoin('modules', 'content.module_id', 'modules.id')
-      .leftJoin('courses', 'modules.course_id', 'courses.id')
-      .leftJoin('institutions', 'courses.institution_id', 'institutions.id')
-      .select([
-        'content.id',
-        'content.title',
-        'content.description',
-        'content.video_url',
-        'content.duration',
-        'content.thumbnail_url',
-        'content.order_index',
-        'content.created_at',
-        'modules.title as module_title',
-        'courses.title as course_title',
-        'institutions.name as institution_name'
-      ])
-      .where('content.type', 'video')
-      .where('content.status', 'active');
-
-    // Filtrar por instituição do usuário se não for admin
-    if (userInstitutionId && req.user?.role !== 'admin') {
-      query = query.where('courses.institution_id', userInstitutionId);
-    }
-
-    // Aplicar filtros
-    if (module) {
-      query = query.where('content.module_id', module);
-    }
-
-    if (course) {
-      query = query.where('courses.id', course);
-    }
-
-    if (search) {
-      const searchTerm = `%${search}%`;
-      query = query.where(function() {
-        this.where('content.title', 'ilike', searchTerm)
-          .orWhere('content.description', 'ilike', searchTerm);
-      });
-    }
-
-    // Contar total
-    const totalQuery = query.clone();
-    const [{ count }] = await totalQuery.count('* as count');
-    const total = Number(count);
-
-    // Aplicar paginação
-    const videos = await query
-      .orderBy('courses.title')
-      .orderBy('modules.order_index')
-      .orderBy('content.order_index')
-      .limit(Number(limit))
-      .offset(offset);
-
-    const totalPages = Math.ceil(total / Number(limit));
-
-    res.json({
-      success: true,
-      data: videos,
-      total,
-      page: Number(page),
-      totalPages
-    });
-  } catch (error) {
-    console.error('Error fetching videos:', error);
-    res.status(500).json({
-      success: false,
-      message: 'Erro interno do servidor'
-    });
-  }
->>>>>>> master
 });
 
 /**
@@ -190,7 +105,6 @@ router.get('/', validateJWT, async (req, res) => {
  *       404:
  *         description: Video not found
  */
-<<<<<<< HEAD
 router.get('/:id', requireInstitution, async (req, res) => {
   // Implementation will be added in the controller
   res.json({
@@ -198,55 +112,6 @@ router.get('/:id', requireInstitution, async (req, res) => {
     message: 'Video by ID - implementação pendente',
     data: null
   });
-=======
-router.get('/:id', validateJWT, async (req, res) => {
-  try {
-    const { id } = req.params;
-    const userInstitutionId = req.user?.institutionId;
-
-    const video = await db('content')
-      .leftJoin('modules', 'content.module_id', 'modules.id')
-      .leftJoin('courses', 'modules.course_id', 'courses.id')
-      .leftJoin('institutions', 'courses.institution_id', 'institutions.id')
-      .select([
-        'content.*',
-        'modules.title as module_title',
-        'modules.id as module_id',
-        'courses.title as course_title',
-        'courses.id as course_id',
-        'institutions.name as institution_name'
-      ])
-      .where('content.id', id)
-      .where('content.type', 'video')
-      .first();
-
-    if (!video) {
-      return res.status(404).json({
-        success: false,
-        message: 'Vídeo não encontrado'
-      });
-    }
-
-    // Verificar permissões de acesso
-    if (userInstitutionId && video.institution_id !== userInstitutionId && req.user?.role !== 'admin') {
-      return res.status(403).json({
-        success: false,
-        message: 'Acesso negado'
-      });
-    }
-
-    return res.json({
-      success: true,
-      data: video
-    });
-  } catch (error) {
-    console.error('Error fetching video:', error);
-    return res.status(500).json({
-      success: false,
-      message: 'Erro interno do servidor'
-    });
-  }
->>>>>>> master
 });
 
 /**
@@ -289,7 +154,6 @@ router.get('/:id', validateJWT, async (req, res) => {
  *       400:
  *         description: Invalid input
  */
-<<<<<<< HEAD
 router.post('/', requireTeacherOrAdmin, requireInstitution, async (req, res) => {
   // Implementation will be added in the controller
   res.status(201).json({
@@ -297,99 +161,6 @@ router.post('/', requireTeacherOrAdmin, requireInstitution, async (req, res) => 
     message: 'Create video - implementação pendente',
     data: null
   });
-=======
-router.post('/', validateJWT, requireRole(['admin', 'teacher']), async (req, res) => {
-  try {
-    const {
-      title,
-      description,
-      module_id,
-      video_url,
-      duration,
-      thumbnail_url,
-      order_index
-    } = req.body;
-
-    const userInstitutionId = req.user?.institutionId;
-
-    // Validar campos obrigatórios
-    if (!title || !module_id || !video_url) {
-      return res.status(400).json({
-        success: false,
-        message: 'Campos obrigatórios: title, module_id, video_url'
-      });
-    }
-
-    // Verificar se o módulo existe e se o usuário tem acesso
-    const module = await db('modules')
-      .join('courses', 'modules.course_id', 'courses.id')
-      .select([
-        'modules.id',
-        'modules.title',
-        'courses.institution_id',
-        'courses.teacher_id'
-      ])
-      .where('modules.id', module_id)
-      .first();
-
-    if (!module) {
-      return res.status(404).json({
-        success: false,
-        message: 'Módulo não encontrado'
-      });
-    }
-
-    // Verificar permissões
-    const isAdmin = req.user?.role === 'admin';
-    const isTeacher = module.teacher_id === req.user?.userId;
-    const sameInstitution = module.institution_id === userInstitutionId;
-
-    if (!isAdmin && (!isTeacher || !sameInstitution)) {
-      return res.status(403).json({
-        success: false,
-        message: 'Você não tem permissão para criar vídeos neste módulo'
-      });
-    }
-
-    // Determinar order_index se não fornecido
-    let finalOrderIndex = order_index;
-    if (!finalOrderIndex) {
-      const lastContent = await db('content')
-        .where('module_id', module_id)
-        .orderBy('order_index', 'desc')
-        .first();
-      finalOrderIndex = lastContent ? lastContent.order_index + 1 : 1;
-    }
-
-    const videoData = {
-      title,
-      description,
-      module_id,
-      type: 'video',
-      video_url,
-      duration,
-      thumbnail_url,
-      order_index: finalOrderIndex,
-      status: 'active',
-      created_at: new Date(),
-      updated_at: new Date()
-    };
-
-    const [newVideo] = await db('content').insert(videoData).returning('*');
-
-    return res.status(201).json({
-      success: true,
-      data: newVideo,
-      message: 'Vídeo criado com sucesso'
-    });
-  } catch (error) {
-    console.error('Error creating video:', error);
-    return res.status(500).json({
-      success: false,
-      message: 'Erro interno do servidor'
-    });
-  }
->>>>>>> master
 });
 
 /**
@@ -435,7 +206,6 @@ router.post('/', validateJWT, requireRole(['admin', 'teacher']), async (req, res
  *       404:
  *         description: Video not found
  */
-<<<<<<< HEAD
 router.put('/:id', requireTeacherOrAdmin, requireInstitution, async (req, res) => {
   // Implementation will be added in the controller
   res.json({
@@ -443,92 +213,6 @@ router.put('/:id', requireTeacherOrAdmin, requireInstitution, async (req, res) =
     message: 'Update video - implementação pendente',
     data: null
   });
-=======
-router.put('/:id', validateJWT, requireRole(['admin', 'teacher']), async (req, res) => {
-  try {
-    const { id } = req.params;
-    const userInstitutionId = req.user?.institutionId;
-
-    // Verificar se o vídeo existe
-    const existingVideo = await db('content')
-      .join('modules', 'content.module_id', 'modules.id')
-      .join('courses', 'modules.course_id', 'courses.id')
-      .select([
-        'content.*',
-        'courses.institution_id',
-        'courses.teacher_id'
-      ])
-      .where('content.id', id)
-      .where('content.type', 'video')
-      .first();
-
-    if (!existingVideo) {
-      return res.status(404).json({
-        success: false,
-        message: 'Vídeo não encontrado'
-      });
-    }
-
-    // Verificar permissões
-    const isAdmin = req.user?.role === 'admin';
-    const isTeacher = existingVideo.teacher_id === req.user?.userId;
-    const sameInstitution = existingVideo.institution_id === userInstitutionId;
-
-    if (!isAdmin && (!isTeacher || !sameInstitution)) {
-      return res.status(403).json({
-        success: false,
-        message: 'Você não tem permissão para editar este vídeo'
-      });
-    }
-
-    const {
-      title,
-      description,
-      video_url,
-      duration,
-      thumbnail_url,
-      order_index,
-      status
-    } = req.body;
-
-    const updateData: any = {
-      updated_at: new Date()
-    };
-
-    if (title !== undefined) updateData.title = title;
-    if (description !== undefined) updateData.description = description;
-    if (video_url !== undefined) updateData.video_url = video_url;
-    if (duration !== undefined) updateData.duration = duration;
-    if (thumbnail_url !== undefined) updateData.thumbnail_url = thumbnail_url;
-    if (order_index !== undefined) updateData.order_index = order_index;
-    if (status !== undefined) updateData.status = status;
-
-    await db('content').where('id', id).update(updateData);
-
-    const updatedVideo = await db('content')
-      .leftJoin('modules', 'content.module_id', 'modules.id')
-      .leftJoin('courses', 'modules.course_id', 'courses.id')
-      .select([
-        'content.*',
-        'modules.title as module_title',
-        'courses.title as course_title'
-      ])
-      .where('content.id', id)
-      .first();
-
-    return res.json({
-      success: true,
-      data: updatedVideo,
-      message: 'Vídeo atualizado com sucesso'
-    });
-  } catch (error) {
-    console.error('Error updating video:', error);
-    return res.status(500).json({
-      success: false,
-      message: 'Erro interno do servidor'
-    });
-  }
->>>>>>> master
 });
 
 /**
@@ -552,67 +236,12 @@ router.put('/:id', validateJWT, requireRole(['admin', 'teacher']), async (req, r
  *       404:
  *         description: Video not found
  */
-<<<<<<< HEAD
 router.delete('/:id', requireTeacherOrAdmin, requireInstitution, async (req, res) => {
   // Implementation will be added in the controller
   res.json({
     success: true,
     message: 'Delete video - implementação pendente'
   });
-=======
-router.delete('/:id', validateJWT, requireRole(['admin', 'teacher']), async (req, res) => {
-  try {
-    const { id } = req.params;
-
-    const existingVideo = await db('content')
-      .join('modules', 'content.module_id', 'modules.id')
-      .join('courses', 'modules.course_id', 'courses.id')
-      .select([
-        'content.*',
-        'courses.teacher_id'
-      ])
-      .where('content.id', id)
-      .where('content.type', 'video')
-      .first();
-
-    if (!existingVideo) {
-      return res.status(404).json({
-        success: false,
-        message: 'Vídeo não encontrado'
-      });
-    }
-
-    // Verificar permissões
-    const isAdmin = req.user?.role === 'admin';
-    const isTeacher = existingVideo.teacher_id === req.user?.userId;
-
-    if (!isAdmin && !isTeacher) {
-      return res.status(403).json({
-        success: false,
-        message: 'Você não tem permissão para deletar este vídeo'
-      });
-    }
-
-    // Soft delete: marcar como inativo
-    await db('content')
-      .where('id', id)
-      .update({
-        status: 'inactive',
-        updated_at: new Date()
-      });
-
-    return res.json({
-      success: true,
-      message: 'Vídeo removido com sucesso'
-    });
-  } catch (error) {
-    console.error('Error deleting video:', error);
-    return res.status(500).json({
-      success: false,
-      message: 'Erro interno do servidor'
-    });
-  }
->>>>>>> master
 });
 
 /**
@@ -665,7 +294,6 @@ router.post('/upload', validateJWT, requireRole(['admin', 'teacher']), async (re
  *           type: string
  *           format: uuid
  *     responses:
-<<<<<<< HEAD
  *       206:
  *         description: Partial content (video stream)
  *       404:
@@ -676,18 +304,6 @@ router.get('/:id/stream', requireInstitution, async (req, res) => {
   res.json({
     success: true,
     message: 'Video streaming - implementação pendente'
-=======
- *       200:
- *         description: Video stream
- *       404:
- *         description: Video not found
- */
-router.get('/stream/:id', validateJWT, async (req, res) => {
-  // Streaming implementation would go here
-  return res.status(501).json({
-    success: false,
-    message: 'Streaming não implementado ainda'
->>>>>>> master
   });
 });
 
@@ -717,17 +333,8 @@ router.get('/stream/:id', validateJWT, async (req, res) => {
  *       404:
  *         description: Video or thumbnail not found
  */
-<<<<<<< HEAD
 router.get('/:id/thumbnail', requireInstitution, async (req, res) => {
   // Implementation will be added in the controller
-=======
-router.get('/:id/thumbnail', validateJWT, async (req, res) => {
-  // Thumbnail implementation would go here
-  return res.status(501).json({
-    success: false,
-    message: 'Thumbnail não implementado ainda'
-  });
->>>>>>> master
 });
 
 export default router;

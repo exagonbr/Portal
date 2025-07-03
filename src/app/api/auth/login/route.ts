@@ -6,29 +6,7 @@ export async function POST(request: NextRequest) {
     const body = await request.json();
     const { email, password, rememberMe = false } = body;
 
-<<<<<<< HEAD
     if (!email || !password) {
-=======
-    console.log('🔐 Tentativa de login para:', email);
-
-    // Fazer requisição para o backend
-    const response = await fetch(`${BACKEND_URL}/api/auth/login`, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({ email, password }),
-    });
-
-    const data = await response.json();
-    
-    console.log('📊 Status da resposta do backend:', response.status);
-    console.log('📊 Headers da resposta:', Object.fromEntries(response.headers.entries()));
-    console.log('📊 Dados retornados do backend:', JSON.stringify(data, null, 2));
-
-    if (!response.ok) {
-      console.log('❌ Resposta não OK do backend');
->>>>>>> master
       return NextResponse.json(
         { 
           success: false, 
@@ -39,7 +17,6 @@ export async function POST(request: NextRequest) {
       );
     }
 
-<<<<<<< HEAD
     console.log('🔐 [LOGIN] Tentativa de login:', email);
 
     // Extrair informações do dispositivo e IP
@@ -105,62 +82,6 @@ export async function POST(request: NextRequest) {
       secure: process.env.NODE_ENV === 'production',
       sameSite: 'strict' as const,
       path: '/'
-=======
-    // Verificar se o backend retornou success: true
-    if (!data.success) {
-      console.log('❌ Backend retornou success: false');
-      return NextResponse.json(
-        { success: false, message: data.message || 'Falha na autenticação' },
-        { status: 200 }
-      );
-    }
-
-    console.log('✅ Login bem-sucedido no backend, configurando cookies...');
-
-    // Configurar cookies com os tokens recebidos do backend
-    const cookieStore = cookies();
-    
-    // Token de acesso
-    if (data.token) {
-      cookieStore.set('auth_token', data.token, {
-        httpOnly: true,
-        secure: process.env.NODE_ENV === 'production',
-        sameSite: 'lax',
-        maxAge: 60 * 60 * 24, // 24 horas
-        path: '/',
-      });
-    }
-
-    // Token de refresh
-    if (data.refreshToken) {
-      cookieStore.set('refresh_token', data.refreshToken, {
-        httpOnly: true,
-        secure: process.env.NODE_ENV === 'production',
-        sameSite: 'lax',
-        maxAge: 60 * 60 * 24 * 7, // 7 dias
-        path: '/',
-      });
-    }
-
-    // ID da sessão
-    if (data.sessionId) {
-      cookieStore.set('session_id', data.sessionId, {
-        httpOnly: true,
-        secure: process.env.NODE_ENV === 'production',
-        sameSite: 'lax',
-        maxAge: 60 * 60 * 24, // 24 horas
-        path: '/',
-      });
-    }
-
-    // Dados do usuário (não sensíveis)
-    const userData = {
-      id: data.user?.id,
-      name: data.user?.name,
-      email: data.user?.email,
-      role: data.user?.role,
-      permissions: data.user?.permissions || [],
->>>>>>> master
     };
 
     const refreshMaxAge = rememberMe ? 7 * 24 * 60 * 60 : 24 * 60 * 60; // 7 dias se rememberMe, senão 1 dia
@@ -171,7 +92,6 @@ export async function POST(request: NextRequest) {
       maxAge: expiresIn
     });
 
-<<<<<<< HEAD
     // Cookie alternativo para compatibilidade
     response.cookies.set('auth_token', accessToken, {
       ...cookieOptions,
@@ -229,17 +149,6 @@ export async function POST(request: NextRequest) {
 
   } catch (error: any) {
     console.error('❌ [LOGIN] Erro interno:', error);
-=======
-    console.log('✅ Retornando resposta de sucesso para o frontend');
-
-    return NextResponse.json({
-      success: true,
-      user: userData,
-      token: data.token,
-    });
-  } catch (error) {
-    console.error('❌ Erro no login:', error);
->>>>>>> master
     return NextResponse.json(
       { 
         success: false, 

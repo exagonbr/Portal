@@ -33,7 +33,6 @@ const publicRoutes = [
 export default function Template({ children }: { children: React.ReactNode }) {
   const pathname = usePathname()
 
-<<<<<<< HEAD
   // Por enquanto, renderizar apenas o children sem layout complexo
   // para evitar problemas de carregamento de chunks
   return <div className="h-full w-full">{children}</div>
@@ -41,9 +40,6 @@ export default function Template({ children }: { children: React.ReactNode }) {
   // Código comentado temporariamente:
   /*
   // Não usar layout de dashboard para rotas públicas
-=======
-  // Don't use dashboard layout for public routes
->>>>>>> master
   if (pathname && publicRoutes.includes(pathname)) {
     return <div className="h-full w-full">{children}</div>
   }
