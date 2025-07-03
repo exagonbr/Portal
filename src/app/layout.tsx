@@ -117,7 +117,7 @@ export default function RootLayout({
         />
         
         {/* Service Worker para controle de cache */}
-        <script src="/register-sw.js" defer />
+        <script src="/sw-registrar.js" defer />
       </head>
       <body className={`${inter.className} m-0 p-0 h-full w-full`} suppressHydrationWarning>
         <SimpleProviders>
