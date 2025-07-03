@@ -94,29 +94,22 @@ export const usersCorsMiddleware = (req: Request, res: Response, next: NextFunct
   console.log(`🔒 [USERS-CORS] ${method} ${path} from origin: ${origin || 'no-origin'}`);
   console.log(`🔒 [USERS-CORS] User-Agent: ${userAgent?.substring(0, 100) || 'unknown'}`);
   
-  // Aplicar CORS
-  cors(usersCorsOptions)(req, res, (err) => {
-    if (err) {
-      console.log(`❌ [USERS-CORS] Erro CORS: ${err.message} para origem: ${origin}`);
-      return res.status(403).json({
-        success: false,
-        message: 'Acesso negado pelo CORS',
-        error: 'Origem não autorizada para acessar APIs de usuários',
-        code: 'CORS_ORIGIN_NOT_ALLOWED'
-      });
-    }
-    
-    // Headers adicionais de segurança para APIs de usuários
-    res.setHeader('X-Content-Type-Options', 'nosniff');
-    res.setHeader('X-Frame-Options', 'DENY');
-    res.setHeader('X-XSS-Protection', '1; mode=block');
-    res.setHeader('Referrer-Policy', 'strict-origin-when-cross-origin');
-    res.setHeader('X-API-Version', '1.0');
-    res.setHeader('X-Service', 'users-api');
-    
-    console.log(`✅ [USERS-CORS] CORS aprovado para ${method} ${path}`);
-    return next();
-  });
+  // Aplicar CORS e deixar a lib tratar o erro
+  cors(usersCorsOptions)(req, res, next);
+};
+
+export const corsErrorHandler = (err: any, req: Request, res: Response, next: NextFunction) => {
+  if (err && err.code === 'CORS_ORIGIN_NOT_ALLOWED') {
+    console.log(`❌ [USERS-CORS] Erro CORS: ${err.message} para origem: ${req.headers.origin}`);
+    return res.status(403).json({
+      success: false,
+      message: 'Acesso negado pelo CORS',
+      error: 'Origem não autorizada para acessar APIs de usuários',
+      code: 'CORS_ORIGIN_NOT_ALLOWED'
+    });
+  }
+  // Outros erros
+  return next(err);
 };
 
 /**

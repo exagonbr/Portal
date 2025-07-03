@@ -1,6 +1,6 @@
 import request from 'supertest';
 import express from 'express';
-import { usersCorsMiddleware, usersAdminCorsMiddleware, usersPublicCorsMiddleware } from '../middleware/corsUsers.middleware';
+import { usersCorsMiddleware, usersAdminCorsMiddleware, usersPublicCorsMiddleware, corsErrorHandler } from '../middleware/corsUsers.middleware';
 
 describe('CORS Users Middleware Tests', () => {
   let app: express.Application;
@@ -16,6 +16,7 @@ describe('CORS Users Middleware Tests', () => {
       app.get('/test', (req, res) => {
         res.json({ success: true, message: 'Test endpoint' });
       });
+      app.use(corsErrorHandler);
     });
 
     it('should allow requests from localhost in development', async () => {
@@ -83,6 +84,7 @@ describe('CORS Users Middleware Tests', () => {
       app.post('/admin-test', (req, res) => {
         res.json({ success: true, message: 'Admin endpoint' });
       });
+      app.use(corsErrorHandler);
     });
 
     it('should allow requests from admin origins', async () => {
@@ -129,6 +131,7 @@ describe('CORS Users Middleware Tests', () => {
       app.get('/public-test', (req, res) => {
         res.json({ success: true, message: 'Public endpoint' });
       });
+      app.use(corsErrorHandler);
     });
 
     it('should allow requests from any origin', async () => {
@@ -173,6 +176,7 @@ describe('CORS Users Middleware Tests', () => {
       app.get('/env-test', (req, res) => {
         res.json({ success: true });
       });
+      app.use(corsErrorHandler);
 
       const response = await request(app)
         .get('/env-test')
@@ -205,6 +209,7 @@ describe('CORS Users Middleware Tests', () => {
       app.post('/headers-test', (req, res) => {
         res.json({ success: true });
       });
+      app.use(corsErrorHandler);
     });
 
     it('should allow standard headers', async () => {
@@ -248,6 +253,7 @@ describe('CORS Users Middleware Tests', () => {
       app.get('/wildcard-test', (req, res) => {
         res.json({ success: true });
       });
+      app.use(corsErrorHandler);
     });
 
     afterEach(() => {
@@ -277,6 +283,7 @@ describe('CORS Users Middleware Tests', () => {
       app.get('/no-origin-test', (req, res) => {
         res.json({ success: true });
       });
+      app.use(corsErrorHandler);
 
       // Não definimos o header 'Origin'
       const response = await request(app)
