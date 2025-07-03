@@ -9,6 +9,8 @@ import { getApiUrl, getInternalApiUrl, ENV_CONFIG } from './env';
 // Re-exportar funções para manter compatibilidade
 export { getApiUrl, getInternalApiUrl };
 
+export const FRONTEND_URL = ENV_CONFIG.FRONTEND_URL;
+
 // --- Constantes de Rotas da API ---
 
 export const API_ROUTES = {
