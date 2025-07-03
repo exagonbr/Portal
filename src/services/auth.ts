@@ -219,6 +219,7 @@ export const login = authService.login.bind(authService);
 export const logout = authService.logout.bind(authService);
 export const getCurrentUser = authService.getCurrentUser.bind(authService);
 
+export const getAuthToken = apiService.getAuthToken.bind(apiService);
 // Wrapper para register que aceita a assinatura esperada pelo AuthContext
 export const register = (name: string, email: string, password: string, type: 'student' | 'teacher') => {
   // Mapear tipo para role_id (você pode ajustar esses IDs conforme necessário)
