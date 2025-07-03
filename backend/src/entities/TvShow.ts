@@ -1,23 +1,13 @@
 import {
   Entity,
   PrimaryGeneratedColumn,
-  Column,
-  ManyToOne,
-  JoinColumn
+  Column
 } from 'typeorm';
-import { Institution } from './Institution';
 
 @Entity('tv_show')
 export class TVShow {
   @PrimaryGeneratedColumn('increment')
   id: number;
-
-  @Column({ nullable: true })
-  institution_id?: string;
-
-  @ManyToOne(() => Institution, institution => institution.tvShows)
-  @JoinColumn({ name: 'institution_id' })
-  institution?: Institution;
 
   @Column({ type: 'bigint', nullable: true })
   version?: number;
@@ -31,20 +21,23 @@ export class TVShow {
   @Column({ type: 'varchar', length: 255, nullable: true })
   backdrop_path?: string;
 
-  @Column({ type: 'timestamp', nullable: true })
+  @Column({ type: 'datetime', nullable: true })
   contract_term_end?: Date;
 
-  @Column({ type: 'timestamp', readonly: true })
+  @Column({ type: 'datetime' })
   date_created: Date;
 
   @Column({ type: 'bit', nullable: true })
   deleted?: boolean;
 
-  @Column({ type: 'timestamp' })
+  @Column({ type: 'datetime' })
   first_air_date: Date;
 
   @Column({ type: 'varchar', length: 255, nullable: true })
   imdb_id?: string;
+
+  @Column({ type: 'datetime' })
+  last_updated: Date;
 
   @Column({ type: 'bit', nullable: true })
   manual_input?: boolean;
@@ -61,10 +54,10 @@ export class TVShow {
   @Column({ type: 'varchar', length: 255, nullable: true })
   original_language?: string;
 
-  @Column({ type: 'text', nullable: true })
+  @Column({ type: 'longtext', nullable: true })
   overview?: string;
 
-  @Column({ type: 'float', nullable: true })
+  @Column({ type: 'double', nullable: true })
   popularity?: number;
 
   @Column({ type: 'bigint', nullable: true })
@@ -73,10 +66,10 @@ export class TVShow {
   @Column({ type: 'varchar', length: 255, nullable: true })
   poster_path?: string;
 
-  @Column({ type: 'text', nullable: true })
+  @Column({ type: 'longtext', nullable: true })
   producer?: string;
 
-  @Column({ type: 'float', nullable: true })
+  @Column({ type: 'double', nullable: true })
   vote_average?: number;
 
   @Column({ type: 'int', nullable: true })
@@ -84,4 +77,4 @@ export class TVShow {
 
   @Column({ type: 'varchar', length: 255, nullable: true })
   total_load?: string;
-}
+} 
