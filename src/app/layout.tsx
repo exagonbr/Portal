@@ -3,6 +3,7 @@ export const dynamic = 'force-dynamic';
 export const revalidate = 0;
 export const fetchCache = 'force-no-store';
 
+import { headers } from 'next/headers';
 import type { Metadata, Viewport } from 'next';
 import { Inter } from 'next/font/google';
 import './globals.css';
@@ -59,18 +60,12 @@ export default function RootLayout({
 }: {
   children: React.ReactNode;
 }) {
-  // Forçar headers no-cache no servidor
-  const headersList = headers();
-  
+  // A função headers() é chamada para garantir que a rota seja dinâmica.
+  headers();
+
   return (
     <html lang="pt-BR" className="h-full antialiased" suppressHydrationWarning>
       <head>
-        {/* Headers de no-cache agressivos */}
-        <meta httpEquiv="Cache-Control" content="no-cache, no-store, must-revalidate, max-age=0, s-maxage=0" />
-        <meta httpEquiv="Pragma" content="no-cache" />
-        <meta httpEquiv="Expires" content="0" />
-        <meta httpEquiv="Surrogate-Control" content="no-store" />
-        <meta name="robots" content="noarchive" />
         
         {/* PWA e Mobile */}
         <meta name="apple-mobile-web-app-capable" content="yes" />
