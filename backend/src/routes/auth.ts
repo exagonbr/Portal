@@ -52,8 +52,27 @@ const router = express.Router();
  *                   type: boolean
  *                 token:
  *                   type: string
+ *                 refreshToken:
+ *                   type: string
  *                 user:
- *                   $ref: '#/components/schemas/User'
+ *                   type: object
+ *                   properties:
+ *                     id:
+ *                       type: string
+ *                     name:
+ *                       type: string
+ *                     email:
+ *                       type: string
+ *                     roleId:
+ *                       type: string
+ *                     roleName:
+ *                       type: string
+ *                     permissions:
+ *                       type: array
+ *                       items:
+ *                         type: string
+ *                     institutionId:
+ *                       type: string
  *       400:
  *         description: Invalid input data
  *       409:
@@ -135,8 +154,27 @@ router.post(
  *                   type: boolean
  *                 token:
  *                   type: string
+ *                 refreshToken:
+ *                   type: string
  *                 user:
- *                   $ref: '#/components/schemas/User'
+ *                   type: object
+ *                   properties:
+ *                     id:
+ *                       type: string
+ *                     name:
+ *                       type: string
+ *                     email:
+ *                       type: string
+ *                     roleId:
+ *                       type: string
+ *                     roleName:
+ *                       type: string
+ *                     permissions:
+ *                       type: array
+ *                       items:
+ *                         type: string
+ *                     institutionId:
+ *                       type: string
  *       401:
  *         description: Invalid credentials
  */
@@ -164,16 +202,20 @@ router.post(
         ...result,
       });
     } catch (error: any) {
-      if (error.message === 'Invalid credentials') {
+      if (
+        error.message === 'Invalid credentials' ||
+        error.message === 'Usuário não encontrado ou inativo'
+      ) {
         return res.status(401).json({
           success: false,
           message: error.message,
         });
       }
 
+      console.error('Erro no login:', error);
       return res.status(500).json({
         success: false,
-        message: 'Error logging in',
+        message: 'Erro no login: ' + error.message,
       });
     }
   }
