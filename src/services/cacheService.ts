@@ -55,18 +55,19 @@ export class CacheService {
   };
 
   // Cleanup automático a cada 5 minutos
-  private cleanupInterval: NodeJS.Timeout;
+  private cleanupInterval: NodeJS.Timeout | null = null;
 
   constructor(config?: CacheConfig) {
     if (config?.ttl) this.defaultTTL = config.ttl;
     if (config?.prefix) this.keyPrefix = config.prefix;
     if (config?.enabled !== undefined) this.enabled = config.enabled;
 
-    // Limpeza automática do cache em memória a cada 5 minutos
-    this.cleanupInterval = setInterval(() => this.cleanupMemoryCache(), 5 * 60 * 1000);
-
-    // Cleanup quando a página for fechada
+    // Só configurar cleanup automático no cliente
     if (typeof window !== 'undefined') {
+      // Limpeza automática do cache em memória a cada 5 minutos
+      this.cleanupInterval = setInterval(() => this.cleanupMemoryCache(), 5 * 60 * 1000);
+
+      // Cleanup quando a página for fechada
       window.addEventListener('beforeunload', () => {
         this.cleanup();
       });
@@ -336,6 +337,7 @@ export class CacheService {
   cleanup(): void {
     if (this.cleanupInterval) {
       clearInterval(this.cleanupInterval);
+      this.cleanupInterval = null;
     }
     this.memoryCache.clear();
     this.resetStats();

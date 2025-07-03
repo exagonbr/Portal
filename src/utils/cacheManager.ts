@@ -214,39 +214,109 @@ export class CacheManager {
    * Limpa cache do Service Worker
    */
   async clearServiceWorkerCache(): Promise<void> {
-    if (!('serviceWorker' in navigator) || !navigator.serviceWorker.controller) {
-      throw new Error('Service Worker não disponível');
+    if (!('serviceWorker' in navigator)) {
+      console.warn('⚠️ Service Worker não suportado pelo navegador');
+      return;
     }
 
-    const controller = navigator.serviceWorker.controller;
-    if (!controller) {
-      throw new Error('Service Worker controller não disponível');
-    }
+    try {
+      // Verificar se há um service worker ativo
+      const registration = await navigator.serviceWorker.getRegistration();
+      if (!registration || !registration.active) {
+        console.warn('⚠️ Nenhum Service Worker ativo encontrado');
+        return;
+      }
 
-    return new Promise((resolve, reject) => {
-      const messageChannel = new MessageChannel();
-      
-      messageChannel.port1.onmessage = (event) => {
-        if (event.data.success) {
-          resolve();
-        } else {
-          reject(new Error(event.data.error || 'Erro desconhecido'));
+      const controller = navigator.serviceWorker.controller;
+      if (!controller) {
+        console.warn('⚠️ Service Worker controller não disponível');
+        return;
+      }
+
+      // Verificar se o controller ainda é válido
+      if (controller.state === 'redundant') {
+        console.warn('⚠️ Service Worker controller está redundante');
+        return;
+      }
+
+      return new Promise((resolve, reject) => {
+        let messageChannel: MessageChannel | null = null;
+        let timeoutId: NodeJS.Timeout | null = null;
+        let resolved = false;
+
+        const cleanup = () => {
+          if (timeoutId) {
+            clearTimeout(timeoutId);
+            timeoutId = null;
+          }
+          if (messageChannel) {
+            messageChannel.port1.close();
+            messageChannel.port2.close();
+            messageChannel = null;
+          }
+        };
+
+        const resolveOnce = () => {
+          if (!resolved) {
+            resolved = true;
+            cleanup();
+            resolve();
+          }
+        };
+
+        const rejectOnce = (error: Error) => {
+          if (!resolved) {
+            resolved = true;
+            cleanup();
+            reject(error);
+          }
+        };
+
+        try {
+          messageChannel = new MessageChannel();
+          
+          messageChannel.port1.onmessage = (event) => {
+            try {
+              if (event.data && event.data.success) {
+                resolveOnce();
+              } else {
+                rejectOnce(new Error(event.data?.error || 'Erro desconhecido do Service Worker'));
+              }
+            } catch (error) {
+              rejectOnce(new Error(`Erro ao processar resposta: ${error}`));
+            }
+          };
+
+          
+          // Timeout de 5 segundos (reduzido)
+          timeoutId = setTimeout(() => {
+            rejectOnce(new Error('Timeout na limpeza de cache do Service Worker'));
+          }, 5000);
+          
+          // Verificar novamente se o controller ainda é válido antes de enviar
+          if (controller.state === 'redundant') {
+            rejectOnce(new Error('Service Worker tornou-se redundante'));
+            return;
+          }
+
+          controller.postMessage(
+            {
+              type: 'CLEAR_CACHE',
+              payload: { reason: 'manual_clear_all' }
+            },
+            [messageChannel.port2]
+          );
+
+        } catch (error) {
+          rejectOnce(new Error(`Erro ao criar MessageChannel: ${error}`));
         }
-      };
-      
-      // Timeout de 10 segundos
-      setTimeout(() => {
-        reject(new Error('Timeout na limpeza de cache do Service Worker'));
-      }, 10000);
-      
-      controller.postMessage(
-        {
-          type: 'CLEAR_CACHE',
-          payload: { reason: 'manual_clear_all' }
-        },
-        [messageChannel.port2]
-      );
-    });
+      });
+
+    } catch (error) {
+      console.warn('⚠️ Erro ao limpar cache do Service Worker:', error);
+      // Não propagar o erro, apenas logar
+      return;
+    }
   }
 
   /**
@@ -285,26 +355,99 @@ export class CacheManager {
    * Obtém estatísticas do Service Worker
    */
   private async getServiceWorkerStats(): Promise<any> {
-    return new Promise((resolve, reject) => {
-      const messageChannel = new MessageChannel();
-      
-      messageChannel.port1.onmessage = (event) => {
-        if (event.data.success) {
-          resolve(event.data);
-        } else {
-          reject(new Error(event.data.error || 'Erro desconhecido'));
+    if (!('serviceWorker' in navigator)) {
+      throw new Error('Service Worker não suportado pelo navegador');
+    }
+
+    try {
+      // Verificar se há um service worker ativo
+      const registration = await navigator.serviceWorker.getRegistration();
+      if (!registration || !registration.active) {
+        throw new Error('Nenhum Service Worker ativo encontrado');
+      }
+
+      const controller = navigator.serviceWorker.controller;
+      if (!controller) {
+        throw new Error('Service Worker controller não disponível');
+      }
+
+      // Verificar se o controller ainda é válido
+      if (controller.state === 'redundant') {
+        throw new Error('Service Worker controller está redundante');
+      }
+
+      return new Promise((resolve, reject) => {
+        let messageChannel: MessageChannel | null = null;
+        let timeoutId: NodeJS.Timeout | null = null;
+        let resolved = false;
+
+        const cleanup = () => {
+          if (timeoutId) {
+            clearTimeout(timeoutId);
+            timeoutId = null;
+          }
+          if (messageChannel) {
+            messageChannel.port1.close();
+            messageChannel.port2.close();
+            messageChannel = null;
+          }
+        };
+
+        const resolveOnce = (data: any) => {
+          if (!resolved) {
+            resolved = true;
+            cleanup();
+            resolve(data);
+          }
+        };
+
+        const rejectOnce = (error: Error) => {
+          if (!resolved) {
+            resolved = true;
+            cleanup();
+            reject(error);
+          }
+        };
+
+        try {
+          messageChannel = new MessageChannel();
+          
+          messageChannel.port1.onmessage = (event) => {
+            try {
+              if (event.data && event.data.success) {
+                resolveOnce(event.data);
+              } else {
+                rejectOnce(new Error(event.data?.error || 'Erro desconhecido do Service Worker'));
+              }
+            } catch (error) {
+              rejectOnce(new Error(`Erro ao processar resposta: ${error}`));
+            }
+          };
+          
+          // Timeout de 3 segundos para stats
+          timeoutId = setTimeout(() => {
+            rejectOnce(new Error('Timeout ao obter stats do Service Worker'));
+          }, 3000);
+          
+          // Verificar novamente se o controller ainda é válido antes de enviar
+          if (controller.state === 'redundant') {
+            rejectOnce(new Error('Service Worker tornou-se redundante'));
+            return;
+          }
+
+          controller.postMessage(
+            { type: 'GET_CACHE_INFO' },
+            [messageChannel.port2]
+          );
+
+        } catch (error) {
+          rejectOnce(new Error(`Erro ao criar MessageChannel: ${error}`));
         }
-      };
-      
-      setTimeout(() => {
-        reject(new Error('Timeout ao obter stats do Service Worker'));
-      }, 5000);
-      
-      navigator.serviceWorker.controller!.postMessage(
-        { type: 'GET_CACHE_INFO' },
-        [messageChannel.port2]
-      );
-    });
+      });
+
+    } catch (error) {
+      throw new Error(`Erro ao obter stats do Service Worker: ${error}`);
+    }
   }
 
   /**
