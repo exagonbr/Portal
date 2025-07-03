@@ -20,8 +20,8 @@ interface CacheStats {
 }
 
 /**
- * Serviço de cache em memória local
- * - Cache apenas em memória para acesso rápido
+ * Serviço de cache em memória local - RESTRITO APENAS PARA SESSÃO/AUTH
+ * - Cache APENAS para dados de sessão, token, user, userData, refreshToken, roles, permissions
  * - Sem dependência do Redis
  * - Cleanup automático de itens expirados
  */
@@ -30,6 +30,20 @@ export class CacheService {
   private defaultTTL = 300; // 5 minutos
   private keyPrefix = 'portal_sabercon:';
   private enabled = true;
+  
+  // Lista de chaves permitidas para cache (APENAS DADOS DE SESSÃO/AUTH)
+  private allowedKeys = [
+    'session',
+    'token',
+    'accessToken',
+    'refreshToken',
+    'user',
+    'userData',
+    'roles',
+    'permissions',
+    'auth',
+    'login'
+  ];
   
   // Estatísticas de cache
   private stats: CacheStats = {
@@ -57,6 +71,15 @@ export class CacheService {
         this.cleanup();
       });
     }
+  }
+
+  /**
+   * Verifica se a chave é permitida para cache (apenas dados de sessão/auth)
+   */
+  private isKeyAllowed(key: string): boolean {
+    return this.allowedKeys.some(allowedKey =>
+      key.toLowerCase().includes(allowedKey.toLowerCase())
+    );
   }
 
   /**
@@ -122,10 +145,16 @@ export class CacheService {
   }
 
   /**
-   * Obtém valor do cache (apenas memória)
+   * Obtém valor do cache (apenas memória) - RESTRITO A DADOS DE SESSÃO/AUTH
    */
   async get<T>(key: string): Promise<T | null> {
     if (!this.enabled) return null;
+    
+    // VALIDAÇÃO: Só permite cache de dados de sessão/auth
+    if (!this.isKeyAllowed(key)) {
+      console.warn(`🚫 Cache negado para chave não autorizada: ${key}`);
+      return null;
+    }
 
     const cacheKey = this.generateKey(key);
 
@@ -141,10 +170,16 @@ export class CacheService {
   }
 
   /**
-   * Define valor no cache (apenas memória)
+   * Define valor no cache (apenas memória) - RESTRITO A DADOS DE SESSÃO/AUTH
    */
   async set<T>(key: string, value: T, ttl?: number): Promise<void> {
     if (!this.enabled) return;
+    
+    // VALIDAÇÃO: Só permite cache de dados de sessão/auth
+    if (!this.isKeyAllowed(key)) {
+      console.warn(`🚫 Cache negado para chave não autorizada: ${key}`);
+      return;
+    }
 
     const cacheKey = this.generateKey(key);
     const cacheTTL = ttl || this.defaultTTL;
@@ -177,13 +212,20 @@ export class CacheService {
   }
 
   /**
-   * Obtém ou define valor no cache (cache-aside pattern)
+   * Obtém ou define valor no cache (cache-aside pattern) - RESTRITO A DADOS DE SESSÃO/AUTH
    */
   async getOrSet<T>(
-    key: string, 
-    fetcher: () => Promise<T>, 
+    key: string,
+    fetcher: () => Promise<T>,
     ttl?: number
   ): Promise<T> {
+    // VALIDAÇÃO: Só permite cache de dados de sessão/auth
+    if (!this.isKeyAllowed(key)) {
+      console.warn(`🚫 Cache negado para chave não autorizada: ${key}`);
+      // Se não é permitido cache, apenas executa a função
+      return await fetcher();
+    }
+
     // Tenta buscar no cache primeiro
     const cached = await this.get<T>(key);
     if (cached !== null) {

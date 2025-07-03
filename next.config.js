@@ -3,9 +3,6 @@
 const isDev = process.env.NODE_ENV === 'development';
 const isProd = process.env.NODE_ENV === 'production';
 
-// Gerar versão de cache única para cada build
-const cacheVersion = process.env.NEXT_PUBLIC_CACHE_VERSION || `v${Date.now()}`;
-
 // Configurações de segurança CSP
 const ContentSecurityPolicy = `
   default-src 'self';
@@ -31,32 +28,18 @@ const nextConfig = {
   },
 
   // Configurações de desenvolvimento
-  reactStrictMode: true, // Habilitado - react-quill agora é compatível com React 18
+  reactStrictMode: true,
   productionBrowserSourceMaps: false,
-  // Desativar completamente os indicadores de desenvolvimento
   devIndicators: false,
   
   // ESLint
   eslint: {
-    ignoreDuringBuilds: true, // Ignorar erros de lint durante o build
+    ignoreDuringBuilds: true,
     dirs: ['src', 'pages', 'components', 'lib', 'utils'],
-  },
-
-  // Desabilitar cache de páginas completamente
-  generateBuildId: async () => {
-    // Gerar ID único para cada build forçando revalidação
-    return `build-${Date.now()}-${Math.random().toString(36).substring(7)}`;
-  },
-  
-  // Desabilitar cache estático
-  onDemandEntries: {
-    maxInactiveAge: 0,
-    pagesBufferLength: 0,
   },
 
   // Configurações experimentais
   experimental: {
-    // Otimizações modernas
     optimizePackageImports: [
       'react-hot-toast',
       'lucide-react',
@@ -64,19 +47,6 @@ const nextConfig = {
       '@radix-ui/react-dropdown-menu',
       'date-fns',
     ],
-    turbo: {
-      // Habilitar o modo turbo
-      enabled: true,
-    },
-    // Configurações de workers e multi-threading
-    webpackBuildWorker: true,
-    cpus: 10, // Usar 10 cores para compilação
-    workerThreads: true, // Habilitar worker threads
-    
-    // Desabilitar cache ISR completamente
-    isrMemoryCacheSize: 0,
-    
-    // Pacotes externos para componentes do servidor
     serverExternalPackages: [
       'epubjs',
       'sharp',
@@ -97,11 +67,9 @@ const nextConfig = {
 
   // Configurações do compilador
   compiler: {
-    // Remover console.log em produção
     removeConsole: isProd ? {
       exclude: ['error', 'warn', 'info']
     } : false,
-    // Otimizar React
     reactRemoveProperties: isProd,
   },
 
@@ -110,23 +78,15 @@ const nextConfig = {
   distDir: '.next',
   trailingSlash: false,
   poweredByHeader: false,
-  
-  // Desabilitar geração estática e cache de páginas
-  generateEtags: false,
   compress: true,
-  
-  // Forçar revalidação constante
-  staticPageGenerationTimeout: 10,
 
-  // Configuração de imagens otimizada
+  // Configuração de imagens
   images: {
     formats: ['image/webp', 'image/avif'],
     deviceSizes: [640, 750, 828, 1080, 1200, 1920, 2048, 3840],
     imageSizes: [16, 32, 48, 64, 96, 128, 256, 384],
-    minimumCacheTTL: 60, // Apenas 1 minuto de cache para imagens
     dangerouslyAllowSVG: true,
     contentSecurityPolicy: "default-src 'self'; script-src 'none'; sandbox;",
-    unoptimized: isDev, // Desabilitar otimização em dev para performance
     remotePatterns: [
       {
         protocol: 'https',
@@ -145,7 +105,6 @@ const nextConfig = {
         protocol: 'https',
         hostname: 'img.youtube.com'
       },
-      // Configuração para produção
       {
         protocol: 'https',
         hostname: 'portal.sabercon.com.br'
@@ -153,7 +112,21 @@ const nextConfig = {
     ]
   },
 
-  // Headers de segurança e performance
+  // Configuração de proxy para development e production
+  async rewrites() {
+    const apiUrl = isProd
+      ? 'https://api.sabercon.com.br'
+      : 'http://localhost:3001';
+
+    return [
+      {
+        source: '/api/proxy/:path*',
+        destination: `${apiUrl}/:path*`,
+      },
+    ];
+  },
+
+  // Headers de segurança
   async headers() {
     const securityHeaders = [
       {
@@ -190,139 +163,84 @@ const nextConfig = {
       }] : [])
     ];
 
-    // Headers de no-cache EXTREMAMENTE agressivos
-    const noCacheHeaders = [
+    // Cache específico apenas para dados de sessão/auth
+    const authNoCacheHeaders = [
       {
         key: 'Cache-Control',
-        value: 'private, no-cache, no-store, max-age=0, must-revalidate, proxy-revalidate, s-maxage=0'
+        value: 'private, no-cache, no-store, max-age=0, must-revalidate'
       },
       {
         key: 'Pragma',
-        value: 'no-cache'
-      },
-      {
-        key: 'Expires',
-        value: '0'
-      },
-      {
-        key: 'Surrogate-Control',
-        value: 'no-store'
-      },
-      {
-        key: 'X-Accel-Expires',
-        value: '0'
-      },
-      {
-        key: 'CDN-Cache-Control',
-        value: 'no-cache'
-      },
-      {
-        key: 'Cloudflare-CDN-Cache-Control',
-        value: 'no-store, no-cache, private'
-      },
-      {
-        key: 'X-Vercel-Cache',
-        value: 'no-cache'
-      },
-      {
-        key: 'X-Nextjs-Cache',
         value: 'no-cache'
       }
     ];
 
     return [
-      // Headers para TODAS as rotas - NO CACHE ABSOLUTO
+      // Headers gerais com cache normal
       {
         source: '/:path*',
+        headers: securityHeaders
+      },
+      // No-cache apenas para dados específicos: sessão, token, user, userData, refreshToken, roles, permissions
+      {
+        source: '/api/auth/:path*',
         headers: [
           ...securityHeaders,
-          ...noCacheHeaders,
-          {
-            key: 'X-Cache-Version',
-            value: `${cacheVersion}-${Date.now()}`
-          },
-          {
-            key: 'Vary',
-            value: '*'
-          }
+          ...authNoCacheHeaders
         ]
       },
-      // Headers para API - NO CACHE ABSOLUTO
       {
-        source: '/api/:path*',
+        source: '/api/user/:path*',
         headers: [
-          ...noCacheHeaders,
-          {
-            key: 'X-API-Version',
-            value: `${cacheVersion}-${Date.now()}`
-          },
-          {
-            key: 'Content-Type',
-            value: 'application/json; charset=utf-8'
-          }
+          ...securityHeaders,
+          ...authNoCacheHeaders
         ]
       },
-      // Headers para _next - NO CACHE para páginas
       {
-        source: '/_next/data/:path*',
+        source: '/api/session/:path*',
         headers: [
-          ...noCacheHeaders,
-          {
-            key: 'X-Robots-Tag',
-            value: 'noindex'
-          }
+          ...securityHeaders,
+          ...authNoCacheHeaders
         ]
       },
-      // Headers para livros EPUB - Cache permitido apenas para estes
       {
-        source: '/books/:path*',
+        source: '/api/token/:path*',
         headers: [
-          {
-            key: 'Content-Type',
-            value: 'application/epub+zip'
-          },
-          {
-            key: 'Cache-Control',
-            value: 'public, max-age=86400, s-maxage=31536000'
-          },
-          ...securityHeaders
+          ...securityHeaders,
+          ...authNoCacheHeaders
         ]
       },
-      // Headers para JavaScript e CSS - Cache mínimo para performance do menu
       {
-        source: '/_next/static/chunks/:path*',
+        source: '/api/roles/:path*',
+        headers: [
+          ...securityHeaders,
+          ...authNoCacheHeaders
+        ]
+      },
+      {
+        source: '/api/permissions/:path*',
+        headers: [
+          ...securityHeaders,
+          ...authNoCacheHeaders
+        ]
+      },
+      // Cache normal para assets estáticos
+      {
+        source: '/_next/static/:path*',
         headers: [
           {
             key: 'Cache-Control',
-            value: 'private, max-age=300, stale-while-revalidate=60'
-          },
-          {
-            key: 'X-Cache-Version',
-            value: cacheVersion
+            value: 'public, max-age=31536000, immutable'
           }
         ]
       },
-      // Headers para CSS - Cache mínimo
-      {
-        source: '/_next/static/css/:path*',
-        headers: [
-          {
-            key: 'Cache-Control',
-            value: 'private, max-age=300, stale-while-revalidate=60'
-          }
-        ]
-      },
-      // Headers para imagens e fontes - Cache moderado
+      // Cache para imagens
       {
         source: '/(.*\\.(?:png|jpg|jpeg|gif|webp|svg|ico|woff|woff2)$)',
         headers: [
           {
             key: 'Cache-Control',
-            value: 'public, max-age=3600, s-maxage=86400, stale-while-revalidate=86400'
-          },
-          {
-            key: 'X-Cache-Version',
-            value: cacheVersion
+            value: 'public, max-age=86400, stale-while-revalidate=86400'
           }
         ]
       }
@@ -343,16 +261,14 @@ const nextConfig = {
     // Configurações de paralelização para 10 cores
     config.parallelism = 10;
     
-    fastRefresh = true;
-
-    // Plugin para versão de cache no Service Worker
-    if (!isServer) {
-      config.plugins.push(
-        new webpack.DefinePlugin({
-          '__CACHE_VERSION__': JSON.stringify(cacheVersion),
-          '__BUILD_ID__': JSON.stringify(buildId),
-        })
-      );
+    // Configurações de desenvolvimento otimizadas
+    if (dev) {
+      config.cache = {
+        type: 'filesystem',
+        buildDependencies: {
+          config: [__filename],
+        },
+      };
     }
 
     // Configuração para diferentes tipos de arquivo
@@ -579,23 +495,9 @@ const nextConfig = {
     ];
   },
 
-  // Configuração para PWA (se aplicável)
+  // Configurações de ambiente
   env: {
-    CUSTOM_KEY: 'my-value',
-    CACHE_VERSION: cacheVersion,
     NEXT_PUBLIC_NODE_ENV: process.env.NODE_ENV,
-    NEXT_PUBLIC_NO_CACHE: 'true',
-  },
-  
-  // Configurações adicionais para desabilitar cache
-  serverRuntimeConfig: {
-    // Desabilitar cache do servidor
-    unstable_runtimeJS: false,
-  },
-  
-  publicRuntimeConfig: {
-    // Configurações públicas
-    noCache: true,
   },
 };
 
