@@ -93,6 +93,21 @@ export async function middleware(request: NextRequest) {
   return NextResponse.next();
 }
 
+const isDev = process.env.NODE_ENV === 'development';
+
+export function middleware(request: NextRequest) {
+  const response = NextResponse.next();
+
+  // Desabilitar cache em desenvolvimento
+  if (isDev) {
+    response.headers.set('Cache-Control', 'no-store, no-cache, must-revalidate, proxy-revalidate');
+    response.headers.set('Pragma', 'no-cache');
+    response.headers.set('Expires', '0');
+  }
+
+  return response;
+}
+
 /**
  * Configuração do matcher - Apenas para rotas que realmente precisam de verificação
  */

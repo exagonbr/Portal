@@ -39,8 +39,11 @@ const nextConfig: NextConfig = {
   devIndicators: false,
   
   // Allowed development origins for cross-origin requests to /_next/*
-  allowedDevOrigins: isDev ? ['https://portal.sabercon.com.br'] : [],
+  allowedDevOrigins: isDev ? ['https://portal.sabercon.com.br', 'http://portal.sabercon.com.br'] : [],
 
+  // Desabilitar cache completamente em desenvolvimento
+  generateEtags: !isDev,
+  
   // ESLint
   eslint: {
     ignoreDuringBuilds: true,
@@ -139,15 +142,14 @@ const nextConfig: NextConfig = {
     return [
   // Headers para API
   {
-    source: '/api/:path*',
+    source: '/:path*',
     headers: [
       { 
         key: 'Cache-Control', 
-        value: isDev 
-          ? 'no-store, no-cache, must-revalidate' 
-          : 'no-store, no-cache, must-revalidate' 
+        value: 'no-store, no-cache, must-revalidate, proxy-revalidate'
       },
-      { key: 'Vary', value: 'Accept-Encoding, Authorization' },
+      { key: 'Pragma', value: 'no-cache' },
+      { key: 'Expires', value: '0' },
     ],
   },
   // Headers para uploads
