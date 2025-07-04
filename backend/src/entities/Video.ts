@@ -6,7 +6,7 @@ import {
   JoinColumn
 } from 'typeorm';
 import { File } from './File';
-import { TvShow } from './TvShow';
+import { TvShow } from './TVShow';
 import { Module } from './Module';
 
 @Entity('video')
