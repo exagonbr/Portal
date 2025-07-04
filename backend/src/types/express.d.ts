@@ -1,15 +1,6 @@
-import { User as UserModel } from '../entities/User';
+import { Request } from 'express';
 
-declare global {
-  namespace Express {
-    interface User extends UserModel {
-      // Adicione aqui outras propriedades que você pode querer no objeto User do Express
-    }
-
-    interface Request {
-      user?: User;
-      authenticated?: boolean;
-      userId?: string;
-    }
-  }
+export interface AuthenticatedRequest extends Request {
+  authenticated?: boolean;
+  userId?: string;
 }

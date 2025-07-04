@@ -15,7 +15,7 @@ export class Unit {
   @Column({ type: 'bigint', nullable: true })
   version?: number;
 
-  @Column({ name: 'date_created', type: 'datetime', nullable: true })
+  @Column({ name: 'date_created', type: 'timestamp', nullable: true })
   dateCreated?: Date;
 
   @Column({ type: 'boolean', nullable: true })
@@ -28,7 +28,7 @@ export class Unit {
   @JoinColumn({ name: 'institution_id' })
   institution!: Institution;
 
-  @Column({ name: 'last_updated', type: 'datetime', nullable: true })
+  @Column({ name: 'last_updated', type: 'timestamp', nullable: true })
   lastUpdated?: Date;
 
   @Column({ type: 'varchar', length: 255 })

@@ -10,33 +10,33 @@ import { Question } from './Question';
 
 @Entity('quizzes')
 export class Quiz {
-  @PrimaryGeneratedColumn('uuid')
-  id: string;
+  @PrimaryGeneratedColumn('increment')
+  id!: number;
 
   @Column()
-  title: string;
+  title!: string;
 
   @Column({ type: 'text' })
-  description: string;
+  description!: string;
 
   @Column({ type: 'int', nullable: true })
   time_limit?: number;
 
   @Column({ type: 'int' })
-  passing_score: number;
+  passing_score!: number;
 
   @Column({ type: 'int', default: 1 })
-  attempts: number;
+  attempts!: number;
 
   @Column({ default: true })
-  is_graded: boolean;
+  is_graded!: boolean;
 
   @OneToMany(() => Question, question => question.quiz)
-  questions: Question[];
+  questions!: Question[];
 
   @CreateDateColumn()
-  created_at: Date;
+  created_at!: Date;
 
   @UpdateDateColumn()
-  updated_at: Date;
+  updated_at!: Date;
 }

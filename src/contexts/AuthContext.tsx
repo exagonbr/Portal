@@ -7,8 +7,9 @@ import { jwtDecode } from 'jwt-decode';
 import { toast } from 'react-hot-toast';
 import { ROLE_PERMISSIONS, UserRole } from '@/types/roles';
 import { buildLoginUrl, buildDashboardUrl, buildUrl } from '../utils/urlBuilder';
-import { useCacheCleaner } from '../hooks/useCacheCleaner';
+import { getDashboardPath } from '@/utils/roleRedirect';
 import { isDevelopment } from '../utils/env';
+import { clearAllDataForUnauthorized } from '@/utils/clearAllData';
 
 // Variável de ambiente para controlar o uso do token de teste
 const useTestToken = process.env.NEXT_PUBLIC_USE_TEST_TOKEN === 'true' && isDevelopment();
@@ -57,6 +58,7 @@ interface AuthContextType {
   isLoading: boolean;
   loading: boolean;
   error: string | null;
+  isLoggingOut: boolean;
   login: (email: string, password: string) => Promise<void>;
   logout: () => void;
   handleGoogleLogin: (token: string) => Promise<void>;
@@ -107,12 +109,12 @@ const removeStoredToken = (): void => {
 export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   const [user, setUser] = useState<User | null>(null);
   const [isLoading, setIsLoading] = useState(true);
+  const [isLoggingOut, setIsLoggingOut] = useState(false);
   const [isClient, setIsClient] = useState(false);
   const router = useRouter();
   const initializationRef = useRef(false);
   
   // Hook para limpeza de cache
-  const { clearAuthCache, performCacheCleanup } = useCacheCleaner();
 
   const isAuthenticated = !!user;
 
@@ -123,22 +125,27 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
 
   // Função de logout centralizada
   const logout = useCallback(async () => {
+    console.log('Starting logout process...');
+    setIsLoggingOut(true);
+
+    // Aguarda um tempo para o usuário ver a mensagem
+    await new Promise(resolve => setTimeout(resolve, 2000));
+
+    console.log('Clearing all client data...');
+    await clearAllDataForUnauthorized();
+    
     console.log('Logging out: removing token and user');
     
-    // Limpar cache antes do logout
-    await performCacheCleanup('logout');
-    
-    removeStoredToken();
     setUser(null);
     apiClient.defaults.headers.common['Authorization'] = '';
     apiClient.post('/auth/logout').catch(err => console.error("Logout API call failed:", err));
     
-    // Limpar cache de autenticação após logout
-    clearAuthCache();
-    
     router.push(buildLoginUrl());
-    toast.success('Você foi desconectado.');
-  }, [router, performCacheCleanup, clearAuthCache]);
+    toast.success('Até a próxima!');
+    
+    // Reseta o estado após a conclusão
+    setIsLoggingOut(false);
+  }, [router]);
 
   // Função para validar e configurar usuário a partir do token
   const setupUserFromToken = useCallback((token: string): boolean => {
@@ -200,35 +207,62 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
 
     setIsLoading(true);
 
-    console.log('AuthContext: Usando login mockado para qualquer usuário.');
-    const mockUser: User = {
-      id: 1,
-      name: 'Mock User',
-      email: email,
-      role: UserRole.SYSTEM_ADMIN,
-      permissions: ['*'], // Todas as permissões
-    };
-    
-    // Criar um token JWT mockado simples (não seguro, apenas para fins de mock)
-    const mockTokenPayload = {
-      id: mockUser.id,
-      name: mockUser.name,
-      email: mockUser.email,
-      role: mockUser.role,
-      permissions: mockUser.permissions,
-      exp: Math.floor(Date.now() / 1000) + (60 * 60 * 24) // Expira em 24 horas
-    };
-    
-    // Apenas para simular um token, não use em produção
-    const mockToken = `mock-header.${btoa(JSON.stringify(mockTokenPayload))}.mock-signature`;
-
-    setStoredToken(mockToken);
-    setUser(mockUser);
-    apiClient.defaults.headers.common['Authorization'] = `Bearer ${mockToken}`;
-    
-    toast.success('Login mockado realizado com sucesso!');
-    router.push(buildDashboardUrl(mockUser.role));
-    setIsLoading(false);
+    try {
+      console.log('🔐 Fazendo login via API...');
+      const response = await apiClient.post('/auth/login', { email, password });
+      
+      if (response.data.success && response.data.data) {
+        const { accessToken, user: userData } = response.data.data;
+        
+        // Armazenar o token
+        setStoredToken(accessToken);
+        
+        // Configurar o header de autorização
+        apiClient.defaults.headers.common['Authorization'] = `Bearer ${accessToken}`;
+        
+        // Decodificar o token para obter informações do usuário
+        const decodedToken = decodeToken(accessToken);
+        
+        // Configurar o usuário no estado
+        const user: User = {
+          id: userData.id || decodedToken.id,
+          name: userData.name || decodedToken.name,
+          email: userData.email || decodedToken.email,
+          role: userData.role || decodedToken.role,
+          permissions: userData.permissions || decodedToken.permissions || [],
+          telefone: userData.telefone,
+          endereco: userData.endereco,
+          unidadeEnsino: userData.unidadeEnsino,
+          institution_name: userData.institution_name
+        };
+        
+        setUser(user);
+        
+        console.log('✅ Login realizado com sucesso!', user);
+        toast.success('Login realizado com sucesso!');
+        
+        // Redirecionar para o dashboard apropriado
+        const targetPath = getDashboardPath(user.role);
+        router.push(buildDashboardUrl(user.role));
+      } else {
+        throw new Error(response.data.message || 'Falha no login');
+      }
+    } catch (error: any) {
+      console.error('❌ Erro no login:', error);
+      
+      let errorMessage = 'Falha no login. Verifique suas credenciais.';
+      
+      if (error.response?.data?.message) {
+        errorMessage = error.response.data.message;
+      } else if (error.message) {
+        errorMessage = error.message;
+      }
+      
+      toast.error(errorMessage);
+      throw new Error(errorMessage);
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   const handleGoogleLogin = async (token: string) => {
@@ -236,7 +270,6 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
 
     setIsLoading(true);
     try {
-      await performCacheCleanup('google-login');
       
       const { data } = await apiClient.post('/auth/google-login', { token });
       const { accessToken } = data.data;
@@ -244,7 +277,6 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
       setStoredToken(accessToken);
       
       if (setupUserFromToken(accessToken)) {
-        await performCacheCleanup('login success');
         toast.success('Login com Google realizado com sucesso!');
         const decoded: { role: UserRole } = jwtDecode(accessToken);
         router.push(buildDashboardUrl(decoded.role));
@@ -253,7 +285,6 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
       }
     } catch (error: any) {
       console.error("Google login failed:", error);
-      clearAuthCache();
       const message = error.response?.data?.message || 'Falha no login com Google.';
       toast.error(message);
     } finally {
@@ -267,6 +298,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     isLoading,
     loading: isLoading,
     error: null, // Placeholder, será implementado no futuro
+    isLoggingOut,
     login,
     logout,
     handleGoogleLogin,

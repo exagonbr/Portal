@@ -10,39 +10,39 @@ import { Module } from './Module';
 
 @Entity('collections')
 export class Collection {
-  @PrimaryGeneratedColumn('uuid')
-  id: string;
+  @PrimaryGeneratedColumn('increment')
+  id!: number;
 
   @Column()
-  name: string;
+  name!: string;
 
   @Column({ type: 'text' })
-  synopsis: string;
+  synopsis!: string;
 
   @Column()
-  cover_image: string;
+  cover_image!: string;
 
   @Column({ nullable: true })
   support_material?: string;
 
   @Column({ type: 'int', default: 0 })
-  total_duration: number;
+  total_duration!: number;
 
   @Column()
-  subject: string;
+  subject!: string;
 
   @Column({ type: 'jsonb', default: [] })
-  tags: string[];
+  tags!: string[];
 
   @Column()
-  created_by: string;
+  created_by!: number;
 
   @OneToMany(() => Module, module => module.collection)
-  modules: Module[];
+  modules!: Module[];
 
   @CreateDateColumn()
-  created_at: Date;
+  created_at!: Date;
 
   @UpdateDateColumn()
-  updated_at: Date;
+  updated_at!: Date;
 }

@@ -23,8 +23,8 @@ export enum ShiftType {
 
 @Entity('classes')
 export class Class {
-  @PrimaryGeneratedColumn('uuid')
-  id!: string;
+  @PrimaryGeneratedColumn('increment')
+  id!: number;
 
   @Column()
   name!: string;
@@ -33,7 +33,7 @@ export class Class {
   code!: string;
 
   @Column()
-  school_id!: string;
+  school_id!: number;
 
   @JoinColumn({ name: 'school_id' })
   school!: School;

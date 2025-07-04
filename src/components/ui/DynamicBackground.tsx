@@ -2,21 +2,28 @@
 
 import { useEffect, useState } from 'react'
 import { useSystemSettings } from '@/hooks/useSystemSettings'
+import { usePublicSettings } from '@/hooks/usePublicSettings'
 
 interface DynamicBackgroundProps {
   className?: string
   children?: React.ReactNode
   overlay?: boolean
   overlayOpacity?: number
+  usePublic?: boolean
 }
 
-export default function DynamicBackground({ 
-  className = '', 
-  children, 
+export default function DynamicBackground({
+  className = '',
+  children,
   overlay = true,
-  overlayOpacity = 0.5 
+  overlayOpacity = 0.5,
+  usePublic = false
 }: DynamicBackgroundProps) {
-  const { settings, loading } = useSystemSettings()
+  // Usar hook público ou privado baseado na prop
+  const systemHook = useSystemSettings()
+  const publicHook = usePublicSettings()
+  
+  const { settings, loading } = usePublic ? publicHook : systemHook
   const [backgroundStyle, setBackgroundStyle] = useState<React.CSSProperties>({})
 
   useEffect(() => {
@@ -131,8 +138,11 @@ export default function DynamicBackground({
 }
 
 // Hook para usar apenas as configurações de background
-export function useBackgroundSettings() {
-  const { settings, loading } = useSystemSettings()
+export function useBackgroundSettings(usePublic = false) {
+  const systemHook = useSystemSettings()
+  const publicHook = usePublicSettings()
+  
+  const { settings, loading } = usePublic ? publicHook : systemHook
   
   return {
     backgroundType: settings?.background_type || 'video',
@@ -146,10 +156,11 @@ export function useBackgroundSettings() {
 // Componente simplificado para usar em páginas de login
 export function LoginBackground({ children, className = '' }: { children: React.ReactNode, className?: string }) {
   return (
-    <DynamicBackground 
+    <DynamicBackground
       className={`min-h-screen flex items-center justify-center ${className}`}
       overlay={true}
       overlayOpacity={0.6}
+      usePublic={true}
     >
       {children}
     </DynamicBackground>

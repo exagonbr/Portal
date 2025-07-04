@@ -1,6 +1,5 @@
 'use client';
 
-import { useAutoCacheCleaner } from '@/hooks/useCacheCleaner';
 import { ReactNode } from 'react';
 
 interface CacheCleanerProviderProps {
@@ -13,7 +12,6 @@ interface CacheCleanerProviderProps {
  */
 export function CacheCleanerProvider({ children }: CacheCleanerProviderProps) {
   // Hook para limpeza automática de cache
-  useAutoCacheCleaner();
 
   return <>{children}</>;
 }

@@ -11,21 +11,21 @@ import { User } from './User';
 
 @Entity('announcements')
 export class Announcement {
-  @PrimaryGeneratedColumn('uuid')
-  id: string;
+  @PrimaryGeneratedColumn('increment')
+  id!: number;
 
   @Column()
-  title: string;
+  title!: string;
 
   @Column({ type: 'text' })
-  content: string;
+  content!: string;
 
   @Column()
-  author_id: string;
+  author_id!: number;
 
   @ManyToOne(() => User)
   @JoinColumn({ name: 'author_id' })
-  author: User;
+  author!: User;
 
   @Column({ type: 'timestamp', nullable: true })
   expires_at?: Date;
@@ -35,16 +35,16 @@ export class Announcement {
     enum: ['baixa', 'média', 'alta', 'urgente'],
     default: 'média'
   })
-  priority: string;
+  priority!: string;
 
   @Column({ type: 'jsonb' })
-  scope: {
+  scope!: {
     type: 'global' | 'turma' | 'curso';
     targetId?: string;
   };
 
   @Column({ type: 'jsonb' })
-  notifications: {
+  notifications!: {
     email: boolean;
     push: boolean;
   };
@@ -53,11 +53,11 @@ export class Announcement {
   attachments?: any[];
 
   @Column({ type: 'jsonb', default: [] })
-  acknowledgments: string[]; // IDs de usuários
+  acknowledgments!: string[]; // IDs de usuários
 
   @CreateDateColumn()
-  created_at: Date;
+  created_at!: Date;
 
   @UpdateDateColumn()
-  updated_at: Date;
+  updated_at!: Date;
 }

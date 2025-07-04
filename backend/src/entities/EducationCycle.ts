@@ -19,8 +19,8 @@ export enum EducationLevel {
 
 @Entity('education_cycles')
 export class EducationCycle {
-  @PrimaryGeneratedColumn('uuid')
-  id!: string;
+  @PrimaryGeneratedColumn('increment')
+  id!: number;
 
   @Column()
   name!: string;

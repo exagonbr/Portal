@@ -1,7 +1,7 @@
 // Script para registrar o Service Worker com Workbox
 // Deve ser carregado no HTML principal
 
-if ('serviceWorker' in navigator && location.hostname !== 'localhost') {
+if ('serviceWorker' in navigator) {
   window.addEventListener('load', () => {
     navigator.serviceWorker.register('/sw.js', { scope: '/' })
       .then((registration) => {

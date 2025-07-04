@@ -113,7 +113,6 @@ export default function CoordinatorReportsPage() {
   const reportTypes = Array.from(new Set(MOCK_REPORTS.map(report => report.type)))
 
   return (
-    <AuthenticatedLayout>
       <div className="container mx-auto px-4 py-6 max-w-7xl">
         {/* Header Section */}
         <div className="mb-8">
@@ -520,6 +519,5 @@ export default function CoordinatorReportsPage() {
           </div>
         )}
       </div>
-    </AuthenticatedLayout>
   )
 }

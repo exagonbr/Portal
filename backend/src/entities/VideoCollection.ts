@@ -10,14 +10,14 @@ import { VideoModule } from './VideoModule';
 
 @Entity('video_collections')
 export class VideoCollection {
-  @PrimaryGeneratedColumn('uuid')
-  id: string;
+  @PrimaryGeneratedColumn('increment')
+  id!: number;
 
   @Column({ type: 'integer', nullable: true })
   mysql_id?: number;
 
   @Column({ type: 'varchar', length: 255 })
-  name: string;
+  name!: string;
 
   @Column({ type: 'text', nullable: true })
   synopsis?: string;
@@ -32,13 +32,13 @@ export class VideoCollection {
   contract_expiry_date?: Date;
 
   @Column({ type: 'simple-array', default: [] })
-  authors: string[];
+  authors!: string[];
 
   @Column({ type: 'simple-array', default: [] })
-  target_audience: string[];
+  target_audience!: string[];
 
   @Column({ type: 'varchar', length: 20, default: '00:00:00' })
-  total_hours: string;
+  total_hours!: string;
 
   @Column({ type: 'varchar', length: 500, nullable: true })
   poster_image_url?: string;
@@ -50,7 +50,7 @@ export class VideoCollection {
   ebook_file_url?: string;
 
   @Column({ type: 'boolean', default: true })
-  use_default_cover_for_videos: boolean;
+  use_default_cover_for_videos!: boolean;
 
   @Column({ type: 'double precision', nullable: true })
   popularity?: number;
@@ -75,14 +75,14 @@ export class VideoCollection {
   manual_support_path?: string;
 
   @Column({ type: 'boolean', default: false })
-  deleted: boolean;
+  deleted!: boolean;
 
   @OneToMany(() => VideoModule, videoModule => videoModule.collection, { cascade: true })
-  videos: VideoModule[];
+  videos!: VideoModule[];
 
   @CreateDateColumn()
-  created_at: Date;
+  created_at!: Date;
 
   @UpdateDateColumn()
-  updated_at: Date;
+  updated_at!: Date;
 } 

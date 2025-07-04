@@ -35,13 +35,13 @@ export class Institution {
   @Column({ name: 'contract_num', type: 'bigint', nullable: true })
   contractNum?: number;
 
-  @Column({ name: 'contract_term_end', type: 'datetime' })
+  @Column({ name: 'contract_term_end', type: 'timestamp' })
   contractTermEnd!: Date;
 
-  @Column({ name: 'contract_term_start', type: 'datetime' })
+  @Column({ name: 'contract_term_start', type: 'timestamp' })
   contractTermStart!: Date;
 
-  @Column({ name: 'date_created', type: 'datetime', nullable: true })
+  @Column({ name: 'date_created', type: 'timestamp', nullable: true })
   dateCreated?: Date;
 
   @Column({ type: 'boolean', default: false })
@@ -53,10 +53,10 @@ export class Institution {
   @Column({ type: 'varchar', length: 255 })
   document!: string;
 
-  @Column({ name: 'invoice_date', type: 'datetime', nullable: true })
+  @Column({ name: 'invoice_date', type: 'timestamp', nullable: true })
   invoiceDate?: Date;
 
-  @Column({ name: 'last_updated', type: 'datetime', nullable: true })
+  @Column({ name: 'last_updated', type: 'timestamp', nullable: true })
   lastUpdated?: Date;
 
   @Column({ type: 'varchar', length: 255 })

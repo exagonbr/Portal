@@ -11,33 +11,33 @@ import { VideoCollection } from './VideoCollection';
 
 @Entity('video_modules')
 export class VideoModule {
-  @PrimaryGeneratedColumn('uuid')
-  id: string;
+  @PrimaryGeneratedColumn('increment')
+  id!: number;
 
-  @Column({ type: 'uuid' })
-  collection_id: string;
+  @Column({ type: 'int' })
+  collection_id!: number;
 
   @ManyToOne(() => VideoCollection, collection => collection.videos, { onDelete: 'CASCADE' })
   @JoinColumn({ name: 'collection_id' })
-  collection: VideoCollection;
+  collection!: VideoCollection;
 
   @Column({ type: 'integer' })
-  module_number: number;
+  module_number!: number;
 
   @Column({ type: 'varchar', length: 255 })
-  title: string;
+  title!: string;
 
   @Column({ type: 'text' })
-  synopsis: string;
+  synopsis!: string;
 
   @Column({ type: 'integer' })
-  release_year: number;
+  release_year!: number;
 
   @Column({ type: 'varchar', length: 20, default: '00:00:00' })
-  duration: string;
+  duration!: string;
 
   @Column({ type: 'varchar', length: 100 })
-  education_cycle: string;
+  education_cycle!: string;
 
   @Column({ type: 'varchar', length: 500, nullable: true })
   poster_image_url?: string;
@@ -46,11 +46,11 @@ export class VideoModule {
   video_url?: string;
 
   @Column({ type: 'integer', default: 1 })
-  order_in_module: number;
+  order_in_module!: number;
 
   @CreateDateColumn()
-  created_at: Date;
+  created_at!: Date;
 
   @UpdateDateColumn()
-  updated_at: Date;
-} 
+  updated_at!: Date;
+}

@@ -162,7 +162,6 @@ export default function AdminSchoolsPage() {
   const totalPages = Math.ceil(totalItems / itemsPerPage)
 
   return (
-    <AuthenticatedLayout>
       <div className="container mx-auto px-4 py-6 max-w-7xl">
         <div className="bg-white rounded-xl shadow-sm border border-gray-200">
           {/* Header */}
@@ -333,6 +332,5 @@ export default function AdminSchoolsPage() {
           )}
         </div>
       </div>
-    </AuthenticatedLayout>
   )
 }

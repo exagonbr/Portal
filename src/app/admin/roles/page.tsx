@@ -269,8 +269,6 @@ export default function RolesPermissionsPage() {
   });
 
   return (
-    <AuthenticatedLayout>
-      <ProtectedRoute requiredRole={[UserRole.SYSTEM_ADMIN]}>
         <div className="container mx-auto py-8">
           {/* Header */}
           <div className="flex flex-col gap-4 mb-6">
@@ -1023,7 +1021,5 @@ export default function RolesPermissionsPage() {
             />
           )}
         </div>
-      </ProtectedRoute>
-    </AuthenticatedLayout>
   );
 }

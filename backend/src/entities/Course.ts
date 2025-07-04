@@ -14,21 +14,21 @@ import { Institution } from './Institution';
 
 @Entity('courses')
 export class Course {
-  @PrimaryGeneratedColumn('uuid')
-  id: string;
+  @PrimaryGeneratedColumn('increment')
+  id!: number;
 
   @Column()
-  name: string;
+  name!: string;
 
   @Column({ type: 'text', nullable: true })
   description?: string;
 
   @Column()
-  institution_id: string;
+  institution_id!: number;
 
   @ManyToOne(() => Institution)
   @JoinColumn({ name: 'institution_id' })
-  institution: Institution;
+  institution!: Institution;
 
   @Column({ nullable: true })
   level?: string;
@@ -37,7 +37,7 @@ export class Course {
   duration?: number;
 
   @Column({ nullable: true })
-  teacher_id?: string;
+  teacher_id?: number;
 
   @ManyToOne(() => User, user => user.teachingCourses, { nullable: true })
   @JoinColumn({ name: 'teacher_id' })
@@ -49,16 +49,16 @@ export class Course {
     joinColumn: { name: 'course_id', referencedColumnName: 'id' },
     inverseJoinColumn: { name: 'user_id', referencedColumnName: 'id' }
   })
-  students: User[];
+  students!: User[];
 
   @Column({ default: true })
-  is_active: boolean;
+  is_active!: boolean;
 
   @CreateDateColumn()
-  created_at: Date;
+  created_at!: Date;
 
   @UpdateDateColumn()
-  updated_at: Date;
+  updated_at!: Date;
 
   // Propriedades computadas
   institution_name?: string;

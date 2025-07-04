@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
-import { RefreshCw, AlertCircle, ArrowLeft, Wifi, WifiOff } from 'lucide-react';
+import { RefreshCw, AlertCircle, ArrowLeft, Wifi, WifiOff, Loader2 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 
 interface LoadingStateProps {
@@ -381,40 +381,33 @@ export function LogoutLoadingState({
       exit={{ opacity: 0 }}
       className="fixed inset-0 flex items-center justify-center backdrop-blur-md z-50"
       style={{
-        background: 'transparent'
+        background: 'rgba(0, 0, 0, 0.3)'
       }}
     >
       <div className="flex flex-col items-center max-w-md mx-auto p-8">
-        {/* Spinner principal com efeito vidro */}
-        <div className="relative mb-6">
-          <motion.div
-            animate={{ rotate: 360 }}
-            transition={{ duration: 1, repeat: Infinity, ease: "linear" }}
-            className="w-16 h-16 border-4 border-white/30 border-t-white rounded-full backdrop-blur-sm"
-            style={{
-              background: 'rgba(255, 255, 255, 0.1)',
-              boxShadow: '0 8px 32px 0 rgba(31, 38, 135, 0.37)',
-              backdropFilter: 'blur(4px)',
-              WebkitBackdropFilter: 'blur(4px)',
-              borderRadius: '50%',
-              border: '1px solid rgba(255, 255, 255, 0.18)'
-            }}
-          />
-        </div>
+        {/* Ícone de carregamento animado */}
+        <motion.div
+          animate={{ rotate: 360 }}
+          transition={{ duration: 1.5, repeat: Infinity, ease: "linear" }}
+          className="mb-6"
+        >
+          <Loader2 className="w-12 h-12 text-white/80" />
+        </motion.div>
 
-        {/* Mensagem com efeito vidro */}
+        {/* Mensagem com legibilidade aprimorada */}
         <div
-          className="px-6 py-4 rounded-2xl text-center"
+          className="px-8 py-4 rounded-2xl text-center"
           style={{
-            background: 'rgba(255, 255, 255, 0.15)',
-            boxShadow: '0 8px 32px 0 rgba(31, 38, 135, 0.37)',
-            backdropFilter: 'blur(8px)',
-            WebkitBackdropFilter: 'blur(8px)',
-            borderRadius: '16px',
-            border: '1px solid rgba(255, 255, 255, 0.18)'
+            background: 'rgba(255, 255, 255, 0.1)',
+            backdropFilter: 'blur(10px)',
+            WebkitBackdropFilter: 'blur(10px)',
+            border: '1px solid rgba(255, 255, 255, 0.2)'
           }}
         >
-          <h3 className="text-lg font-semibold text-white drop-shadow-lg">
+          <h3
+            className="text-lg font-semibold text-white"
+            style={{ textShadow: '0 2px 4px rgba(0, 0, 0, 0.5)' }}
+          >
             {message}
           </h3>
         </div>

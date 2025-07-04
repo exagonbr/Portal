@@ -11,7 +11,7 @@ import Modal from '@/components/ui/Modal'
 import ClassForm from '@/components/forms/ClassForm'
 import ProtectedRoute from '@/components/auth/ProtectedRoute'
 import { useCRUD } from '@/hooks/useCRUD'
-import { apiClient, BaseApiService } from '@/lib/api-client'
+import { apiClient } from '@/lib/api-client'
 import { useTheme } from '@/contexts/ThemeContext'
 import { UserRole } from '@/types/roles'
 import { useRouter } from 'next/navigation'
@@ -37,8 +37,6 @@ interface Class {
   updated_at: string
 }
 
-const classService = new BaseApiService<Class>('/classes')
-
 export default function TeacherClassesPage() {
   const { theme } = useTheme()
   const router = useRouter()
@@ -57,8 +55,8 @@ export default function TeacherClassesPage() {
     search,
     setSelectedItem,
     setPage
-  } = useCRUD({
-    service: classService,
+  } = useCRUD<Class>({
+    endpoint: '/classes',
     entityName: 'Turma',
     autoFetch: true,
     paginated: true
@@ -259,7 +257,6 @@ export default function TeacherClassesPage() {
   )
 
   return (
-    <AuthenticatedLayout>
       <div className="container mx-auto px-4 py-6 max-w-7xl">
         <ProtectedRoute requiredRole={[UserRole.TEACHER, UserRole.COORDINATOR, UserRole.SYSTEM_ADMIN]}>
           <DashboardPageLayout
@@ -367,6 +364,5 @@ export default function TeacherClassesPage() {
           </DashboardPageLayout>
         </ProtectedRoute>
       </div>
-    </AuthenticatedLayout>
   )
 } 

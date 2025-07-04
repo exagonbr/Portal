@@ -31,7 +31,7 @@ export class MediaEntry {
   @JoinColumn({ name: 'author_id' })
   author?: Author;
 
-  @Column({ name: 'date_created', type: 'datetime', nullable: true })
+  @Column({ name: 'date_created', type: 'timestamp', nullable: true })
   dateCreated?: Date;
 
   @Column({ type: 'boolean', nullable: true })
@@ -74,7 +74,7 @@ export class MediaEntry {
   @JoinColumn({ name: 'language_id' })
   language?: Language;
 
-  @Column({ name: 'last_updated', type: 'datetime', nullable: true })
+  @Column({ name: 'last_updated', type: 'timestamp', nullable: true })
   lastUpdated?: Date;
 
   @Column({ type: 'varchar', length: 255, nullable: true })

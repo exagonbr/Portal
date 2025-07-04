@@ -38,41 +38,41 @@ export enum NotificationPriority {
 
 @Entity('notifications')
 export class Notification {
-  @PrimaryGeneratedColumn('uuid')
-  id: string;
+  @PrimaryGeneratedColumn('increment')
+  id!: number;
 
   @Column()
-  title: string;
+  title!: string;
 
   @Column({ type: 'text' })
-  message: string;
+  message!: string;
 
   @Column({
     type: 'enum',
     enum: NotificationType,
     default: NotificationType.INFO
   })
-  type: NotificationType;
+  type!: NotificationType;
 
   @Column({
     type: 'enum',
     enum: NotificationCategory,
     default: NotificationCategory.SYSTEM
   })
-  category: NotificationCategory;
+  category!: NotificationCategory;
 
   @Column({ type: 'timestamp', nullable: true })
   sent_at?: Date;
 
   @Column()
-  sent_by_id: string;
+  sent_by_id!: number;
 
   @ManyToOne(() => User, user => user.sentNotifications)
   @JoinColumn({ name: 'sent_by_id' })
-  sentBy: User;
+  sentBy!: User;
 
   @Column({ type: 'jsonb', default: {} })
-  recipients: {
+  recipients!: {
     total?: number;
     read?: number;
     unread?: number;
@@ -85,7 +85,7 @@ export class Notification {
     enum: NotificationStatus,
     default: NotificationStatus.DRAFT
   })
-  status: NotificationStatus;
+  status!: NotificationStatus;
 
   @Column({ type: 'timestamp', nullable: true })
   scheduled_for?: Date;
@@ -95,11 +95,11 @@ export class Notification {
     enum: NotificationPriority,
     default: NotificationPriority.MEDIUM
   })
-  priority: NotificationPriority;
+  priority!: NotificationPriority;
 
   @CreateDateColumn()
-  created_at: Date;
+  created_at!: Date;
 
   @UpdateDateColumn()
-  updated_at: Date;
+  updated_at!: Date;
 }

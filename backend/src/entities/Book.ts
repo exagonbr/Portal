@@ -8,35 +8,35 @@ import {
 
 @Entity('books')
 export class Book {
-  @PrimaryGeneratedColumn('uuid')
-  id: string;
+  @PrimaryGeneratedColumn('increment')
+  id!: number;
 
   @Column()
-  title: string;
+  title!: string;
 
   @Column()
-  author: string;
+  author!: string;
 
   @Column()
-  publisher: string;
+  publisher!: string;
 
   @Column({ type: 'text' })
-  synopsis: string;
+  synopsis!: string;
 
   @Column()
-  thumbnail: string;
+  thumbnail!: string;
 
   @Column()
-  url: string;
+  url!: string;
 
   @Column({ nullable: true })
   s3_key?: string;
 
   @Column({ type: 'int' })
-  size: number;
+  size!: number;
 
   @Column()
-  education_level: string;
+  education_level!: string;
 
   @Column({ nullable: true })
   cycle?: string;
@@ -48,14 +48,14 @@ export class Book {
   subject?: string;
 
   @Column({ type: 'jsonb', default: [] })
-  tags: string[];
+  tags!: string[];
 
   @Column()
-  uploaded_by: string;
+  uploaded_by!: number;
 
   @CreateDateColumn()
-  created_at: Date;
+  created_at!: Date;
 
   @UpdateDateColumn()
-  updated_at: Date;
+  updated_at!: Date;
 }

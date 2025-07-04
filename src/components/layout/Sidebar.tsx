@@ -9,7 +9,6 @@ import { useState, useEffect, useCallback, memo } from 'react'
 import { UserRole, ROLE_PERMISSIONS, ROLE_LABELS, hasPermission, getAccessibleRoutes, RolePermissions } from '@/types/roles'
 import { motion, AnimatePresence } from 'framer-motion'
 import { getSystemAdminMenuItems } from '@/components/admin/SystemAdminMenu'
-import { EnhancedLoadingState } from '@/components/ui/LoadingStates'
 import { useNavigationWithLoading } from '@/hooks/useNavigationWithLoading'
 
 interface NavItem {
@@ -422,7 +421,6 @@ function Sidebar() {
   const { theme } = useTheme()
   const [isCollapsed, setIsCollapsed] = useState(false)
   const [isMobileOpen, setIsMobileOpen] = useState(false)
-  const [isLoggingOut, setIsLoggingOut] = useState(false);
 
   // Get user role with fallback to STUDENT
   const userRole: UserRole = (user?.role || UserRole.STUDENT) as UserRole;
@@ -496,12 +494,9 @@ function Sidebar() {
 
   const handleLogout = async () => {
     try {
-      setIsLoggingOut(true);
       await logout();
     } catch (error) {
       console.log('Erro ao fazer logout:', error);
-    } finally {
-      setIsLoggingOut(false);
     }
   }
 
@@ -1133,15 +1128,6 @@ function Sidebar() {
 
   return (
     <>
-      {/* Loading State para Logout */}
-      {isLoggingOut && (
-        <EnhancedLoadingState
-          message="Saindo do sistema..."
-          submessage="Limpando dados e finalizando sessão"
-          showProgress={false}
-        />
-      )}
-
       <motion.aside
         initial={{ x: -300 }}
         animate={{ x: 0 }}

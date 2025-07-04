@@ -10,28 +10,28 @@ import { User } from './User';
 
 @Entity('chat_messages')
 export class ChatMessage {
-  @PrimaryGeneratedColumn('uuid')
-  id: string;
+  @PrimaryGeneratedColumn('increment')
+  id!: number;
 
   @Column()
-  sender_id: string;
+  sender_id!: number;
 
   @ManyToOne(() => User, user => user.sentMessages)
   @JoinColumn({ name: 'sender_id' })
-  sender: User;
+  sender!: User;
 
   @Column({ type: 'text' })
-  content: string;
+  content!: string;
 
   @Column()
-  class_id: string;
+  class_id!: number;
 
   @Column({ type: 'jsonb', nullable: true })
   attachments?: any[];
 
   @Column({ type: 'jsonb', default: [] })
-  read_by: string[]; // IDs de usuários
+  read_by!: string[]; // IDs de usuários
 
   @CreateDateColumn()
-  timestamp: Date;
+  timestamp!: Date;
 }

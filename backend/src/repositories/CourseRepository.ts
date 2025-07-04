@@ -24,7 +24,7 @@ export class CourseRepository extends BaseRepository<Course> {
   }
 
   async findByInstitution(institutionId: string): Promise<Course[]> {
-    return this.findAll({ institution_id: institutionId } as Partial<Course>);
+    return this.findAll({ institution_id: parseInt(institutionId, 10) });
   }
 
   async findByLevel(level: string): Promise<Course[]> {
@@ -32,7 +32,7 @@ export class CourseRepository extends BaseRepository<Course> {
   }
 
   async findByTeacher(teacherId: string): Promise<Course[]> {
-    return this.findAll({ teacher_id: teacherId } as Partial<Course>);
+    return this.findAll({ teacher_id: parseInt(teacherId, 10) });
   }
 
   async findByStudent(studentId: string): Promise<Course[]> {
@@ -48,7 +48,7 @@ export class CourseRepository extends BaseRepository<Course> {
       .orWhere('description', 'ilike', `%${term}%`);
 
     if (institutionId) {
-      query = query.andWhere({ institution_id: institutionId });
+      query = query.andWhere({ institution_id: parseInt(institutionId, 10) });
     }
 
     return query;

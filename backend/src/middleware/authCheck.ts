@@ -1,13 +1,14 @@
-import { Request, Response, NextFunction } from 'express';
+import { Response, NextFunction } from 'express';
 import jwt from 'jsonwebtoken';
 import { JWT_CONFIG } from '../config/jwt';
+import { AuthenticatedRequest } from '../types/express.d';
 
 
 /**
  * Middleware to check if the request has a valid access token.
  * Sets req.authenticated to true if valid, false otherwise.
  */
-export function authCheckMiddleware(req: Request, res: Response, next: NextFunction) {
+export function authCheckMiddleware(req: AuthenticatedRequest, res: Response, next: NextFunction) {
   const authHeader = req.headers['authorization'];
   const token = authHeader && authHeader.split(' ')[1];
 

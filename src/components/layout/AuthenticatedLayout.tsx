@@ -8,7 +8,7 @@ import { useTheme } from '@/contexts/ThemeContext'
 import { motion, AnimatePresence } from 'framer-motion'
 import { UpdateNotificationCompact } from '@/components/UpdateNotificationCompact'
 import { useUpdateStatus } from '@/components/PWAUpdateManager'
-import { EnhancedLoadingState } from '@/components/ui/LoadingStates'
+import { LogoutLoadingState } from '@/components/ui/LoadingStates'
 import { UserRole, ROLE_LABELS } from '@/types/roles'
 
 interface AuthenticatedLayoutProps {
@@ -16,14 +16,13 @@ interface AuthenticatedLayoutProps {
 }
 
 export default function AuthenticatedLayout({ children }: AuthenticatedLayoutProps) {
-  const { user, logout, loading } = useAuth()
+  const { user, logout, loading, isLoggingOut } = useAuth()
   const router = useRouter()
   const [showNotifications, setShowNotifications] = useState(false)
   const [showActivities, setShowActivities] = useState(false)
   const [showCalendar, setShowCalendar] = useState(false)
   const [showUserMenu, setShowUserMenu] = useState(false)
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false)
-  const [isLoggingOut, setIsLoggingOut] = useState(false)
   const { theme, themeType, toggleTheme } = useTheme()
   const updateStatus = useUpdateStatus()
   const [redirecting, setRedirecting] = useState(false)
@@ -147,25 +146,20 @@ export default function AuthenticatedLayout({ children }: AuthenticatedLayoutPro
 
   const handleLogout = async () => {
     try {
-      setIsLoggingOut(true);
       setShowUserMenu(false);
       await logout();
     } catch (error) {
       console.log('Erro ao fazer logout:', error);
-    } finally {
-      setIsLoggingOut(false);
     }
   }
 
   return (
     <>
-      {isLoggingOut && (
-        <EnhancedLoadingState
-          message="Saindo do sistema..."
-          submessage="Limpando dados e finalizando sessão"
-          showProgress={false}
-        />
-      )}
+      <AnimatePresence>
+        {isLoggingOut && (
+          <LogoutLoadingState message="Saindo do Sistema... Volte Sempre!" />
+        )}
+      </AnimatePresence>
 
       <div className="flex h-screen w-screen overflow-hidden" style={{ backgroundColor: theme.colors.background.secondary }}>
         <div className="hidden md:block">

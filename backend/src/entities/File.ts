@@ -15,7 +15,7 @@ export class File {
   @Column({ name: 'content_type', type: 'varchar', length: 255, nullable: true })
   contentType?: string;
 
-  @Column({ name: 'date_created', type: 'datetime' })
+  @Column({ name: 'date_created', type: 'timestamp' })
   dateCreated!: Date;
 
   @Column({ type: 'varchar', length: 255, nullable: true })
@@ -33,7 +33,7 @@ export class File {
   @Column({ type: 'varchar', length: 255, nullable: true })
   label?: string;
 
-  @Column({ name: 'last_updated', type: 'datetime' })
+  @Column({ name: 'last_updated', type: 'timestamp' })
   lastUpdated!: Date;
 
   @Column({ name: 'local_file', type: 'varchar', length: 255, nullable: true })

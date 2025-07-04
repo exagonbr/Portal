@@ -7,14 +7,18 @@ import { useTheme } from '@/contexts/ThemeContext';
 import { LicenseValidationModal } from './LicenseValidationModal';
 import { MotionDiv, MotionSpan } from '@/components/ui/MotionWrapper';
 import { FRONTEND_URL } from '@/config/urls';
+import { clearAllDataForUnauthorized } from '@/utils/clearAllData';
 
 export function LoginForm() {
   const { login } = useAuth();
   const { theme } = useTheme();
+  const [email, setEmail] = useState<string>('');
+  const [password, setPassword] = useState<string>('');
   const [submitError, setSubmitError] = useState<string>('');
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [isMobile, setIsMobile] = useState(false);
+  const [showPassword, setShowPassword] = useState(false);
 
   useEffect(() => {
     const checkMobile = () => {
@@ -29,34 +33,51 @@ export function LoginForm() {
     return () => window.removeEventListener('resize', checkMobile);
   }, []);
 
-  const handleLogin = useCallback(async () => {
+  const handleLogin = useCallback(async (e?: React.FormEvent) => {
+    if (e) {
+      e.preventDefault();
+    }
+
+    // Validação básica
+    if (!email || !password) {
+      setSubmitError('Por favor, preencha todos os campos.');
+      return;
+    }
+
     setIsSubmitting(true);
     setSubmitError('');
+    
     try {
-      await login('admin@sabercon.edu.br', 'password123');
+      // Limpar todos os dados antes do login
+      console.log('🧹 Limpando todos os dados antes do login...');
+      await clearAllDataForUnauthorized();
+      console.log('✅ Dados limpos com sucesso');
+      
+      // Fazer o login
+      await login(email, password);
     } catch (error: any) {
       setSubmitError(error.message || 'Falha no login. Verifique as credenciais e tente novamente.');
     } finally {
       setIsSubmitting(false);
     }
-  }, [login]);
+  }, [login, email, password]);
 
   return (
     <>
-      <div className="space-y-6 mt-8" role="form" aria-label="Formulário de login">
+      <form onSubmit={handleLogin} className="space-y-6 mt-8" role="form" aria-label="Formulário de login">
         {submitError && (
-          <MotionDiv 
+          <MotionDiv
             initial={{ opacity: 0, scale: 0.95 }}
             animate={{ opacity: 1, scale: 1 }}
-            className="rounded-lg p-4 flex items-start gap-3" 
+            className="rounded-lg p-4 flex items-start gap-3"
             style={{
               backgroundColor: `${theme.colors.status.error}20`,
               border: `1px solid ${theme.colors.status.error}40`
             }}
             role="alert"
           >
-            <span 
-              className="material-symbols-outlined text-xl mt-0.5" 
+            <span
+              className="material-symbols-outlined text-xl mt-0.5"
               style={{ color: theme.colors.status.error }}
               aria-hidden="true"
             >
@@ -70,14 +91,96 @@ export function LoginForm() {
           </MotionDiv>
         )}
 
+        {/* Campo de Email */}
+        <MotionDiv
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.2 }}
+        >
+          <label htmlFor="email" className="block text-sm font-medium mb-2" style={{ color: theme.colors.text.primary }}>
+            Email
+          </label>
+          <div className="relative">
+            <input
+              id="email"
+              type="email"
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
+              placeholder="seu@email.com"
+              required
+              disabled={isSubmitting}
+              className={`w-full px-4 ${isMobile ? 'py-3' : 'py-2'} pl-10 rounded-lg border transition-all duration-200 focus:outline-none focus:ring-2`}
+              style={{
+                backgroundColor: theme.colors.background.primary,
+                borderColor: theme.colors.border.DEFAULT,
+                color: theme.colors.text.primary,
+                fontSize: isMobile ? '16px' : '14px',
+                minHeight: isMobile ? '48px' : 'auto'
+              }}
+            />
+            <span
+              className="material-symbols-outlined absolute left-3 top-1/2 transform -translate-y-1/2 text-xl"
+              style={{ color: theme.colors.text.tertiary }}
+            >
+              mail
+            </span>
+          </div>
+        </MotionDiv>
+
+        {/* Campo de Senha */}
         <MotionDiv
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.3 }}
         >
+          <label htmlFor="password" className="block text-sm font-medium mb-2" style={{ color: theme.colors.text.primary }}>
+            Senha
+          </label>
+          <div className="relative">
+            <input
+              id="password"
+              type={showPassword ? 'text' : 'password'}
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
+              placeholder="••••••••"
+              required
+              disabled={isSubmitting}
+              className={`w-full px-4 ${isMobile ? 'py-3' : 'py-2'} pl-10 pr-10 rounded-lg border transition-all duration-200 focus:outline-none focus:ring-2`}
+              style={{
+                backgroundColor: theme.colors.background.primary,
+                borderColor: theme.colors.border.DEFAULT,
+                color: theme.colors.text.primary,
+                fontSize: isMobile ? '16px' : '14px',
+                minHeight: isMobile ? '48px' : 'auto'
+              }}
+            />
+            <span
+              className="material-symbols-outlined absolute left-3 top-1/2 transform -translate-y-1/2 text-xl"
+              style={{ color: theme.colors.text.tertiary }}
+            >
+              lock
+            </span>
+            <button
+              type="button"
+              onClick={() => setShowPassword(!showPassword)}
+              className="absolute right-3 top-1/2 transform -translate-y-1/2 text-xl hover:opacity-70 transition-opacity"
+              style={{ color: theme.colors.text.tertiary }}
+            >
+              <span className="material-symbols-outlined">
+                {showPassword ? 'visibility_off' : 'visibility'}
+              </span>
+            </button>
+          </div>
+        </MotionDiv>
+
+        {/* Botão de Login */}
+        <MotionDiv
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.4 }}
+        >
           <button
-            type="button"
-            onClick={handleLogin}
+            type="submit"
             disabled={isSubmitting}
             className={`w-full flex justify-center items-center gap-2 rounded-lg shadow-lg text-sm font-medium transition-all duration-200 transform hover:scale-105 active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed disabled:transform-none ${
               isMobile ? 'py-4 px-4' : 'py-3 px-4'
@@ -104,7 +207,7 @@ export function LoginForm() {
             ) : (
               <>
                 <span className="material-symbols-outlined">login</span>
-                Acessar como SYSTEM_ADMIN
+                Acessar
               </>
             )}
           </button>
@@ -166,7 +269,28 @@ export function LoginForm() {
             Validar Licença
           </button>
         </MotionDiv>
-      </div>
+
+        {/* Credenciais de Demonstração */}
+        <MotionDiv
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.5 }}
+          className="mt-4 p-4 rounded-lg border"
+          style={{
+            backgroundColor: `${theme.colors.primary.DEFAULT}10`,
+            borderColor: `${theme.colors.primary.DEFAULT}30`
+          }}
+        >
+          <h3 className="text-sm font-medium mb-2" style={{ color: theme.colors.text.primary }}>
+            Credenciais de Demonstração:
+          </h3>
+          <div className="space-y-1 text-xs" style={{ color: theme.colors.text.secondary }}>
+            <p><strong>Admin:</strong> admin@sabercon.edu.br / password123</p>
+            <p><strong>Professor:</strong> teacher@sabercon.edu.br / password123</p>
+            <p><strong>Aluno:</strong> student@sabercon.edu.br / password123</p>
+          </div>
+        </MotionDiv>
+      </form>
 
       <LicenseValidationModal
         isOpen={isModalOpen}

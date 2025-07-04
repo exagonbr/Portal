@@ -30,11 +30,11 @@ export class ClassRepository extends BaseRepository<Class> {
   }
 
   async findBySchool(schoolId: string): Promise<Class[]> {
-    return this.findAll({ school_id: schoolId } as Partial<Class>);
+    return this.findAll({ school_id: parseInt(schoolId, 10) });
   }
 
   async findByCode(schoolId: string, code: string): Promise<Class | null> {
-    return this.findOne({ school_id: schoolId, code } as Partial<Class>);
+    return this.findOne({ school_id: parseInt(schoolId, 10), code });
   }
 
   async findWithFilters(filters: ClassFilters): Promise<{ data: Class[], total: number }> {

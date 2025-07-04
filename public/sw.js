@@ -10,7 +10,6 @@ console.log(`🚀 Service Worker iniciado - Versão: ${CACHE_VERSION}`);
 
 // Assets para cache estático
 const STATIC_ASSETS = [
-  '/',
   '/manifest.json',
   '/icons/icon-192x192.png',
   '/icons/icon-512x512.png',
@@ -21,12 +20,28 @@ self.addEventListener('install', (event) => {
   console.log('Service Worker: Installing...');
   event.waitUntil(
     caches.open(STATIC_CACHE_NAME)
-      .then((cache) => {
+      .then(async (cache) => {
         console.log('Service Worker: Caching static assets');
-        return cache.addAll(STATIC_ASSETS);
+        // Tentar fazer cache de cada asset individualmente
+        const cachePromises = STATIC_ASSETS.map(async (url) => {
+          try {
+            const response = await fetch(url);
+            if (response.ok) {
+              await cache.put(url, response);
+              console.log(`✅ Cached: ${url}`);
+            } else {
+              console.warn(`⚠️ Failed to cache ${url}: ${response.status}`);
+            }
+          } catch (error) {
+            console.warn(`⚠️ Failed to fetch ${url}:`, error);
+          }
+        });
+        
+        await Promise.all(cachePromises);
+        console.log('Service Worker: Installation complete');
       })
       .catch((error) => {
-        console.log('Service Worker: Failed to cache static assets', error);
+        console.error('Service Worker: Installation error:', error);
       })
   );
   self.skipWaiting();

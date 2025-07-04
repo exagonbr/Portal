@@ -13,32 +13,34 @@ import { Video } from './Video';
 
 @Entity('modules')
 export class Module {
-  @PrimaryGeneratedColumn('uuid')
-  id: string;
+  @PrimaryGeneratedColumn('increment')
+  id!: number;
 
   @Column()
-  name: string;
+  name!: string;
 
   @Column({ type: 'text' })
-  description: string;
+  description!: string;
 
   @Column()
-  cover_image: string;
+  cover_image!: string;
 
   @Column({ type: 'int' })
-  order: number;
+  order!: number;
 
   @Column()
-  collection_id: string;
+  collection_id!: number;
 
+  @ManyToOne(() => Collection, collection => collection.modules)
   @JoinColumn({ name: 'collection_id' })
-  collection: Collection;
+  collection!: Collection;
 
-  videos: Video[];
+  @OneToMany(() => Video, video => video.module)
+  videos!: Video[];
 
   @CreateDateColumn()
-  created_at: Date;
+  created_at!: Date;
 
   @UpdateDateColumn()
-  updated_at: Date;
+  updated_at!: Date;
 }

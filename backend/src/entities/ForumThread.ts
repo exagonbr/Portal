@@ -13,46 +13,46 @@ import { ForumReply } from './ForumReply';
 
 @Entity('forum_threads')
 export class ForumThread {
-  @PrimaryGeneratedColumn('uuid')
-  id: string;
+  @PrimaryGeneratedColumn('increment')
+  id!: number;
 
   @Column()
-  class_id: string;
+  class_id!: number;
 
   @Column()
-  title: string;
+  title!: string;
 
   @Column({ type: 'text' })
-  content: string;
+  content!: string;
 
   @Column()
-  author_id: string;
+  author_id!: number;
 
   @ManyToOne(() => User, user => user.forumThreads)
   @JoinColumn({ name: 'author_id' })
-  author: User;
+  author!: User;
 
   @Column({ type: 'jsonb', default: [] })
-  tags: string[];
+  tags!: string[];
 
   @Column({ type: 'jsonb', nullable: true })
   attachments?: any[];
 
   @Column({ default: false })
-  pinned: boolean;
+  pinned!: boolean;
 
   @Column({ default: false })
-  locked: boolean;
+  locked!: boolean;
 
   @Column({ type: 'int', default: 0 })
-  views: number;
+  views!: number;
 
   @OneToMany(() => ForumReply, reply => reply.thread)
-  replies: ForumReply[];
+  replies!: ForumReply[];
 
   @CreateDateColumn()
-  created_at: Date;
+  created_at!: Date;
 
   @UpdateDateColumn()
-  updated_at: Date;
+  updated_at!: Date;
 }

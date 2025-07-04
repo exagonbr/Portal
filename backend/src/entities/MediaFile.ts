@@ -16,7 +16,7 @@ export class MediaFile {
   @Column({ type: 'bigint', nullable: true })
   version?: number;
 
-  @Column({ name: 'date_created', type: 'datetime', nullable: true })
+  @Column({ name: 'date_created', type: 'timestamp', nullable: true })
   dateCreated?: Date;
 
   @Column({ type: 'boolean', nullable: true })
@@ -29,7 +29,7 @@ export class MediaFile {
   @JoinColumn({ name: 'file_id' })
   file?: File;
 
-  @Column({ name: 'last_updated', type: 'datetime', nullable: true })
+  @Column({ name: 'last_updated', type: 'timestamp', nullable: true })
   lastUpdated?: Date;
 
   @Column({ name: 'media_entry_id', type: 'bigint', nullable: true })

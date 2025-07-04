@@ -18,7 +18,7 @@ interface ProfileFormData {
 }
 
 export default function ProfilePage() {
-  const { user, refreshUser } = useAuth()
+  const { user, logout, refreshUser } = useAuth()
   const { theme } = useTheme()
   const [isEditing, setIsEditing] = useState(false)
   const [loading, setLoading] = useState(false)
@@ -502,6 +502,22 @@ export default function ProfilePage() {
                     }}
                   >
                     Histórico de Atividades
+                  </button>
+                  <button
+                    onClick={logout}
+                    className="w-full text-left px-3 py-2 rounded-lg transition-colors text-sm"
+                    style={{
+                      color: theme.colors.status.error,
+                      backgroundColor: 'transparent'
+                    }}
+                    onMouseEnter={(e) => {
+                      e.currentTarget.style.backgroundColor = theme.colors.status.error + '10'
+                    }}
+                    onMouseLeave={(e) => {
+                      e.currentTarget.style.backgroundColor = 'transparent'
+                    }}
+                  >
+                    Sair da Conta
                   </button>
                 </div>
               </div>

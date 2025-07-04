@@ -187,8 +187,7 @@ export default function StudentGradesPage() {
   ]
 
   return (
-    <AuthenticatedLayout>
-      <div className="container mx-auto px-4 py-6 max-w-7xl">
+<div className="container mx-auto px-4 py-6 max-w-7xl">
         <ProtectedRoute requiredRole={[UserRole.STUDENT, UserRole.SYSTEM_ADMIN]}>
           <DashboardPageLayout
             title="Minhas Notas"
@@ -383,6 +382,5 @@ export default function StudentGradesPage() {
           </DashboardPageLayout>
         </ProtectedRoute>
       </div>
-    </AuthenticatedLayout>
   )
 } 

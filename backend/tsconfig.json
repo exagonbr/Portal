@@ -17,10 +17,15 @@
   },
   "experimentalDecorators": true,
   "emitDecoratorMetadata": true,
-  "sourceMap": true
+  "sourceMap": true,
+  "typeRoots": [
+    "./node_modules/@types",
+    "./src/types"
+  ]
 },
 "include": [
-  "src/**/*.ts"
+  "src/**/*.ts",
+  "src/**/*.d.ts"
 ],
 "exclude": [
   "node_modules",

@@ -103,7 +103,12 @@ export const getUserProfile = async (id: number): Promise<ProfileDto> => {
     return mapToProfileDto(response);
 };
 
+export const login = async (credentials: Pick<FrontendCreateUserDto, 'email' | 'password'>) => {
+  const response = await apiPost<{ token: string }>('/login', credentials);
+  return response;
+};
 export const userService = {
+  login,
   getUsers,
   getUserById,
   createUser,

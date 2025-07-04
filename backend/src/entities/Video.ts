@@ -7,6 +7,7 @@ import {
 } from 'typeorm';
 import { File } from './File';
 import { TvShow } from './TvShow';
+import { Module } from './Module';
 
 @Entity('video')
 export class Video {
@@ -19,7 +20,7 @@ export class Video {
   @Column({ name: 'api_id', type: 'varchar', length: 255, nullable: true })
   apiId?: string;
 
-  @Column({ name: 'date_created', type: 'datetime', nullable: true })
+  @Column({ name: 'date_created', type: 'timestamp', nullable: true })
   dateCreated?: Date;
 
   @Column({ type: 'boolean', nullable: true })
@@ -34,7 +35,7 @@ export class Video {
   @Column({ name: 'intro_start', type: 'int', nullable: true })
   introStart?: number;
 
-  @Column({ name: 'last_updated', type: 'datetime', nullable: true })
+  @Column({ name: 'last_updated', type: 'timestamp', nullable: true })
   lastUpdated?: Date;
 
   @Column({ name: 'original_language', type: 'varchar', length: 255, nullable: true })
@@ -43,16 +44,16 @@ export class Video {
   @Column({ name: 'outro_start', type: 'int', nullable: true })
   outroStart?: number;
 
-  @Column({ type: 'longtext', nullable: true })
+  @Column({ type: 'text', nullable: true })
   overview?: string;
 
-  @Column({ type: 'double', nullable: true })
+  @Column({ type: 'double precision', nullable: true })
   popularity?: number;
 
   @Column({ name: 'report_count', type: 'int', nullable: true })
   reportCount?: number;
 
-  @Column({ name: 'vote_average', type: 'double', nullable: true })
+  @Column({ name: 'vote_average', type: 'double precision', nullable: true })
   voteAverage?: number;
 
   @Column({ name: 'vote_count', type: 'int', nullable: true })
@@ -127,4 +128,11 @@ export class Video {
 
   @Column({ type: 'varchar', length: 255, nullable: true })
   duration?: string;
+
+  @Column({ nullable: true })
+  module_id?: number;
+
+  @ManyToOne(() => Module, module => module.videos, { nullable: true })
+  @JoinColumn({ name: 'module_id' })
+  module?: Module;
 }

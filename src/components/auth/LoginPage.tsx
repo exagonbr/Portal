@@ -5,18 +5,16 @@ import Image from 'next/image';
 import { useSearchParams, useRouter } from 'next/navigation';
 import { ThemeSelectorCompact } from '@/components/ui/ThemeSelector';
 import { useAuthSafe as useAuth } from '@/contexts/AuthContext';
-import { useSystemSettings } from '@/hooks/useSystemSettings';
+import { usePublicSettings } from '@/hooks/usePublicSettings';
 import { clearAllDataForUnauthorized } from '@/utils/clearAllData';
 import { getDashboardPath } from '@/utils/roleRedirect';
 import { MotionDiv, MotionH1, MotionP } from '@/components/ui/MotionWrapper';
 import { getTheme } from '@/config/themes';
 import { useEffect, useState } from 'react';
-import { useAutoCacheCleaner } from '@/hooks/useCacheCleaner';
 import { buildUrl } from '@/utils/urlBuilder';
 
 export function LoginPage() {
   // Hook para limpeza automática de cache
-  useAutoCacheCleaner();
   
   const router = useRouter();
   const authContext = useAuth();
@@ -56,7 +54,7 @@ export function LoginPage() {
     }
   }, [mounted]);
   
-  const { settings, isLoading } = useSystemSettings();
+  const { settings, loading: isLoading } = usePublicSettings();
 
   // Aguardar montagem no cliente
   useEffect(() => {

@@ -1,107 +1,67 @@
-'use client'
+// src/components/admin/analytics/ResourceDistributionChart.tsx
+'use client';
 
-import { useEffect, useRef } from 'react'
-import { ResourceDistribution } from '@/types/analytics'
+import React from 'react';
+import { ResourceDistribution } from '@/types/analytics';
 
 interface ResourceDistributionChartProps {
-  data: ResourceDistribution[]
-  height?: number
+  data: ResourceDistribution[];
+  loading: boolean;
+  title: string;
 }
 
-export default function ResourceDistributionChart({ data, height = 320 }: ResourceDistributionChartProps) {
-  const canvasRef = useRef<HTMLCanvasElement>(null)
+/**
+ * Um componente para exibir um gráfico de distribuição de recursos.
+ * Este é um placeholder e deve ser integrado com uma biblioteca de gráficos (ex: Recharts).
+ */
+const ResourceDistributionChart: React.FC<ResourceDistributionChartProps> = ({ data, loading, title }) => {
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center h-64 bg-gray-100 dark:bg-gray-800 rounded-lg">
+        <p className="text-gray-500">Carregando dados do gráfico...</p>
+      </div>
+    );
+  }
 
-  useEffect(() => {
-    if (!canvasRef.current || data.length === 0) return
+  if (!data || data.length === 0) {
+    return (
+      <div className="flex items-center justify-center h-64 bg-gray-100 dark:bg-gray-800 rounded-lg">
+        <p className="text-gray-500">Não há dados de distribuição para exibir.</p>
+      </div>
+    );
+  }
 
-    const canvas = canvasRef.current
-    const ctx = canvas.getContext('2d')
-    if (!ctx) return
-
-    // Configurar dimensões
-    const rect = canvas.getBoundingClientRect()
-    canvas.width = rect.width * window.devicePixelRatio
-    canvas.height = rect.height * window.devicePixelRatio
-    ctx.scale(window.devicePixelRatio, window.devicePixelRatio)
-
-    // Limpar canvas
-    ctx.clearRect(0, 0, rect.width, rect.height)
-
-    // Configurações do gráfico
-    const centerX = rect.width / 2
-    const centerY = rect.height / 2 - 20
-    const radius = Math.min(rect.width, rect.height - 40) / 3
-
-    // Desenhar gráfico de pizza
-    let currentAngle = -Math.PI / 2 // Começar do topo
-
-    data.forEach((item, index) => {
-      const sliceAngle = (item.percentage / 100) * Math.PI * 2
-
-      // Desenhar fatia
-      ctx.beginPath()
-      ctx.moveTo(centerX, centerY)
-      ctx.arc(centerX, centerY, radius, currentAngle, currentAngle + sliceAngle)
-      ctx.closePath()
-      ctx.fillStyle = item.color
-      ctx.fill()
-
-      // Desenhar borda
-      ctx.strokeStyle = '#ffffff'
-      ctx.lineWidth = 2
-      ctx.stroke()
-
-      // Calcular posição do texto
-      const textAngle = currentAngle + sliceAngle / 2
-      const textX = centerX + Math.cos(textAngle) * (radius * 0.7)
-      const textY = centerY + Math.sin(textAngle) * (radius * 0.7)
-
-      // Desenhar porcentagem
-      ctx.fillStyle = '#ffffff'
-      ctx.font = 'bold 14px sans-serif'
-      ctx.textAlign = 'center'
-      ctx.textBaseline = 'middle'
-      ctx.fillText(`${item.percentage}%`, textX, textY)
-
-      currentAngle += sliceAngle
-    })
-
-    // Desenhar legenda
-    const legendStartY = centerY + radius + 40
-    const legendItemHeight = 20
-    const legendStartX = rect.width / 2 - 150
-
-    data.forEach((item, index) => {
-      const y = legendStartY + index * legendItemHeight
-
-      // Quadrado colorido
-      ctx.fillStyle = item.color
-      ctx.fillRect(legendStartX, y - 8, 16, 16)
-
-      // Texto da legenda
-      ctx.fillStyle = '#374151'
-      ctx.font = '12px sans-serif'
-      ctx.textAlign = 'left'
-      ctx.textBaseline = 'middle'
-      ctx.fillText(`${item.category} (${item.value}%)`, legendStartX + 25, y)
-    })
-
-    // Título do gráfico
-    ctx.fillStyle = '#111827'
-    ctx.font = 'bold 14px sans-serif'
-    ctx.textAlign = 'center'
-    ctx.textBaseline = 'top'
-    ctx.fillText('Distribuição de Recursos AWS', centerX, 10)
-
-  }, [data])
-
+  // Placeholder para a implementação real do gráfico
   return (
-    <div className="w-full h-full relative">
-      <canvas
-        ref={canvasRef}
-        className="w-full h-full"
-        style={{ height: `${height}px` }}
-      />
+    <div className="p-4 border rounded-lg shadow-sm bg-white dark:bg-gray-900">
+      <h3 className="text-lg font-semibold mb-4">{title}</h3>
+      <div className="h-64 flex items-center justify-center bg-gray-50 dark:bg-gray-800">
+        <p className="text-gray-600 dark:text-gray-300">
+          [Implementação do Gráfico de Pizza/Barras Aqui]
+        </p>
+        {/* 
+          Exemplo com Recharts (Gráfico de Pizza):
+          <ResponsiveContainer width="100%" height="100%">
+            <PieChart>
+              <Pie
+                data={data}
+                cx="50%"
+                cy="50%"
+                labelLine={false}
+                outerRadius={80}
+                fill="#8884d8"
+                dataKey="percentage"
+                nameKey="resourceName"
+                label={({ name, percent }) => `${name}: ${(percent * 100).toFixed(0)}%`}
+              />
+              <Tooltip />
+              <Legend />
+            </PieChart>
+          </ResponsiveContainer>
+        */}
+      </div>
     </div>
-  )
-} 
+  );
+};
+
+export default ResourceDistributionChart;

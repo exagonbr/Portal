@@ -25,22 +25,22 @@ export enum NotificationStatus {
 @Index(['type', 'status'])
 @Index(['recipient', 'type'])
 export class NotificationLog {
-  @PrimaryGeneratedColumn('uuid')
-  id: string;
+  @PrimaryGeneratedColumn('increment')
+  id!: number;
 
   @Column({
     type: 'enum',
     enum: NotificationType,
     comment: 'Tipo de notificação: email, sms ou push'
   })
-  type: NotificationType;
+  type!: NotificationType;
 
   @Column({
     type: 'varchar',
     length: 255,
     comment: 'Email, telefone ou device token do destinatário'
   })
-  recipient: string;
+  recipient!: string;
 
   @Column({
     type: 'varchar',
@@ -74,12 +74,11 @@ export class NotificationLog {
   verificationToken?: string;
 
   @Column({
-    type: 'varchar',
-    length: 50,
+    type: 'int',
     nullable: true,
     comment: 'ID do usuário relacionado'
   })
-  userId?: string;
+  userId?: number;
 
   @Column({
     type: 'enum',
@@ -87,7 +86,7 @@ export class NotificationLog {
     default: NotificationStatus.PENDING,
     comment: 'Status do envio da notificação'
   })
-  status: NotificationStatus;
+  status!: NotificationStatus;
 
   @Column({
     type: 'varchar',
@@ -124,7 +123,7 @@ export class NotificationLog {
     default: 0,
     comment: 'Número de tentativas de reenvio'
   })
-  retryCount: number;
+  retryCount!: number;
 
   @Column({
     type: 'timestamp',
@@ -169,8 +168,8 @@ export class NotificationLog {
   metadata?: any;
 
   @CreateDateColumn()
-  createdAt: Date;
+  createdAt!: Date;
 
   @UpdateDateColumn()
-  updatedAt: Date;
+  updatedAt!: Date;
 }

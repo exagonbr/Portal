@@ -30,22 +30,22 @@ export class TvShow {
   @Column({ name: 'backdrop_path', type: 'varchar', length: 255, nullable: true })
   backdropPath?: string;
 
-  @Column({ name: 'contract_term_end', type: 'datetime' })
+  @Column({ name: 'contract_term_end', type: 'timestamp' })
   contractTermEnd!: Date;
 
-  @Column({ name: 'date_created', type: 'datetime' })
+  @Column({ name: 'date_created', type: 'timestamp' })
   dateCreated!: Date;
 
   @Column({ type: 'boolean', nullable: true })
   deleted?: boolean;
 
-  @Column({ name: 'first_air_date', type: 'datetime' })
+  @Column({ name: 'first_air_date', type: 'timestamp' })
   firstAirDate!: Date;
 
   @Column({ name: 'imdb_id', type: 'varchar', length: 255, nullable: true })
   imdbId?: string;
 
-  @Column({ name: 'last_updated', type: 'datetime' })
+  @Column({ name: 'last_updated', type: 'timestamp' })
   lastUpdated!: Date;
 
   @Column({ name: 'manual_input', type: 'boolean', nullable: true })
@@ -67,10 +67,10 @@ export class TvShow {
   @Column({ name: 'original_language', type: 'varchar', length: 255, nullable: true })
   originalLanguage?: string;
 
-  @Column({ type: 'longtext', nullable: true })
+  @Column({ type: 'text', nullable: true })
   overview?: string;
 
-  @Column({ type: 'double', nullable: true })
+  @Column({ type: 'double precision', nullable: true })
   popularity?: number;
 
   @Column({ name: 'poster_image_id', type: 'bigint', nullable: true })
@@ -83,10 +83,10 @@ export class TvShow {
   @Column({ name: 'poster_path', type: 'varchar', length: 255, nullable: true })
   posterPath?: string;
 
-  @Column({ type: 'longtext', nullable: true })
+  @Column({ type: 'text', nullable: true })
   producer?: string;
 
-  @Column({ name: 'vote_average', type: 'double', nullable: true })
+  @Column({ name: 'vote_average', type: 'double precision', nullable: true })
   voteAverage?: number;
 
   @Column({ name: 'vote_count', type: 'int', nullable: true })

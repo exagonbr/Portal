@@ -18,18 +18,18 @@ export enum UserClassRole {
 
 @Entity('user_classes')
 export class UserClass {
-  @PrimaryGeneratedColumn('uuid')
-  id!: string;
+  @PrimaryGeneratedColumn('increment')
+  id!: number;
 
   @Column()
-  user_id!: string;
+  user_id!: number;
 
   @ManyToOne(() => User, user => user.userClasses)
   @JoinColumn({ name: 'user_id' })
   user!: User;
 
   @Column()
-  class_id!: string;
+  class_id!: number;
 
   @ManyToOne(() => Class, classEntity => classEntity.userClasses)
   @JoinColumn({ name: 'class_id' })
@@ -62,5 +62,5 @@ export class UserClass {
   class_name?: string;
   class_code?: string;
   school_name?: string;
-  school_id?: string;
+  school_id?: number;
 }

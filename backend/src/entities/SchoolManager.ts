@@ -19,18 +19,18 @@ export enum ManagerPosition {
 
 @Entity('school_managers')
 export class SchoolManager {
-  @PrimaryGeneratedColumn('uuid')
-  id!: string;
+  @PrimaryGeneratedColumn('increment')
+  id!: number;
 
   @Column()
-  user_id!: string;
+  user_id!: number;
 
   @ManyToOne(() => User, user => user.schoolManagers)
   @JoinColumn({ name: 'user_id' })
   user!: User;
 
   @Column()
-  school_id!: string;
+  school_id!: number;
 
   @JoinColumn({ name: 'school_id' })
   school!: School;
@@ -62,5 +62,5 @@ export class SchoolManager {
   school_name?: string;
   school_code?: string;
   institution_name?: string;
-  institution_id?: string;
+  institution_id?: number;
 }

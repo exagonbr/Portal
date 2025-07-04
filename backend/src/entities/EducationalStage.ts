@@ -12,7 +12,7 @@ export class EducationalStage {
   @Column({ type: 'bigint', nullable: true })
   version?: number;
 
-  @Column({ name: 'date_created', type: 'datetime', nullable: true })
+  @Column({ name: 'date_created', type: 'timestamp', nullable: true })
   dateCreated?: Date;
 
   @Column({ type: 'boolean', default: false })
@@ -45,7 +45,7 @@ export class EducationalStage {
   @Column({ name: 'grade_9', type: 'boolean', nullable: true })
   grade9?: boolean;
 
-  @Column({ name: 'last_updated', type: 'datetime', nullable: true })
+  @Column({ name: 'last_updated', type: 'timestamp', nullable: true })
   lastUpdated?: Date;
 
   @Column({ type: 'varchar', length: 255 })

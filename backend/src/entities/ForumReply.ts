@@ -12,38 +12,38 @@ import { ForumThread } from './ForumThread';
 
 @Entity('forum_replies')
 export class ForumReply {
-  @PrimaryGeneratedColumn('uuid')
-  id: string;
+  @PrimaryGeneratedColumn('increment')
+  id!: number;
 
   @Column()
-  thread_id: string;
+  thread_id!: number;
 
   @ManyToOne(() => ForumThread, thread => thread.replies)
   @JoinColumn({ name: 'thread_id' })
-  thread: ForumThread;
+  thread!: ForumThread;
 
   @Column({ nullable: true })
-  parent_reply_id?: string;
+  parent_reply_id?: number;
 
   @Column({ type: 'text' })
-  content: string;
+  content!: string;
 
   @Column()
-  author_id: string;
+  author_id!: number;
 
   @ManyToOne(() => User, user => user.forumReplies)
   @JoinColumn({ name: 'author_id' })
-  author: User;
+  author!: User;
 
   @Column({ type: 'jsonb', nullable: true })
   attachments?: any[];
 
   @Column({ type: 'jsonb', default: [] })
-  likes: string[]; // IDs de usuários
+  likes!: string[]; // IDs de usuários
 
   @CreateDateColumn()
-  created_at: Date;
+  created_at!: Date;
 
   @UpdateDateColumn()
-  updated_at: Date;
+  updated_at!: Date;
 }

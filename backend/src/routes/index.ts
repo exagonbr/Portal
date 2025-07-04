@@ -1,7 +1,6 @@
 import express from 'express';
-import swaggerUi from 'swagger-ui-express';
-import { swaggerSpec } from '../config/swagger';
-import db from '../config/database';
+// import swaggerUi from 'swagger-ui-express';
+// import { swaggerSpec } from '../config/swagger';
 import { requireAuth } from '../middleware/requireAuth';
 
 // Importação das novas rotas
@@ -19,16 +18,16 @@ import videoCollectionsRouter from './video-collections';
 const router = express.Router();
 
 // Documentação da API
-router.use('/docs', swaggerUi.serve, swaggerUi.setup(swaggerSpec, {
-  explorer: true,
-  customCss: '.swagger-ui .topbar { display: none }',
-  customSiteTitle: 'Portal Educacional API Documentation'
-}));
+// router.use('/docs', swaggerUi.serve, swaggerUi.setup(swaggerSpec, {
+//   explorer: true,
+//   customCss: '.swagger-ui .topbar { display: none }',
+//   customSiteTitle: 'Portal Educacional API Documentation'
+// }));
 
-router.get('/docs.json', (req, res) => {
-  res.setHeader('Content-Type', 'application/json');
-  res.send(swaggerSpec);
-});
+// router.get('/docs.json', (req, res) => {
+//   res.setHeader('Content-Type', 'application/json');
+//   res.send(swaggerSpec);
+// });
 
 // Health check
 router.get('/health', (req, res) => {

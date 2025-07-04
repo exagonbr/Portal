@@ -16,10 +16,10 @@ export class Certificate {
   @Column({ type: 'bigint', nullable: true })
   version?: number;
 
-  @Column({ name: 'date_created', type: 'datetime' })
+  @Column({ name: 'date_created', type: 'timestamp' })
   dateCreated!: Date;
 
-  @Column({ name: 'last_updated', type: 'datetime', nullable: true })
+  @Column({ name: 'last_updated', type: 'timestamp', nullable: true })
   lastUpdated?: Date;
 
   @Column({ type: 'varchar', length: 255, nullable: true })

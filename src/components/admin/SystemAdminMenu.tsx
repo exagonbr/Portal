@@ -148,12 +148,6 @@ export const getSystemAdminMenuItems = (): AdminMenuSection[] => {
           permission: 'canViewSystemAnalytics'
         },
         {
-          href: '/admin/monitoring',
-          icon: 'monitor_heart',
-          label: 'Monitoramento em Tempo Real',
-          permission: 'canManageSystem'
-        },
-        {
           href: '/admin/logs',
           icon: 'terminal',
           label: 'Logs do Sistema',
