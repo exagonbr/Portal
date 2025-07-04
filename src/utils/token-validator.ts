@@ -1,53 +1,43 @@
-import { getAuthToken } from '../services/auth';
+// Este arquivo foi neutralizado para o desacoplamento do frontend.
+// A lógica de validação de token foi mockada.
+
+const MOCKED_TOKEN_KEY = 'auth_token';
 
 export function getCurrentToken(): string | null {
-  return getAuthToken();
+  if (typeof window === 'undefined') return null;
+  return localStorage.getItem(MOCKED_TOKEN_KEY);
 }
 
 export function validateToken(token?: string): boolean {
-  const tokenToValidate = token || getAuthToken();
-  if (!tokenToValidate) return false;
-  
-  try {
-    // Basic JWT structure validation
-    const parts = tokenToValidate.split('.');
-    if (parts.length !== 3) return false;
-    
-    // Try to decode the payload
-    const payload = JSON.parse(atob(parts[1]));
-    
-    // Check if token is expired
-    if (payload.exp && payload.exp * 1000 < Date.now()) {
-      return false;
-    }
-    
-    return true;
-  } catch (error) {
-    return false;
-  }
+  const tokenToValidate = token || getCurrentToken();
+  // Em modo desacoplado, qualquer token existente é considerado válido.
+  return !!tokenToValidate;
 }
 
 export function isAuthenticated(): boolean {
-  const token = getAuthToken();
-  return token ? validateToken(token) : false;
+  return validateToken();
 }
 
 export function syncTokenWithApiClient(): void {
-  // This function would sync the token with the API client
-  // Implementation depends on your API client setup
-  console.log('Token synced with API client');
+  // Função desativada em modo desacoplado.
+  console.warn("syncTokenWithApiClient foi chamada, mas está desativada.");
 }
 
 export function clearAllTokens(): void {
-  // Clear all possible token storage locations
+  if (typeof window === 'undefined') return;
+  
+  // Limpa a chave de token mockado
+  localStorage.removeItem(MOCKED_TOKEN_KEY);
+  localStorage.removeItem('user_data');
+
+  // Limpa outras chaves por segurança
   localStorage.removeItem('accessToken');
-  localStorage.removeItem('auth_token');
   localStorage.removeItem('token');
   sessionStorage.removeItem('accessToken');
   sessionStorage.removeItem('auth_token');
   sessionStorage.removeItem('token');
   
-  // Clear cookies if needed
+  // Limpa cookies se necessário
   document.cookie = 'accessToken=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;';
   document.cookie = 'auth_token=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;';
   document.cookie = 'token=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;';

@@ -20,7 +20,7 @@ import ProtectedRoute from '@/components/auth/ProtectedRoute';
 import { useToast } from '@/components/ToastManager';
 import AuthenticatedLayout from '@/components/AuthenticatedLayout';
 import { motion } from 'framer-motion';
-import { roleService } from '@/services/roleService';
+import { mockRoleService as roleService } from '@/mocks/api';
 import { RoleResponseDto, RoleCreateDto, RoleUpdateDto } from '@/types/api';
 
 // Importar componentes do sistema de grupos
@@ -118,40 +118,7 @@ export default function RolesPermissionsPage() {
       console.log('❌ Erro ao carregar dados:', error);
       showError('Erro ao carregar roles e permissões');
       
-      // Fallback para dados simulados em caso de erro
-      const fallbackRoles: RoleResponseDto[] = [
-        {
-          id: '1',
-          name: 'Administrador do Sistema',
-          description: 'Acesso total ao sistema',
-          active: true,
-          created_at: new Date().toISOString(),
-          updated_at: new Date().toISOString(),
-          users_count: 2,
-          status: 'active'
-        },
-        {
-          id: '2',
-          name: 'Professor',
-          description: 'Criar e gerenciar cursos',
-          active: true,
-          created_at: new Date().toISOString(),
-          updated_at: new Date().toISOString(),
-          users_count: 23,
-          status: 'active'
-        },
-        {
-          id: '3',
-          name: 'Estudante',
-          description: 'Acessar cursos e conteúdos',
-          active: true,
-          created_at: new Date().toISOString(),
-          updated_at: new Date().toISOString(),
-          users_count: 156,
-          status: 'active'
-        }
-      ];
-      setRoles(fallbackRoles);
+      setRoles([]); // Limpa as roles em caso de erro
     } finally {
       setLoading(false);
     }
@@ -175,7 +142,7 @@ export default function RolesPermissionsPage() {
           description: formData.description,
           active: formData.active
         };
-        await roleService.updateRole(editingRole.id, updateData);
+        await roleService.updateRole(editingRole.id.toString(), updateData);
         showSuccess('Função atualizada com sucesso!');
       } else {
         await roleService.createRole(formData);
@@ -205,7 +172,7 @@ export default function RolesPermissionsPage() {
 
   const handleToggleActive = async (role: RoleResponseDto) => {
     try {
-      await roleService.toggleRoleStatus(role.id, !role.active);
+      await roleService.toggleRoleStatus(role.id.toString(), !role.active);
       showSuccess(role.active ? 'Função desativada' : 'Função ativada');
       await loadData();
     } catch (error: any) {
@@ -220,7 +187,7 @@ export default function RolesPermissionsPage() {
     }
 
     try {
-      await roleService.deleteRole(role.id);
+      await roleService.deleteRole(role.id.toString());
       showSuccess('Função excluída com sucesso!');
       await loadData();
     } catch (error: any) {

@@ -1,4 +1,6 @@
-import { getAuthToken } from '@/services/auth';
+// Este arquivo foi neutralizado para o desacoplamento do frontend.
+// Todas as chamadas de API foram mockadas para não depender do backend.
+
 import { getApiUrl, getInternalApiUrl, ENV_CONFIG } from '@/config/env';
 
 // --- Tipos ---
@@ -9,7 +11,6 @@ interface ApiRequestOptions extends RequestInit {
   timeout?: number;
 }
 
-// Tipo para resposta da API
 export interface ApiResponse<T = any> {
   success: boolean;
   data?: T;
@@ -20,7 +21,6 @@ export interface ApiResponse<T = any> {
   pagination?: any;
 }
 
-// Classe de erro customizada
 export class ApiClientError extends Error {
   status: number;
   errors?: string[];
@@ -35,73 +35,50 @@ export class ApiClientError extends Error {
 
 // --- Helpers ---
 
-const createAuthHeaders = (skipAuth: boolean = false, isUpload: boolean = false): Record<string, string> => {
-  const headers: Record<string, string> = {};
-  
-  if (!isUpload) {
-    headers['Content-Type'] = 'application/json';
-    headers['Accept'] = 'application/json';
-  }
-  
+const getMockedAuthToken = (): string | null => {
+  if (typeof window === 'undefined') return null;
+  return localStorage.getItem('auth_token');
+};
+
+const createAuthHeaders = (skipAuth: boolean = false): Record<string, string> => {
+  const headers: Record<string, string> = {
+    'Content-Type': 'application/json',
+    'Accept': 'application/json',
+  };
   if (!skipAuth) {
-    const token = getAuthToken();
+    const token = getMockedAuthToken();
     if (token) {
       headers.Authorization = `Bearer ${token}`;
     }
   }
-  
   return headers;
 };
 
-// --- Funções de Requisição ---
+// --- Funções de Requisição Mockadas ---
 
 export const fetchWithAuth = async (
   url: string, 
   options: ApiRequestOptions = {}
 ): Promise<Response> => {
-  const { 
-    skipAuth = false, 
-    isInternal = false,
-    timeout = ENV_CONFIG.API_TIMEOUT,
-    ...fetchOptions 
-  } = options;
+  console.warn(`API call to "${url}" was intercepted in decoupled mode.`, { options });
 
-  const fullUrl = url.startsWith('http') 
-    ? url 
-    : isInternal 
-      ? getInternalApiUrl(url)
-      : getApiUrl(url);
-
-  const authHeaders = createAuthHeaders(skipAuth, fetchOptions.body instanceof FormData);
-  
-  const mergedOptions: RequestInit = {
-    ...fetchOptions,
-    headers: {
-      ...authHeaders,
-      ...(fetchOptions.headers || {}),
-    },
+  // Simula uma resposta de erro para qualquer chamada de API.
+  const errorResponse = {
+    success: false,
+    message: `API Desacoplada: A chamada para ${url} foi bloqueada.`,
+    error: 'Modo desacoplado ativado.',
   };
 
-  const controller = new AbortController();
-  const timeoutId = setTimeout(() => controller.abort(), timeout);
-  
-  try {
-    const response = await fetch(fullUrl, {
-      ...mergedOptions,
-      signal: controller.signal,
-    });
-    clearTimeout(timeoutId);
-    return response;
-  } catch (error) {
-    clearTimeout(timeoutId);
-    if (error instanceof Error && error.name === 'AbortError') {
-      throw new Error(`Requisição para ${url} expirou após ${timeout}ms`);
-    }
-    throw error;
-  }
+  return new Response(JSON.stringify(errorResponse), {
+    status: 418, // "I'm a teapot" para indicar que é uma resposta mockada
+    headers: { 'Content-Type': 'application/json' },
+  });
 };
 
 export const parseJsonResponse = async <T = any>(response: Response): Promise<T> => {
+  if (response.status === 418) { // Resposta mockada
+    return response.json();
+  }
   if (!response.ok) {
     let errorMessage = `Erro ${response.status}: ${response.statusText}`;
     try {
@@ -158,137 +135,54 @@ export const handleApiError = (error: any): string => {
   if (error instanceof ApiClientError) {
     return error.message;
   }
-  
   if (error instanceof Error) {
     return error.message;
   }
-  
   if (typeof error === 'string') {
     return error;
   }
-  
   return 'Erro desconhecido ao processar requisição';
 };
 
 // --- Classe ApiClient para compatibilidade ---
 
 class ApiClient {
-  async get<T = any>(url: string, params?: Record<string, any>): Promise<ApiResponse<T>> {
+  private async handleRequest<T>(method: 'get' | 'post' | 'put' | 'patch' | 'delete', url: string, body?: any): Promise<ApiResponse<T>> {
     try {
-      let finalUrl = url;
-      if (params) {
-        const queryString = new URLSearchParams(
-          Object.entries(params).map(([key, value]) => [key, String(value)])
-        ).toString();
-        finalUrl = `${url}?${queryString}`;
-      }
-
-      const response = await apiGet(finalUrl);
+      const response = await fetchWithAuth(url, { method: method.toUpperCase(), body: body ? JSON.stringify(body) : undefined });
       const data = await parseJsonResponse<any>(response);
-      
-      if (typeof data === 'object' && data !== null && 'success' in data) {
-        return data as ApiResponse<T>;
-      }
-      
-      return {
-        success: true,
-        data: data as T
-      };
+      return data as ApiResponse<T>;
     } catch (error) {
       if (error instanceof Error) {
         throw new ApiClientError(error.message, 500);
       }
       throw error;
     }
+  }
+
+  async get<T = any>(url: string, params?: Record<string, any>): Promise<ApiResponse<T>> {
+    let finalUrl = url;
+    if (params) {
+      const queryString = new URLSearchParams(params).toString();
+      finalUrl = `${url}?${queryString}`;
+    }
+    return this.handleRequest('get', finalUrl);
   }
 
   async post<T = any>(url: string, body?: any): Promise<ApiResponse<T>> {
-    try {
-      const response = await apiPost(url, body);
-      const data = await parseJsonResponse<any>(response);
-      
-      if (typeof data === 'object' && data !== null && 'success' in data) {
-        return data as ApiResponse<T>;
-      }
-      
-      return {
-        success: true,
-        data: data as T
-      };
-    } catch (error) {
-      if (error instanceof Error) {
-        throw new ApiClientError(error.message, 500);
-      }
-      throw error;
-    }
+    return this.handleRequest('post', url, body);
   }
 
   async put<T = any>(url: string, body?: any): Promise<ApiResponse<T>> {
-    try {
-      const response = await apiPut(url, body);
-      const data = await parseJsonResponse<any>(response);
-      
-      if (typeof data === 'object' && data !== null && 'success' in data) {
-        return data as ApiResponse<T>;
-      }
-      
-      return {
-        success: true,
-        data: data as T
-      };
-    } catch (error) {
-      if (error instanceof Error) {
-        throw new ApiClientError(error.message, 500);
-      }
-      throw error;
-    }
+    return this.handleRequest('put', url, body);
   }
 
   async patch<T = any>(url: string, body?: any): Promise<ApiResponse<T>> {
-    try {
-      const response = await apiPatch(url, body);
-      const data = await parseJsonResponse<any>(response);
-      
-      if (typeof data === 'object' && data !== null && 'success' in data) {
-        return data as ApiResponse<T>;
-      }
-      
-      return {
-        success: true,
-        data: data as T
-      };
-    } catch (error) {
-      if (error instanceof Error) {
-        throw new ApiClientError(error.message, 500);
-      }
-      throw error;
-    }
+    return this.handleRequest('patch', url, body);
   }
 
   async delete<T = any>(url: string): Promise<ApiResponse<T>> {
-    try {
-      const response = await apiDelete(url);
-      
-      let data: any = null;
-      const contentType = response.headers.get('content-type');
-      if (contentType && contentType.includes('application/json')) {
-        data = await parseJsonResponse<any>(response);
-      }
-      
-      if (data && typeof data === 'object' && 'success' in data) {
-        return data as ApiResponse<T>;
-      }
-      
-      return {
-        success: true,
-        data: data as T
-      };
-    } catch (error) {
-      if (error instanceof Error) {
-        throw new ApiClientError(error.message, 500);
-      }
-      throw error;
-    }
+    return this.handleRequest('delete', url);
   }
 }
 

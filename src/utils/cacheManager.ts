@@ -3,7 +3,64 @@
  * Coordena cache do Service Worker, memória e invalidação inteligente
  */
 
-import { cacheService } from '@/services/cacheService';
+// Mock do cacheService para remover a dependência externa
+const memoryCache = new Map<string, { data: any; expiry: number }>();
+const MOCK_DEFAULT_TTL = 60 * 1000; // 1 minuto em milissegundos
+let isMemoryCacheEnabled = true;
+let defaultTTLMs = MOCK_DEFAULT_TTL;
+
+const mockCacheService = {
+  async get<T>(key: string): Promise<T | null> {
+    if (!isMemoryCacheEnabled) return null;
+    const item = memoryCache.get(key);
+    if (item && item.expiry > Date.now()) {
+      return item.data as T;
+    }
+    if (item) {
+      memoryCache.delete(key);
+    }
+    return null;
+  },
+
+  async set(key: string, data: any, ttlSeconds: number): Promise<void> {
+    if (!isMemoryCacheEnabled) return;
+    const expiry = Date.now() + (ttlSeconds * 1000 || defaultTTLMs);
+    memoryCache.set(key, { data, expiry });
+  },
+
+  async invalidatePattern(pattern: string): Promise<void> {
+    const regex = new RegExp(pattern);
+    for (const key of Array.from(memoryCache.keys())) {
+      if (regex.test(key)) {
+        memoryCache.delete(key);
+      }
+    }
+  },
+
+  async clear(): Promise<void> {
+    memoryCache.clear();
+  },
+
+  getStats() {
+    return {
+      size: memoryCache.size,
+      keys: Array.from(memoryCache.keys()),
+    };
+  },
+  
+  setMemoryCacheEnabled(enabled: boolean) {
+    isMemoryCacheEnabled = enabled;
+    if (!enabled) {
+        memoryCache.clear();
+    }
+  },
+  
+  setDefaultTTLMs(ttl: number) {
+    defaultTTLMs = ttl;
+  }
+};
+
+const cacheService = mockCacheService;
 
 export interface CacheManagerConfig {
   enableServiceWorker?: boolean;

@@ -1,74 +1,65 @@
-import { Entity, PrimaryGeneratedColumn, Column, CreateDateColumn, UpdateDateColumn, ManyToOne, JoinColumn } from 'typeorm';
-import { User } from './User';
-import { Book } from './Book';
+import {
+  Entity,
+  PrimaryGeneratedColumn,
+  Column
+} from 'typeorm';
 
-@Entity('files')
+@Entity('file')
 export class File {
-  @PrimaryGeneratedColumn('uuid')
-  id: string;
+  @PrimaryGeneratedColumn('increment')
+  id!: number;
 
-  @Column({ type: 'varchar', length: 255 })
-  name: string;
+  @Column({ type: 'bigint', nullable: true })
+  version?: number;
 
-  @Column({ type: 'varchar', length: 255 })
-  original_name: string;
+  @Column({ name: 'content_type', type: 'varchar', length: 255, nullable: true })
+  contentType?: string;
 
-  @Column({ type: 'varchar', length: 10 })
-  type: string;
+  @Column({ name: 'date_created', type: 'datetime' })
+  dateCreated!: Date;
 
-  @Column({ type: 'bigint' })
-  size: number;
+  @Column({ type: 'varchar', length: 255, nullable: true })
+  extension?: string;
 
-  @Column({ type: 'varchar', length: 20 })
-  size_formatted: string;
+  @Column({ name: 'external_link', type: 'varchar', length: 255, nullable: true })
+  externalLink?: string;
 
-  @Column({ type: 'varchar', length: 100 })
-  bucket: string;
+  @Column({ name: 'is_default', type: 'boolean', nullable: true })
+  isDefault?: boolean;
 
-  @Column({ type: 'varchar', length: 500, unique: true })
-  s3_key: string;
+  @Column({ name: 'is_public', type: 'boolean', nullable: true })
+  isPublic?: boolean;
 
-  @Column({ type: 'text' })
-  s3_url: string;
+  @Column({ type: 'varchar', length: 255, nullable: true })
+  label?: string;
 
-  @Column({ type: 'text', nullable: true })
-  description: string;
+  @Column({ name: 'last_updated', type: 'datetime' })
+  lastUpdated!: Date;
 
-  @Column({ type: 'enum', enum: ['literario', 'professor', 'aluno'] })
-  category: 'literario' | 'professor' | 'aluno';
+  @Column({ name: 'local_file', type: 'varchar', length: 255, nullable: true })
+  localFile?: string;
 
-  @Column({ type: 'jsonb', default: '{}' })
-  metadata: any;
+  @Column({ type: 'varchar', length: 255, nullable: true })
+  name?: string;
+
+  @Column({ name: 'original_filename', type: 'varchar', length: 255, nullable: true })
+  originalFilename?: string;
+
+  @Column({ type: 'varchar', length: 4, nullable: true })
+  quality?: string;
 
   @Column({ type: 'varchar', length: 64, nullable: true })
-  checksum: string;
+  sha256hex?: string;
 
-  @Column({ type: 'uuid', nullable: true })
-  uploaded_by: string;
+  @Column({ type: 'bigint', nullable: true })
+  size?: number;
 
-  @ManyToOne(() => User, { nullable: true })
-  @JoinColumn({ name: 'uploaded_by' })
-  uploader: User;
+  @Column({ name: 'subtitle_label', type: 'varchar', length: 255, nullable: true })
+  subtitleLabel?: string;
 
-  @Column({ type: 'boolean', default: true })
-  is_active: boolean;
+  @Column({ name: 'subtitle_src_lang', type: 'varchar', length: 255, nullable: true })
+  subtitleSrcLang?: string;
 
-  @Column({ type: 'text', array: true, default: '{}' })
-  tags: string[];
-
-  @Column({ type: 'uuid', nullable: true })
-  linked_book_id: string;
-
-  @ManyToOne(() => Book, { nullable: true })
-  @JoinColumn({ name: 'linked_book_id' })
-  linkedBook: Book;
-
-  @Column({ type: 'timestamp', nullable: true })
-  linked_at: Date;
-
-  @CreateDateColumn()
-  created_at: Date;
-
-  @UpdateDateColumn()
-  updated_at: Date;
+  @Column({ name: 'is_subtitled', type: 'boolean', nullable: true })
+  isSubtitled?: boolean;
 }

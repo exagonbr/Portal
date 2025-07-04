@@ -1,5 +1,5 @@
 import type { Metadata } from 'next';
-import { OptimizedLayout } from '@/components/layout/OptimizedLayout';
+import UnauthenticatedLayout from '@/components/layout/UnauthenticatedLayout';
 
 export const metadata: Metadata = {
   title: 'Autenticação - Portal Educacional',
@@ -13,8 +13,8 @@ export default function AuthSubLayout({
   children: React.ReactNode;
 }) {
   return (
-    <OptimizedLayout className="auth-container">
+    <UnauthenticatedLayout>
       {children}
-    </OptimizedLayout>
+    </UnauthenticatedLayout>
   );
 }

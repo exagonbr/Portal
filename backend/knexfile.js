@@ -1,74 +1,77 @@
+'use strict';
+
 require('dotenv').config();
 
 module.exports = {
   development: {
-    client: 'postgresql',
+    client: 'postgres',
     connection: {
       host: process.env.DB_HOST || 'localhost',
-      port: parseInt(process.env.DB_PORT || '5432'),
-      database: process.env.DB_NAME || 'portal_sabercon',
+      port: process.env.DB_PORT || 5432,
       user: process.env.DB_USER || 'postgres',
       password: process.env.DB_PASSWORD || 'root',
-      ssl: process.env.DB_SSL === 'true' ? { rejectUnauthorized: false } : false,
+      database: process.env.DB_NAME || 'portal_dev',
+      charset: 'utf8'
     },
     pool: {
-      min: 2,
-      max: 10,
+      min: 5,
+      max: 30
     },
     migrations: {
-      tableName: 'knex_migrations',
-      directory: './migrations',
+      directory: './src/database/migrations',
+      tableName: 'knex_migrations'
     },
     seeds: {
-      directory: './seeds',
-    },
+      directory: './src/database/seeds'
+    }
   },
-  staging: {
-    client: 'postgresql',
+
+  test: {
+    client: 'postgres',
     connection: {
       host: process.env.DB_HOST || 'localhost',
-      port: parseInt(process.env.DB_PORT || '5432'),
-      database: process.env.DB_NAME || 'portal_sabercon',
+      port: process.env.DB_PORT || 5432,
       user: process.env.DB_USER || 'postgres',
-      password: process.env.DB_PASSWORD || '',
-      ssl: process.env.DB_SSL === 'true' ? { rejectUnauthorized: false } : false,
+      password: process.env.DB_PASSWORD || 'root',
+      database: process.env.DB_NAME_TEST || 'portal_test',
+      charset: 'utf8'
     },
     pool: {
       min: 2,
-      max: 10,
+      max: 10
     },
     migrations: {
-      tableName: 'knex_migrations',
-      directory: './migrations',
+      directory: './src/database/migrations',
+      tableName: 'knex_migrations'
     },
     seeds: {
-      directory: './seeds',
-    },
+      directory: './src/database/seeds'
+    }
   },
+
   production: {
-    client: 'postgresql',
+    client: 'postgres',
     connection: {
-      host: process.env.DB_HOST || 'localhost',
-      port: parseInt(process.env.DB_PORT || '5432'),
-      database: process.env.DB_NAME || 'portal_sabercon',
-      user: process.env.DB_USER || 'postgres',
-      password: process.env.DB_PASSWORD || '',
-      ssl: process.env.DB_SSL === 'true' ? { rejectUnauthorized: false } : false,
+      host: process.env.DB_HOST,
+      port: process.env.DB_PORT || 5432,
+      user: process.env.DB_USER,
+      password: process.env.DB_PASSWORD,
+      database: process.env.DB_NAME,
+      charset: 'utf8',
+      ssl: process.env.DB_SSL === 'true' ? {
+        rejectUnauthorized: false
+      } : false
     },
     pool: {
       min: 2,
-      max: 20,
-      acquireTimeoutMillis: 60000,
-      destroyTimeoutMillis: 5000,
-      idleTimeoutMillis: 30000,
-      reapIntervalMillis: 1000,
+      max: 10
     },
     migrations: {
-      tableName: 'knex_migrations',
-      directory: './migrations',
+      directory: './src/database/migrations',
+      tableName: 'knex_migrations'
     },
     seeds: {
-      directory: './seeds',
-    },
+      directory: './src/database/seeds'
+    }
   }
 };

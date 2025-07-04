@@ -1,0 +1,20 @@
+import {
+  Entity,
+  PrimaryGeneratedColumn,
+  Column
+} from 'typeorm';
+
+@Entity('education_period')
+export class EducationPeriod {
+  @PrimaryGeneratedColumn('increment')
+  id!: number;
+
+  @Column({ type: 'bigint', nullable: true })
+  version?: number;
+
+  @Column({ type: 'varchar', length: 255 })
+  description!: string;
+
+  @Column({ name: 'is_active', type: 'boolean', default: true })
+  isActive!: boolean;
+}

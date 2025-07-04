@@ -9,8 +9,9 @@ import {
   BeforeUpdate
 } from 'typeorm';
 import * as bcrypt from 'bcryptjs';
-import { Role } from './Role';
 import { Institution } from './Institution';
+import { TeacherSubject } from './TeacherSubject';
+import { Role } from './Role';
 import { UserClass } from './UserClass';
 import { SchoolManager } from './SchoolManager';
 import { Course } from './Course';
@@ -19,62 +20,152 @@ import { ForumThread } from './ForumThread';
 import { ForumReply } from './ForumReply';
 import { Notification } from './Notification';
 
-@Entity('users')
+@Entity('user')
 export class User {
-  @PrimaryGeneratedColumn('uuid')
-  id: string;
+  @PrimaryGeneratedColumn('increment')
+  id!: number;
 
-  @Column({ unique: true })
-  email: string;
+  @Column({ type: 'bigint', nullable: true })
+  version?: number;
 
-  @Column()
+  @Column({ name: 'account_expired', type: 'boolean', nullable: true })
+  accountExpired?: boolean;
+
+  @Column({ name: 'account_locked', type: 'boolean', nullable: true })
+  accountLocked?: boolean;
+
+  @Column({ type: 'varchar', length: 255, nullable: true })
+  address?: string;
+
+  @Column({ name: 'amount_of_media_entries', type: 'int', nullable: true })
+  amountOfMediaEntries?: number;
+
+  @Column({ name: 'date_created', type: 'datetime', nullable: true })
+  dateCreated?: Date;
+
+  @Column({ type: 'boolean', nullable: true })
+  deleted?: boolean;
+
+  @Column({ type: 'varchar', length: 255 })
+  email!: string;
+
+  @Column({ type: 'boolean', nullable: true })
+  enabled?: boolean;
+
+  @Column({ name: 'full_name', type: 'varchar', length: 255 })
+  fullName!: string;
+
+  // Alias para compatibilidade
+  get name(): string {
+    return this.fullName;
+  }
+
+  set name(value: string) {
+    this.fullName = value;
+  }
+
+  @Column({ name: 'invitation_sent', type: 'boolean', nullable: true })
+  invitationSent?: boolean;
+
+  @Column({ name: 'is_admin', type: 'boolean' })
+  isAdmin!: boolean;
+
+  @Column({ type: 'varchar', length: 255, nullable: true })
+  language?: string;
+
+  @Column({ name: 'last_updated', type: 'datetime', nullable: true })
+  lastUpdated?: Date;
+
+  @Column({ type: 'varchar', length: 255, nullable: true })
   password?: string;
 
-  @Column({ nullable: true, unique: true })
-  googleId?: string;
+  @Column({ name: 'password_expired', type: 'boolean', nullable: true })
+  passwordExpired?: boolean;
 
-  @Column({ name: 'full_name' })
-  name: string;
+  @Column({ name: 'pause_video_on_click', type: 'boolean', nullable: true })
+  pauseVideoOnClick?: boolean;
 
+  @Column({ type: 'varchar', length: 255, nullable: true })
+  phone?: string;
 
-  @Column({ name: 'enabled', default: true })
-  is_active: boolean;
+  @Column({ name: 'reset_password', type: 'boolean', default: true })
+  resetPassword!: boolean;
 
-  @Column({ default: '35f57500-9a89-4318-bc9f-9acad28c2fb6' })
-  role_id: string;
+  @Column({ type: 'varchar', length: 255, nullable: true, unique: true })
+  username?: string;
 
-  @ManyToOne(() => Role, role => role.users)
-  @JoinColumn({ name: 'role_id' })
-  role: Role;
+  @Column({ type: 'varchar', length: 255, nullable: true })
+  uuid?: string;
 
-  @Column({ nullable: true })
-  institution_id?: string;
+  @Column({ name: 'is_manager', type: 'boolean' })
+  isManager!: boolean;
+
+  @Column({ type: 'int', nullable: true })
+  type?: number;
+
+  @Column({ name: 'certificate_path', type: 'varchar', length: 255, nullable: true })
+  certificatePath?: string;
+
+  @Column({ name: 'is_certified', type: 'boolean', default: false })
+  isCertified!: boolean;
+
+  @Column({ name: 'is_student', type: 'boolean' })
+  isStudent!: boolean;
+
+  @Column({ name: 'is_teacher', type: 'boolean' })
+  isTeacher!: boolean;
+
+  @Column({ name: 'institution_id', type: 'bigint', nullable: true })
+  institutionId?: number;
+
+  // Alias para compatibilidade
+  get institution_id(): number | null | undefined {
+    return this.institutionId;
+  }
+
+  set institution_id(value: number | null | undefined) {
+    this.institutionId = value;
+  }
 
   @ManyToOne(() => Institution, institution => institution.users, { nullable: true })
   @JoinColumn({ name: 'institution_id' })
   institution?: Institution;
 
+  @Column({ type: 'varchar', length: 255, nullable: true })
+  subject?: string;
+
+  @Column({ name: 'subject_data_id', type: 'bigint', nullable: true })
+  subjectDataId?: number;
+
+  @ManyToOne(() => TeacherSubject, { nullable: true })
+  @JoinColumn({ name: 'subject_data_id' })
+  subjectData?: TeacherSubject;
+
+  // Relacionamentos para compatibilidade com o código existente
+  @ManyToOne(() => Role, role => role.users, { nullable: true })
+  @JoinColumn({ name: 'role_id' })
+  role?: Role;
+
   @OneToMany(() => UserClass, userClass => userClass.user)
-  userClasses: UserClass[];
+  userClasses!: UserClass[];
 
   @OneToMany(() => SchoolManager, schoolManager => schoolManager.user)
-  schoolManagers: SchoolManager[];
+  schoolManagers!: SchoolManager[];
 
   @OneToMany(() => Course, course => course.teacher)
-  teachingCourses: Course[];
+  teachingCourses!: Course[];
 
   @OneToMany(() => ChatMessage, message => message.sender)
-  sentMessages: ChatMessage[];
+  sentMessages!: ChatMessage[];
 
   @OneToMany(() => ForumThread, thread => thread.author)
-  forumThreads: ForumThread[];
+  forumThreads!: ForumThread[];
 
   @OneToMany(() => ForumReply, reply => reply.author)
-  forumReplies: ForumReply[];
+  forumReplies!: ForumReply[];
 
   @OneToMany(() => Notification, notification => notification.sentBy)
-  sentNotifications: Notification[];
-
+  sentNotifications!: Notification[];
 
   // Métodos para hash de senha
   @BeforeInsert()

@@ -2,8 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import { User, UserRole, UserInstitution } from '../types/auth';
-// Assuming authService might be used for a real API call in the future
-// import * as authService from '../services/auth';
+// As chamadas de API foram mockadas para desacoplamento.
 
 interface UserFormModalProps {
   isOpen: boolean;

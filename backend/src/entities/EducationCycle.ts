@@ -20,22 +20,22 @@ export enum EducationLevel {
 @Entity('education_cycles')
 export class EducationCycle {
   @PrimaryGeneratedColumn('uuid')
-  id: string;
+  id!: string;
 
   @Column()
-  name: string;
+  name!: string;
 
   @Column({
     type: 'enum',
     enum: EducationLevel
   })
-  level: EducationLevel;
+  level!: EducationLevel;
 
   @Column({ type: 'text', nullable: true })
   description?: string;
 
   @Column({ type: 'int' })
-  duration_years: number;
+  duration_years!: number;
 
   @Column({ type: 'int', nullable: true })
   min_age?: number;
@@ -44,13 +44,13 @@ export class EducationCycle {
   max_age?: number;
 
   @ManyToMany(() => Class, classEntity => classEntity.educationCycles)
-  classes: Class[];
+  classes!: Class[];
 
   @CreateDateColumn()
-  created_at: Date;
+  created_at!: Date;
 
   @UpdateDateColumn()
-  updated_at: Date;
+  updated_at!: Date;
 
   // Propriedades computadas
   total_students?: number;

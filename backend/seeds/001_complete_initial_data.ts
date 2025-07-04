@@ -21,35 +21,56 @@ export async function seed(knex: Knex): Promise<void> {
   await knex('courses').del();
   await knex('classes').del();
   await knex('education_cycles').del();
-  await knex('schools').del();
-  await knex('users').del();
+  await knex('unit').del();
+  await knex('user').del();
   await knex('role_permissions').del();
   await knex('permissions').del();
   await knex('roles').del();
-  await knex('institutions').del();
+  await knex('institution').del();
 
   console.log('✅ Tabelas limpas com sucesso');
 
   // 1. Inserir instituições
-  const institutions = await knex('institutions').insert([
+  const institutions = await knex('institution').insert([
     {
       name: 'Sabercon Educação',
-      code: 'SABERCON',
-      description: 'Instituição principal do sistema Sabercon',
-      type: 'UNIVERSITY',
-      phone: '(11) 1234-5678',
-      email: 'contato@sabercon.edu.br',
-      website: 'https://sabercon.edu.br',
-      status: 'active'
+      company_name: 'Sabercon Soluções Educacionais LTDA',
+      document: '12.345.678/0001-99',
+      accountable_name: 'Sr. Administrador',
+      accountable_contact: 'admin@sabercon.edu.br',
+      postal_code: '01000-000',
+      street: 'Rua do Saber',
+      district: 'Centro',
+      state: 'SP',
+      contract_disabled: false,
+      deleted: false,
+      contract_term_start: new Date('2024-01-01'),
+      contract_term_end: new Date('2029-12-31'),
+      has_library_platform: true,
+      has_principal_platform: true,
+      has_student_platform: true,
+      date_created: new Date(),
+      last_updated: new Date()
     },
     {
       name: 'Instituto Federal de São Paulo',
-      code: 'IFSP',
-      description: 'Instituto Federal de São Paulo, referência em educação técnica e tecnológica',
-      type: 'TECH_CENTER',
-      phone: '(21) 9876-5432',
-      email: 'contato@ifsp.edu.br',
-      status: 'active'
+      company_name: 'Instituto Federal de Educação, Ciência e Tecnologia de São Paulo',
+      document: '98.765.432/0001-11',
+      accountable_name: 'Diretoria IFSP',
+      accountable_contact: 'diretoria@ifsp.edu.br',
+      postal_code: '01109-010',
+      street: 'Rua Pedro Vicente',
+      district: 'Canindé',
+      state: 'SP',
+      contract_disabled: false,
+      deleted: false,
+      contract_term_start: new Date('2023-01-01'),
+      contract_term_end: new Date('2028-12-31'),
+      has_library_platform: true,
+      has_principal_platform: false,
+      has_student_platform: true,
+      date_created: new Date(),
+      last_updated: new Date()
     }
   ]).returning('*');
 
@@ -192,10 +213,6 @@ export async function seed(knex: Knex): Promise<void> {
     return acc;
   }, {} as Record<string, string>);
 
-  const roleLookup = roles.reduce((acc, role) => {
-    acc[role.name] = role.id;
-    return acc;
-  }, {} as Record<string, string>);
 
   // 5. Inserir associações role-permission baseadas na propriedade permissions de cada role
   const rolePermissions = [];
@@ -217,107 +234,135 @@ export async function seed(knex: Knex): Promise<void> {
   console.log(`✅ ${rolePermissions.length} associações role-permission inseridas`);
 
   // 6. Inserir usuários de exemplo com senhas seguras
-  const users = await knex('users').insert([
+  const users = await knex('user').insert([
     {
       email: 'admin@sabercon.edu.br',
       password: '$2a$12$CAEPB0QB3PdSAtrX1MewruU1rjW9fTdFgjmxGXllsturmPJkbNPFO', // password123 (hash válido)
-      name: 'Administrador do Sistema Sabercon',
-      role_id: roleLookup['SYSTEM_ADMIN'],
+      full_name: 'Administrador do Sistema Sabercon',
       institution_id: institutions[0].id,
-      is_active: true
+      enabled: true,
+      is_admin: true,
+      is_manager: false,
+      is_student: false,
+      is_teacher: false,
+      date_created: new Date(),
+      last_updated: new Date()
     },
     {
       email: 'gestor@sabercon.edu.br',
       password: '$2a$12$CAEPB0QB3PdSAtrX1MewruU1rjW9fTdFgjmxGXllsturmPJkbNPFO', // password123 (hash válido)
-      name: 'Marina Silva Santos - Gestora Institucional',
-      role_id: roleLookup['INSTITUTION_MANAGER'],
+      full_name: 'Marina Silva Santos - Gestora Institucional',
       institution_id: institutions[0].id,
-      is_active: true
+      enabled: true,
+      is_admin: false,
+      is_manager: true,
+      is_student: false,
+      is_teacher: false,
+      date_created: new Date(),
+      last_updated: new Date()
     },
     {
       email: 'coordenador@sabercon.edu.com',
       password: '$2a$12$CAEPB0QB3PdSAtrX1MewruU1rjW9fTdFgjmxGXllsturmPJkbNPFO', // password123 (hash válido)
-      name: 'Luciana Lima Costa - Coordenadora Acadêmica',
-      role_id: roleLookup['ACADEMIC_COORDINATOR'],
+      full_name: 'Luciana Lima Costa - Coordenadora Acadêmica',
       institution_id: institutions[0].id,
-      is_active: true
+      enabled: true,
+      is_admin: false,
+      is_manager: true, // Coordenador também é um tipo de gestor
+      is_student: false,
+      is_teacher: false,
+      date_created: new Date(),
+      last_updated: new Date()
     },
     {
       email: 'professor@sabercon.edu.br',
       password: '$2a$12$CAEPB0QB3PdSAtrX1MewruU1rjW9fTdFgjmxGXllsturmPJkbNPFO', // password123 (hash válido)
-      name: 'Ricardo Santos Oliveira - Professor',
-      role_id: roleLookup['TEACHER'],
+      full_name: 'Ricardo Santos Oliveira - Professor',
       institution_id: institutions[0].id,
-      is_active: true
+      enabled: true,
+      is_admin: false,
+      is_manager: false,
+      is_student: false,
+      is_teacher: true,
+      date_created: new Date(),
+      last_updated: new Date()
     },
     {
       email: 'julia.c@ifsp.com',
       password: '$2a$12$CAEPB0QB3PdSAtrX1MewruU1rjW9fTdFgjmxGXllsturmPJkbNPFO', // password123 (hash válido)
-      name: 'Julia Costa Ferreira - Estudante IFSP',
-      role_id: roleLookup['STUDENT'],
+      full_name: 'Julia Costa Ferreira - Estudante IFSP',
       institution_id: institutions[1].id,
-      is_active: true
+      enabled: true,
+      is_admin: false,
+      is_manager: false,
+      is_student: true,
+      is_teacher: false,
+      date_created: new Date(),
+      last_updated: new Date()
     },
     {
       email: 'renato@gmail.com',
       password: '$2a$12$CAEPB0QB3PdSAtrX1MewruU1rjW9fTdFgjmxGXllsturmPJkbNPFO', // password123 (hash válido)
-      name: 'Renato Oliveira Silva - Responsável',
-      role_id: roleLookup['GUARDIAN'],
+      full_name: 'Renato Oliveira Silva - Responsável',
       institution_id: institutions[0].id,
-      is_active: true
+      enabled: true,
+      is_admin: false,
+      is_manager: false,
+      is_student: false,
+      is_teacher: false, // Responsável não é professor
+      date_created: new Date(),
+      last_updated: new Date()
     },
     // Usuários de backup do sistema para testes
     {
       email: 'admin@portal.com',
       password: '$2a$12$CAEPB0QB3PdSAtrX1MewruU1rjW9fTdFgjmxGXllsturmPJkbNPFO', // password123 (hash válido)
-      name: 'Admin Backup Portal',
-      role_id: roleLookup['SYSTEM_ADMIN'],
+      full_name: 'Admin Backup Portal',
       institution_id: institutions[0].id,
-      is_active: true
+      enabled: true,
+      is_admin: true,
+      is_manager: false,
+      is_student: false,
+      is_teacher: false,
+      date_created: new Date(),
+      last_updated: new Date()
     },
     {
       email: 'prof.carlos@ifsp.edu.br',
       password: '$2a$12$CAEPB0QB3PdSAtrX1MewruU1rjW9fTdFgjmxGXllsturmPJkbNPFO', // password123 (hash válido)
-      name: 'Carlos Alberto Professor - IFSP',
-      role_id: roleLookup['TEACHER'],
+      full_name: 'Carlos Alberto Professor - IFSP',
       institution_id: institutions[1].id,
-      is_active: true
+      enabled: true,
+      is_admin: false,
+      is_manager: false,
+      is_student: false,
+      is_teacher: true,
+      date_created: new Date(),
+      last_updated: new Date()
     }
   ]).returning('*');
 
   console.log(`✅ ${users.length} usuários inseridos`);
 
-  // 7. Inserir escolas
-  const schools = await knex('schools').insert([
+  // 7. Inserir unidades (antigas escolas)
+  const units = await knex('unit').insert([
     {
-      name: 'Escola Central Sabercon',
-      code: 'ECS001',
-      description: 'Escola principal da rede Sabercon',
-      address: 'Rua da Educação, 123',
-      city: 'São Paulo',
-      state: 'SP',
-      zip_code: '01234-567',
-      phone: '(11) 1234-5678',
-      email: 'central@sabercon.edu.br',
+      name: 'Unidade Central Sabercon',
       institution_id: institutions[0].id,
-      status: 'active'
+      date_created: new Date(),
+      last_updated: new Date(),
+      deleted: false
     },
     {
       name: 'Campus São Paulo - IFSP',
-      code: 'IFSP-SP',
-      description: 'Campus principal do IFSP em São Paulo',
-      address: 'Av. Principal, 456',
-      city: 'São Paulo',
-      state: 'SP',
-      zip_code: '20000-000',
-      phone: '(21) 9876-5432',
-      email: 'saopaulo@ifsp.edu.br',
       institution_id: institutions[1].id,
-      status: 'active'
+      date_created: new Date(),
+      last_updated: new Date(),
+      deleted: false
     }
   ]).returning('*');
 
-  console.log(`✅ ${schools.length} escolas inseridas`);
+  console.log(`✅ ${units.length} unidades inseridas`);
 
   // 8. Inserir ciclos educacionais
   const educationCycles = await knex('education_cycles').insert([
@@ -375,7 +420,7 @@ export async function seed(knex: Knex): Promise<void> {
       semester: 1,
       max_students: 30,
       current_students: 1,
-      school_id: schools[0].id,
+      unit_id: units[0].id,
       education_cycle_id: educationCycles[0].id,
       status: 'active'
     },
@@ -387,7 +432,7 @@ export async function seed(knex: Knex): Promise<void> {
       semester: 1,
       max_students: 32,
       current_students: 0,
-      school_id: schools[0].id,
+      unit_id: units[0].id,
       education_cycle_id: educationCycles[1].id,
       status: 'active'
     },
@@ -399,7 +444,7 @@ export async function seed(knex: Knex): Promise<void> {
       semester: 1,
       max_students: 25,
       current_students: 0,
-      school_id: schools[1].id,
+      unit_id: units[1].id,
       education_cycle_id: educationCycles[3].id,
       status: 'active'
     }
@@ -428,7 +473,7 @@ export async function seed(knex: Knex): Promise<void> {
   console.log(`   • ${roles.length} roles`);
   console.log(`   • ${rolePermissions.length} associações role-permission`);
   console.log(`   • ${users.length} usuários`);
-  console.log(`   • ${schools.length} escolas`);
+  console.log(`   • ${units.length} unidades`);
   console.log(`   • ${educationCycles.length} ciclos educacionais`);
   console.log(`   • ${classes.length} turmas`);
   console.log('\n🔐 Usuários de teste criados:');

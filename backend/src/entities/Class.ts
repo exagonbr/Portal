@@ -24,39 +24,39 @@ export enum ShiftType {
 @Entity('classes')
 export class Class {
   @PrimaryGeneratedColumn('uuid')
-  id: string;
+  id!: string;
 
   @Column()
-  name: string;
+  name!: string;
 
   @Column({ unique: true })
-  code: string;
+  code!: string;
 
   @Column()
-  school_id: string;
+  school_id!: string;
 
   @ManyToOne(() => School, school => school.classes)
   @JoinColumn({ name: 'school_id' })
-  school: School;
+  school!: School;
 
   @Column({ type: 'int' })
-  year: number;
+  year!: number;
 
   @Column({
     type: 'enum',
     enum: ShiftType,
     default: ShiftType.MORNING
   })
-  shift: ShiftType;
+  shift!: ShiftType;
 
   @Column({ type: 'int', default: 30 })
-  max_students: number;
+  max_students!: number;
 
   @Column({ default: true })
-  is_active: boolean;
+  is_active!: boolean;
 
   @OneToMany(() => UserClass, userClass => userClass.class)
-  userClasses: UserClass[];
+  userClasses!: UserClass[];
 
   @ManyToMany(() => EducationCycle, educationCycle => educationCycle.classes)
   @JoinTable({
@@ -64,13 +64,13 @@ export class Class {
     joinColumn: { name: 'class_id', referencedColumnName: 'id' },
     inverseJoinColumn: { name: 'education_cycle_id', referencedColumnName: 'id' }
   })
-  educationCycles: EducationCycle[];
+  educationCycles!: EducationCycle[];
 
   @CreateDateColumn()
-  created_at: Date;
+  created_at!: Date;
 
   @UpdateDateColumn()
-  updated_at: Date;
+  updated_at!: Date;
 
   // Propriedades computadas
   school_name?: string;

@@ -20,27 +20,6 @@ function RoleGuardContent({
   const { user, loading } = useAuth();
   const router = useRouter();
 
-  useEffect(() => {
-    if (!loading) {
-      if (!user) {
-        // Se não há usuário, limpar dados e redirecionar para login
-        clearAllDataForUnauthorized().then(() => {
-          router.push('/auth/login?error=unauthorized');
-        }).catch((error) => {
-          console.log('❌ Erro durante limpeza de dados:', error);
-          // Redirecionar mesmo com erro na limpeza
-          router.push('/auth/login?error=unauthorized');
-        });
-      } else {
-        // SYSTEM_ADMIN pode acessar TODAS as rotas
-        if (user.role === UserRole.SYSTEM_ADMIN.toString() || user.role?.toLowerCase() === 'system_admin') {
-          console.log('✅ SYSTEM_ADMIN detectado, permitindo acesso total');
-          return;
-        }
-      }
-    }
-  }, [user, loading, allowedRoles, router, redirectTo]);
-
   // Mostra loading enquanto verifica autenticação
   if (loading) {
     return (

@@ -1,58 +1,71 @@
 import {
   Entity,
   PrimaryGeneratedColumn,
-  Column
+  Column,
+  ManyToOne,
+  JoinColumn,
+  ManyToMany,
+  JoinTable
 } from 'typeorm';
+import { File } from './File';
 
 @Entity('tv_show')
-export class TVShow {
+export class TvShow {
   @PrimaryGeneratedColumn('increment')
-  id: number;
+  id!: number;
 
   @Column({ type: 'bigint', nullable: true })
   version?: number;
 
-  @Column({ type: 'varchar', length: 255, nullable: true })
-  api_id?: string;
+  @Column({ name: 'api_id', type: 'varchar', length: 255, nullable: true })
+  apiId?: string;
 
-  @Column({ type: 'bigint', nullable: true })
-  backdrop_image_id?: number;
+  @Column({ name: 'backdrop_image_id', type: 'bigint', nullable: true })
+  backdropImageId?: number;
 
-  @Column({ type: 'varchar', length: 255, nullable: true })
-  backdrop_path?: string;
+  @ManyToOne(() => File, { nullable: true })
+  @JoinColumn({ name: 'backdrop_image_id' })
+  backdropImage?: File;
 
-  @Column({ type: 'datetime' })
-  contract_term_end: Date;
+  @Column({ name: 'backdrop_path', type: 'varchar', length: 255, nullable: true })
+  backdropPath?: string;
 
-  @Column({ type: 'datetime' })
-  date_created: Date;
+  @Column({ name: 'contract_term_end', type: 'datetime' })
+  contractTermEnd!: Date;
 
-  @Column({ type: 'bit', nullable: true })
+  @Column({ name: 'date_created', type: 'datetime' })
+  dateCreated!: Date;
+
+  @Column({ type: 'boolean', nullable: true })
   deleted?: boolean;
 
-  @Column({ type: 'datetime' })
-  first_air_date: Date;
+  @Column({ name: 'first_air_date', type: 'datetime' })
+  firstAirDate!: Date;
 
-  @Column({ type: 'varchar', length: 255, nullable: true })
-  imdb_id?: string;
+  @Column({ name: 'imdb_id', type: 'varchar', length: 255, nullable: true })
+  imdbId?: string;
 
-  @Column({ type: 'datetime' })
-  last_updated: Date;
+  @Column({ name: 'last_updated', type: 'datetime' })
+  lastUpdated!: Date;
 
-  @Column({ type: 'bit', nullable: true })
-  manual_input?: boolean;
+  @Column({ name: 'manual_input', type: 'boolean', nullable: true })
+  manualInput?: boolean;
 
-  @Column({ type: 'bigint', nullable: true })
-  manual_support_id?: number;
+  @Column({ name: 'manual_support_id', type: 'bigint', nullable: true })
+  manualSupportId?: number;
 
-  @Column({ type: 'varchar', length: 255, nullable: true })
-  manual_support_path?: string;
+  @ManyToOne(() => File, { nullable: true })
+  @JoinColumn({ name: 'manual_support_id' })
+  manualSupport?: File;
+
+  @Column({ name: 'manual_support_path', type: 'varchar', length: 255, nullable: true })
+  manualSupportPath?: string;
 
   @Column({ type: 'varchar', length: 255 })
-  name: string;
+  name!: string;
 
-  @Column({ type: 'varchar', length: 255, nullable: true })
-  original_language?: string;
+  @Column({ name: 'original_language', type: 'varchar', length: 255, nullable: true })
+  originalLanguage?: string;
 
   @Column({ type: 'longtext', nullable: true })
   overview?: string;
@@ -60,21 +73,25 @@ export class TVShow {
   @Column({ type: 'double', nullable: true })
   popularity?: number;
 
-  @Column({ type: 'bigint', nullable: true })
-  poster_image_id?: number;
+  @Column({ name: 'poster_image_id', type: 'bigint', nullable: true })
+  posterImageId?: number;
 
-  @Column({ type: 'varchar', length: 255, nullable: true })
-  poster_path?: string;
+  @ManyToOne(() => File, { nullable: true })
+  @JoinColumn({ name: 'poster_image_id' })
+  posterImage?: File;
+
+  @Column({ name: 'poster_path', type: 'varchar', length: 255, nullable: true })
+  posterPath?: string;
 
   @Column({ type: 'longtext', nullable: true })
   producer?: string;
 
-  @Column({ type: 'double', nullable: true })
-  vote_average?: number;
+  @Column({ name: 'vote_average', type: 'double', nullable: true })
+  voteAverage?: number;
 
-  @Column({ type: 'int', nullable: true })
-  vote_count?: number;
+  @Column({ name: 'vote_count', type: 'int', nullable: true })
+  voteCount?: number;
 
-  @Column({ type: 'varchar', length: 255, nullable: true })
-  total_load?: string;
-} 
+  @Column({ name: 'total_load', type: 'varchar', length: 255, nullable: true })
+  totalLoad?: string;
+}

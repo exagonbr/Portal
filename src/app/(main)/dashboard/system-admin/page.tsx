@@ -1,7 +1,6 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
-import { runAuthDiagnostics, AuthDiagnosticResult } from '@/utils/auth-diagnostic';
 import { isDevelopment } from '@/utils/env';
 import {
   Shield,
@@ -39,16 +38,13 @@ import { useAuth } from '@/contexts/AuthContext';
 import { UserRole } from '@/types/roles';
 import { useRouter } from 'next/navigation';
 import { toast } from 'react-hot-toast';
-import { systemAdminService, SystemDashboardData as ServiceSystemDashboardData } from '@/services/systemAdminService';
-import { InstitutionService } from '@/services/institutionService';
-import { InstitutionType, InstitutionNature } from '@/types/institution';
+import { InstitutionType } from '@/types/institution';
 import { debugAuth } from '@/utils/auth-debug';
 import { StatCard, ContentCard, SimpleCard } from '@/components/ui/StandardCard';
 import { initializeGlobalErrorHandler } from '@/utils/global-error-handler';
 import { runAllChunkErrorTests } from '@/utils/chunk-error-test';
 
-// Usar a interface do serviço diretamente
-type SystemDashboardData = ServiceSystemDashboardData;
+type SystemDashboardData = any;
 
 interface RealUserStats {
   total_users: number;
@@ -65,7 +61,7 @@ interface InstitutionStats {
   code: string;
   cnpj?: string;
   type: InstitutionType;
-  nature?: InstitutionNature;
+  nature?: string;
   description?: string;
   address?: string | object;
   city?: string;
@@ -215,7 +211,7 @@ export default function SystemAdminDashboard() {
 }
 
 function SystemAdminDashboardContent() {
-  const { user, isAuthenticated } = useAuth();
+  const { user } = useAuth();
   const router = useRouter();
   const [loading, setLoading] = useState(true);
   const [dashboardData, setDashboardData] = useState<SystemDashboardData | null>(null);
@@ -236,27 +232,8 @@ function SystemAdminDashboardContent() {
     averageUsersPerInstitution: number;
     recentInstitutions: number;
   } | null>(null);
-  const [authDiagnostic, setAuthDiagnostic] = useState<AuthDiagnosticResult | null>(null);
 
   useEffect(() => {
-    // Executar diagnóstico de autenticação ao carregar
-    const runInitialDiagnostic = async () => {
-      console.log('🔍 [DASHBOARD] Executando diagnóstico inicial de autenticação...');
-      try {
-        const diagnostic = await runAuthDiagnostics();
-        setAuthDiagnostic(diagnostic);
-        
-        if (!diagnostic.tokenValid || diagnostic.errors.length > 0) {
-          console.warn('⚠️ [DASHBOARD] Problemas de autenticação detectados:', diagnostic.errors);
-        } else {
-          console.log('✅ [DASHBOARD] Autenticação funcionando corretamente');
-        }
-      } catch (error) {
-        console.log('❌ [DASHBOARD] Erro no diagnóstico de autenticação:', error);
-      }
-    };
-
-    runInitialDiagnostic();
     
     // Inicializar handler global de erros
     initializeGlobalErrorHandler();
@@ -267,9 +244,7 @@ function SystemAdminDashboardContent() {
     }
     
 
-    if (isAuthenticated) {
-      loadDashboardData();
-    }
+    loadDashboardData();
     
     // Auto-refresh a cada 30 segundos para métricas em tempo real
     const interval = setInterval(() => {
@@ -282,360 +257,106 @@ function SystemAdminDashboardContent() {
       if (interval) clearInterval(interval);
       if (refreshInterval) clearInterval(refreshInterval);
     };
-  }, [isAuthenticated]);
+  }, []);
 
   const loadDashboardData = async () => {
-    try {
-      setLoading(true);
-      
-      // Carregar dados em paralelo com tratamento individual de erros
-      const results = await Promise.allSettled([
-        loadSystemDashboard(),
-        loadInstitutions(),
-        loadRoleStats(),
-        loadAwsStats(),
-        loadSystemAlerts(),
-        loadRealUsersByRole(),
-        loadRealUserStats(),
-        loadSystemAnalytics(),
-        loadEngagementMetrics()
-      ]);
-
-      // Log dos resultados para debug
-      results.forEach((result, index) => {
-        const functionNames = [
-          'loadSystemDashboard', 'loadInstitutions', 'loadRoleStats', 
-          'loadAwsStats', 'loadSystemAlerts', 'loadRealUsersByRole',
-          'loadRealUserStats', 'loadSystemAnalytics', 'loadEngagementMetrics'
-        ];
-        
-        if (result.status === 'rejected') {
-          console.warn(`⚠️ ${functionNames[index]} falhou:`, result.reason);
-        }
-      });
-
-      // Verificar se pelo menos algumas funções foram bem-sucedidas
-      const successCount = results.filter(r => r.status === 'fulfilled').length;
-      if (successCount === 0) {
-        throw new Error('Todas as funções de carregamento falharam');
-      }
-
-    } catch (error) {
-      console.log('Erro ao carregar dados do dashboard:', error);
-      
-      // Verificar se é erro de chunk loading
-      const errorMessage = (error as any)?.message || '';
-      if (errorMessage.includes("Cannot read properties of undefined (reading 'call')") ||
-          errorMessage.includes("originalFactory is undefined") ||
-          errorMessage.includes("ChunkLoadError")) {
-        toast.error('Erro de carregamento de recursos. Recarregando página...');
-        setTimeout(() => window.location.reload(), 2000);
-      } else {
-        toast.error('Erro ao carregar dados do sistema');
-      }
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const loadSystemDashboard = async () => {
-    try {
-      const data = await systemAdminService.getSystemDashboard();
-      setDashboardData(data);
-    } catch (error) {
-      console.log('Erro ao carregar dashboard do sistema:', error);
-      toast.error('Erro ao carregar dados do dashboard');
-    }
-  };
-
-  const loadInstitutions = async () => {
-    try {
-      // Carregar instituições com dados detalhados
-      const result = await InstitutionService.getInstitutions({ 
-        limit: 10, 
-        is_active: true,
-        sortBy: 'name',
-        sortOrder: 'asc'
-      });
-      
-      console.log('📊 Dados das instituições carregados:', result);
-      
-      // Mapear dados para incluir estatísticas adicionais
-      const institutionsWithStats = result.items.map(institution => ({
-        ...institution,
-        users_count: institution.users_count || 0,
-        schools_count: institution.schools_count || 0,
-        created_at: institution.created_at || new Date().toISOString(),
-        active: institution.active ?? true
-      }));
-      
-      setInstitutions(institutionsWithStats);
-      
-      // Calcular estatísticas das instituições
-      const stats = {
-        totalInstitutions: result.total || institutionsWithStats.length,
-        activeInstitutions: institutionsWithStats.filter(inst => inst.active === true).length,
-        totalUsers: institutionsWithStats.reduce((sum, inst) => sum + (inst.users_count || 0), 0),
-        totalSchools: institutionsWithStats.reduce((sum, inst) => sum + (inst.schools_count || 0), 0),
-        averageUsersPerInstitution: institutionsWithStats.length > 0 
-          ? Math.round(institutionsWithStats.reduce((sum, inst) => sum + (inst.users_count || 0), 0) / institutionsWithStats.length)
-          : 0,
-        recentInstitutions: institutionsWithStats.filter(inst => {
-          const createdDate = new Date(inst.created_at);
-          return (Date.now() - createdDate.getTime()) < (30 * 24 * 60 * 60 * 1000);
-        }).length
-      };
-      
-      setInstitutionStats(stats);
-      console.log('📈 Estatísticas das instituições:', stats);
-    } catch (error) {
-      console.log('Erro ao carregar instituições:', error);
-      // Fallback para dados básicos se a API falhar
-      try {
-        const basicResult = await InstitutionService.getActiveInstitutions();
-        const basicInstitutions = basicResult.slice(0, 10).map(institution => ({
-          ...institution,
-          users_count: 0,
-          schools_count: 0,
-          created_at: institution.created_at || new Date().toISOString(),
-          active: institution.active ?? true
-        }));
-        setInstitutions(basicInstitutions);
-      } catch (fallbackError) {
-        console.log('Erro no fallback das instituições:', fallbackError);
-        toast.error('Erro ao carregar dados das instituições');
-      }
-    }
-  };
-
-  const loadRoleStats = async () => {
-    try {
-      const result = await systemAdminService.getRoleStats();
-      setRoleStats(result);
-    } catch (error) {
-      console.log('Erro ao carregar estatísticas de roles:', error);
-    }
-  };
-
-  const loadAwsStats = async () => {
-    try {
-      const result = await systemAdminService.getAwsConnectionStats();
-      setAwsStats(result);
-    } catch (error) {
-      console.log('Erro ao carregar estatísticas AWS:', error);
-    }
-  };
-
-  const loadSystemAlerts = async () => {
-    try {
-      // Alertas baseados em métricas reais do sistema
-      const systemAlerts: SystemAlert[] = [];
-    
-    // Verificar uso de memória real se disponível
-    if (dashboardData?.system?.memoryUsage) {
-      const memoryUsagePercent = (dashboardData.system.memoryUsage.heapUsed / dashboardData.system.memoryUsage.heapTotal) * 100;
-      
-      if (memoryUsagePercent > 85) {
-        systemAlerts.push({
-          id: 'memory-critical',
-          type: 'critical',
-          title: 'Uso crítico de memória',
-          description: `Uso de memória heap em ${memoryUsagePercent.toFixed(1)}% - Ação imediata necessária`,
-          timestamp: new Date(),
-          resolved: false
-        });
-      } else if (memoryUsagePercent > 75) {
-        systemAlerts.push({
-          id: 'memory-warning',
-          type: 'warning',
-          title: 'Alto uso de memória',
-          description: `Uso de memória heap em ${memoryUsagePercent.toFixed(1)}% - Monitoramento necessário`,
-          timestamp: new Date(),
-          resolved: false
-        });
-      }
-    }
-
-    // Verificar sessões ativas
-    if (dashboardData?.sessions?.activeUsers && dashboardData.sessions.activeUsers > 5000) {
-      systemAlerts.push({
-        id: 'high-load',
-        type: 'warning',
-        title: 'Alta carga de usuários',
-        description: `${dashboardData.sessions.activeUsers.toLocaleString('pt-BR')} usuários ativos simultaneamente`,
-        timestamp: new Date(),
-        resolved: false
-      });
-    }
-
-    // Verificar AWS se disponível
-    if (awsStats && typeof awsStats.success_rate === 'number' && awsStats.success_rate < 95) {
-      systemAlerts.push({
-        id: 'aws-degraded',
-        type: awsStats.success_rate < 80 ? 'critical' : 'warning',
-        title: 'Problemas na conectividade AWS',
-        description: `Taxa de sucesso AWS em ${awsStats.success_rate.toFixed(1)}% - Verificar configurações`,
-        timestamp: new Date(),
-        resolved: false
-      });
-    }
-
-    // Alertas informativos sempre presentes
-    systemAlerts.push(
-      {
-        id: 'backup-success',
-        type: 'info',
-        title: 'Backup automático concluído',
-        description: 'Backup diário do banco de dados executado com sucesso às 02:00',
-        timestamp: new Date(Date.now() - 3600000 * 10), // 10 horas atrás
-        resolved: true
+    // Mock data to bring the dashboard to life
+    setRealUserStats({
+      total_users: 12540,
+      active_users: 9870,
+      inactive_users: 2670,
+      users_by_role: {
+        'STUDENT': 8000,
+        'TEACHER': 1500,
+        'COORDINATOR': 200,
+        'PARENT': 2500,
+        'ADMIN': 50,
+        'SYSTEM_ADMIN': 5
       },
-      {
-        id: 'security-scan',
-        type: 'info',
-        title: 'Varredura de segurança concluída',
-        description: 'Scan de vulnerabilidades executado - Nenhuma ameaça detectada',
-        timestamp: new Date(Date.now() - 3600000 * 6), // 6 horas atrás
-        resolved: true
-      }
-    );
+      users_by_institution: {},
+      recent_registrations: 320,
+    });
 
-      setAlerts(systemAlerts);
-    } catch (error) {
-      console.log('Erro ao carregar alertas do sistema:', error);
-      // Set default alerts in case of error
-      setAlerts([
-        {
-          id: 'system-info',
-          type: 'info',
-          title: 'Sistema operacional',
-          description: 'Todos os serviços estão funcionando normalmente',
-          timestamp: new Date(),
-          resolved: true
+    setInstitutions([
+      { id: '1', name: 'Colégio Saber', code: 'CS', users_count: 2500, schools_count: 3, created_at: new Date().toISOString(), type: 'PRIVATE', active: true, updated_at: new Date().toISOString() },
+      { id: '2', name: 'Escola Conhecer', code: 'EC', users_count: 1800, schools_count: 2, created_at: new Date().toISOString(), type: 'PUBLIC', active: true, updated_at: new Date().toISOString() },
+      { id: '3', name: 'Instituto Aprender Mais', code: 'IAM', users_count: 3200, schools_count: 5, created_at: new Date(Date.now() - 10 * 24 * 60 * 60 * 1000).toISOString(), type: 'PRIVATE', active: true, updated_at: new Date().toISOString() },
+    ]);
+
+    setAlerts([
+      { id: 'memory-warning', type: 'warning', title: 'Alto uso de memória', description: 'Uso de memória heap em 82.1% - Monitoramento necessário', timestamp: new Date(), resolved: false },
+      { id: 'backup-success', type: 'info', title: 'Backup automático concluído', description: 'Backup diário do banco de dados executado com sucesso', timestamp: new Date(Date.now() - 3600000 * 8), resolved: true },
+    ]);
+    
+    setDashboardData({
+        system: {
+            uptime: 86400 * 5, // 5 days
+            version: '2.5.1',
+            environment: 'production',
+            memoryUsage: { heapUsed: 350 * 1024 * 1024, heapTotal: 512 * 1024 * 1024 }
+        },
+        sessions: {
+            activeUsers: 123,
+            totalActiveSessions: 150,
+            sessionsByDevice: { Desktop: 90, Mobile: 50, Tablet: 10 },
+            averageSessionDuration: 25
+        },
+        infrastructure: {
+            aws: {
+                performance: { uptime: 99.98, responseTime: 120 },
+                services: ['S3', 'EC2', 'RDS', 'Lambda'],
+                costs: { monthly: 1500.50 }
+            }
         }
-      ]);
-    }
-  };
+    });
 
-  const loadRealUsersByRole = async () => {
-    try {
-      const usersByRole = await systemAdminService.getUsersByRole();
-      setRealUsersByRole(usersByRole);
-    } catch (error) {
-      console.log('Erro ao carregar usuários por função:', error);
-    }
-  };
+    setRealUsersByRole({
+        'STUDENT': 8000,
+        'TEACHER': 1500,
+        'COORDINATOR': 200,
+        'PARENT': 2500,
+        'ADMIN': 50,
+        'SYSTEM_ADMIN': 5
+    });
 
-  const loadRealUserStats = async () => {
-    try {
-      const result = await systemAdminService.getRealUserStats();
-      setRealUserStats(result);
-      if (result.users_by_role) {
-        setRealUsersByRole(result.users_by_role);
-      }
-    } catch (error) {
-      console.log('Erro ao carregar estatísticas reais de usuários:', error);
-    }
-  };
+    setEngagementMetrics({
+        retentionRate: 85,
+        averageSessionDuration: 25,
+        bounceRate: 22,
+        topFeatures: [
+            { name: 'Visualização de Notas', usage: 78 },
+            { name: 'Entrega de Atividades', usage: 65 },
+            { name: 'Fórum de Discussão', usage: 45 }
+        ]
+    });
 
-  const loadSystemAnalytics = async () => {
-    try {
-      const analytics = await systemAdminService.getSystemAnalytics();
-      setSystemAnalytics(analytics);
-    } catch (error) {
-      console.log('Erro ao carregar analytics do sistema:', error);
-    }
-  };
+    setSystemAnalytics({
+        userGrowth: [
+            { month: 'Jan', users: 7000, growth: 5 },
+            { month: 'Fev', users: 7500, growth: 7 },
+            { month: 'Mar', users: 8200, growth: 9 },
+            { month: 'Abr', users: 9000, growth: 10 },
+            { month: 'Mai', users: 10500, growth: 17 },
+            { month: 'Jun', users: 12540, growth: 19 }
+        ],
+        sessionTrends: [
+            { hour: '08:00', sessions: 120 },
+            { hour: '10:00', sessions: 150 },
+            { hour: '14:00', sessions: 180 },
+            { hour: '16:00', sessions: 160 },
+            { hour: '20:00', sessions: 100 }
+        ],
+        institutionDistribution: [
+            { name: 'Colégio Saber', users: 2500 },
+            { name: 'Escola Conhecer', users: 1800 },
+            { name: 'Instituto Aprender Mais', users: 3200 },
+        ]
+    });
 
-  const loadEngagementMetrics = async () => {
-    try {
-      const engagement = await systemAdminService.getUserEngagementMetrics();
-      
-      // Verificar se os dados têm a estrutura correta
-      if (engagement && typeof engagement === 'object') {
-        // Garantir que topFeatures seja um array válido
-        if (!Array.isArray(engagement.topFeatures)) {
-          engagement.topFeatures = [];
-        }
-        
-        setEngagementMetrics(engagement);
-      } else {
-        console.warn('Dados de engajamento inválidos recebidos:', engagement);
-        setEngagementMetrics(null);
-      }
-    } catch (error) {
-      console.log('Erro ao carregar métricas de engajamento:', error);
-      setEngagementMetrics(null);
-    }
-  };
 
-  const loadRealTimeMetrics = async () => {
-    try {
-      const metrics = await systemAdminService.getRealTimeMetrics();
-      
-      // Debug: Inspecionar objeto memoryUsage
-      console.log('🔍 [DEBUG] Memory Usage Raw:', metrics.memoryUsage);
-      
-      // Sanitizar objeto memoryUsage para garantir apenas valores numéricos
-      const sanitizedMemoryUsage = {
-        rss: Number(metrics.memoryUsage?.rss) || 0,
-        heapTotal: Number(metrics.memoryUsage?.heapTotal) || 0,
-        heapUsed: Number(metrics.memoryUsage?.heapUsed) || 0,
-        external: Number(metrics.memoryUsage?.external) || 0,
-        arrayBuffers: Number(metrics.memoryUsage?.arrayBuffers) || 0
-      };
-      
-      console.log('✅ [DEBUG] Memory Usage Sanitized:', sanitizedMemoryUsage);
-      
-      // Atualizar apenas métricas em tempo real com valores sanitizados
-      if (dashboardData) {
-        try {
-          setDashboardData(prev => {
-            if (!prev) return prev;
-            
-            const updatedData = {
-              ...prev,
-              sessions: {
-                ...prev.sessions,
-                activeUsers: Number(metrics.activeUsers) || 0,
-                totalActiveSessions: Number(metrics.activeSessions) || 0,
-                // Preserve existing sessionsByDevice if it exists
-                sessionsByDevice: prev.sessions?.sessionsByDevice || {}
-              },
-              system: prev.system ? {
-                ...prev.system,
-                memoryUsage: sanitizedMemoryUsage
-              } : undefined
-            };
-            
-            // Verificar se o objeto pode ser serializado
-            JSON.stringify(updatedData);
-            
-            return updatedData;
-          });
-        } catch (serializationError) {
-          console.log('❌ [ERROR] Erro de serialização ao atualizar estado:', serializationError);
-          throw new Error('Erro de serialização ao atualizar métricas em tempo real');
-        }
-      }
-    } catch (error) {
-      console.log('Erro ao carregar métricas em tempo real:', error);
-      
-      // Verificar se é erro de chunk loading
-      const errorMessage = (error as any)?.message || '';
-      if (errorMessage.includes("Cannot read properties of undefined (reading 'call')") ||
-          errorMessage.includes("originalFactory is undefined") ||
-          errorMessage.includes("ChunkLoadError")) {
-        console.warn('⚠️ Erro de chunk loading nas métricas em tempo real, pausando auto-refresh');
-        
-        // Parar o auto-refresh se houver erro de chunk
-        if (refreshInterval) {
-          clearInterval(refreshInterval);
-          setRefreshInterval(null);
-        }
-      }
-    }
+    setLoading(false);
   };
+  const loadRealTimeMetrics = async () => {};
 
   const getAlertIcon = (type: SystemAlert['type']) => {
     switch (type) {
@@ -1243,58 +964,6 @@ function SystemAdminDashboardContent() {
           {/* Seção de Gráficos Secundários */}
           <div className="grid grid-cols-1 gap-3 sm:gap-4 mb-3 sm:mb-4">
             
-            {/* Sessões por Dispositivo */}
-            {sessionsByDeviceData && (
-              <div className="bg-white dark:bg-gray-100 rounded-lg shadow-md p-3 sm:p-4">
-                <div className="flex items-center justify-between mb-2 sm:mb-3">
-                  <h3 className="text-sm sm:text-base font-semibold flex items-center gap-2">
-                    <Monitor className="w-3 h-3 sm:w-4 sm:h-4 text-indigo-500 flex-shrink-0" />
-                    <span className="truncate">Sessões por Dispositivo</span>
-                  </h3>
-                  <div className="flex items-center gap-1 flex-shrink-0">
-                    <span className="w-1.5 h-1.5 inline-block bg-green-500 rounded-full animate-pulse"></span>
-                    <span className="text-xs text-gray-500">Tempo real</span>
-                  </div>
-                </div>
-                <div className="h-32 sm:h-40 flex items-center justify-center bg-gray-50 rounded-lg border-2 border-dashed border-gray-300">
-                  <div className="text-center px-2">
-                    <BarChart3 className="w-8 h-8 sm:w-12 sm:h-12 text-gray-400 mx-auto mb-2" />
-                    <p className="text-xs sm:text-sm text-gray-500">Sessões por Dispositivo</p>
-                    <p className="text-xs text-gray-400">Em manutenção</p>
-                  </div>
-                </div>
-                <div className="mt-2 sm:mt-3 grid grid-cols-2 sm:grid-cols-3 gap-2 sm:gap-3 text-center">
-                  {dashboardData && dashboardData.sessions?.sessionsByDevice && Object.keys(dashboardData.sessions.sessionsByDevice).length > 0 ?
-                    Object.entries(dashboardData.sessions.sessionsByDevice).map(([device, count], index) => {
-                      const colors = ['text-indigo-600', 'text-green-600', 'text-orange-600', 'text-purple-600'];
-                      const bgColors = ['bg-indigo-100', 'bg-green-100', 'bg-orange-100', 'bg-purple-100'];
-                      const icons = [Monitor, Smartphone, Tablet];
-                      const Icon = icons[index] || Monitor;
-                      const total = Object.values(dashboardData.sessions.sessionsByDevice || {}).reduce((a, b) => a + b, 0);
-                      const percentage = total > 0 ? Math.round((count / total) * 100) : 0;
-                      return (
-                        <div key={device} className="text-center p-1.5 sm:p-2 rounded-lg bg-gray-50 hover:shadow-sm transition-shadow">
-                          <div className={`w-6 h-6 sm:w-8 sm:h-8 mx-auto mb-1 rounded-full ${bgColors[index] || 'bg-gray-100'} flex items-center justify-center`}>
-                            <Icon className={`w-3 h-3 sm:w-4 sm:h-4 ${colors[index] || 'text-gray-600'}`} />
-                          </div>
-                          <p className={`text-xs sm:text-sm font-bold ${colors[index] || 'text-gray-600'}`}>
-                            {count.toLocaleString('pt-BR')}
-                          </p>
-                          <p className="text-xs font-medium text-gray-700 truncate">{device}</p>
-                          <p className="text-xs text-gray-500">{percentage}%</p>
-                        </div>
-                      );
-                    }) :
-                    // Fallback when no session data is available
-                    <div className="col-span-3 text-center py-4">
-                      <WifiOff className="w-8 h-8 text-gray-400 mx-auto mb-2" />
-                      <p className="text-sm text-gray-500">Nenhuma sessão ativa</p>
-                      <p className="text-xs text-gray-400">Aguardando dados...</p>
-                    </div>
-                  }
-                </div>
-              </div>
-            )}
 
         </div>
 
@@ -1312,14 +981,14 @@ function SystemAdminDashboardContent() {
             iconColor="bg-slate-500"
             actions={
               <div className="flex items-center gap-2">
-                <button 
-                  onClick={loadInstitutions}
+                <button
+                  onClick={() => {}}
                   className="text-xs text-gray-500 hover:text-gray-700 font-medium"
                   title="Atualizar dados"
                 >
                   <RefreshCw className="w-3 h-3" />
                 </button>
-                <button 
+                <button
                   onClick={() => router.push('/admin/institutions')}
                   className="text-xs text-primary hover:text-primary-dark font-medium"
                 >

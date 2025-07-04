@@ -19,42 +19,42 @@ export enum UserClassRole {
 @Entity('user_classes')
 export class UserClass {
   @PrimaryGeneratedColumn('uuid')
-  id: string;
+  id!: string;
 
   @Column()
-  user_id: string;
+  user_id!: string;
 
   @ManyToOne(() => User, user => user.userClasses)
   @JoinColumn({ name: 'user_id' })
-  user: User;
+  user!: User;
 
   @Column()
-  class_id: string;
+  class_id!: string;
 
   @ManyToOne(() => Class, classEntity => classEntity.userClasses)
   @JoinColumn({ name: 'class_id' })
-  class: Class;
+  class!: Class;
 
   @Column({
     type: 'enum',
     enum: UserClassRole
   })
-  role: UserClassRole;
+  role!: UserClassRole;
 
   @Column({ type: 'date', default: () => 'CURRENT_DATE' })
-  enrollment_date: Date;
+  enrollment_date!: Date;
 
   @Column({ type: 'date', nullable: true })
   exit_date?: Date;
 
   @Column({ default: true })
-  is_active: boolean;
+  is_active!: boolean;
 
   @CreateDateColumn()
-  created_at: Date;
+  created_at!: Date;
 
   @UpdateDateColumn()
-  updated_at: Date;
+  updated_at!: Date;
 
   // Propriedades computadas
   user_name?: string;

@@ -3,7 +3,7 @@ import { PaginationParams, PaginationResult } from '../types/common';
 
 export interface UserClassDto {
   id: string;
-  user_id: string;
+  user_id: number;
   class_id: string;
   role: UserClassRole;
   enrollment_date: Date;

@@ -1,7 +1,17 @@
 'use client'
 
 import React, { useState, useEffect, useCallback } from 'react'
-import debounce from 'lodash/debounce'
+import { useAuth } from '@/contexts/AuthContext'
+import { useToast } from '@/components/ToastManager'
+import { certificateService } from '@/mocks/certificateService'
+import { userService } from '@/mocks/userService'
+import { Certificate, CertificateFilters } from '@/types/certificate'
+import AuthenticatedLayout from '@/components/AuthenticatedLayout'
+import { CertificateFormModal } from '@/components/admin/CertificateFormModal'
+import { Badge } from '@/components/ui/Badge'
+import { Button } from '@/components/ui/Button'
+import { formatDate } from '@/utils/date'
+import { useRouter } from 'next/navigation'
 import {
   Award,
   Edit,
@@ -24,39 +34,6 @@ import {
   ChevronRight,
   Plus
 } from 'lucide-react'
-import { useAuth } from '@/contexts/AuthContext'
-import { formatDate } from '@/utils/date'
-import { useRouter } from 'next/navigation'
-import { useToast } from '@/components/ToastManager'
-import { Badge } from '@/components/ui/Badge'
-import AuthenticatedLayout from '@/components/AuthenticatedLayout'
-import { Button } from '@/components/ui/Button'
-import { CertificateFormModal } from '@/components/admin/CertificateFormModal'
-import {
-  Certificate,
-  CertificateFilters,
-  CertificateListResponse,
-  CERTIFICATE_STATUS_LABELS,
-  CERTIFICATE_STATUS_COLORS
-} from '@/types/certificate'
-import { UserRole } from '@/types/roles'
-
-// Interfaces para as colunas e ações da tabela
-interface CRUDColumn<T> {
-  key: keyof T | string
-  label: string
-  sortable?: boolean
-  render?: (value: any, record: T, index: number) => React.ReactNode
-  width?: string
-}
-
-interface CRUDAction<T> {
-  label: string
-  icon: React.ReactNode
-  onClick: (item: T) => void
-  variant?: string
-  className?: string
-}
 
 // Componente de notificação
 const Notification = ({ message, type, onClose }: { message: string; type: 'success' | 'error' | 'info'; onClose: () => void }) => {
@@ -336,7 +313,7 @@ export default function ManageCertificates() {
     }
 
     // Verificar se é SYSTEM_ADMIN ou se tem certificados
-    const isSystemAdmin = user.role === UserRole.SYSTEM_ADMIN
+    const isSystemAdmin = user.role === 'SYSTEM_ADMIN'
     if (!isSystemAdmin) {
       // TODO: Verificar se o usuário tem certificados
       // Por enquanto, permitir acesso para todos os usuários logados
@@ -354,34 +331,18 @@ export default function ManageCertificates() {
     if (showLoadingIndicator) setLoading(true);
 
     try {
-      const params = new URLSearchParams({
-        page: currentPage.toString(),
-        limit: itemsPerPage.toString(),
-        ...(filters.search && { search: filters.search }),
-        ...(filters.user_id && { user_id: filters.user_id.toString() }),
-        ...(filters.tv_show_id && { tv_show_id: filters.tv_show_id.toString() }),
-        ...(filters.score && { score: filters.score.toString() }),
-        ...(filters.document && { document: filters.document }),
-        ...(filters.license_code && { license_code: filters.license_code }),
-        ...(filters.tv_show_name && { tv_show_name: filters.tv_show_name }),
-        ...(filters.recreate !== undefined && { recreate: filters.recreate.toString() }),
-        ...(filters.sort_by && { sort_by: filters.sort_by }),
-        ...(filters.sort_order && { sort_order: filters.sort_order }),
+      const response = await certificateService.getCertificates({
+        page: currentPage,
+        limit: itemsPerPage,
+        search: searchTerm,
+        ...filters
       });
 
-      const response = await fetch(`/api/certificates?${params}`);
-      
-      if (!response.ok) {
-        throw new Error('Erro ao carregar certificados');
-      }
-
-      const data: CertificateListResponse = await response.json();
-
-      if (data.success) {
-        setCertificates(data.data);
-        if (data.pagination) {
-          setTotalPages(data.pagination.totalPages);
-          setTotalItems(data.pagination.total);
+      if (response.success && response.data) {
+        setCertificates(response.data);
+        if (response.pagination) {
+          setTotalPages(response.pagination.totalPages);
+          setTotalItems(response.pagination.total);
         }
       } else {
         throw new Error('Resposta inválida do servidor');
@@ -397,31 +358,32 @@ export default function ManageCertificates() {
       setLoading(false);
       setRefreshing(false);
     }
-  }, [currentPage, itemsPerPage, filters, showError]);
+  }, [currentPage, itemsPerPage, filters, searchTerm, showError]);
 
+  // Carregar dados quando os parâmetros mudarem
   useEffect(() => {
     loadCertificates();
+  }, [currentPage, itemsPerPage, filters, searchTerm]);
+
+  // Carregar usuários e TV shows apenas uma vez
+  useEffect(() => {
     loadUsersAndTvShows();
-  }, [loadCertificates]);
+  }, []);
 
   // Carregar usuários e TV shows para o formulário
   const loadUsersAndTvShows = async () => {
     try {
-      // Carregar usuários (simplificado - você pode ajustar conforme sua API)
-      const usersResponse = await fetch('/api/users?limit=1000');
-      if (usersResponse.ok) {
-        const usersData = await usersResponse.json();
-        if (usersData.success && usersData.data) {
-          setUsers(usersData.data.map((u: any) => ({
-            id: Number(u.id),
-            name: u.name || u.full_name,
-            email: u.email
-          })));
-        }
+      // Carregar usuários
+      const usersResponse = await userService.getUsers({ limit: 1000 });
+      if (usersResponse.items) {
+        setUsers(usersResponse.items.map(u => ({
+          id: Number(u.id),
+          name: u.full_name,
+          email: u.email
+        })));
       }
 
-      // Carregar TV Shows (você pode ajustar conforme sua API)
-      // Por enquanto, vamos usar dados mock ou uma API específica
+      // Mock de TV Shows por enquanto
       setTvShows([
         { id: 1, name: 'Programa Educativo 1' },
         { id: 2, name: 'Programa Educativo 2' },
@@ -435,7 +397,6 @@ export default function ManageCertificates() {
   // Função de busca
   const handleSearch = useCallback((query: string) => {
     setSearchTerm(query)
-    setFilters(prev => ({ ...prev, search: query }))
     setCurrentPage(1)
   }, [])
 
@@ -466,33 +427,17 @@ export default function ManageCertificates() {
   // Salvar certificado (criar ou editar)
   const handleSaveCertificate = async (formData: any) => {
     try {
-      const url = editingCertificate 
-        ? `/api/certificates/${editingCertificate.id}`
-        : '/api/certificates';
-      
-      const method = editingCertificate ? 'PUT' : 'POST';
-      
-      const response = await fetch(url, {
-        method,
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify(formData),
-      });
-
-      if (!response.ok) {
-        throw new Error('Erro ao salvar certificado');
-      }
-
-      const result = await response.json();
-      if (result.success) {
-        showSuccess(editingCertificate ? 'Certificado atualizado com sucesso!' : 'Certificado criado com sucesso!');
-        loadCertificates();
-        setShowCreateModal(false);
-        setEditingCertificate(null);
+      if (editingCertificate) {
+        await certificateService.updateCertificate(editingCertificate.id, formData);
+        showSuccess('Certificado atualizado com sucesso!');
       } else {
-        throw new Error(result.message || 'Erro ao salvar certificado');
+        await certificateService.createCertificate(formData);
+        showSuccess('Certificado criado com sucesso!');
       }
+      
+      loadCertificates();
+      setShowCreateModal(false);
+      setEditingCertificate(null);
     } catch (error: any) {
       console.log('Erro ao salvar certificado:', error);
       showError(error.message || 'Erro ao salvar certificado');
@@ -506,15 +451,9 @@ export default function ManageCertificates() {
     }
 
     try {
-      const response = await fetch(`/api/certificates/${certificate.id}`, {
-        method: 'DELETE',
-      });
-
-      if (!response.ok) {
-        throw new Error('Erro ao excluir certificado');
-      }
-
+      await certificateService.deleteCertificate(certificate.id);
       showSuccess('Certificado excluído com sucesso!')
+      setShowDetailsModal(false) // Fechar modal de detalhes
       loadCertificates()
     } catch (error: any) {
       console.log('Erro ao excluir certificado:', error)
@@ -522,25 +461,22 @@ export default function ManageCertificates() {
     }
   }
 
-  // Função para atualizar um filtro específico com debounce
-  const updateFilter = useCallback(
-    debounce((key: string, value: any) => {
-      setCurrentPage(1);
-      setFilters(prev => {
-        if (value === '' || value === undefined || value === null) {
-          const newFilters = { ...prev }
-          delete newFilters[key as keyof CertificateFilters]
-          return newFilters
-        }
-        
-        return {
-          ...prev,
-          [key]: value
-        };
-      })
-    }, 500),
-    []
-  )
+  // Função para atualizar um filtro específico
+  const updateFilter = useCallback((key: string, value: any) => {
+    setCurrentPage(1);
+    setFilters(prev => {
+      if (value === '' || value === undefined || value === null) {
+        const newFilters = { ...prev }
+        delete newFilters[key as keyof CertificateFilters]
+        return newFilters
+      }
+      
+      return {
+        ...prev,
+        [key]: value
+      };
+    })
+  }, [])
 
   // Limpar filtros
   const handleClearFilters = useCallback(() => {
@@ -548,11 +484,10 @@ export default function ManageCertificates() {
     setSearchTerm('')
     setCurrentPage(1)
     showSuccess('Filtros limpos com sucesso')
-    loadCertificates()
-  }, [loadCertificates, showSuccess])
+  }, [showSuccess])
 
   // Função para mudar de página
-  const handlePageChange = useCallback(async (page: number) => {
+  const handlePageChange = useCallback((page: number) => {
     setCurrentPage(page)
     window.scrollTo({ top: 0, behavior: 'smooth' });
   }, [])
@@ -576,13 +511,19 @@ export default function ManageCertificates() {
     }
   }
 
-  const columns: CRUDColumn<Certificate>[] = [
+  const columns: Array<{
+    key: keyof Certificate | string;
+    label: string;
+    sortable?: boolean;
+    width?: string;
+    render?: (value: any, certificate: Certificate, index: number) => React.ReactNode;
+  }> = [
     {
       key: 'document',
       label: 'Certificado',
       sortable: true,
       width: '300px',
-      render: (value, certificate, index) => {
+      render: (value, certificate) => {
         if (!certificate) return '-'
         return (
           <div className="flex items-center gap-3 min-w-0">
@@ -606,7 +547,7 @@ export default function ManageCertificates() {
       label: 'Beneficiário',
       sortable: false,
       width: '200px',
-      render: (value, certificate, index) => {
+      render: (value, certificate) => {
         if (!certificate?.user) return '-'
         return (
           <div className="flex items-center gap-2 min-w-0">
@@ -624,7 +565,7 @@ export default function ManageCertificates() {
       label: 'Pontuação',
       sortable: true,
       width: '120px',
-      render: (value, certificate, index) => {
+      render: (value, certificate) => {
         if (!certificate || certificate.score === null || certificate.score === undefined) return '-'
         return (
           <div className="flex items-center gap-1">
@@ -641,7 +582,7 @@ export default function ManageCertificates() {
       label: 'Criação',
       sortable: true,
       width: '120px',
-      render: (value, certificate, index) => {
+      render: (value, certificate) => {
         if (!certificate || !certificate.date_created) return '-'
         const date = new Date(certificate.date_created)
         const formattedDate = date.toLocaleDateString('pt-BR', {
@@ -663,15 +604,15 @@ export default function ManageCertificates() {
       key: 'recreate',
       label: 'Status',
       width: '120px',
-      render: (value, certificate, index) => {
+      render: (value, certificate) => {
         if (!certificate) return '-'
         const recreateStatus = certificate.recreate?.toString() || 'false'
         return (
           <div className={`inline-flex items-center gap-1 px-2 py-1 rounded-full text-xs font-semibold ${
-            CERTIFICATE_STATUS_COLORS[recreateStatus]
+            certificate.recreate ? 'bg-green-100 text-green-800' : 'bg-gray-100 text-gray-800'
           }`}>
             <div className={`h-2 w-2 rounded-full ${certificate.recreate ? 'bg-green-500' : 'bg-gray-500'} animate-pulse`}></div>
-            {CERTIFICATE_STATUS_LABELS[recreateStatus]}
+            {certificate.recreate ? 'Recriável' : 'Não Recriável'}
           </div>
         )
       }
@@ -679,7 +620,13 @@ export default function ManageCertificates() {
   ]
 
   // Definir ações personalizadas para o GenericCRUD
-  const customActions: CRUDAction<Certificate>[] = [
+  const customActions: Array<{
+    label: string;
+    icon: React.ReactNode;
+    onClick: (certificate: Certificate) => void;
+    variant?: string;
+    className?: string;
+  }> = [
     {
       label: 'Ver',
       icon: <Eye className="h-3 w-3" />,
@@ -806,101 +753,96 @@ export default function ManageCertificates() {
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
               {/* Filtro por Busca */}
               <div className="space-y-2 bg-white p-3 rounded-lg shadow-sm border border-purple-100">
-                <label className="flex items-center gap-2 text-sm font-semibold text-purple-700">
-                  <Search className="h-4 w-4 text-purple-500" />
-                  Buscar
-                </label>
-                <input
-                  type="text"
-                  value={filters.search || ''}
-                  onChange={(e) => updateFilter('search', e.target.value)}
-                  placeholder="Título, descrição ou código"
-                  className="w-full rounded-lg border border-purple-200 bg-white px-4 py-2.5 text-sm focus:border-purple-500 focus:ring-2 focus:ring-purple-500/20 transition-all"
-                />
+                <label className="text-sm font-medium text-slate-700">Buscar</label>
+                <div className="relative">
+                  <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-slate-400" />
+                  <input
+                    type="text"
+                    value={searchTerm}
+                    onChange={(e) => handleSearch(e.target.value)}
+                    placeholder="Buscar certificados..."
+                    className="w-full pl-10 pr-3 py-2 border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent text-sm"
+                  />
+                </div>
               </div>
 
-              {/* Filtro por Programa de TV */}
+              {/* Filtro por Status */}
               <div className="space-y-2 bg-white p-3 rounded-lg shadow-sm border border-purple-100">
-                <label className="flex items-center gap-2 text-sm font-semibold text-purple-700">
-                  <Award className="h-4 w-4 text-purple-500" />
-                  Programa de TV
-                </label>
-                <input
-                  type="text"
-                  value={filters.tv_show_name || ''}
-                  onChange={(e) => updateFilter('tv_show_name', e.target.value)}
-                  placeholder="Nome do programa"
-                  className="w-full rounded-lg border border-purple-200 bg-white px-4 py-2.5 text-sm focus:border-purple-500 focus:ring-2 focus:ring-purple-500/20 transition-all"
-                />
-              </div>
-
-              {/* Filtro por Status de Recriação */}
-              <div className="space-y-2 bg-white p-3 rounded-lg shadow-sm border border-purple-100">
-                <label className="flex items-center gap-2 text-sm font-semibold text-purple-700">
-                  <CheckCircle className="h-4 w-4 text-purple-500" />
-                  Status de Recriação
-                </label>
+                <label className="text-sm font-medium text-slate-700">Status</label>
                 <select
-                  value={filters.recreate !== undefined ? filters.recreate.toString() : ''}
+                  value={filters.recreate?.toString() || ''}
                   onChange={(e) => updateFilter('recreate', e.target.value === '' ? undefined : e.target.value === 'true')}
-                  className="w-full rounded-lg border border-purple-200 bg-white px-4 py-2.5 text-sm focus:border-purple-500 focus:ring-2 focus:ring-purple-500/20 transition-all"
+                  className="w-full px-3 py-2 border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent text-sm"
                 >
-                  <option value="">Todos os status</option>
+                  <option value="">Todos</option>
                   <option value="true">Recriável</option>
                   <option value="false">Não Recriável</option>
                 </select>
               </div>
 
-              {/* Filtro por Ordenação */}
+              {/* Filtro por Programa */}
               <div className="space-y-2 bg-white p-3 rounded-lg shadow-sm border border-purple-100">
-                <label className="flex items-center gap-2 text-sm font-semibold text-purple-700">
-                  <Calendar className="h-4 w-4 text-purple-500" />
-                  Ordenar por
-                </label>
+                <label className="text-sm font-medium text-slate-700">Programa</label>
                 <select
-                  value={filters.sort_by || ''}
-                  onChange={(e) => updateFilter('sort_by', e.target.value)}
-                  className="w-full rounded-lg border border-purple-200 bg-white px-4 py-2.5 text-sm focus:border-purple-500 focus:ring-2 focus:ring-purple-500/20 transition-all"
+                  value={filters.tv_show_name || ''}
+                  onChange={(e) => updateFilter('tv_show_name', e.target.value)}
+                  className="w-full px-3 py-2 border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent text-sm"
                 >
-                  <option value="">Padrão</option>
-                  <option value="tv_show_name">Nome do Programa</option>
-                  <option value="date_created">Data de Criação</option>
-                  <option value="last_updated">Última Atualização</option>
-                  <option value="score">Pontuação</option>
+                  <option value="">Todos os programas</option>
+                  {tvShows.map(show => (
+                    <option key={show.id} value={show.name}>{show.name}</option>
+                  ))}
+                </select>
+              </div>
+
+              {/* Filtro por Itens por Página */}
+              <div className="space-y-2 bg-white p-3 rounded-lg shadow-sm border border-purple-100">
+                <label className="text-sm font-medium text-slate-700">Itens por página</label>
+                <select
+                  value={itemsPerPage}
+                  onChange={(e) => {
+                    setItemsPerPage(Number(e.target.value))
+                    setCurrentPage(1)
+                  }}
+                  className="w-full px-3 py-2 border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent text-sm"
+                >
+                  <option value="10">10</option>
+                  <option value="25">25</option>
+                  <option value="50">50</option>
+                  <option value="100">100</option>
                 </select>
               </div>
             </div>
           </div>
         )}
 
-        {/* Lista de certificados */}
-        <div className="bg-white rounded-lg shadow-md border border-slate-200">
-          {loading ? (
-            <div className="flex items-center justify-center py-16">
-              <div className="flex items-center gap-3">
-                <RefreshCw className="h-6 w-6 animate-spin text-purple-500" />
-                <span className="text-lg text-slate-600">Carregando certificados...</span>
-              </div>
-            </div>
-          ) : certificates.length === 0 ? (
-            <EmptyState onClearFilters={handleClearFilters} hasFilters={hasActiveFilters()} />
-          ) : (
-            <>
-              {/* Tabela de certificados */}
+        {/* Tabela de certificados */}
+        {loading ? (
+          <div className="flex justify-center items-center py-12">
+            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-purple-600"></div>
+          </div>
+        ) : certificates.length === 0 ? (
+          <EmptyState
+            onClearFilters={handleClearFilters}
+            hasFilters={hasActiveFilters()}
+          />
+        ) : (
+          <>
+            <div className="bg-white rounded-lg shadow-md overflow-hidden">
               <div className="overflow-x-auto">
                 <table className="w-full">
                   <thead className="bg-slate-50 border-b border-slate-200">
                     <tr>
                       {columns.map((column) => (
                         <th
-                          key={column.key as string}
+                          key={column.key}
                           className="px-6 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider"
                           style={{ width: column.width }}
                         >
                           {column.label}
                         </th>
                       ))}
-                      <th className="px-6 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider w-32">
+                      <th className="px-6 py-3 text-right text-xs font-medium text-slate-500 uppercase tracking-wider">
                         Ações
                       </th>
                     </tr>
@@ -909,22 +851,31 @@ export default function ManageCertificates() {
                     {certificates.map((certificate, index) => (
                       <tr key={certificate.id} className="hover:bg-slate-50 transition-colors">
                         {columns.map((column) => (
-                          <td key={column.key as string} className="px-6 py-4 whitespace-nowrap">
-                            {column.render ? column.render(certificate[column.key as keyof Certificate], certificate, index) : String(certificate[column.key as keyof Certificate] || '-')}
+                          <td key={column.key} className="px-6 py-4 whitespace-nowrap">
+                            {column.render ? column.render(certificate[column.key as keyof Certificate], certificate, index) : String(certificate[column.key as keyof Certificate] || '')}
                           </td>
                         ))}
-                        <td className="px-6 py-4 whitespace-nowrap">
-                          <div className="flex items-center gap-1">
+                        <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
+                          <div className="flex justify-end gap-1">
                             {customActions.map((action, actionIndex) => (
                               <button
                                 key={actionIndex}
                                 onClick={() => action.onClick(certificate)}
-                                className={`p-1 rounded hover:bg-slate-100 transition-colors ${action.className || ''}`}
+                                className={action.className}
                                 title={action.label}
                               >
                                 {action.icon}
+                                <span className="ml-1">{action.label}</span>
                               </button>
                             ))}
+                            <button
+                              onClick={() => handleDeleteCertificate(certificate)}
+                              className="text-red-600 hover:text-red-800 hover:bg-red-50 px-2 py-1 text-xs rounded"
+                              title="Excluir"
+                            >
+                              <Trash2 className="h-3 w-3" />
+                              <span className="ml-1">Excluir</span>
+                            </button>
                           </div>
                         </td>
                       </tr>
@@ -932,15 +883,16 @@ export default function ManageCertificates() {
                   </tbody>
                 </table>
               </div>
-              
-              <Pagination
-                currentPage={currentPage}
-                totalPages={totalPages}
-                onPageChange={handlePageChange}
-              />
-            </>
-          )}
-        </div>
+            </div>
+
+            {/* Paginação */}
+            <Pagination
+              currentPage={currentPage}
+              totalPages={totalPages}
+              onPageChange={handlePageChange}
+            />
+          </>
+        )}
 
         {/* Modal de detalhes */}
         {showDetailsModal && (
@@ -956,17 +908,19 @@ export default function ManageCertificates() {
         )}
 
         {/* Modal de criação/edição */}
-        <CertificateFormModal
-          certificate={editingCertificate}
-          isOpen={showCreateModal}
-          onClose={() => {
-            setShowCreateModal(false)
-            setEditingCertificate(null)
-          }}
-          onSave={handleSaveCertificate}
-          users={users}
-          tvShows={tvShows}
-        />
+        {showCreateModal && (
+          <CertificateFormModal
+            isOpen={showCreateModal}
+            certificate={editingCertificate}
+            users={users}
+            tvShows={tvShows}
+            onSave={handleSaveCertificate}
+            onClose={() => {
+              setShowCreateModal(false)
+              setEditingCertificate(null)
+            }}
+          />
+        )}
       </div>
     </AuthenticatedLayout>
   )

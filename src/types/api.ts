@@ -24,30 +24,57 @@ export interface PaginationParams {
 
 // DTOs de usuário que correspondem ao backend
 export interface CreateUserDto {
-  name: any;
-  full_name: string;
   email: string;
-  password: string;
-  role_id: string;
-  institution_id: string;
-  endereco?: string;
-  telefone?: string;
-  cpf?: string;
-  birth_date?: string;
-  is_active?: boolean;
+  full_name: string;
+  password?: string;
+  username?: string;
+  institution_id?: string | null;
+  role_id?: string;
+  
+  // Campos booleanos com valores padrão
+  account_expired?: boolean;
+  account_locked?: boolean;
+  enabled?: boolean;
+  is_admin?: boolean;
+  is_manager?: boolean;
+  is_student?: boolean;
+  is_teacher?: boolean;
+  
+  // Campos opcionais
+  address?: string;
+  phone?: string;
+  language?: string;
+  type?: number;
 }
 
 export interface UpdateUserDto {
   full_name?: string;
   email?: string;
   password?: string;
+  username?: string;
+  institution_id?: string | null;
   role_id?: string;
-  institution_id?: string;
-  endereco?: string;
-  telefone?: string;
-  cpf?: string;
-  birth_date?: string;
-  is_active?: boolean;
+  
+  account_expired?: boolean;
+  account_locked?: boolean;
+  enabled?: boolean;
+  is_admin?: boolean;
+  is_manager?: boolean;
+  is_student?: boolean;
+  is_teacher?: boolean;
+  
+  address?: string;
+  phone?: string;
+  language?: string;
+  type?: number;
+  
+  // Campos de certificado
+  certificate_path?: string;
+  is_certified?: boolean;
+  
+  // Campos de matéria
+  subject?: string;
+  subject_data_id?: string | null;
 }
 
 export interface UpdateProfileDto {
@@ -64,23 +91,52 @@ export interface ChangePasswordDto {
 }
 
 export interface UserResponseDto {
-  name: any | string;
-  id: string;
+  id: number; // ou number, dependendo do backend
+  version?: number;
+  uuid?: string;
+  
+  // Informações principais
   full_name: string;
   email: string;
-  role_id: string;
-  institution_id: string;
-  endereco?: string;
-  telefone?: string;
-  school_id?: string;
-  cpf?: string;
-  birth_date?: string;
-  is_active: boolean;
-  created_at: string;
-  updated_at: string;
-  role_name?: string;
-  institution_name?: string;
-  school_name?: string;
+  username?: string;
+  
+  // Status da conta
+  account_expired?: boolean;
+  account_locked?: boolean;
+  enabled?: boolean;
+  password_expired?: boolean;
+  
+  // Detalhes de contato
+  address?: string;
+  phone?: string;
+  
+  // Configurações e permissões
+  language?: string;
+  is_admin: boolean;
+  is_manager: boolean;
+  is_student: boolean;
+  is_teacher: boolean;
+  type?: number;
+  
+  // Relacionamentos
+  institution_id?: string | null;
+  role_id?: string;
+  subject_data_id?: string | null;
+  
+  // Datas
+  date_created?: string;
+  last_updated?: string;
+  
+  // Certificado
+  certificate_path?: string;
+  is_certified?: boolean;
+  
+  // Outros
+  amount_of_media_entries?: number;
+  invitation_sent?: boolean;
+  pause_video_on_click?: boolean;
+  reset_password?: boolean;
+  subject?: string;
 }
 
 export interface UserWithRoleDto extends UserResponseDto {
@@ -128,112 +184,109 @@ export interface AuthResponseDto {
 }
 
 // DTOs de Role
-export interface RoleDto {
-  id: string;
+export interface RoleResponseDto {
+  id: number;
   name: string;
-  description?: string;
-  permissions?: string[];
+  description: string;
+  active: boolean;
+  users_count: number;
   created_at: string;
   updated_at: string;
-}
-
-export interface RoleResponseDto extends RoleDto {
   status: string;
-  active?: boolean;
-  users_count?: number;
 }
 
-export interface CreateRoleDto {
+export interface RoleCreateDto {
   name: string;
-  description?: string;
-  permissions?: string[];
-  active?: boolean;
+  description: string;
+  active: boolean;
 }
 
-export interface UpdateRoleDto {
+export interface RoleUpdateDto {
   name?: string;
   description?: string;
-  permissions?: string[];
   active?: boolean;
 }
-
-export interface RoleCreateDto extends CreateRoleDto {}
-export interface RoleUpdateDto extends UpdateRoleDto {}
 
 // DTOs de Institution
-export interface InstitutionDto {
-  id: string;
+export interface InstitutionResponseDto {
+  id: number;
+  version?: number;
+  accountable_contact: string;
+  accountable_name: string;
+  company_name: string;
+  complement?: string;
+  contract_disabled: boolean;
+  contract_invoice_num?: string;
+  contract_num?: number;
+  contract_term_end: string;
+  contract_term_start: string;
+  date_created?: string;
+  deleted: boolean;
+  district: string;
+  document: string;
+  invoice_date?: string;
+  last_updated?: string;
   name: string;
-  code?: string;
-  cnpj?: string;
-  description?: string;
-  address?: string | {
-    street?: string;
-    number?: string;
-    complement?: string;
-    neighborhood?: string;
-    city?: string;
-    state?: string;
-    zipCode?: string;
-  };
-  phone?: string;
-  email?: string;
-  website?: string;
-  logo?: string;
-  type?: 'SCHOOL' | 'COLLEGE' | 'UNIVERSITY' | 'TECH_CENTER';
-  created_at: string;
-  updated_at: string;
-  created_by?: string;
-}
-
-export interface InstitutionResponseDto extends InstitutionDto {
-  active?: boolean;
-  users_count?: number;
-  courses_count?: number;
-  schools_count?: number;
-  settings?: {
-    allowStudentRegistration?: boolean;
-    requireEmailVerification?: boolean;
-    maxSchools?: number;
-    maxUsersPerSchool?: number;
-  };
-  schools?: any[];
-  // Campos adicionais da tabela institution
-  city?: string;
-  state?: string;
-  zip_code?: string;
-  status?: 'active' | 'inactive';
-  logo_url?: string;
+  postal_code: string;
+  state: string;
+  street: string;
+  score?: number;
+  has_library_platform: boolean;
+  has_principal_platform: boolean;
+  has_student_platform: boolean;
 }
 
 export interface CreateInstitutionDto {
+  accountable_contact: string;
+  accountable_name: string;
+  company_name: string;
+  contract_disabled: boolean;
+  contract_term_end: string;
+  contract_term_start: string;
+  deleted: boolean;
+  district: string;
+  document: string;
   name: string;
-  code: string;
-  description?: string;
-  address?: string;
-  phone?: string;
-  email?: string;
-  active?: boolean;
-  type?: 'SCHOOL' | 'COLLEGE' | 'UNIVERSITY' | 'TECH_CENTER';
+  postal_code: string;
+  state: string;
+  street: string;
+  has_library_platform: boolean;
+  has_principal_platform: boolean;
+  has_student_platform: boolean;
+  complement?: string;
+  contract_invoice_num?: string;
+  contract_num?: number;
+  invoice_date?: string;
+  score?: number;
 }
 
 export interface UpdateInstitutionDto {
+  accountable_contact?: string;
+  accountable_name?: string;
+  company_name?: string;
+  contract_disabled?: boolean;
+  contract_term_end?: string;
+  contract_term_start?: string;
+  deleted?: boolean;
+  district?: string;
+  document?: string;
   name?: string;
-  code?: string;
-  description?: string;
-  address?: string;
-  phone?: string;
-  email?: string;
-  active?: boolean;
-  type?: 'SCHOOL' | 'COLLEGE' | 'UNIVERSITY' | 'TECH_CENTER';
+  postal_code?: string;
+  state?: string;
+  street?: string;
+  has_library_platform?: boolean;
+  has_principal_platform?: boolean;
+  has_student_platform?: boolean;
+  complement?: string;
+  contract_invoice_num?: string;
+  contract_num?: number;
+  invoice_date?: string;
+  score?: number;
 }
-
-export interface InstitutionCreateDto extends CreateInstitutionDto {}
-export interface InstitutionUpdateDto extends UpdateInstitutionDto {}
 
 // DTOs de Course
 export interface CourseDto {
-  id: string;
+  id: number;
   name: string;
   description?: string;
   institution_id: string;
@@ -261,7 +314,7 @@ export interface UpdateCourseDto {
 }
 
 export interface CourseResponseDto {
-  id: string;
+  id: number;
   name: string;
   description: string;
   level: string;
@@ -271,15 +324,15 @@ export interface CourseResponseDto {
   created_at: string;
   updated_at: string;
   institution?: {
-    id: string;
+    id: number;
     name: string;
   };
   teachers?: {
-    id: string;
+    id: number;
     name: string;
   }[];
   students?: {
-    id: string;
+    id: number;
     name: string;
   }[];
 }
@@ -327,6 +380,14 @@ export interface RoleFilterDto extends BaseFilterDto {
 }
 
 // Tipos de resposta de lista
+export interface PaginatedResponse<T> {
+  items: T[];
+  total: number;
+  page: number;
+  limit: number;
+  totalPages: number;
+}
+
 export interface ListResponse<T> {
   items: T[];
   pagination: PaginationResult;
@@ -402,7 +463,7 @@ export interface NotificationStatsDto {
 }
 
 export interface UnitResponseDto {
-  id: string;
+  id: number;
   name: string;
   description: string;
   type: string;
@@ -430,7 +491,7 @@ export interface UnitUpdateDto {
 }
 
 export interface ClassResponseDto {
-  id: string;
+  id: number;
   name: string;
   description: string;
   status: string;
@@ -440,15 +501,15 @@ export interface ClassResponseDto {
   created_at: string;
   updated_at: string;
   course?: {
-    id: string;
+    id: number;
     name: string;
   };
   teacher?: {
-    id: string;
+    id: number;
     name: string;
   };
   students?: {
-    id: string;
+    id: number;
     name: string;
   }[];
 }
@@ -473,7 +534,7 @@ export interface ClassUpdateDto {
 
 // Book DTOs
 export interface BookResponseDto {
-  id: string;
+  id: number;
   name: string;
   subtitle?: string;
   author: string;
@@ -506,4 +567,962 @@ export interface BookUpdateDto {
   pages?: number;
   cover_url?: string;
   published_date?: string;
+}
+
+// DTOs de Certificado
+export interface CertificateResponseDto {
+  id: number;
+  version?: number;
+  date_created: string;
+  last_updated?: string;
+  path?: string;
+  score?: number;
+  tv_show_id?: string | null;
+  user_id?: string | null;
+  document?: string;
+  license_code?: string;
+  tv_show_name?: string;
+  recreate?: boolean;
+}
+
+export interface CreateCertificateDto {
+  date_created: string;
+  path?: string;
+  score?: number;
+  tv_show_id?: string | null;
+  user_id?: string | null;
+  document?: string;
+  license_code?: string;
+  tv_show_name?: string;
+  recreate?: boolean;
+}
+
+export interface UpdateCertificateDto {
+  date_created?: string;
+  last_updated?: string;
+  path?: string;
+  score?: number;
+  tv_show_id?: string | null;
+  user_id?: string | null;
+  document?: string;
+  license_code?: string;
+  tv_show_name?: string;
+  recreate?: boolean;
+}
+
+// DTOs de Unidade
+export interface UnitResponseDto {
+  id: number;
+  version?: number;
+  date_created?: string;
+  deleted?: boolean;
+  institution_id: string;
+  last_updated?: string;
+  name: string;
+  institution_name?: string;
+}
+
+export interface CreateUnitDto {
+  name: string;
+  institution_id: string;
+  institution_name?: string;
+  deleted?: boolean;
+  date_created?: string;
+}
+
+export interface UpdateUnitDto {
+  name?: string;
+  institution_id?: string;
+  institution_name?: string;
+  deleted?: boolean;
+  last_updated?: string;
+}
+
+// DTOs de Autor
+export interface AuthorResponseDto {
+  id: number;
+  version?: number;
+  description: string;
+  email?: string;
+  is_active?: boolean;
+  name: string;
+}
+
+export interface CreateAuthorDto {
+  description: string;
+  name: string;
+  email?: string;
+  is_active?: boolean;
+}
+
+export interface UpdateAuthorDto {
+  description?: string;
+  name?: string;
+  email?: string;
+  is_active?: boolean;
+}
+
+// DTOs de CookieSigned
+export interface CookieSignedResponseDto {
+  id: number;
+  cookie?: string;
+}
+
+export interface CreateCookieSignedDto {
+  cookie?: string;
+}
+
+export interface UpdateCookieSignedDto {
+  cookie?: string;
+}
+
+// DTOs de EducationPeriod
+export interface EducationPeriodResponseDto {
+  id: number;
+  version?: number;
+  description: string;
+  is_active?: boolean;
+}
+
+export interface CreateEducationPeriodDto {
+  description: string;
+  is_active?: boolean;
+}
+
+export interface UpdateEducationPeriodDto {
+  description?: string;
+  is_active?: boolean;
+}
+
+// DTOs de EducationalStage
+export interface EducationalStageResponseDto {
+  id: number;
+  version?: number;
+  date_created?: string;
+  deleted: boolean;
+  grade_1?: boolean;
+  grade_2?: boolean;
+  grade_3?: boolean;
+  grade_4?: boolean;
+  grade_5?: boolean;
+  grade_6?: boolean;
+  grade_7?: boolean;
+  grade_8?: boolean;
+  grade_9?: boolean;
+  last_updated?: string;
+  name: string;
+  uuid?: string;
+}
+
+export interface CreateEducationalStageDto {
+  deleted: boolean;
+  name: string;
+  date_created?: string;
+  grade_1?: boolean;
+  grade_2?: boolean;
+  grade_3?: boolean;
+  grade_4?: boolean;
+  grade_5?: boolean;
+  grade_6?: boolean;
+  grade_7?: boolean;
+  grade_8?: boolean;
+  grade_9?: boolean;
+  uuid?: string;
+}
+
+export interface UpdateEducationalStageDto {
+  deleted?: boolean;
+  name?: string;
+  last_updated?: string;
+  grade_1?: boolean;
+  grade_2?: boolean;
+  grade_3?: boolean;
+  grade_4?: boolean;
+  grade_5?: boolean;
+  grade_6?: boolean;
+  grade_7?: boolean;
+  grade_8?: boolean;
+  grade_9?: boolean;
+  uuid?: string;
+}
+
+// DTOs de File
+export interface FileResponseDto {
+  id: number;
+  version?: number;
+  content_type?: string;
+  date_created: string;
+  extension?: string;
+  external_link?: string;
+  is_default?: boolean;
+  is_public?: boolean;
+  label?: string;
+  last_updated: string;
+  local_file?: string;
+  name?: string;
+  original_filename?: string;
+  quality?: string;
+  sha256hex?: string;
+  size?: number;
+  subtitle_label?: string;
+  subtitle_src_lang?: string;
+  is_subtitled?: boolean;
+}
+
+export interface CreateFileDto {
+  date_created: string;
+  last_updated: string;
+  content_type?: string;
+  extension?: string;
+  external_link?: string;
+  is_default?: boolean;
+  is_public?: boolean;
+  label?: string;
+  local_file?: string;
+  name?: string;
+  original_filename?: string;
+  quality?: string;
+  sha256hex?: string;
+  size?: number;
+  subtitle_label?: string;
+  subtitle_src_lang?: string;
+  is_subtitled?: boolean;
+}
+
+export interface UpdateFileDto {
+  last_updated: string;
+  content_type?: string;
+  extension?: string;
+  external_link?: string;
+  is_default?: boolean;
+  is_public?: boolean;
+  label?: string;
+  local_file?: string;
+  name?: string;
+  original_filename?: string;
+  quality?: string;
+  sha256hex?: string;
+  size?: number;
+  subtitle_label?: string;
+  subtitle_src_lang?: string;
+  is_subtitled?: boolean;
+}
+
+// DTOs de ForgotPassword
+export interface ForgotPasswordResponseDto {
+  id: number;
+  version?: number;
+  email?: string;
+}
+
+export interface CreateForgotPasswordDto {
+  email?: string;
+}
+
+export interface UpdateForgotPasswordDto {
+  email?: string;
+}
+
+// DTOs de Genre
+export interface GenreResponseDto {
+  id: number;
+  version?: number;
+  api_id: number;
+  name: string;
+}
+
+export interface CreateGenreDto {
+  api_id: number;
+  name: string;
+}
+
+export interface UpdateGenreDto {
+  api_id?: number;
+  name?: string;
+}
+
+// DTOs de Public
+export interface PublicResponseDto {
+  id: number;
+  version?: number;
+  api_id: number;
+  name: string;
+}
+
+export interface CreatePublicDto {
+  api_id: number;
+  name: string;
+}
+
+export interface UpdatePublicDto {
+  api_id?: number;
+  name?: string;
+}
+
+// DTOs de Settings
+export interface SettingsResponseDto {
+  id: number;
+  version?: number;
+  default_value?: string;
+  description?: string;
+  name?: string;
+  required?: boolean;
+  settings_key: string;
+  settings_type?: string;
+  validation_required?: boolean;
+  value?: string;
+}
+
+export interface CreateSettingsDto {
+  settings_key: string;
+  default_value?: string;
+  description?: string;
+  name?: string;
+  required?: boolean;
+  settings_type?: string;
+  validation_required?: boolean;
+  value?: string;
+}
+
+export interface UpdateSettingsDto {
+  settings_key?: string;
+  default_value?: string;
+  description?: string;
+  name?: string;
+  required?: boolean;
+  settings_type?: string;
+  validation_required?: boolean;
+  value?: string;
+}
+
+// DTOs de Tag
+export interface TagResponseDto {
+  id: number;
+  version?: number;
+  date_created: string;
+  deleted?: boolean;
+  last_updated: string;
+  name?: string;
+}
+
+export interface CreateTagDto {
+  date_created: string;
+  last_updated: string;
+  deleted?: boolean;
+  name?: string;
+}
+
+export interface UpdateTagDto {
+  last_updated: string;
+  deleted?: boolean;
+  name?: string;
+}
+
+// DTOs de TargetAudience
+export interface TargetAudienceResponseDto {
+  id: number;
+  version?: number;
+  description: string;
+  is_active?: boolean;
+  name: string;
+}
+
+export interface CreateTargetAudienceDto {
+  description: string;
+  name: string;
+  is_active?: boolean;
+}
+
+export interface UpdateTargetAudienceDto {
+  description?: string;
+  name?: string;
+  is_active?: boolean;
+}
+
+// DTOs de TeacherSubject
+export interface TeacherSubjectResponseDto {
+  id: number;
+  version?: number;
+  is_child?: boolean;
+  is_deleted?: boolean;
+  name?: string;
+  uuid?: string;
+}
+
+export interface CreateTeacherSubjectDto {
+  is_child?: boolean;
+  is_deleted?: boolean;
+  name?: string;
+  uuid?: string;
+}
+
+export interface UpdateTeacherSubjectDto {
+  is_child?: boolean;
+  is_deleted?: boolean;
+  name?: string;
+  uuid?: string;
+}
+
+// DTOs de Theme
+export interface ThemeResponseDto {
+  id: number;
+  version?: number;
+  description: string;
+  is_active?: boolean;
+  name: string;
+}
+
+export interface CreateThemeDto {
+  description: string;
+  name: string;
+  is_active?: boolean;
+}
+
+export interface UpdateThemeDto {
+  description?: string;
+  name?: string;
+  is_active?: boolean;
+}
+
+// DTOs de TvShow
+export interface TvShowResponseDto {
+  id: number;
+  version?: number;
+  api_id?: string;
+  backdrop_image_id?: string | null;
+  backdrop_path?: string;
+  contract_term_end: string;
+  date_created: string;
+  deleted?: boolean;
+  first_air_date: string;
+  imdb_id?: string;
+  last_updated: string;
+  manual_input?: boolean;
+  manual_support_id?: string | null;
+  manual_support_path?: string;
+  name: string;
+  original_language?: string;
+  overview?: string;
+  popularity?: number;
+  poster_image_id?: string | null;
+  poster_path?: string;
+  producer?: string;
+  vote_average?: number;
+  vote_count?: number;
+  total_load?: string;
+}
+
+export interface CreateTvShowDto {
+  contract_term_end: string;
+  date_created: string;
+  first_air_date: string;
+  last_updated: string;
+  name: string;
+  api_id?: string;
+  backdrop_image_id?: string | null;
+  backdrop_path?: string;
+  deleted?: boolean;
+  imdb_id?: string;
+  manual_input?: boolean;
+  manual_support_id?: string | null;
+  manual_support_path?: string;
+  original_language?: string;
+  overview?: string;
+  popularity?: number;
+  poster_image_id?: string | null;
+  poster_path?: string;
+  producer?: string;
+  vote_average?: number;
+  vote_count?: number;
+  total_load?: string;
+}
+
+export interface UpdateTvShowDto {
+  last_updated: string;
+  contract_term_end?: string;
+  first_air_date?: string;
+  name?: string;
+  api_id?: string;
+  backdrop_image_id?: string | null;
+  backdrop_path?: string;
+  deleted?: boolean;
+  imdb_id?: string;
+  manual_input?: boolean;
+  manual_support_id?: string | null;
+  manual_support_path?: string;
+  original_language?: string;
+  overview?: string;
+  popularity?: number;
+  poster_image_id?: string | null;
+  poster_path?: string;
+  producer?: string;
+  vote_average?: number;
+  vote_count?: number;
+  total_load?: string;
+}
+
+// DTOs de UnitClass
+export interface UnitClassResponseDto {
+  id: number;
+  version?: number;
+  date_created?: string;
+  deleted: boolean;
+  institution_id: string;
+  last_updated?: string;
+  name: string;
+  unit_id: string;
+  institution_name?: string;
+  unit_name?: string;
+}
+
+export interface CreateUnitClassDto {
+  deleted: boolean;
+  institution_id: string;
+  name: string;
+  unit_id: string;
+  date_created?: string;
+  institution_name?: string;
+  unit_name?: string;
+}
+
+export interface UpdateUnitClassDto {
+  deleted?: boolean;
+  institution_id?: string;
+  name?: string;
+  unit_id?: string;
+  last_updated?: string;
+  institution_name?: string;
+  unit_name?: string;
+}
+
+// DTOs de Video
+export interface VideoResponseDto {
+  id: number;
+  version?: number;
+  api_id?: string;
+  date_created?: string;
+  deleted?: boolean;
+  imdb_id?: string;
+  intro_end?: number;
+  intro_start?: number;
+  last_updated?: string;
+  original_language?: string;
+  outro_start?: number;
+  overview?: string;
+  popularity?: number;
+  report_count?: number;
+  vote_average?: number;
+  vote_count?: number;
+  class: string;
+  backdrop_path?: string;
+  poster_image_id?: string | null;
+  poster_path?: string;
+  release_date?: string;
+  title?: string;
+  trailer_key?: string;
+  backdrop_image_id?: string | null;
+  air_date?: string;
+  episode_string?: string;
+  episode_number?: number;
+  name?: string;
+  season_episode_merged?: number;
+  season_number?: number;
+  show_id?: string | null;
+  still_image_id?: string | null;
+  still_path?: string;
+  duration?: string;
+}
+
+export interface CreateVideoDto {
+  class: string;
+  api_id?: string;
+  date_created?: string;
+  deleted?: boolean;
+  imdb_id?: string;
+  intro_end?: number;
+  intro_start?: number;
+  last_updated?: string;
+  original_language?: string;
+  outro_start?: number;
+  overview?: string;
+  popularity?: number;
+  report_count?: number;
+  vote_average?: number;
+  vote_count?: number;
+  backdrop_path?: string;
+  poster_image_id?: string | null;
+  poster_path?: string;
+  release_date?: string;
+  title?: string;
+  trailer_key?: string;
+  backdrop_image_id?: string | null;
+  air_date?: string;
+  episode_string?: string;
+  episode_number?: number;
+  name?: string;
+  season_episode_merged?: number;
+  season_number?: number;
+  show_id?: string | null;
+  still_image_id?: string | null;
+  still_path?: string;
+  duration?: string;
+}
+
+export interface UpdateVideoDto {
+  class?: string;
+  api_id?: string;
+  last_updated?: string;
+  deleted?: boolean;
+  imdb_id?: string;
+  intro_end?: number;
+  intro_start?: number;
+  original_language?: string;
+  outro_start?: number;
+  overview?: string;
+  popularity?: number;
+  report_count?: number;
+  vote_average?: number;
+  vote_count?: number;
+  backdrop_path?: string;
+  poster_image_id?: string | null;
+  poster_path?: string;
+  release_date?: string;
+  title?: string;
+  trailer_key?: string;
+  backdrop_image_id?: string | null;
+  air_date?: string;
+  episode_string?: string;
+  episode_number?: number;
+  name?: string;
+  season_episode_merged?: number;
+  season_number?: number;
+  show_id?: string | null;
+  still_image_id?: string | null;
+  still_path?: string;
+  duration?: string;
+}
+
+// DTOs de NotificationQueue
+export interface NotificationQueueResponseDto {
+  id: number;
+  version?: number;
+  date_created: string;
+  description?: string;
+  is_completed?: boolean;
+  last_updated: string;
+  movie_id?: string | null;
+  tv_show_id?: string | null;
+  type?: string;
+  video_to_play_id?: string | null;
+}
+
+export interface CreateNotificationQueueDto {
+  date_created: string;
+  last_updated: string;
+  description?: string;
+  is_completed?: boolean;
+  movie_id?: string | null;
+  tv_show_id?: string | null;
+  type?: string;
+  video_to_play_id?: string | null;
+}
+
+export interface UpdateNotificationQueueDto {
+  last_updated: string;
+  description?: string;
+  is_completed?: boolean;
+  movie_id?: string | null;
+  tv_show_id?: string | null;
+  type?: string;
+  video_to_play_id?: string | null;
+}
+
+// DTOs de Profile
+export interface ProfileResponseDto {
+  id: number;
+  version?: number;
+  avatar_color?: string;
+  is_child?: boolean;
+  is_deleted?: boolean;
+  profile_language?: string;
+  profile_name?: string;
+  user_id?: string | null;
+}
+
+export interface CreateProfileDto {
+  avatar_color?: string;
+  is_child?: boolean;
+  is_deleted?: boolean;
+  profile_language?: string;
+  profile_name?: string;
+  user_id?: string | null;
+}
+
+export interface UpdateProfileDto {
+  avatar_color?: string;
+  is_child?: boolean;
+  is_deleted?: boolean;
+  profile_language?: string;
+  profile_name?: string;
+  user_id?: string | null;
+}
+
+// DTOs de Question
+export interface QuestionResponseDto {
+  id: number;
+  version?: number;
+  date_created: string;
+  deleted?: boolean;
+  file_id?: string | null;
+  last_updated?: string;
+  test?: string;
+  tv_show_id?: string | null;
+  episode_id?: string | null;
+}
+
+export interface CreateQuestionDto {
+  date_created: string;
+  deleted?: boolean;
+  file_id?: string | null;
+  last_updated?: string;
+  test?: string;
+  tv_show_id?: string | null;
+  episode_id?: string | null;
+}
+
+export interface UpdateQuestionDto {
+  last_updated?: string;
+  deleted?: boolean;
+  file_id?: string | null;
+  test?: string;
+  tv_show_id?: string | null;
+  episode_id?: string | null;
+}
+
+// DTOs de Report
+export interface ReportResponseDto {
+  id: number;
+  version?: number;
+  created_by_id?: string | null;
+  date_created: string;
+  error_code?: string;
+  last_updated: string;
+  resolved?: boolean;
+  video_id?: string | null;
+}
+
+export interface CreateReportDto {
+  date_created: string;
+  last_updated: string;
+  created_by_id?: string | null;
+  error_code?: string;
+  resolved?: boolean;
+  video_id?: string | null;
+}
+
+export interface UpdateReportDto {
+  last_updated: string;
+  created_by_id?: string | null;
+  error_code?: string;
+  resolved?: boolean;
+  video_id?: string | null;
+}
+
+// DTOs de UserActivity
+export interface UserActivityResponseDto {
+  id: number;
+  version?: number;
+  browser?: string;
+  date_created: string;
+  device?: string;
+  ip_address?: string;
+  last_updated?: string;
+  operating_system?: string;
+  type?: string;
+  user_id?: string | null;
+  video_id?: string | null;
+  institution_id?: string | null;
+  unit_id?: string | null;
+  fullname?: string;
+  institution_name?: string;
+  is_certified?: boolean;
+  username?: string;
+  units_data?: string;
+  user_data?: string;
+  populated: boolean;
+  role?: string;
+}
+
+export interface CreateUserActivityDto {
+  date_created: string;
+  populated: boolean;
+  browser?: string;
+  device?: string;
+  ip_address?: string;
+  last_updated?: string;
+  operating_system?: string;
+  type?: string;
+  user_id?: string | null;
+  video_id?: string | null;
+  institution_id?: string | null;
+  unit_id?: string | null;
+  fullname?: string;
+  institution_name?: string;
+  is_certified?: boolean;
+  username?: string;
+  units_data?: string;
+  user_data?: string;
+  role?: string;
+}
+
+export interface UpdateUserActivityDto {
+  last_updated?: string;
+  populated?: boolean;
+  browser?: string;
+  device?: string;
+  ip_address?: string;
+  operating_system?: string;
+  type?: string;
+  user_id?: string | null;
+  video_id?: string | null;
+  institution_id?: string | null;
+  unit_id?: string | null;
+  fullname?: string;
+  institution_name?: string;
+  is_certified?: boolean;
+  username?: string;
+  units_data?: string;
+  user_data?: string;
+  role?: string;
+}
+
+// DTOs de ViewingStatus
+export interface ViewingStatusResponseDto {
+  id: number;
+  version?: number;
+  completed?: boolean;
+  current_play_time: number;
+  date_created?: string;
+  last_updated?: string;
+  profile_id?: string | null;
+  runtime?: number;
+  tv_show_id?: string | null;
+  user_id?: string | null;
+  video_id: string;
+}
+
+export interface CreateViewingStatusDto {
+  current_play_time: number;
+  video_id: string;
+  completed?: boolean;
+  date_created?: string;
+  last_updated?: string;
+  profile_id?: string | null;
+  runtime?: number;
+  tv_show_id?: string | null;
+  user_id?: string | null;
+}
+
+export interface UpdateViewingStatusDto {
+  current_play_time?: number;
+  video_id?: string;
+  completed?: boolean;
+  last_updated?: string;
+  profile_id?: string | null;
+  runtime?: number;
+  tv_show_id?: string | null;
+  user_id?: string | null;
+}
+
+// DTOs de WatchlistEntry
+export interface WatchlistEntryResponseDto {
+  id: number;
+  version?: number;
+  date_created?: string;
+  is_deleted: boolean;
+  last_updated?: string;
+  profile_id: string;
+  tv_show_id?: string | null;
+  user_id: string;
+  video_id?: string | null;
+}
+
+export interface CreateWatchlistEntryDto {
+  is_deleted: boolean;
+  profile_id: string;
+  user_id: string;
+  date_created?: string;
+  last_updated?: string;
+  tv_show_id?: string | null;
+  video_id?: string | null;
+}
+
+export interface UpdateWatchlistEntryDto {
+  is_deleted?: boolean;
+  profile_id?: string;
+  user_id?: string;
+  last_updated?: string;
+  tv_show_id?: string | null;
+  video_id?: string | null;
+}
+
+// DTOs de Answer
+export interface AnswerResponseDto {
+  id: number;
+  version?: number;
+  date_created: string;
+  deleted?: boolean;
+  is_correct?: boolean;
+  last_updated?: string;
+  question_id?: string | null;
+  reply?: string;
+}
+
+export interface CreateAnswerDto {
+  date_created: string;
+  deleted?: boolean;
+  is_correct?: boolean;
+  last_updated?: string;
+  question_id?: string | null;
+  reply?: string;
+}
+
+export interface UpdateAnswerDto {
+  last_updated?: string;
+  deleted?: boolean;
+  is_correct?: boolean;
+  question_id?: string | null;
+  reply?: string;
+}
+
+// DTOs de UserAnswer
+export interface UserAnswerResponseDto {
+  id: number;
+  answer_id: string;
+  question_id: string;
+  version?: number;
+  date_created: string;
+  is_correct?: boolean;
+  last_updated?: string;
+  score?: number;
+  user_id?: string | null;
+}
+
+export interface CreateUserAnswerDto {
+  answer_id: string;
+  question_id: string;
+  date_created: string;
+  is_correct?: boolean;
+  last_updated?: string;
+  score?: number;
+  user_id?: string | null;
+}
+
+export interface UpdateUserAnswerDto {
+  answer_id?: string;
+  question_id?: string;
+  last_updated?: string;
+  is_correct?: boolean;
+  score?: number;
+  user_id?: string | null;
 }

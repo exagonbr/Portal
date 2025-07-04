@@ -1,7 +1,31 @@
 'use client';
 
 import { useEffect, useRef } from 'react';
-import { pushNotificationService } from '@/services/pushNotificationService';
+// Mock do pushNotificationService para remover a dependência externa
+const mockPushNotificationService = {
+  initialize: async (): Promise<void> => {
+    console.log('Mock Push Notification: Tentando inicializar...');
+    await new Promise(resolve => setTimeout(resolve, 100)); // Simula uma pequena demora
+    if (typeof window !== 'undefined' && 'Notification' in window) {
+      if (Notification.permission === 'granted') {
+        console.log('Mock Push Notification: Permissão já concedida.');
+        return;
+      }
+      if (Notification.permission !== 'denied') {
+        console.log('Mock Push Notification: Solicitando permissão...');
+        // Em um cenário de teste, não podemos realmente solicitar permissão,
+        // então apenas simulamos que ela não foi concedida ainda.
+        console.log('Mock Push Notification: Permissão ainda não solicitada ou concedida.');
+      } else {
+        console.warn('Mock Push Notification: Permissão foi negada.');
+      }
+    } else {
+      console.warn('Mock Push Notification: Notificações não são suportadas neste navegador.');
+    }
+  },
+};
+
+const pushNotificationService = mockPushNotificationService;
 import { useAuth } from '@/contexts/AuthContext';
 
 export const PushNotificationInitializer: React.FC = () => {

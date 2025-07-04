@@ -1,114 +1,115 @@
-import { DataSource, DataSourceOptions } from 'typeorm';
+import { DataSource } from 'typeorm';
 import * as dotenv from 'dotenv';
-import { User } from '../entities/User';
-import { Users } from '../entities/Users';
-import { Role } from '../entities/Role';
-import { Institution } from '../entities/Institution';
-import { School } from '../entities/School';
-import { Class } from '../entities/Class';
-import { EducationCycle } from '../entities/EducationCycle';
-import { SchoolManager } from '../entities/SchoolManager';
-import { UserClass } from '../entities/UserClass';
-import { Course } from '../entities/Course';
-import { Notification } from '../entities/Notification';
-import { Collection } from '../entities/Collection';
-import { Module } from '../entities/Module';
-import { Video } from '../entities/Video';
-import { Book } from '../entities/Book';
-import { Quiz } from '../entities/Quiz';
-import { Question } from '../entities/Question';
-import { ForumThread } from '../entities/ForumThread';
-import { ForumReply } from '../entities/ForumReply';
-import { ChatMessage } from '../entities/ChatMessage';
-import { Announcement } from '../entities/Announcement';
-import { File } from '../entities/File';
-import { VideoCollection } from '../entities/VideoCollection';
-import { VideoModule } from '../entities/VideoModule';
 import {
-  TvShowComplete,
-  TvShowVideo,
-  TvShowQuestion,
-  TvShowAnswer,
-  TvShowFile,
-  TvShowVideoFile,
-  TvShowAuthor,
-  TvShowGenre
-} from '../entities/TvShowComplete';
+  Announcement,
+  Author,
+  Book,
+  Certificate,
+  ChatMessage,
+  Class,
+  Collection,
+  CookieSigned,
+  Course,
+  EducationCycle,
+  EducationPeriod,
+  EducationalStage,
+  File,
+  ForgotPassword,
+  ForumReply,
+  ForumThread,
+  Genre,
+  Institution,
+  Language,
+  MediaEntry,
+  MediaFile,
+  Module,
+  Notification,
+  NotificationLog,
+  Profile,
+  Public,
+  Publisher,
+  Question,
+  Quiz,
+  Role,
+  School,
+  SchoolManager,
+  Settings,
+  Subject,
+  Tag,
+  TargetAudience,
+  TeacherSubject,
+  Theme,
+  TvShow,
+  Unit,
+  UnitClass,
+  User,
+  UserClass,
+  UserRole,
+  Video,
+  VideoCollection,
+  VideoModule
+} from '../entities';
 
 dotenv.config();
 
-const environment = process.env.NODE_ENV || 'development';
-
-export const dataSourceOptions: DataSourceOptions = {
-  type: 'postgres',
+export const AppDataSource = new DataSource({
+  type: 'mysql',
   host: process.env.DB_HOST || 'localhost',
-  port: parseInt(process.env.DB_PORT || '5432'),
-  username: process.env.DB_USER || 'postgres',
-  password: String(process.env.DB_PASSWORD || 'root'), // Garantir que seja string para evitar erro SASL
-  database: process.env.DB_NAME || 'portal_sabercon',
-  ssl: process.env.DB_SSL === 'true' ? { rejectUnauthorized: false } : false,
-  synchronize: false, // Disabled to prevent conflicts with Knex migrations
-  logging: environment === 'development',
+  port: parseInt(process.env.DB_PORT || '3306'),
+  username: process.env.DB_USERNAME || 'root',
+  password: process.env.DB_PASSWORD || '',
+  database: process.env.DB_DATABASE || 'portal',
+  synchronize: false, // Não sincronizar automaticamente em produção
+  logging: process.env.NODE_ENV === 'development',
   entities: [
-    User,
-    Users,
-    Role,
-    Institution,
-    School,
-    Class,
-    EducationCycle,
-    SchoolManager,
-    UserClass,
-    Course,
-    Notification,
-    Collection,
-    Module,
-    Video,
-    Book,
-    Quiz,
-    Question,
-    ForumThread,
-    ForumReply,
-    ChatMessage,
     Announcement,
+    Author,
+    Book,
+    Certificate,
+    ChatMessage,
+    Class,
+    Collection,
+    CookieSigned,
+    Course,
+    EducationCycle,
+    EducationPeriod,
+    EducationalStage,
     File,
+    ForgotPassword,
+    ForumReply,
+    ForumThread,
+    Genre,
+    Institution,
+    Language,
+    MediaEntry,
+    MediaFile,
+    Module,
+    Notification,
+    NotificationLog,
+    Profile,
+    Public,
+    Publisher,
+    Question,
+    Quiz,
+    Role,
+    School,
+    SchoolManager,
+    Settings,
+    Subject,
+    Tag,
+    TargetAudience,
+    TeacherSubject,
+    Theme,
+    TvShow,
+    Unit,
+    UnitClass,
+    User,
+    UserClass,
+    UserRole,
+    Video,
     VideoCollection,
-    VideoModule,
-    TvShowComplete,
-    TvShowVideo,
-    TvShowQuestion,
-    TvShowAnswer,
-    TvShowFile,
-    TvShowVideoFile,
-    TvShowAuthor,
-    TvShowGenre
+    VideoModule
   ],
   migrations: ['src/database/migrations/*.ts'],
-  subscribers: ['src/subscribers/*.ts'],
-};
-
-export const AppDataSource = new DataSource(dataSourceOptions);
-
-// Função para inicializar a conexão
-export const initializeDatabase = async (): Promise<void> => {
-  try {
-    await AppDataSource.initialize();
-    console.log('✅ Conexão com PostgreSQL estabelecida com sucesso via TypeORM');
-  } catch (error) {
-    console.log('❌ Erro ao conectar com PostgreSQL via TypeORM:', error);
-    throw error;
-  }
-};
-
-// Função para fechar a conexão
-export const closeDatabaseConnection = async (): Promise<void> => {
-  try {
-    if (AppDataSource.isInitialized) {
-      await AppDataSource.destroy();
-      console.log('🔌 Conexão com PostgreSQL fechada');
-    }
-  } catch (error) {
-    console.log('❌ Erro ao fechar conexão com PostgreSQL:', error);
-    throw error;
-  }
-};
+  subscribers: [],
+});

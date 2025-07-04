@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
-import { institutionService } from '@/services/institutionService'
+import { institutionService } from '@/services'
 import { InstitutionDto } from '@/types/institution'
 import { useToast } from '@/components/ToastManager'
 import { InstitutionModalNew } from '@/components/modals/InstitutionModalNew'
@@ -138,7 +138,7 @@ export default function ManageInstitutions() {
   const handleDeleteInstitution = async (institution: InstitutionDto) => {
     // Verificar se a instituição pode ser excluída
     try {
-      const canDelete = await institutionService.canDeleteInstitution(institution.id)
+      const canDelete = await institutionService.canDeleteInstitution(Number(institution.id))
       
       if (!canDelete) {
         showWarning(
@@ -159,7 +159,7 @@ export default function ManageInstitutions() {
 
     try {
       setLoading(true)
-      await institutionService.deleteInstitution(institution.id)
+      await institutionService.deleteInstitution(Number(institution.id))
       showSuccess("Instituição excluída", "A instituição foi excluída com sucesso.")
       
       // Recarregar a lista
@@ -204,7 +204,7 @@ export default function ManageInstitutions() {
         }
         
       } else if (modalMode === 'edit' && modalInstitution) {
-        const updatedInstitution = await institutionService.updateInstitution(modalInstitution.id, data)
+        const updatedInstitution = await institutionService.updateInstitution(Number(modalInstitution.id), data)
         showSuccess("Sucesso", "Instituição atualizada com sucesso!")
         console.log('✅ Instituição atualizada:', updatedInstitution)
         
@@ -231,7 +231,7 @@ export default function ManageInstitutions() {
   const handleToggleStatus = async (institution: InstitutionDto) => {
     try {
       setLoading(true)
-      const updatedInstitution = await institutionService.toggleInstitutionStatus(institution.id)
+      const updatedInstitution = await institutionService.toggleInstitutionStatus(Number(institution.id))
       
       const statusText = updatedInstitution.is_active ? 'ativada' : 'desativada'
       showSuccess("Status alterado", `Instituição ${statusText} com sucesso!`)

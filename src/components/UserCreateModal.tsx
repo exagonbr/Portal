@@ -7,11 +7,52 @@ import Input from '@/components/ui/Input';
 // import { Select } from '@/components/ui/Select'; // Removido - usando select HTML nativo
 import { Switch } from '@/components/ui/Switch';
 import { useToast } from '@/components/ToastManager';
-import { CreateUserDto, RoleResponseDto, InstitutionResponseDto } from '@/types/api';
-import { roleService } from '@/services/roleService';
-import { institutionService } from '@/services/institutionService';
-import { userService } from '@/services/userService';
+import { CreateUserDto, InstitutionResponseDto } from '@/types/api';
 import { Eye, EyeOff, User, Mail, Lock, Shield, Building2, Phone, MapPin } from 'lucide-react';
+
+// Mock dos serviços para remover dependências externas
+
+const mockInstitutionService = {
+  getActiveInstitutions: async (): Promise<InstitutionResponseDto[]> => {
+    const now = new Date().toISOString();
+    return [
+      {
+        id: 1,
+        name: 'Escola SaberCon Digital',
+        accountable_contact: 'contato@sabercon.com',
+        accountable_name: 'Admin SaberCon',
+        company_name: 'SaberCon EdTech',
+        contract_disabled: false,
+        contract_term_end: new Date(2025, 11, 31).toISOString(),
+        contract_term_start: new Date(2023, 0, 1).toISOString(),
+        deleted: false,
+        district: 'Centro',
+        document: '12.345.678/0001-99',
+        postal_code: '12345-000',
+        state: 'SP',
+        street: 'Rua do Saber, 123',
+        has_library_platform: true,
+        has_principal_platform: true,
+        has_student_platform: true,
+        date_created: now,
+        last_updated: now,
+      },
+    ];
+  }
+};
+
+const mockUserService = {
+  createUser: async (data: CreateUserDto): Promise<any> => {
+    console.log('Mock: Criando usuário com os seguintes dados:', data);
+    // Simula uma pequena demora da rede
+    await new Promise(resolve => setTimeout(resolve, 500));
+    // Simula um sucesso
+    return { success: true, message: 'Usuário criado com sucesso (mock).', data };
+  }
+};
+
+const institutionService = mockInstitutionService;
+const userService = mockUserService;
 
 interface UserCreateModalProps {
   onClose: () => void;
@@ -21,20 +62,20 @@ interface UserCreateModalProps {
 export function UserCreateModal({ onClose, onSuccess }: UserCreateModalProps) {
   const { showSuccess, showError } = useToast();
   const [formData, setFormData] = useState<CreateUserDto>({
-    name: '',
+    full_name: '',
     email: '',
     password: '',
-    role_id: '',
-    institution_id: '',
-    endereco: '',
-    telefone: '',
-    is_active: true
+    institution_id: null,
+    is_admin: false,
+    is_manager: false,
+    is_student: true,
+    is_teacher: false,
+    enabled: true,
   });
   
   const [confirmPassword, setConfirmPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
-  const [roles, setRoles] = useState<RoleResponseDto[]>([]);
   const [institutions, setInstitutions] = useState<InstitutionResponseDto[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const [loadingData, setLoadingData] = useState(true);
@@ -43,35 +84,8 @@ export function UserCreateModal({ onClose, onSuccess }: UserCreateModalProps) {
     const loadData = async () => {
       setLoadingData(true);
       try {
-        const [rolesResponse, institutionsResponse] = await Promise.all([
-          roleService.getActiveRoles(),
-          institutionService.getActiveInstitutions()
-        ]);
-
-        if (rolesResponse && rolesResponse.length > 0) {
-          setRoles(rolesResponse);
-        } else {
-          // Mock data para desenvolvimento
-          const now = new Date().toISOString();
-          setRoles([
-            { id: 'role-1', name: 'Administrador', description: 'Acesso total ao sistema', status: 'active', created_at: now, updated_at: now },
-            { id: 'role-2', name: 'Professor', description: 'Gerencia cursos e alunos', status: 'active', created_at: now, updated_at: now },
-            { id: 'role-3', name: 'Estudante', description: 'Acessa os cursos e materiais', status: 'active', created_at: now, updated_at: now },
-            { id: 'role-4', name: 'Coordenador', description: 'Coordena professores e turmas', status: 'active', created_at: now, updated_at: now },
-          ]);
-        }
-
-        if (institutionsResponse && institutionsResponse.length > 0) {
-          setInstitutions(institutionsResponse);
-        } else {
-          // Mock data para desenvolvimento
-          const now = new Date().toISOString();
-          setInstitutions([
-            { id: 'inst-1', name: 'Escola SaberCon Digital', code: 'SABERCON', created_at: now, updated_at: now },
-            { id: 'inst-2', name: 'Colégio Exagon Inovação', code: 'EXAGON', created_at: now, updated_at: now },
-            { id: 'inst-3', name: 'Centro Educacional DevStrade', code: 'DEVSTRADE', created_at: now, updated_at: now },
-          ]);
-        }
+        const institutionsResponse = await institutionService.getActiveInstitutions();
+        setInstitutions(institutionsResponse);
       } catch (error) {
         console.log('Erro ao carregar dados:', error);
         showError('Erro ao carregar dados necessários');
@@ -84,7 +98,7 @@ export function UserCreateModal({ onClose, onSuccess }: UserCreateModalProps) {
   }, [showError]);
 
   const validateForm = () => {
-    if (!formData.name.trim()) {
+    if (!formData.full_name.trim()) {
       showError('Nome é obrigatório');
       return false;
     }
@@ -115,8 +129,10 @@ export function UserCreateModal({ onClose, onSuccess }: UserCreateModalProps) {
       return false;
     }
 
-    if (!formData.role_id) {
-      showError('Função é obrigatória');
+    // A validação de perfil (is_admin, etc.) pode ser adicionada aqui se necessário
+    const profileSelected = formData.is_admin || formData.is_manager || formData.is_student || formData.is_teacher;
+    if (!profileSelected) {
+      showError('Pelo menos um perfil (Admin, Gestor, Estudante, Professor) deve ser selecionado.');
       return false;
     }
 
@@ -172,8 +188,8 @@ export function UserCreateModal({ onClose, onSuccess }: UserCreateModalProps) {
               </label>
               <Input
                 type="text"
-                value={formData.name}
-                onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+                value={formData.full_name}
+                onChange={(e) => setFormData({ ...formData, full_name: e.target.value })}
                 placeholder="Digite o nome completo"
                 required
               />
@@ -251,33 +267,38 @@ export function UserCreateModal({ onClose, onSuccess }: UserCreateModalProps) {
           </div>
         </div>
 
-        {/* Função e Instituição */}
+        {/* Perfis e Instituição */}
         <div className="bg-slate-50 p-4 rounded-lg">
           <h3 className="text-lg font-semibold text-slate-800 mb-4 flex items-center gap-2">
             <Shield className="h-5 w-5 text-purple-500" />
-            Função e Instituição
+            Perfis e Instituição
           </h3>
           
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            {/* Seleção de Perfis */}
             <div>
-              <label className="block text-sm font-medium text-slate-700 mb-1">
-                Função *
-              </label>
-              <select
-                value={formData.role_id}
-                onChange={(e) => setFormData({ ...formData, role_id: e.target.value })}
-                className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                required
-              >
-                <option value="">Selecione uma função</option>
-                {roles.map((role) => (
-                  <option key={role.id} value={role.id}>
-                    {role.name}
-                  </option>
-                ))}
-              </select>
+              <label className="block text-sm font-medium text-slate-700 mb-2">Perfis *</label>
+              <div className="space-y-2">
+                <div className="flex items-center gap-2">
+                  <Switch id="is_admin" checked={!!formData.is_admin} onChange={(checked: boolean) => setFormData(f => ({...f, is_admin: checked}))} />
+                  <label htmlFor="is_admin" className="text-sm text-slate-600">Administrador</label>
+                </div>
+                <div className="flex items-center gap-2">
+                  <Switch id="is_manager" checked={!!formData.is_manager} onChange={(checked: boolean) => setFormData(f => ({...f, is_manager: checked}))} />
+                  <label htmlFor="is_manager" className="text-sm text-slate-600">Gestor</label>
+                </div>
+                <div className="flex items-center gap-2">
+                  <Switch id="is_teacher" checked={!!formData.is_teacher} onChange={(checked: boolean) => setFormData(f => ({...f, is_teacher: checked}))} />
+                  <label htmlFor="is_teacher" className="text-sm text-slate-600">Professor</label>
+                </div>
+                <div className="flex items-center gap-2">
+                  <Switch id="is_student" checked={!!formData.is_student} onChange={(checked: boolean) => setFormData(f => ({...f, is_student: checked}))} />
+                  <label htmlFor="is_student" className="text-sm text-slate-600">Estudante</label>
+                </div>
+              </div>
             </div>
 
+            {/* Seleção de Instituição */}
             <div>
               <label className="block text-sm font-medium text-slate-700 mb-1">
                 Instituição
@@ -285,10 +306,10 @@ export function UserCreateModal({ onClose, onSuccess }: UserCreateModalProps) {
               <div className="relative">
                 <select
                   value={formData.institution_id || ''}
-                  onChange={(e) => setFormData({ ...formData, institution_id: e.target.value })}
+                  onChange={(e) => setFormData({ ...formData, institution_id: e.target.value || null })}
                   className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
                 >
-                  <option value="">Selecione uma instituição</option>
+                  <option value="">Nenhuma</option>
                   {institutions.map((institution) => (
                     <option key={institution.id} value={institution.id}>
                       {institution.name}
@@ -316,8 +337,8 @@ export function UserCreateModal({ onClose, onSuccess }: UserCreateModalProps) {
               <div className="relative">
                 <Input
                   type="tel"
-                  value={formData.telefone || ''}
-                  onChange={(e) => setFormData({ ...formData, telefone: e.target.value })}
+                  value={formData.phone || ''}
+                  onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
                   placeholder="(11) 99999-9999"
                 />
                 <Phone className="absolute right-3 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400" />
@@ -331,8 +352,8 @@ export function UserCreateModal({ onClose, onSuccess }: UserCreateModalProps) {
               <div className="relative">
                 <Input
                   type="text"
-                  value={formData.endereco || ''}
-                  onChange={(e) => setFormData({ ...formData, endereco: e.target.value })}
+                  value={formData.address || ''}
+                  onChange={(e) => setFormData({ ...formData, address: e.target.value })}
                   placeholder="Endereço completo"
                 />
                 <MapPin className="absolute right-3 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400" />
@@ -346,15 +367,15 @@ export function UserCreateModal({ onClose, onSuccess }: UserCreateModalProps) {
           <div className="flex items-center justify-between">
             <div>
               <h3 className="text-lg font-semibold text-slate-800">Status do Usuário</h3>
-              <p className="text-sm text-slate-600">Defina se o usuário estará ativo no sistema</p>
+              <p className="text-sm text-slate-600">Defina se o usuário estará habilitado no sistema</p>
             </div>
             <div className="flex items-center gap-3">
-              <span className={`text-sm font-medium ${formData.is_active ? 'text-green-600' : 'text-red-600'}`}>
-                {formData.is_active ? 'Ativo' : 'Inativo'}
+              <span className={`text-sm font-medium ${formData.enabled ? 'text-green-600' : 'text-red-600'}`}>
+                {formData.enabled ? 'Habilitado' : 'Desabilitado'}
               </span>
               <Switch
-                checked={formData.is_active}
-                onChange={(checked) => setFormData({ ...formData, is_active: checked })}
+                checked={!!formData.enabled}
+                onChange={(checked: boolean) => setFormData({ ...formData, enabled: checked })}
               />
             </div>
           </div>

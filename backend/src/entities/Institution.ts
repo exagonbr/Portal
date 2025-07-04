@@ -2,81 +2,88 @@ import {
   Entity,
   PrimaryGeneratedColumn,
   Column,
-  CreateDateColumn,
-  UpdateDateColumn,
   OneToMany
 } from 'typeorm';
 import { User } from './User';
-import { School } from './School';
-
-export enum InstitutionType {
-  PUBLIC = 'PUBLIC',
-  PRIVATE = 'PRIVATE',
-  MIXED = 'MIXED'
-}
 
 @Entity('institution')
 export class Institution {
-  @PrimaryGeneratedColumn('uuid')
-  id: string;
+  @PrimaryGeneratedColumn('increment')
+  id!: number;
 
-  @Column()
-  name: string;
+  @Column({ type: 'bigint', nullable: true })
+  version?: number;
 
-  @Column({ unique: true })
-  code: string;
+  @Column({ name: 'accountable_contact', type: 'varchar', length: 255 })
+  accountableContact!: string;
 
-  @Column({
-    type: 'enum',
-    enum: InstitutionType,
-    default: InstitutionType.PUBLIC
-  })
-  type: InstitutionType;
+  @Column({ name: 'accountable_name', type: 'varchar', length: 255 })
+  accountableName!: string;
 
-  @Column({ type: 'text', nullable: true })
-  description?: string;
+  @Column({ name: 'company_name', type: 'varchar', length: 255 })
+  companyName!: string;
 
-  @Column({ nullable: true })
-  email?: string;
+  @Column({ type: 'varchar', length: 255, nullable: true })
+  complement?: string;
 
-  @Column({ nullable: true })
-  phone?: string;
+  @Column({ name: 'contract_disabled', type: 'boolean', default: false })
+  contractDisabled!: boolean;
 
-  @Column({ nullable: true })
-  website?: string;
+  @Column({ name: 'contract_invoice_num', type: 'varchar', length: 255, nullable: true })
+  contractInvoiceNum?: string;
 
-  @Column({ nullable: true })
-  address?: string;
+  @Column({ name: 'contract_num', type: 'bigint', nullable: true })
+  contractNum?: number;
 
-  @Column({ nullable: true })
-  city?: string;
+  @Column({ name: 'contract_term_end', type: 'datetime' })
+  contractTermEnd!: Date;
 
-  @Column({ nullable: true })
-  state?: string;
+  @Column({ name: 'contract_term_start', type: 'datetime' })
+  contractTermStart!: Date;
 
-  @Column({ nullable: true })
-  zip_code?: string;
+  @Column({ name: 'date_created', type: 'datetime', nullable: true })
+  dateCreated?: Date;
 
-  @Column({ nullable: true })
-  logo_url?: string;
+  @Column({ type: 'boolean', default: false })
+  deleted!: boolean;
 
-  @Column({ default: true })
-  is_active: boolean;
+  @Column({ type: 'varchar', length: 255 })
+  district!: string;
 
+  @Column({ type: 'varchar', length: 255 })
+  document!: string;
+
+  @Column({ name: 'invoice_date', type: 'datetime', nullable: true })
+  invoiceDate?: Date;
+
+  @Column({ name: 'last_updated', type: 'datetime', nullable: true })
+  lastUpdated?: Date;
+
+  @Column({ type: 'varchar', length: 255 })
+  name!: string;
+
+  @Column({ name: 'postal_code', type: 'varchar', length: 255 })
+  postalCode!: string;
+
+  @Column({ type: 'varchar', length: 255 })
+  state!: string;
+
+  @Column({ type: 'varchar', length: 255 })
+  street!: string;
+
+  @Column({ type: 'bigint', nullable: true })
+  score?: number;
+
+  @Column({ name: 'has_library_platform', type: 'boolean', default: false })
+  hasLibraryPlatform!: boolean;
+
+  @Column({ name: 'has_principal_platform', type: 'boolean', default: false })
+  hasPrincipalPlatform!: boolean;
+
+  @Column({ name: 'has_student_platform', type: 'boolean', default: false })
+  hasStudentPlatform!: boolean;
+
+  // Relacionamentos
   @OneToMany(() => User, user => user.institution)
-  users: User[];
-
-  @OneToMany(() => School, school => school.institution)
-  schools: School[];
-
-  @CreateDateColumn()
-  created_at: Date;
-
-  @UpdateDateColumn()
-  updated_at: Date;
-
-  // Propriedades computadas
-  schools_count?: number;
-  users_count?: number;
-  active_courses?: number;
+  users!: User[];
 }

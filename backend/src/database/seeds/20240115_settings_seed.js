@@ -1,63 +1,64 @@
 exports.seed = async function(knex) {
-  // Limpar tabelas existentes
-  await knex('email_settings').del();
-  await knex('security_settings').del();
-  await knex('general_settings').del();
-  await knex('background_settings').del();
-  await knex('aws_settings').del();
-
-  // Inserir dados iniciais
-  await knex('aws_settings').insert([
-    {
-      id: 1,
-      access_key_id: '',
-      secret_access_key: '',
-      region: 'us-east-1',
-      s3_bucket_name: '',
-      cloudwatch_namespace: 'Portal/Metrics',
-      update_interval: 30,
-      enable_real_time_updates: true
+  // Essas tabelas não existem mais no novo schema
+  // Vamos apenas retornar sem fazer nada
+  // Os settings agora são gerenciados pela tabela 'settings' genérica
+  
+  // Se quisermos migrar esses dados para a tabela settings, podemos fazer:
+  try {
+    // Verificar se já existem essas configurações
+    const existingSettings = await knex('settings').where('category', 'email').first();
+    
+    if (!existingSettings) {
+      // Inserir configurações de email como settings genéricos
+      await knex('settings').insert([
+        {
+          key: 'smtp_server',
+          value: '',
+          type: 'string',
+          category: 'email',
+          description: 'Servidor SMTP para envio de emails',
+          is_public: false,
+          is_editable: true,
+          created_at: new Date(),
+          updated_at: new Date()
+        },
+        {
+          key: 'smtp_port',
+          value: '587',
+          type: 'number',
+          category: 'email',
+          description: 'Porta do servidor SMTP',
+          is_public: false,
+          is_editable: true,
+          created_at: new Date(),
+          updated_at: new Date()
+        },
+        {
+          key: 'smtp_encryption',
+          value: 'tls',
+          type: 'string',
+          category: 'email',
+          description: 'Tipo de criptografia (tls/ssl)',
+          is_public: false,
+          is_editable: true,
+          created_at: new Date(),
+          updated_at: new Date()
+        },
+        {
+          key: 'sender_email',
+          value: '',
+          type: 'string',
+          category: 'email',
+          description: 'Email remetente padrão',
+          is_public: false,
+          is_editable: true,
+          created_at: new Date(),
+          updated_at: new Date()
+        }
+      ]);
     }
-  ]);
-
-  await knex('background_settings').insert([
-    {
-      id: 1,
-      type: 'video',
-      video_file: '/back_video1.mp4',
-      custom_url: '',
-      solid_color: '#1e3a8a'
-    }
-  ]);
-
-  await knex('general_settings').insert([
-    {
-      id: 1,
-      platform_name: 'Portal Educacional',
-      system_url: 'https://portal.educacional.com',
-      support_email: 'suporte@portal.educacional.com'
-    }
-  ]);
-
-  await knex('security_settings').insert([
-    {
-      id: 1,
-      min_password_length: 8,
-      require_special_chars: true,
-      require_numbers: true,
-      two_factor_auth: 'optional',
-      session_timeout: 30
-    }
-  ]);
-
-  await knex('email_settings').insert([
-    {
-      id: 1,
-      smtp_server: '',
-      smtp_port: 587,
-      encryption: 'tls',
-      sender_email: '',
-      sender_password: ''
-    }
-  ]);
-}; 
+  } catch (error) {
+    // Ignorar erros se as tabelas não existirem
+    console.log('Settings de email já configurados ou erro ao inserir:', error.message);
+  }
+};

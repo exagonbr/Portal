@@ -1,6 +1,109 @@
 import { useCallback, useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { EmergencyCleanupService, CleanupResult } from '@/services/emergencyCleanupService';
+// Mock do EmergencyCleanupService para remover a dependência externa
+
+export interface CleanupResult {
+  localStorageCleared: boolean;
+  sessionStorageCleared: boolean;
+  cookiesCleared: boolean;
+  indexedDBCleared: boolean;
+  redirectedToLogin: boolean;
+  timestamp: string;
+}
+
+class MockEmergencyCleanupService {
+  private static instance: MockEmergencyCleanupService;
+  private redirectCountKey = 'redirect_count';
+  private lastCleanupKey = 'last_cleanup_timestamp';
+  private redirectLimit = 5;
+  private timeLimit = 10000; // 10 segundos
+
+  private constructor() {}
+
+  public static getInstance(): MockEmergencyCleanupService {
+    if (!MockEmergencyCleanupService.instance) {
+      MockEmergencyCleanupService.instance = new MockEmergencyCleanupService();
+    }
+    return MockEmergencyCleanupService.instance;
+  }
+
+  async executeFullCleanup(): Promise<CleanupResult> {
+    console.log('🚨 Executando mock de limpeza de emergência...');
+    const result: CleanupResult = {
+      localStorageCleared: this.clearLocalStorage(),
+      sessionStorageCleared: this.clearSessionStorage(),
+      cookiesCleared: this.clearCookies(),
+      indexedDBCleared: await this.clearIndexedDB(),
+      redirectedToLogin: false,
+      timestamp: new Date().toISOString(),
+    };
+    sessionStorage.setItem(this.lastCleanupKey, result.timestamp);
+    console.log('✅ Mock de limpeza concluído:', result);
+    return result;
+  }
+
+  detectLoopCondition(): boolean {
+    try {
+      const count = parseInt(sessionStorage.getItem(this.redirectCountKey) || '0');
+      const lastCleanup = sessionStorage.getItem(this.lastCleanupKey);
+      if (lastCleanup && new Date().getTime() - new Date(lastCleanup).getTime() < this.timeLimit) {
+        if (count > this.redirectLimit) {
+          console.warn(`🔄 Condição de loop detectada! Contagem de redirecionamento: ${count}`);
+          return true;
+        }
+      } else if (count > 0) {
+        sessionStorage.removeItem(this.redirectCountKey);
+      }
+    } catch (e) {
+      console.error('Erro ao detectar condição de loop', e);
+    }
+    return false;
+  }
+
+  incrementRedirectCount(): void {
+    try {
+      let count = parseInt(sessionStorage.getItem(this.redirectCountKey) || '0');
+      count++;
+      sessionStorage.setItem(this.redirectCountKey, count.toString());
+    } catch (e) {
+      console.error('Erro ao incrementar contagem de redirecionamento', e);
+    }
+  }
+
+  private clearLocalStorage(): boolean {
+    try {
+      // localStorage.clear(); // Comentado para não limpar dados reais durante o mock
+      console.log('Mock: localStorage.clear() chamado');
+      return true;
+    } catch (e) {
+      console.error('Erro ao limpar localStorage (mock)', e);
+      return false;
+    }
+  }
+
+  private clearSessionStorage(): boolean {
+    try {
+      // sessionStorage.clear(); // Comentado para não limpar dados reais durante o mock
+      console.log('Mock: sessionStorage.clear() chamado');
+      return true;
+    } catch (e) {
+      console.error('Erro ao limpar sessionStorage (mock)', e);
+      return false;
+    }
+  }
+
+  private clearCookies(): boolean {
+    console.log('Mock: Limpeza de cookies não implementada no mock.');
+    return true;
+  }
+
+  private async clearIndexedDB(): Promise<boolean> {
+    console.log('Mock: Limpeza de IndexedDB não implementada no mock.');
+    return Promise.resolve(true);
+  }
+}
+
+const EmergencyCleanupService = MockEmergencyCleanupService;
 
 interface UseEmergencyCleanupOptions {
   autoDetect?: boolean;

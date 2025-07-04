@@ -9,7 +9,19 @@ import { Textarea } from '@/components/ui/Textarea';
 import { Switch } from '@/components/ui/Switch';
 import { useToast } from '@/components/ToastManager';
 import { UnitResponseDto, UnitCreateDto, UnitUpdateDto } from '@/types/api';
-import { institutionService } from '@/services/institutionService';
+// Mock do institutionService para remover a dependência externa
+const mockInstitutionService = {
+  getAll: async (): Promise<any[]> => {
+    console.log('Mock Institution: Buscando todas as instituições...');
+    await new Promise(resolve => setTimeout(resolve, 100)); // Simula demora da rede
+    return [
+      { id: 'inst-1', name: 'Escola SaberCon Digital' },
+      { id: 'inst-2', name: 'Colégio Exagon Inovação' },
+      { id: 'inst-3', name: 'Centro Educacional DevStrade' },
+    ];
+  }
+};
+const institutionService = mockInstitutionService;
 
 interface UnitEditModalProps {
   unit?: UnitResponseDto;

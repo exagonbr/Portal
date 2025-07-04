@@ -1,6 +1,6 @@
 'use client';
 
-import DashboardLayout from '@/components/dashboard/DashboardLayout'
+import AuthenticatedLayout from '@/components/layout/AuthenticatedLayout'
 
 export default function DashboardRootLayout({
   children,
@@ -8,8 +8,8 @@ export default function DashboardRootLayout({
   children: React.ReactNode
 }) {
   return (
-    <DashboardLayout>
+    <AuthenticatedLayout>
       {children}
-    </DashboardLayout>
+    </AuthenticatedLayout>
   )
 }

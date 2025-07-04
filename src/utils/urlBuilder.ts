@@ -8,10 +8,7 @@
  * @returns URL completa ou caminho relativo se não houver variável de ambiente
  */
 export function buildUrl(path: string): string {
-  const frontendUrl = process.env.NEXT_PUBLIC_FRONTEND_URL ||
-                     process.env.FRONTEND_URL ||
-                     process.env.NEXTAUTH_URL ||
-                     (typeof window !== 'undefined' ? window.location.origin : '');
+  const frontendUrl = process.env.FRONTEND_URL;
   
   // Se não há URL base ou o path já é uma URL completa, retorna o path original
   if (!frontendUrl || path.startsWith('http') || path.startsWith('https')) {
@@ -69,10 +66,7 @@ export function isExternalUrl(url: string): boolean {
     return false;
   }
   
-  const frontendUrl = process.env.NEXT_PUBLIC_FRONTEND_URL ||
-                     process.env.FRONTEND_URL ||
-                     process.env.NEXTAUTH_URL ||
-                     (typeof window !== 'undefined' ? window.location.origin : '');
+  const frontendUrl = process.env.FRONTEND_URL;
   if (!frontendUrl) {
     return true;
   }

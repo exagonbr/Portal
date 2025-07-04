@@ -20,42 +20,42 @@ export enum ManagerPosition {
 @Entity('school_managers')
 export class SchoolManager {
   @PrimaryGeneratedColumn('uuid')
-  id: string;
+  id!: string;
 
   @Column()
-  user_id: string;
+  user_id!: string;
 
   @ManyToOne(() => User, user => user.schoolManagers)
   @JoinColumn({ name: 'user_id' })
-  user: User;
+  user!: User;
 
   @Column()
-  school_id: string;
+  school_id!: string;
 
   @ManyToOne(() => School, school => school.managers)
   @JoinColumn({ name: 'school_id' })
-  school: School;
+  school!: School;
 
   @Column({
     type: 'enum',
     enum: ManagerPosition
   })
-  position: ManagerPosition;
+  position!: ManagerPosition;
 
   @Column({ type: 'date', default: () => 'CURRENT_DATE' })
-  start_date: Date;
+  start_date!: Date;
 
   @Column({ type: 'date', nullable: true })
   end_date?: Date;
 
   @Column({ default: true })
-  is_active: boolean;
+  is_active!: boolean;
 
   @CreateDateColumn()
-  created_at: Date;
+  created_at!: Date;
 
   @UpdateDateColumn()
-  updated_at: Date;
+  updated_at!: Date;
 
   // Propriedades computadas
   user_name?: string;

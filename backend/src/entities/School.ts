@@ -15,20 +15,20 @@ import { SchoolManager } from './SchoolManager';
 @Entity('schools')
 export class School {
   @PrimaryGeneratedColumn('uuid')
-  id: string;
+  id!: string;
 
   @Column()
-  name: string;
+  name!: string;
 
   @Column({ unique: true })
-  code: string;
+  code!: string;
 
   @Column()
-  institution_id: string;
+  institution_id!: string;
 
   @ManyToOne(() => Institution, institution => institution.schools)
   @JoinColumn({ name: 'institution_id' })
-  institution: Institution;
+  institution!: Institution;
 
   @Column({ nullable: true })
   address?: string;
@@ -49,19 +49,19 @@ export class School {
   email?: string;
 
   @Column({ default: true })
-  is_active: boolean;
+  is_active!: boolean;
 
   @OneToMany(() => Class, classEntity => classEntity.school)
-  classes: Class[];
+  classes!: Class[];
 
   @OneToMany(() => SchoolManager, schoolManager => schoolManager.school)
-  managers: SchoolManager[];
+  managers!: SchoolManager[];
 
   @CreateDateColumn()
-  created_at: Date;
+  created_at!: Date;
 
   @UpdateDateColumn()
-  updated_at: Date;
+  updated_at!: Date;
 
   // Propriedades computadas
   total_students?: number;

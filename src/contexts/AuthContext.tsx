@@ -5,15 +5,40 @@ import { useRouter } from 'next/navigation';
 import apiClient from '../lib/authFetch';
 import { jwtDecode } from 'jwt-decode';
 import { toast } from 'react-hot-toast';
+import { ROLE_PERMISSIONS, UserRole } from '@/types/roles';
 import { buildLoginUrl, buildDashboardUrl, buildUrl } from '../utils/urlBuilder';
 import { useCacheCleaner } from '../hooks/useCacheCleaner';
+import { isDevelopment } from '../utils/env';
+
+// Variável de ambiente para controlar o uso do token de teste
+const useTestToken = process.env.NEXT_PUBLIC_USE_TEST_TOKEN === 'true' && isDevelopment();
+
+// Função para criar um token de teste com dados de usuário personalizáveis
+const createTestToken = (user: Partial<User> = {}): string => {
+  const testUser: User = {
+    id: user.id || 2,
+    name: user.name || 'Test User',
+    email: user.email || 'test@sabercon.edu.br',
+    role: user.role || UserRole.SYSTEM_ADMIN,
+    permissions: user.permissions || Object.keys(ROLE_PERMISSIONS[UserRole.SYSTEM_ADMIN]),
+    ...user,
+  };
+
+  const payload = {
+    ...testUser,
+    exp: Math.floor(Date.now() / 1000) + (60 * 60 * 24), // 24 horas de validade
+  };
+
+  // Simula um token JWT (codificação base64, não uma assinatura real)
+  return `test-header.${btoa(JSON.stringify(payload))}.test-signature`;
+};
 
 // Tipagem para o usuário e o contexto
 interface User {
   id: number;
   name: string;
   email: string;
-  role: string;
+  role: UserRole;
   permissions: string[];
   contact?: {
     phone?: string;
@@ -124,7 +149,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
         id: decodedPayload.id,
         name: decodedPayload.name,
         email: decodedPayload.email,
-        role: decodedPayload.role,
+        role: decodedPayload.role as UserRole,
         permissions: decodedPayload.permissions || [],
       });
       console.log('AuthProvider: User set from token:', decodedPayload);
@@ -150,6 +175,14 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     if (token) {
       console.log('AuthProvider: Token found, validating...');
       setupUserFromToken(token);
+    } else if (useTestToken) {
+      console.log('AuthProvider: No token found, using test token');
+      const testToken = createTestToken({
+        name: 'Admin Teste',
+        role: UserRole.SYSTEM_ADMIN,
+      });
+      setStoredToken(testToken);
+      setupUserFromToken(testToken);
     } else {
       console.log('AuthProvider: No token found');
     }
@@ -160,8 +193,43 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   // Função de login
   const login = async (email: string, password: string) => {
     if (!isClient) return;
-    
+
     setIsLoading(true);
+
+    // Mock para o super admin
+    if (email === 'admin@sabercon.edu.br' && password === 'password123') {
+      console.log('AuthContext: Usando login mockado para SYSTEM_ADMIN.');
+      const mockUser: User = {
+        id: 1,
+        name: 'SYSTEM_ADMIN',
+        email: 'admin@sabercon.edu.br',
+        role: UserRole.SYSTEM_ADMIN,
+        permissions: ['*'], // Todas as permissões
+      };
+      
+      // Criar um token JWT mockado simples (não seguro, apenas para fins de mock)
+      const mockTokenPayload = {
+        id: mockUser.id,
+        name: mockUser.name,
+        email: mockUser.email,
+        role: mockUser.role,
+        permissions: mockUser.permissions,
+        exp: Math.floor(Date.now() / 1000) + (60 * 60 * 24) // Expira em 24 horas
+      };
+      
+      // Apenas para simular um token, não use em produção
+      const mockToken = `mock-header.${btoa(JSON.stringify(mockTokenPayload))}.mock-signature`;
+
+      setStoredToken(mockToken);
+      setUser(mockUser);
+      apiClient.defaults.headers.common['Authorization'] = `Bearer ${mockToken}`;
+      
+      toast.success('Login como SYSTEM_ADMIN realizado com sucesso!');
+      router.push(buildDashboardUrl(mockUser.role));
+      setIsLoading(false);
+      return;
+    }
+
     try {
       // Limpar cache antes do login
       await performCacheCleanup('login attempt');
@@ -177,7 +245,8 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
         await performCacheCleanup('login success');
         
         toast.success('Login realizado com sucesso!');
-        router.push(buildUrl('/dashboard'));
+        const decoded: { role: UserRole } = jwtDecode(accessToken);
+        router.push(buildDashboardUrl(decoded.role));
       } else {
         throw new Error('Token inválido recebido do servidor');
       }
@@ -213,7 +282,8 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
       if (setupUserFromToken(accessToken)) {
         await performCacheCleanup('login success');
         toast.success('Login com Google realizado com sucesso!');
-        router.push(buildUrl('/dashboard'));
+        const decoded: { role: UserRole } = jwtDecode(accessToken);
+        router.push(buildDashboardUrl(decoded.role));
       } else {
         throw new Error('Token inválido recebido do servidor');
       }

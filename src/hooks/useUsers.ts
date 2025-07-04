@@ -1,7 +1,4 @@
 import { useState, useEffect, useCallback, useRef, useMemo } from 'react'
-import { usersService, UsersResponseDto, UsersFilterDto } from '@/services/usersService'
-import { roleService } from '@/services/roleService'
-import { institutionService } from '@/services/institutionService'
 import { RoleResponseDto, InstitutionResponseDto } from '@/types/api'
 import { useToast } from '@/components/ToastManager'
 
@@ -11,7 +8,6 @@ interface UseUsersOptions {
 
 interface UseUsersReturn {
   // Data
-  users: UsersResponseDto[]
   roles: RoleResponseDto[]
   institutions: InstitutionResponseDto[]
   

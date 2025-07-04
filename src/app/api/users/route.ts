@@ -50,7 +50,7 @@ export async function GET(req: NextRequest) {
       success: true,
       data: serializedUsers,
     }, {
-      headers: getCorsHeaders(request.headers.get('origin') || undefined)
+      headers: getCorsHeaders(req.headers.get('origin') || undefined)
     })
   } catch (err: any) {
     console.log('Erro ao buscar usuários:', err)

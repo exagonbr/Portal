@@ -5,15 +5,18 @@ const bcrypt = require('bcryptjs');
  * @returns { Promise<void> } 
  */
 exports.seed = async function(knex) {
-  // Limpar dados existentes
-  await knex('users').del();
+  // Não vamos deletar usuários existentes pois já existem dados relacionados
+  // await knex('user').del();
   
   // Hash das senhas padrão
   const defaultPassword = await bcrypt.hash('password123', 12);
   const adminPassword = await bcrypt.hash('password123', 12);
   
-  // Inserir usuários padrão
-  await knex('users').insert([
+  // Verificar se já existem usuários antes de inserir
+  const existingUsers = await knex('user').select('email');
+  const existingEmails = existingUsers.map(u => u.email);
+  
+  const usersToInsert = [
     {
       id: 1,
       email: 'admin@sabercon.edu.br',
@@ -183,7 +186,39 @@ exports.seed = async function(knex) {
       date_created: knex.fn.now(),
       last_updated: knex.fn.now()
     }
-  ]);
+  ].filter(user => !existingEmails.includes(user.email));
+  
+  if (usersToInsert.length > 0) {
+    // Ajustar campos para corresponder ao schema real
+    const adjustedUsers = usersToInsert.map(user => ({
+      id: user.id,
+      email: user.email,
+      full_name: user.full_name,
+      password: user.password,
+      username: user.username,
+      enabled: user.enabled,
+      account_expired: user.account_expired,
+      account_locked: user.account_locked,
+      password_expired: user.password_expired,
+      deleted: user.deleted,
+      language: user.language,
+      type: user.type,
+      institution_id: 1, // Assumindo institution_id 1
+      role_id: user.type, // Mapeando type para role_id
+      is_admin: user.is_admin,
+      is_manager: user.is_manager,
+      is_student: user.is_student,
+      is_teacher: user.is_teacher,
+      is_certified: user.is_certified || false,
+      reset_password: user.reset_password,
+      invitation_sent: user.invitation_sent,
+      subject: user.subject || null,
+      date_created: new Date(),
+      last_updated: new Date()
+    }));
+    
+    await knex('user').insert(adjustedUsers);
+  }
   
   console.log('✅ Usuários padrão criados com sucesso!');
   console.log('📧 Credenciais padrão:');
@@ -192,5 +227,5 @@ exports.seed = async function(knex) {
   console.log('   Teacher: teacher@sabercon.edu.br / password123');
   console.log('   Student: student@sabercon.edu.br / password123');
   console.log('   Coordinator: coordinator@sabercon.edu.br / password123');
-  console.log('   Institution Manager: manager@sabercon.edu.br / password123');
+  console.log('   Institution Manager: institution.manager@sabercon.edu.br / password123');
 };

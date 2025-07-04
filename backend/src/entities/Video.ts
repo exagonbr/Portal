@@ -2,47 +2,129 @@ import {
   Entity,
   PrimaryGeneratedColumn,
   Column,
-  CreateDateColumn,
-  UpdateDateColumn,
   ManyToOne,
   JoinColumn
 } from 'typeorm';
-import { Module } from './Module';
+import { File } from './File';
+import { TvShow } from './TvShow';
 
-@Entity('videos')
+@Entity('video')
 export class Video {
-  @PrimaryGeneratedColumn('uuid')
-  id: string;
+  @PrimaryGeneratedColumn('increment')
+  id!: number;
 
-  @Column()
-  name: string;
+  @Column({ type: 'bigint', nullable: true })
+  version?: number;
 
-  @Column()
-  module_id: string;
+  @Column({ name: 'api_id', type: 'varchar', length: 255, nullable: true })
+  apiId?: string;
 
-  @ManyToOne(() => Module, module => module.videos)
-  @JoinColumn({ name: 'module_id' })
-  module: Module;
+  @Column({ name: 'date_created', type: 'datetime', nullable: true })
+  dateCreated?: Date;
 
-  @Column()
-  video_url: string;
+  @Column({ type: 'boolean', nullable: true })
+  deleted?: boolean;
 
-  @Column({ type: 'int' })
-  duration: number; // em segundos
+  @Column({ name: 'imdb_id', type: 'varchar', length: 255, nullable: true })
+  imdbId?: string;
 
-  @Column({ type: 'jsonb', default: [] })
-  authors: string[];
+  @Column({ name: 'intro_end', type: 'int', nullable: true })
+  introEnd?: number;
 
-  @Column({ type: 'jsonb' })
-  education_cycle: {
-    level: string;
-    cycle?: string;
-    grade?: string;
-  };
+  @Column({ name: 'intro_start', type: 'int', nullable: true })
+  introStart?: number;
 
-  @CreateDateColumn()
-  created_at: Date;
+  @Column({ name: 'last_updated', type: 'datetime', nullable: true })
+  lastUpdated?: Date;
 
-  @UpdateDateColumn()
-  updated_at: Date;
+  @Column({ name: 'original_language', type: 'varchar', length: 255, nullable: true })
+  originalLanguage?: string;
+
+  @Column({ name: 'outro_start', type: 'int', nullable: true })
+  outroStart?: number;
+
+  @Column({ type: 'longtext', nullable: true })
+  overview?: string;
+
+  @Column({ type: 'double', nullable: true })
+  popularity?: number;
+
+  @Column({ name: 'report_count', type: 'int', nullable: true })
+  reportCount?: number;
+
+  @Column({ name: 'vote_average', type: 'double', nullable: true })
+  voteAverage?: number;
+
+  @Column({ name: 'vote_count', type: 'int', nullable: true })
+  voteCount?: number;
+
+  @Column({ type: 'varchar', length: 255 })
+  class!: string;
+
+  @Column({ name: 'backdrop_path', type: 'varchar', length: 255, nullable: true })
+  backdropPath?: string;
+
+  @Column({ name: 'poster_image_id', type: 'bigint', nullable: true })
+  posterImageId?: number;
+
+  @ManyToOne(() => File, { nullable: true })
+  @JoinColumn({ name: 'poster_image_id' })
+  posterImage?: File;
+
+  @Column({ name: 'poster_path', type: 'varchar', length: 255, nullable: true })
+  posterPath?: string;
+
+  @Column({ name: 'release_date', type: 'varchar', length: 255, nullable: true })
+  releaseDate?: string;
+
+  @Column({ type: 'varchar', length: 255, nullable: true })
+  title?: string;
+
+  @Column({ name: 'trailer_key', type: 'varchar', length: 255, nullable: true })
+  trailerKey?: string;
+
+  @Column({ name: 'backdrop_image_id', type: 'bigint', nullable: true })
+  backdropImageId?: number;
+
+  @ManyToOne(() => File, { nullable: true })
+  @JoinColumn({ name: 'backdrop_image_id' })
+  backdropImage?: File;
+
+  @Column({ name: 'air_date', type: 'varchar', length: 255, nullable: true })
+  airDate?: string;
+
+  @Column({ name: 'episode_string', type: 'varchar', length: 255, nullable: true })
+  episodeString?: string;
+
+  @Column({ name: 'episode_number', type: 'int', nullable: true })
+  episodeNumber?: number;
+
+  @Column({ type: 'varchar', length: 255, nullable: true })
+  name?: string;
+
+  @Column({ name: 'season_episode_merged', type: 'int', nullable: true })
+  seasonEpisodeMerged?: number;
+
+  @Column({ name: 'season_number', type: 'int', nullable: true })
+  seasonNumber?: number;
+
+  @Column({ name: 'show_id', type: 'bigint', nullable: true })
+  showId?: number;
+
+  @ManyToOne(() => TvShow, { nullable: true })
+  @JoinColumn({ name: 'show_id' })
+  show?: TvShow;
+
+  @Column({ name: 'still_image_id', type: 'bigint', nullable: true })
+  stillImageId?: number;
+
+  @ManyToOne(() => File, { nullable: true })
+  @JoinColumn({ name: 'still_image_id' })
+  stillImage?: File;
+
+  @Column({ name: 'still_path', type: 'varchar', length: 255, nullable: true })
+  stillPath?: string;
+
+  @Column({ type: 'varchar', length: 255, nullable: true })
+  duration?: string;
 }

@@ -3,9 +3,8 @@
 import React, { useState, useEffect, useCallback, useRef } from 'react'
 import { useAuth } from '@/contexts/AuthContext'
 import { useToast } from '@/components/ToastManager'
-import { usersService, UsersResponseDto, UsersFilterDto } from '@/services/usersService'
-import { roleService } from '@/services/roleService'
-import { institutionService } from '@/services/institutionService'
+import { mockUsersService as usersService, mockInstitutionService as institutionService, mockRoleService as roleService } from '@/mocks/api';
+import { UserResponseDto, UserFilterDto, RoleResponseDto, InstitutionResponseDto } from '@/types/api';
 import AuthenticatedLayout from '@/components/AuthenticatedLayout'
 import GenericCRUD, { CRUDColumn, CRUDAction } from '@/components/crud/GenericCRUD'
 import { Badge } from '@/components/ui/Badge'
@@ -13,7 +12,6 @@ import { Button } from '@/components/ui/Button'
 import UserFormModal from '@/components/admin/users/UserFormModal'
 import UserPermissionsModal from '@/components/admin/users/UserPermissionsModal'
 import UserViewModal from '@/components/admin/users/UserViewModal'
-import { RoleResponseDto, InstitutionResponseDto } from '@/types/api'
 import { formatDate } from '@/utils/date'
 import {
   Plus,
@@ -47,11 +45,9 @@ export default function AdminUsersPage() {
   const { user } = useAuth()
   const { showSuccess, showError } = useToast()
   
-  // Ref para controlar se o componente está montado
   const isMountedRef = useRef(true)
   
-  // Estados principais
-  const [users, setUsers] = useState<UsersResponseDto[]>([])
+  const [users, setUsers] = useState<UserResponseDto[]>([])
   const [roles, setRoles] = useState<RoleResponseDto[]>([])
   const [institutions, setInstitutions] = useState<InstitutionResponseDto[]>([])
   const [loading, setLoading] = useState(true)
@@ -61,76 +57,52 @@ export default function AdminUsersPage() {
   const [totalPages, setTotalPages] = useState(1)
   const [itemsPerPage, setItemsPerPage] = useState(10)
   const [searchTerm, setSearchTerm] = useState('')
-  const [filters, setFilters] = useState<UsersFilterDto>({})
+  const [filters, setFilters] = useState<UserFilterDto>({})
   const [auxiliaryDataError, setAuxiliaryDataError] = useState<string | null>(null)
 
-  // Modal states
-  const [selectedUser, setSelectedUser] = useState<UsersResponseDto | null>(null)
+  const [selectedUser, setSelectedUser] = useState<UserResponseDto | null>(null)
   const [showCreateModal, setShowCreateModal] = useState(false)
   const [showEditModal, setShowEditModal] = useState(false)
   const [showViewModal, setShowViewModal] = useState(false)
   const [showPermissionsModal, setShowPermissionsModal] = useState(false)
   const [showFilters, setShowFilters] = useState(false)
 
-  // Cleanup quando o componente for desmontado
   useEffect(() => {
     return () => {
       isMountedRef.current = false
     }
   }, [])
 
-  // Carregar dados auxiliares (roles e instituições)
   const loadAuxiliaryData = async () => {
     setAuxiliaryDataError(null);
     
     try {
-      console.log('🔄 Carregando dados auxiliares (roles e instituições)...');
-      
-      // Carregar roles e instituições separadamente para melhor tratamento de erro
-      try {
-        const rolesFromApi = await roleService.getActiveRoles();
-        console.log('✅ Roles carregadas da API:', rolesFromApi.map(r => ({ id: r.id, name: r.name })));
-        setRoles(rolesFromApi);
-      } catch (error) {
-        console.log('❌ Erro ao carregar roles:', error);
-        setAuxiliaryDataError('Falha ao carregar funções. Algumas opções podem estar indisponíveis.');
-        setRoles([]);
-      }
+      const [rolesResponse, institutionsResponse] = await Promise.all([
+        roleService.getRoles({ page: 1, limit: 1000, sortBy: 'name', sortOrder: 'asc' }),
+        institutionService.getInstitutions({ limit: 1000 })
+      ]);
 
-      try {
-        const institutionsFromApi = await institutionService.getActiveInstitutions();
-        console.log('✅ Instituições carregadas da API:', institutionsFromApi.map(i => ({ id: i.id, name: i.name })));
-        setInstitutions(institutionsFromApi);
-      } catch (error) {
-        console.log('❌ Erro ao carregar instituições:', error);
-        setAuxiliaryDataError(prev =>
-          prev ? `${prev} Falha ao carregar instituições.` : 'Falha ao carregar instituições. Algumas opções podem estar indisponíveis.'
-        );
-        setInstitutions([]);
-      }
-
-      console.log('📊 Dados auxiliares carregados');
+      setRoles(rolesResponse.items);
+      setInstitutions(institutionsResponse.items);
 
     } catch (error) {
-      console.log('❌ Erro ao carregar dados auxiliares:', error);
+      console.error('❌ Erro ao carregar dados auxiliares:', error);
       setAuxiliaryDataError('Falha ao carregar dados auxiliares. Algumas opções podem estar indisponíveis.');
     } finally {
       setAuxiliaryDataLoaded(true);
-      console.log('🏁 Carregamento de dados auxiliares finalizado');
     }
   }
 
-  // Carregar usuários
   const loadUsers = useCallback(async (showLoadingIndicator = true) => {
     if (!isMountedRef.current) return;
     
     if (showLoadingIndicator) setLoading(true);
 
     try {
-      const params: UsersFilterDto = {
+      const params: UserFilterDto = {
         page: currentPage,
         limit: itemsPerPage,
-        sortBy: 'name',
+        sortBy: 'full_name',
         sortOrder: 'asc',
         ...filters,
       };
@@ -139,51 +111,16 @@ export default function AdminUsersPage() {
         params.search = searchTerm;
       }
 
-      console.log('🔍 Iniciando busca de usuários com parâmetros:', params);
-
       const response = await usersService.getUsers(params);
 
-      console.log('📥 Resposta recebida do usersService:', {
-        items: response.items?.length || 0,
-        pagination: response.pagination,
-        primeiroUsuario: response.items?.[0]?.fullName || 'Nenhum',
-        ultimoUsuario: response.items?.[response.items?.length - 1]?.fullName || 'Nenhum'
-      });
-
-      // Verificar se o componente ainda está montado antes de atualizar o estado
       if (!isMountedRef.current) return;
       
       setUsers(response.items || []);
-      setTotalPages(response.pagination?.totalPages || 1);
-      setTotalItems(response.pagination?.total || 0);
-
-      // Log de sucesso
-      if (response.items && response.items.length > 0) {
-        console.log(`✅ ${response.items.length} usuários carregados com sucesso (página ${response.pagination?.page} de ${response.pagination?.totalPages})`);
-      } else {
-        console.warn('⚠️ Nenhum usuário encontrado com os filtros aplicados');
-      }
+      setTotalPages(response.totalPages || 1);
+      setTotalItems(response.total || 0);
 
     } catch (error: any) {
-      console.log('❌ Erro ao carregar usuários:', error);
-      
-      // Mensagem de erro mais específica
-      let errorMessage = 'Erro ao carregar usuários';
-      if (error.message) {
-        if (error.message.includes('Network')) {
-          errorMessage = 'Erro de conexão com o servidor. Verifique se o backend está rodando.';
-        } else if (error.message.includes('401') || error.message.includes('403')) {
-          errorMessage = 'Erro de autenticação. Faça login novamente.';
-        } else if (error.message.includes('500')) {
-          errorMessage = 'Erro interno do servidor. Contate o suporte.';
-        } else {
-          errorMessage = error.message;
-        }
-      }
-      
-      showError(errorMessage);
-      
-      // Em caso de erro, limpa a lista para evitar exibir dados incorretos
+      showError('Erro ao carregar usuários');
       if (isMountedRef.current) {
         setUsers([]);
         setTotalPages(1);
@@ -196,28 +133,24 @@ export default function AdminUsersPage() {
     }
   }, [currentPage, searchTerm, filters, itemsPerPage, showError]);
 
-  // Check if user has permission to create users
   const canCreateUsers = () => {
     if (!user) return false
     const allowedRoles = ['SYSTEM_ADMIN', 'INSTITUTION_MANAGER', 'COORDINATOR', 'admin']
     return allowedRoles.includes(user.role?.toUpperCase() || '')
   }
 
-  // Verificar se há filtros ativos
   const hasActiveFilters = () => {
     return Object.keys(filters).length > 0 &&
       Object.values(filters).some(value =>
         value !== undefined && value !== '' &&
-        (typeof value !== 'object' || Object.keys(value).length > 0)
+        (typeof value !== 'object' || (value !== null && Object.keys(value).length > 0))
       );
   };
 
-  // Função para atualizar lista
   const refreshUsers = () => {
     loadUsers(false)
   }
 
-  // Handlers
   const handleCreateUser = () => {
     if (!canCreateUsers()) {
       showError('Você não tem permissão para criar usuários.')
@@ -226,28 +159,28 @@ export default function AdminUsersPage() {
     setShowCreateModal(true)
   }
 
-  const handleEditUser = (userToEdit: UsersResponseDto) => {
+  const handleEditUser = (userToEdit: UserResponseDto) => {
     setSelectedUser(userToEdit)
     setShowEditModal(true)
   }
 
-  const handleViewUser = (userToView: UsersResponseDto) => {
+  const handleViewUser = (userToView: UserResponseDto) => {
     setSelectedUser(userToView)
     setShowViewModal(true)
   }
 
-  const handleManagePermissions = (userForPermissions: UsersResponseDto) => {
+  const handleManagePermissions = (userForPermissions: UserResponseDto) => {
     setSelectedUser(userForPermissions)
     setShowPermissionsModal(true)
   }
 
-  const handleDeleteUser = async (userToDelete: UsersResponseDto) => {
-    if (!confirm(`Tem certeza que deseja excluir o usuário "${userToDelete.fullName}"?`)) {
+  const handleDeleteUser = async (userToDelete: UserResponseDto) => {
+    if (!confirm(`Tem certeza que deseja excluir o usuário "${userToDelete.full_name}"?`)) {
       return
     }
 
     try {
-      await usersService.deleteUser(userToDelete.id)
+      await usersService.deleteUser(userToDelete.id.toString())
       showSuccess('Usuário excluído com sucesso!')
       loadUsers()
     } catch (error: any) {
@@ -268,7 +201,6 @@ export default function AdminUsersPage() {
     refreshUsers()
   }
 
-  // Filter functions
   const updateFilter = (key: string, value: any) => {
     const newFilters = { ...filters };
     if (value === '' || value === undefined || value === null) {
@@ -277,10 +209,9 @@ export default function AdminUsersPage() {
       (newFilters as any)[key] = value;
     }
     setFilters(newFilters);
-    setCurrentPage(1); // Reset to first page when filtering
+    setCurrentPage(1);
   }
 
-  // Limpar filtros
   const clearFilters = () => {
     setFilters({})
     setSearchTerm('')
@@ -288,43 +219,16 @@ export default function AdminUsersPage() {
     showSuccess('Filtros limpos com sucesso')
   }
 
-  // Carregar dados iniciais
   useEffect(() => {
     loadAuxiliaryData();
   }, []);
 
   useEffect(() => {
     if (auxiliaryDataLoaded && isMountedRef.current) {
-      console.log('🔄 Dados auxiliares carregados, iniciando carregamento de usuários...');
       loadUsers();
     }
   }, [loadUsers, auxiliaryDataLoaded]);
 
-  // Recarregar dados quando filtros, página ou ordenação mudarem (com debounce)
-  useEffect(() => {
-    if (!auxiliaryDataLoaded || !isMountedRef.current) {
-      console.log('⏳ Aguardando dados auxiliares para aplicar filtros...');
-      return;
-    }
-
-    console.log('🔄 Filtros/paginação alterados, recarregando usuários...', {
-      currentPage,
-      hasFilters: hasActiveFilters(),
-      filters: Object.keys(filters),
-      searchTerm: searchTerm || 'nenhum'
-    });
-
-    // Debounce para evitar chamadas excessivas
-    const timeoutId = setTimeout(() => {
-      if (isMountedRef.current) {
-        loadUsers();
-      }
-    }, 300);
-
-    return () => clearTimeout(timeoutId);
-  }, [currentPage, filters, searchTerm, auxiliaryDataLoaded]);
-
-  // Role badge variant
   const getRoleBadgeVariant = (roleName: string) => {
     const normalizedRole = roleName?.toUpperCase()
     switch (normalizedRole) {
@@ -349,20 +253,19 @@ export default function AdminUsersPage() {
     }
   }
 
-  // Table columns
-  const columns: CRUDColumn<UsersResponseDto>[] = [
+  const columns: CRUDColumn<UserResponseDto>[] = [
     {
-      key: 'fullName',
+      key: 'full_name',
       label: 'Usuário',
       sortable: true,
       width: '250px',
-      render: (_, user) => (
+      render: (user) => (
         <div className="flex items-center gap-3 min-w-0">
           <div className="h-8 w-8 rounded-full bg-blue-500 flex items-center justify-center text-white text-sm font-bold flex-shrink-0">
-            {user.fullName.substring(0, 2).toUpperCase()}
+            {user.full_name.substring(0, 2).toUpperCase()}
           </div>
           <div className="min-w-0 flex-1">
-            <div className="font-semibold text-slate-800 truncate">{user.fullName}</div>
+            <div className="font-semibold text-slate-800 truncate">{user.full_name}</div>
             <div className="flex items-center gap-1 text-xs text-slate-500">
               <Mail className="h-3 w-3 text-blue-500 flex-shrink-0" />
               <span className="truncate">{user.email}</span>
@@ -372,25 +275,27 @@ export default function AdminUsersPage() {
       )
     },
     {
-      key: 'roleName',
+      key: 'role_id',
       label: 'Função',
       sortable: true,
       width: '120px',
-      render: (_, user) => {
-        const roleName = user.role_name || 'Não definida'
+      render: (user) => {
+        const role = roles.find(r => r.id.toString() === user.role_id);
+        const roleName = role?.name || 'Não definida'
         return (
-          <Badge variant={getRoleBadgeVariant(roleName)} className="text-xs">
+          <Badge variant={getRoleBadgeVariant(roleName) as any} className="text-xs">
             {roleName}
           </Badge>
         )
       }
     },
     {
-      key: 'institution_name',
+      key: 'institution_id',
       label: 'Instituição',
       width: '150px',
-      render: (_, user) => {
-        const institutionName = user.institution_name || 'Não vinculada'
+      render: (user) => {
+        const institution = institutions.find(i => i.id.toString() === user.institution_id);
+        const institutionName = institution?.name || 'Não vinculada'
         return (
           <div className="flex items-center gap-2 min-w-0">
             <Building2 className="h-4 w-4 text-purple-500 flex-shrink-0" />
@@ -405,8 +310,8 @@ export default function AdminUsersPage() {
       key: 'enabled',
       label: 'Status',
       width: '90px',
-      render: (_, user) => {
-        const isActive = user.enabled !== undefined ? user.enabled : user.is_active
+      render: (user) => {
+        const isActive = user.enabled
         return (
           <div className={`inline-flex items-center gap-1 px-2 py-1 rounded-full text-xs font-semibold ${
             isActive ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'
@@ -418,12 +323,13 @@ export default function AdminUsersPage() {
       }
     },
     {
-      key: 'dateCreated',
+      key: 'date_created',
       label: 'Cadastro',
       sortable: true,
       width: '110px',
-      render: (_, user) => {
-        const dateString = user.dateCreated || user.created_at
+      render: (user) => {
+        const dateString = user.date_created
+        if (!dateString) return null;
         const date = new Date(dateString)
         const formattedDate = date.toLocaleDateString('pt-BR', {
           day: '2-digit',
@@ -442,28 +348,24 @@ export default function AdminUsersPage() {
     }
   ]
 
-  // Custom actions for the table
-  const customActions: CRUDAction<UsersResponseDto>[] = [
+  const customActions: CRUDAction<UserResponseDto>[] = [
     {
       label: 'Ver',
-      icon: <Eye className="h-3 w-3" />,
+      icon: 'Eye',
       onClick: handleViewUser,
-      variant: 'ghost',
-      className: 'text-blue-600 hover:text-blue-800 hover:bg-blue-50 px-2 py-1 text-xs'
+      variant: 'ghost' as any,
     },
     {
       label: 'Editar',
-      icon: <Edit className="h-3 w-3" />,
+      icon: 'Edit',
       onClick: handleEditUser,
-      variant: 'ghost',
-      className: 'text-amber-600 hover:text-amber-800 hover:bg-amber-50 px-2 py-1 text-xs'
+      variant: 'ghost' as any,
     },
     {
       label: 'Permissões',
-      icon: <Shield className="h-3 w-3" />,
+      icon: 'Shield',
       onClick: handleManagePermissions,
-      variant: 'ghost',
-      className: 'text-purple-600 hover:text-purple-800 hover:bg-purple-50 px-2 py-1 text-xs'
+      variant: 'ghost' as any,
     }
   ]
 
@@ -478,18 +380,15 @@ export default function AdminUsersPage() {
           </div>
           
           <div className="flex items-center gap-3">
-            {/* Connection Status */}
             <div className="flex items-center gap-2 px-3 py-1 bg-green-100 text-green-800 rounded-full text-sm">
               <CheckCircle className="h-4 w-4" />
               <span>Online</span>
             </div>
             
-            {/* Stats */}
             <span className="text-sm text-slate-500">
               Total: {totalItems} usuários
             </span>
             
-            {/* Refresh Button */}
             <Button
               variant="ghost"
               size="sm"
@@ -501,7 +400,6 @@ export default function AdminUsersPage() {
               <RefreshCw className={`h-4 w-4 ${loading ? 'animate-spin' : ''}`} />
             </Button>
             
-            {/* Filter Toggle */}
             <Button
               variant="ghost"
               size="sm"
@@ -517,7 +415,6 @@ export default function AdminUsersPage() {
               )}
             </Button>
             
-            {/* Create User Button */}
             <Button
               onClick={handleCreateUser}
               disabled={loading || !canCreateUsers()}
@@ -529,7 +426,6 @@ export default function AdminUsersPage() {
           </div>
         </div>
 
-        {/* Filters Section - Simplified */}
         {showFilters && (
           <div className="mb-6 p-4 bg-slate-50 rounded-lg border">
             <div className="flex items-center justify-between mb-4">
@@ -558,8 +454,8 @@ export default function AdminUsersPage() {
               <div>
                 <label className="block text-sm font-medium mb-1">Função</label>
                 <select
-                  value={filters.roleId || ''}
-                  onChange={(e) => updateFilter('roleId', e.target.value)}
+                  value={filters.role_id || ''}
+                  onChange={(e) => updateFilter('role_id', e.target.value)}
                   className="w-full px-3 py-2 border rounded-lg"
                 >
                   <option value="">Todas as funções</option>
@@ -574,10 +470,10 @@ export default function AdminUsersPage() {
               <div>
                 <label className="block text-sm font-medium mb-1">Status</label>
                 <select
-                  value={filters.enabled === undefined ? '' : filters.enabled ? 'true' : 'false'}
+                  value={filters.is_active === undefined ? '' : filters.is_active ? 'true' : 'false'}
                   onChange={(e) => {
                     const value = e.target.value;
-                    updateFilter('enabled', value === '' ? undefined : value === 'true');
+                    updateFilter('is_active', value === '' ? undefined : value === 'true');
                   }}
                   className="w-full px-3 py-2 border rounded-lg"
                 >
@@ -604,8 +500,7 @@ export default function AdminUsersPage() {
           </div>
         )}
 
-        {/* Main Table */}
-        <GenericCRUD<UsersResponseDto>
+        <GenericCRUD<UserResponseDto>
           title=""
           entityName="Usuário"
           entityNamePlural="Usuários"
@@ -627,7 +522,6 @@ export default function AdminUsersPage() {
           }
         />
 
-        {/* Modals */}
         <UserFormModal
           isOpen={showCreateModal}
           roles={roles}
@@ -638,7 +532,7 @@ export default function AdminUsersPage() {
 
         <UserFormModal
           isOpen={showEditModal}
-          user={selectedUser as any}
+          user={selectedUser}
           roles={roles}
           institutions={institutions}
           onClose={handleCloseModals}
@@ -647,25 +541,25 @@ export default function AdminUsersPage() {
 
         <UserViewModal
           isOpen={showViewModal}
-          user={selectedUser as any}
+          user={selectedUser}
           roles={roles}
           institutions={institutions}
           onClose={handleCloseModals}
           onEdit={(user) => {
             setShowViewModal(false)
-            setSelectedUser(user as unknown as UsersResponseDto)
+            setSelectedUser(user)
             setShowEditModal(true)
           }}
           onManagePermissions={(user) => {
             setShowViewModal(false)
-            setSelectedUser(user as unknown as UsersResponseDto)
+            setSelectedUser(user)
             setShowPermissionsModal(true)
           }}
         />
 
         <UserPermissionsModal
           isOpen={showPermissionsModal}
-          user={selectedUser as any}
+          user={selectedUser}
           onClose={handleCloseModals}
           onSave={handleModalSuccess}
         />

@@ -1,55 +1,80 @@
 import { InstitutionType } from '../models/Institution';
 import { PaginationResult } from '../types/common';
 
-export interface InstitutionDto {
+export interface InstitutionResponseDto {
   id: string;
+  version?: number;
+  accountable_contact: string;
+  accountable_name: string;
+  company_name: string;
+  complement?: string;
+  contract_disabled: boolean;
+  contract_invoice_num?: string;
+  contract_num?: number;
+  contract_term_end: string;
+  contract_term_start: string;
+  date_created?: string;
+  deleted: boolean;
+  district: string;
+  document: string;
+  invoice_date?: string;
+  last_updated?: string;
   name: string;
-  code: string;
-  type: InstitutionType;
-  address?: string;
-  city?: string;
-  state?: string;
-  zip_code?: string;
-  country?: string;
-  phone?: string;
-  email?: string;
-  website?: string;
-  logo_url?: string;
-  is_active?: boolean; // Tornando opcional para alinhar com o modelo
-  created_at: Date;
-  updated_at: Date;
+  postal_code: string;
+  state: string;
+  street: string;
+  score?: number;
+  has_library_platform: boolean;
+  has_principal_platform: boolean;
+  has_student_platform: boolean;
 }
 
 export interface CreateInstitutionDto {
+  accountable_contact: string;
+  accountable_name: string;
+  company_name: string;
+  contract_disabled: boolean;
+  contract_term_end: Date;
+  contract_term_start: Date;
+  deleted: boolean;
+  district: string;
+  document: string;
   name: string;
-  code: string;
-  type: InstitutionType;
-  address?: string;
-  city?: string;
-  state?: string;
-  zip_code?: string;
-  country?: string;
-  phone?: string;
-  email?: string;
-  website?: string;
-  logo_url?: string;
-  is_active?: boolean;
+  postal_code: string;
+  state: string;
+  street: string;
+  has_library_platform: boolean;
+  has_principal_platform: boolean;
+  has_student_platform: boolean;
+  complement?: string;
+  contract_invoice_num?: string;
+  contract_num?: number;
+  invoice_date?: Date;
+  score?: number;
 }
 
 export interface UpdateInstitutionDto {
+  accountable_contact?: string;
+  accountable_name?: string;
+  company_name?: string;
+  contract_disabled?: boolean;
+  contract_term_end?: Date;
+  contract_term_start?: Date;
+  deleted?: boolean;
+  district?: string;
+  document?: string;
   name?: string;
-  code?: string;
-  type?: InstitutionType;
-  address?: string;
-  city?: string;
+  postal_code?: string;
   state?: string;
-  zip_code?: string;
-  country?: string;
-  phone?: string;
-  email?: string;
-  website?: string;
-  logo_url?: string;
-  is_active?: boolean;
+  street?: string;
+  has_library_platform?: boolean;
+  has_principal_platform?: boolean;
+  has_student_platform?: boolean;
+  complement?: string;
+  contract_invoice_num?: string;
+  contract_num?: number;
+  invoice_date?: Date;
+  score?: number;
 }
 
 // Removido "extends PaginationParams" pois page e limit já estão aqui. Offset é calculado depois.
@@ -59,12 +84,12 @@ export interface InstitutionFilterDto {
   is_active?: boolean;
   page?: number; // Adicionado para clareza, já que vem da query
   limit?: number; // Adicionado para clareza
-  sortBy?: keyof InstitutionDto;
+  sortBy?: keyof InstitutionResponseDto;
   sortOrder?: 'asc' | 'desc';
 }
 
 export interface PaginatedInstitutionDto {
-  institution: InstitutionDto[];
+  institution: InstitutionResponseDto[];
   pagination: PaginationResult;
 }
 
