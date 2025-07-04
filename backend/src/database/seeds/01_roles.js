@@ -8,11 +8,11 @@ exports.seed = async function(knex) {
 
   // Insere os papéis fundamentais do sistema.
   await knex('roles').insert([
-    { id: 1, name: 'Admin', description: 'Administrador do Sistema', is_active: true, created_at: new Date(), updated_at: new Date() },
-    { id: 2, name: 'Manager', description: 'Gerente da Instituição', is_active: true, created_at: new Date(), updated_at: new Date() },
-    { id: 3, name: 'Teacher', description: 'Professor', is_active: true, created_at: new Date(), updated_at: new Date() },
-    { id: 4, name: 'Student', description: 'Estudante', is_active: true, created_at: new Date(), updated_at: new Date() },
-    { id: 5, name: 'Guardian', description: 'Responsável pelo Estudante', is_active: true, created_at: new Date(), updated_at: new Date() },
-    { id: 6, name: 'Institution Manager', description: 'Gerente da Instituição', is_active: true, created_at: new Date(), updated_at: new Date() }
+    { id: 1, name: 'SYSTEM_ADMIN', description: 'Administrador do Sistema', is_active: true, created_at: new Date(), updated_at: new Date() },
+    { id: 2, name: 'INSTITUTION_MANAGER', description: 'Gerente da Instituição', is_active: true, created_at: new Date(), updated_at: new Date() },
+    { id: 3, name: 'COORDINATOR', description: 'Coordenador Acadêmico', is_active: true, created_at: new Date(), updated_at: new Date() },
+    { id: 4, name: 'TEACHER', description: 'Professor', is_active: true, created_at: new Date(), updated_at: new Date() },
+    { id: 5, name: 'STUDENT', description: 'Estudante', is_active: true, created_at: new Date(), updated_at: new Date() },
+    { id: 6, name: 'GUARDIAN', description: 'Responsável pelo Estudante', is_active: true, created_at: new Date(), updated_at: new Date() }
   ]);
 };

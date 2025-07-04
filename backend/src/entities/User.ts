@@ -23,8 +23,6 @@ import { Notification } from './Notification';
 
 @Entity('user')
 export class User {
-  @Column({ name: 'google_id', type: 'varchar', length: 255, nullable: true, unique: true })
-  googleId?: string;
   @PrimaryGeneratedColumn('increment')
   id!: number;
 
@@ -96,9 +94,6 @@ export class User {
 
   @Column({ type: 'varchar', length: 255, nullable: true, unique: true })
   username?: string;
-
-  @Column({ type: 'varchar', length: 255, nullable: true })
-  uuid?: string;
 
   @Column({ name: 'is_manager', type: 'boolean' })
   isManager!: boolean;

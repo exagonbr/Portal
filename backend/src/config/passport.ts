@@ -35,32 +35,14 @@ export function setupPassport() {
       async (accessToken, refreshToken, profile, done) => {
         try {
           const userRepository = AppDataSource.getRepository(User);
+          
+          // Buscar usuário por email (já que removemos googleId)
           let user = await userRepository.findOne({
-            where: { googleId: profile.id },
-            relations: ['role']
-          });
-
-          if (user) {
-            const userRole = user.role?.authority;
-            const authUser: AuthenticatedUser = {
-              id: user.id,
-              email: user.email,
-              name: user.fullName,
-              role: user.role?.authority || 'user',
-              institutionId: user.institutionId,
-              permissions: getDefaultPermissions(userRole),
-            };
-            return done(null, authUser);
-          }
-
-          user = await userRepository.findOne({
             where: { email: profile.emails![0].value },
             relations: ['role']
           });
 
           if (user) {
-            user.googleId = profile.id;
-            await userRepository.save(user);
             const userRole = user.role?.authority;
             const authUser: AuthenticatedUser = {
               id: user.id,
@@ -73,11 +55,16 @@ export function setupPassport() {
             return done(null, authUser);
           }
 
+          // Criar novo usuário se não existir
           const newUser = userRepository.create({
-            googleId: profile.id,
             fullName: profile.displayName,
             email: profile.emails![0].value,
-            role: { id: 3 } as Role // Assumindo que 3 é o ID para 'student' e fazendo um cast
+            enabled: true,
+            isAdmin: false,
+            isManager: false,
+            isTeacher: false,
+            isStudent: true,
+            roleId: 4 // ID da role Student
           });
 
           const savedUser = await userRepository.save(newUser);
