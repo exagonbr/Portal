@@ -17,6 +17,7 @@ export class TvShow {
   @Column({ type: 'bigint', nullable: true })
   version?: number;
 
+  
   @Column({ name: 'api_id', type: 'varchar', length: 255, nullable: true })
   apiId?: string;
 

@@ -9,7 +9,7 @@ import { User } from './User';
 @Entity('institution')
 export class Institution {
   @PrimaryGeneratedColumn('increment')
-  id!: number;
+  id!: number; 
 
   @Column({ type: 'bigint', nullable: true })
   version?: number;
