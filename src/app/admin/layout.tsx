@@ -1,11 +1,8 @@
 'use client'
 
-import ProtectedRoute from '@/components/auth/ProtectedRoute'
-import DashboardLayout from '@/components/dashboard/DashboardPageLayout'
+import AuthenticatedLayout from '@/components/AuthenticatedLayout'
 import { UserRole } from '@/types/roles'
 import { ErrorBoundary } from '@/components/ErrorBoundary'
-import { ErrorRecoveryModal } from '@/components/ui/LoadingModal'
-import { AuthProvider } from '@/contexts/AuthContext'
 
 export default function AdminLayout({
   children,
@@ -13,14 +10,10 @@ export default function AdminLayout({
   children: React.ReactNode
 }) {
   return (
-    <AuthProvider>
-      <ErrorBoundary>
-        <ProtectedRoute requiredRole={[UserRole.SYSTEM_ADMIN]}>
-          <DashboardLayout title="Admin Dashboard">
-            {children}
-          </DashboardLayout>
-        </ProtectedRoute>
-      </ErrorBoundary>
-    </AuthProvider>
+    <ErrorBoundary>
+      <AuthenticatedLayout requiredRole={UserRole.SYSTEM_ADMIN}>
+        {children}
+      </AuthenticatedLayout>
+    </ErrorBoundary>
   )
 }

@@ -20,7 +20,8 @@ import {
   Edit,
   BarChart3
 } from 'lucide-react';
-import { notificationApiService } from '@/services/notificationApiService';
+import { notificationService } from '@/services/notificationService';
+import { NotificationStatus } from '@/types/notification';
 
 interface SentNotification {
   id: string;
@@ -83,10 +84,10 @@ export default function SentNotificationsPage() {
   const loadSentNotifications = async () => {
     setIsLoading(true);
     try {
-      const response = await notificationApiService.getSentNotifications({
+      const response = await notificationService.getNotifications({
         page: 1,
         limit: 50,
-        status: filters.status !== 'all' ? filters.status : undefined
+        status: filters.status !== 'all' ? (filters.status as NotificationStatus) : undefined
       });
       
       // Mock data para demonstração

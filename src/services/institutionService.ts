@@ -111,7 +111,7 @@ export const getInstitutionAnalytics = async (id: string): Promise<InstitutionAn
   return apiGet<InstitutionAnalytics>(`/institutions/${id}/analytics`);
 };
 
-export const institutionService = {
+const institutionService = {
   getInstitutions,
   getInstitutionById,
   createInstitution,
@@ -125,3 +125,5 @@ export const institutionService = {
   getInstitutionSchedules,
   getInstitutionAnalytics,
 };
+
+export default institutionService;

@@ -374,6 +374,53 @@ export const mockRoleService = {
       hasNext: page < totalPages,
       hasPrev: page > 1
     }
+  },
+
+  createRole: async (data: any): Promise<RoleResponseDto> => {
+    const newRole: RoleResponseDto = {
+      id: Math.max(...mockRoles.map(r => r.id)) + 1,
+      name: data.name,
+      description: data.description || '',
+      active: data.active ?? true,
+      users_count: 0,
+      created_at: new Date().toISOString(),
+      updated_at: new Date().toISOString(),
+      status: data.active ? 'active' : 'inactive'
+    }
+    mockRoles.push(newRole)
+    return newRole
+  },
+
+  updateRole: async (id: string, data: any): Promise<RoleResponseDto> => {
+    const roleIndex = mockRoles.findIndex(r => r.id.toString() === id)
+    if (roleIndex === -1) throw new Error('Role não encontrada')
+    
+    mockRoles[roleIndex] = {
+      ...mockRoles[roleIndex],
+      name: data.name,
+      description: data.description || '',
+      active: data.active ?? mockRoles[roleIndex].active,
+      updated_at: new Date().toISOString(),
+      status: data.active ? 'active' : 'inactive'
+    }
+    return mockRoles[roleIndex]
+  },
+
+  deleteRole: async (id: string): Promise<void> => {
+    const roleIndex = mockRoles.findIndex(r => r.id.toString() === id)
+    if (roleIndex === -1) throw new Error('Role não encontrada')
+    mockRoles.splice(roleIndex, 1)
+  },
+
+  toggleRoleStatus: async (id: string, newStatus: boolean): Promise<RoleResponseDto> => {
+    const roleIndex = mockRoles.findIndex(r => r.id.toString() === id)
+    if (roleIndex === -1) throw new Error('Role não encontrada')
+    
+    mockRoles[roleIndex].active = newStatus
+    mockRoles[roleIndex].status = newStatus ? 'active' : 'inactive'
+    mockRoles[roleIndex].updated_at = new Date().toISOString()
+    
+    return mockRoles[roleIndex]
   }
 }
 

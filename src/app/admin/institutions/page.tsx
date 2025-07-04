@@ -2,8 +2,8 @@
 
 import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
-import { institutionService } from '@/services/institutionService'
-import { InstitutionDto } from '@/types/institution'
+import institutionService from '@/services/institutionService'
+import { InstitutionDto, InstitutionType } from '@/types/institution'
 import { useToast } from '@/components/ToastManager'
 import { InstitutionModalNew } from '@/components/modals/InstitutionModalNew'
 import { Badge } from '@/components/ui/Badge'
@@ -56,40 +56,70 @@ export default function ManageInstitutions() {
     }
   })
 
+  const getMockInstitutions = (page: number, limit: number, search: string) => {
+    const allInstitutions: InstitutionDto[] = Array.from({ length: 53 }, (_, i) => ({
+      id: (i + 1).toString(),
+      name: `Instituição de Exemplo ${i + 1}`,
+      code: `IE${String(i + 1).padStart(3, '0')}`,
+      type: [InstitutionType.SCHOOL, InstitutionType.COLLEGE, InstitutionType.UNIVERSITY, InstitutionType.TECH_CENTER][i % 4],
+      is_active: i % 5 !== 0, // 1 a cada 5 inativa
+      schools_count: Math.floor(Math.random() * 10) + 1,
+      users_count: Math.floor(Math.random() * 500) + 50,
+      city: `Cidade ${i + 1}`,
+      state: ['SP', 'RJ', 'MG', 'BA'][i % 4],
+      email: `contato@instituicao${i + 1}.com`,
+      phone: `(11) 98765-43${String(i + 1).padStart(2, '0')}`,
+      created_at: new Date().toISOString(),
+      updated_at: new Date().toISOString(),
+    }));
+
+    const filteredInstitutions = allInstitutions.filter(inst =>
+      inst.name.toLowerCase().includes(search.toLowerCase()) ||
+      inst.code.toLowerCase().includes(search.toLowerCase())
+    );
+
+    const paginatedInstitutions = filteredInstitutions.slice((page - 1) * limit, page * limit);
+
+    return {
+      items: paginatedInstitutions,
+      total: filteredInstitutions.length,
+    };
+  };
+
   const fetchInstitutions = async (page = 1, search = '', showLoadingIndicator = true) => {
     if (showLoadingIndicator) {
-      setLoading(true)
+      setLoading(true);
     } else {
-      setRefreshing(true)
+      setRefreshing(true);
     }
-    
-    try {
-      const response = await institutionService.getInstitutions({
-        page,
-        limit: itemsPerPage,
-        search
-      })
-      
-      console.log('📊 Response from institutionService:', response)
-      
-      setInstitutions(response.items || [])
-      setTotalItems(response.total || 0)
-      setCurrentPage(page)
 
-      // Calcular estatísticas
-      calculateStats(response.items || [])
+    // Simular atraso da API
+    await new Promise(resolve => setTimeout(resolve, 500));
+
+    try {
+      const response = getMockInstitutions(page, itemsPerPage, search);
+      
+      console.log('📊 Mock response:', response);
+      
+      setInstitutions(response.items || []);
+      setTotalItems(response.total || 0);
+      setCurrentPage(page);
+
+      // Calcular estatísticas com todos os dados mocados para uma visão geral
+      const allMockData = getMockInstitutions(1, 100, '').items;
+      calculateStats(allMockData);
       
       if (!showLoadingIndicator) {
-        showSuccess("Atualizado", "Lista de instituições atualizada com sucesso!")
+        showSuccess("Atualizado", "Lista de instituições atualizada com sucesso!");
       }
     } catch (error) {
-      console.log('❌ Erro ao carregar instituições:', error)
-      showError("Erro ao carregar instituições", "Não foi possível carregar a lista de instituições.")
+      console.log('❌ Erro ao carregar instituições mocadas:', error);
+      showError("Erro ao carregar instituições", "Não foi possível carregar a lista de instituições.");
     } finally {
-      setLoading(false)
-      setRefreshing(false)
+      setLoading(false);
+      setRefreshing(false);
     }
-  }
+  };
 
   const calculateStats = (institutions: InstitutionDto[]) => {
     const totalInstitutions = institutions.length
@@ -277,7 +307,6 @@ export default function ManageInstitutions() {
   const totalPages = Math.ceil(totalItems / itemsPerPage)
 
   return (
-    <AuthenticatedLayout requiredPermission="canManageInstitutions">
       <div className="container mx-auto px-4 py-6 max-w-7xl">
         <div className="bg-white rounded-xl shadow-sm border border-gray-200">
           {/* Header Simplificado */}
@@ -644,6 +673,5 @@ export default function ManageInstitutions() {
           mode={modalMode}
         />
       </div>
-    </AuthenticatedLayout>
   )
 }

@@ -35,7 +35,7 @@ import { useAuth } from '@/contexts/AuthContext';
 import { UserRole, ROLE_COLORS } from '@/types/roles';
 import ProtectedRoute from '@/components/auth/ProtectedRoute';
 import DashboardPageLayout from '@/components/dashboard/DashboardPageLayout';
-import { InstitutionService } from '@/services/institutionService';
+import institutionService from '../../../../services/institutionService';
 import { InstitutionDto, Institution, InstitutionFilter } from '@/types/institution';
 
 
@@ -100,7 +100,7 @@ export default function InstitutionManagerDashboardPage() {
     try {
       setLoading(true);
       setError(null);
-      const response = await InstitutionService.getInstitutions(queryParams);
+      const response = await institutionService.getInstitutions(queryParams);
       setInstitutions(response.items);
     } catch (err) {
       setError('Erro ao carregar instituições. Verifique se o backend está rodando.');

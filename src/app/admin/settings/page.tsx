@@ -226,8 +226,6 @@ export default function AdminSettingsPage() {
   }
 
   return (
-    <AuthenticatedLayout>
-      <ProtectedRoute requiredRole={[UserRole.SYSTEM_ADMIN]}>
         <DashboardPageLayout
           title="Configurações do Sistema"
           subtitle="Gerencie as configurações globais do sistema"
@@ -1010,7 +1008,5 @@ export default function AdminSettingsPage() {
             </div>
           </div>
         </DashboardPageLayout>
-      </ProtectedRoute>
-    </AuthenticatedLayout>
   )
 }

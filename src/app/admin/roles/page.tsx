@@ -18,7 +18,7 @@ import { useAuth } from '@/contexts/AuthContext';
 import { UserRole } from '@/types/roles';
 import ProtectedRoute from '@/components/auth/ProtectedRoute';
 import { useToast } from '@/components/ToastManager';
-import AuthenticatedLayout from '@/components/AuthenticatedLayout';
+import AuthenticatedLayout from '@/components/layout/AuthenticatedLayout';
 import { motion } from 'framer-motion';
 import { mockRoleService as roleService } from '@/mocks/api';
 import { RoleResponseDto, RoleCreateDto, RoleUpdateDto } from '@/types/api';
@@ -269,8 +269,8 @@ export default function RolesPermissionsPage() {
   });
 
   return (
-    <ProtectedRoute requiredRole={[UserRole.SYSTEM_ADMIN]}>
-      <AuthenticatedLayout>
+    <AuthenticatedLayout>
+      <ProtectedRoute requiredRole={[UserRole.SYSTEM_ADMIN]}>
         <div className="container mx-auto py-8">
           {/* Header */}
           <div className="flex flex-col gap-4 mb-6">
@@ -1023,7 +1023,7 @@ export default function RolesPermissionsPage() {
             />
           )}
         </div>
-      </AuthenticatedLayout>
-    </ProtectedRoute>
+      </ProtectedRoute>
+    </AuthenticatedLayout>
   );
 }

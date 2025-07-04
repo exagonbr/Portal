@@ -1,927 +1,357 @@
 'use client'
 
 import React, { useState, useEffect, useCallback } from 'react'
-import { useAuth } from '@/contexts/AuthContext'
 import { useToast } from '@/components/ToastManager'
-import { certificateService } from '@/mocks/certificateService'
-import { userService } from '@/mocks/userService'
-import { Certificate, CertificateFilters } from '@/types/certificate'
+import { certificateService } from '@/services/certificateService.mock'
+import { userService } from '@/services/userService.mock'
+import { CertificateResponseDto, BaseFilterDto } from '@/types/api'
 import AuthenticatedLayout from '@/components/AuthenticatedLayout'
-import { CertificateFormModal } from '@/components/admin/CertificateFormModal'
 import { Badge } from '@/components/ui/Badge'
 import { Button } from '@/components/ui/Button'
-import { formatDate } from '@/utils/date'
-import { useRouter } from 'next/navigation'
+import { StatCard } from '@/components/ui/StandardCard'
 import {
-  Award,
-  Edit,
-  Eye,
-  Trash2,
+  Plus,
   Search,
-  Filter,
+  Edit,
+  Trash2,
+  Eye,
+  Award,
   RefreshCw,
-  AlertCircle,
-  CheckCircle,
+  Filter,
   X,
   Calendar,
   User,
+  Users,
   BookOpen,
-  Shield,
-  FileText,
-  ExternalLink,
-  Trophy,
-  ChevronLeft,
-  ChevronRight,
-  Plus
+  CheckCircle,
+  AlertTriangle
 } from 'lucide-react'
 
-// Componente de notificação
-const Notification = ({ message, type, onClose }: { message: string; type: 'success' | 'error' | 'info'; onClose: () => void }) => {
-  const bgColor = type === 'success' ? 'bg-green-500' : type === 'error' ? 'bg-red-500' : 'bg-blue-500'
-  const Icon = type === 'success' ? CheckCircle : type === 'error' ? AlertCircle : AlertCircle
-
-  return (
-    <div className={`${bgColor} text-white p-4 rounded-lg shadow-lg flex items-center justify-between mb-4`}>
-      <div className="flex items-center gap-2">
-        <Icon className="h-5 w-5" />
-        <span>{message}</span>
-      </div>
-      <button onClick={onClose} className="hover:opacity-80">
-        <X className="h-4 w-4" />
-      </button>
-    </div>
-  )
+// Interface para estatísticas de certificados
+interface CertificateStats {
+  totalCertificates: number
+  recreatable: number
+  programs: number
+  usersWithCerts: number
 }
 
-// Modal de detalhes do certificado
-const CertificateDetailsModal = ({ 
-  certificate, 
-  onClose,
-  onEdit,
-  onDelete
-}: { 
-  certificate: Certificate | null; 
-  onClose: () => void;
-  onEdit?: (certificate: Certificate) => void;
-  onDelete?: (certificate: Certificate) => void;
-}) => {
-  if (!certificate) return null
-
-  return (
-    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
-      <div className="bg-white rounded-lg shadow-xl w-full max-w-3xl max-h-[90vh] overflow-hidden">
-        <div className="bg-gradient-to-r from-purple-600 to-purple-700 text-white p-6">
-          <div className="flex justify-between items-start">
-            <div className="flex items-center gap-4">
-              <div className="h-16 w-16 rounded-full bg-white/20 flex items-center justify-center">
-                <Award className="h-8 w-8 text-white" />
-              </div>
-              <div>
-                <h2 className="text-2xl font-bold">
-                  {certificate.document || certificate.license_code || `Certificado #${certificate.id}`}
-                </h2>
-                <p className="text-purple-100">{certificate.user?.name}</p>
-              </div>
-            </div>
-            <button
-              onClick={onClose}
-              className="text-white hover:text-purple-200 transition-colors"
-            >
-              <X className="h-6 w-6" />
-            </button>
-          </div>
-        </div>
-
-        <div className="p-6 overflow-y-auto">
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            <div>
-              <h3 className="text-lg font-semibold text-slate-800 mb-3">Informações do Certificado</h3>
-              <div className="space-y-3">
-                {certificate.tv_show_name && (
-                  <div className="flex items-center gap-2 text-slate-600">
-                    <Award className="h-4 w-4" />
-                    <span>Programa: {certificate.tv_show_name}</span>
-                  </div>
-                )}
-                <div className="flex items-center gap-2 text-slate-600">
-                  <Calendar className="h-4 w-4" />
-                  <span>Criado em: {formatDate(certificate.date_created)}</span>
-                </div>
-                {certificate.last_updated && (
-                  <div className="flex items-center gap-2 text-slate-600">
-                    <Calendar className="h-4 w-4" />
-                    <span>Atualizado em: {formatDate(certificate.last_updated)}</span>
-                  </div>
-                )}
-                {certificate.license_code && (
-                  <div className="flex items-center gap-2 text-slate-600">
-                    <Shield className="h-4 w-4" />
-                    <span>Código de Licença: {certificate.license_code}</span>
-                  </div>
-                )}
-                {certificate.score !== null && certificate.score !== undefined && (
-                  <div className="flex items-center gap-2 text-slate-600">
-                    <Trophy className="h-4 w-4" />
-                    <span>Pontuação: {certificate.score}</span>
-                  </div>
-                )}
-              </div>
-            </div>
-
-            <div>
-              <h3 className="text-lg font-semibold text-slate-800 mb-3">Beneficiário</h3>
-              <div className="space-y-3">
-                <div className="flex items-center gap-2 text-slate-600">
-                  <User className="h-4 w-4" />
-                  <span>{certificate.user?.name}</span>
-                </div>
-                <div className="flex items-center gap-2 text-slate-600">
-                  <User className="h-4 w-4" />
-                  <span>{certificate.user?.email || 'Email não disponível'}</span>
-                </div>
-                {certificate.tv_show && (
-                  <div className="flex items-center gap-2 text-slate-600">
-                    <BookOpen className="h-4 w-4" />
-                    <span>TV Show: {certificate.tv_show.name}</span>
-                  </div>
-                )}
-              </div>
-            </div>
-          </div>
-
-          {certificate.document && (
-            <div className="mt-6 pt-6 border-t border-slate-200">
-              <h3 className="text-lg font-semibold text-slate-800 mb-3">Documento</h3>
-              <p className="text-slate-600">{certificate.document}</p>
-            </div>
-          )}
-
-          {certificate.path && (
-            <div className="mt-6 pt-6 border-t border-slate-200">
-              <h3 className="text-lg font-semibold text-slate-800 mb-3">Arquivo</h3>
-              <a
-                href={certificate.path}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="inline-flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
-              >
-                <FileText className="h-4 w-4" />
-                Visualizar Certificado
-                <ExternalLink className="h-4 w-4" />
-              </a>
-            </div>
-          )}
-        </div>
-
-        <div className="border-t border-slate-200 px-6 py-4 bg-slate-50">
-          <div className="flex justify-between items-center">
-            <div className="flex space-x-2">
-              {onEdit && (
-                <Button
-                  variant="secondary"
-                  onClick={() => onEdit(certificate)}
-                  className="flex items-center gap-1"
-                >
-                  <Edit className="h-4 w-4" />
-                  <span>Editar</span>
-                </Button>
-              )}
-              
-              {onDelete && (
-                <Button
-                  variant="destructive"
-                  onClick={() => onDelete(certificate)}
-                  className="flex items-center gap-1"
-                >
-                  <Trash2 className="h-4 w-4" />
-                  <span>Excluir</span>
-                </Button>
-              )}
-            </div>
-            
-            <Button
-              variant="default"
-              onClick={onClose}
-            >
-              Fechar
-            </Button>
-          </div>
-        </div>
-      </div>
-    </div>
-  )
-}
-
-// Componente de Paginação
-const Pagination = ({
-  currentPage,
-  totalPages,
-  onPageChange
-}: {
-  currentPage: number;
-  totalPages: number;
-  onPageChange: (page: number) => void;
-}) => {
-  if (totalPages <= 1) return null;
-
-  return (
-    <div className="flex items-center justify-center mt-6 gap-1">
-      <button
-        onClick={() => onPageChange(Math.max(1, currentPage - 1))}
-        disabled={currentPage === 1}
-        className={`p-2 rounded-md border ${currentPage === 1 ? 'text-gray-400 cursor-not-allowed' : 'hover:bg-slate-100'}`}
-      >
-        <ChevronLeft className="h-4 w-4" />
-      </button>
-      
-      <span className="px-4 py-2 text-sm">
-        Página {currentPage} de {totalPages}
-      </span>
-      
-      <button
-        onClick={() => onPageChange(Math.min(totalPages, currentPage + 1))}
-        disabled={currentPage === totalPages}
-        className={`p-2 rounded-md border ${currentPage === totalPages ? 'text-gray-400 cursor-not-allowed' : 'hover:bg-slate-100'}`}
-      >
-        <ChevronRight className="h-4 w-4" />
-      </button>
-    </div>
-  );
-};
-
-// Componente para estado vazio
-const EmptyState = ({
-  onClearFilters,
-  hasFilters
-}: {
-  onClearFilters: () => void;
-  hasFilters: boolean;
-}) => {
-  return (
-    <div className="text-center py-16 px-6 bg-white rounded-lg shadow-md border border-slate-200 mt-4">
-      <Award className="mx-auto h-12 w-12 text-slate-400" />
-      <h3 className="mt-4 text-xl font-bold text-slate-800">Nenhum certificado encontrado</h3>
-      <p className="mt-2 text-base text-slate-600 max-w-md mx-auto">
-        {hasFilters
-          ? "Tente ajustar seus filtros de busca ou limpar todos os filtros para ver mais resultados."
-          : "Não há certificados cadastrados ainda."}
-      </p>
-      <div className="mt-6 flex justify-center items-center gap-3">
-        {hasFilters && (
-          <Button
-            variant="outline"
-            onClick={onClearFilters}
-            className="flex items-center gap-2"
-          >
-            <X className="h-4 w-4" />
-            Limpar Filtros
-          </Button>
-        )}
-      </div>
-    </div>
-  );
-};
-
-export default function ManageCertificates() {
-  const router = useRouter()
+export default function AdminCertificatesPage() {
   const { showSuccess, showError } = useToast()
-  const { user } = useAuth()
-  
   const [loading, setLoading] = useState(true)
   const [refreshing, setRefreshing] = useState(false)
-  const [certificates, setCertificates] = useState<Certificate[]>([])
-  const [showDetailsModal, setShowDetailsModal] = useState(false)
-  const [selectedCertificate, setSelectedCertificate] = useState<Certificate | null>(null)
-  const [searchTerm, setSearchTerm] = useState('')
-  const [currentPage, setCurrentPage] = useState(1)
-  const [totalPages, setTotalPages] = useState(1)
+  
+  // Dados principais
+  const [certificates, setCertificates] = useState<CertificateResponseDto[]>([])
+  const [users, setUsers] = useState<any[]>([])
+
+  // Paginação e Filtros
   const [totalItems, setTotalItems] = useState(0)
-  const [notification, setNotification] = useState<{ message: string; type: 'success' | 'error' | 'info' } | null>(null)
-  const [filters, setFilters] = useState<CertificateFilters>({})
-  const [showFilters, setShowFilters] = useState(true)
-  const [itemsPerPage, setItemsPerPage] = useState(10)
-  const [showCreateModal, setShowCreateModal] = useState(false)
-  const [editingCertificate, setEditingCertificate] = useState<Certificate | null>(null)
-  const [users, setUsers] = useState<Array<{ id: number; name: string; email: string }>>([])
-  const [tvShows, setTvShows] = useState<Array<{ id: number; name: string }>>([]);
+  const [currentPage, setCurrentPage] = useState(1)
+  const [itemsPerPage] = useState(10)
+  const [searchQuery, setSearchTerm] = useState('')
+  const [filters, setFilters] = useState<BaseFilterDto & { recreate?: boolean, tv_show_name?: string }>({})
+  const [showFilterPanel, setShowFilterPanel] = useState(false)
 
-  // Verificar autorização
-  useEffect(() => {
-    if (!user) {
-      router.push('/auth/login')
-      return
-    }
+  // Modais (simplificado por enquanto)
+  const [modalOpen, setModalOpen] = useState(false)
+  const [selectedCertificate, setSelectedCertificate] = useState<CertificateResponseDto | null>(null)
 
-    // Verificar se é SYSTEM_ADMIN ou se tem certificados
-    const isSystemAdmin = user.role === 'SYSTEM_ADMIN'
-    if (!isSystemAdmin) {
-      // TODO: Verificar se o usuário tem certificados
-      // Por enquanto, permitir acesso para todos os usuários logados
-    }
-  }, [user, router])
+  // Estatísticas
+  const [stats, setStats] = useState<CertificateStats>({
+    totalCertificates: 0,
+    recreatable: 0,
+    programs: 0,
+    usersWithCerts: 0,
+  })
 
-  // Função para mostrar notificações
-  const showNotification = (message: string, type: 'success' | 'error' | 'info' = 'info') => {
-    setNotification({ message, type })
-    setTimeout(() => setNotification(null), 5000)
-  }
+  const calculateStats = useCallback((allCertificates: CertificateResponseDto[]) => {
+    const totalCertificates = allCertificates.length
+    const recreatable = allCertificates.filter(c => c.recreate).length
+    const programs = new Set(allCertificates.map(c => c.tv_show_name)).size
+    const usersWithCerts = new Set(allCertificates.map(c => c.user_id)).size
 
-  // Carregar certificados
-  const loadCertificates = useCallback(async (showLoadingIndicator = true) => {
-    if (showLoadingIndicator) setLoading(true);
+    setStats({ totalCertificates, recreatable, programs, usersWithCerts })
+  }, [])
+
+  const fetchPageData = useCallback(async (page = 1, search = '', currentFilters: typeof filters = {}, showLoadingIndicator = true) => {
+    if (showLoadingIndicator) setLoading(true)
+    else setRefreshing(true)
+
+    await new Promise(resolve => setTimeout(resolve, 500))
 
     try {
-      const response = await certificateService.getCertificates({
-        page: currentPage,
+      const params = {
+        page,
         limit: itemsPerPage,
-        search: searchTerm,
-        ...filters
-      });
-
-      if (response.success && response.data) {
-        setCertificates(response.data);
-        if (response.pagination) {
-          setTotalPages(response.pagination.totalPages);
-          setTotalItems(response.pagination.total);
-        }
-      } else {
-        throw new Error('Resposta inválida do servidor');
+        search,
+        ...currentFilters,
       }
 
-    } catch (error: any) {
-      console.log('Erro ao carregar certificados:', error);
-      showError(error.message || 'Erro ao carregar certificados');
-      setCertificates([]);
-      setTotalPages(1);
-      setTotalItems(0);
-    } finally {
-      setLoading(false);
-      setRefreshing(false);
-    }
-  }, [currentPage, itemsPerPage, filters, searchTerm, showError]);
-
-  // Carregar dados quando os parâmetros mudarem
-  useEffect(() => {
-    loadCertificates();
-  }, [currentPage, itemsPerPage, filters, searchTerm]);
-
-  // Carregar usuários e TV shows apenas uma vez
-  useEffect(() => {
-    loadUsersAndTvShows();
-  }, []);
-
-  // Carregar usuários e TV shows para o formulário
-  const loadUsersAndTvShows = async () => {
-    try {
-      // Carregar usuários
-      const usersResponse = await userService.getUsers({ limit: 1000 });
-      if (usersResponse.items) {
-        setUsers(usersResponse.items.map(u => ({
-          id: Number(u.id),
-          name: u.full_name,
-          email: u.email
-        })));
-      }
-
-      // Mock de TV Shows por enquanto
-      setTvShows([
-        { id: 1, name: 'Programa Educativo 1' },
-        { id: 2, name: 'Programa Educativo 2' },
-        { id: 3, name: 'Programa Educativo 3' }
+      const [certResponse, usersResponse] = await Promise.all([
+        certificateService.getCertificates(params),
+        userService.getUsers({ limit: 1000 }) // Assumindo que userService está disponível
       ]);
+
+      setCertificates(certResponse.items || [])
+      setTotalItems(certResponse.total || 0)
+      setCurrentPage(page)
+      setUsers(usersResponse.items || [])
+
+      const allCertsResponse = await certificateService.getCertificates({ limit: 1000 })
+      calculateStats(allCertsResponse.items)
+
+      if (!showLoadingIndicator) {
+        showSuccess("Lista de certificados atualizada!")
+      }
     } catch (error) {
-      console.log('Erro ao carregar usuários e TV shows:', error);
+      showError("Erro ao carregar certificados.")
+    } finally {
+      setLoading(false)
+      setRefreshing(false)
     }
+  }, [itemsPerPage, calculateStats, showError, showSuccess])
+
+  useEffect(() => {
+    fetchPageData(currentPage, searchQuery, filters)
+  }, [currentPage, fetchPageData])
+
+  const handleSearch = (e: React.FormEvent) => {
+    e.preventDefault()
+    setCurrentPage(1)
+    fetchPageData(1, searchQuery, filters)
+  }
+
+  const handleFilterChange = (key: keyof typeof filters, value: any) => {
+    const newFilters = { ...filters };
+    if (value === '' || value === undefined || value === null) {
+      delete (newFilters as any)[key];
+    } else {
+      (newFilters as any)[key] = value;
+    }
+    setFilters(newFilters);
   };
 
-  // Função de busca
-  const handleSearch = useCallback((query: string) => {
-    setSearchTerm(query)
-    setCurrentPage(1)
-  }, [])
-
-  // Função para atualizar lista
-  const handleRefresh = () => {
-    setRefreshing(true)
-    loadCertificates(false)
-  }
-
-  // Visualizar detalhes do certificado
-  const handleViewCertificate = (certificate: Certificate) => {
-    setSelectedCertificate(certificate)
-    setShowDetailsModal(true)
-  }
-
-  // Editar certificado
-  const handleEditCertificate = (certificate: Certificate) => {
-    setEditingCertificate(certificate)
-    setShowCreateModal(true)
-  }
-
-  // Criar novo certificado
-  const handleCreateCertificate = () => {
-    setEditingCertificate(null)
-    setShowCreateModal(true)
-  }
-
-  // Salvar certificado (criar ou editar)
-  const handleSaveCertificate = async (formData: any) => {
-    try {
-      if (editingCertificate) {
-        await certificateService.updateCertificate(editingCertificate.id, formData);
-        showSuccess('Certificado atualizado com sucesso!');
-      } else {
-        await certificateService.createCertificate(formData);
-        showSuccess('Certificado criado com sucesso!');
-      }
-      
-      loadCertificates();
-      setShowCreateModal(false);
-      setEditingCertificate(null);
-    } catch (error: any) {
-      console.log('Erro ao salvar certificado:', error);
-      showError(error.message || 'Erro ao salvar certificado');
-    }
-  }
-
-  // Excluir certificado
-  const handleDeleteCertificate = async (certificate: Certificate) => {
-    if (!window.confirm('Tem certeza que deseja excluir este certificado? Esta ação não pode ser desfeita.')) {
-      return
-    }
-
-    try {
-      await certificateService.deleteCertificate(certificate.id);
-      showSuccess('Certificado excluído com sucesso!')
-      setShowDetailsModal(false) // Fechar modal de detalhes
-      loadCertificates()
-    } catch (error: any) {
-      console.log('Erro ao excluir certificado:', error)
-      showError(error.message || 'Erro ao excluir certificado')
-    }
-  }
-
-  // Função para atualizar um filtro específico
-  const updateFilter = useCallback((key: string, value: any) => {
+  const applyFilters = () => {
     setCurrentPage(1);
-    setFilters(prev => {
-      if (value === '' || value === undefined || value === null) {
-        const newFilters = { ...prev }
-        delete newFilters[key as keyof CertificateFilters]
-        return newFilters
-      }
-      
-      return {
-        ...prev,
-        [key]: value
-      };
-    })
-  }, [])
-
-  // Limpar filtros
-  const handleClearFilters = useCallback(() => {
-    setFilters({})
-    setSearchTerm('')
-    setCurrentPage(1)
-    showSuccess('Filtros limpos com sucesso')
-  }, [showSuccess])
-
-  // Função para mudar de página
-  const handlePageChange = useCallback((page: number) => {
-    setCurrentPage(page)
-    window.scrollTo({ top: 0, behavior: 'smooth' });
-  }, [])
-
-  // Verificar se há filtros ativos
-  const hasActiveFilters = () => {
-    return Object.keys(filters).length > 0 && 
-      Object.values(filters).some(value => 
-        value !== undefined && value !== '' && 
-        (typeof value !== 'object' || Object.keys(value).length > 0)
-      );
+    fetchPageData(1, searchQuery, filters);
   };
 
-  // Exportar certificados
-  const handleExport = async () => {
+  const clearFilters = () => {
+    setSearchTerm('');
+    setFilters({});
+    setCurrentPage(1);
+    fetchPageData(1, '', {});
+  };
+
+  const handleRefresh = () => {
+    fetchPageData(currentPage, searchQuery, filters, false)
+  }
+
+  const handleDelete = async (certificate: CertificateResponseDto) => {
+    if (!confirm(`Tem certeza que deseja excluir o certificado "${certificate.document}"?`)) return
+
     try {
-      showSuccess('Exportação iniciada! Você receberá um email quando estiver pronta.')
-    } catch (error: any) {
-      console.log('Erro ao exportar:', error)
-      showError(error.message || 'Erro ao exportar certificados')
+      setLoading(true)
+      await certificateService.deleteCertificate(certificate.id)
+      showSuccess("Certificado excluído com sucesso.")
+      await fetchPageData(currentPage, searchQuery, filters, false)
+    } catch (error) {
+      showError("Erro ao excluir certificado.")
+    } finally {
+      setLoading(false)
     }
   }
 
-  const columns: Array<{
-    key: keyof Certificate | string;
-    label: string;
-    sortable?: boolean;
-    width?: string;
-    render?: (value: any, certificate: Certificate, index: number) => React.ReactNode;
-  }> = [
-    {
-      key: 'document',
-      label: 'Certificado',
-      sortable: true,
-      width: '300px',
-      render: (value, certificate) => {
-        if (!certificate) return '-'
-        return (
-          <div className="flex items-center gap-3 min-w-0">
-            <div className="flex-shrink-0">
-              <Award className="h-8 w-8 text-purple-500" />
-            </div>
-            <div className="min-w-0 flex-1">
-              <div className="font-semibold text-slate-800 truncate">
-                {certificate.document || certificate.license_code || `Certificado #${certificate.id}`}
-              </div>
-              <div className="text-xs text-slate-500 truncate">
-                {certificate.tv_show_name || 'Sem programa associado'}
-              </div>
-            </div>
-          </div>
-        )
-      }
-    },
-    {
-      key: 'user',
-      label: 'Beneficiário',
-      sortable: false,
-      width: '200px',
-      render: (value, certificate) => {
-        if (!certificate?.user) return '-'
-        return (
-          <div className="flex items-center gap-2 min-w-0">
-            <User className="h-4 w-4 text-blue-500 flex-shrink-0" />
-            <div className="min-w-0">
-              <div className="font-medium text-slate-700 truncate">{certificate.user.name}</div>
-              <div className="text-xs text-slate-500 truncate">{certificate.user.email}</div>
-            </div>
-          </div>
-        )
-      }
-    },
-    {
-      key: 'score',
-      label: 'Pontuação',
-      sortable: true,
-      width: '120px',
-      render: (value, certificate) => {
-        if (!certificate || certificate.score === null || certificate.score === undefined) return '-'
-        return (
-          <div className="flex items-center gap-1">
-            <Trophy className="h-3 w-3 text-yellow-500 flex-shrink-0" />
-            <span className="text-sm font-medium text-slate-700">
-              {certificate.score}
-            </span>
-          </div>
-        )
-      }
-    },
-    {
-      key: 'date_created',
-      label: 'Criação',
-      sortable: true,
-      width: '120px',
-      render: (value, certificate) => {
-        if (!certificate || !certificate.date_created) return '-'
-        const date = new Date(certificate.date_created)
-        const formattedDate = date.toLocaleDateString('pt-BR', {
-          day: '2-digit',
-          month: '2-digit',
-          year: '2-digit'
-        })
-        return (
-          <div className="flex items-center gap-1">
-            <Calendar className="h-3 w-3 text-green-500 flex-shrink-0" />
-            <span className="text-xs font-medium text-slate-700" title={formatDate(certificate.date_created)}>
-              {formattedDate}
-            </span>
-          </div>
-        )
-      }
-    },
-    {
-      key: 'recreate',
-      label: 'Status',
-      width: '120px',
-      render: (value, certificate) => {
-        if (!certificate) return '-'
-        const recreateStatus = certificate.recreate?.toString() || 'false'
-        return (
-          <div className={`inline-flex items-center gap-1 px-2 py-1 rounded-full text-xs font-semibold ${
-            certificate.recreate ? 'bg-green-100 text-green-800' : 'bg-gray-100 text-gray-800'
-          }`}>
-            <div className={`h-2 w-2 rounded-full ${certificate.recreate ? 'bg-green-500' : 'bg-gray-500'} animate-pulse`}></div>
-            {certificate.recreate ? 'Recriável' : 'Não Recriável'}
-          </div>
-        )
-      }
-    }
-  ]
+  const totalPages = Math.ceil(totalItems / itemsPerPage)
 
-  // Definir ações personalizadas para o GenericCRUD
-  const customActions: Array<{
-    label: string;
-    icon: React.ReactNode;
-    onClick: (certificate: Certificate) => void;
-    variant?: string;
-    className?: string;
-  }> = [
-    {
-      label: 'Ver',
-      icon: <Eye className="h-3 w-3" />,
-      onClick: handleViewCertificate,
-      variant: 'ghost',
-      className: 'text-blue-600 hover:text-blue-800 hover:bg-blue-50 px-2 py-1 text-xs'
-    },
-    {
-      label: 'Editar',
-      icon: <Edit className="h-3 w-3" />,
-      onClick: handleEditCertificate,
-      variant: 'ghost',
-      className: 'text-amber-600 hover:text-amber-800 hover:bg-amber-50 px-2 py-1 text-xs'
-    }
-  ]
+  const getUserName = (userId: string | null | undefined) => {
+    if (!userId) return 'N/A';
+    const user = users.find(u => u.id.toString() === userId);
+    return user?.full_name || 'Usuário não encontrado';
+  }
 
   return (
-    <AuthenticatedLayout>
-      <div className="container mx-auto py-8">
-        {notification && (
-          <Notification
-            message={notification.message}
-            type={notification.type}
-            onClose={() => setNotification(null)}
-          />
-        )}
-        
-        <div className="flex flex-col gap-4 mb-6">
-          <div className="flex justify-between items-center">
-            <h1 className="text-2xl font-bold text-slate-800">Gerenciamento de Certificados</h1>
-            <div className="flex items-center gap-2">
-              <span className="text-sm text-slate-500">
-                Total: {totalItems} certificados
-              </span>
-              <Button
-                onClick={handleCreateCertificate}
-                className="flex items-center gap-2 bg-purple-600 hover:bg-purple-700"
-              >
-                <Plus className="h-4 w-4" />
-                Novo Certificado
-              </Button>
-              <button
-                onClick={handleRefresh}
-                className={`p-2 rounded-lg border border-slate-200 hover:bg-slate-50 ${refreshing ? 'animate-spin' : ''}`}
-                title="Atualizar lista"
-              >
-                <RefreshCw className="h-4 w-4" />
-              </button>
-              <button
-                onClick={() => setShowFilters(!showFilters)}
-                className={`p-2 rounded-lg border border-slate-200 hover:bg-slate-50 flex items-center gap-1 ${
-                  hasActiveFilters() ? 'bg-blue-50 border-blue-200 text-blue-600' : ''
-                }`}
-                title="Filtros"
-              >
-                <Filter className="h-4 w-4" />
-                <span className="hidden sm:inline text-sm">Filtros</span>
-                {hasActiveFilters() && (
-                  <span className="flex h-4 w-4 items-center justify-center rounded-full bg-blue-500 text-[10px] text-white">
-                    {Object.keys(filters).length}
-                  </span>
-                )}
-              </button>
+      <div className="container mx-auto px-4 py-6 max-w-7xl">
+        <div className="bg-white rounded-xl shadow-sm border border-gray-200">
+          {/* Header */}
+          <div className="p-6 border-b border-gray-200">
+            <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4 mb-6">
+              <div>
+                <h1 className="text-2xl font-bold text-gray-900">Gerenciamento de Certificados</h1>
+                <p className="text-gray-600 mt-1">Consulte e gerencie os certificados emitidos</p>
+              </div>
+              <div className="flex gap-3">
+                <Button onClick={handleRefresh} variant="outline" disabled={refreshing} className="flex items-center gap-2">
+                  <RefreshCw className={`w-4 h-4 ${refreshing ? 'animate-spin' : ''}`} />
+                  Atualizar
+                </Button>
+                <Button onClick={() => alert("Funcionalidade de 'Novo Certificado' a ser implementada.")} className="flex items-center gap-2">
+                  <Plus className="w-4 h-4" />
+                  Novo Certificado
+                </Button>
+              </div>
             </div>
-          </div>
-        </div>
-        
-        {/* Resumo dos filtros ativos */}
-        {!showFilters && hasActiveFilters() && (
-          <div className="mb-4 bg-blue-50 border border-blue-200 rounded-lg p-4">
-            <div className="flex flex-wrap items-center gap-2">
-              <span className="text-sm font-medium text-blue-800">Filtros ativos:</span>
-              {filters.search && (
-                <span className="px-2 py-1 bg-blue-100 text-blue-800 rounded-full text-xs">
-                  Busca: &quot;{filters.search}&quot;
-                </span>
-              )}
-              {filters.tv_show_name && (
-                <span className="px-2 py-1 bg-blue-100 text-blue-800 rounded-full text-xs">
-                  Programa: {filters.tv_show_name}
-                </span>
-              )}
-              {filters.recreate !== undefined && (
-                <span className="px-2 py-1 bg-blue-100 text-blue-800 rounded-full text-xs">
-                  Status: {filters.recreate ? 'Recriável' : 'Não Recriável'}
-                </span>
-              )}
-              <button
-                onClick={handleClearFilters}
-                className="ml-2 px-2 py-1 bg-red-100 text-red-800 rounded-full text-xs hover:bg-red-200 transition-colors"
-              >
-                Limpar todos
-              </button>
-            </div>
-          </div>
-        )}
 
-        {/* Seção de filtros */}
-        {showFilters && (
-          <div className="mb-6 p-6 bg-gradient-to-br from-purple-50 to-indigo-50 border border-purple-200 rounded-xl shadow-md">
-            <div className="flex justify-between items-center mb-6">
-              <div className="flex items-center gap-3">
-                <div className="p-2 bg-purple-500 rounded-lg shadow-sm">
-                  <Filter className="h-5 w-5 text-white" />
-                </div>
-                <div>
-                  <h2 className="text-xl font-bold text-purple-800">Filtros de Certificados</h2>
-                </div>
-              </div>
-              <div className="flex items-center gap-3">
-                {hasActiveFilters() && (
-                  <Button
-                    variant="secondary"
-                    onClick={handleClearFilters}
-                    className="flex items-center gap-2 bg-red-50 text-red-600 border-red-200 hover:bg-red-100"
-                  >
-                    <X className="h-4 w-4" />
-                    Limpar filtros
-                  </Button>
-                )}
-              </div>
+            {/* Stats */}
+            <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
+              <StatCard icon={Award} title="Total" value={stats.totalCertificates} subtitle="Certificados" color="purple" />
+              <StatCard icon={CheckCircle} title="Recriáveis" value={stats.recreatable} subtitle="Disponíveis" color="green" />
+              <StatCard icon={BookOpen} title="Programas" value={stats.programs} subtitle="Distintos" color="blue" />
+              <StatCard icon={Users} title="Usuários" value={stats.usersWithCerts} subtitle="Certificados" color="amber" />
             </div>
-            
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
-              {/* Filtro por Busca */}
-              <div className="space-y-2 bg-white p-3 rounded-lg shadow-sm border border-purple-100">
-                <label className="text-sm font-medium text-slate-700">Buscar</label>
+
+            {/* Search & Filter Trigger */}
+            <div className="flex gap-3">
+              <form onSubmit={handleSearch} className="flex-1">
                 <div className="relative">
-                  <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-slate-400" />
+                  <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
                   <input
                     type="text"
-                    value={searchTerm}
-                    onChange={(e) => handleSearch(e.target.value)}
-                    placeholder="Buscar certificados..."
-                    className="w-full pl-10 pr-3 py-2 border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent text-sm"
+                    placeholder="Buscar por documento, licença ou nome do usuário..."
+                    value={searchQuery}
+                    onChange={(e) => setSearchTerm(e.target.value)}
+                    className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent"
                   />
                 </div>
-              </div>
-
-              {/* Filtro por Status */}
-              <div className="space-y-2 bg-white p-3 rounded-lg shadow-sm border border-purple-100">
-                <label className="text-sm font-medium text-slate-700">Status</label>
-                <select
-                  value={filters.recreate?.toString() || ''}
-                  onChange={(e) => updateFilter('recreate', e.target.value === '' ? undefined : e.target.value === 'true')}
-                  className="w-full px-3 py-2 border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent text-sm"
-                >
-                  <option value="">Todos</option>
-                  <option value="true">Recriável</option>
-                  <option value="false">Não Recriável</option>
-                </select>
-              </div>
-
-              {/* Filtro por Programa */}
-              <div className="space-y-2 bg-white p-3 rounded-lg shadow-sm border border-purple-100">
-                <label className="text-sm font-medium text-slate-700">Programa</label>
-                <select
-                  value={filters.tv_show_name || ''}
-                  onChange={(e) => updateFilter('tv_show_name', e.target.value)}
-                  className="w-full px-3 py-2 border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent text-sm"
-                >
-                  <option value="">Todos os programas</option>
-                  {tvShows.map(show => (
-                    <option key={show.id} value={show.name}>{show.name}</option>
-                  ))}
-                </select>
-              </div>
-
-              {/* Filtro por Itens por Página */}
-              <div className="space-y-2 bg-white p-3 rounded-lg shadow-sm border border-purple-100">
-                <label className="text-sm font-medium text-slate-700">Itens por página</label>
-                <select
-                  value={itemsPerPage}
-                  onChange={(e) => {
-                    setItemsPerPage(Number(e.target.value))
-                    setCurrentPage(1)
-                  }}
-                  className="w-full px-3 py-2 border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent text-sm"
-                >
-                  <option value="10">10</option>
-                  <option value="25">25</option>
-                  <option value="50">50</option>
-                  <option value="100">100</option>
-                </select>
-              </div>
+              </form>
+              <Button onClick={() => setShowFilterPanel(!showFilterPanel)} variant="outline" className="flex items-center gap-2">
+                <Filter className="w-4 h-4" />
+                Filtros
+              </Button>
             </div>
           </div>
-        )}
 
-        {/* Tabela de certificados */}
-        {loading ? (
-          <div className="flex justify-center items-center py-12">
-            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-purple-600"></div>
-          </div>
-        ) : certificates.length === 0 ? (
-          <EmptyState
-            onClearFilters={handleClearFilters}
-            hasFilters={hasActiveFilters()}
-          />
-        ) : (
-          <>
-            <div className="bg-white rounded-lg shadow-md overflow-hidden">
-              <div className="overflow-x-auto">
-                <table className="w-full">
-                  <thead className="bg-slate-50 border-b border-slate-200">
-                    <tr>
-                      {columns.map((column) => (
-                        <th
-                          key={column.key}
-                          className="px-6 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider"
-                          style={{ width: column.width }}
-                        >
-                          {column.label}
-                        </th>
-                      ))}
-                      <th className="px-6 py-3 text-right text-xs font-medium text-slate-500 uppercase tracking-wider">
-                        Ações
-                      </th>
-                    </tr>
-                  </thead>
-                  <tbody className="bg-white divide-y divide-slate-200">
-                    {certificates.map((certificate, index) => (
-                      <tr key={certificate.id} className="hover:bg-slate-50 transition-colors">
-                        {columns.map((column) => (
-                          <td key={column.key} className="px-6 py-4 whitespace-nowrap">
-                            {column.render ? column.render(certificate[column.key as keyof Certificate], certificate, index) : String(certificate[column.key as keyof Certificate] || '')}
-                          </td>
-                        ))}
-                        <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
-                          <div className="flex justify-end gap-1">
-                            {customActions.map((action, actionIndex) => (
-                              <button
-                                key={actionIndex}
-                                onClick={() => action.onClick(certificate)}
-                                className={action.className}
-                                title={action.label}
-                              >
-                                {action.icon}
-                                <span className="ml-1">{action.label}</span>
-                              </button>
-                            ))}
-                            <button
-                              onClick={() => handleDeleteCertificate(certificate)}
-                              className="text-red-600 hover:text-red-800 hover:bg-red-50 px-2 py-1 text-xs rounded"
-                              title="Excluir"
-                            >
-                              <Trash2 className="h-3 w-3" />
-                              <span className="ml-1">Excluir</span>
-                            </button>
-                          </div>
-                        </td>
+          {/* Filter Panel */}
+          {showFilterPanel && (
+            <div className="p-6 border-b border-gray-200 bg-gray-50">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div>
+                  <label className="block text-sm font-medium mb-1 text-gray-700">Status</label>
+                  <select
+                    value={filters.recreate === undefined ? '' : String(filters.recreate)}
+                    onChange={(e) => handleFilterChange('recreate', e.target.value === '' ? undefined : e.target.value === 'true')}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg"
+                  >
+                    <option value="">Todos</option>
+                    <option value="true">Recriável</option>
+                    <option value="false">Não Recriável</option>
+                  </select>
+                </div>
+                <div>
+                  <label className="block text-sm font-medium mb-1 text-gray-700">Programa</label>
+                  <select
+                    value={filters.tv_show_name || ''}
+                    onChange={(e) => handleFilterChange('tv_show_name', e.target.value)}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg"
+                  >
+                    <option value="">Todos os Programas</option>
+                    <option value="Programa Educativo 1">Programa Educativo 1</option>
+                    <option value="Programa Educativo 2">Programa Educativo 2</option>
+                    <option value="Programa Educativo 3">Programa Educativo 3</option>
+                  </select>
+                </div>
+              </div>
+              <div className="flex justify-end gap-3 mt-4">
+                <Button variant="ghost" onClick={clearFilters}>Limpar Filtros</Button>
+                <Button onClick={applyFilters}>Aplicar</Button>
+              </div>
+            </div>
+          )}
+
+          {/* Content */}
+          <div>
+            {loading ? (
+              <div className="flex items-center justify-center py-12">
+                <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-purple-600"></div>
+                <span className="ml-2 text-gray-600">Carregando certificados...</span>
+              </div>
+            ) : certificates.length === 0 ? (
+              <div className="text-center py-12">
+                <Award className="w-16 h-16 text-gray-300 mx-auto mb-4" />
+                <p className="text-gray-500 text-lg mb-2">Nenhum certificado encontrado</p>
+                <p className="text-gray-400 text-sm">{searchQuery || Object.keys(filters).length > 0 ? "Tente ajustar sua busca ou filtros." : "Nenhum certificado no sistema."}</p>
+              </div>
+            ) : (
+              <>
+                {/* Desktop Table */}
+                <div className="hidden lg:block overflow-x-auto">
+                  <table className="w-full divide-y divide-gray-200">
+                    <thead className="bg-gray-50">
+                      <tr>
+                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Certificado</th>
+                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Usuário</th>
+                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Programa</th>
+                        <th className="px-6 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">Status</th>
+                        <th className="px-6 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">Ações</th>
                       </tr>
-                    ))}
-                  </tbody>
-                </table>
+                    </thead>
+                    <tbody className="bg-white divide-y divide-gray-200">
+                      {certificates.map((cert) => (
+                        <tr key={cert.id} className="hover:bg-gray-50">
+                          <td className="px-6 py-4">
+                            <div className="text-sm font-semibold text-gray-900">{cert.document}</div>
+                            <div className="text-xs text-gray-500 font-mono">{cert.license_code}</div>
+                          </td>
+                          <td className="px-6 py-4 text-sm text-gray-800">{getUserName(cert.user_id)}</td>
+                          <td className="px-6 py-4 text-sm text-gray-600">{cert.tv_show_name}</td>
+                          <td className="px-6 py-4 text-center">
+                            <Badge variant={cert.recreate ? 'success' : 'secondary'}>
+                              {cert.recreate ? 'Recriável' : 'Não Recriável'}
+                            </Badge>
+                          </td>
+                          <td className="px-6 py-4 text-center">
+                            <div className="flex items-center justify-center space-x-2">
+                              <Button variant="ghost" size="sm" onClick={() => alert(`Visualizar: ${cert.document}`)} className="text-blue-600 hover:text-blue-900"><Eye className="w-4 h-4" /></Button>
+                              <Button variant="ghost" size="sm" onClick={() => alert(`Editar: ${cert.document}`)} className="text-green-600 hover:text-green-900"><Edit className="w-4 h-4" /></Button>
+                              <Button variant="ghost" size="sm" onClick={() => handleDelete(cert)} className="text-red-600 hover:text-red-900"><Trash2 className="w-4 h-4" /></Button>
+                            </div>
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+
+                {/* Mobile Cards */}
+                <div className="lg:hidden p-4 space-y-4">
+                  {certificates.map(cert => (
+                    <div key={cert.id} className="bg-white border border-gray-200 rounded-lg shadow-sm">
+                      <div className="p-4 border-b border-gray-100 flex justify-between items-start">
+                        <div>
+                          <h3 className="font-semibold text-gray-800">{cert.document}</h3>
+                          <p className="text-sm text-gray-500 font-mono">{cert.license_code}</p>
+                        </div>
+                        <Badge variant={cert.recreate ? 'success' : 'secondary'}>{cert.recreate ? 'Recriável' : 'Não Recriável'}</Badge>
+                      </div>
+                      <div className="p-4 space-y-2">
+                        <div className="flex items-center text-sm"><User className="w-4 h-4 mr-2 text-gray-400"/>{getUserName(cert.user_id)}</div>
+                        <div className="flex items-center text-sm"><BookOpen className="w-4 h-4 mr-2 text-gray-400"/>{cert.tv_show_name}</div>
+                      </div>
+                      <div className="p-4 border-t border-gray-100 flex justify-end space-x-2">
+                        <Button variant="outline" size="sm" onClick={() => alert(`Visualizar: ${cert.document}`)}>Ver</Button>
+                        <Button variant="outline" size="sm" onClick={() => alert(`Editar: ${cert.document}`)}>Editar</Button>
+                        <Button variant="destructive" size="sm" onClick={() => handleDelete(cert)}>Excluir</Button>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </>
+            )}
+          </div>
+
+          {/* Pagination */}
+          {totalPages > 1 && (
+            <div className="px-6 py-4 border-t border-gray-200 flex items-center justify-between">
+              <div className="text-sm text-gray-700">
+                Página {currentPage} de {totalPages}
+              </div>
+              <div className="flex items-center space-x-2">
+                <Button variant="outline" size="sm" onClick={() => setCurrentPage(p => Math.max(p - 1, 1))} disabled={currentPage === 1}>Anterior</Button>
+                <Button variant="outline" size="sm" onClick={() => setCurrentPage(p => Math.min(p + 1, totalPages))} disabled={currentPage === totalPages}>Próxima</Button>
               </div>
             </div>
-
-            {/* Paginação */}
-            <Pagination
-              currentPage={currentPage}
-              totalPages={totalPages}
-              onPageChange={handlePageChange}
-            />
-          </>
-        )}
-
-        {/* Modal de detalhes */}
-        {showDetailsModal && (
-          <CertificateDetailsModal
-            certificate={selectedCertificate}
-            onClose={() => {
-              setShowDetailsModal(false)
-              setSelectedCertificate(null)
-            }}
-            onEdit={handleEditCertificate}
-            onDelete={handleDeleteCertificate}
-          />
-        )}
-
-        {/* Modal de criação/edição */}
-        {showCreateModal && (
-          <CertificateFormModal
-            isOpen={showCreateModal}
-            certificate={editingCertificate}
-            users={users}
-            tvShows={tvShows}
-            onSave={handleSaveCertificate}
-            onClose={() => {
-              setShowCreateModal(false)
-              setEditingCertificate(null)
-            }}
-          />
-        )}
+          )}
+        </div>
       </div>
-    </AuthenticatedLayout>
   )
 }

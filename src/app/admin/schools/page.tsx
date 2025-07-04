@@ -1,489 +1,338 @@
-'use client';
+'use client'
 
-import React, { useState } from 'react';
+import React, { useState, useEffect, useCallback } from 'react'
+import { useToast } from '@/components/ToastManager'
+import { schoolService } from '@/services/schoolService.mock'
+import { institutionService } from '@/services/institutionService.mock'
+import { SchoolResponseDto, InstitutionResponseDto, BaseFilterDto } from '@/types/api'
+import AuthenticatedLayout from '@/components/AuthenticatedLayout'
+import { Badge } from '@/components/ui/Badge'
+import { Button } from '@/components/ui/Button'
+import { StatCard } from '@/components/ui/StandardCard'
 import {
-  Building2 as UnitIcon,
   Plus,
+  Search,
   Edit,
   Trash2,
-  Search,
-  CheckCircle,
-  XCircle,
-  BookOpen
-} from 'lucide-react';
-import { UnitResponseDto, UnitCreateDto, InstitutionResponseDto } from '@/types/api';
-import { useAuth } from '@/contexts/AuthContext';
-import { motion } from 'framer-motion';
-import { UserRole } from '@/types/roles';
-import { useToast } from '@/components/ToastManager';
-import AuthenticatedLayout from '@/components/AuthenticatedLayout';
+  Eye,
+  School,
+  Users,
+  BookOpen,
+  RefreshCw,
+  Filter,
+  X,
+  Building2
+} from 'lucide-react'
 
-// Interface estendida para dados da UI
-interface UnitExtended extends UnitResponseDto {
-  studentsCount?: number;
-  teachersCount?: number;
-  coursesCount?: number;
-  institutionName?: string;
+// Interface para estatísticas de escolas
+interface SchoolStats {
+  totalSchools: number
+  totalStudents: number
+  totalTeachers: number
+  totalClasses: number
 }
 
-// Dados mockados estáticos alinhados com os DTOs de api.ts
-const mockInstitutions: InstitutionResponseDto[] = [
-  {
-    id: 1,
-    name: 'Rede Educacional Futuro Brilhante',
-    accountable_contact: 'diretoria@futurobrilhante.edu.br',
-    accountable_name: 'Maria Helena Rodrigues',
-    company_name: 'Futuro Brilhante Educação Ltda',
-    contract_disabled: false,
-    contract_term_end: '2025-12-31T23:59:59.000Z',
-    contract_term_start: '2023-01-01T00:00:00.000Z',
-    deleted: false,
-    district: 'Jardim América',
-    document: '12.345.678/0001-90',
-    postal_code: '01454-000',
-    state: 'SP',
-    street: 'Av. Brigadeiro Faria Lima, 2170',
-    has_library_platform: true,
-    has_principal_platform: true,
-    has_student_platform: true
-  },
-  {
-    id: 2,
-    name: 'Instituto Educacional Nova Era',
-    accountable_contact: 'contato@novaera.edu.br',
-    accountable_name: 'João Carlos Mendes',
-    company_name: 'Nova Era Ensino e Pesquisa S.A.',
-    contract_disabled: false,
-    contract_term_end: '2026-06-30T23:59:59.000Z',
-    contract_term_start: '2022-07-01T00:00:00.000Z',
-    deleted: false,
-    district: 'Botafogo',
-    document: '98.765.432/0001-10',
-    postal_code: '22250-040',
-    state: 'RJ',
-    street: 'Rua Voluntários da Pátria, 45',
-    has_library_platform: true,
-    has_principal_platform: false,
-    has_student_platform: true
-  },
-  {
-    id: 3,
-    name: 'Grupo Educacional Conhecimento',
-    accountable_contact: 'administracao@conhecimento.edu.br',
-    accountable_name: 'Ana Paula Silva',
-    company_name: 'Conhecimento Educação e Cultura EIRELI',
-    contract_disabled: false,
-    contract_term_end: '2025-03-31T23:59:59.000Z',
-    contract_term_start: '2023-04-01T00:00:00.000Z',
-    deleted: false,
-    district: 'Asa Sul',
-    document: '45.678.901/0001-23',
-    postal_code: '70390-100',
-    state: 'DF',
-    street: 'SQS 308 Bloco A',
-    has_library_platform: true,
-    has_principal_platform: true,
-    has_student_platform: true
-  }
-];
+export default function AdminSchoolsPage() {
+  const { showSuccess, showError } = useToast()
+  const [loading, setLoading] = useState(true)
+  const [refreshing, setRefreshing] = useState(false)
+  
+  // Dados principais
+  const [schools, setSchools] = useState<SchoolResponseDto[]>([])
+  const [institutions, setInstitutions] = useState<InstitutionResponseDto[]>([])
 
-const mockUnits: UnitExtended[] = [
-  {
-    id: 101,
-    name: 'Escola Futuro Brilhante - Unidade Centro',
-    institution_id: '1',
-    description: 'Unidade principal com ensino fundamental I e II completo. Infraestrutura moderna com laboratórios de ciências e informática.',
-    type: 'school',
-    active: true,
-    studentsCount: 856,
-    teachersCount: 42,
-    coursesCount: 24,
-    institutionName: 'Rede Educacional Futuro Brilhante',
-    created_at: '2023-01-15T10:30:00.000Z',
-    updated_at: '2024-11-20T14:45:00.000Z'
-  },
-  {
-    id: 102,
-    name: 'Colégio Futuro Brilhante - Vila Nova',
-    institution_id: '1',
-    description: 'Unidade focada em ensino médio e preparação para vestibulares. Conta com programa bilíngue e atividades extracurriculares.',
-    type: 'school',
-    active: true,
-    studentsCount: 620,
-    teachersCount: 38,
-    coursesCount: 18,
-    institutionName: 'Rede Educacional Futuro Brilhante',
-    created_at: '2023-03-10T09:00:00.000Z',
-    updated_at: '2024-12-01T16:20:00.000Z'
-  },
-  {
-    id: 103,
-    name: 'Escola Futuro Brilhante - Jardim Primavera',
-    institution_id: '1',
-    description: 'Especializada em educação infantil e fundamental I. Metodologia lúdica e espaços adaptados para crianças.',
-    type: 'school',
-    active: true,
-    studentsCount: 320,
-    teachersCount: 28,
-    coursesCount: 12,
-    institutionName: 'Rede Educacional Futuro Brilhante',
-    created_at: '2023-02-20T11:15:00.000Z',
-    updated_at: '2024-10-15T13:30:00.000Z'
-  },
-  {
-    id: 201,
-    name: 'Instituto Nova Era - Campus Principal',
-    institution_id: '2',
-    description: 'Campus universitário com cursos de graduação e pós-graduação em diversas áreas do conhecimento.',
-    type: 'university',
-    active: true,
-    studentsCount: 3500,
-    teachersCount: 180,
-    coursesCount: 45,
-    institutionName: 'Instituto Educacional Nova Era',
-    created_at: '2022-07-15T08:00:00.000Z',
-    updated_at: '2024-12-10T17:00:00.000Z'
-  },
-  {
-    id: 202,
-    name: 'Faculdade Nova Era - Tecnologia',
-    institution_id: '2',
-    description: 'Unidade especializada em cursos de tecnologia, engenharia e ciências exatas.',
-    type: 'college',
-    active: true,
-    studentsCount: 1200,
-    teachersCount: 65,
-    coursesCount: 15,
-    institutionName: 'Instituto Educacional Nova Era',
-    created_at: '2022-09-01T10:00:00.000Z',
-    updated_at: '2024-11-25T15:45:00.000Z'
-  },
-  {
-    id: 203,
-    name: 'Centro de Extensão Nova Era',
-    institution_id: '2',
-    description: 'Oferece cursos livres, extensão universitária e programas de educação continuada.',
-    type: 'campus',
-    active: false,
-    studentsCount: 450,
-    teachersCount: 25,
-    coursesCount: 30,
-    institutionName: 'Instituto Educacional Nova Era',
-    created_at: '2023-01-20T09:30:00.000Z',
-    updated_at: '2024-06-15T11:00:00.000Z'
-  },
-  {
-    id: 301,
-    name: 'Escola Conhecimento - Asa Norte',
-    institution_id: '3',
-    description: 'Unidade com ensino fundamental e médio, reconhecida pela excelência acadêmica e projetos sociais.',
-    type: 'school',
-    active: true,
-    studentsCount: 980,
-    teachersCount: 52,
-    coursesCount: 28,
-    institutionName: 'Grupo Educacional Conhecimento',
-    created_at: '2023-04-10T08:30:00.000Z',
-    updated_at: '2024-12-05T14:20:00.000Z'
-  },
-  {
-    id: 302,
-    name: 'Colégio Conhecimento - Lago Sul',
-    institution_id: '3',
-    description: 'Unidade premium com programa internacional IB e infraestrutura de ponta.',
-    type: 'school',
-    active: true,
-    studentsCount: 420,
-    teachersCount: 35,
-    coursesCount: 20,
-    institutionName: 'Grupo Educacional Conhecimento',
-    created_at: '2023-05-15T10:00:00.000Z',
-    updated_at: '2024-11-30T16:00:00.000Z'
-  },
-  {
-    id: 303,
-    name: 'Centro de Idiomas Conhecimento',
-    institution_id: '3',
-    description: 'Especializado no ensino de línguas estrangeiras com metodologia imersiva.',
-    type: 'campus',
-    active: true,
-    studentsCount: 650,
-    teachersCount: 30,
-    coursesCount: 12,
-    institutionName: 'Grupo Educacional Conhecimento',
-    created_at: '2023-06-01T11:30:00.000Z',
-    updated_at: '2024-12-01T13:45:00.000Z'
-  }
-];
+  // Paginação e Filtros
+  const [totalItems, setTotalItems] = useState(0)
+  const [currentPage, setCurrentPage] = useState(1)
+  const [itemsPerPage] = useState(10)
+  const [searchQuery, setSearchTerm] = useState('')
+  const [filters, setFilters] = useState<BaseFilterDto & { institutionId?: number }>({})
+  const [showFilterPanel, setShowFilterPanel] = useState(false)
 
-export default function SystemAdminUnitsPage() {
-  const { showSuccess, showError } = useToast();
-  const [units, setUnits] = useState<UnitExtended[]>(mockUnits);
-  const [institutions] = useState<InstitutionResponseDto[]>(mockInstitutions);
-  const [searchTerm, setSearchTerm] = useState('');
-  const [selectedInstitution, setSelectedInstitution] = useState<string>('all');
-  const [showModal, setShowModal] = useState(false);
-  const [editingUnit, setEditingUnit] = useState<UnitExtended | null>(null);
-  const [formData, setFormData] = useState<UnitCreateDto>({
-    name: '',
-    institution_id: '',
-    description: '',
-    type: 'school',
-    active: true,
-  });
-  const [filterStatus, setFilterStatus] = useState<'all' | 'active' | 'inactive'>('all');
-  const [filterType, setFilterType] = useState<string>('all');
+  // Modais (simplificado)
+  const [modalOpen, setModalOpen] = useState(false)
+  const [selectedSchool, setSelectedSchool] = useState<SchoolResponseDto | null>(null)
 
-  const resetForm = () => {
-    setEditingUnit(null);
-    setFormData({
-      name: '',
-      institution_id: '',
-      description: '',
-      type: 'school',
-      active: true,
-    });
-  };
+  // Estatísticas
+  const [stats, setStats] = useState<SchoolStats>({
+    totalSchools: 0,
+    totalStudents: 0,
+    totalTeachers: 0,
+    totalClasses: 0,
+  })
 
-  const handleSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!formData.name.trim() || !formData.institution_id) {
-      showError('Nome da unidade e instituição são obrigatórios.');
-      return;
+  const calculateStats = useCallback((allSchools: SchoolResponseDto[]) => {
+    const totalSchools = allSchools.length
+    const totalStudents = allSchools.reduce((sum, s) => sum + (s.total_students || 0), 0)
+    const totalTeachers = allSchools.reduce((sum, s) => sum + (s.total_teachers || 0), 0)
+    const totalClasses = allSchools.reduce((sum, s) => sum + (s.total_classes || 0), 0)
+
+    setStats({ totalSchools, totalStudents, totalTeachers, totalClasses })
+  }, [])
+
+  const fetchPageData = useCallback(async (page = 1, search = '', currentFilters: typeof filters = {}, showLoadingIndicator = true) => {
+    if (showLoadingIndicator) setLoading(true)
+    else setRefreshing(true)
+
+    await new Promise(resolve => setTimeout(resolve, 500))
+
+    try {
+      if (institutions.length === 0) {
+        const instResponse = await institutionService.getInstitutions({ limit: 1000 });
+        setInstitutions(instResponse.items);
+      }
+
+      const params = {
+        page,
+        limit: itemsPerPage,
+        search,
+        ...currentFilters,
+      }
+
+      const response = await schoolService.getSchools(params)
+      setSchools(response.items || [])
+      setTotalItems(response.total || 0)
+      setCurrentPage(page)
+
+      const allSchoolsResponse = await schoolService.getSchools({ limit: 1000 })
+      calculateStats(allSchoolsResponse.items)
+
+      if (!showLoadingIndicator) {
+        showSuccess("Lista de escolas atualizada!")
+      }
+    } catch (error) {
+      showError("Erro ao carregar escolas.")
+    } finally {
+      setLoading(false)
+      setRefreshing(false)
     }
+  }, [itemsPerPage, calculateStats, showError, showSuccess, institutions.length])
 
-    const institutionIdNum = parseInt(formData.institution_id, 10);
-    const institutionName = institutions.find(i => i.id === institutionIdNum)?.name || 'Desconhecida';
+  useEffect(() => {
+    fetchPageData(currentPage, searchQuery, filters)
+  }, [currentPage, fetchPageData])
 
-    if (editingUnit) {
-      const updatedUnits = units.map(u =>
-        u.id === editingUnit.id ? { ...editingUnit, ...formData, institution_id: formData.institution_id, institutionName } : u
-      );
-      setUnits(updatedUnits);
-      showSuccess('Unidade atualizada com sucesso!');
+  const handleSearch = (e: React.FormEvent) => {
+    e.preventDefault()
+    setCurrentPage(1)
+    fetchPageData(1, searchQuery, filters)
+  }
+
+  const handleFilterChange = (key: keyof typeof filters, value: any) => {
+    const newFilters = { ...filters };
+    if (value === '' || value === undefined || value === null) {
+      delete (newFilters as any)[key];
     } else {
-      const newUnit: UnitExtended = {
-        id: Math.floor(Math.random() * 10000) + 1,
-        name: formData.name,
-        description: formData.description,
-        type: formData.type,
-        institution_id: formData.institution_id,
-        active: formData.active ?? true,
-        studentsCount: 0,
-        teachersCount: 0,
-        coursesCount: 0,
-        institutionName,
-        created_at: new Date().toISOString(),
-        updated_at: new Date().toISOString(),
-      };
-      setUnits([...units, newUnit]);
-      showSuccess('Unidade criada com sucesso!');
+      (newFilters as any)[key] = value;
     }
-
-    setShowModal(false);
-    resetForm();
+    setFilters(newFilters);
   };
 
-  const handleEdit = (unit: UnitExtended) => {
-    setEditingUnit(unit);
-    setFormData({
-      name: unit.name,
-      institution_id: unit.institution_id,
-      description: unit.description || '',
-      type: unit.type || 'school',
-      active: unit.active,
-    });
-    setShowModal(true);
+  const applyFilters = () => {
+    setCurrentPage(1);
+    fetchPageData(1, searchQuery, filters);
   };
 
-  const handleToggleActive = (unit: UnitExtended) => {
-    const updatedUnits = units.map(u =>
-      u.id === unit.id ? { ...u, active: !u.active } : u
-    );
-    setUnits(updatedUnits);
-    showSuccess(unit.active ? 'Unidade desativada' : 'Unidade ativada');
+  const clearFilters = () => {
+    setSearchTerm('');
+    setFilters({});
+    setCurrentPage(1);
+    fetchPageData(1, '', {});
   };
 
-  const handleDelete = (unit: UnitExtended) => {
-    if (confirm('Tem certeza que deseja excluir esta unidade?')) {
-      const updatedUnits = units.filter(u => u.id !== unit.id);
-      setUnits(updatedUnits);
-      showSuccess('Unidade excluída com sucesso!');
+  const handleRefresh = () => {
+    fetchPageData(currentPage, searchQuery, filters, false)
+  }
+
+  const handleDelete = async (school: SchoolResponseDto) => {
+    if (!confirm(`Tem certeza que deseja excluir a escola "${school.name}"?`)) return
+
+    try {
+      setLoading(true)
+      await schoolService.deleteSchool(school.id)
+      showSuccess("Escola excluída com sucesso.")
+      await fetchPageData(currentPage, searchQuery, filters, false)
+    } catch (error) {
+      showError("Erro ao excluir escola.")
+    } finally {
+      setLoading(false)
     }
-  };
+  }
 
-  const filteredUnits = units.filter(unit => {
-    const matchesSearch = unit.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                         (unit.institutionName || '').toLowerCase().includes(searchTerm.toLowerCase()) ||
-                         (unit.description || '').toLowerCase().includes(searchTerm.toLowerCase());
-    const matchesStatus = filterStatus === 'all' || (filterStatus === 'active' ? unit.active : !unit.active);
-    const matchesInstitution = selectedInstitution === 'all' || unit.institution_id === selectedInstitution;
-    const matchesType = filterType === 'all' || unit.type === filterType;
-    
-    return matchesSearch && matchesStatus && matchesInstitution && matchesType;
-  });
+  const totalPages = Math.ceil(totalItems / itemsPerPage)
 
   return (
-    <AuthenticatedLayout requiredPermission="canManageSchools">
-      <div className="container mx-auto py-8">
-        {/* Header */}
-        <div className="flex justify-between items-center mb-6">
-          <div>
-            <h1 className="text-2xl font-bold text-slate-800 flex items-center gap-3">
-              <UnitIcon className="w-6 h-6 text-blue-600" />
-              Gerenciamento de Unidades
-            </h1>
-            <p className="text-slate-600 mt-1">Total: {filteredUnits.length} unidades</p>
-          </div>
-          <button
-            onClick={() => { resetForm(); setShowModal(true); }}
-            className="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg flex items-center gap-2 text-sm"
-          >
-            <Plus className="w-4 h-4" />
-            Nova Unidade
-          </button>
-        </div>
+    <AuthenticatedLayout>
+      <div className="container mx-auto px-4 py-6 max-w-7xl">
+        <div className="bg-white rounded-xl shadow-sm border border-gray-200">
+          {/* Header */}
+          <div className="p-6 border-b border-gray-200">
+            <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4 mb-6">
+              <div>
+                <h1 className="text-2xl font-bold text-gray-900">Gerenciamento de Escolas</h1>
+                <p className="text-gray-600 mt-1">Consulte e gerencie as escolas (unidades) do sistema</p>
+              </div>
+              <div className="flex gap-3">
+                <Button onClick={handleRefresh} variant="outline" disabled={refreshing} className="flex items-center gap-2">
+                  <RefreshCw className={`w-4 h-4 ${refreshing ? 'animate-spin' : ''}`} />
+                  Atualizar
+                </Button>
+                <Button onClick={() => alert("Funcionalidade de 'Nova Escola' a ser implementada.")} className="flex items-center gap-2">
+                  <Plus className="w-4 h-4" />
+                  Nova Escola
+                </Button>
+              </div>
+            </div>
 
-        {/* Filtros */}
-        <div className="mb-6 p-4 bg-slate-50 border border-slate-200 rounded-xl">
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-            <input
-              type="text"
-              value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
-              placeholder="Buscar por nome, instituição..."
-              className="w-full rounded-lg border-slate-300"
-            />
-            <select
-              value={selectedInstitution}
-              onChange={(e) => setSelectedInstitution(e.target.value)}
-              className="w-full rounded-lg border-slate-300"
-            >
-              <option value="all">Todas as instituições</option>
-              {institutions.map(inst => (
-                <option key={inst.id} value={inst.id.toString()}>{inst.name}</option>
-              ))}
-            </select>
-            <select
-              value={filterStatus}
-              onChange={(e) => setFilterStatus(e.target.value as any)}
-              className="w-full rounded-lg border-slate-300"
-            >
-              <option value="all">Todos os status</option>
-              <option value="active">Ativas</option>
-              <option value="inactive">Inativas</option>
-            </select>
-            <select
-              value={filterType}
-              onChange={(e) => setFilterType(e.target.value)}
-              className="w-full rounded-lg border-slate-300"
-            >
-              <option value="all">Todos os tipos</option>
-              <option value="school">Escola</option>
-              <option value="college">Faculdade</option>
-              <option value="university">Universidade</option>
-              <option value="campus">Campus</option>
-            </select>
-          </div>
-        </div>
+            {/* Stats */}
+            <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
+              <StatCard icon={School} title="Total" value={stats.totalSchools} subtitle="Escolas" color="blue" />
+              <StatCard icon={Users} title="Alunos" value={stats.totalStudents} subtitle="Matriculados" color="green" />
+              <StatCard icon={Users} title="Professores" value={stats.totalTeachers} subtitle="Atuando" color="amber" />
+              <StatCard icon={BookOpen} title="Turmas" value={stats.totalClasses} subtitle="Ativas" color="purple" />
+            </div>
 
-        {/* Lista de Unidades */}
-        <div className="bg-white rounded-lg shadow-md border border-slate-200">
-          <div className="overflow-x-auto">
-            <table className="w-full">
-              <thead className="bg-slate-50">
-                <tr>
-                  <th className="p-4 text-left text-sm font-semibold text-slate-600">Unidade</th>
-                  <th className="p-4 text-left text-sm font-semibold text-slate-600">Instituição</th>
-                  <th className="p-4 text-left text-sm font-semibold text-slate-600">Tipo</th>
-                  <th className="p-4 text-left text-sm font-semibold text-slate-600">Status</th>
-                  <th className="p-4 text-left text-sm font-semibold text-slate-600">Ações</th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-slate-200">
-                {filteredUnits.length > 0 ? filteredUnits.map((unit) => (
-                  <tr key={unit.id} className="hover:bg-slate-50">
-                    <td className="p-4">{unit.name}</td>
-                    <td className="p-4">{unit.institutionName}</td>
-                    <td className="p-4">{unit.type}</td>
-                    <td className="p-4">
-                      <span onClick={() => handleToggleActive(unit)} className={`cursor-pointer px-2 py-1 text-xs rounded-full ${unit.active ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'}`}>
-                        {unit.active ? "Ativa" : "Inativa"}
-                      </span>
-                    </td>
-                    <td className="p-4 flex gap-2">
-                      <button onClick={() => handleEdit(unit)} className="text-blue-600 hover:text-blue-800"><Edit size={16} /></button>
-                      <button onClick={() => handleDelete(unit)} className="text-red-600 hover:text-red-800"><Trash2 size={16} /></button>
-                    </td>
-                  </tr>
-                )) : (
-                  <tr>
-                    <td colSpan={5} className="text-center p-8 text-slate-500">
-                      Nenhuma unidade encontrada.
-                    </td>
-                  </tr>
-                )}
-              </tbody>
-            </table>
-          </div>
-        </div>
-
-        {/* Modal */}
-        {showModal && (
-          <div className="fixed inset-0 bg-black bg-opacity-60 flex items-center justify-center z-50">
-            <motion.div
-              initial={{ opacity: 0, y: -30 }}
-              animate={{ opacity: 1, y: 0 }}
-              className="bg-white rounded-lg shadow-xl max-w-lg w-full"
-            >
-              <div className="p-6">
-                <h3 className="text-xl font-semibold mb-4">{editingUnit ? 'Editar Unidade' : 'Nova Unidade'}</h3>
-                <form onSubmit={handleSubmit} className="space-y-4">
+            {/* Search & Filter Trigger */}
+            <div className="flex gap-3">
+              <form onSubmit={handleSearch} className="flex-1">
+                <div className="relative">
+                  <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
                   <input
                     type="text"
-                    value={formData.name}
-                    onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-                    placeholder="Nome da Unidade"
-                    className="w-full p-2 border rounded-md"
-                    required
+                    placeholder="Buscar por nome da escola ou instituição..."
+                    value={searchQuery}
+                    onChange={(e) => setSearchTerm(e.target.value)}
+                    className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                   />
-                  <select
-                    value={formData.institution_id}
-                    onChange={(e) => setFormData({ ...formData, institution_id: e.target.value })}
-                    className="w-full p-2 border rounded-md"
-                    required
-                  >
-                    <option value="">Selecione uma instituição</option>
-                    {institutions.map(inst => (
-                      <option key={inst.id} value={inst.id.toString()}>{inst.name}</option>
-                    ))}
-                  </select>
-                  <textarea
-                    value={formData.description || ''}
-                    onChange={(e) => setFormData({ ...formData, description: e.target.value })}
-                    placeholder="Descrição"
-                    className="w-full p-2 border rounded-md"
-                  />
-                  <select
-                    value={formData.type || 'school'}
-                    onChange={(e) => setFormData({ ...formData, type: e.target.value })}
-                    className="w-full p-2 border rounded-md"
-                  >
-                    <option value="school">Escola</option>
-                    <option value="college">Faculdade</option>
-                    <option value="university">Universidade</option>
-                    <option value="campus">Campus</option>
-                  </select>
-                  <div className="flex justify-end gap-4 pt-4">
-                    <button type="button" onClick={() => { setShowModal(false); resetForm(); }} className="px-4 py-2 bg-gray-200 rounded-md">Cancelar</button>
-                    <button type="submit" className="px-4 py-2 bg-blue-600 text-white rounded-md">{editingUnit ? 'Atualizar' : 'Criar'}</button>
-                  </div>
-                </form>
-              </div>
-            </motion.div>
+                </div>
+              </form>
+              <Button onClick={() => setShowFilterPanel(!showFilterPanel)} variant="outline" className="flex items-center gap-2">
+                <Filter className="w-4 h-4" />
+                Filtros
+              </Button>
+            </div>
           </div>
-        )}
+
+          {/* Filter Panel */}
+          {showFilterPanel && (
+            <div className="p-6 border-b border-gray-200 bg-gray-50">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div>
+                  <label className="block text-sm font-medium mb-1 text-gray-700">Instituição</label>
+                  <select
+                    value={filters.institutionId || ''}
+                    onChange={(e) => handleFilterChange('institutionId', e.target.value ? Number(e.target.value) : undefined)}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg"
+                  >
+                    <option value="">Todas as Instituições</option>
+                    {institutions.map(inst => <option key={inst.id} value={inst.id}>{inst.name}</option>)}
+                  </select>
+                </div>
+              </div>
+              <div className="flex justify-end gap-3 mt-4">
+                <Button variant="ghost" onClick={clearFilters}>Limpar Filtros</Button>
+                <Button onClick={applyFilters}>Aplicar</Button>
+              </div>
+            </div>
+          )}
+
+          {/* Content */}
+          <div>
+            {loading ? (
+              <div className="flex items-center justify-center py-12">
+                <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
+                <span className="ml-2 text-gray-600">Carregando escolas...</span>
+              </div>
+            ) : schools.length === 0 ? (
+              <div className="text-center py-12">
+                <School className="w-16 h-16 text-gray-300 mx-auto mb-4" />
+                <p className="text-gray-500 text-lg mb-2">Nenhuma escola encontrada</p>
+                <p className="text-gray-400 text-sm">{searchQuery || Object.keys(filters).length > 0 ? "Tente ajustar sua busca ou filtros." : "Nenhuma escola cadastrada."}</p>
+              </div>
+            ) : (
+              <>
+                {/* Desktop Table */}
+                <div className="hidden lg:block overflow-x-auto">
+                  <table className="w-full divide-y divide-gray-200">
+                    <thead className="bg-gray-50">
+                      <tr>
+                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Escola</th>
+                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Instituição</th>
+                        <th className="px-6 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">Alunos</th>
+                        <th className="px-6 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">Professores</th>
+                        <th className="px-6 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">Ações</th>
+                      </tr>
+                    </thead>
+                    <tbody className="bg-white divide-y divide-gray-200">
+                      {schools.map((school) => (
+                        <tr key={school.id} className="hover:bg-gray-50">
+                          <td className="px-6 py-4">
+                            <div className="text-sm font-semibold text-gray-900">{school.name}</div>
+                          </td>
+                          <td className="px-6 py-4 text-sm text-gray-600">{school.institutionName}</td>
+                          <td className="px-6 py-4 text-center text-sm text-gray-800">{school.total_students}</td>
+                          <td className="px-6 py-4 text-center text-sm text-gray-800">{school.total_teachers}</td>
+                          <td className="px-6 py-4 text-center">
+                            <div className="flex items-center justify-center space-x-2">
+                              <Button variant="ghost" size="sm" onClick={() => alert(`Visualizar: ${school.name}`)} className="text-blue-600 hover:text-blue-900"><Eye className="w-4 h-4" /></Button>
+                              <Button variant="ghost" size="sm" onClick={() => alert(`Editar: ${school.name}`)} className="text-green-600 hover:text-green-900"><Edit className="w-4 h-4" /></Button>
+                              <Button variant="ghost" size="sm" onClick={() => handleDelete(school)} className="text-red-600 hover:text-red-900"><Trash2 className="w-4 h-4" /></Button>
+                            </div>
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+
+                {/* Mobile Cards */}
+                <div className="lg:hidden p-4 space-y-4">
+                  {schools.map(school => (
+                    <div key={school.id} className="bg-white border border-gray-200 rounded-lg shadow-sm">
+                      <div className="p-4 border-b border-gray-100">
+                        <h3 className="font-semibold text-gray-800">{school.name}</h3>
+                        <p className="text-sm text-gray-500 flex items-center mt-1"><Building2 className="w-4 h-4 mr-2"/>{school.institutionName}</p>
+                      </div>
+                      <div className="p-4 grid grid-cols-3 gap-2 text-center">
+                        <div>
+                          <p className="text-xs text-gray-500">Alunos</p>
+                          <p className="font-bold text-gray-800">{school.total_students}</p>
+                        </div>
+                        <div>
+                          <p className="text-xs text-gray-500">Professores</p>
+                          <p className="font-bold text-gray-800">{school.total_teachers}</p>
+                        </div>
+                        <div>
+                          <p className="text-xs text-gray-500">Turmas</p>
+                          <p className="font-bold text-gray-800">{school.total_classes}</p>
+                        </div>
+                      </div>
+                      <div className="p-4 border-t border-gray-100 flex justify-end space-x-2">
+                        <Button variant="outline" size="sm" onClick={() => alert(`Visualizar: ${school.name}`)}>Ver</Button>
+                        <Button variant="outline" size="sm" onClick={() => alert(`Editar: ${school.name}`)}>Editar</Button>
+                        <Button variant="destructive" size="sm" onClick={() => handleDelete(school)}>Excluir</Button>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </>
+            )}
+          </div>
+
+          {/* Pagination */}
+          {totalPages > 1 && (
+            <div className="px-6 py-4 border-t border-gray-200 flex items-center justify-between">
+              <div className="text-sm text-gray-700">
+                Página {currentPage} de {totalPages}
+              </div>
+              <div className="flex items-center space-x-2">
+                <Button variant="outline" size="sm" onClick={() => setCurrentPage(p => Math.max(p - 1, 1))} disabled={currentPage === 1}>Anterior</Button>
+                <Button variant="outline" size="sm" onClick={() => setCurrentPage(p => Math.min(p + 1, totalPages))} disabled={currentPage === totalPages}>Próxima</Button>
+              </div>
+            </div>
+          )}
+        </div>
       </div>
     </AuthenticatedLayout>
-  );
+  )
 }

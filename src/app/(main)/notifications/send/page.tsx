@@ -1,6 +1,7 @@
 'use client';
 
 import React, { useState } from 'react';
+import { useSession } from 'next-auth/react';
 import Card, { CardHeader, CardBody as CardContent } from '@/components/ui/Card';
 import { Button } from '@/components/ui/Button';
 import Input from '@/components/ui/Input';
@@ -37,7 +38,12 @@ import {
   Smartphone,
   Monitor
 } from 'lucide-react';
-import { notificationApiService } from '@/services/notificationApiService';
+import { notificationService } from '@/services/notificationService';
+import {
+  NotificationType,
+  NotificationCategory,
+  NotificationPriority,
+} from '@/types/notification';
 
 interface Recipient {
   type: 'user' | 'email' | 'role';
@@ -62,6 +68,7 @@ interface Template {
 
 export default function SendNotificationPage() {
   const { showSuccess, showError } = useToast();
+  const { data: session } = useSession();
   
   const [activeTab, setActiveTab] = useState<'templates' | 'content' | 'recipients' | 'preview'>('templates');
   const [selectedTemplate, setSelectedTemplate] = useState<Template | null>(null);
@@ -69,9 +76,9 @@ export default function SendNotificationPage() {
   const [formData, setFormData] = useState({
     title: '',
     message: '',
-    type: 'info',
-    category: 'system',
-    priority: 'medium',
+    type: NotificationType.INFO,
+    category: NotificationCategory.SYSTEM,
+    priority: NotificationPriority.MEDIUM,
     sendPush: true,
     sendEmail: false,
     scheduledDate: '',
@@ -202,25 +209,25 @@ export default function SendNotificationPage() {
   ];
 
   const notificationTypes = [
-    { value: 'info', label: 'Informação', color: 'bg-blue-100 text-blue-800', icon: '💡' },
-    { value: 'success', label: 'Sucesso', color: 'bg-green-100 text-green-800', icon: '✅' },
-    { value: 'warning', label: 'Aviso', color: 'bg-yellow-100 text-yellow-800', icon: '⚠️' },
-    { value: 'error', label: 'Erro', color: 'bg-red-100 text-red-800', icon: '❌' }
+    { value: NotificationType.INFO, label: 'Informação', color: 'bg-blue-100 text-blue-800', icon: '💡' },
+    { value: NotificationType.SUCCESS, label: 'Sucesso', color: 'bg-green-100 text-green-800', icon: '✅' },
+    { value: NotificationType.WARNING, label: 'Aviso', color: 'bg-yellow-100 text-yellow-800', icon: '⚠️' },
+    { value: NotificationType.ERROR, label: 'Erro', color: 'bg-red-100 text-red-800', icon: '❌' }
   ];
 
   const categories = [
-    { value: 'academic', label: 'Acadêmico', icon: '📚' },
-    { value: 'system', label: 'Sistema', icon: '⚙️' },
-    { value: 'social', label: 'Social', icon: '👥' },
-    { value: 'administrative', label: 'Administrativo', icon: '📋' },
+    { value: NotificationCategory.ACADEMIC, label: 'Acadêmico', icon: '📚' },
+    { value: NotificationCategory.SYSTEM, label: 'Sistema', icon: '⚙️' },
+    { value: NotificationCategory.SOCIAL, label: 'Social', icon: '👥' },
+    { value: NotificationCategory.ADMINISTRATIVE, label: 'Administrativo', icon: '📋' },
     { value: 'marketing', label: 'Marketing', icon: '📢' },
     { value: 'support', label: 'Suporte', icon: '🛠️' }
   ];
 
   const priorities = [
-    { value: 'low', label: 'Baixa', color: 'bg-gray-100 text-gray-800', icon: '⬇️' },
-    { value: 'medium', label: 'Média', color: 'bg-blue-100 text-blue-800', icon: '➡️' },
-    { value: 'high', label: 'Alta', color: 'bg-red-100 text-red-800', icon: '⬆️' }
+    { value: NotificationPriority.LOW, label: 'Baixa', color: 'bg-gray-100 text-gray-800', icon: '⬇️' },
+    { value: NotificationPriority.MEDIUM, label: 'Média', color: 'bg-blue-100 text-blue-800', icon: '➡️' },
+    { value: NotificationPriority.HIGH, label: 'Alta', color: 'bg-red-100 text-red-800', icon: '⬆️' }
   ];
 
   const roles = [
@@ -244,8 +251,8 @@ export default function SendNotificationPage() {
       ...prev,
       title: template.preview.title,
       message: template.preview.message,
-      type: template.preview.type,
-      priority: template.preview.priority
+      type: template.preview.type as NotificationType,
+      priority: template.preview.priority as NotificationPriority
     }));
     setActiveTab('content');
   };
@@ -331,32 +338,36 @@ export default function SendNotificationPage() {
 
     setIsLoading(true);
     try {
+      if (!session?.user?.id) {
+        showError('Sessão inválida. Por favor, faça login novamente.');
+        setIsLoading(false);
+        return;
+      }
+
       const recipientData = {
-        userIds: recipients.filter(r => r.type === 'user').map(r => r.value),
-        emails: recipients.filter(r => r.type === 'email').map(r => r.value),
+        specific: recipients.filter(r => r.type === 'user').map(r => r.value),
         roles: recipients.filter(r => r.type === 'role').map(r => r.value)
       };
 
-      const result = await notificationApiService.sendNotification({
+      const result = await notificationService.createNotification({
         title: formData.title,
         message: formData.message,
         type: formData.type,
         category: formData.category,
         priority: formData.priority,
-        sendPush: formData.sendPush,
-        sendEmail: formData.sendEmail,
-        recipients: recipientData
+        recipients: recipientData,
+        sent_by_id: session.user.id,
       });
 
-      showSuccess(`Notificação ${formData.isScheduled ? 'agendada' : 'enviada'} com sucesso para ${result.recipientCount} destinatário(s)!`);
+      showSuccess(`Notificação ${formData.isScheduled ? 'agendada' : 'enviada'} com sucesso para ${recipients.length} destinatário(s)!`);
       
       // Reset form
       setFormData({
         title: '',
         message: '',
-        type: 'info',
-        category: 'system',
-        priority: 'medium',
+        type: NotificationType.INFO,
+        category: NotificationCategory.SYSTEM,
+        priority: NotificationPriority.MEDIUM,
         sendPush: true,
         sendEmail: false,
         scheduledDate: '',

@@ -1,58 +1,21 @@
-'use client';
-
-import { useEffect } from 'react';
-import { useAuth } from '@/contexts/AuthContext';
-import { useRouter } from 'next/navigation';
+import AuthenticatedLayout from '@/components/AuthenticatedLayout'
+import { UserRole } from '@/types/roles'
+import React from 'react'
 
 export default function ManagementLayout({
   children,
 }: {
-  children: React.ReactNode;
+  children: React.ReactNode
 }) {
-  const { user, loading, isAuthenticated } = useAuth();
-  const router = useRouter();
-
-  useEffect(() => {
-    if (loading) return;
-
-    if (!isAuthenticated || !user) {
-      router.push('/auth/login');
-      return;
-    }
-
-    // Verificar se o usuário tem permissão para acessar área de gestão
-    const allowedRoles = ['SYSTEM_ADMIN', 'INSTITUTION_MANAGER', 'COORDINATOR'];
-    if (!allowedRoles.includes(user.role || '')) {
-      router.push('/dashboard');
-      return;
-    }
-  }, [user, loading, isAuthenticated, router]);
-
-  if (loading) {
-    return (
-      <div className="min-h-screen flex items-center justify-center">
-        <div className="animate-spin rounded-full h-32 w-32 border-b-2 border-green-600"></div>
-      </div>
-    );
-  }
-
-  if (!isAuthenticated || !user || !['SYSTEM_ADMIN', 'INSTITUTION_MANAGER', 'COORDINATOR'].includes(user.role || '')) {
-    return null;
-  }
-
   return (
-    <div className="min-h-screen bg-gray-100">
-      <header className="bg-green-600 text-white p-4">
-        <div className="container mx-auto">
-          <h1 className="text-2xl font-bold">Gestão Educacional</h1>
-        </div>
-      </header>
-      <div className="flex">
-        {/* Sidebar de gestão será adicionado aqui */}
-        <main className="flex-1 p-6">
-          {children}
-        </main>
-      </div>
-    </div>
-  );
+    <AuthenticatedLayout
+      requiredRole={[
+        UserRole.SYSTEM_ADMIN,
+        UserRole.INSTITUTION_MANAGER,
+        UserRole.COORDINATOR,
+      ]}
+    >
+      {children}
+    </AuthenticatedLayout>
+  )
 }
