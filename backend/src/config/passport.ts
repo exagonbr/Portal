@@ -43,12 +43,12 @@ export function setupPassport() {
           });
 
           if (user) {
-            const userRole = user.role?.authority;
+            const userRole = user.role?.name;
             const authUser: AuthenticatedUser = {
               id: user.id,
               email: user.email,
               name: user.fullName,
-              role: user.role?.authority || 'user',
+              role: user.role?.name || 'user',
               institutionId: user.institutionId,
               permissions: getDefaultPermissions(userRole),
             };
@@ -74,12 +74,12 @@ export function setupPassport() {
           });
 
           if (userWithRole) {
-            const userRole = userWithRole.role?.authority;
+            const userRole = userWithRole.role?.name;
             const authUser: AuthenticatedUser = {
               id: userWithRole.id,
               email: userWithRole.email,
               name: userWithRole.fullName,
-              role: userWithRole.role?.authority || 'user',
+              role: userWithRole.role?.name || 'user',
               institutionId: userWithRole.institutionId,
               permissions: getDefaultPermissions(userRole),
             };
@@ -107,12 +107,12 @@ export function setupPassport() {
         relations: ['role']
       });
       if (user) {
-        const userRole = user.role?.authority;
+        const userRole = user.role?.name;
         const authUser: AuthenticatedUser = {
           id: user.id,
           email: user.email,
           name: user.fullName,
-          role: user.role?.authority || 'user',
+          role: user.role?.name || 'user',
           institutionId: user.institutionId,
           permissions: getDefaultPermissions(userRole),
         };

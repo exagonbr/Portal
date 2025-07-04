@@ -26,11 +26,6 @@ export class Role {
   @Column({ name: 'updated_at', type: 'timestamp', default: () => 'CURRENT_TIMESTAMP' })
   updatedAt!: Date;
 
-  // Propriedades para compatibilidade com código existente
-  get authority(): string {
-    return `ROLE_${this.name.toUpperCase()}`;
-  }
-
   get displayName(): string {
     return this.description || this.name;
   }
