@@ -63,7 +63,7 @@ export default function RootLayout({
         {/* Remover preload de fontes específicas para evitar avisos */}
         
         {/* Service Worker personalizado para limpeza de cache */}
-        <script src="/sw.js" defer />
+        <script src="/register-sw.js" defer />
       </head>
       <body className={`${inter.className} m-0 p-0 h-full w-full`} suppressHydrationWarning>
         <SimpleProviders>

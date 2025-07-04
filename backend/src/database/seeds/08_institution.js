@@ -27,5 +27,27 @@ exports.seed = async function(knex) {
       date_created: new Date(),
       last_updated: new Date()
     }
+,
+    {
+      id: 2,
+      accountable_contact: 'contato@outraescola.com',
+      accountable_name: 'Admin Outra Escola',
+      company_name: 'Outra Escola Ltda',
+      contract_disabled: false,
+      contract_term_end: new Date('2025-12-31'),
+      contract_term_start: new Date('2023-01-01'),
+      deleted: false,
+      district: 'Bairro',
+      document: '98.765.432/0001-11',
+      name: 'Outra Escola',
+      postal_code: '54321-000',
+      state: 'RJ',
+      street: 'Avenida Brasil, 456',
+      has_library_platform: true,
+      has_principal_platform: true,
+      has_student_platform: true,
+      date_created: new Date(),
+      last_updated: new Date()
+    }
   ]);
 };

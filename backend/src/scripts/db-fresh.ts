@@ -20,7 +20,7 @@ async function fresh() {
 
     // Run specific seed
     console.log('🌱 Executando seed de dados iniciais...');
-    await db.seed.run({ specific: '001_test_seed.js' });
+    await db.seed.run();
     console.log('✅ Seeds executados com sucesso.');
     
     console.log('\n🎉 BANCO DE DADOS RESETADO COM SUCESSO!');

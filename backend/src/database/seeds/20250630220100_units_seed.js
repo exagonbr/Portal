@@ -16,9 +16,7 @@ exports.seed = async function(knex) {
       institution_id: 1,
       last_updated: new Date(),
       name: 'Escola Municipal João Silva',
-      institution_name: 'Prefeitura Municipal de São Paulo',
-      description: 'Escola de ensino fundamental localizada no centro da cidade',
-      type: 'school'
+      institution_name: 'Prefeitura Municipal de São Paulo'
     },
     {
       id: 2,
@@ -28,9 +26,7 @@ exports.seed = async function(knex) {
       institution_id: 1,
       last_updated: new Date(),
       name: 'Colégio Estadual Maria Santos',
-      institution_name: 'Secretaria de Educação do Estado',
-      description: 'Colégio de ensino médio com foco em preparação para vestibular',
-      type: 'college'
+      institution_name: 'Secretaria de Educação do Estado'
     },
     {
       id: 3,
@@ -40,9 +36,7 @@ exports.seed = async function(knex) {
       institution_id: 2,
       last_updated: new Date(),
       name: 'Campus Central - Universidade Federal',
-      institution_name: 'Universidade Federal de São Paulo',
-      description: 'Campus principal da universidade com cursos de graduação e pós-graduação',
-      type: 'university'
+      institution_name: 'Universidade Federal de São Paulo'
     },
     {
       id: 4,
@@ -52,9 +46,7 @@ exports.seed = async function(knex) {
       institution_id: 2,
       last_updated: new Date(),
       name: 'Campus Norte - Extensão',
-      institution_name: 'Universidade Federal de São Paulo',
-      description: 'Campus de extensão com cursos técnicos e profissionalizantes',
-      type: 'campus'
+      institution_name: 'Universidade Federal de São Paulo'
     },
     {
       id: 5,
@@ -64,9 +56,7 @@ exports.seed = async function(knex) {
       institution_id: 1,
       last_updated: new Date(),
       name: 'Escola Desativada',
-      institution_name: 'Prefeitura Municipal de São Paulo',
-      description: 'Escola que foi desativada por falta de alunos',
-      type: 'school'
+      institution_name: 'Prefeitura Municipal de São Paulo'
     }
   ]);
 };
