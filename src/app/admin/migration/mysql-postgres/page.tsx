@@ -57,7 +57,7 @@ export default function MySQLPostgresMigrationPage() {
   
 
   // Estados da UI
-  const [activeTab, setActiveTab] = useState<'connection' | 'tables' | 'columns' | 'mapping' | 'migration'>('connection')
+  const [activeTab, setActiveTab] = useState<'connection' | 'tables' | 'migration'>('connection')
   const [connectionTested, setConnectionTested] = useState(false)
   const [isTestingConnection, setIsTestingConnection] = useState(false)
   const [isLoadingTables, setIsLoadingTables] = useState(false)
@@ -257,31 +257,19 @@ export default function MySQLPostgresMigrationPage() {
   const normalizeTableName = (mysqlName: string): string => {
     const mapping: Record<string, string> = {
       // Mapeamento CRÍTICO: user → users (mais importante)
-      'user': 'users',
+      'user': 'user',
       
       // Outros mapeamentos importantes
-      'file': 'files',
-      'video': 'videos',
-      'institution': 'institutions',
-      'unit': 'schools',
-      'tv_show': 'collections',
+      'file': 'file',
+      'video': 'video',
+      'institution': 'institution',
+      'unit': 'unit',
+      'tv_show': 'tv_show',
       
       // Mapeamentos de roles e perfis
       'roles': 'roles',
       'role': 'roles',
       'profile': 'profile',
-
-      // Mapeamentos de conteúdo
-      'livros': 'books',
-      'livro': 'books',
-      'books': 'books',
-      'book': 'books',
-      
-      // Mapeamentos de turmas e classes
-      'turmas': 'classes',
-      'turma': 'classes',
-      'classes': 'classes',
-      'class': 'classes'
     }
     
     const normalized = mapping[mysqlName.toLowerCase()] || mysqlName.toLowerCase()
@@ -753,15 +741,6 @@ export default function MySQLPostgresMigrationPage() {
                       {selectedTables.length}/{tables.length}
                     </span>
                   )}
-                </button>
-                <button
-                  onClick={() => setActiveTab('columns')}
-                  className={`px-6 py-2 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 ${
-                    activeTab === 'columns' ? 'bg-blue-50 border-blue-300' : ''
-                  }`}
-                  disabled={selectedTables.length === 0}
-                >
-                  🗂️ Mapear Colunas
                 </button>
                 <button
                   onClick={() => setActiveTab('migration')}
