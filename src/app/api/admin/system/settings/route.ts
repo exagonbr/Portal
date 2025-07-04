@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { getServerSession } from 'next-auth';
 import { authOptions } from '@/lib/auth';
 import { UserRole } from '@/types/roles';
+import { jwtDecode } from 'jwt-decode';
 
 // Interface para as configurações do sistema
 interface SystemSettings {
@@ -70,13 +71,52 @@ const defaultSettings: SystemSettings = {
 // Armazenamento temporário em memória (em produção, usar banco de dados)
 let currentSettings: SystemSettings = { ...defaultSettings };
 
+// Função auxiliar para verificar autenticação via JWT ou NextAuth
+async function getAuthenticatedUser(request: NextRequest) {
+  // Primeiro, tentar NextAuth
+  const session = await getServerSession(authOptions);
+  if (session?.user) {
+    return {
+      id: (session.user as any).id,
+      email: session.user.email,
+      name: session.user.name,
+      role: (session.user as any).role as UserRole,
+      permissions: (session.user as any).permissions || []
+    };
+  }
+
+  // Se não houver sessão NextAuth, verificar token JWT customizado
+  const authHeader = request.headers.get('authorization');
+  if (authHeader?.startsWith('Bearer ')) {
+    try {
+      const token = authHeader.substring(7);
+      const decoded = jwtDecode(token) as any;
+      
+      // Verificar se o token não expirou
+      if (decoded.exp && decoded.exp * 1000 > Date.now()) {
+        return {
+          id: decoded.id,
+          email: decoded.email,
+          name: decoded.name,
+          role: decoded.role as UserRole,
+          permissions: decoded.permissions || []
+        };
+      }
+    } catch (error) {
+      console.error('Erro ao decodificar token JWT:', error);
+    }
+  }
+
+  return null;
+}
+
 // GET - Buscar configurações do sistema
 export async function GET(request: NextRequest) {
   try {
-    // Verificar autenticação
-    const session = await getServerSession(authOptions);
+    // Verificar autenticação (NextAuth ou JWT customizado)
+    const user = await getAuthenticatedUser(request);
     
-    if (!session || !session.user) {
+    if (!user) {
       // Retornar configurações públicas para usuários não autenticados
       const publicSettings = {
         site_name: currentSettings.site_name,
@@ -100,7 +140,7 @@ export async function GET(request: NextRequest) {
     }
 
     // Para usuários autenticados mas não admin, retornar configurações limitadas
-    if (session.user.role !== UserRole.SYSTEM_ADMIN) {
+    if (user.role !== UserRole.SYSTEM_ADMIN) {
       const limitedSettings = {
         site_name: currentSettings.site_name,
         site_title: currentSettings.site_title,
@@ -145,10 +185,10 @@ export async function GET(request: NextRequest) {
 // PUT - Atualizar configurações do sistema
 export async function PUT(request: NextRequest) {
   try {
-    // Verificar autenticação
-    const session = await getServerSession(authOptions);
+    // Verificar autenticação (NextAuth ou JWT customizado)
+    const user = await getAuthenticatedUser(request);
     
-    if (!session || !session.user) {
+    if (!user) {
       return NextResponse.json(
         { error: 'Não autorizado' },
         { status: 401 }
@@ -156,7 +196,7 @@ export async function PUT(request: NextRequest) {
     }
 
     // Verificar se é admin do sistema
-    if (session.user.role !== UserRole.SYSTEM_ADMIN) {
+    if (user.role !== UserRole.SYSTEM_ADMIN) {
       return NextResponse.json(
         { error: 'Acesso negado. Apenas administradores do sistema podem modificar estas configurações.' },
         { status: 403 }
@@ -173,10 +213,10 @@ export async function PUT(request: NextRequest) {
     };
 
     // Log da alteração
-    console.log(`Configurações atualizadas por ${session.user.email}:`, {
+    console.log(`Configurações atualizadas por ${user.email}:`, {
       timestamp: new Date().toISOString(),
-      userId: session.user.id,
-      userEmail: session.user.email,
+      userId: user.id,
+      userEmail: user.email,
       changes: Object.keys(updates)
     });
 

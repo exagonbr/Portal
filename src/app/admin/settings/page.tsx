@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useCallback } from 'react'
 import { useAuth } from '@/contexts/AuthContext'
 import DashboardPageLayout from '@/components/dashboard/DashboardPageLayout'
 import ProtectedRoute from '@/components/auth/ProtectedRoute'
@@ -34,6 +34,7 @@ export default function AdminSettingsPage() {
     message: string
   } | null>(null)
   const [showResetConfirm, setShowResetConfirm] = useState(false)
+  const [showFullscreenPreview, setShowFullscreenPreview] = useState(false)
 
   // Lista de vídeos disponíveis
   const availableVideos = [
@@ -209,6 +210,23 @@ export default function AdminSettingsPage() {
       setReconfiguringEmail(false)
     }
   }
+
+  // Função para fechar preview com ESC
+  const handleEscKey = useCallback((event: KeyboardEvent) => {
+    if (event.key === 'Escape' && showFullscreenPreview) {
+      setShowFullscreenPreview(false)
+    }
+  }, [showFullscreenPreview])
+
+  // Adicionar/remover listener do teclado
+  useEffect(() => {
+    if (showFullscreenPreview) {
+      document.addEventListener('keydown', handleEscKey)
+      return () => {
+        document.removeEventListener('keydown', handleEscKey)
+      }
+    }
+  }, [showFullscreenPreview, handleEscKey])
 
   if (loading) {
     return (
@@ -504,15 +522,28 @@ export default function AdminSettingsPage() {
 
                   {/* Preview do Background */}
                   <div className="p-4 bg-gray-50 rounded-lg border">
-                    <h4 className="font-medium text-gray-700 mb-2">Preview do Background</h4>
-                    <div 
-                      className="w-full h-32 rounded-lg border-2 border-dashed border-gray-300 flex items-center justify-center relative overflow-hidden"
+                    <div className="flex items-center justify-between mb-3">
+                      <h4 className="font-medium text-gray-700 flex items-center">
+                        <span className="material-symbols-outlined mr-2 text-purple-600">preview</span>
+                        Preview do Background
+                      </h4>
+                      <button
+                        onClick={() => setShowFullscreenPreview(true)}
+                        className="text-sm text-purple-600 hover:text-purple-700 flex items-center transition-colors"
+                      >
+                        <span className="material-symbols-outlined mr-1 text-sm">fullscreen</span>
+                        Tela Cheia
+                      </button>
+                    </div>
+                    <div
+                      className="w-full h-48 rounded-lg border-2 border-dashed border-gray-300 flex items-center justify-center relative overflow-hidden shadow-inner cursor-pointer group"
+                      onClick={() => setShowFullscreenPreview(true)}
                       style={{
-                        backgroundColor: localSettings.background_type === 'color' 
-                          ? localSettings.main_background 
+                        backgroundColor: localSettings.background_type === 'color'
+                          ? localSettings.main_background
                           : localSettings.primary_color,
-                        backgroundImage: localSettings.background_type === 'image' 
-                          ? `url(${localSettings.main_background})` 
+                        backgroundImage: localSettings.background_type === 'image'
+                          ? `url(${localSettings.main_background})`
                           : 'none',
                         backgroundSize: 'cover',
                         backgroundPosition: 'center'
@@ -520,18 +551,34 @@ export default function AdminSettingsPage() {
                     >
                       {localSettings.background_type === 'video' && localSettings.main_background && (
                         <video
+                          key={localSettings.main_background} // Força re-render quando o vídeo muda
                           autoPlay
                           muted
                           loop
+                          playsInline
                           className="absolute inset-0 w-full h-full object-cover"
+                          onError={(e) => {
+                            console.error('Erro ao carregar vídeo:', e);
+                          }}
                         >
                           <source src={localSettings.main_background} type="video/mp4" />
                         </video>
                       )}
-                      <div className="relative z-10 text-white font-medium text-sm bg-black/50 px-2 py-1 rounded">
-                        Preview
+                      <div className="absolute inset-0 bg-black/20 group-hover:bg-black/30 transition-colors" />
+                      <div className="relative z-10 text-white font-medium text-sm bg-black/60 px-4 py-2 rounded-lg backdrop-blur-sm">
+                        <div className="flex items-center">
+                          <span className="material-symbols-outlined mr-2 text-xs">visibility</span>
+                          Preview em Tempo Real
+                        </div>
+                      </div>
+                      <div className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity">
+                        <span className="material-symbols-outlined text-white bg-black/50 rounded p-1">fullscreen</span>
                       </div>
                     </div>
+                    <p className="text-xs text-gray-500 mt-2 flex items-center">
+                      <span className="material-symbols-outlined mr-1 text-xs">info</span>
+                      Clique no preview ou use o botão para visualizar em tela cheia
+                    </p>
                   </div>
                 </div>
               </div>
@@ -1005,6 +1052,63 @@ export default function AdminSettingsPage() {
                 )}
               </button>
             </div>
+
+            {/* Modal de Preview em Tela Cheia */}
+            {showFullscreenPreview && (
+              <div className="fixed inset-0 bg-black z-50 flex items-center justify-center">
+                <button
+                  onClick={() => setShowFullscreenPreview(false)}
+                  className="absolute top-4 right-4 text-white bg-black/50 hover:bg-black/70 rounded-full p-2 transition-colors z-10"
+                >
+                  <span className="material-symbols-outlined">close</span>
+                </button>
+                
+                <div className="absolute inset-0">
+                  {localSettings.background_type === 'video' && localSettings.main_background && (
+                    <video
+                      key={localSettings.main_background}
+                      autoPlay
+                      muted
+                      loop
+                      playsInline
+                      className="w-full h-full object-cover"
+                    >
+                      <source src={localSettings.main_background} type="video/mp4" />
+                    </video>
+                  )}
+                  
+                  {localSettings.background_type === 'image' && (
+                    <div
+                      className="w-full h-full"
+                      style={{
+                        backgroundImage: `url(${localSettings.main_background})`,
+                        backgroundSize: 'cover',
+                        backgroundPosition: 'center',
+                        backgroundRepeat: 'no-repeat'
+                      }}
+                    />
+                  )}
+                  
+                  {localSettings.background_type === 'color' && (
+                    <div
+                      className="w-full h-full"
+                      style={{
+                        backgroundColor: localSettings.main_background
+                      }}
+                    />
+                  )}
+                </div>
+                
+                <div className="absolute bottom-8 left-1/2 transform -translate-x-1/2 bg-black/70 text-white px-6 py-3 rounded-lg backdrop-blur-sm">
+                  <p className="text-sm">
+                    {localSettings.background_type === 'video' && `Vídeo: ${localSettings.main_background}`}
+                    {localSettings.background_type === 'image' && `Imagem: ${localSettings.main_background}`}
+                    {localSettings.background_type === 'color' && `Cor: ${localSettings.main_background}`}
+                  </p>
+                  <p className="text-xs text-gray-300 mt-1">Pressione ESC ou clique no X para fechar</p>
+                </div>
+              </div>
+            )}
             </div>
           </div>
         </DashboardPageLayout>

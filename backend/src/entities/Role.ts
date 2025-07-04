@@ -6,19 +6,34 @@ import {
 } from 'typeorm';
 import { User } from './User';
 
-@Entity('role')
+@Entity('roles')
 export class Role {
   @PrimaryGeneratedColumn('increment')
   id!: number;
 
-  @Column({ type: 'bigint', nullable: true })
-  version?: number;
+  @Column({ type: 'varchar', length: 255, nullable: false })
+  name!: string;
 
-  @Column({ type: 'varchar', length: 255, nullable: true, unique: true })
-  authority?: string;
+  @Column({ type: 'varchar', length: 500, nullable: true })
+  description?: string;
 
-  @Column({ name: 'display_name', type: 'varchar', length: 255, nullable: true })
-  displayName?: string;
+  @Column({ name: 'is_active', type: 'boolean', default: true })
+  isActive!: boolean;
+
+  @Column({ name: 'created_at', type: 'timestamp', default: () => 'CURRENT_TIMESTAMP' })
+  createdAt!: Date;
+
+  @Column({ name: 'updated_at', type: 'timestamp', default: () => 'CURRENT_TIMESTAMP' })
+  updatedAt!: Date;
+
+  // Propriedades para compatibilidade com código existente
+  get authority(): string {
+    return `ROLE_${this.name.toUpperCase()}`;
+  }
+
+  get displayName(): string {
+    return this.description || this.name;
+  }
 
   // Relacionamentos
   @OneToMany(() => User, user => user.role)

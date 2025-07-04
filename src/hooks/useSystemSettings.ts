@@ -1,5 +1,30 @@
 import { useState, useEffect, useCallback } from 'react';
 
+// Helper para obter o token do localStorage
+const getStoredToken = (): string | null => {
+  if (typeof window === 'undefined') return null;
+  try {
+    return localStorage.getItem('accessToken');
+  } catch (error) {
+    console.error('Error accessing localStorage:', error);
+    return null;
+  }
+};
+
+// Helper para criar headers com autenticação
+const getAuthHeaders = () => {
+  const token = getStoredToken();
+  const headers: Record<string, string> = {
+    'Content-Type': 'application/json',
+  };
+  
+  if (token) {
+    headers['Authorization'] = `Bearer ${token}`;
+  }
+  
+  return headers;
+};
+
 // Interfaces permanecem as mesmas para manter a compatibilidade
 export interface BackgroundSettings {
   type: 'video' | 'image' | 'color';
@@ -84,9 +109,7 @@ export function useSystemSettings() {
     try {
       const response = await fetch('/api/admin/system/settings', {
         method: 'GET',
-        headers: {
-          'Content-Type': 'application/json',
-        },
+        headers: getAuthHeaders(),
         credentials: 'include'
       });
 
@@ -143,9 +166,7 @@ export function useSystemSettings() {
     try {
       const response = await fetch('/api/admin/system/settings', {
         method: 'PUT',
-        headers: {
-          'Content-Type': 'application/json',
-        },
+        headers: getAuthHeaders(),
         credentials: 'include',
         body: JSON.stringify(newSettings)
       });
@@ -182,9 +203,7 @@ export function useSystemSettings() {
     try {
       const response = await fetch('/api/admin/system/test-aws', {
         method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
+        headers: getAuthHeaders(),
         credentials: 'include',
         body: JSON.stringify(credentials)
       });
@@ -211,9 +230,7 @@ export function useSystemSettings() {
     try {
       const response = await fetch('/api/admin/system/test-email', {
         method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
+        headers: getAuthHeaders(),
         credentials: 'include',
         body: JSON.stringify(emailConfig)
       });
@@ -236,9 +253,7 @@ export function useSystemSettings() {
     try {
       const response = await fetch('/api/admin/system/settings/reset', {
         method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
+        headers: getAuthHeaders(),
         credentials: 'include'
       });
 

@@ -144,6 +144,10 @@ export class User {
   @JoinColumn({ name: 'subject_data_id' })
   subjectData?: TeacherSubject;
 
+  // Coluna role_id para relacionamento direto com Role
+  @Column({ name: 'role_id', type: 'bigint', nullable: true })
+  roleId?: number;
+
   // Relacionamentos para compatibilidade com o código existente
   @ManyToOne(() => Role, role => role.users, { nullable: true })
   @JoinColumn({ name: 'role_id' })
