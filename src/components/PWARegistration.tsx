@@ -35,7 +35,7 @@ export function PWARegistration() {
 
       // 3. Registrar Service Worker com proteções
       if ('serviceWorker' in navigator) {
-        const wb = new Workbox('/register-sw.js');
+        const wb = new Workbox('/sw.js');
 
         // Add event listeners for service worker updates
         wb.addEventListener('installed', (event) => {
