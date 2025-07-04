@@ -1,195 +1,105 @@
 import { BaseRepository } from './BaseRepository';
-import { Institution, CreateInstitutionData, UpdateInstitutionData } from '../models/Institution';
+import { Institution } from '../entities/Institution';
+
+// Definindo uma interface para os dados de criação para desacoplar da entidade TypeORM
+export interface CreateInstitutionData {
+  name: string;
+  companyName: string;
+  document: string;
+  accountableName: string;
+  accountableContact: string;
+  postalCode: string;
+  street: string;
+  district: string;
+  state: string;
+  contractTermStart: Date;
+  contractTermEnd: Date;
+  complement?: string;
+  contractDisabled?: boolean;
+  hasLibraryPlatform?: boolean;
+  hasPrincipalPlatform?: boolean;
+  hasStudentPlatform?: boolean;
+}
+
+// Definindo uma interface para os dados de atualização
+export type UpdateInstitutionData = Partial<CreateInstitutionData>;
+
+// Definindo uma interface para os filtros de busca
+export interface InstitutionFilters {
+  search?: string;
+  state?: string;
+  contractDisabled?: boolean;
+  hasLibraryPlatform?: boolean;
+  page?: number;
+  limit?: number;
+  sortBy?: keyof Institution;
+  sortOrder?: 'asc' | 'desc';
+}
 
 export class InstitutionRepository extends BaseRepository<Institution> {
   constructor() {
-    super('institutions');
-  }
-
-  async findByCode(code: string): Promise<Institution | null> {
-    return this.findOne({ code } as Partial<Institution>);
-  }
-
-  async findByEmail(email: string): Promise<Institution | null> {
-    return this.findOne({ email } as Partial<Institution>);
-  }
-
-  async findByType(type: string): Promise<Institution[]> {
-    return this.findAll({ type } as Partial<Institution>);
+    super('institution');
   }
 
   async createInstitution(data: CreateInstitutionData): Promise<Institution> {
-    // Map is_active to status
-    const dbData: any = { ...data };
-    if (dbData.is_active !== undefined) {
-      dbData.status = dbData.is_active ? 'active' : 'inactive';
-      delete dbData.is_active;
-    }
-    
-    const result = await this.create(dbData);
-    // Map status back to is_active in the result
-    return this.mapToModel(result);
+    return this.create(data);
   }
 
-  async updateInstitution(id: string, data: UpdateInstitutionData): Promise<Institution | null> {
-    // Map is_active to status
-    const dbData: any = { ...data };
-    if (dbData.is_active !== undefined) {
-      dbData.status = dbData.is_active ? 'active' : 'inactive';
-      delete dbData.is_active;
-    }
-    
-    const result = await this.update(id, dbData);
-    // Map status back to is_active in the result
-    return result ? this.mapToModel(result) : null;
+  async updateInstitution(id: number, data: UpdateInstitutionData): Promise<Institution | null> {
+    return this.update(id, data);
   }
 
-  async deleteInstitution(id: string): Promise<boolean> {
-    return this.delete(id);
+  async findByName(name: string): Promise<Institution[]> {
+    return this.db(this.tableName).where('name', 'ilike', `%${name}%`);
   }
 
-  async searchInstitutions(searchTerm: string): Promise<Institution[]> {
-    return this.db(this.tableName)
-      .where('name', 'ilike', `%${searchTerm}%`)
-      .orWhere('code', 'ilike', `%${searchTerm}%`)
-      .select('*');
+  async findByDocument(document: string): Promise<Institution | null> {
+    return this.findOne({ document } as Partial<Institution>);
   }
 
-  async findAllWithFilters(
-    filters: { search?: string; type?: string; is_active?: boolean },
-    pagination?: { page: number; limit: number },
-    sortBy?: keyof Institution | undefined,
-    sortOrder?: 'asc' | 'desc'
-  ): Promise<Institution[]> {
-    const query = this.db(this.tableName);
+  async findByState(state: string): Promise<Institution[]> {
+    return this.findAll({ state } as Partial<Institution>);
+  }
 
-    // Aplicar filtros de forma otimizada
-    if (filters.search) {
-      // Usar índices para busca de texto se disponíveis
-      query.where(function() {
-        this.whereRaw(`LOWER(name) LIKE LOWER(?)`, [`%${filters.search}%`])
-            .orWhereRaw(`LOWER(code) LIKE LOWER(?)`, [`%${filters.search}%`]);
+  async findWithFilters(filters: InstitutionFilters): Promise<{ data: Institution[], total: number }> {
+    const {
+      page = 1,
+      limit = 10,
+      sortBy = 'name',
+      sortOrder = 'asc',
+      search,
+      ...otherFilters
+    } = filters;
+
+    const query = this.db(this.tableName).select('*');
+    const countQuery = this.db(this.tableName).count('* as total').first();
+
+    if (search) {
+      query.where(builder => {
+        builder
+          .where('name', 'ilike', `%${search}%`)
+          .orWhere('companyName', 'ilike', `%${search}%`)
+          .orWhere('document', 'ilike', `%${search}%`);
+      });
+      countQuery.where(builder => {
+        builder
+          .where('name', 'ilike', `%${search}%`)
+          .orWhere('companyName', 'ilike', `%${search}%`)
+          .orWhere('document', 'ilike', `%${search}%`);
       });
     }
 
-    if (filters.type) {
-      query.where('type', filters.type);
-    }
-
-    if (filters.is_active !== undefined) {
-      // Map is_active boolean to status string
-      const status = filters.is_active ? 'active' : 'inactive';
-      query.where('status', status);
-    }
-
-    // Aplicar ordenação
-    if (sortBy && sortOrder) {
-      // Mapear campos que podem ter nomes diferentes na tabela
-      let dbSortBy = sortBy;
-      if (sortBy === 'created_at' || sortBy === 'updated_at') {
-        // Verificar se as colunas existem, senão usar alternativas
-        dbSortBy = sortBy;
-      }
-      query.orderBy(dbSortBy as string, sortOrder);
-    } else {
-      // Usar uma coluna que sabemos que existe
-      query.orderBy('name', 'asc'); // Default sort order por nome
-    }
-
-    // Aplicar paginação por último para otimizar a consulta
-    if (pagination) {
-      query.limit(pagination.limit).offset((pagination.page - 1) * pagination.limit);
-    }
-
-    try {
-      // Usar timeout explícito para evitar consultas muito longas
-      const results = await query.select('*').timeout(30000);
-      // Map each result from DB format to model format
-      return results.map(this.mapToModel);
-    } catch (error) {
-      console.log('Erro na consulta de instituições:', error);
-      throw error;
-    }
-  }
-
-  // Helper method to map database record to model
-  private mapToModel(record: any): Institution {
-    if (!record) return record;
-    
-    const model: any = { ...record };
-    // Map status to is_active
-    if (record.status !== undefined) {
-      model.is_active = record.status === 'active';
-      delete model.status;
+    if (Object.keys(otherFilters).length > 0) {
+        query.where(otherFilters);
+        countQuery.where(otherFilters);
     }
     
-    return model as Institution;
-  }
+    query.orderBy(sortBy, sortOrder).limit(limit).offset((page - 1) * limit);
 
-  // Override the base methods to handle the mapping
-  async findById(id: string): Promise<Institution | null> {
-    const result = await super.findById(id);
-    return result ? this.mapToModel(result) : null;
-  }
-
-  async findOne(filters: Partial<Institution>): Promise<Institution | null> {
-    // Map is_active to status in filters if present
-    const dbFilters: any = { ...filters };
-    if (dbFilters.is_active !== undefined) {
-      dbFilters.status = dbFilters.is_active ? 'active' : 'inactive';
-      delete dbFilters.is_active;
-    }
+    const [data, totalResult] = await Promise.all([query, countQuery]);
     
-    const result = await super.findOne(dbFilters);
-    return result ? this.mapToModel(result) : null;
-  }
+    const total = totalResult ? parseInt(totalResult.total as string, 10) : 0;
 
-  async findAll(filters?: Partial<Institution>, pagination?: { page: number; limit: number }): Promise<Institution[]> {
-    // Map is_active to status in filters if present
-    let dbFilters: any = undefined;
-    if (filters) {
-      dbFilters = { ...filters };
-      if (dbFilters.is_active !== undefined) {
-        dbFilters.status = dbFilters.is_active ? 'active' : 'inactive';
-        delete dbFilters.is_active;
-      }
-    }
-    
-    const results = await super.findAll(dbFilters, pagination);
-    return results.map(this.mapToModel);
-  }
-
-  // Renomeado de getInstitutionStats e tipo de retorno ajustado
-  async getStatistics(institutionId: string): Promise<{ totalStudents: number; totalTeachers: number; totalCourses: number; totalUsers: number; } | null> {
-    // Nota: O DTO InstitutionStatsDto espera totalClasses, que não está nesta query.
-    // A query atual retorna total_users, total_courses, total_students, total_teachers.
-    // Vamos mapear para o que a query retorna e o serviço pode adaptar ou o DTO/query podem ser ajustados.
-    const result = await this.db.raw(`
-      SELECT
-        COUNT(DISTINCT c.id) as "totalCourses",
-        COUNT(DISTINCT CASE WHEN r.name = 'student' THEN u.id END) as "totalStudents",
-        COUNT(DISTINCT CASE WHEN r.name = 'teacher' THEN u.id END) as "totalTeachers",
-        COUNT(DISTINCT u.id) as "totalUsers"
-        -- Adicionar totalClasses se necessário: COUNT(DISTINCT cl.id) as "totalClasses"
-        -- LEFT JOIN classes cl ON i.id = cl.institution_id
-      FROM institutions i
-      LEFT JOIN users u ON i.id = u.institution_id
-      LEFT JOIN roles r ON u.role_id = r.id
-      LEFT JOIN courses c ON i.id = c.institution_id
-      WHERE i.id = ?
-      GROUP BY i.id
-    `, [institutionId]);
-
-    if (result.rows.length > 0) {
-      const rawStats = result.rows[0];
-      return {
-        totalCourses: parseInt(rawStats.totalCourses, 10) || 0,
-        totalStudents: parseInt(rawStats.totalStudents, 10) || 0,
-        totalTeachers: parseInt(rawStats.totalTeachers, 10) || 0,
-        totalUsers: parseInt(rawStats.totalUsers, 10) || 0,
-        // totalClasses: parseInt(rawStats.totalClasses, 10) || 0, // Se adicionado à query
-      };
-    }
-    return null;
+    return { data, total };
   }
 }

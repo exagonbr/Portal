@@ -1,4 +1,5 @@
 import DashboardLayout from '@/components/dashboard/DashboardLayout'
+import AuthenticatedLayout from '@/components/layout/AuthenticatedLayout'
 import { Viewport } from 'next'
 
 export const viewport: Viewport = {
@@ -14,10 +15,10 @@ export default function ChatLayout({
   children: React.ReactNode
 }) {
   return (
-    <DashboardLayout>
+    <AuthenticatedLayout>
     <div className="h-full w-full">
       {children}
     </div>
-    </DashboardLayout>
+    </AuthenticatedLayout>
   )
 }

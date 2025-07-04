@@ -2,36 +2,32 @@ export interface Course {
   id: string;
   name: string;
   description?: string;
-  level: CourseLevel;
-  cycle: string;
-  stage?: string;
-  duration?: string;
-  schedule?: any; // JSON field
   institution_id: string;
+  level?: string;
+  duration?: number;
+  teacher_id?: string;
+  is_active: boolean;
   created_at: Date;
   updated_at: Date;
+  institution_name?: string;
+  student_count?: number;
 }
-
-export type CourseLevel = 'BASIC' | 'PROFESSIONAL' | 'SUPERIOR';
 
 export interface CreateCourseData {
   name: string;
-  description?: string;
-  level: CourseLevel;
-  cycle: string;
-  stage?: string;
-  duration?: string;
-  schedule?: any;
   institution_id: string;
+  description?: string;
+  level?: string;
+  duration?: number;
+  teacher_id?: string;
+  is_active?: boolean;
 }
 
 export interface UpdateCourseData {
   name?: string;
   description?: string;
-  level?: CourseLevel;
-  cycle?: string;
-  stage?: string;
-  duration?: string;
-  schedule?: any;
-  institution_id?: string;
+  level?: string;
+  duration?: number;
+  teacher_id?: string;
+  is_active?: boolean;
 }

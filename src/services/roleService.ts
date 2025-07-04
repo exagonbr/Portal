@@ -1,67 +1,62 @@
-import { RoleResponseDto, RoleCreateDto, RoleUpdateDto, PaginatedResponse } from '@/types/api';
+import {
+  RoleDto,
+  CreateRoleDto,
+  UpdateRoleDto,
+  RoleFilter,
+} from '@/types/roles';
+import {
+  PaginatedResponse,
+  RoleResponseDto as ApiRoleResponseDto,
+} from '@/types/api';
+import { apiGet, apiPost, apiPut, apiDelete, apiPatch } from './apiService';
 
-const API_BASE_URL = '/api';
+// Função para mapear a resposta da API para o DTO do frontend
+const mapToRoleDto = (data: ApiRoleResponseDto): RoleDto => ({
+  id: String(data.id),
+  name: data.name,
+  description: data.description,
+  is_active: data.active,
+  users_count: data.users_count,
+  created_at: data.created_at,
+  updated_at: data.updated_at,
+});
 
-async function handleResponse<T>(response: Response): Promise<T> {
-  if (!response.ok) {
-    try {
-      const error = await response.json();
-      throw new Error(error.message || `Erro na API: ${response.statusText}`);
-    } catch (e) {
-      throw new Error(`Erro na API: ${response.statusText}`);
-    }
-  }
-  return response.json() as Promise<T>;
-}
-
-const getRoles = async (params: { page: number; limit: number; sortBy: string; sortOrder: string; }): Promise<PaginatedResponse<RoleResponseDto>> => {
-  const query = new URLSearchParams(params as any).toString();
-  const response = await fetch(`${API_BASE_URL}/roles?${query}`);
-  return handleResponse<PaginatedResponse<RoleResponseDto>>(response);
+export const getRoles = async (params: RoleFilter): Promise<PaginatedResponse<RoleDto>> => {
+  const response = await apiGet<PaginatedResponse<ApiRoleResponseDto>>('/roles', params);
+  return {
+    ...response,
+    items: response.items.map(mapToRoleDto),
+  };
 };
 
-const createRole = async (data: RoleCreateDto): Promise<RoleResponseDto> => {
-  const response = await fetch(`${API_BASE_URL}/roles`, {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify(data),
-  });
-  return handleResponse<RoleResponseDto>(response);
+export const getRoleById = async (id: number): Promise<RoleDto> => {
+  const response = await apiGet<ApiRoleResponseDto>(`/roles/${id}`);
+  return mapToRoleDto(response);
 };
 
-const updateRole = async (id: string, data: RoleUpdateDto): Promise<RoleResponseDto> => {
-  const response = await fetch(`${API_BASE_URL}/roles/${id}`, {
-    method: 'PUT',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify(data),
-  });
-  return handleResponse<RoleResponseDto>(response);
+export const createRole = async (data: CreateRoleDto): Promise<RoleDto> => {
+  const response = await apiPost<ApiRoleResponseDto>('/roles', data);
+  return mapToRoleDto(response);
 };
 
-const deleteRole = async (id: string): Promise<void> => {
-  const response = await fetch(`${API_BASE_URL}/roles/${id}`, {
-    method: 'DELETE',
-  });
-  if (!response.ok) {
-    const error = await response.json().catch(() => ({ message: 'Erro ao excluir função' }));
-    throw new Error(error.message);
-  }
+export const updateRole = async (id: number, data: UpdateRoleDto): Promise<RoleDto> => {
+  const response = await apiPut<ApiRoleResponseDto>(`/roles/${id}`, data);
+  return mapToRoleDto(response);
 };
 
-const toggleRoleStatus = async (id: string, active: boolean): Promise<void> => {
-    const response = await fetch(`${API_BASE_URL}/roles/${id}/status`, {
-        method: 'PATCH',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ active }),
-    });
-    if (!response.ok) {
-        const error = await response.json().catch(() => ({ message: 'Erro ao alterar status da função' }));
-        throw new Error(error.message);
-    }
+export const deleteRole = async (id: number): Promise<void> => {
+  return apiDelete(`/roles/${id}`);
+};
+
+export const toggleRoleStatus = async (id: number): Promise<RoleDto> => {
+  const role = await getRoleById(id);
+  const response = await apiPatch<ApiRoleResponseDto>(`/roles/${id}/status`, { active: !role.is_active });
+  return mapToRoleDto(response);
 };
 
 export const roleService = {
   getRoles,
+  getRoleById,
   createRole,
   updateRole,
   deleteRole,

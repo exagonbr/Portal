@@ -1,20 +1,12 @@
 import { BaseRepository } from './BaseRepository';
-import { Module, CreateModuleData, UpdateModuleData } from '../models/Module';
+import { Module } from '../entities/Module';
+
+export interface CreateModuleData extends Omit<Module, 'id' | 'created_at' | 'updated_at' | 'collection' | 'videos'> {}
+export interface UpdateModuleData extends Partial<CreateModuleData> {}
 
 export class ModuleRepository extends BaseRepository<Module> {
   constructor() {
     super('modules');
-  }
-
-  async findByCourse(courseId: string): Promise<Module[]> {
-    return this.db(this.tableName)
-      .where('course_id', courseId)
-      .orderBy('order', 'asc')
-      .select('*');
-  }
-
-  async findByCourseId(courseId: string): Promise<Module[]> {
-    return this.findByCourse(courseId);
   }
 
   async createModule(data: CreateModuleData): Promise<Module> {
@@ -29,34 +21,28 @@ export class ModuleRepository extends BaseRepository<Module> {
     return this.delete(id);
   }
 
-  async getModuleLessons(moduleId: string): Promise<any[]> {
-    return this.db('lessons')
-      .where('module_id', moduleId)
-      .orderBy('order', 'asc')
-      .select('*');
+  async findByCollection(collectionId: string): Promise<Module[]> {
+    return this.db(this.tableName)
+      .where('collection_id', collectionId)
+      .orderBy('order', 'asc');
   }
 
-  async reorderModules(courseId: string, moduleOrders: { id: string; order: number }[]): Promise<void> {
-    await this.executeTransaction(async (trx) => {
-      for (const moduleOrder of moduleOrders) {
-        await trx('modules')
-          .where('id', moduleOrder.id)
-          .andWhere('course_id', courseId)
-          .update({ order: moduleOrder.order, updated_at: new Date() });
-      }
-    });
-  }
-
-  async getNextOrder(courseId: string): Promise<number> {
+  async getNextOrder(collectionId: string): Promise<number> {
     const result = await this.db(this.tableName)
-      .where('course_id', courseId)
+      .where('collection_id', collectionId)
       .max('order as max_order')
       .first();
 
     return (result?.max_order || 0) + 1;
   }
 
-  async updateCompletion(id: string, isCompleted: boolean): Promise<Module | null> {
-    return this.update(id, { is_completed: isCompleted } as Partial<Module>);
+  async reorderModules(collectionId: string, moduleOrders: { id: string; order: number }[]): Promise<void> {
+    await this.executeTransaction(async (trx) => {
+      for (const moduleOrder of moduleOrders) {
+        await trx(this.tableName)
+          .where({ id: moduleOrder.id, collection_id: collectionId })
+          .update({ order: moduleOrder.order });
+      }
+    });
   }
 }

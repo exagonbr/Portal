@@ -524,3 +524,31 @@ export function getAccessibleRoutes(userRole: UserRole): RoleBasedRoute[] {
   }
   return ROLE_BASED_ROUTES.filter(route => route.roles.includes(userRole));
 }
+import { BaseEntityDto, BaseFilter } from './common';
+
+// DTO para a entidade Role, usado no frontend
+export interface RoleDto extends BaseEntityDto {
+  name: string;
+  description: string;
+  is_active: boolean;
+  users_count: number;
+}
+
+// DTO para criação de Role
+export interface CreateRoleDto {
+  name: string;
+  description: string;
+  is_active?: boolean;
+}
+
+// DTO para atualização de Role
+export interface UpdateRoleDto {
+  name?: string;
+  description?: string;
+  is_active?: boolean;
+}
+
+// Interface para filtros de Role
+export interface RoleFilter extends BaseFilter {
+  is_active?: boolean;
+}

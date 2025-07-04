@@ -31,11 +31,9 @@ export class Module {
   @Column()
   collection_id: string;
 
-  @ManyToOne(() => Collection, collection => collection.modules)
   @JoinColumn({ name: 'collection_id' })
   collection: Collection;
 
-  @OneToMany(() => Video, video => video.module)
   videos: Video[];
 
   @CreateDateColumn()

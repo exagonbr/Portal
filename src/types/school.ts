@@ -1,67 +1,49 @@
-export interface School {
-  id: string;
+import { BaseEntityDto, BaseFilter, UUID } from './common';
+
+// DTO para a entidade School, usado no frontend
+export interface SchoolDto extends BaseEntityDto {
   name: string;
   code: string;
-  institution_id: string;
-  type?: 'elementary' | 'middle' | 'high' | 'technical';
-  description?: string;
+  institution_id: UUID;
+  institution_name?: string;
   address?: string;
   city?: string;
   state?: string;
   zip_code?: string;
-  phone?: string;
-  email?: string;
   is_active: boolean;
-  created_at: Date;
-  updated_at: Date;
+  students_count?: number;
+  teachers_count?: number;
+  classes_count?: number;
 }
 
-export interface CreateSchoolData {
+// DTO para criação de School
+export interface CreateSchoolDto {
   name: string;
   code: string;
-  institution_id: string;
-  type?: 'elementary' | 'middle' | 'high' | 'technical';
-  description?: string;
+  institution_id: UUID;
   address?: string;
   city?: string;
   state?: string;
   zip_code?: string;
-  phone?: string;
-  email?: string;
   is_active?: boolean;
 }
 
-export interface UpdateSchoolData {
+// DTO para atualização de School
+export interface UpdateSchoolDto {
   name?: string;
   code?: string;
-  institution_id?: string;
-  type?: 'elementary' | 'middle' | 'high' | 'technical';
-  description?: string;
+  institution_id?: UUID;
   address?: string;
   city?: string;
   state?: string;
   zip_code?: string;
-  phone?: string;
-  email?: string;
   is_active?: boolean;
 }
 
-export interface SchoolStats {
-  totalStudents: number;
-  totalTeachers: number;
-  totalClasses: number;
-  totalManagers: number;
-  activeClasses: number;
-}
-
-export interface SchoolFilter {
-  search?: string;
-  institution_id?: string;
+// Interface para filtros de School
+export interface SchoolFilter extends BaseFilter {
+  institution_id?: UUID;
   is_active?: boolean;
-  city?: string;
   state?: string;
-  page?: number;
-  limit?: number;
-  sortBy?: keyof School;
-  sortOrder?: 'asc' | 'desc';
+  city?: string;
 }

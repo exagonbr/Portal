@@ -1,49 +1,61 @@
 export type InstitutionType = 'SCHOOL' | 'COLLEGE' | 'UNIVERSITY' | 'TECH_CENTER';
 
 export interface Institution {
-  id: string;
+  id: number;
+  version?: number;
+  accountableContact: string;
+  accountableName: string;
+  companyName: string;
+  complement?: string;
+  contractDisabled: boolean;
+  contractInvoiceNum?: string;
+  contractNum?: number;
+  contractTermEnd: Date;
+  contractTermStart: Date;
+  dateCreated?: Date;
+  deleted: boolean;
+  district: string;
+  document: string;
+  invoiceDate?: Date;
+  lastUpdated?: Date;
   name: string;
-  code: string;
-  type: InstitutionType;
-  description?: string;
-  address?: string;
-  city?: string;
-  state?: string;
-  zip_code?: string;
-  phone?: string;
-  email?: string;
-  website?: string;
-  is_active: boolean; // Adicionado campo is_active
-  created_at: Date;
-  updated_at: Date;
+  postalCode: string;
+  state: string;
+  street: string;
+  score?: number;
+  hasLibraryPlatform: boolean;
+  hasPrincipalPlatform: boolean;
+  hasStudentPlatform: boolean;
 }
 
 export interface CreateInstitutionData {
   name: string;
-  code: string;
-  type: InstitutionType;
-  description?: string;
-  address?: string;
-  city?: string;
-  state?: string;
-  zip_code?: string;
-  phone?: string;
-  email?: string;
-  website?: string;
-  is_active?: boolean; // Adicionado
+  companyName: string;
+  document: string;
+  accountableName: string;
+  accountableContact: string;
+  contractTermStart: Date;
+  contractTermEnd: Date;
+  street: string;
+  district: string;
+  state: string;
+  postalCode: string;
+  complement?: string;
 }
 
 export interface UpdateInstitutionData {
   name?: string;
-  code?: string;
-  type?: InstitutionType;
-  description?: string;
-  address?: string;
-  city?: string;
+  companyName?: string;
+  document?: string;
+  accountableName?: string;
+  accountableContact?: string;
+  contractTermStart?: Date;
+  contractTermEnd?: Date;
+  street?: string;
+  district?: string;
   state?: string;
-  zip_code?: string;
-  phone?: string;
-  email?: string;
-  website?: string;
-  is_active?: boolean; // Adicionado
+  postalCode?: string;
+  complement?: string;
+  contractDisabled?: boolean;
+  deleted?: boolean;
 }

@@ -8,7 +8,7 @@ import { User } from './User';
 import { Role } from './Role';
 
 @Entity('user_role')
-export class UserRole {
+export class UserRoleMapping {
   @PrimaryColumn({ name: 'user_id', type: 'bigint' })
   userId!: number;
 

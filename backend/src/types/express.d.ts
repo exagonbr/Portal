@@ -1,12 +1,15 @@
-import { AuthenticatedUser } from './auth.types';
+import { User as UserModel } from '../entities/User';
 
 declare global {
   namespace Express {
-    interface Request {
-      user?: AuthenticatedUser;
+    interface User extends UserModel {
+      // Adicione aqui outras propriedades que você pode querer no objeto User do Express
     }
-    
-    // Sobrescreve a definição do Passport para usar nosso tipo
-    interface User extends AuthenticatedUser {}
+
+    interface Request {
+      user?: User;
+      authenticated?: boolean;
+      userId?: string;
+    }
   }
 }

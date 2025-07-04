@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
-import { institutionService } from '@/services'
+import { institutionService } from '@/services/institutionService'
 import { InstitutionDto } from '@/types/institution'
 import { useToast } from '@/components/ToastManager'
 import { InstitutionModalNew } from '@/components/modals/InstitutionModalNew'
@@ -277,7 +277,7 @@ export default function ManageInstitutions() {
   const totalPages = Math.ceil(totalItems / itemsPerPage)
 
   return (
-    <AuthenticatedLayout>
+    <AuthenticatedLayout requiredPermission="canManageInstitutions">
       <div className="container mx-auto px-4 py-6 max-w-7xl">
         <div className="bg-white rounded-xl shadow-sm border border-gray-200">
           {/* Header Simplificado */}
@@ -367,7 +367,7 @@ export default function ManageInstitutions() {
               <div className="text-center py-12">
                 <Building2 className="w-16 h-16 text-gray-300 mx-auto mb-4" />
                 <p className="text-gray-500 text-lg mb-2">Nenhuma instituição encontrada</p>
-                <p className="text-gray-400 text-sm">Clique em &quot;Nova Instituição&quot; para adicionar a primeira</p>
+                <p className="text-gray-400 text-sm">Clique em "Nova Instituição" para adicionar a primeira</p>
               </div>
             ) : (
               <>

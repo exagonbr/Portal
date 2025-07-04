@@ -14,7 +14,8 @@ export { Role } from './Role';
 export { Subject } from './Subject';
 export { TeacherSubject } from './TeacherSubject';
 export { User } from './User';
-export { UserRole } from './UserRole';
+export { UserRoleMapping } from './UserRole';
+export { UserRole } from './UserRole.enum';
 
 // Entidades existentes que precisam ser atualizadas
 export { Book } from './Book';

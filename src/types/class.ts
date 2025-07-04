@@ -1,71 +1,65 @@
-export type ShiftType = 'MORNING' | 'AFTERNOON' | 'EVENING' | 'FULL_TIME';
+import { BaseEntityDto, BaseFilter, UUID } from './common';
 
-export interface Class {
-  id: string;
+export enum ShiftType {
+  MORNING = 'MORNING',
+  AFTERNOON = 'AFTERNOON',
+  EVENING = 'EVENING',
+  FULL_TIME = 'FULL_TIME'
+}
+
+// Labels para os turnos em português
+export const SHIFT_LABELS: Record<ShiftType, string> = {
+  [ShiftType.MORNING]: 'Manhã',
+  [ShiftType.AFTERNOON]: 'Tarde', 
+  [ShiftType.EVENING]: 'Noite',
+  [ShiftType.FULL_TIME]: 'Integral'
+};
+
+// DTO para a entidade Class, usado no frontend
+export interface ClassDto extends BaseEntityDto {
   name: string;
   code: string;
-  school_id: string;
+  school_id: UUID;
+  school_name?: string;
   year: number;
   shift: ShiftType;
   max_students: number;
   is_active: boolean;
-  created_at: Date;
-  updated_at: Date;
+  students_count?: number;
+  teacher_name?: string;
 }
 
-export interface CreateClassData {
+// DTO para criação de Class
+export interface CreateClassDto {
   name: string;
   code: string;
-  school_id: string;
+  school_id: UUID;
   year: number;
   shift: ShiftType;
-  max_students?: number;
+  max_students: number;
   is_active?: boolean;
 }
 
-export interface UpdateClassData {
+// DTO para atualização de Class
+export interface UpdateClassDto {
   name?: string;
   code?: string;
-  school_id?: string;
+  school_id?: UUID;
   year?: number;
   shift?: ShiftType;
   max_students?: number;
   is_active?: boolean;
 }
 
-export interface ClassStats {
-  totalStudents: number;
-  totalTeachers: number;
-  averageStudents: number;
-  occupancyRate: number;
-}
-
-export interface ClassWithDetails extends Class {
-  school_name: string;
-  student_count: number;
-  teacher_count: number;
-  education_cycles: Array<{
-    id: string;
-    name: string;
-    level: string;
-  }>;
-}
-
-export interface ClassFilter {
-  search?: string;
-  school_id?: string;
+// Interface para filtros de Class
+export interface ClassFilter extends BaseFilter {
+  school_id?: UUID;
   year?: number;
   shift?: ShiftType;
   is_active?: boolean;
-  page?: number;
-  limit?: number;
-  sortBy?: keyof Class;
-  sortOrder?: 'asc' | 'desc';
 }
 
-export const SHIFT_LABELS: Record<ShiftType, string> = {
-  MORNING: 'Manhã',
-  AFTERNOON: 'Tarde',
-  EVENING: 'Noite',
-  FULL_TIME: 'Integral'
-};
+// Tipos legados para compatibilidade
+export type Class = ClassDto;
+export type CreateClassData = CreateClassDto;
+export type UpdateClassData = UpdateClassDto;

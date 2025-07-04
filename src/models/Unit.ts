@@ -2,16 +2,16 @@ import { Model } from 'objection';
 import { Institution } from './Institution';
 
 export class Unit extends Model {
-  static tableName = 'units';
+  static tableName = 'unit';
 
-  id!: string;
+  id!: number;
+  version?: number;
+  dateCreated?: Date;
+  deleted?: boolean;
+  institutionId!: number;
+  lastUpdated?: Date;
   name!: string;
-  description?: string;
-  type!: string;
-  active!: boolean;
-  institution_id!: string;
-  created_at!: Date;
-  updated_at!: Date;
+  institutionName?: string;
 
   institution?: Institution;
 
@@ -20,18 +20,9 @@ export class Unit extends Model {
       relation: Model.BelongsToOneRelation,
       modelClass: Institution,
       join: {
-        from: 'units.institution_id',
+        from: 'unit.institutionId',
         to: 'institution.id'
       }
     }
   };
-
-  $beforeInsert() {
-    this.created_at = new Date();
-    this.updated_at = new Date();
-  }
-
-  $beforeUpdate() {
-    this.updated_at = new Date();
-  }
-} 
+}

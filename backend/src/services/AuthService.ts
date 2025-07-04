@@ -1,12 +1,13 @@
-import { Response } from 'express';
-import jwt from 'jsonwebtoken';
 import { AppDataSource } from '../config/typeorm.config';
+import { User } from '../entities/User';
+import { Role } from '../entities/Role';
+import { UserRole } from '../entities/UserRole.enum';
+import jwt from 'jsonwebtoken';
 import { JWT_CONFIG, AccessTokenPayload, RefreshTokenPayload } from '../config/jwt';
-import { Role, UserRole } from '../entities/Role';
-import { Users } from '../entities/Users';
+import { Response } from 'express';
 
 class AuthService {
-  private userRepository = AppDataSource.getRepository(Users);
+  private userRepository = AppDataSource.getRepository(User);
   private roleRepository = AppDataSource.getRepository(Role);
 
   public async login(email: string, password: string) {
@@ -24,16 +25,14 @@ class AuthService {
       return { success: false, message: 'Credenciais inválidas.' };
     }
 
-    // Verificar se o usuário tem uma role válida ou pode ter uma atribuída
     if (!user.hasValidRole()) {
-      return { success: false, message: 'Usuário não possui uma role associada.' };
-    }
-
-    // Se não tem role mas tem flags, atribuir role automaticamente
-    let userRole = user.role;
-    if (!userRole) {
       const determinedRole = user.determineRoleFromFlags();
-      userRole = await this.assignRoleToUser(user, determinedRole);
+      user.role = await this.assignRoleToUser(user, determinedRole);
+    }
+    
+    const userRole = user.role;
+    if (!userRole) {
+        return { success: false, message: 'Usuário não possui uma role associada.' };
     }
 
     const sessionId = `session_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
@@ -49,8 +48,8 @@ class AuthService {
           id: user.id,
           email: user.email,
           name: user.fullName,
-          role: userRole.name,
-          permissions: Role.getDefaultPermissions(userRole.name),
+          role: userRole.authority,
+          permissions: [], // TODO: Implementar busca de permissões
           institutionId: user.institutionId,
         },
       },
@@ -83,17 +82,14 @@ class AuthService {
       if (!user || !user.enabled) {
         return { success: false, message: 'Usuário não encontrado ou inativo.' };
       }
-
-      // Verificar se o usuário tem uma role válida ou pode ter uma atribuída
+      
       if (!user.hasValidRole()) {
         return { success: false, message: 'Usuário não possui uma role associada.' };
       }
-
-      // Se não tem role mas tem flags, atribuir role automaticamente
-      let userRole = user.role;
+      
+      const userRole = user.role;
       if (!userRole) {
-        const determinedRole = user.determineRoleFromFlags();
-        userRole = await this.assignRoleToUser(user, determinedRole);
+          return { success: false, message: 'Usuário não possui uma role associada.' };
       }
 
       const newAccessToken = this.generateAccessToken(user, userRole, decoded.sessionId);
@@ -112,7 +108,7 @@ class AuthService {
       secure: process.env.NODE_ENV === 'production',
       sameSite: 'strict',
       path: '/api/auth',
-      maxAge: 7 * 24 * 60 * 60 * 1000,
+      maxAge: 7 * 24 * 60 * 60 * 1000, // 7 dias
     });
   }
 
@@ -125,26 +121,25 @@ class AuthService {
     });
   }
 
-  private async assignRoleToUser(user: Users, roleName: UserRole): Promise<Role> {
-    const roleEntity = await this.roleRepository.findOne({ where: { name: roleName } });
+  private async assignRoleToUser(user: User, roleName: UserRole): Promise<Role> {
+    const roleEntity = await this.roleRepository.findOne({ where: { authority: roleName } });
     if (!roleEntity) {
-      throw new Error(`Role ${roleName} não encontrada no sistema.`);
+      throw new Error(`Role '${roleName}' não encontrada no sistema.`);
     }
     
     user.role = roleEntity;
-    user.roleId = roleEntity.id;
     await this.userRepository.save(user);
     
     return roleEntity;
   }
 
-  private generateAccessToken(user: Users, role: Role, sessionId: string): string {
+  private generateAccessToken(user: User, role: Role, sessionId: string): string {
     const payload: AccessTokenPayload = {
       id: user.id.toString(),
       email: user.email,
       name: user.fullName,
-      role: role.name,
-      permissions: Role.getDefaultPermissions(role.name),
+      role: role.authority || '',
+      permissions: [], // TODO: Implementar busca de permissões
       institutionId: user.institutionId?.toString(),
       sessionId,
       type: 'access',

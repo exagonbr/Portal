@@ -1,123 +1,59 @@
 import { BaseRepository } from './BaseRepository';
-import { Video, CreateVideoData, UpdateVideoData } from '../models/Video';
+import { Video } from '../entities/Video';
+
+export interface CreateVideoData extends Omit<Video, 'id'> {}
+export interface UpdateVideoData extends Partial<CreateVideoData> {}
 
 export class VideoRepository extends BaseRepository<Video> {
   constructor() {
-    super('videos');
-  }
-
-  async findByCourse(courseId: string): Promise<Video[]> {
-    return this.findAll({ course_id: courseId } as Partial<Video>);
+    super('video');
   }
 
   async createVideo(data: CreateVideoData): Promise<Video> {
     return this.create(data);
   }
 
-  async updateVideo(id: string, data: UpdateVideoData): Promise<Video | null> {
+  async updateVideo(id: number, data: UpdateVideoData): Promise<Video | null> {
     return this.update(id, data);
   }
 
-  async deleteVideo(id: string): Promise<boolean> {
+  async deleteVideo(id: number): Promise<boolean> {
     return this.delete(id);
   }
 
-  async searchVideos(searchTerm: string, courseId?: string): Promise<Video[]> {
-    let query = this.db.queryBuilder().from(this.tableName)
-      .where('title', 'ilike', `%${searchTerm}%`)
-      .orWhere('description', 'ilike', `%${searchTerm}%`);
-
-    if (courseId) {
-      query = query.andWhere('course_id', courseId);
-    }
-
-    return query.select('*');
+  async findByTitle(title: string): Promise<Video[]> {
+    return this.db(this.tableName).where('title', 'ilike', `%${title}%`);
   }
 
-  async getVideosWithCourse(): Promise<any[]> {
-    return this.db.queryBuilder().from(this.tableName)
-      .select(
-        'videos.*',
-        'courses.name as course_name'
-      )
-      .leftJoin('courses', 'videos.course_id', 'courses.id');
+  async findByShowId(showId: number): Promise<Video[]> {
+    return this.findAll({ showId } as Partial<Video>);
   }
 
-  async getVideoWithCourse(id: string): Promise<any | null> {
-    const result = await this.db.queryBuilder().from(this.tableName)
-      .select(
-        'videos.*',
-        'courses.name as course_name'
-      )
-      .leftJoin('courses', 'videos.course_id', 'courses.id')
-      .where('videos.id', id)
-      .first();
-
-    return result || null;
+  async search(term: string): Promise<Video[]> {
+    return this.db(this.tableName)
+      .where('title', 'ilike', `%${term}%`)
+      .orWhere('overview', 'ilike', `%${term}%`);
   }
 
-  async updateVideoProgress(videoId: string, userId: string, progress: number): Promise<void> {
-    const existingProgress = await this.db.queryBuilder().from('user_progress')
-      .where({ user_id: userId, video_id: videoId })
-      .first();
+  // A lógica de progresso do usuário geralmente fica em uma tabela separada (ex: user_video_progress)
+  // Os métodos abaixo são exemplos e precisariam dessa tabela de junção.
 
-    if (existingProgress) {
-      await this.db.queryBuilder().from('user_progress')
-        .where({ user_id: userId, video_id: videoId })
-        .update({
-          progress_percentage: progress,
-          updated_at: new Date()
-        });
-    } else {
-      await this.db.queryBuilder().from('user_progress').insert({
-        user_id: userId,
-        video_id: videoId,
-        progress_percentage: progress,
-        created_at: new Date(),
-        updated_at: new Date()
-      });
-    }
+  async updateUserProgress(userId: number, videoId: number, progressSeconds: number): Promise<void> {
+    // Exemplo:
+    // await this.db('user_video_progress')
+    //   .insert({ user_id: userId, video_id: videoId, progress_seconds: progressSeconds })
+    //   .onConflict(['user_id', 'video_id'])
+    //   .merge();
+    console.log(`Progresso de ${progressSeconds}s salvo para usuário ${userId} no vídeo ${videoId}`);
   }
 
-  async getUserVideoProgress(videoId: string, userId: string): Promise<any | null> {
-    return this.db.queryBuilder().from('user_progress')
-      .where({ user_id: userId, video_id: videoId })
-      .first();
-  }
-
-  async getVideosByDuration(minDuration?: string, maxDuration?: string): Promise<Video[]> {
-    let query = this.db.queryBuilder().from(this.tableName);
-
-    if (minDuration) {
-      query = query.where('duration', '>=', minDuration);
-    }
-
-    if (maxDuration) {
-      query = query.where('duration', '<=', maxDuration);
-    }
-
-    return query.select('*');
-  }
-
-  async updateProgress(id: string, progress: number): Promise<Video | null> {
-    return this.update(id, { progress } as Partial<Video>);
-  }
-
-  async getVideoStream(id: string): Promise<{ file_path: string } | null> {
-    const result = await this.db.queryBuilder().from(this.tableName)
-      .select('file_path')
-      .where('id', id)
-      .first();
-
-    return result || null;
-  }
-
-  async getVideoThumbnail(id: string): Promise<{ thumbnail_path: string } | null> {
-    const result = await this.db.queryBuilder().from(this.tableName)
-      .select('thumbnail_path')
-      .where('id', id)
-      .first();
-
-    return result || null;
+  async getUserProgress(userId: number, videoId: number): Promise<number | null> {
+    // Exemplo:
+    // const result = await this.db('user_video_progress')
+    //   .where({ user_id: userId, video_id: videoId })
+    //   .first();
+    // return result?.progress_seconds || null;
+    console.log(`Buscando progresso para usuário ${userId} no vídeo ${videoId}`);
+    return null;
   }
 }

@@ -15,7 +15,6 @@ import { UnitResponseDto, UnitCreateDto, InstitutionResponseDto } from '@/types/
 import { useAuth } from '@/contexts/AuthContext';
 import { motion } from 'framer-motion';
 import { UserRole } from '@/types/roles';
-import ProtectedRoute from '@/components/auth/ProtectedRoute';
 import { useToast } from '@/components/ToastManager';
 import AuthenticatedLayout from '@/components/AuthenticatedLayout';
 
@@ -269,7 +268,7 @@ export default function SystemAdminUnitsPage() {
         description: formData.description,
         type: formData.type,
         institution_id: formData.institution_id,
-        active: formData.active ?? true, // Garante que 'active' seja sempre boolean
+        active: formData.active ?? true,
         studentsCount: 0,
         teachersCount: 0,
         coursesCount: 0,
@@ -325,168 +324,166 @@ export default function SystemAdminUnitsPage() {
   });
 
   return (
-    <ProtectedRoute requiredRole={[UserRole.SYSTEM_ADMIN]}>
-      <AuthenticatedLayout>
-        <div className="container mx-auto py-8">
-          {/* Header */}
-          <div className="flex justify-between items-center mb-6">
-            <div>
-              <h1 className="text-2xl font-bold text-slate-800 flex items-center gap-3">
-                <UnitIcon className="w-6 h-6 text-blue-600" />
-                Gerenciamento de Unidades
-              </h1>
-              <p className="text-slate-600 mt-1">Total: {filteredUnits.length} unidades</p>
-            </div>
-            <button
-              onClick={() => { resetForm(); setShowModal(true); }}
-              className="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg flex items-center gap-2 text-sm"
-            >
-              <Plus className="w-4 h-4" />
-              Nova Unidade
-            </button>
+    <AuthenticatedLayout requiredPermission="canManageSchools">
+      <div className="container mx-auto py-8">
+        {/* Header */}
+        <div className="flex justify-between items-center mb-6">
+          <div>
+            <h1 className="text-2xl font-bold text-slate-800 flex items-center gap-3">
+              <UnitIcon className="w-6 h-6 text-blue-600" />
+              Gerenciamento de Unidades
+            </h1>
+            <p className="text-slate-600 mt-1">Total: {filteredUnits.length} unidades</p>
           </div>
-
-          {/* Filtros */}
-          <div className="mb-6 p-4 bg-slate-50 border border-slate-200 rounded-xl">
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-              <input
-                type="text"
-                value={searchTerm}
-                onChange={(e) => setSearchTerm(e.target.value)}
-                placeholder="Buscar por nome, instituição..."
-                className="w-full rounded-lg border-slate-300"
-              />
-              <select
-                value={selectedInstitution}
-                onChange={(e) => setSelectedInstitution(e.target.value)}
-                className="w-full rounded-lg border-slate-300"
-              >
-                <option value="all">Todas as instituições</option>
-                {institutions.map(inst => (
-                  <option key={inst.id} value={inst.id.toString()}>{inst.name}</option>
-                ))}
-              </select>
-              <select
-                value={filterStatus}
-                onChange={(e) => setFilterStatus(e.target.value as any)}
-                className="w-full rounded-lg border-slate-300"
-              >
-                <option value="all">Todos os status</option>
-                <option value="active">Ativas</option>
-                <option value="inactive">Inativas</option>
-              </select>
-              <select
-                value={filterType}
-                onChange={(e) => setFilterType(e.target.value)}
-                className="w-full rounded-lg border-slate-300"
-              >
-                <option value="all">Todos os tipos</option>
-                <option value="school">Escola</option>
-                <option value="college">Faculdade</option>
-                <option value="university">Universidade</option>
-                <option value="campus">Campus</option>
-              </select>
-            </div>
-          </div>
-
-          {/* Lista de Unidades */}
-          <div className="bg-white rounded-lg shadow-md border border-slate-200">
-            <div className="overflow-x-auto">
-              <table className="w-full">
-                <thead className="bg-slate-50">
-                  <tr>
-                    <th className="p-4 text-left text-sm font-semibold text-slate-600">Unidade</th>
-                    <th className="p-4 text-left text-sm font-semibold text-slate-600">Instituição</th>
-                    <th className="p-4 text-left text-sm font-semibold text-slate-600">Tipo</th>
-                    <th className="p-4 text-left text-sm font-semibold text-slate-600">Status</th>
-                    <th className="p-4 text-left text-sm font-semibold text-slate-600">Ações</th>
-                  </tr>
-                </thead>
-                <tbody className="divide-y divide-slate-200">
-                  {filteredUnits.length > 0 ? filteredUnits.map((unit) => (
-                    <tr key={unit.id} className="hover:bg-slate-50">
-                      <td className="p-4">{unit.name}</td>
-                      <td className="p-4">{unit.institutionName}</td>
-                      <td className="p-4">{unit.type}</td>
-                      <td className="p-4">
-                        <span onClick={() => handleToggleActive(unit)} className={`cursor-pointer px-2 py-1 text-xs rounded-full ${unit.active ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'}`}>
-                          {unit.active ? "Ativa" : "Inativa"}
-                        </span>
-                      </td>
-                      <td className="p-4 flex gap-2">
-                        <button onClick={() => handleEdit(unit)} className="text-blue-600 hover:text-blue-800"><Edit size={16} /></button>
-                        <button onClick={() => handleDelete(unit)} className="text-red-600 hover:text-red-800"><Trash2 size={16} /></button>
-                      </td>
-                    </tr>
-                  )) : (
-                    <tr>
-                      <td colSpan={5} className="text-center p-8 text-slate-500">
-                        Nenhuma unidade encontrada.
-                      </td>
-                    </tr>
-                  )}
-                </tbody>
-              </table>
-            </div>
-          </div>
-
-          {/* Modal */}
-          {showModal && (
-            <div className="fixed inset-0 bg-black bg-opacity-60 flex items-center justify-center z-50">
-              <motion.div
-                initial={{ opacity: 0, y: -30 }}
-                animate={{ opacity: 1, y: 0 }}
-                className="bg-white rounded-lg shadow-xl max-w-lg w-full"
-              >
-                <div className="p-6">
-                  <h3 className="text-xl font-semibold mb-4">{editingUnit ? 'Editar Unidade' : 'Nova Unidade'}</h3>
-                  <form onSubmit={handleSubmit} className="space-y-4">
-                    <input
-                      type="text"
-                      value={formData.name}
-                      onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-                      placeholder="Nome da Unidade"
-                      className="w-full p-2 border rounded-md"
-                      required
-                    />
-                    <select
-                      value={formData.institution_id}
-                      onChange={(e) => setFormData({ ...formData, institution_id: e.target.value })}
-                      className="w-full p-2 border rounded-md"
-                      required
-                    >
-                      <option value="">Selecione uma instituição</option>
-                      {institutions.map(inst => (
-                        <option key={inst.id} value={inst.id.toString()}>{inst.name}</option>
-                      ))}
-                    </select>
-                    <textarea
-                      value={formData.description || ''}
-                      onChange={(e) => setFormData({ ...formData, description: e.target.value })}
-                      placeholder="Descrição"
-                      className="w-full p-2 border rounded-md"
-                    />
-                    <select
-                      value={formData.type || 'school'}
-                      onChange={(e) => setFormData({ ...formData, type: e.target.value })}
-                      className="w-full p-2 border rounded-md"
-                    >
-                      <option value="school">Escola</option>
-                      <option value="college">Faculdade</option>
-                      <option value="university">Universidade</option>
-                      <option value="campus">Campus</option>
-                    </select>
-                    <div className="flex justify-end gap-4 pt-4">
-                      <button type="button" onClick={() => { setShowModal(false); resetForm(); }} className="px-4 py-2 bg-gray-200 rounded-md">Cancelar</button>
-                      <button type="submit" className="px-4 py-2 bg-blue-600 text-white rounded-md">{editingUnit ? 'Atualizar' : 'Criar'}</button>
-                    </div>
-                  </form>
-                </div>
-              </motion.div>
-            </div>
-          )}
+          <button
+            onClick={() => { resetForm(); setShowModal(true); }}
+            className="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg flex items-center gap-2 text-sm"
+          >
+            <Plus className="w-4 h-4" />
+            Nova Unidade
+          </button>
         </div>
-      </AuthenticatedLayout>
-    </ProtectedRoute>
+
+        {/* Filtros */}
+        <div className="mb-6 p-4 bg-slate-50 border border-slate-200 rounded-xl">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+            <input
+              type="text"
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+              placeholder="Buscar por nome, instituição..."
+              className="w-full rounded-lg border-slate-300"
+            />
+            <select
+              value={selectedInstitution}
+              onChange={(e) => setSelectedInstitution(e.target.value)}
+              className="w-full rounded-lg border-slate-300"
+            >
+              <option value="all">Todas as instituições</option>
+              {institutions.map(inst => (
+                <option key={inst.id} value={inst.id.toString()}>{inst.name}</option>
+              ))}
+            </select>
+            <select
+              value={filterStatus}
+              onChange={(e) => setFilterStatus(e.target.value as any)}
+              className="w-full rounded-lg border-slate-300"
+            >
+              <option value="all">Todos os status</option>
+              <option value="active">Ativas</option>
+              <option value="inactive">Inativas</option>
+            </select>
+            <select
+              value={filterType}
+              onChange={(e) => setFilterType(e.target.value)}
+              className="w-full rounded-lg border-slate-300"
+            >
+              <option value="all">Todos os tipos</option>
+              <option value="school">Escola</option>
+              <option value="college">Faculdade</option>
+              <option value="university">Universidade</option>
+              <option value="campus">Campus</option>
+            </select>
+          </div>
+        </div>
+
+        {/* Lista de Unidades */}
+        <div className="bg-white rounded-lg shadow-md border border-slate-200">
+          <div className="overflow-x-auto">
+            <table className="w-full">
+              <thead className="bg-slate-50">
+                <tr>
+                  <th className="p-4 text-left text-sm font-semibold text-slate-600">Unidade</th>
+                  <th className="p-4 text-left text-sm font-semibold text-slate-600">Instituição</th>
+                  <th className="p-4 text-left text-sm font-semibold text-slate-600">Tipo</th>
+                  <th className="p-4 text-left text-sm font-semibold text-slate-600">Status</th>
+                  <th className="p-4 text-left text-sm font-semibold text-slate-600">Ações</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-slate-200">
+                {filteredUnits.length > 0 ? filteredUnits.map((unit) => (
+                  <tr key={unit.id} className="hover:bg-slate-50">
+                    <td className="p-4">{unit.name}</td>
+                    <td className="p-4">{unit.institutionName}</td>
+                    <td className="p-4">{unit.type}</td>
+                    <td className="p-4">
+                      <span onClick={() => handleToggleActive(unit)} className={`cursor-pointer px-2 py-1 text-xs rounded-full ${unit.active ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'}`}>
+                        {unit.active ? "Ativa" : "Inativa"}
+                      </span>
+                    </td>
+                    <td className="p-4 flex gap-2">
+                      <button onClick={() => handleEdit(unit)} className="text-blue-600 hover:text-blue-800"><Edit size={16} /></button>
+                      <button onClick={() => handleDelete(unit)} className="text-red-600 hover:text-red-800"><Trash2 size={16} /></button>
+                    </td>
+                  </tr>
+                )) : (
+                  <tr>
+                    <td colSpan={5} className="text-center p-8 text-slate-500">
+                      Nenhuma unidade encontrada.
+                    </td>
+                  </tr>
+                )}
+              </tbody>
+            </table>
+          </div>
+        </div>
+
+        {/* Modal */}
+        {showModal && (
+          <div className="fixed inset-0 bg-black bg-opacity-60 flex items-center justify-center z-50">
+            <motion.div
+              initial={{ opacity: 0, y: -30 }}
+              animate={{ opacity: 1, y: 0 }}
+              className="bg-white rounded-lg shadow-xl max-w-lg w-full"
+            >
+              <div className="p-6">
+                <h3 className="text-xl font-semibold mb-4">{editingUnit ? 'Editar Unidade' : 'Nova Unidade'}</h3>
+                <form onSubmit={handleSubmit} className="space-y-4">
+                  <input
+                    type="text"
+                    value={formData.name}
+                    onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+                    placeholder="Nome da Unidade"
+                    className="w-full p-2 border rounded-md"
+                    required
+                  />
+                  <select
+                    value={formData.institution_id}
+                    onChange={(e) => setFormData({ ...formData, institution_id: e.target.value })}
+                    className="w-full p-2 border rounded-md"
+                    required
+                  >
+                    <option value="">Selecione uma instituição</option>
+                    {institutions.map(inst => (
+                      <option key={inst.id} value={inst.id.toString()}>{inst.name}</option>
+                    ))}
+                  </select>
+                  <textarea
+                    value={formData.description || ''}
+                    onChange={(e) => setFormData({ ...formData, description: e.target.value })}
+                    placeholder="Descrição"
+                    className="w-full p-2 border rounded-md"
+                  />
+                  <select
+                    value={formData.type || 'school'}
+                    onChange={(e) => setFormData({ ...formData, type: e.target.value })}
+                    className="w-full p-2 border rounded-md"
+                  >
+                    <option value="school">Escola</option>
+                    <option value="college">Faculdade</option>
+                    <option value="university">Universidade</option>
+                    <option value="campus">Campus</option>
+                  </select>
+                  <div className="flex justify-end gap-4 pt-4">
+                    <button type="button" onClick={() => { setShowModal(false); resetForm(); }} className="px-4 py-2 bg-gray-200 rounded-md">Cancelar</button>
+                    <button type="submit" className="px-4 py-2 bg-blue-600 text-white rounded-md">{editingUnit ? 'Atualizar' : 'Criar'}</button>
+                  </div>
+                </form>
+              </div>
+            </motion.div>
+          </div>
+        )}
+      </div>
+    </AuthenticatedLayout>
   );
 }

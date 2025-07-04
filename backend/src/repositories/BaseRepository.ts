@@ -1,7 +1,7 @@
 import { Knex } from 'knex';
 import db from '../config/database';
 
-export abstract class BaseRepository<T> {
+export abstract class BaseRepository<T extends { id: string | number }> {
   protected db: Knex;
   protected tableName: string;
 
@@ -11,7 +11,7 @@ export abstract class BaseRepository<T> {
   }
 
   async findAll(filters?: Partial<T>, pagination?: { page: number; limit: number }): Promise<T[]> {
-    let query = this.db(this.tableName);
+    let query = this.db(this.tableName).select('*');
 
     if (filters) {
       query = query.where(filters);
@@ -22,13 +22,12 @@ export abstract class BaseRepository<T> {
       query = query.limit(pagination.limit).offset(offset);
     }
 
-    return query.select('*');
+    return query;
   }
 
-  async findById(id: string): Promise<T | null> {
+  async findById(id: string | number): Promise<T | null> {
     const result = await this.db(this.tableName)
       .where('id', id)
-      .select('*')
       .first();
     return result || null;
   }
@@ -36,19 +35,18 @@ export abstract class BaseRepository<T> {
   async findOne(filters: Partial<T>): Promise<T | null> {
     const result = await this.db(this.tableName)
       .where(filters)
-      .select('*')
       .first();
     return result || null;
   }
 
-  async create(data: Partial<T>): Promise<T> {
+  async create(data: Partial<Omit<T, 'id' | 'created_at' | 'updated_at'>>): Promise<T> {
     const [result] = await this.db(this.tableName)
       .insert(data)
       .returning('*');
     return result;
   }
 
-  async update(id: string, data: Partial<T>): Promise<T | null> {
+  async update(id: string | number, data: Partial<Omit<T, 'id' | 'created_at' | 'updated_at'>>): Promise<T | null> {
     const [result] = await this.db(this.tableName)
       .where('id', id)
       .update({ ...data, updated_at: new Date() })
@@ -56,7 +54,7 @@ export abstract class BaseRepository<T> {
     return result || null;
   }
 
-  async delete(id: string): Promise<boolean> {
+  async delete(id: string | number): Promise<boolean> {
     const deletedRows = await this.db(this.tableName)
       .where('id', id)
       .del();
@@ -70,17 +68,8 @@ export abstract class BaseRepository<T> {
       query = query.where(filters);
     }
 
-    try {
-      // Usar timeout explícito e otimizar a contagem
-      const result = await query
-        .count('* as count')
-        .timeout(15000)
-        .first();
-      return parseInt(result?.count as string) || 0;
-    } catch (error) {
-      console.log(`Erro ao contar registros na tabela ${this.tableName}:`, error);
-      throw error;
-    }
+    const result = await query.count('* as count').first();
+    return parseInt(result?.count as string, 10) || 0;
   }
 
   async exists(filters: Partial<T>): Promise<boolean> {

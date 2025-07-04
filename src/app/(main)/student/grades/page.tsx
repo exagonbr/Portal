@@ -1,6 +1,10 @@
 'use client'
 
-import { useState } from 'react'
+import React, { useState, useEffect } from 'react'
+import { useAuth } from '@/contexts/AuthContext'
+import { GraduationCap, TrendingUp, TrendingDown, Calendar, BookOpen, Trophy, Target, AlertCircle, CheckCircle, Clock, Star, BarChart3, PieChart, LineChart } from 'lucide-react'
+import { StatCard, ContentCard } from '@/components/ui/StandardCard'
+import AuthenticatedLayout from '@/components/layout/AuthenticatedLayout'
 import DashboardLayout from '@/components/dashboard/DashboardLayout'
 import DashboardPageLayout from '@/components/dashboard/DashboardPageLayout'
 import ProtectedRoute from '@/components/auth/ProtectedRoute'
@@ -183,198 +187,202 @@ export default function StudentGradesPage() {
   ]
 
   return (
-          <ProtectedRoute requiredRole={[UserRole.STUDENT, UserRole.SYSTEM_ADMIN]}>
-        <DashboardPageLayout
-          title="Minhas Notas"
-          subtitle="Acompanhe seu desempenho acadêmico"
-        >
-          {/* GPA and Overview */}
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
-            <Card gradient>
-              <div className="p-6">
-                <div className="flex items-center justify-between mb-4">
-                  <h3 className="text-lg font-semibold" style={{ color: theme.colors.text.primary }}>
-                    Média Geral (GPA)
-                  </h3>
-                  <span className="material-symbols-outlined" style={{ color: theme.colors.primary.DEFAULT }}>
-                    grade
-                  </span>
-                </div>
-                <div className="text-3xl font-bold mb-2" style={{ color: theme.colors.primary.DEFAULT }}>
-                  {calculateGPA()}
-                </div>
-                <p className="text-sm" style={{ color: theme.colors.text.secondary }}>
-                  de 4.00 possíveis
-                </p>
-              </div>
-            </Card>
-
-            <Card>
-              <div className="p-6">
-                <div className="flex items-center justify-between mb-4">
-                  <h3 className="text-lg font-semibold" style={{ color: theme.colors.text.primary }}>
-                    Cursos Ativos
-                  </h3>
-                  <span className="material-symbols-outlined" style={{ color: theme.colors.secondary.DEFAULT }}>
-                    school
-                  </span>
-                </div>
-                <div className="text-3xl font-bold mb-2" style={{ color: theme.colors.text.primary }}>
-                  {courseGrades.length}
-                </div>
-                <p className="text-sm" style={{ color: theme.colors.text.secondary }}>
-                  {courseGrades.reduce((acc, c) => acc + c.credits, 0)} créditos totais
-                </p>
-              </div>
-            </Card>
-
-            <Card>
-              <div className="p-6">
-                <div className="flex items-center justify-between mb-4">
-                  <h3 className="text-lg font-semibold" style={{ color: theme.colors.text.primary }}>
-                    Média do Período
-                  </h3>
-                  <span className="material-symbols-outlined" style={{ color: theme.colors.accent.DEFAULT }}>
-                    trending_up
-                  </span>
-                </div>
-                <div className="text-3xl font-bold mb-2" style={{ color: theme.colors.text.primary }}>
-                  {(courseGrades.reduce((acc, c) => acc + c.current_grade, 0) / courseGrades.length).toFixed(1)}%
-                </div>
-                <p className="text-sm" style={{ color: theme.colors.text.secondary }}>
-                  Desempenho geral
-                </p>
-              </div>
-            </Card>
-          </div>
-
-          {/* Filters */}
-          <div className="flex gap-4 mb-6">
-            <Select
-              value={selectedCourse}
-              onChange={(value) => setSelectedCourse(value as string)}
-              options={courseOptions}
-              className="w-64"
-            />
-            <Select
-              value={selectedPeriod}
-              onChange={(value) => setSelectedPeriod(value as string)}
-              options={periodOptions}
-              className="w-48"
-            />
-          </div>
-
-          {/* Course Grades */}
-          <div className="space-y-6">
-            {filteredCourses.map((course, index) => (
-              <motion.div
-                key={course.course_id}
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ duration: 0.3, delay: index * 0.1 }}
-              >
-                <Card>
-                  <div className="p-6">
-                    <div className="flex items-center justify-between mb-6">
-                      <div>
-                        <h3 className="text-xl font-semibold mb-1" style={{ color: theme.colors.text.primary }}>
-                          {course.course_name}
-                        </h3>
-                        <p className="text-sm" style={{ color: theme.colors.text.secondary }}>
-                          {course.class_name} • {course.credits} créditos
-                        </p>
-                      </div>
-                      <div className="text-right">
-                        <div className="text-2xl font-bold" style={{ color: getGradeColor(course.current_grade) }}>
-                          {course.current_grade.toFixed(1)}%
-                        </div>
-                        <div className="text-lg font-medium" style={{ color: theme.colors.text.secondary }}>
-                          Nota: {course.grade_letter}
-                        </div>
-                      </div>
-                    </div>
-
-                    <Table
-                      columns={[
-                        {
-                          key: 'activity',
-                          title: 'Atividade',
-                          render: (grade: Grade) => (
-                            <div className="flex items-center gap-3">
-                              <span 
-                                className="material-symbols-outlined"
-                                style={{ color: theme.colors.text.secondary }}
-                              >
-                                {getActivityIcon(grade.activity_type)}
-                              </span>
-                              <span style={{ color: theme.colors.text.primary }}>
-                                {grade.activity_name}
-                              </span>
-                            </div>
-                          )
-                        },
-                        {
-                          key: 'grade',
-                          title: 'Nota',
-                          render: (grade: Grade) => (
-                            <div>
-                              <span className="font-medium" style={{ color: theme.colors.text.primary }}>
-                                {grade.points_earned}/{grade.points_possible}
-                              </span>
-                              <span className="ml-2 text-sm" style={{ color: getGradeColor(grade.percentage) }}>
-                                ({grade.percentage}%)
-                              </span>
-                            </div>
-                          )
-                        },
-                        {
-                          key: 'letter',
-                          title: 'Conceito',
-                          render: (grade: Grade) => (
-                            <span 
-                              className="font-bold text-lg"
-                              style={{ color: getGradeColor(grade.percentage) }}
-                            >
-                              {grade.grade_letter}
-                            </span>
-                          )
-                        },
-                        {
-                          key: 'date',
-                          title: 'Data',
-                          render: (grade: Grade) => (
-                            <span style={{ color: theme.colors.text.secondary }}>
-                              {new Date(grade.graded_at).toLocaleDateString('pt-BR')}
-                            </span>
-                          )
-                        },
-                        {
-                          key: 'actions',
-                          title: '',
-                          render: (grade: Grade) => (
-                            <Button
-                              variant="ghost"
-                              size="sm"
-                              onClick={() => {}}
-                            >
-                              {grade.feedback ? (
-                                <span className="material-symbols-outlined">comment</span>
-                              ) : (
-                                <span className="material-symbols-outlined">visibility</span>
-                              )}
-                            </Button>
-                          )
-                        }
-                      ]}
-                      data={course.grades}
-                      size="sm"
-                    />
+    <AuthenticatedLayout>
+      <div className="container mx-auto px-4 py-6 max-w-7xl">
+        <ProtectedRoute requiredRole={[UserRole.STUDENT, UserRole.SYSTEM_ADMIN]}>
+          <DashboardPageLayout
+            title="Minhas Notas"
+            subtitle="Acompanhe seu desempenho acadêmico"
+          >
+            {/* GPA and Overview */}
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
+              <Card gradient>
+                <div className="p-6">
+                  <div className="flex items-center justify-between mb-4">
+                    <h3 className="text-lg font-semibold" style={{ color: theme.colors.text.primary }}>
+                      Média Geral (GPA)
+                    </h3>
+                    <span className="material-symbols-outlined" style={{ color: theme.colors.primary.DEFAULT }}>
+                      grade
+                    </span>
                   </div>
-                </Card>
-              </motion.div>
-            ))}
-          </div>
-        </DashboardPageLayout>
-    </ProtectedRoute>
+                  <div className="text-3xl font-bold mb-2" style={{ color: theme.colors.primary.DEFAULT }}>
+                    {calculateGPA()}
+                  </div>
+                  <p className="text-sm" style={{ color: theme.colors.text.secondary }}>
+                    de 4.00 possíveis
+                  </p>
+                </div>
+              </Card>
+
+              <Card>
+                <div className="p-6">
+                  <div className="flex items-center justify-between mb-4">
+                    <h3 className="text-lg font-semibold" style={{ color: theme.colors.text.primary }}>
+                      Cursos Ativos
+                    </h3>
+                    <span className="material-symbols-outlined" style={{ color: theme.colors.secondary.DEFAULT }}>
+                      school
+                    </span>
+                  </div>
+                  <div className="text-3xl font-bold mb-2" style={{ color: theme.colors.text.primary }}>
+                    {courseGrades.length}
+                  </div>
+                  <p className="text-sm" style={{ color: theme.colors.text.secondary }}>
+                    {courseGrades.reduce((acc, c) => acc + c.credits, 0)} créditos totais
+                  </p>
+                </div>
+              </Card>
+
+              <Card>
+                <div className="p-6">
+                  <div className="flex items-center justify-between mb-4">
+                    <h3 className="text-lg font-semibold" style={{ color: theme.colors.text.primary }}>
+                      Média do Período
+                    </h3>
+                    <span className="material-symbols-outlined" style={{ color: theme.colors.accent.DEFAULT }}>
+                      trending_up
+                    </span>
+                  </div>
+                  <div className="text-3xl font-bold mb-2" style={{ color: theme.colors.text.primary }}>
+                    {(courseGrades.reduce((acc, c) => acc + c.current_grade, 0) / courseGrades.length).toFixed(1)}%
+                  </div>
+                  <p className="text-sm" style={{ color: theme.colors.text.secondary }}>
+                    Desempenho geral
+                  </p>
+                </div>
+              </Card>
+            </div>
+
+            {/* Filters */}
+            <div className="flex gap-4 mb-6">
+              <Select
+                value={selectedCourse}
+                onChange={(value) => setSelectedCourse(value as string)}
+                options={courseOptions}
+                className="w-64"
+              />
+              <Select
+                value={selectedPeriod}
+                onChange={(value) => setSelectedPeriod(value as string)}
+                options={periodOptions}
+                className="w-48"
+              />
+            </div>
+
+            {/* Course Grades */}
+            <div className="space-y-6">
+              {filteredCourses.map((course, index) => (
+                <motion.div
+                  key={course.course_id}
+                  initial={{ opacity: 0, y: 20 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ duration: 0.3, delay: index * 0.1 }}
+                >
+                  <Card>
+                    <div className="p-6">
+                      <div className="flex items-center justify-between mb-6">
+                        <div>
+                          <h3 className="text-xl font-semibold mb-1" style={{ color: theme.colors.text.primary }}>
+                            {course.course_name}
+                          </h3>
+                          <p className="text-sm" style={{ color: theme.colors.text.secondary }}>
+                            {course.class_name} • {course.credits} créditos
+                          </p>
+                        </div>
+                        <div className="text-right">
+                          <div className="text-2xl font-bold" style={{ color: getGradeColor(course.current_grade) }}>
+                            {course.current_grade.toFixed(1)}%
+                          </div>
+                          <div className="text-lg font-medium" style={{ color: theme.colors.text.secondary }}>
+                            Nota: {course.grade_letter}
+                          </div>
+                        </div>
+                      </div>
+
+                      <Table
+                        columns={[
+                          {
+                            key: 'activity',
+                            title: 'Atividade',
+                            render: (grade: Grade) => (
+                              <div className="flex items-center gap-3">
+                                <span 
+                                  className="material-symbols-outlined"
+                                  style={{ color: theme.colors.text.secondary }}
+                                >
+                                  {getActivityIcon(grade.activity_type)}
+                                </span>
+                                <span style={{ color: theme.colors.text.primary }}>
+                                  {grade.activity_name}
+                                </span>
+                              </div>
+                            )
+                          },
+                          {
+                            key: 'grade',
+                            title: 'Nota',
+                            render: (grade: Grade) => (
+                              <div>
+                                <span className="font-medium" style={{ color: theme.colors.text.primary }}>
+                                  {grade.points_earned}/{grade.points_possible}
+                                </span>
+                                <span className="ml-2 text-sm" style={{ color: getGradeColor(grade.percentage) }}>
+                                  ({grade.percentage}%)
+                                </span>
+                              </div>
+                            )
+                          },
+                          {
+                            key: 'letter',
+                            title: 'Conceito',
+                            render: (grade: Grade) => (
+                              <span 
+                                className="font-bold text-lg"
+                                style={{ color: getGradeColor(grade.percentage) }}
+                              >
+                                {grade.grade_letter}
+                              </span>
+                            )
+                          },
+                          {
+                            key: 'date',
+                            title: 'Data',
+                            render: (grade: Grade) => (
+                              <span style={{ color: theme.colors.text.secondary }}>
+                                {new Date(grade.graded_at).toLocaleDateString('pt-BR')}
+                              </span>
+                            )
+                          },
+                          {
+                            key: 'actions',
+                            title: '',
+                            render: (grade: Grade) => (
+                              <Button
+                                variant="ghost"
+                                size="sm"
+                                onClick={() => {}}
+                              >
+                                {grade.feedback ? (
+                                  <span className="material-symbols-outlined">comment</span>
+                                ) : (
+                                  <span className="material-symbols-outlined">visibility</span>
+                                )}
+                              </Button>
+                            )
+                          }
+                        ]}
+                        data={course.grades}
+                        size="sm"
+                      />
+                    </div>
+                  </Card>
+                </motion.div>
+              ))}
+            </div>
+          </DashboardPageLayout>
+        </ProtectedRoute>
+      </div>
+    </AuthenticatedLayout>
   )
 } 

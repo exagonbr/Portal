@@ -1,11 +1,23 @@
-
 import passport from 'passport';
 import { Strategy as GoogleStrategy } from 'passport-google-oauth20';
-import { AppDataSource } from './typeorm.config'; // Ajuste para o novo TypeORM
-import { Role, UserRole } from '../entities/Role';
-import { Users } from '../entities/Users'; // A entidade correta é Users
+import { AppDataSource } from './typeorm.config';
+import { Role } from '../entities/Role';
+import { User } from '../entities/User';
 import { AuthenticatedUser } from '../types/auth.types';
 
+// Função auxiliar para obter permissões padrão
+const getDefaultPermissions = (roleName: string | undefined): string[] => {
+  const r = roleName?.toLowerCase() || 'student';
+  switch (r) {
+    case 'admin':
+      return ['read', 'write', 'delete', 'admin'];
+    case 'teacher':
+      return ['read', 'write'];
+    case 'student':
+    default:
+      return ['read'];
+  }
+};
 
 export function setupPassport() {
   console.log('GOOGLE_CLIENT_ID:', process.env.GOOGLE_CLIENT_ID);
@@ -22,26 +34,26 @@ export function setupPassport() {
 
       async (accessToken, refreshToken, profile, done) => {
         try {
-          const userRepository = AppDataSource.getRepository(Users);
-          let user = await userRepository.findOne({ 
+          const userRepository = AppDataSource.getRepository(User);
+          let user = await userRepository.findOne({
             where: { googleId: profile.id },
             relations: ['role']
           });
 
           if (user) {
-            const userRole = user.role?.name || UserRole.STUDENT;
+            const userRole = user.role?.authority;
             const authUser: AuthenticatedUser = {
               id: user.id,
               email: user.email,
               name: user.fullName,
-              role: user.role?.name || 'user',
+              role: user.role?.authority || 'user',
               institutionId: user.institutionId,
-              permissions: Role.getDefaultPermissions(userRole),
+              permissions: getDefaultPermissions(userRole),
             };
             return done(null, authUser);
           }
 
-          user = await userRepository.findOne({ 
+          user = await userRepository.findOne({
             where: { email: profile.emails![0].value },
             relations: ['role']
           });
@@ -49,14 +61,14 @@ export function setupPassport() {
           if (user) {
             user.googleId = profile.id;
             await userRepository.save(user);
-            const userRole = user.role?.name || UserRole.STUDENT;
+            const userRole = user.role?.authority;
             const authUser: AuthenticatedUser = {
               id: user.id,
               email: user.email,
               name: user.fullName,
-              role: user.role?.name || 'user',
+              role: user.role?.authority || 'user',
               institutionId: user.institutionId,
-              permissions: Role.getDefaultPermissions(userRole),
+              permissions: getDefaultPermissions(userRole),
             };
             return done(null, authUser);
           }
@@ -65,8 +77,7 @@ export function setupPassport() {
             googleId: profile.id,
             fullName: profile.displayName,
             email: profile.emails![0].value,
-            // Assign a default role or handle role assignment as needed
-            roleId: '35f57500-9a89-4318-bc9f-9acad28c2fb6', // Default 'student' role
+            role: { id: 3 } as Role // Assumindo que 3 é o ID para 'student' e fazendo um cast
           });
 
           const savedUser = await userRepository.save(newUser);
@@ -76,14 +87,14 @@ export function setupPassport() {
           });
 
           if (userWithRole) {
-            const userRole = userWithRole.role?.name || UserRole.STUDENT;
+            const userRole = userWithRole.role?.authority;
             const authUser: AuthenticatedUser = {
               id: userWithRole.id,
               email: userWithRole.email,
               name: userWithRole.fullName,
-              role: userWithRole.role?.name || 'user',
+              role: userWithRole.role?.authority || 'user',
               institutionId: userWithRole.institutionId,
-              permissions: Role.getDefaultPermissions(userRole),
+              permissions: getDefaultPermissions(userRole),
             };
             done(null, authUser);
           } else {
@@ -103,20 +114,20 @@ export function setupPassport() {
 
   passport.deserializeUser(async (id: number, done) => {
     try {
-      const userRepository = AppDataSource.getRepository(Users);
+      const userRepository = AppDataSource.getRepository(User);
       const user = await userRepository.findOne({
         where: { id },
         relations: ['role']
       });
       if (user) {
-        const userRole = user.role?.name || UserRole.STUDENT;
+        const userRole = user.role?.authority;
         const authUser: AuthenticatedUser = {
           id: user.id,
           email: user.email,
           name: user.fullName,
-          role: user.role?.name || 'user',
+          role: user.role?.authority || 'user',
           institutionId: user.institutionId,
-          permissions: Role.getDefaultPermissions(userRole),
+          permissions: getDefaultPermissions(userRole),
         };
         done(null, authUser);
       } else {

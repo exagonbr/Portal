@@ -56,7 +56,7 @@ export interface UserDto extends BaseEntityDto {
   is_active: boolean;
 }
 
-export interface CreateUserData {
+export interface CreateUserDto {
   name: string;
   email: Email;
   password: string;
@@ -80,7 +80,7 @@ export interface CreateUserData {
   is_active?: boolean;
 }
 
-export interface UpdateUserData {
+export interface UpdateUserDto {
   name?: string;
   email?: Email;
   password?: string;
@@ -152,6 +152,20 @@ export interface UserProfile extends User {
     code: string;
     role: string;
   }>;
+}
+
+export interface ProfileDto {
+  id: UUID;
+  user_id: UUID;
+  name: string;
+  language?: string;
+  avatar_color?: string;
+  is_child?: boolean;
+}
+
+export interface ChangePasswordDto {
+  current_password: string;
+  new_password: string;
 }
 
 export const USER_STATUS_LABELS: Record<string, string> = {

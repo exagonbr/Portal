@@ -284,6 +284,18 @@ export interface UpdateInstitutionDto {
   score?: number;
 }
 
+export type InstitutionRequestDto = CreateInstitutionDto | UpdateInstitutionDto;
+
+// DTOs de Schedule
+export interface ScheduleResponseDto {
+  id: string;
+  title: string;
+  start: string;
+  end: string;
+  class_id: string;
+  teacher_id: string;
+}
+
 // DTOs de Course
 export interface CourseDto {
   id: number;
@@ -1525,4 +1537,822 @@ export interface UpdateUserAnswerDto {
   is_correct?: boolean;
   score?: number;
   user_id?: string | null;
+}
+
+// DTOs de School
+export interface SchoolResponseDto {
+  id: number;
+  version?: number;
+  date_created?: string;
+  deleted?: boolean;
+  institutionId: number;
+  last_updated?: string;
+  name: string;
+  institutionName?: string;
+  total_students?: number;
+  total_teachers?: number;
+  total_classes?: number;
+}
+
+export interface CreateSchoolDto {
+  name: string;
+  institutionId: number;
+  institutionName?: string;
+  deleted?: boolean;
+  date_created?: string;
+}
+
+export interface UpdateSchoolDto {
+  name?: string;
+  institutionId?: number;
+  institutionName?: string;
+  deleted?: boolean;
+  last_updated?: string;
+}
+
+// DTOs de Class
+export interface ClassResponseDto {
+  id: number;
+  name: string;
+  code: string;
+  school_id: string;
+  year: number;
+  shift: 'MORNING' | 'AFTERNOON' | 'EVENING' | 'FULL_TIME';
+  max_students: number;
+  is_active: boolean;
+  school_name?: string;
+  student_count?: number;
+  teacher_count?: number;
+}
+
+export interface CreateClassDto {
+  name: string;
+  code: string;
+  school_id: string;
+  year: number;
+  shift: 'MORNING' | 'AFTERNOON' | 'EVENING' | 'FULL_TIME';
+  max_students: number;
+  is_active?: boolean;
+}
+
+export interface UpdateClassDto {
+  name?: string;
+  code?: string;
+  school_id?: string;
+  year?: number;
+  shift?: 'MORNING' | 'AFTERNOON' | 'EVENING' | 'FULL_TIME';
+  max_students?: number;
+  is_active?: boolean;
+}
+
+// DTOs de Announcement
+export interface AnnouncementResponseDto {
+  id: string;
+  title: string;
+  content: string;
+  author_id: string;
+  expires_at?: string;
+  priority: 'baixa' | 'média' | 'alta' | 'urgente';
+  scope: {
+    type: 'global' | 'turma' | 'curso' | 'institution';
+    targetId?: string;
+  };
+  created_at: string;
+  updated_at: string;
+}
+
+export interface CreateAnnouncementDto {
+  title: string;
+  content: string;
+  author_id: string;
+  expires_at?: string;
+  priority: 'baixa' | 'média' | 'alta' | 'urgente';
+  scope: {
+    type: 'global' | 'turma' | 'curso' | 'institution';
+    targetId?: string;
+  };
+}
+
+export interface UpdateAnnouncementDto {
+  title?: string;
+  content?: string;
+  expires_at?: string;
+  priority?: 'baixa' | 'média' | 'alta' | 'urgente';
+  scope?: {
+    type: 'global' | 'turma' | 'curso' | 'institution';
+    targetId?: string;
+  };
+}
+
+// DTOs de Author
+export interface AuthorResponseDto {
+  id: number;
+  version?: number;
+  description: string;
+  email?: string;
+  is_active?: boolean;
+  name: string;
+}
+
+export interface CreateAuthorDto {
+  description: string;
+  name: string;
+  email?: string;
+  is_active?: boolean;
+}
+
+export interface UpdateAuthorDto {
+  description?: string;
+  name?: string;
+  email?: string;
+  is_active?: boolean;
+}
+
+// DTOs de Book
+export interface BookResponseDto {
+  id: number;
+  title: string;
+  author: string;
+  publisher: string;
+  synopsis: string;
+  thumbnail?: string;
+  url: string;
+  s3_key?: string;
+  size: number;
+  education_level: string;
+  cycle?: string;
+  grade?: string;
+  subject?: string;
+  tags: string[];
+  uploaded_by: string;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface CreateBookDto {
+  title: string;
+  author: string;
+  publisher: string;
+  synopsis: string;
+  thumbnail?: string;
+  url: string;
+  s3_key?: string;
+  size: number;
+  education_level: string;
+  cycle?: string;
+  grade?: string;
+  subject?: string;
+  tags?: string[];
+  uploaded_by: string;
+}
+
+export interface UpdateBookDto {
+  title?: string;
+  author?: string;
+  publisher?: string;
+  synopsis?: string;
+  thumbnail?: string;
+  url?: string;
+  s3_key?: string;
+  size?: number;
+  education_level?: string;
+  cycle?: string;
+  grade?: string;
+  subject?: string;
+  tags?: string[];
+}
+
+// DTOs de ChatMessage
+export interface ChatMessageResponseDto {
+  id: string;
+  sender_id: string;
+  content: string;
+  class_id: string;
+  attachments?: any[];
+  read_by: string[];
+  timestamp: string;
+}
+
+export interface CreateChatMessageDto {
+  sender_id: string;
+  content: string;
+  class_id: string;
+  attachments?: any[];
+}
+
+// DTOs de Collection
+export interface CollectionResponseDto {
+  id: string;
+  name: string;
+  synopsis: string;
+  cover_image: string;
+  support_material?: string;
+  total_duration: number;
+  subject: string;
+  tags: string[];
+  created_by: string;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface CreateCollectionDto {
+  name: string;
+  synopsis: string;
+  cover_image: string;
+  support_material?: string;
+  total_duration: number;
+  subject: string;
+  tags?: string[];
+  created_by: string;
+}
+
+export interface UpdateCollectionDto {
+  name?: string;
+  synopsis?: string;
+  cover_image?: string;
+  support_material?: string;
+  total_duration?: number;
+  subject?: string;
+  tags?: string[];
+}
+
+// DTOs de EducationCycle
+export interface EducationCycleResponseDto {
+  id: string;
+  name: string;
+  level: 'EDUCACAO_INFANTIL' | 'ENSINO_FUNDAMENTAL_I' | 'ENSINO_FUNDAMENTAL_II' | 'ENSINO_MEDIO' | 'ENSINO_TECNICO' | 'ENSINO_SUPERIOR';
+  description?: string;
+  duration_years: number;
+  min_age?: number;
+  max_age?: number;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface CreateEducationCycleDto {
+  name: string;
+  level: 'EDUCACAO_INFANTIL' | 'ENSINO_FUNDAMENTAL_I' | 'ENSINO_FUNDAMENTAL_II' | 'ENSINO_MEDIO' | 'ENSINO_TECNICO' | 'ENSINO_SUPERIOR';
+  description?: string;
+  duration_years: number;
+  min_age?: number;
+  max_age?: number;
+}
+
+export interface UpdateEducationCycleDto {
+  name?: string;
+  level?: 'EDUCACAO_INFANTIL' | 'ENSINO_FUNDAMENTAL_I' | 'ENSINO_FUNDAMENTAL_II' | 'ENSINO_MEDIO' | 'ENSINO_TECNICO' | 'ENSINO_SUPERIOR';
+  description?: string;
+  duration_years?: number;
+  min_age?: number;
+  max_age?: number;
+}
+
+// DTOs de Forum
+export interface ForumThreadResponseDto {
+  id: string;
+  class_id: string;
+  title: string;
+  content: string;
+  author_id: string;
+  tags: string[];
+  pinned: boolean;
+  locked: boolean;
+  views: number;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface CreateForumThreadDto {
+  class_id: string;
+  title: string;
+  content: string;
+  author_id: string;
+  tags?: string[];
+  pinned?: boolean;
+  locked?: boolean;
+}
+
+export interface UpdateForumThreadDto {
+  title?: string;
+  content?: string;
+  tags?: string[];
+  pinned?: boolean;
+  locked?: boolean;
+}
+
+export interface ForumReplyResponseDto {
+    id: string;
+    thread_id: string;
+    parent_reply_id?: string;
+    content: string;
+    author_id: string;
+    likes: string[];
+    created_at: string;
+    updated_at: string;
+}
+
+export interface CreateForumReplyDto {
+    thread_id: string;
+    parent_reply_id?: string;
+    content: string;
+    author_id: string;
+}
+
+// DTOs de Notification
+export interface NotificationResponseDto {
+  id: string;
+  title: string;
+  message: string;
+  type: 'info' | 'warning' | 'success' | 'error';
+  category: 'academic' | 'system' | 'social' | 'administrative';
+  sent_at?: string;
+  sent_by_id: string;
+  recipients: {
+    total?: number;
+    read?: number;
+    unread?: number;
+    roles?: string[];
+    specific?: string[];
+  };
+  status: 'sent' | 'scheduled' | 'draft' | 'failed';
+  scheduled_for?: string;
+  priority: 'low' | 'medium' | 'high';
+  created_at: string;
+  updated_at: string;
+}
+
+export interface CreateNotificationDto {
+  title: string;
+  message: string;
+  type: 'info' | 'warning' | 'success' | 'error';
+  category: 'academic' | 'system' | 'social' | 'administrative';
+  sent_by_id: string;
+  recipients: {
+    roles?: string[];
+    specific?: string[];
+  };
+  status?: 'sent' | 'scheduled' | 'draft' | 'failed';
+  scheduled_for?: string;
+  priority?: 'low' | 'medium' | 'high';
+}
+
+// DTOs de SchoolManager
+export interface SchoolManagerResponseDto {
+  id: string;
+  user_id: string;
+  school_id: string;
+  position: 'PRINCIPAL' | 'VICE_PRINCIPAL' | 'COORDINATOR' | 'SUPERVISOR';
+  start_date: string;
+  end_date?: string;
+  is_active: boolean;
+  user_name?: string;
+  school_name?: string;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface CreateSchoolManagerDto {
+  user_id: string;
+  school_id: string;
+  position: 'PRINCIPAL' | 'VICE_PRINCIPAL' | 'COORDINATOR' | 'SUPERVISOR';
+  start_date: string;
+  end_date?: string;
+  is_active?: boolean;
+}
+
+export interface UpdateSchoolManagerDto {
+  user_id?: string;
+  school_id?: string;
+  position?: 'PRINCIPAL' | 'VICE_PRINCIPAL' | 'COORDINATOR' | 'SUPERVISOR';
+  start_date?: string;
+  end_date?: string;
+  is_active?: boolean;
+}
+
+// DTOs de UserClass
+export interface UserClassResponseDto {
+  id: string;
+  user_id: string;
+  class_id: string;
+  role: 'STUDENT' | 'TEACHER' | 'COORDINATOR';
+  enrollment_date: string;
+  exit_date?: string;
+  is_active: boolean;
+  user_name?: string;
+  class_name?: string;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface CreateUserClassDto {
+  user_id: string;
+  class_id: string;
+  role: 'STUDENT' | 'TEACHER' | 'COORDINATOR';
+  enrollment_date: string;
+  exit_date?: string;
+  is_active?: boolean;
+}
+
+export interface UpdateUserClassDto {
+  user_id?: string;
+  class_id?: string;
+  role?: 'STUDENT' | 'TEACHER' | 'COORDINATOR';
+  enrollment_date?: string;
+  exit_date?: string;
+  is_active?: boolean;
+}
+
+// DTOs de VideoCollection
+export interface VideoCollectionResponseDto {
+  id: string;
+  name: string;
+  synopsis?: string;
+  producer?: string;
+  release_date?: string;
+  contract_expiry_date?: string;
+  authors: string[];
+  target_audience: string[];
+  total_hours: string;
+  poster_image_url?: string;
+  carousel_image_url?: string;
+  ebook_file_url?: string;
+  use_default_cover_for_videos: boolean;
+  deleted: boolean;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface CreateVideoCollectionDto {
+  name: string;
+  synopsis?: string;
+  producer?: string;
+  release_date?: string;
+  contract_expiry_date?: string;
+  authors: string[];
+  target_audience: string[];
+  total_hours: string;
+  poster_image_url?: string;
+  carousel_image_url?: string;
+  ebook_file_url?: string;
+  use_default_cover_for_videos?: boolean;
+  deleted?: boolean;
+}
+
+export interface UpdateVideoCollectionDto {
+  name?: string;
+  synopsis?: string;
+  producer?: string;
+  release_date?: string;
+  contract_expiry_date?: string;
+  authors?: string[];
+  target_audience?: string[];
+  total_hours?: string;
+  poster_image_url?: string;
+  carousel_image_url?: string;
+  ebook_file_url?: string;
+  use_default_cover_for_videos?: boolean;
+  deleted?: boolean;
+}
+
+// DTOs de Quiz/Question
+export interface QuestionResponseDto {
+  id: number;
+  quiz_id: string;
+  type: 'multiple-choice' | 'true-false' | 'short-answer';
+  text: string;
+  options?: string[];
+  correct_answer: string | string[];
+  points: number;
+  explanation?: string;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface QuizResponseDto {
+  id: string;
+  title: string;
+  description: string;
+  time_limit?: number;
+  passing_score: number;
+  attempts: number;
+  is_graded: boolean;
+  questions: QuestionResponseDto[];
+  created_at: string;
+  updated_at: string;
+}
+
+export interface CreateQuizDto {
+  title: string;
+  description: string;
+  time_limit?: number;
+  passing_score: number;
+  attempts?: number;
+  is_graded?: boolean;
+  questions: Array<Omit<QuestionResponseDto, 'id' | 'created_at' | 'updated_at' | 'quiz_id'>>;
+}
+
+export interface UpdateQuizDto {
+  title?: string;
+  description?: string;
+  time_limit?: number;
+  passing_score?: number;
+  attempts?: number;
+  is_graded?: boolean;
+}
+
+// DTOs de Settings
+export interface SettingsResponseDto {
+  id: number;
+  version?: number;
+  default_value?: string;
+  description?: string;
+  name?: string;
+  required?: boolean;
+  settings_key: string;
+  settings_type?: string;
+  validation_required?: boolean;
+  value?: string;
+}
+
+export interface UpdateSettingsDto {
+    [key: string]: any;
+}
+
+// DTOs de EducationalStage
+export interface EducationalStageResponseDto {
+  id: number;
+  version?: number;
+  date_created?: string;
+  deleted: boolean;
+  grade_1?: boolean;
+  grade_2?: boolean;
+  grade_3?: boolean;
+  grade_4?: boolean;
+  grade_5?: boolean;
+  grade_6?: boolean;
+  grade_7?: boolean;
+  grade_8?: boolean;
+  grade_9?: boolean;
+  last_updated?: string;
+  name: string;
+  uuid?: string;
+}
+
+export interface CreateEducationalStageDto {
+  deleted: boolean;
+  name: string;
+  date_created?: string;
+  grade_1?: boolean;
+  grade_2?: boolean;
+  grade_3?: boolean;
+  grade_4?: boolean;
+  grade_5?: boolean;
+  grade_6?: boolean;
+  grade_7?: boolean;
+  grade_8?: boolean;
+  grade_9?: boolean;
+  uuid?: string;
+}
+
+export interface UpdateEducationalStageDto {
+  deleted?: boolean;
+  name?: string;
+  last_updated?: string;
+  grade_1?: boolean;
+  grade_2?: boolean;
+  grade_3?: boolean;
+  grade_4?: boolean;
+  grade_5?: boolean;
+  grade_6?: boolean;
+  grade_7?: boolean;
+  grade_8?: boolean;
+  grade_9?: boolean;
+  uuid?: string;
+}
+
+// DTOs de EducationPeriod
+export interface EducationPeriodResponseDto {
+  id: number;
+  version?: number;
+  description: string;
+  is_active?: boolean;
+}
+
+export interface CreateEducationPeriodDto {
+  description: string;
+  is_active?: boolean;
+}
+
+export interface UpdateEducationPeriodDto {
+  description?: string;
+  is_active?: boolean;
+}
+
+// DTOs de Language
+export interface LanguageResponseDto {
+  id: number;
+  version?: number;
+  code: string;
+  is_active: boolean;
+  name: string;
+}
+
+export interface CreateLanguageDto {
+  code: string;
+  name: string;
+  is_active?: boolean;
+}
+
+export interface UpdateLanguageDto {
+  code?: string;
+  name?: string;
+  is_active?: boolean;
+}
+
+// DTOs de MediaEntry
+export interface MediaEntryResponseDto {
+  id: number;
+  version?: number;
+  amount_of_views?: number;
+  author_id?: number;
+  date_created?: string;
+  deleted?: boolean;
+  description?: string;
+  education_period_id?: number;
+  educational_stage_id?: number;
+  enabled?: boolean;
+  genre_id?: number;
+  isbn?: string;
+  language_id?: number;
+  last_updated?: string;
+  name?: string;
+  publisher_id?: number;
+  subject_id?: number;
+  uuid?: string;
+  year_of_publication?: number;
+  is_active: boolean;
+  is_featured: boolean;
+  is_new: boolean;
+  is_popular: boolean;
+  is_recommended: boolean;
+  tags?: string;
+  keywords?: string;
+  category?: string;
+  subcategory?: string;
+  type?: string;
+  format?: string;
+  duration?: string;
+  pages?: string;
+  size?: string;
+  url?: string;
+  thumbnail?: string;
+  cover?: string;
+  preview?: string;
+  price?: number;
+  discount?: number;
+  rating?: number;
+  reviews?: number;
+  downloads?: number;
+  likes?: number;
+  shares?: number;
+  comments?: number;
+}
+
+export interface CreateMediaEntryDto {
+  name: string;
+  type: string;
+  url: string;
+  description?: string;
+  thumbnail?: string;
+  author_id?: number;
+  publisher_id?: number;
+  genre_id?: number;
+  subject_id?: number;
+  is_active?: boolean;
+}
+
+export interface UpdateMediaEntryDto {
+  name?: string;
+  type?: string;
+  url?: string;
+  description?: string;
+  thumbnail?: string;
+  author_id?: number;
+  publisher_id?: number;
+  genre_id?: number;
+  subject_id?: number;
+  is_active?: boolean;
+}
+
+// DTOs de Module
+export interface ModuleResponseDto {
+  id: string;
+  name: string;
+  description: string;
+  cover_image: string;
+  order: number;
+  collection_id: string;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface CreateModuleDto {
+  name: string;
+  description: string;
+  cover_image: string;
+  order: number;
+  collection_id: string;
+}
+
+export interface UpdateModuleDto {
+  name?: string;
+  description?: string;
+  cover_image?: string;
+  order?: number;
+  collection_id?: string;
+}
+
+// DTOs de Publisher
+export interface PublisherResponseDto {
+  id: number;
+  version?: number;
+  description: string;
+  is_active: boolean;
+  name: string;
+}
+
+export interface CreatePublisherDto {
+  description: string;
+  name: string;
+  is_active?: boolean;
+}
+
+export interface UpdatePublisherDto {
+  description?: string;
+  name?: string;
+  is_active?: boolean;
+}
+
+// DTOs de Subject
+export interface SubjectResponseDto {
+  id: number;
+  version?: number;
+  description: string;
+  is_active: boolean;
+  name: string;
+}
+
+export interface CreateSubjectDto {
+  description: string;
+  name: string;
+  is_active?: boolean;
+}
+
+export interface UpdateSubjectDto {
+  description?: string;
+  name?: string;
+  is_active?: boolean;
+}
+
+// DTOs de VideoModule
+export interface VideoModuleResponseDto {
+  id: string;
+  collection_id: string;
+  module_number: number;
+  title: string;
+  synopsis: string;
+  release_year: number;
+  duration: string;
+  education_cycle: string;
+  poster_image_url?: string;
+  video_url?: string;
+  order_in_module: number;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface CreateVideoModuleDto {
+  collection_id: string;
+  module_number: number;
+  title: string;
+  synopsis: string;
+  release_year: number;
+  duration: string;
+  education_cycle: string;
+  poster_image_url?: string;
+  video_url?: string;
+  order_in_module?: number;
+}
+
+export interface UpdateVideoModuleDto {
+  collection_id?: string;
+  module_number?: number;
+  title?: string;
+  synopsis?: string;
+  release_year?: number;
+  duration?: string;
+  education_cycle?: string;
+  poster_image_url?: string;
+  video_url?: string;
+  order_in_module?: number;
 }

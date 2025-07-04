@@ -1,53 +1,62 @@
 import { Model } from 'objection';
-import { Course } from './Course';
-import { User } from './User';
+import { School } from './School';
+import { UserClass } from './UserClass';
+import { EducationCycle } from './EducationCycle';
+
+export enum ShiftType {
+  MORNING = 'MORNING',
+  AFTERNOON = 'AFTERNOON',
+  EVENING = 'EVENING',
+  FULL_TIME = 'FULL_TIME'
+}
 
 export class Class extends Model {
   static tableName = 'classes';
 
   id!: string;
   name!: string;
-  description?: string;
-  status!: string;
-  active!: boolean;
-  course_id!: string;
-  teacher_id!: string;
+  code!: string;
+  school_id!: string;
+  year!: number;
+  shift!: ShiftType;
+  max_students!: number;
+  is_active!: boolean;
   created_at!: Date;
   updated_at!: Date;
 
-  course?: Course;
-  teacher?: User;
-  students?: User[];
+  school?: School;
+  userClasses?: UserClass[];
+  educationCycles?: EducationCycle[];
 
   static relationMappings = {
-    course: {
+    school: {
       relation: Model.BelongsToOneRelation,
-      modelClass: Course,
+      modelClass: School,
       join: {
-        from: 'classes.course_id',
-        to: 'courses.id'
+        from: 'classes.school_id',
+        to: 'schools.id'
       }
     },
-    teacher: {
-      relation: Model.BelongsToOneRelation,
-      modelClass: User,
-      join: {
-        from: 'classes.teacher_id',
-        to: 'users.id'
-      }
-    },
-    students: {
-      relation: Model.ManyToManyRelation,
-      modelClass: User,
+    userClasses: {
+      relation: Model.HasManyRelation,
+      modelClass: UserClass,
       join: {
         from: 'classes.id',
-        through: {
-          from: 'class_students.class_id',
-          to: 'class_students.student_id'
-        },
-        to: 'users.id'
+        to: 'user_classes.class_id'
       }
-    }
+    },
+    educationCycles: {
+        relation: Model.ManyToManyRelation,
+        modelClass: EducationCycle,
+        join: {
+          from: 'classes.id',
+          through: {
+            from: 'class_education_cycles.class_id',
+            to: 'class_education_cycles.education_cycle_id'
+          },
+          to: 'education_cycles.id'
+        }
+      }
   };
 
   $beforeInsert() {
@@ -58,4 +67,4 @@ export class Class extends Model {
   $beforeUpdate() {
     this.updated_at = new Date();
   }
-} 
+}

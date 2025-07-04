@@ -1,55 +1,72 @@
-export interface NotificationRecipients {
-    total: number;
-    read: number;
-    unread: number;
+import { BaseEntityDto, BaseFilter, UUID } from './common';
+
+export enum NotificationType {
+  INFO = 'info',
+  WARNING = 'warning',
+  SUCCESS = 'success',
+  ERROR = 'error'
+}
+
+export enum NotificationCategory {
+  ACADEMIC = 'academic',
+  SYSTEM = 'system',
+  SOCIAL = 'social',
+  ADMINISTRATIVE = 'administrative'
+}
+
+export enum NotificationStatus {
+  SENT = 'sent',
+  SCHEDULED = 'scheduled',
+  DRAFT = 'draft',
+  FAILED = 'failed'
+}
+
+export enum NotificationPriority {
+  LOW = 'low',
+  MEDIUM = 'medium',
+  HIGH = 'high'
+}
+
+// DTO para a entidade Notification, usado no frontend
+export interface NotificationDto extends BaseEntityDto {
+  title: string;
+  message: string;
+  type: NotificationType;
+  category: NotificationCategory;
+  sent_at?: string;
+  sent_by_id: UUID;
+  recipients: {
+    total?: number;
+    read?: number;
+    unread?: number;
     roles?: string[];
-    specific?: string[];
+    specific?: UUID[];
+  };
+  status: NotificationStatus;
+  scheduled_for?: string;
+  priority: NotificationPriority;
 }
 
-export type NotificationType = 'info' | 'warning' | 'success' | 'error';
-export type NotificationCategory = 'academic' | 'system' | 'social' | 'administrative';
-export type NotificationStatus = 'sent' | 'scheduled' | 'draft' | 'failed';
-export type NotificationPriority = 'low' | 'medium' | 'high';
-
-export interface Notification {
-    id: number;
-    title: string;
-    message: string;
-    type: NotificationType;
-    category: NotificationCategory;
-    sentAt: string | null;
-    sentBy: number; // User ID
-    recipients: NotificationRecipients;
-    status: NotificationStatus;
-    scheduledFor?: string;
-    priority: NotificationPriority;
-    createdAt: string;
-    updatedAt: string;
-}
-
+// DTO para criação de Notification
 export interface CreateNotificationDto {
-    title: string;
-    message: string;
-    type: NotificationType;
-    category: NotificationCategory;
-    recipients: {
-        roles?: string[];
-        specific?: string[];
-    };
-    scheduledFor?: string;
-    priority: NotificationPriority;
+  title: string;
+  message: string;
+  type: NotificationType;
+  category: NotificationCategory;
+  sent_by_id: UUID;
+  recipients: {
+    roles?: string[];
+    specific?: UUID[];
+  };
+  status?: NotificationStatus;
+  scheduled_for?: string;
+  priority?: NotificationPriority;
 }
 
-export interface UpdateNotificationDto {
-    title?: string;
-    message?: string;
-    type?: NotificationType;
-    category?: NotificationCategory;
-    recipients?: {
-        roles?: string[];
-        specific?: string[];
-    };
-    scheduledFor?: string;
-    priority?: NotificationPriority;
-    status?: NotificationStatus;
+// Interface para filtros de Notification
+export interface NotificationFilter extends BaseFilter {
+  category?: NotificationCategory;
+  status?: NotificationStatus;
+  priority?: NotificationPriority;
+  sent_by_id?: UUID;
 }

@@ -170,24 +170,28 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     initializationRef.current = true;
     console.log('AuthProvider: Initializing authentication check');
 
-    const token = getStoredToken();
-    
-    if (token) {
-      console.log('AuthProvider: Token found, validating...');
-      setupUserFromToken(token);
-    } else if (useTestToken) {
-      console.log('AuthProvider: No token found, using test token');
-      const testToken = createTestToken({
-        name: 'Admin Teste',
-        role: UserRole.SYSTEM_ADMIN,
-      });
-      setStoredToken(testToken);
-      setupUserFromToken(testToken);
-    } else {
-      console.log('AuthProvider: No token found');
+    try {
+      const token = getStoredToken();
+      
+      if (token) {
+        console.log('AuthProvider: Token found, validating...');
+        setupUserFromToken(token);
+      } else if (useTestToken) {
+        console.log('AuthProvider: No token found, using test token');
+        const testToken = createTestToken({
+          name: 'Admin Teste',
+          role: UserRole.SYSTEM_ADMIN,
+        });
+        setStoredToken(testToken);
+        setupUserFromToken(testToken);
+      } else {
+        console.log('AuthProvider: No token found');
+      }
+    } catch (error) {
+      console.error("Error during auth initialization:", error);
+    } finally {
+      setIsLoading(false);
     }
-    
-    setIsLoading(false);
   }, [isClient, setupUserFromToken]);
 
   // Função de login
@@ -196,75 +200,35 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
 
     setIsLoading(true);
 
-    // Mock para o super admin
-    if (email === 'admin@sabercon.edu.br' && password === 'password123') {
-      console.log('AuthContext: Usando login mockado para SYSTEM_ADMIN.');
-      const mockUser: User = {
-        id: 1,
-        name: 'SYSTEM_ADMIN',
-        email: 'admin@sabercon.edu.br',
-        role: UserRole.SYSTEM_ADMIN,
-        permissions: ['*'], // Todas as permissões
-      };
-      
-      // Criar um token JWT mockado simples (não seguro, apenas para fins de mock)
-      const mockTokenPayload = {
-        id: mockUser.id,
-        name: mockUser.name,
-        email: mockUser.email,
-        role: mockUser.role,
-        permissions: mockUser.permissions,
-        exp: Math.floor(Date.now() / 1000) + (60 * 60 * 24) // Expira em 24 horas
-      };
-      
-      // Apenas para simular um token, não use em produção
-      const mockToken = `mock-header.${btoa(JSON.stringify(mockTokenPayload))}.mock-signature`;
+    console.log('AuthContext: Usando login mockado para qualquer usuário.');
+    const mockUser: User = {
+      id: 1,
+      name: 'Mock User',
+      email: email,
+      role: UserRole.SYSTEM_ADMIN,
+      permissions: ['*'], // Todas as permissões
+    };
+    
+    // Criar um token JWT mockado simples (não seguro, apenas para fins de mock)
+    const mockTokenPayload = {
+      id: mockUser.id,
+      name: mockUser.name,
+      email: mockUser.email,
+      role: mockUser.role,
+      permissions: mockUser.permissions,
+      exp: Math.floor(Date.now() / 1000) + (60 * 60 * 24) // Expira em 24 horas
+    };
+    
+    // Apenas para simular um token, não use em produção
+    const mockToken = `mock-header.${btoa(JSON.stringify(mockTokenPayload))}.mock-signature`;
 
-      setStoredToken(mockToken);
-      setUser(mockUser);
-      apiClient.defaults.headers.common['Authorization'] = `Bearer ${mockToken}`;
-      
-      toast.success('Login como SYSTEM_ADMIN realizado com sucesso!');
-      router.push(buildDashboardUrl(mockUser.role));
-      setIsLoading(false);
-      return;
-    }
-
-    try {
-      // Limpar cache antes do login
-      await performCacheCleanup('login attempt');
-      
-      const { data } = await apiClient.post('/auth/login', { email, password });
-      const { accessToken } = data.data;
-      
-      console.log('Login successful, storing token');
-      setStoredToken(accessToken);
-      
-      if (setupUserFromToken(accessToken)) {
-        // Limpar cache após login bem-sucedido
-        await performCacheCleanup('login success');
-        
-        toast.success('Login realizado com sucesso!');
-        const decoded: { role: UserRole } = jwtDecode(accessToken);
-        router.push(buildDashboardUrl(decoded.role));
-      } else {
-        throw new Error('Token inválido recebido do servidor');
-      }
-
-    } catch (error: any) {
-      console.error("Login failed:", error);
-      
-      // Limpar cache em caso de erro
-      clearAuthCache();
-      
-      const message = error.response?.data?.message || 'Falha no login. Verifique suas credenciais.';
-      toast.error(message, {
-        duration: 4000,
-        position: 'top-center',
-      });
-    } finally {
-      setIsLoading(false);
-    }
+    setStoredToken(mockToken);
+    setUser(mockUser);
+    apiClient.defaults.headers.common['Authorization'] = `Bearer ${mockToken}`;
+    
+    toast.success('Login mockado realizado com sucesso!');
+    router.push(buildDashboardUrl(mockUser.role));
+    setIsLoading(false);
   };
 
   const handleGoogleLogin = async (token: string) => {

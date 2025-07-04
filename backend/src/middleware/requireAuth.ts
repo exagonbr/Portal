@@ -1,15 +1,9 @@
 import { Request, Response, NextFunction, RequestHandler } from 'express';
 import jwt from 'jsonwebtoken';
 import { JWT_CONFIG, AccessTokenPayload } from '../config/jwt';
-import db from '../config/database';
+import { AppDataSource } from '../config/typeorm.config';
+import { User } from '../entities/User';
 
-declare global {
-  namespace Express {
-    interface Request {
-      user?: User;
-    }
-  }
-}
 
 export const requireAuth: RequestHandler = async (req: Request, res: Response, next: NextFunction) => {
   const authHeader = req.headers.authorization;
@@ -36,9 +30,11 @@ export const requireAuth: RequestHandler = async (req: Request, res: Response, n
       return;
     }
 
-    const user = await db('users')
-      .where({ id: decoded.id, is_active: true })
-      .first();
+    const userRepository = AppDataSource.getRepository(User);
+    const user = await userRepository.findOne({
+      where: { id: parseInt(decoded.id), enabled: true },
+      relations: ['role']
+    });
 
     if (!user) {
       res.status(401).json({ success: false, message: 'User not found or inactive.' });

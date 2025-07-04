@@ -1,6 +1,10 @@
 'use client'
 
-import { useState } from 'react'
+import React, { useState, useEffect } from 'react'
+import { useAuth } from '@/contexts/AuthContext'
+import { Users, BookOpen, Calendar, TrendingUp, AlertCircle, Plus, Eye, Edit, MoreVertical } from 'lucide-react'
+import { StatCard, ContentCard } from '@/components/ui/StandardCard'
+import AuthenticatedLayout from '@/components/layout/AuthenticatedLayout'
 import DashboardPageLayout from '@/components/dashboard/DashboardPageLayout'
 import GenericCRUD from '@/components/crud/GenericCRUD'
 import Modal from '@/components/ui/Modal'
@@ -255,110 +259,114 @@ export default function TeacherClassesPage() {
   )
 
   return (
-          <ProtectedRoute requiredRole={[UserRole.TEACHER, UserRole.COORDINATOR, UserRole.SYSTEM_ADMIN]}>
-        <DashboardPageLayout
-          title="Minhas Turmas"
-          subtitle="Gerencie suas turmas e acompanhe o progresso dos alunos"
-          actions={
-            <div className="flex items-center gap-2">
-              <Button
-                variant="ghost"
-                size="sm"
-                onClick={() => setViewMode('grid')}
-                className={viewMode === 'grid' ? 'bg-opacity-20' : ''}
-                style={{ 
-                  backgroundColor: viewMode === 'grid' ? theme.colors.primary.DEFAULT : 'transparent'
-                }}
-              >
-                <span className="material-symbols-outlined">grid_view</span>
-              </Button>
-              <Button
-                variant="ghost"
-                size="sm"
-                onClick={() => setViewMode('list')}
-                className={viewMode === 'list' ? 'bg-opacity-20' : ''}
-                style={{ 
-                  backgroundColor: viewMode === 'list' ? theme.colors.primary.DEFAULT : 'transparent'
-                }}
-              >
-                <span className="material-symbols-outlined">list</span>
-              </Button>
-            </div>
-          }
-        >
-          {viewMode === 'list' ? (
-            <GenericCRUD
-              title=""
-              entityName="Turma"
-              entityNamePlural="Turmas"
-              columns={columns}
-              data={data}
-              loading={loading}
-              totalItems={pagination.total}
-              currentPage={pagination.currentPage}
-              itemsPerPage={pagination.pageSize}
-              onPageChange={setPage}
-              onSearch={search}
-              onCreate={handleCreate}
-              onEdit={handleEdit}
-              onDelete={(classItem) => remove(classItem.id)}
-              onView={handleView}
-              customActions={customActions}
-            />
-          ) : (
-            <>
-              <div className="mb-6 flex justify-between items-center">
-                <Input
-                  type="search"
-                  placeholder="Buscar turmas..."
-                  leftIcon="search"
-                  className="w-64"
-                  onChange={(e) => search(e.target.value)}
-                />
+    <AuthenticatedLayout>
+      <div className="container mx-auto px-4 py-6 max-w-7xl">
+        <ProtectedRoute requiredRole={[UserRole.TEACHER, UserRole.COORDINATOR, UserRole.SYSTEM_ADMIN]}>
+          <DashboardPageLayout
+            title="Minhas Turmas"
+            subtitle="Gerencie suas turmas e acompanhe o progresso dos alunos"
+            actions={
+              <div className="flex items-center gap-2">
                 <Button
-                  variant="default"
-                  onClick={handleCreate}
+                  variant="ghost"
+                  size="sm"
+                  onClick={() => setViewMode('grid')}
+                  className={viewMode === 'grid' ? 'bg-opacity-20' : ''}
+                  style={{ 
+                    backgroundColor: viewMode === 'grid' ? theme.colors.primary.DEFAULT : 'transparent'
+                  }}
                 >
-                  <span className="material-symbols-outlined">add</span>
-                  Nova Turma
+                  <span className="material-symbols-outlined">grid_view</span>
+                </Button>
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={() => setViewMode('list')}
+                  className={viewMode === 'list' ? 'bg-opacity-20' : ''}
+                  style={{ 
+                    backgroundColor: viewMode === 'list' ? theme.colors.primary.DEFAULT : 'transparent'
+                  }}
+                >
+                  <span className="material-symbols-outlined">list</span>
                 </Button>
               </div>
-              {loading ? (
-                <div className="flex justify-center items-center h-64">
-                  <div 
-                    className="animate-spin w-12 h-12 border-4 border-t-transparent rounded-full"
-                    style={{ 
-                      borderColor: theme.colors.primary.DEFAULT,
-                      borderTopColor: 'transparent'
-                    }}
-                  />
-                </div>
-              ) : (
-                renderGridView()
-              )}
-            </>
-          )}
-
-          <Modal
-            isOpen={modalOpen}
-            onClose={() => setModalOpen(false)}
-            title={
-              modalMode === 'create' 
-                ? 'Nova Turma' 
-                : modalMode === 'edit' 
-                  ? 'Editar Turma' 
-                  : 'Visualizar Turma'
             }
-            size="lg"
           >
-            <ClassForm
-              classItem={selectedItem}
-              mode={modalMode}
-              onSubmit={handleSubmit}
-              onCancel={() => setModalOpen(false)}
-            />
-          </Modal>
-        </DashboardPageLayout>
-    </ProtectedRoute>
+            {viewMode === 'list' ? (
+              <GenericCRUD
+                title=""
+                entityName="Turma"
+                entityNamePlural="Turmas"
+                columns={columns}
+                data={data}
+                loading={loading}
+                totalItems={pagination.total}
+                currentPage={pagination.currentPage}
+                itemsPerPage={pagination.pageSize}
+                onPageChange={setPage}
+                onSearch={search}
+                onCreate={handleCreate}
+                onEdit={handleEdit}
+                onDelete={(classItem) => remove(classItem.id)}
+                onView={handleView}
+                customActions={customActions}
+              />
+            ) : (
+              <>
+                <div className="mb-6 flex justify-between items-center">
+                  <Input
+                    type="search"
+                    placeholder="Buscar turmas..."
+                    leftIcon="search"
+                    className="w-64"
+                    onChange={(e) => search(e.target.value)}
+                  />
+                  <Button
+                    variant="default"
+                    onClick={handleCreate}
+                  >
+                    <span className="material-symbols-outlined">add</span>
+                    Nova Turma
+                  </Button>
+                </div>
+                {loading ? (
+                  <div className="flex justify-center items-center h-64">
+                    <div 
+                      className="animate-spin w-12 h-12 border-4 border-t-transparent rounded-full"
+                      style={{ 
+                        borderColor: theme.colors.primary.DEFAULT,
+                        borderTopColor: 'transparent'
+                      }}
+                    />
+                  </div>
+                ) : (
+                  renderGridView()
+                )}
+              </>
+            )}
+
+            <Modal
+              isOpen={modalOpen}
+              onClose={() => setModalOpen(false)}
+              title={
+                modalMode === 'create' 
+                  ? 'Nova Turma' 
+                  : modalMode === 'edit' 
+                    ? 'Editar Turma' 
+                    : 'Visualizar Turma'
+              }
+              size="lg"
+            >
+              <ClassForm
+                classItem={selectedItem}
+                mode={modalMode}
+                onSubmit={handleSubmit}
+                onCancel={() => setModalOpen(false)}
+              />
+            </Modal>
+          </DashboardPageLayout>
+        </ProtectedRoute>
+      </div>
+    </AuthenticatedLayout>
   )
 } 

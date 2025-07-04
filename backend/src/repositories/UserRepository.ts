@@ -1,176 +1,93 @@
 import { BaseRepository } from './BaseRepository';
-import { User, CreateUserData, UpdateUserData } from '../models/User';
-import db from '../config/database';
+import { User } from '../entities/User';
+import * as bcrypt from 'bcryptjs';
+
+// Interfaces para desacoplar da entidade
+export interface CreateUserData extends Omit<User, 'id' | 'comparePassword' | 'hashPassword' | 'toJSON' | 'userClasses' | 'schoolManagers' | 'teachingCourses' | 'sentMessages' | 'forumThreads' | 'forumReplies' | 'sentNotifications' | 'dateCreated' | 'lastUpdated'> {
+  password?: string;
+}
+
+export interface UpdateUserData extends Partial<Omit<CreateUserData, 'password'>> {
+  password?: string; // Senha é opcional na atualização
+}
 
 export class UserRepository extends BaseRepository<User> {
-  protected tableName = 'users';
-
   constructor() {
-    super('users');
+    super('user');
   }
 
   async findByEmail(email: string): Promise<User | null> {
-    console.log(`🔍 [UserRepository] Buscando usuário por email: ${email}`);
-    
-    const result = await this.db(this.tableName)
-      .where({ email })
-      .select('*')
-      .first();
-    
-    if (!result) {
-      console.log(`❌ [UserRepository] Usuário não encontrado: ${email}`);
-      return null;
-    }
-    
-    // Mapear enabled para is_active para compatibilidade
-    const user = {
-      ...result,
-      is_active: result.enabled !== false // true se enabled for true ou null
-    };
-    
-    console.log(`✅ [UserRepository] Usuário encontrado:`, {
-      id: user.id,
-      email: user.email,
-      enabled: result.enabled,
-      is_active: user.is_active,
-      full_name: user.full_name
-    });
-    
-    return user as User;
+    return this.findOne({ email } as Partial<User>);
+  }
+
+  async findByUsername(username: string): Promise<User | null> {
+    return this.findOne({ username } as Partial<User>);
+  }
+
+  async findByGoogleId(googleId: string): Promise<User | null> {
+    return this.findOne({ googleId } as Partial<User>);
   }
 
   async createUser(data: CreateUserData): Promise<User> {
+    if (data.password) {
+      const salt = await bcrypt.genSalt(12);
+      data.password = await bcrypt.hash(data.password, salt);
+    }
     return this.create(data);
   }
 
-  async updateUser(id: string, data: UpdateUserData): Promise<User | null> {
+  async updateUser(id: number, data: UpdateUserData): Promise<User | null> {
+    if (data.password) {
+      const salt = await bcrypt.genSalt(12);
+      data.password = await bcrypt.hash(data.password, salt);
+    }
     return this.update(id, data);
   }
 
-  async deleteUser(id: string): Promise<boolean> {
+  async deleteUser(id: number): Promise<boolean> {
     return this.delete(id);
   }
 
-  async findById(id: string): Promise<User | null> {
+  async findByIdWithRelations(id: number): Promise<User | null> {
     const user = await this.db(this.tableName)
       .where({ [`${this.tableName}.id`]: id })
-      .leftJoin('roles', `${this.tableName}.role_id`, 'roles.id')
+      .leftJoin('role', `${this.tableName}.roleId`, 'role.id')
+      .leftJoin('institution', `${this.tableName}.institutionId`, 'institution.id')
       .select(
         `${this.tableName}.*`,
-        'roles.name as roleName',
-        'roles.permissions as rolePermissions'
+        'role.displayName as roleName',
+        'institution.name as institutionName'
       )
       .first();
 
-    if (!user) {
-      return null;
-    }
+    if (!user) return null;
 
-    const { roleName, rolePermissions, ...userProps } = user;
+    const { roleName, institutionName, ...userProps } = user;
     
-    // Mapear enabled para is_active para compatibilidade
-    const mappedUser = {
+    return {
       ...userProps,
-      is_active: userProps.enabled !== false, // true se enabled for true ou null
-      role: {
-        id: user.role_id,
-        name: roleName,
-        permissions: rolePermissions,
-      },
-    };
-    
-    console.log(`✅ [UserRepository] findById - Usuário mapeado:`, {
-      id: mappedUser.id,
-      enabled: userProps.enabled,
-      is_active: mappedUser.is_active
-    });
-    
-    return mappedUser as unknown as User;
+      role: { name: roleName },
+      institution: { name: institutionName },
+    } as User;
   }
 
-  async getUserWithRoleAndInstitution(id: string): Promise<any | null> {
-    return this.findById(id);
+  async search(term: string, limit: number = 20): Promise<User[]> {
+    return this.db(this.tableName)
+      .where('fullName', 'ilike', `%${term}%`)
+      .orWhere('email', 'ilike', `%${term}%`)
+      .orWhere('username', 'ilike', `%${term}%`)
+      .limit(limit);
   }
 
-  async searchUsers(searchTerm: string, institutionId?: string): Promise<User[]> {
-    let query = this.db(this.tableName)
-      .where('full_name', 'ilike', `%${searchTerm}%`)
-      .orWhere('email', 'ilike', `%${searchTerm}%`);
-
-    if (institutionId) {
-      query = query.andWhere({ institution_id: institutionId });
-    }
-
-    return query.select('*');
+  async findByRole(roleId: number): Promise<User[]> {
+    return this.findAll({ roleId } as Partial<User>);
   }
 
-  async findByRole(role: string): Promise<User[]> {
-    const roleResult = await this.db('roles').where({ name: role }).first();
-    if (!roleResult) return [];
-    return this.findAll({ role_id: roleResult.id });
+  async findByInstitution(institutionId: number): Promise<User[]> {
+    return this.findAll({ institutionId } as Partial<User>);
   }
 
-  async findByInstitution(institutionId: string): Promise<User[]> {
-    return this.findAll({ institution_id: institutionId });
-  }
-
-  async getUserCourses(userId: string): Promise<any[]> {
-    return this.db('user_classes')
-      .where({ user_id: userId })
-      .join('classes', 'user_classes.class_id', 'classes.id')
-      .join('courses', 'classes.course_id', 'courses.id')
-      .select('courses.*');
-  }
-
-  async updateLastLogin(userId: string): Promise<void> {
-    await this.update(userId, { last_login: new Date() } as any);
-  }
-
-  async getUserStatsByRole(): Promise<Record<string, number>> {
-    try {
-      const result = await db('users')
-        .select('role_id')
-        .count('id as count')
-        .groupBy('role_id');
-
-      const stats: Record<string, number> = {};
-      result.forEach((row: any) => {
-        stats[row.role_id || 'UNKNOWN'] = parseInt(row.count, 10) || 0;
-      });
-      return stats;
-    } catch (error) {
-      console.log('Error fetching user stats by role:', error);
-      return {};
-    }
-  }
-
-  async getUserStatsByInstitution(): Promise<Record<string, number>> {
-    try {
-      const result = await db(this.tableName)
-        .select('institution_id')
-        .count('id as count')
-        .groupBy('institution_id');
-
-      const stats: Record<string, number> = {};
-      result.forEach((row: any) => {
-        stats[row.institution_id || 'UNKNOWN'] = parseInt(row.count, 10) || 0;
-      });
-      return stats;
-    } catch (error) {
-      console.log('Error fetching user stats by institution:', error);
-      return {};
-    }
-  }
-
-  async countNewThisMonth(): Promise<number> {
-    const firstDayOfMonth = new Date(new Date().setDate(1));
-    firstDayOfMonth.setHours(0, 0, 0, 0);
-    
-    const result = await db(this.tableName)
-      .where('created_at', '>=', firstDayOfMonth)
-      .count('id as count')
-      .first();
-      
-    return parseInt(String(result?.count || '0'), 10);
+  async updateLastLogin(id: number): Promise<void> {
+    await this.update(id, { lastUpdated: new Date() } as Partial<User>);
   }
 }

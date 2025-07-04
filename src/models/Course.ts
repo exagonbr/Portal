@@ -1,6 +1,6 @@
 import { Model } from 'objection';
 import { Institution } from './Institution';
-import { Class } from './Class';
+import { User } from './User';
 
 export class Course extends Model {
   static tableName = 'courses';
@@ -8,15 +8,17 @@ export class Course extends Model {
   id!: string;
   name!: string;
   description?: string;
-  level!: string;
-  type!: string;
-  active!: boolean;
   institution_id!: string;
+  level?: string;
+  duration?: number;
+  teacher_id?: string;
+  is_active!: boolean;
   created_at!: Date;
   updated_at!: Date;
 
   institution?: Institution;
-  classes?: Class[];
+  teacher?: User;
+  students?: User[];
 
   static relationMappings = {
     institution: {
@@ -27,12 +29,24 @@ export class Course extends Model {
         to: 'institution.id'
       }
     },
-    classes: {
-      relation: Model.HasManyRelation,
-      modelClass: Class,
+    teacher: {
+      relation: Model.BelongsToOneRelation,
+      modelClass: User,
+      join: {
+        from: 'courses.teacher_id',
+        to: 'user.id'
+      }
+    },
+    students: {
+      relation: Model.ManyToManyRelation,
+      modelClass: User,
       join: {
         from: 'courses.id',
-        to: 'classes.course_id'
+        through: {
+          from: 'course_students.course_id',
+          to: 'course_students.user_id'
+        },
+        to: 'user.id'
       }
     }
   };
@@ -45,4 +59,4 @@ export class Course extends Model {
   $beforeUpdate() {
     this.updated_at = new Date();
   }
-} 
+}

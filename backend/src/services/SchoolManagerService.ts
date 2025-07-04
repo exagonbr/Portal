@@ -1,247 +1,102 @@
-import { 
-  SchoolManagerDto, 
-  CreateSchoolManagerDto, 
-  UpdateSchoolManagerDto, 
-  SchoolManagerFilterDto,
-  PaginatedSchoolManagersDto,
-  SchoolManagerWithDetailsDto,
-  SchoolManagementTeamDto,
-  ManagerHistoryDto
-} from '../dto/SchoolManagerDto';
-import { SchoolManagerRepository } from '../repositories/SchoolManagerRepository';
-import { SchoolRepository } from '../repositories/SchoolRepository';
-import { UserRepository } from '../repositories/UserRepository';
-import { AppError } from '../utils/AppError';
+import { AppDataSource } from '../config/typeorm.config';
+import { SchoolManager, ManagerPosition } from '../entities/SchoolManager';
+import { School } from '../entities/School';
+import { User } from '../entities/User';
+import { Repository } from 'typeorm';
+
+export interface SchoolManagerDto {
+  id: string;
+  userId: string;
+  schoolId: string;
+  position: ManagerPosition;
+  startDate: Date;
+  endDate?: Date;
+  isActive: boolean;
+}
+
+export interface SchoolManagerFilterDto {
+    page?: number;
+    limit?: number;
+    search?: string;
+    schoolId?: string;
+    userId?: string;
+    position?: ManagerPosition;
+}
 
 export class SchoolManagerService {
-  private schoolManagerRepository: SchoolManagerRepository;
-  private schoolRepository: SchoolRepository;
-  private userRepository: UserRepository;
+  private schoolManagerRepository: Repository<SchoolManager>;
 
   constructor() {
-    this.schoolManagerRepository = new SchoolManagerRepository();
-    this.schoolRepository = new SchoolRepository();
-    this.userRepository = new UserRepository();
+    this.schoolManagerRepository = AppDataSource.getRepository(SchoolManager);
   }
 
-  async create(data: CreateSchoolManagerDto): Promise<SchoolManagerDto> {
-    // Verificar se o usuário existe
-    const user = await this.userRepository.findById(data.user_id);
-    if (!user) {
-      throw new AppError('Usuário não encontrado', 404);
+  async findSchoolManagersWithFilters(filters: SchoolManagerFilterDto): Promise<{ managers: SchoolManagerDto[], total: number }> {
+    const { page = 1, limit = 10, search, schoolId, userId, position } = filters;
+    const queryBuilder = this.schoolManagerRepository.createQueryBuilder('manager')
+        .leftJoinAndSelect('manager.user', 'user')
+        .leftJoinAndSelect('manager.school', 'school')
+        .where('manager.is_active = :isActive', { isActive: true });
+
+    if (search) {
+      queryBuilder.andWhere('(user.fullName LIKE :search OR school.name LIKE :search)', { search: `%${search}%` });
+    }
+    if (schoolId) {
+        queryBuilder.andWhere('manager.school_id = :schoolId', { schoolId });
+    }
+    if (userId) {
+        queryBuilder.andWhere('manager.user_id = :userId', { userId });
+    }
+    if (position) {
+        queryBuilder.andWhere('manager.position = :position', { position });
     }
 
-    // Verificar se a escola existe
-    const school = await this.schoolRepository.findById(data.school_id);
-    if (!school) {
-      throw new AppError('Escola não encontrada', 404);
-    }
-
-    // Verificar se a escola está ativa
-    if (!school.is_active) {
-      throw new AppError('Não é possível adicionar gestor a uma escola inativa', 400);
-    }
-
-    // Verificar se já existe um gestor ativo com o mesmo cargo
-    const existingManager = await this.schoolManagerRepository.checkManagerExists(
-      data.user_id,
-      data.school_id,
-      data.position
-    );
-    if (existingManager) {
-      throw new AppError('Este usuário já possui este cargo nesta escola', 400);
-    }
-
-    // Verificar disponibilidade do cargo (ex: apenas um diretor por escola)
-    const positionAvailable = await this.schoolManagerRepository.checkPositionAvailable(
-      data.school_id,
-      data.position,
-      data.user_id
-    );
-    if (!positionAvailable) {
-      throw new AppError('Este cargo já está ocupado nesta escola', 400);
-    }
-
-    const manager = await this.schoolManagerRepository.create(data);
-    return this.toDto(manager);
-  }
-
-  async update(id: string, data: UpdateSchoolManagerDto): Promise<SchoolManagerDto> {
-    // Verificar se o gestor existe
-    const existingManager = await this.schoolManagerRepository.findById(id);
-    if (!existingManager) {
-      throw new AppError('Gestor não encontrado', 404);
-    }
-
-    // Se estiver mudando usuário, verificar se existe
-    if (data.user_id && data.user_id !== existingManager.user_id) {
-      const user = await this.userRepository.findById(data.user_id);
-      if (!user) {
-        throw new AppError('Usuário não encontrado', 404);
-      }
-    }
-
-    // Se estiver mudando escola, verificar se existe
-    if (data.school_id && data.school_id !== existingManager.school_id) {
-      const school = await this.schoolRepository.findById(data.school_id);
-      if (!school) {
-        throw new AppError('Escola não encontrada', 404);
-      }
-    }
-
-    // Se estiver mudando cargo, verificar disponibilidade
-    if (data.position && data.position !== existingManager.position) {
-      const schoolId = data.school_id || existingManager.school_id;
-      const positionAvailable = await this.schoolManagerRepository.checkPositionAvailable(
-        schoolId,
-        data.position,
-        existingManager.user_id
-      );
-      if (!positionAvailable) {
-        throw new AppError('Este cargo já está ocupado nesta escola', 400);
-      }
-    }
-
-    const updatedManager = await this.schoolManagerRepository.update(id, data);
-    if (!updatedManager) {
-      throw new AppError('Erro ao atualizar gestor', 500);
-    }
-
-    return this.toDto(updatedManager);
-  }
-
-  async findById(id: string): Promise<SchoolManagerDto> {
-    const manager = await this.schoolManagerRepository.findById(id);
-    if (!manager) {
-      throw new AppError('Gestor não encontrado', 404);
-    }
-
-    return this.toDto(manager);
-  }
-
-  async findActiveBySchool(schoolId: string): Promise<SchoolManagerDto[]> {
-    // Verificar se a escola existe
-    const school = await this.schoolRepository.findById(schoolId);
-    if (!school) {
-      throw new AppError('Escola não encontrada', 404);
-    }
-
-    const managers = await this.schoolManagerRepository.findActiveBySchool(schoolId);
-    return managers.map(m => this.toDto(m));
-  }
-
-  async findActiveByUser(userId: string): Promise<SchoolManagerDto[]> {
-    // Verificar se o usuário existe
-    const user = await this.userRepository.findById(userId);
-    if (!user) {
-      throw new AppError('Usuário não encontrado', 404);
-    }
-
-    const managers = await this.schoolManagerRepository.findActiveByUser(userId);
-    return managers.map(m => this.toDto(m));
-  }
-
-  async findWithPagination(filter: SchoolManagerFilterDto): Promise<PaginatedSchoolManagersDto> {
-    const result = await this.schoolManagerRepository.findWithPagination(filter);
+    const total = await queryBuilder.getCount();
     
-    return {
-      school_managers: result.school_managers.map(m => this.toDto(m)),
-      pagination: result.pagination
-    };
+    queryBuilder
+      .orderBy('user.fullName', 'ASC')
+      .skip((page - 1) * limit)
+      .take(limit);
+
+    const managers = await queryBuilder.getMany();
+
+    const mappedManagers = managers.map(m => ({
+        id: m.id,
+        userId: m.user_id,
+        schoolId: m.school_id,
+        position: m.position,
+        startDate: m.start_date,
+        endDate: m.end_date,
+        isActive: m.is_active,
+    }));
+
+    return { managers: mappedManagers, total };
   }
 
-  async getWithDetails(managerId: string): Promise<SchoolManagerWithDetailsDto> {
-    const details = await this.schoolManagerRepository.getWithDetails(managerId);
-    if (!details) {
-      throw new AppError('Gestor não encontrado', 404);
-    }
-
-    return details;
-  }
-
-  async getSchoolManagementTeam(schoolId: string): Promise<SchoolManagementTeamDto> {
-    // Verificar se a escola existe
-    const school = await this.schoolRepository.findById(schoolId);
-    if (!school) {
-      throw new AppError('Escola não encontrada', 404);
-    }
-
-    return await this.schoolManagerRepository.getSchoolManagementTeam(schoolId);
-  }
-
-  async getManagerHistory(userId: string): Promise<ManagerHistoryDto> {
-    // Verificar se o usuário existe
-    const user = await this.userRepository.findById(userId);
-    if (!user) {
-      throw new AppError('Usuário não encontrado', 404);
-    }
-
-    return await this.schoolManagerRepository.getManagerHistory(userId);
-  }
-
-  async deactivateManager(userId: string, schoolId: string, position: string): Promise<void> {
-    // Verificar se o gestor existe e está ativo
-    const managers = await this.schoolManagerRepository.findByUserAndSchool(userId, schoolId);
-    const activeManager = managers.find(m => m.position === position && m.is_active);
-    
-    if (!activeManager) {
-      throw new AppError('Gestor não encontrado ou já está inativo', 404);
-    }
-
-    const success = await this.schoolManagerRepository.deactivateManager(userId, schoolId, position);
-    if (!success) {
-      throw new AppError('Erro ao desativar gestor', 500);
-    }
-  }
-
-  async reactivateManager(managerId: string): Promise<SchoolManagerDto> {
-    const manager = await this.schoolManagerRepository.findById(managerId);
-    if (!manager) {
-      throw new AppError('Gestor não encontrado', 404);
-    }
-
-    if (manager.is_active) {
-      throw new AppError('O gestor já está ativo', 400);
-    }
-
-    // Verificar se a escola ainda está ativa
-    const school = await this.schoolRepository.findById(manager.school_id);
-    if (!school || !school.is_active) {
-      throw new AppError('Não é possível reativar gestor em uma escola inativa', 400);
-    }
-
-    // Verificar se o cargo está disponível
-    const positionAvailable = await this.schoolManagerRepository.checkPositionAvailable(
-      manager.school_id,
-      manager.position,
-      manager.user_id
-    );
-    if (!positionAvailable) {
-      throw new AppError('Este cargo já está ocupado nesta escola', 400);
-    }
-
-    const updatedManager = await this.schoolManagerRepository.update(managerId, {
-      is_active: true
+  async findSchoolManagerById(id: string): Promise<SchoolManager | null> {
+    return this.schoolManagerRepository.findOne({ 
+        where: { id },
+        relations: ['user', 'school']
     });
-
-    if (!updatedManager) {
-      throw new AppError('Erro ao reativar gestor', 500);
-    }
-
-    return this.toDto(updatedManager);
   }
 
-  private toDto(manager: any): SchoolManagerDto {
-    return {
-      id: manager.id,
-      user_id: manager.user_id,
-      school_id: manager.school_id,
-      position: manager.position,
-      start_date: manager.start_date,
-      end_date: manager.end_date,
-      is_active: manager.is_active,
-      created_at: manager.created_at,
-      updated_at: manager.updated_at
-    };
+  async createSchoolManager(data: Partial<SchoolManager>): Promise<SchoolManager> {
+    const manager = this.schoolManagerRepository.create(data);
+    return this.schoolManagerRepository.save(manager);
+  }
+
+  async updateSchoolManager(id: string, data: Partial<SchoolManager>): Promise<SchoolManager | null> {
+    const manager = await this.schoolManagerRepository.findOneBy({ id });
+    if (!manager) {
+      return null;
+    }
+    this.schoolManagerRepository.merge(manager, data);
+    return this.schoolManagerRepository.save(manager);
+  }
+
+  async deleteSchoolManager(id: string): Promise<boolean> {
+    const result = await this.schoolManagerRepository.update(id, { is_active: false });
+    return result.affected ? result.affected > 0 : false;
   }
 }
+
+export default new SchoolManagerService();

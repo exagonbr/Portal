@@ -278,9 +278,9 @@ function SystemAdminDashboardContent() {
     });
 
     setInstitutions([
-      { id: '1', name: 'Colégio Saber', code: 'CS', users_count: 2500, schools_count: 3, created_at: new Date().toISOString(), type: 'PRIVATE', active: true, updated_at: new Date().toISOString() },
-      { id: '2', name: 'Escola Conhecer', code: 'EC', users_count: 1800, schools_count: 2, created_at: new Date().toISOString(), type: 'PUBLIC', active: true, updated_at: new Date().toISOString() },
-      { id: '3', name: 'Instituto Aprender Mais', code: 'IAM', users_count: 3200, schools_count: 5, created_at: new Date(Date.now() - 10 * 24 * 60 * 60 * 1000).toISOString(), type: 'PRIVATE', active: true, updated_at: new Date().toISOString() },
+      { id: '1', name: 'Colégio Saber', code: 'CS', users_count: 2500, schools_count: 3, created_at: new Date().toISOString(), type: InstitutionType.COLLEGE, active: true, updated_at: new Date().toISOString() },
+      { id: '2', name: 'Escola Conhecer', code: 'EC', users_count: 1800, schools_count: 2, created_at: new Date().toISOString(), type: InstitutionType.SCHOOL, active: true, updated_at: new Date().toISOString() },
+      { id: '3', name: 'Instituto Aprender Mais', code: 'IAM', users_count: 3200, schools_count: 5, created_at: new Date(Date.now() - 10 * 24 * 60 * 60 * 1000).toISOString(), type: InstitutionType.TECH_CENTER, active: true, updated_at: new Date().toISOString() },
     ]);
 
     setAlerts([

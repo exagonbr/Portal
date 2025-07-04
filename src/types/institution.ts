@@ -146,6 +146,14 @@ export interface InstitutionStats {
   institutions_by_state: Record<string, number>;
 }
 
+// Interface para análise de dados da Instituição
+export interface InstitutionAnalytics {
+  user_growth: { date: string; count: number }[];
+  course_completion_rate: { course_name: string; rate: number }[];
+  most_active_courses: { course_name: string; activity_count: number }[];
+  login_trends: { date: string; logins: number }[];
+  user_demographics: { state: string; count: number }[];
+}
 // Estados brasileiros
 export const BRAZILIAN_STATES = [
   { value: 'AC', label: 'Acre' },

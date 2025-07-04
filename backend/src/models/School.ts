@@ -1,47 +1,26 @@
 export interface School {
-  id: string;
+  id: number;
+  version?: number;
+  dateCreated?: Date;
+  deleted?: boolean;
+  institutionId: number;
+  lastUpdated?: Date;
   name: string;
-  code: string;
-  institution_id: string;
-  type?: 'elementary' | 'middle' | 'high' | 'technical';
-  description?: string;
-  address?: string;
-  city?: string;
-  state?: string;
-  zip_code?: string;
-  phone?: string;
-  email?: string;
-  is_active: boolean;
-  created_at: Date;
-  updated_at: Date;
+  institutionName?: string;
+  total_students?: number;
+  total_teachers?: number;
+  total_classes?: number;
+  total_managers?: number;
+  active_classes?: number;
 }
 
 export interface CreateSchoolData {
   name: string;
-  code: string;
-  institution_id: string;
-  type?: 'elementary' | 'middle' | 'high' | 'technical';
-  description?: string;
-  address?: string;
-  city?: string;
-  state?: string;
-  zip_code?: string;
-  phone?: string;
-  email?: string;
-  is_active?: boolean;
+  institutionId: number;
 }
 
 export interface UpdateSchoolData {
   name?: string;
-  code?: string;
-  institution_id?: string;
-  type?: 'elementary' | 'middle' | 'high' | 'technical';
-  description?: string;
-  address?: string;
-  city?: string;
-  state?: string;
-  zip_code?: string;
-  phone?: string;
-  email?: string;
-  is_active?: boolean;
+  institutionId?: number;
+  deleted?: boolean;
 }

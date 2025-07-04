@@ -14,54 +14,33 @@ import { SchoolManager } from './SchoolManager';
 
 @Entity('schools')
 export class School {
-  @PrimaryGeneratedColumn('uuid')
-  id!: string;
+  @PrimaryGeneratedColumn('increment')
+  id!: number;
 
-  @Column()
-  name!: string;
+  @Column({ type: 'bigint', nullable: true })
+  version?: number;
 
-  @Column({ unique: true })
-  code!: string;
+  @Column({ name: 'date_created', type: 'datetime', nullable: true })
+  dateCreated?: Date;
 
-  @Column()
-  institution_id!: string;
+  @Column({ type: 'boolean', nullable: true })
+  deleted?: boolean;
 
-  @ManyToOne(() => Institution, institution => institution.schools)
+  @Column({ name: 'institution_id', type: 'bigint' })
+  institutionId!: number;
+
+  @ManyToOne(() => Institution)
   @JoinColumn({ name: 'institution_id' })
   institution!: Institution;
 
-  @Column({ nullable: true })
-  address?: string;
+  @Column({ name: 'last_updated', type: 'datetime', nullable: true })
+  lastUpdated?: Date;
 
-  @Column({ nullable: true })
-  city?: string;
+  @Column({ type: 'varchar', length: 255 })
+  name!: string;
 
-  @Column({ nullable: true })
-  state?: string;
-
-  @Column({ nullable: true })
-  zip_code?: string;
-
-  @Column({ nullable: true })
-  phone?: string;
-
-  @Column({ nullable: true })
-  email?: string;
-
-  @Column({ default: true })
-  is_active!: boolean;
-
-  @OneToMany(() => Class, classEntity => classEntity.school)
-  classes!: Class[];
-
-  @OneToMany(() => SchoolManager, schoolManager => schoolManager.school)
-  managers!: SchoolManager[];
-
-  @CreateDateColumn()
-  created_at!: Date;
-
-  @UpdateDateColumn()
-  updated_at!: Date;
+  @Column({ name: 'institution_name', type: 'varchar', length: 255, nullable: true })
+  institutionName?: string;
 
   // Propriedades computadas
   total_students?: number;
@@ -69,4 +48,4 @@ export class School {
   total_classes?: number;
   total_managers?: number;
   active_classes?: number;
-}
+}Class

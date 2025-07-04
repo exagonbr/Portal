@@ -1,51 +1,22 @@
 import { UserResponseDto, UserFilterDto, PaginatedResponse, CreateUserDto, UpdateUserDto } from '@/types/api';
+import { apiGet, apiPost, apiPut, apiDelete } from './apiService';
 
-const API_BASE_URL = '/api';
+const ENDPOINT = '/users';
 
-async function handleResponse<T>(response: Response): Promise<T> {
-  if (!response.ok) {
-    try {
-      const error = await response.json();
-      throw new Error(error.message || `Erro na API: ${response.statusText}`);
-    } catch (e) {
-      throw new Error(`Erro na API: ${response.statusText}`);
-    }
-  }
-  return response.json() as Promise<T>;
-}
-
-const getUsers = async (filters: UserFilterDto): Promise<PaginatedResponse<UserResponseDto>> => {
-  const query = new URLSearchParams(filters as any).toString();
-  const response = await fetch(`${API_BASE_URL}/users?${query}`);
-  return handleResponse<PaginatedResponse<UserResponseDto>>(response);
+export const getUsers = async (filters: UserFilterDto): Promise<PaginatedResponse<UserResponseDto>> => {
+  return apiGet<PaginatedResponse<UserResponseDto>>(ENDPOINT, filters);
 };
 
-const createUser = async (data: CreateUserDto): Promise<UserResponseDto> => {
-    const response = await fetch(`${API_BASE_URL}/users`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(data),
-    });
-    return handleResponse<UserResponseDto>(response);
+export const createUser = async (data: CreateUserDto): Promise<UserResponseDto> => {
+    return apiPost<UserResponseDto>(ENDPOINT, data);
 };
 
-const updateUser = async (id: string, data: UpdateUserDto): Promise<UserResponseDto> => {
-    const response = await fetch(`${API_BASE_URL}/users/${id}`, {
-        method: 'PUT',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(data),
-    });
-    return handleResponse<UserResponseDto>(response);
+export const updateUser = async (id: string, data: UpdateUserDto): Promise<UserResponseDto> => {
+    return apiPut<UserResponseDto>(`${ENDPOINT}/${id}`, data);
 };
 
-const deleteUser = async (id: string): Promise<void> => {
-    const response = await fetch(`${API_BASE_URL}/users/${id}`, {
-        method: 'DELETE',
-    });
-    if (!response.ok) {
-        const error = await response.json().catch(() => ({ message: 'Erro ao excluir usuário' }));
-        throw new Error(error.message);
-    }
+export const deleteUser = async (id: string): Promise<void> => {
+    return apiDelete(`${ENDPOINT}/${id}`);
 };
 
 export const usersService = {

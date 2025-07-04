@@ -1,127 +1,86 @@
-import { 
-  SchoolDto, 
-  CreateSchoolDto, 
-  UpdateSchoolDto, 
-  SchoolFilterDto,
-  PaginatedSchoolsDto,
-  SchoolStatsDto
-} from '../dto/SchoolDto';
-import { SchoolRepository } from '../repositories/SchoolRepository';
-import { AppError } from '../utils/AppError';
+import { AppDataSource } from '../config/typeorm.config';
+import { School } from '../entities/School';
+import { Repository } from 'typeorm';
+
+export interface SchoolDto {
+  id: number;
+  name: string;
+  institutionId: number;
+  institutionName?: string;
+}
+
+export interface SchoolFilterDto {
+    page?: number;
+    limit?: number;
+    search?: string;
+    institutionId?: number;
+}
 
 export class SchoolService {
-  private schoolRepository: SchoolRepository;
+  private schoolRepository: Repository<School>;
 
   constructor() {
-    this.schoolRepository = new SchoolRepository();
+    this.schoolRepository = AppDataSource.getRepository(School);
   }
 
-  async create(data: CreateSchoolDto): Promise<SchoolDto> {
-    // Verificar se o código já existe
-    const existingSchool = await this.schoolRepository.findByCode(data.code);
-    if (existingSchool) {
-      throw new AppError('Já existe uma escola com este código', 400);
+  async findSchoolsWithFilters(filters: SchoolFilterDto): Promise<{ schools: SchoolDto[], total: number }> {
+    const { page = 1, limit = 10, search, institutionId } = filters;
+    const queryBuilder = this.schoolRepository.createQueryBuilder('school')
+        .leftJoinAndSelect('school.institution', 'institution')
+        .where('school.deleted IS NOT TRUE');
+
+    if (search) {
+      queryBuilder.andWhere('school.name LIKE :search', { search: `%${search}%` });
     }
-
-    const school = await this.schoolRepository.create(data);
-    return this.toDto(school);
-  }
-
-  async update(id: string, data: UpdateSchoolDto): Promise<SchoolDto> {
-    // Verificar se a escola existe
-    const existingSchool = await this.schoolRepository.findById(id);
-    if (!existingSchool) {
-      throw new AppError('Escola não encontrada', 404);
-    }
-
-    // Se estiver atualizando o código, verificar unicidade
-    if (data.code && data.code !== existingSchool.code) {
-      const codeExists = await this.schoolRepository.findByCode(data.code);
-      if (codeExists) {
-        throw new AppError('Já existe uma escola com este código', 400);
-      }
-    }
-
-    const updatedSchool = await this.schoolRepository.update(id, data);
-    if (!updatedSchool) {
-      throw new AppError('Erro ao atualizar escola', 500);
-    }
-
-    return this.toDto(updatedSchool);
-  }
-
-  async findById(id: string): Promise<SchoolDto> {
-    const school = await this.schoolRepository.findById(id);
-    if (!school) {
-      throw new AppError('Escola não encontrada', 404);
-    }
-
-    return this.toDto(school);
-  }
-
-  async findByInstitution(institutionId: string): Promise<SchoolDto[]> {
-    const schools = await this.schoolRepository.findByInstitution(institutionId);
-    return schools.map(school => this.toDto(school));
-  }
-
-  async findWithPagination(filter: SchoolFilterDto): Promise<PaginatedSchoolsDto> {
-    const result = await this.schoolRepository.findWithPagination(filter);
     
-    return {
-      schools: result.schools.map(school => this.toDto(school)),
-      pagination: result.pagination
-    };
+    if (institutionId) {
+        queryBuilder.andWhere('school.institutionId = :institutionId', { institutionId });
+    }
+
+    const total = await queryBuilder.getCount();
+    
+    queryBuilder
+      .orderBy('school.name', 'ASC')
+      .skip((page - 1) * limit)
+      .take(limit);
+
+    const schools = await queryBuilder.getMany();
+
+    const mappedSchools = schools.map(school => ({
+        id: school.id,
+        name: school.name,
+        institutionId: school.institutionId,
+        institutionName: school.institution?.name,
+    }));
+
+    return { schools: mappedSchools, total };
   }
 
-  async getStats(schoolId: string): Promise<SchoolStatsDto> {
-    // Verificar se a escola existe
-    const school = await this.schoolRepository.findById(schoolId);
+  async findSchoolById(id: number): Promise<School | null> {
+    return this.schoolRepository.findOne({ 
+        where: { id },
+        relations: ['institution']
+    });
+  }
+
+  async createSchool(data: Partial<School>): Promise<School> {
+    const school = this.schoolRepository.create(data);
+    return this.schoolRepository.save(school);
+  }
+
+  async updateSchool(id: number, data: Partial<School>): Promise<School | null> {
+    const school = await this.schoolRepository.findOneBy({ id });
     if (!school) {
-      throw new AppError('Escola não encontrada', 404);
+      return null;
     }
-
-    return await this.schoolRepository.getStats(schoolId);
+    this.schoolRepository.merge(school, data);
+    return this.schoolRepository.save(school);
   }
 
-  async delete(id: string): Promise<void> {
-    const school = await this.schoolRepository.findById(id);
-    if (!school) {
-      throw new AppError('Escola não encontrada', 404);
-    }
-
-    // Em vez de deletar, desativar a escola
-    await this.schoolRepository.update(id, { is_active: false });
-  }
-
-  async activate(id: string): Promise<SchoolDto> {
-    const school = await this.schoolRepository.findById(id);
-    if (!school) {
-      throw new AppError('Escola não encontrada', 404);
-    }
-
-    const updatedSchool = await this.schoolRepository.update(id, { is_active: true });
-    if (!updatedSchool) {
-      throw new AppError('Erro ao ativar escola', 500);
-    }
-
-    return this.toDto(updatedSchool);
-  }
-
-  private toDto(school: any): SchoolDto {
-    return {
-      id: school.id,
-      name: school.name,
-      code: school.code,
-      institution_id: school.institution_id,
-      address: school.address,
-      city: school.city,
-      state: school.state,
-      zip_code: school.zip_code,
-      phone: school.phone,
-      email: school.email,
-      is_active: school.is_active,
-      created_at: school.created_at,
-      updated_at: school.updated_at
-    };
+  async deleteSchool(id: number): Promise<boolean> {
+    const result = await this.schoolRepository.update(id, { deleted: true });
+    return result.affected ? result.affected > 0 : false;
   }
 }
+
+export default new SchoolService();

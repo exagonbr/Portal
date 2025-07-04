@@ -9,6 +9,7 @@ import {
   BeforeUpdate
 } from 'typeorm';
 import * as bcrypt from 'bcryptjs';
+import { UserRole } from './UserRole.enum';
 import { Institution } from './Institution';
 import { TeacherSubject } from './TeacherSubject';
 import { Role } from './Role';
@@ -22,6 +23,8 @@ import { Notification } from './Notification';
 
 @Entity('user')
 export class User {
+  @Column({ name: 'google_id', type: 'varchar', length: 255, nullable: true, unique: true })
+  googleId?: string;
   @PrimaryGeneratedColumn('increment')
   id!: number;
 
@@ -124,7 +127,7 @@ export class User {
   }
 
   set institution_id(value: number | null | undefined) {
-    this.institutionId = value;
+    this.institutionId = value ?? undefined;
   }
 
   @ManyToOne(() => Institution, institution => institution.users, { nullable: true })
@@ -182,6 +185,25 @@ export class User {
       return false;
     }
     return bcrypt.compare(password, this.password);
+  }
+hasValidRole(): boolean {
+    return !!this.role;
+  }
+
+  determineRoleFromFlags(): UserRole {
+    if (this.isAdmin) {
+      return UserRole.SYSTEM_ADMIN;
+    }
+    if (this.isManager) {
+      return UserRole.INSTITUTION_MANAGER;
+    }
+    if (this.isTeacher) {
+      return UserRole.TEACHER;
+    }
+    if (this.isStudent) {
+      return UserRole.STUDENT;
+    }
+    return UserRole.GUEST;
   }
 
   // Método para remover senha do objeto

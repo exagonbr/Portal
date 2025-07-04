@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation'
 import { UserRole, ROLE_PERMISSIONS } from '@/types/roles'
 import { motion } from 'framer-motion'
 import { clearAllDataForUnauthorized } from '@/utils/clearAllData'
+import { useAuth } from '@/contexts/AuthContext'
 
 interface ProtectedRouteProps {
   children: React.ReactNode
@@ -14,15 +15,9 @@ interface ProtectedRouteProps {
   showUnauthorized?: boolean
 }
 
-// Hook seguro para AuthContext com fallback
-function useAuthSafe() {
-  try {
-    const { useAuth } = require('@/contexts/AuthContext');
-    return useAuth();
-  } catch (error) {
-    console.log('⚠️ Erro ao carregar AuthContext:', error);
-    return null;
-  }
+// Estendendo a interface para incluir o auth opcional
+interface ProtectedRouteContentProps extends ProtectedRouteProps {
+  auth?: any;
 }
 
 // Hook seguro para tema com fallback
@@ -49,21 +44,27 @@ function ProtectedRouteContent({
   requiredRole,
   requiredPermission,
   redirectTo = '/auth/login',
-  showUnauthorized = true
-}: ProtectedRouteProps) {
+  showUnauthorized = true,
+  auth
+}: ProtectedRouteContentProps) {
   const router = useRouter()
   const [isAuthorized, setIsAuthorized] = useState(false)
   const [hasError, setHasError] = useState(false)
   const [reloadCounter, setReloadCounter] = useState(0)
-  const [authContext, setAuthContext] = useState<any>(null)
+  const [authContext, setAuthContext] = useState<any>(auth)
   const [theme, setTheme] = useState<any>(null)
+
+  // Atualizar authContext quando auth mudar
+  useEffect(() => {
+    if (auth) {
+      setAuthContext(auth);
+    }
+  }, [auth]);
 
   // Carregar dependências de forma segura
   useEffect(() => {
     try {
-      const auth = useAuthSafe();
       const themeData = useThemeOnly();
-      setAuthContext(auth);
       setTheme(themeData);
     } catch (error) {
       console.log('❌ Erro ao carregar dependências:', error);
@@ -79,10 +80,8 @@ function ProtectedRouteContent({
         setReloadCounter(prev => prev + 1);
         // Tentar recarregar as dependências
         try {
-          const auth = useAuthSafe();
           const themeData = useThemeOnly();
-          if (auth && themeData) {
-            setAuthContext(auth);
+          if (themeData) {
             setTheme(themeData);
             setHasError(false);
           } else {
@@ -319,8 +318,19 @@ function ProtectedRouteContent({
 export default function ProtectedRoute(props: ProtectedRouteProps) {
   // Captura de erros no componente principal
   try {
+    // Usar o hook aqui, no componente principal
+    let auth = null;
+    try {
+      auth = useAuth();
+    } catch (error) {
+      console.log('⚠️ Erro ao carregar AuthContext:', error);
+    }
+    
+    // Passar o auth como prop para o componente interno
+    const contentProps = { ...props, auth };
+    
     return (
-      <ProtectedRouteContent {...props} />
+      <ProtectedRouteContent {...contentProps} />
     );
   } catch (error) {
     console.log('❌ Erro fatal no ProtectedRoute:', error);

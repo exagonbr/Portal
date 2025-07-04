@@ -1,23 +1,15 @@
 import { BaseRepository } from './BaseRepository';
-import { Book, CreateBookData, UpdateBookData } from '../models/Book';
+import { Book } from '../entities/Book';
+// Supondo que as entidades Annotation e Highlight existam em algum lugar
+// import { Annotation } from '../entities/Annotation'; 
+// import { Highlight } from '../entities/Highlight';
+
+export interface CreateBookData extends Omit<Book, 'id' | 'created_at' | 'updated_at'> {}
+export interface UpdateBookData extends Partial<CreateBookData> {}
 
 export class BookRepository extends BaseRepository<Book> {
   constructor() {
     super('books');
-  }
-
-  async findByCourse(courseId: string): Promise<Book[]> {
-    return this.findAll({ course_id: courseId } as Partial<Book>);
-  }
-
-  async findByIsbn(isbn: string): Promise<Book | null> {
-    return this.findOne({ isbn } as Partial<Book>);
-  }
-
-  async findByAuthor(author: string): Promise<Book[]> {
-    return this.db(this.tableName)
-      .where('author', 'ilike', `%${author}%`)
-      .select('*');
   }
 
   async createBook(data: CreateBookData): Promise<Book> {
@@ -32,101 +24,49 @@ export class BookRepository extends BaseRepository<Book> {
     return this.delete(id);
   }
 
-  async searchBooks(searchTerm: string, courseId?: string): Promise<Book[]> {
-    let query = this.db(this.tableName)
-      .where('title', 'ilike', `%${searchTerm}%`)
-      .orWhere('author', 'ilike', `%${searchTerm}%`)
-      .orWhere('isbn', 'ilike', `%${searchTerm}%`);
-
-    if (courseId) {
-      query = query.andWhere('course_id', courseId);
-    }
-
-    return query.select('*');
+  async findByTitle(title: string): Promise<Book[]> {
+    return this.db(this.tableName).where('title', 'ilike', `%${title}%`);
   }
 
-  async getBookAnnotations(bookId: string, userId?: string): Promise<any[]> {
-    let query = this.db('annotations')
-      .where('book_id', bookId);
-
-    if (userId) {
-      query = query.andWhere('user_id', userId);
-    }
-
-    return query
-      .orderBy('page_number', 'asc')
-      .orderBy('created_at', 'asc')
-      .select('*');
+  async findByAuthor(author: string): Promise<Book[]> {
+    return this.db(this.tableName).where('author', 'ilike', `%${author}%`);
+  }
+  
+  async findByPublisher(publisher: string): Promise<Book[]> {
+    return this.db(this.tableName).where('publisher', 'ilike', `%${publisher}%`);
   }
 
-  async getBookHighlights(bookId: string, userId?: string): Promise<any[]> {
-    let query = this.db('highlights')
-      .where('book_id', bookId);
-
-    if (userId) {
-      query = query.andWhere('user_id', userId);
-    }
-
-    return query
-      .orderBy('page_number', 'asc')
-      .orderBy('created_at', 'asc')
-      .select('*');
+  async findByEducationLevel(level: string): Promise<Book[]> {
+    return this.findAll({ education_level: level } as Partial<Book>);
   }
 
-  async getBooksWithCourse(): Promise<any[]> {
+  async search(term: string): Promise<Book[]> {
     return this.db(this.tableName)
-      .select(
-        'books.*',
-        'courses.name as course_name'
-      )
-      .leftJoin('courses', 'books.course_id', 'courses.id');
+      .where('title', 'ilike', `%${term}%`)
+      .orWhere('author', 'ilike', `%${term}%`)
+      .orWhere('publisher', 'ilike', `%${term}%`)
+      .orWhere('synopsis', 'ilike', `%${term}%`);
   }
 
-  async getBookWithCourse(id: string): Promise<any | null> {
-    const result = await this.db(this.tableName)
-      .select(
-        'books.*',
-        'courses.name as course_name'
-      )
-      .leftJoin('courses', 'books.course_id', 'courses.id')
-      .where('books.id', id)
-      .first();
-
-    return result || null;
-  }
-
-  async getBooksByFormat(format: string): Promise<Book[]> {
-    return this.findAll({ format } as Partial<Book>);
-  }
-
-  async updateBookProgress(bookId: string, userId: string, progress: number): Promise<void> {
-    // This would typically be in a separate user_book_progress table
-    // For now, we'll just track it in a simple way
-    const existingProgress = await this.db('user_progress')
-      .where({ user_id: userId, book_id: bookId })
-      .first();
-
-    if (existingProgress) {
-      await this.db('user_progress')
-        .where({ user_id: userId, book_id: bookId })
-        .update({
-          progress_percentage: progress,
-          updated_at: new Date()
-        });
-    } else {
-      await this.db('user_progress').insert({
-        user_id: userId,
-        book_id: bookId,
-        progress_percentage: progress,
-        created_at: new Date(),
-        updated_at: new Date()
-      });
+  // Exemplo de como seria a busca por anotações (requer entidade Annotation)
+  /*
+  async getAnnotations(bookId: string, userId?: string): Promise<Annotation[]> {
+    let query = this.db('annotations').where('book_id', bookId);
+    if (userId) {
+      query = query.andWhere('user_id', userId);
     }
+    return query.orderBy('created_at', 'asc');
   }
+  */
 
-  async getUserBookProgress(bookId: string, userId: string): Promise<any | null> {
-    return this.db('user_progress')
-      .where({ user_id: userId, book_id: bookId })
-      .first();
+  // Exemplo de como seria a busca por destaques (requer entidade Highlight)
+  /*
+  async getHighlights(bookId: string, userId?: string): Promise<Highlight[]> {
+    let query = this.db('highlights').where('book_id', bookId);
+    if (userId) {
+      query = query.andWhere('user_id', userId);
+    }
+    return query.orderBy('created_at', 'asc');
   }
+  */
 }

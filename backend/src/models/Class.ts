@@ -1,4 +1,9 @@
-export type ShiftType = 'MORNING' | 'AFTERNOON' | 'EVENING' | 'FULL_TIME';
+export enum ShiftType {
+  MORNING = 'MORNING',
+  AFTERNOON = 'AFTERNOON',
+  EVENING = 'EVENING',
+  FULL_TIME = 'FULL_TIME'
+}
 
 export interface Class {
   id: string;
@@ -11,6 +16,9 @@ export interface Class {
   is_active: boolean;
   created_at: Date;
   updated_at: Date;
+  school_name?: string;
+  student_count?: number;
+  teacher_count?: number;
 }
 
 export interface CreateClassData {

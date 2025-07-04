@@ -1,46 +1,45 @@
 import { Model } from 'objection';
-import { Unit } from './Unit';
-import { Course } from './Course';
+import { User } from './User';
 
 export class Institution extends Model {
-  static tableName = 'institutions';
+  static tableName = 'institution';
 
-  id!: string;
+  id!: number;
+  version?: number;
+  accountableContact!: string;
+  accountableName!: string;
+  companyName!: string;
+  complement?: string;
+  contractDisabled!: boolean;
+  contractInvoiceNum?: string;
+  contractNum?: number;
+  contractTermEnd!: Date;
+  contractTermStart!: Date;
+  dateCreated?: Date;
+  deleted!: boolean;
+  district!: string;
+  document!: string;
+  invoiceDate?: Date;
+  lastUpdated?: Date;
   name!: string;
-  description?: string;
-  type!: string;
-  active!: boolean;
-  created_at!: Date;
-  updated_at!: Date;
+  postalCode!: string;
+  state!: string;
+  street!: string;
+  score?: number;
+  hasLibraryPlatform!: boolean;
+  hasPrincipalPlatform!: boolean;
+  hasStudentPlatform!: boolean;
 
-  units?: Unit[];
-  courses?: Course[];
+  users?: User[];
 
   static relationMappings = {
-    units: {
+    users: {
       relation: Model.HasManyRelation,
-      modelClass: Unit,
+      modelClass: User,
       join: {
         from: 'institution.id',
-        to: 'units.institution_id'
-      }
-    },
-    courses: {
-      relation: Model.HasManyRelation,
-      modelClass: Course,
-      join: {
-        from: 'institution.id',
-        to: 'courses.institution_id'
+        to: 'user.institutionId'
       }
     }
   };
-
-  $beforeInsert() {
-    this.created_at = new Date();
-    this.updated_at = new Date();
-  }
-
-  $beforeUpdate() {
-    this.updated_at = new Date();
-  }
-} 
+}

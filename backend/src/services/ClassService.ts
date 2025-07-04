@@ -1,174 +1,104 @@
-import { 
-  ClassDto, 
-  CreateClassDto, 
-  UpdateClassDto, 
-  ClassFilterDto,
-  PaginatedClassesDto,
-  ClassStatsDto,
-  ClassWithDetailsDto
-} from '../dto/ClassDto';
-import { ClassRepository } from '../repositories/ClassRepository';
-import { SchoolRepository } from '../repositories/SchoolRepository';
-import { AppError } from '../utils/AppError';
+import { AppDataSource } from '../config/typeorm.config';
+import { Class, ShiftType } from '../entities/Class';
+import { School } from '../entities/School';
+import { Repository } from 'typeorm';
+
+export interface ClassDto {
+  id: string;
+  name: string;
+  code: string;
+  schoolId: string;
+  year: number;
+  shift: ShiftType;
+  maxStudents: number;
+  isActive: boolean;
+}
+
+export interface ClassFilterDto {
+    page?: number;
+    limit?: number;
+    search?: string;
+    schoolId?: string;
+    year?: number;
+    shift?: ShiftType;
+}
 
 export class ClassService {
-  private classRepository: ClassRepository;
-  private schoolRepository: SchoolRepository;
+  private classRepository: Repository<Class>;
+  private schoolRepository: Repository<School>;
 
   constructor() {
-    this.classRepository = new ClassRepository();
-    this.schoolRepository = new SchoolRepository();
+    this.classRepository = AppDataSource.getRepository(Class);
+    this.schoolRepository = AppDataSource.getRepository(School);
   }
 
-  async create(data: CreateClassDto): Promise<ClassDto> {
-    // Verificar se a escola existe
-    const school = await this.schoolRepository.findById(data.school_id);
-    if (!school) {
-      throw new AppError('Escola não encontrada', 404);
+  async findClassesWithFilters(filters: ClassFilterDto): Promise<{ classes: ClassDto[], total: number }> {
+    const { page = 1, limit = 10, search, schoolId, year, shift } = filters;
+    const queryBuilder = this.classRepository.createQueryBuilder('class')
+        .leftJoinAndSelect('class.school', 'school')
+        .where('class.is_active = :isActive', { isActive: true });
+
+    if (search) {
+      queryBuilder.andWhere('(class.name LIKE :search OR class.code LIKE :search)', { search: `%${search}%` });
+    }
+    if (schoolId) {
+        queryBuilder.andWhere('class.school_id = :schoolId', { schoolId });
+    }
+    if (year) {
+        queryBuilder.andWhere('class.year = :year', { year });
+    }
+    if (shift) {
+        queryBuilder.andWhere('class.shift = :shift', { shift });
     }
 
-    // Verificar se já existe uma turma com o mesmo código na escola e ano
-    const existingClass = await this.classRepository.findByCodeAndSchool(
-      data.code,
-      data.school_id,
-      data.year
-    );
-    if (existingClass) {
-      throw new AppError('Já existe uma turma com este código nesta escola e ano', 400);
-    }
-
-    const classEntity = await this.classRepository.create(data);
-    return this.toDto(classEntity);
-  }
-
-  async update(id: string, data: UpdateClassDto): Promise<ClassDto> {
-    // Verificar se a turma existe
-    const existingClass = await this.classRepository.findById(id);
-    if (!existingClass) {
-      throw new AppError('Turma não encontrada', 404);
-    }
-
-    // Se estiver atualizando a escola, verificar se ela existe
-    if (data.school_id && data.school_id !== existingClass.school_id) {
-      const school = await this.schoolRepository.findById(data.school_id);
-      if (!school) {
-        throw new AppError('Escola não encontrada', 404);
-      }
-    }
-
-    // Se estiver atualizando código, escola ou ano, verificar unicidade
-    if (
-      (data.code && data.code !== existingClass.code) ||
-      (data.school_id && data.school_id !== existingClass.school_id) ||
-      (data.year && data.year !== existingClass.year)
-    ) {
-      const code = data.code || existingClass.code;
-      const schoolId = data.school_id || existingClass.school_id;
-      const year = data.year || existingClass.year;
-
-      const isUnique = await this.classRepository.checkCodeUniqueness(
-        code,
-        schoolId,
-        year,
-        id
-      );
-      if (!isUnique) {
-        throw new AppError('Já existe uma turma com este código nesta escola e ano', 400);
-      }
-    }
-
-    const updatedClass = await this.classRepository.update(id, data);
-    if (!updatedClass) {
-      throw new AppError('Erro ao atualizar turma', 500);
-    }
-
-    return this.toDto(updatedClass);
-  }
-
-  async findById(id: string): Promise<ClassDto> {
-    const classEntity = await this.classRepository.findById(id);
-    if (!classEntity) {
-      throw new AppError('Turma não encontrada', 404);
-    }
-
-    return this.toDto(classEntity);
-  }
-
-  async findBySchool(schoolId: string): Promise<ClassDto[]> {
-    // Verificar se a escola existe
-    const school = await this.schoolRepository.findById(schoolId);
-    if (!school) {
-      throw new AppError('Escola não encontrada', 404);
-    }
-
-    const classes = await this.classRepository.findBySchool(schoolId);
-    return classes.map(c => this.toDto(c));
-  }
-
-  async findWithPagination(filter: ClassFilterDto): Promise<PaginatedClassesDto> {
-    const result = await this.classRepository.findWithPagination(filter);
+    const total = await queryBuilder.getCount();
     
-    return {
-      classes: result.classes.map(c => this.toDto(c)),
-      pagination: result.pagination
-    };
+    queryBuilder
+      .orderBy('class.name', 'ASC')
+      .skip((page - 1) * limit)
+      .take(limit);
+
+    const classes = await queryBuilder.getMany();
+
+    const mappedClasses = classes.map(c => ({
+        id: c.id,
+        name: c.name,
+        code: c.code,
+        schoolId: c.school_id,
+        year: c.year,
+        shift: c.shift,
+        maxStudents: c.max_students,
+        isActive: c.is_active,
+    }));
+
+    return { classes: mappedClasses, total };
   }
 
-  async getStats(classId: string): Promise<ClassStatsDto> {
-    // Verificar se a turma existe
-    const classEntity = await this.classRepository.findById(classId);
+  async findClassById(id: string): Promise<Class | null> {
+    return this.classRepository.findOne({ 
+        where: { id },
+        relations: ['school']
+    });
+  }
+
+  async createClass(data: Partial<Class>): Promise<Class> {
+    const classEntity = this.classRepository.create(data);
+    return this.classRepository.save(classEntity);
+  }
+
+  async updateClass(id: string, data: Partial<Class>): Promise<Class | null> {
+    const classEntity = await this.classRepository.findOneBy({ id });
     if (!classEntity) {
-      throw new AppError('Turma não encontrada', 404);
+      return null;
     }
-
-    return await this.classRepository.getStats(classId);
+    this.classRepository.merge(classEntity, data);
+    return this.classRepository.save(classEntity);
   }
 
-  async getWithDetails(classId: string): Promise<ClassWithDetailsDto> {
-    const classDetails = await this.classRepository.getWithDetails(classId);
-    if (!classDetails) {
-      throw new AppError('Turma não encontrada', 404);
-    }
-
-    return classDetails;
-  }
-
-  async delete(id: string): Promise<void> {
-    const classEntity = await this.classRepository.findById(id);
-    if (!classEntity) {
-      throw new AppError('Turma não encontrada', 404);
-    }
-
-    // Em vez de deletar, desativar a turma
-    await this.classRepository.update(id, { is_active: false });
-  }
-
-  async activate(id: string): Promise<ClassDto> {
-    const classEntity = await this.classRepository.findById(id);
-    if (!classEntity) {
-      throw new AppError('Turma não encontrada', 404);
-    }
-
-    const updatedClass = await this.classRepository.update(id, { is_active: true });
-    if (!updatedClass) {
-      throw new AppError('Erro ao ativar turma', 500);
-    }
-
-    return this.toDto(updatedClass);
-  }
-
-  private toDto(classEntity: any): ClassDto {
-    return {
-      id: classEntity.id,
-      name: classEntity.name,
-      code: classEntity.code,
-      school_id: classEntity.school_id,
-      year: classEntity.year,
-      shift: classEntity.shift,
-      max_students: classEntity.max_students,
-      is_active: classEntity.is_active,
-      created_at: classEntity.created_at,
-      updated_at: classEntity.updated_at
-    };
+  async deleteClass(id: string): Promise<boolean> {
+    const result = await this.classRepository.update(id, { is_active: false });
+    return result.affected ? result.affected > 0 : false;
   }
 }
+
+export default new ClassService();

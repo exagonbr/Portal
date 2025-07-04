@@ -1,50 +1,20 @@
 export interface Unit {
-  id: string;
+  id: number;
   version?: number;
-  date_created?: Date;
+  dateCreated?: Date;
   deleted?: boolean;
-  institution_id: string;
-  last_updated?: Date;
+  institutionId: number;
+  lastUpdated?: Date;
   name: string;
-  institution_name?: string;
-  description?: string;
-  type?: 'school' | 'college' | 'university' | 'campus';
-  active?: boolean;
-  created_at?: Date;
-  updated_at?: Date;
+  institutionName?: string;
 }
 
 export interface CreateUnitData {
   name: string;
-  institution_id: string;
-  description?: string;
-  type?: 'school' | 'college' | 'university' | 'campus';
+  institutionId: number;
 }
 
 export interface UpdateUnitData {
   name?: string;
-  institution_id?: string;
-  description?: string;
-  type?: 'school' | 'college' | 'university' | 'campus';
-  active?: boolean;
-}
-
-export interface UnitFilters {
-  name?: string;
-  search?: string;
-  type?: string;
-  active?: boolean;
-  institution_id?: string;
-  page?: number;
-  limit?: number;
-}
-
-export interface PaginatedUnitResponse {
-  items: Unit[];
-  pagination: {
-    total: number;
-    page: number;
-    limit: number;
-    totalPages: number;
-  };
+  deleted?: boolean;
 }

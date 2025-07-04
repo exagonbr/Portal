@@ -32,7 +32,6 @@ export class SchoolManager {
   @Column()
   school_id!: string;
 
-  @ManyToOne(() => School, school => school.managers)
   @JoinColumn({ name: 'school_id' })
   school!: School;
 

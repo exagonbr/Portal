@@ -159,29 +159,38 @@ export default function SimpleProviders({ children }: { children: ReactNode }) {
   }, []);
 
   return (
-    <ErrorBoundary 
+    <ErrorBoundary
       FallbackComponent={ErrorBoundaryFallback}
       onError={(error, errorInfo) => {
         if (isDevelopment()) {
-          console.log('❌ ErrorBoundary capturou erro:', error, errorInfo);
+          console.log('❌ Auth ErrorBoundary:', error, errorInfo);
         }
       }}
     >
-      <CacheCleanerProvider>
-        <AuthProvider>
-          <ThemeProvider>
-            <GamificationProvider>
-              <NavigationLoadingProvider>
-                <UpdateProvider>
-                <ToastManager>
-                  {children}
-                </ToastManager>
-                </UpdateProvider>
-              </NavigationLoadingProvider>
-            </GamificationProvider>
-          </ThemeProvider>
-        </AuthProvider>
-      </CacheCleanerProvider>
+      <AuthProvider>
+        <ErrorBoundary
+          FallbackComponent={ErrorBoundaryFallback}
+          onError={(error, errorInfo) => {
+            if (isDevelopment()) {
+              console.log('❌ General ErrorBoundary:', error, errorInfo);
+            }
+          }}
+        >
+          <CacheCleanerProvider>
+            <ThemeProvider>
+              <GamificationProvider>
+                <NavigationLoadingProvider>
+                  <UpdateProvider>
+                    <ToastManager>
+                      {children}
+                    </ToastManager>
+                  </UpdateProvider>
+                </NavigationLoadingProvider>
+              </GamificationProvider>
+            </ThemeProvider>
+          </CacheCleanerProvider>
+        </ErrorBoundary>
+      </AuthProvider>
     </ErrorBoundary>
   );
 }

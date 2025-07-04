@@ -44,7 +44,7 @@ import {
   UnitClass,
   User,
   UserClass,
-  UserRole,
+  UserRoleMapping,
   Video,
   VideoCollection,
   VideoModule
@@ -105,7 +105,7 @@ export const AppDataSource = new DataSource({
     UnitClass,
     User,
     UserClass,
-    UserRole,
+    UserRoleMapping,
     Video,
     VideoCollection,
     VideoModule

@@ -35,7 +35,6 @@ export class Class {
   @Column()
   school_id!: string;
 
-  @ManyToOne(() => School, school => school.classes)
   @JoinColumn({ name: 'school_id' })
   school!: School;
 

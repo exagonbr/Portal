@@ -2,15 +2,6 @@ import { Request, Response, NextFunction } from 'express';
 import jwt from 'jsonwebtoken';
 import { JWT_CONFIG } from '../config/jwt';
 
-// Extend Express Request type
-declare global {
-  namespace Express {
-    interface Request {
-      authenticated?: boolean;
-      userId?: string;
-    }
-  }
-}
 
 /**
  * Middleware to check if the request has a valid access token.

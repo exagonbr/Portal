@@ -1,0 +1,10 @@
+export { default as AuthController } from './AuthController';
+export { default as UserController } from './UserController';
+export { default as CourseController } from './CourseController';
+export { default as GroupController } from './GroupController';
+export { default as NotificationController } from './NotificationController';
+export { default as SettingsController } from './SettingsController';
+export { default as InstitutionController } from './InstitutionController';
+export { default as SchoolController } from './SchoolController';
+export { default as ClassController } from './ClassController';
+export { default as VideoCollectionController } from './VideoCollectionController';

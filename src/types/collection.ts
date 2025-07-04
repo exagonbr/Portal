@@ -1,61 +1,43 @@
-export interface Module {
-  id: string;
-  name: string;
-  description: string;
-  coverImage: string; // URL do S3
-  videoIds: string[];
-  order: number;
-  createdAt: Date;
-  updatedAt: Date;
-}
+import { BaseEntityDto, BaseFilter, UUID } from './common';
 
-export interface Video {
-  id: string;
-  name: string;
-  moduleId: string;
-  videoUrl: string; // URL do S3
-  duration: number; // em segundos
-  authors: string[];
-  educationCycle: {
-    level: keyof typeof import('../constants/brazilianEducation').BRAZILIAN_EDUCATION;
-    cycle?: string; // Para Fundamental: 'ANOS_INICIAIS' ou 'ANOS_FINAIS'
-    grade?: string; // Chave da série específica
-  };
-  createdAt: Date;
-  updatedAt: Date;
-}
-
-export interface Collection {
-  id: string;
+// DTO para a entidade Collection, usado no frontend
+export interface CollectionDto extends BaseEntityDto {
   name: string;
   synopsis: string;
-  coverImage: string;
-  supportMaterial?: string; // URL do PDF (S3)
-  totalDuration: number; // em segundos
-  subject: string; // disciplina
-  modules: Module[];
+  cover_image: string;
+  support_material?: string;
+  total_duration: number;
+  subject: string;
   tags: string[];
-  createdBy: string;
-  createdAt: Date;
-  updatedAt: Date;
+  created_by: UUID;
 }
 
-export interface BookByEducationCycle {
-  id: string;
-  title: string;
-  author: string;
-  publisher: string;
-  publicationYear: number;
-  description: string;
-  thumbnail: string;
-  url: string;
-  s3Key?: string;
-  size: number;
-  educationLevel: keyof typeof import('../constants/brazilianEducation').BRAZILIAN_EDUCATION;
-  cycle?: string; // Para Fundamental: 'ANOS_INICIAIS' ou 'ANOS_FINAIS'
-  grade?: string; // Chave da série específica
-  subject?: string; // Disciplina do livro
-  tags: string[];
-  uploadedBy: string;
-  uploadedAt: Date;
+// DTO para criação de Collection
+export interface CreateCollectionDto {
+  name: string;
+  synopsis: string;
+  cover_image: string;
+  support_material?: string;
+  total_duration: number;
+  subject: string;
+  tags?: string[];
+  created_by: UUID;
+}
+
+// DTO para atualização de Collection
+export interface UpdateCollectionDto {
+  name?: string;
+  synopsis?: string;
+  cover_image?: string;
+  support_material?: string;
+  total_duration?: number;
+  subject?: string;
+  tags?: string[];
+}
+
+// Interface para filtros de Collection
+export interface CollectionFilter extends BaseFilter {
+  subject?: string;
+  tags?: string;
+  created_by?: UUID;
 }

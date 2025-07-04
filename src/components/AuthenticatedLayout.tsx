@@ -6,13 +6,16 @@ import { useAuth } from '../contexts/AuthContext'
 import { Header } from './Header'
 import { clearAllDataForUnauthorized } from '../utils/clearAllData'
 import { buildLoginUrl, buildDashboardUrl } from '../utils/urlBuilder'
+import { UserRole, hasPermission } from '@/types/roles'
 
 export default function AuthenticatedLayout({
   children,
   requiredRole,
+  requiredPermission,
 }: {
   children: React.ReactNode
-  requiredRole?: 'student' | 'teacher' | 'admin'
+  requiredRole?: UserRole | UserRole[]
+  requiredPermission?: string
 }) {
   const { user, isLoading } = useAuth()
   const router = useRouter()
@@ -29,14 +32,36 @@ export default function AuthenticatedLayout({
           // Redirecionar mesmo com erro na limpeza
           router.push(loginUrl)
         });
-      } else if (requiredRole && user.role !== requiredRole) {
-        const dashboardUrl = user.role === 'student'
-          ? buildDashboardUrl('STUDENT')
-          : buildDashboardUrl('TEACHER');
-        router.push(dashboardUrl)
+        return;
+      }
+
+      // SYSTEM_ADMIN tem acesso a TODAS as páginas
+      if (user.role === UserRole.SYSTEM_ADMIN) {
+        return;
+      }
+
+      // Verificar role específica se fornecida
+      if (requiredRole) {
+        const roles = Array.isArray(requiredRole) ? requiredRole : [requiredRole];
+        const hasRequiredRole = roles.includes(user.role);
+        
+        if (!hasRequiredRole) {
+          console.log(`🔒 AuthenticatedLayout: Role ${user.role} não permitida. Roles necessárias: ${roles.join(', ')}`);
+          const dashboardUrl = buildDashboardUrl(user.role);
+          router.push(dashboardUrl);
+          return;
+        }
+      }
+
+      // Verificar permissão específica se fornecida
+      if (requiredPermission && !hasPermission(user.role, requiredPermission as any)) {
+        console.log(`🔒 AuthenticatedLayout: Permissão ${requiredPermission} não encontrada para role ${user.role}`);
+        const dashboardUrl = buildDashboardUrl(user.role);
+        router.push(dashboardUrl);
+        return;
       }
     }
-  }, [user, isLoading, router, requiredRole])
+  }, [user, isLoading, router, requiredRole, requiredPermission])
 
   if (isLoading) {
     return (
