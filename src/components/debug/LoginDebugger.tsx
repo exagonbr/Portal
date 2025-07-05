@@ -4,17 +4,28 @@ import { useEffect, useState } from 'react';
 import { useAuth } from '@/contexts/AuthContext';
 import { useRouter } from 'next/navigation';
 import { getDashboardPath } from '@/utils/roleRedirect';
+import { loginDiagnostics, LoginDiagnostics } from '@/utils/login-diagnostics';
 
 export function LoginDebugger() {
   const { user, isAuthenticated, isLoading } = useAuth();
   const router = useRouter();
   const [debugInfo, setDebugInfo] = useState<any[]>([]);
   const [currentUrl, setCurrentUrl] = useState('');
+  const [diagnostics, setDiagnostics] = useState<LoginDiagnostics[]>([]);
 
   useEffect(() => {
     if (typeof window !== 'undefined') {
       setCurrentUrl(window.location.href);
     }
+  }, []);
+
+  // Atualizar diagnósticos em tempo real
+  useEffect(() => {
+    const interval = setInterval(() => {
+      setDiagnostics(loginDiagnostics.getLogs());
+    }, 1000);
+
+    return () => clearInterval(interval);
   }, []);
 
   useEffect(() => {
@@ -41,33 +52,7 @@ export function LoginDebugger() {
 
   const handleTestLogin = async () => {
     try {
-      const response = await fetch('/api/auth/login', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          email: 'admin@sistema.com',
-          password: 'admin123'
-        })
-      });
-
-      const data = await response.json();
-      console.log('🔍 Login Debug Response:', data);
-      
-      if (data.success) {
-        // Simular o que o AuthContext faz
-        const token = data.data.accessToken;
-        localStorage.setItem('accessToken', token);
-        
-        // Aguardar um pouco e verificar se o redirecionamento acontece
-        setTimeout(() => {
-          console.log('🔍 Verificando redirecionamento após login...');
-          console.log('URL atual:', window.location.href);
-          console.log('Usuário autenticado:', isAuthenticated);
-          console.log('Dados do usuário:', user);
-        }, 2000);
-      }
+      await loginDiagnostics.diagnoseLoginFlow('admin@sistema.com', 'admin123');
     } catch (error) {
       console.error('❌ Erro no teste de login:', error);
     }
@@ -96,10 +81,22 @@ export function LoginDebugger() {
         </button>
         <button
           onClick={handleManualRedirect}
-          className="bg-green-500 text-white px-4 py-2 rounded text-sm"
+          className="bg-green-500 text-white px-4 py-2 rounded mr-2 text-sm"
           disabled={!user}
         >
           Manual Redirect
+        </button>
+        <button
+          onClick={() => loginDiagnostics.diagnoseCurrentState()}
+          className="bg-yellow-500 text-white px-4 py-2 rounded mr-2 text-sm"
+        >
+          Diagnose State
+        </button>
+        <button
+          onClick={() => loginDiagnostics.clearLogs()}
+          className="bg-red-500 text-white px-4 py-2 rounded text-sm"
+        >
+          Clear Logs
         </button>
       </div>
 
@@ -131,6 +128,35 @@ export function LoginDebugger() {
                 <div>Token: {info.localStorage?.hasToken ? '✅' : '❌'}</div>
               </div>
             ))}
+          </div>
+        </div>
+
+        <div>
+          <strong>Diagnósticos de Login:</strong>
+          <div className="max-h-40 overflow-y-auto">
+            {diagnostics.slice(-10).map((diag, index) => {
+              const emoji = {
+                success: '✅',
+                error: '❌',
+                warning: '⚠️',
+                info: '🔍'
+              }[diag.status];
+              
+              return (
+                <div key={index} className="text-xs border-b pb-1 mb-1">
+                  <div className="flex justify-between">
+                    <span>{diag.timestamp.split('T')[1].split('.')[0]}</span>
+                    <span>{emoji}</span>
+                  </div>
+                  <div><strong>{diag.step}:</strong> {diag.message}</div>
+                  {diag.data && (
+                    <div className="text-gray-600 truncate">
+                      {JSON.stringify(diag.data).substring(0, 100)}...
+                    </div>
+                  )}
+                </div>
+              );
+            })}
           </div>
         </div>
       </div>
