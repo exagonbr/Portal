@@ -3,6 +3,8 @@ import { getServerSession } from 'next-auth';
 import { authOptions } from '@/lib/auth';
 import { UserRole } from '@/types/roles';
 import { jwtDecode } from 'jwt-decode';
+import { resetPublicSettings } from '../../../../public/settings/route';
+import { resetSystemSettings, loadSystemSettings } from '@/lib/systemSettings';
 
 // Função auxiliar para verificar autenticação via JWT ou NextAuth
 async function getAuthenticatedUser(request: NextRequest) {
@@ -43,38 +45,6 @@ async function getAuthenticatedUser(request: NextRequest) {
   return null;
 }
 
-// Configurações padrão
-const defaultSettings = {
-  site_name: 'Portal Educacional',
-  site_title: 'Portal Educacional - Sistema de Gestão',
-  site_url: 'http://localhost:3000',
-  site_description: 'Sistema completo de gestão educacional.',
-  maintenance_mode: false,
-  logo_light: '/logo-light.png',
-  logo_dark: '/logo-dark.png',
-  background_type: 'video' as const,
-  main_background: '/back_video4.mp4',
-  primary_color: '#1e3a8a',
-  secondary_color: '#3b82f6',
-  aws_access_key: '',
-  aws_secret_key: '',
-  aws_region: 'sa-east-1',
-  aws_bucket_main: '',
-  aws_bucket_backup: '',
-  aws_bucket_media: '',
-  email_smtp_host: '',
-  email_smtp_port: 587,
-  email_smtp_user: '',
-  email_smtp_password: '',
-  email_smtp_secure: true,
-  email_from_name: '',
-  email_from_address: '',
-  notifications_email_enabled: false,
-  notifications_sms_enabled: false,
-  notifications_push_enabled: false,
-  notifications_digest_frequency: 'daily' as const
-};
-
 // POST - Resetar configurações para o padrão
 export async function POST(request: NextRequest) {
   try {
@@ -95,6 +65,22 @@ export async function POST(request: NextRequest) {
         { status: 403 }
       );
     }
+
+    // Resetar configurações no banco de dados
+    const success = await resetSystemSettings();
+    
+    if (!success) {
+      return NextResponse.json(
+        { error: 'Erro ao resetar configurações no banco de dados' },
+        { status: 500 }
+      );
+    }
+
+    // Resetar configurações públicas também
+    resetPublicSettings();
+
+    // Carregar configurações resetadas
+    const defaultSettings = await loadSystemSettings();
 
     // Log da operação
     console.log(`Configurações resetadas por ${user.email}:`, {

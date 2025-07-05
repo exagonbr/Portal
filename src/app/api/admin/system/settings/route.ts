@@ -3,6 +3,12 @@ import { getServerSession } from 'next-auth';
 import { authOptions } from '@/lib/auth';
 import { UserRole } from '@/types/roles';
 import { jwtDecode } from 'jwt-decode';
+import { updatePublicSettings } from '../../../public/settings/route';
+import { 
+  loadSystemSettings, 
+  saveSystemSettings, 
+  SystemSettings 
+} from '@/lib/systemSettings';
 
 // Interface para as configurações do sistema
 interface SystemSettings {
@@ -68,9 +74,6 @@ const defaultSettings: SystemSettings = {
   notifications_digest_frequency: 'daily'
 };
 
-// Armazenamento temporário em memória (em produção, usar banco de dados)
-let currentSettings: SystemSettings = { ...defaultSettings };
-
 // Função auxiliar para verificar autenticação via JWT ou NextAuth
 async function getAuthenticatedUser(request: NextRequest) {
   // Primeiro, tentar NextAuth
@@ -115,6 +118,9 @@ export async function GET(request: NextRequest) {
   try {
     // Verificar autenticação (NextAuth ou JWT customizado)
     const user = await getAuthenticatedUser(request);
+    
+    // Carregar configurações do banco de dados
+    const currentSettings = await loadSystemSettings();
     
     if (!user) {
       // Retornar configurações públicas para usuários não autenticados
@@ -206,11 +212,35 @@ export async function PUT(request: NextRequest) {
     // Obter dados do corpo da requisição
     const updates = await request.json();
 
-    // Validar e atualizar configurações
-    currentSettings = {
-      ...currentSettings,
-      ...updates
+    // Salvar configurações no banco de dados
+    const success = await saveSystemSettings(updates);
+    
+    if (!success) {
+      return NextResponse.json(
+        { error: 'Erro ao salvar configurações no banco de dados' },
+        { status: 500 }
+      );
+    }
+
+    // Carregar configurações atualizadas
+    const currentSettings = await loadSystemSettings();
+
+    // Sincronizar configurações públicas
+    const publicUpdates = {
+      site_name: currentSettings.site_name,
+      site_title: currentSettings.site_title,
+      site_url: currentSettings.site_url,
+      site_description: currentSettings.site_description,
+      maintenance_mode: currentSettings.maintenance_mode,
+      logo_light: currentSettings.logo_light,
+      logo_dark: currentSettings.logo_dark,
+      background_type: currentSettings.background_type,
+      main_background: currentSettings.main_background,
+      primary_color: currentSettings.primary_color,
+      secondary_color: currentSettings.secondary_color,
     };
+    
+    updatePublicSettings(publicUpdates);
 
     // Log da alteração
     console.log(`Configurações atualizadas por ${user.email}:`, {

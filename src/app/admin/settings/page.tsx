@@ -102,7 +102,19 @@ export default function AdminSettingsPage() {
     try {
       const success = await saveSettings(localSettings)
       if (success) {
-        showNotification('success', 'Configurações salvas com sucesso!')
+        // Verificar se configurações de background foram alteradas
+        const backgroundChanged = settings && (
+          settings.background_type !== localSettings.background_type ||
+          settings.main_background !== localSettings.main_background ||
+          settings.primary_color !== localSettings.primary_color ||
+          settings.secondary_color !== localSettings.secondary_color
+        )
+        
+        if (backgroundChanged) {
+          showNotification('success', 'Configurações salvas! O background da página de login foi atualizado.')
+        } else {
+          showNotification('success', 'Configurações salvas com sucesso!')
+        }
       } else {
         showNotification('error', 'Erro ao salvar configurações')
       }
@@ -428,6 +440,17 @@ export default function AdminSettingsPage() {
                   </div>
 
                   <div className="space-y-4">
+                    {/* Destaque para configurações de background */}
+                    <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 mb-4">
+                      <div className="flex items-center mb-2">
+                        <span className="material-symbols-outlined text-blue-600 mr-2">public</span>
+                        <h4 className="font-medium text-blue-800">Configurações de Background Público</h4>
+                      </div>
+                      <p className="text-sm text-blue-700">
+                        Estas configurações de background serão aplicadas na <strong>página de login pública</strong> e em todas as áreas não autenticadas do sistema.
+                      </p>
+                    </div>
+
                     <div>
                       <label className="block text-sm font-medium text-gray-700 mb-2">
                         Tipo de Background da Área Principal
@@ -527,13 +550,22 @@ export default function AdminSettingsPage() {
                         <span className="material-symbols-outlined mr-2 text-purple-600">preview</span>
                         Preview do Background
                       </h4>
-                      <button
-                        onClick={() => setShowFullscreenPreview(true)}
-                        className="text-sm text-purple-600 hover:text-purple-700 flex items-center transition-colors"
-                      >
-                        <span className="material-symbols-outlined mr-1 text-sm">fullscreen</span>
-                        Tela Cheia
-                      </button>
+                      <div className="flex gap-2">
+                        <button
+                          onClick={() => window.open('/auth/login', '_blank')}
+                          className="text-sm text-blue-600 hover:text-blue-700 flex items-center transition-colors"
+                        >
+                          <span className="material-symbols-outlined mr-1 text-sm">login</span>
+                          Ver Login
+                        </button>
+                        <button
+                          onClick={() => setShowFullscreenPreview(true)}
+                          className="text-sm text-purple-600 hover:text-purple-700 flex items-center transition-colors"
+                        >
+                          <span className="material-symbols-outlined mr-1 text-sm">fullscreen</span>
+                          Tela Cheia
+                        </button>
+                      </div>
                     </div>
                     <div
                       className="w-full h-48 rounded-lg border-2 border-dashed border-gray-300 flex items-center justify-center relative overflow-hidden shadow-inner cursor-pointer group"

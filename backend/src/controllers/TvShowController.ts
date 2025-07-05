@@ -20,7 +20,7 @@ class TvShowController extends BaseController<TvShow> {
             const tvShowsPromise = tvShowRepository.findWithFilters({
                 page: req.query.page ? parseInt(req.query.page as string, 10) : 1,
                 limit: req.query.limit ? parseInt(req.query.limit as string, 10) : 10,
-                sortBy: 'title',
+                sortBy: 'name',
                 sortOrder: req.query.sortOrder as 'asc' | 'desc',
                 search: req.query.search as string,
             });
