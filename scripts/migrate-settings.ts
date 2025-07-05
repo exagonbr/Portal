@@ -1,6 +1,23 @@
-#!/usr/bin/env tsx
+#!/usr/bin/env ts-node
 
-import { connection } from '../src/config/database';
+const knex = require('knex');
+
+// Configuração do banco de dados
+const connection = knex({
+  client: 'postgresql',
+  connection: {
+    host: process.env.DB_HOST || 'localhost',
+    port: parseInt(process.env.DB_PORT || '5432'),
+    database: process.env.DB_NAME || 'portal_sabercon',
+    user: process.env.DB_USER || 'postgres',
+    password: String(process.env.DB_PASSWORD || 'root'),
+    ssl: process.env.DB_SSL === 'true' ? { rejectUnauthorized: false } : false,
+  },
+  pool: {
+    min: 2,
+    max: 10,
+  },
+});
 
 async function runMigrations() {
   try {
@@ -12,7 +29,7 @@ async function runMigrations() {
     if (!hasTable) {
       console.log('📋 Criando tabela system_settings...');
       
-      await connection.schema.createTable('system_settings', (table) => {
+      await connection.schema.createTable('system_settings', (table: any) => {
         table.uuid('id').primary().defaultTo(connection.raw('gen_random_uuid()'));
         table.string('key').unique().notNullable();
         table.text('value');
@@ -121,4 +138,4 @@ if (require.main === module) {
   runMigrations().catch(console.error);
 }
 
-export { runMigrations }; 
+module.exports = { runMigrations }; 

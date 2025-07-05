@@ -63,13 +63,16 @@ export class TvShowRepository extends BaseRepository<TvShow> {
     const {
       page = 1,
       limit = 10,
-      sortBy = 'name', // Corrigido: usar 'name' em vez de 'title'
+      sortBy = 'name',
       sortOrder = 'asc',
       search,
       ...otherFilters
     } = filters;
 
     try {
+      // Garantir que nunca use 'title' - sempre usar 'name'
+      const safeSortBy = sortBy === 'title' ? 'name' : (sortBy || 'name');
+
       // Corrigido: usar campos que realmente existem na tabela
       const query = this.db(this.tableName)
         .select('*')
@@ -106,7 +109,7 @@ export class TvShowRepository extends BaseRepository<TvShow> {
         countQuery.where(otherFilters);
       }
       
-      query.orderBy(sortBy, sortOrder).limit(limit).offset((page - 1) * limit);
+      query.orderBy(safeSortBy, sortOrder).limit(limit).offset((page - 1) * limit);
 
       const [items, totalResult] = await Promise.all([query, countQuery]);
       

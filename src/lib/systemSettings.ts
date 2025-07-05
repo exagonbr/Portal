@@ -1,4 +1,21 @@
-import { connection } from '@/config/database';
+import knex from 'knex';
+
+// Configuração do banco de dados
+const connection = knex({
+  client: 'postgresql',
+  connection: {
+    host: process.env.DB_HOST || 'localhost',
+    port: parseInt(process.env.DB_PORT || '5432'),
+    database: process.env.DB_NAME || 'portal_sabercon',
+    user: process.env.DB_USER || 'postgres',
+    password: String(process.env.DB_PASSWORD || 'root'),
+    ssl: process.env.DB_SSL === 'true' ? { rejectUnauthorized: false } : false,
+  },
+  pool: {
+    min: 2,
+    max: 10,
+  },
+});
 
 export interface SystemSettings {
   site_name: string;
@@ -28,7 +45,7 @@ export interface SystemSettings {
   notifications_email_enabled: boolean;
   notifications_sms_enabled: boolean;
   notifications_push_enabled: boolean;
-  notifications_digest_frequency: 'realtime' | 'hourly' | 'daily' | 'weekly';
+  notifications_digest_frequency: string;
 }
 
 export interface PublicSettings {
@@ -50,7 +67,7 @@ const defaultSettings: SystemSettings = {
   site_name: 'Portal Educacional',
   site_title: 'Portal Educacional - Sistema de Gestão',
   site_url: 'http://localhost:3000',
-  site_description: 'Sistema completo de gestão educacional.',
+  site_description: 'Sistema completo de gestão educacional',
   maintenance_mode: false,
   logo_light: '/logo-light.png',
   logo_dark: '/logo-dark.png',
@@ -74,23 +91,16 @@ const defaultSettings: SystemSettings = {
   notifications_email_enabled: false,
   notifications_sms_enabled: false,
   notifications_push_enabled: false,
-  notifications_digest_frequency: 'daily'
+  notifications_digest_frequency: 'daily',
 };
 
-// Cache em memória
-let cachedSettings: SystemSettings | null = null;
-let lastCacheUpdate = 0;
-const CACHE_TTL = 5 * 60 * 1000; // 5 minutos
-
-// Função para converter valor baseado no tipo
-function parseValue(value: string, type: string): any {
-  if (!value) return null;
-  
+// Função para converter valor do banco para tipo correto
+function convertValue(value: string, type: string): any {
   switch (type) {
     case 'boolean':
-      return value === 'true' || value === '1';
+      return value === 'true';
     case 'number':
-      return Number(value);
+      return parseInt(value);
     case 'json':
       try {
         return JSON.parse(value);
@@ -102,129 +112,78 @@ function parseValue(value: string, type: string): any {
   }
 }
 
-// Função para converter valor para string
-function stringifyValue(value: any): string {
-  if (value === null || value === undefined) return '';
-  if (typeof value === 'object') return JSON.stringify(value);
+// Função para converter valor para string do banco
+function convertToString(value: any): string {
+  if (typeof value === 'boolean') {
+    return value ? 'true' : 'false';
+  }
+  if (typeof value === 'number') {
+    return value.toString();
+  }
+  if (typeof value === 'object') {
+    return JSON.stringify(value);
+  }
   return String(value);
 }
 
-// Carregar configurações do banco de dados
+// Carregar configurações do sistema
 export async function loadSystemSettings(): Promise<SystemSettings> {
   try {
-    // Verificar cache
-    const now = Date.now();
-    if (cachedSettings && (now - lastCacheUpdate) < CACHE_TTL) {
-      return cachedSettings;
-    }
-
-    console.log('🔄 Carregando configurações do banco de dados...');
+    console.log('🔄 Carregando configurações do sistema do banco...');
     
-    // Buscar configurações do banco
-    const dbSettings = await connection('system_settings').select('*');
+    const settings = await connection('system_settings').select('key', 'value', 'type');
     
-    // Converter para objeto
-    const settings: any = { ...defaultSettings };
+    const result: any = { ...defaultSettings };
     
-    for (const setting of dbSettings) {
-      const key = setting.key;
-      const value = parseValue(setting.value, setting.type);
-      
-      if (key in settings) {
-        settings[key] = value;
-      }
-    }
-
-    // Atualizar cache
-    cachedSettings = settings;
-    lastCacheUpdate = now;
-    
-    console.log('✅ Configurações carregadas do banco de dados');
-    return settings;
-    
-  } catch (error) {
-    console.error('❌ Erro ao carregar configurações do banco:', error);
-    
-    // Retornar configurações padrão em caso de erro
-    return defaultSettings;
-  }
-}
-
-// Salvar configurações no banco de dados
-export async function saveSystemSettings(updates: Partial<SystemSettings>): Promise<boolean> {
-  try {
-    console.log('💾 Salvando configurações no banco de dados...');
-    
-    // Usar transação para garantir consistência
-    await connection.transaction(async (trx) => {
-      for (const [key, value] of Object.entries(updates)) {
-        const stringValue = stringifyValue(value);
-        
-        // Verificar se a configuração já existe
-        const existing = await trx('system_settings')
-          .where('key', key)
-          .first();
-        
-        if (existing) {
-          // Atualizar configuração existente
-          await trx('system_settings')
-            .where('key', key)
-            .update({
-              value: stringValue,
-              updated_at: new Date()
-            });
-        } else {
-          // Criar nova configuração
-          await trx('system_settings').insert({
-            key,
-            value: stringValue,
-            type: typeof value === 'boolean' ? 'boolean' : 
-                  typeof value === 'number' ? 'number' : 'string',
-            category: getCategoryForKey(key),
-            is_public: isPublicKey(key),
-            created_at: new Date(),
-            updated_at: new Date()
-          });
-        }
+    settings.forEach((setting: any) => {
+      if (setting.key in result) {
+        result[setting.key] = convertValue(setting.value, setting.type);
       }
     });
     
-    // Limpar cache para forçar recarregamento
-    cachedSettings = null;
-    
-    console.log('✅ Configurações salvas no banco de dados');
-    return true;
-    
+    console.log('✅ Configurações do sistema carregadas:', Object.keys(result).length, 'configurações');
+    return result as SystemSettings;
   } catch (error) {
-    console.error('❌ Erro ao salvar configurações no banco:', error);
-    return false;
+    console.error('❌ Erro ao carregar configurações do sistema:', error);
+    return defaultSettings;
   }
 }
 
 // Carregar apenas configurações públicas
 export async function loadPublicSettings(): Promise<PublicSettings> {
   try {
-    const allSettings = await loadSystemSettings();
+    console.log('🔄 Carregando configurações públicas do banco...');
     
-    return {
-      site_name: allSettings.site_name,
-      site_title: allSettings.site_title,
-      site_url: allSettings.site_url,
-      site_description: allSettings.site_description,
-      maintenance_mode: allSettings.maintenance_mode,
-      logo_light: allSettings.logo_light,
-      logo_dark: allSettings.logo_dark,
-      background_type: allSettings.background_type,
-      main_background: allSettings.main_background,
-      primary_color: allSettings.primary_color,
-      secondary_color: allSettings.secondary_color,
-    };
+    const settings = await connection('system_settings')
+      .select('key', 'value', 'type')
+      .where('is_public', true);
     
+    const result: any = {};
+    
+    // Adicionar configurações padrão públicas
+    const publicKeys: (keyof PublicSettings)[] = [
+      'site_name', 'site_title', 'site_url', 'site_description', 'maintenance_mode',
+      'logo_light', 'logo_dark', 'background_type', 'main_background', 
+      'primary_color', 'secondary_color'
+    ];
+    
+    publicKeys.forEach(key => {
+      result[key] = defaultSettings[key];
+    });
+    
+    // Sobrescrever com valores do banco
+    settings.forEach((setting: any) => {
+      if (setting.key in result) {
+        result[setting.key] = convertValue(setting.value, setting.type);
+      }
+    });
+    
+    console.log('✅ Configurações públicas carregadas:', Object.keys(result).length, 'configurações');
+    return result as PublicSettings;
   } catch (error) {
     console.error('❌ Erro ao carregar configurações públicas:', error);
-    
     // Retornar configurações padrão públicas
-    return {
+    const publicDefaults: PublicSettings = {
       site_name: defaultSettings.site_name,
       site_title: defaultSettings.site_title,
       site_url: defaultSettings.site_url,
@@ -237,72 +196,83 @@ export async function loadPublicSettings(): Promise<PublicSettings> {
       primary_color: defaultSettings.primary_color,
       secondary_color: defaultSettings.secondary_color,
     };
+    return publicDefaults;
   }
 }
 
-// Resetar configurações para padrão
-export async function resetSystemSettings(): Promise<boolean> {
+// Salvar configurações do sistema
+export async function saveSystemSettings(settings: Partial<SystemSettings>): Promise<boolean> {
   try {
-    console.log('🔄 Resetando configurações para padrão...');
+    console.log('💾 Salvando configurações do sistema...');
     
-    await connection.transaction(async (trx) => {
-      // Deletar todas as configurações existentes
-      await trx('system_settings').del();
+    const settingsToSave = Object.entries(settings);
+    console.log('📝 Configurações a salvar:', settingsToSave.length);
+    
+    for (const [key, value] of settingsToSave) {
+      const stringValue = convertToString(value);
       
-      // Inserir configurações padrão
-      const settingsToInsert = [];
-      for (const [key, value] of Object.entries(defaultSettings)) {
-        settingsToInsert.push({
+      // Verificar se a configuração já existe
+      const existingSetting = await connection('system_settings')
+        .where('key', key)
+        .first();
+      
+      if (existingSetting) {
+        // Atualizar configuração existente
+        await connection('system_settings')
+          .where('key', key)
+          .update({
+            value: stringValue,
+            updated_at: new Date()
+          });
+        console.log(`✅ Configuração atualizada: ${key}`);
+      } else {
+        // Inserir nova configuração
+        const type = typeof value === 'boolean' ? 'boolean' : 
+                    typeof value === 'number' ? 'number' : 'string';
+        
+        await connection('system_settings').insert({
           key,
-          value: stringifyValue(value),
-          type: typeof value === 'boolean' ? 'boolean' : 
-                typeof value === 'number' ? 'number' : 'string',
-          category: getCategoryForKey(key),
-          is_public: isPublicKey(key),
+          value: stringValue,
+          type,
+          category: 'general',
+          is_public: ['site_name', 'site_title', 'site_url', 'site_description', 
+                     'logo_light', 'logo_dark', 'background_type', 'main_background',
+                     'primary_color', 'secondary_color'].includes(key),
           created_at: new Date(),
           updated_at: new Date()
         });
+        console.log(`✅ Nova configuração criada: ${key}`);
       }
-      
-      await trx('system_settings').insert(settingsToInsert);
-    });
+    }
     
-    // Limpar cache
-    cachedSettings = null;
-    
-    console.log('✅ Configurações resetadas para padrão');
+    console.log('✅ Configurações do sistema salvas com sucesso!');
     return true;
-    
   } catch (error) {
-    console.error('❌ Erro ao resetar configurações:', error);
+    console.error('❌ Erro ao salvar configurações do sistema:', error);
     return false;
   }
 }
 
-// Função auxiliar para determinar categoria da chave
-function getCategoryForKey(key: string): string {
-  if (key.startsWith('aws_')) return 'aws';
-  if (key.startsWith('email_')) return 'email';
-  if (key.startsWith('notifications_')) return 'notifications';
-  if (key.startsWith('security_')) return 'security';
-  if (['logo_light', 'logo_dark', 'background_type', 'main_background', 'primary_color', 'secondary_color'].includes(key)) {
-    return 'appearance';
+// Resetar configurações para o padrão
+export async function resetSystemSettings(): Promise<boolean> {
+  try {
+    console.log('🔄 Resetando configurações do sistema...');
+    
+    for (const [key, value] of Object.entries(defaultSettings)) {
+      const stringValue = convertToString(value);
+      
+      await connection('system_settings')
+        .where('key', key)
+        .update({
+          value: stringValue,
+          updated_at: new Date()
+        });
+    }
+    
+    console.log('✅ Configurações do sistema resetadas para o padrão!');
+    return true;
+  } catch (error) {
+    console.error('❌ Erro ao resetar configurações do sistema:', error);
+    return false;
   }
-  return 'general';
-}
-
-// Função auxiliar para determinar se uma chave é pública
-function isPublicKey(key: string): boolean {
-  const publicKeys = [
-    'site_name', 'site_title', 'site_url', 'site_description',
-    'logo_light', 'logo_dark', 'background_type', 'main_background',
-    'primary_color', 'secondary_color'
-  ];
-  return publicKeys.includes(key);
-}
-
-// Limpar cache (útil para testes)
-export function clearSettingsCache(): void {
-  cachedSettings = null;
-  lastCacheUpdate = 0;
 } 

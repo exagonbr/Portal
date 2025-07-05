@@ -26,6 +26,12 @@ const config: Knex.Config = {
     directory: '../database/seeds',
   },
   acquireConnectionTimeout: 60000,
+  // Configuração específica para evitar carregar drivers desnecessários
+  useNullAsDefault: false,
+  // Forçar apenas PostgreSQL
+  wrapIdentifier: (value: string, origImpl: (value: string) => string) => {
+    return origImpl(value);
+  },
 };
 
 // Instância do Knex

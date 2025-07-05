@@ -49,13 +49,17 @@ const nextConfig: NextConfig = {
 
   // Configurações experimentais
   experimental: {
-    optimizePackageImports: [
-      'react-hot-toast', 
-      'lucide-react', 
-      '@radix-ui/react-dialog',
-      '@radix-ui/react-dropdown-menu',
-      'date-fns',
+    serverComponentsExternalPackages: [
+      'oracledb',
+      'mysql',
+      'mysql2', 
+      'sqlite3',
+      'better-sqlite3',
+      'tedious',
+      'pg-native',
+      'sharp'
     ],
+    optimizePackageImports: ['knex'],
     webpackBuildWorker: true,
     workerThreads: true,
     cpus: 10,
@@ -240,9 +244,16 @@ const nextConfig: NextConfig = {
 
     // Configurações específicas para servidor
     if (isServer) {
+      // Marcar drivers de banco como externos para evitar bundling
       config.externals.push(
-        'oracledb', 'mysql', 'mysql2', 'sqlite3', 'better-sqlite3', 
-        'tedious', 'pg', 'pg-native', 'sharp'
+        'oracledb', 
+        'mysql', 
+        'mysql2', 
+        'sqlite3', 
+        'better-sqlite3', 
+        'tedious', 
+        'pg-native', 
+        'sharp'
       );
     } else {
       // Fallbacks para o cliente
@@ -279,6 +290,27 @@ const nextConfig: NextConfig = {
       }),
       new webpack.IgnorePlugin({
         resourceRegExp: /cloudflare:sockets/,
+      }),
+      // Ignorar drivers de banco específicos que não são usados
+      new webpack.IgnorePlugin({
+        resourceRegExp: /^oracledb$/,
+        contextRegExp: /knex/,
+      }),
+      new webpack.IgnorePlugin({
+        resourceRegExp: /^sqlite3$/,
+        contextRegExp: /knex/,
+      }),
+      new webpack.IgnorePlugin({
+        resourceRegExp: /^better-sqlite3$/,
+        contextRegExp: /knex/,
+      }),
+      new webpack.IgnorePlugin({
+        resourceRegExp: /^tedious$/,
+        contextRegExp: /knex/,
+      }),
+      new webpack.IgnorePlugin({
+        resourceRegExp: /^mysql$/,
+        contextRegExp: /knex/,
       })
     );
 
