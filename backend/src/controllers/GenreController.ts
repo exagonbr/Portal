@@ -1,24 +1,44 @@
 import { Request, Response } from 'express';
+import { GenreRepository } from '../repositories/GenreRepository';
+import { BaseController } from './BaseController';
+import { Genre } from '../entities/Genre';
 
-class GenreController {
-    async getAll(req: Request, res: Response) {
-        res.json({ message: `getAll genres with query ${JSON.stringify(req.query)}` });
+const genreRepository = new GenreRepository();
+
+class GenreController extends BaseController<Genre> {
+    constructor() {
+        super(genreRepository);
     }
 
-    async getById(req: Request, res: Response) {
-        res.json({ message: `get genre by id ${req.params.id}` });
+    async search(req: Request, res: Response) {
+        try {
+            const { q } = req.query;
+            if (!q) {
+                return res.status(400).json({ success: false, message: 'Query parameter "q" is required' });
+            }
+            
+            const genres = await genreRepository.findByName(q as string);
+            return res.status(200).json({ success: true, data: genres });
+        } catch (error) {
+            console.error(`Error in search genres: ${error}`);
+            return res.status(500).json({ success: false, message: 'Internal Server Error' });
+        }
     }
 
-    async create(req: Request, res: Response) {
-        res.status(201).json({ message: 'create genre', data: req.body });
-    }
-
-    async update(req: Request, res: Response) {
-        res.json({ message: `update genre ${req.params.id}`, data: req.body });
-    }
-
-    async delete(req: Request, res: Response) {
-        res.status(204).send();
+    async findByApiId(req: Request, res: Response) {
+        try {
+            const { apiId } = req.params;
+            const genre = await genreRepository.findByApiId(parseInt(apiId));
+            
+            if (!genre) {
+                return res.status(404).json({ success: false, message: 'Genre not found' });
+            }
+            
+            return res.status(200).json({ success: true, data: genre });
+        } catch (error) {
+            console.error(`Error in findByApiId: ${error}`);
+            return res.status(500).json({ success: false, message: 'Internal Server Error' });
+        }
     }
 }
 

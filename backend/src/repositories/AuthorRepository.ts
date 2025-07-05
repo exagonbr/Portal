@@ -1,24 +1,37 @@
 import { BaseRepository } from './BaseRepository';
+import { Author } from '../entities/Author';
 
-// Interface para desacoplar
-export interface Author {
-    id: string;
-    name: string;
-    description?: string;
-    email?: string;
-    is_active: boolean;
-    created_at: Date;
-    updated_at: Date;
+export interface CreateAuthorData {
+  name: string;
+  description: string;
+  email?: string;
+  isActive?: boolean;
 }
+
+export interface UpdateAuthorData extends Partial<CreateAuthorData> {}
 
 export class AuthorRepository extends BaseRepository<Author> {
   constructor() {
-    super('authors');
+    super('author');
   }
 
   async toggleStatus(id: string): Promise<Author | null> {
     const author = await this.findById(id);
     if (!author) return null;
-    return this.update(id, { is_active: !author.is_active } as Partial<Author>);
+    
+    const updatedAuthor = await this.update(id, { isActive: !author.isActive });
+    return updatedAuthor;
+  }
+
+  async findByName(name: string): Promise<Author[]> {
+    return this.db(this.tableName)
+      .where('name', 'ilike', `%${name}%`)
+      .andWhere('is_active', true);
+  }
+
+  async findActive(): Promise<Author[]> {
+    return this.db(this.tableName)
+      .where('is_active', true)
+      .orderBy('name', 'asc');
   }
 }

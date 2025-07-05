@@ -281,28 +281,171 @@ export function LoginForm() {
             borderColor: `${theme.colors.primary.DEFAULT}30`
           }}
         >
-          <h3 className="text-xs font-medium mb-2" style={{ color: theme.colors.text.primary }}>
+          <h3 className="text-xs font-medium mb-3" style={{ color: theme.colors.text.primary }}>
             Credenciais de Demonstração:
           </h3>
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-1 text-xs leading-relaxed" style={{ color: theme.colors.text.secondary }}>
-            <p className="truncate hover:text-clip hover:overflow-visible hover:whitespace-normal" title="admin@sabercon.edu.br / password">
-              <strong>Admin:</strong> admin@sabercon.edu.br / password
-            </p>
-            <p className="truncate hover:text-clip hover:overflow-visible hover:whitespace-normal" title="gestor@sabercon.edu.br / password">
-              <strong>Gestor:</strong> gestor@sabercon.edu.br / password
-            </p>
-            <p className="truncate hover:text-clip hover:overflow-visible hover:whitespace-normal" title="coordenador@sabercon.edu.br / password">
-              <strong>Coordenador:</strong> coordenador@sabercon.edu.br / password
-            </p>
-            <p className="truncate hover:text-clip hover:overflow-visible hover:whitespace-normal" title="professor@sabercon.edu.br / password">
-              <strong>Professor:</strong> professor@sabercon.edu.br / password
-            </p>
-            <p className="truncate hover:text-clip hover:overflow-visible hover:whitespace-normal" title="julia.c@ifsp.com / password">
-              <strong>Aluna:</strong> julia.c@ifsp.com / password
-            </p>
-            <p className="truncate hover:text-clip hover:overflow-visible hover:whitespace-normal" title="renato@gmail.com / password">
-              <strong>Responsável:</strong> renato@gmail.com / password
-            </p>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
+            <button
+              type="button"
+              onClick={() => {
+                setEmail('admin@sabercon.edu.br');
+                setPassword('password');
+              }}
+              className="flex items-center justify-between p-2 rounded-md border transition-all duration-200 hover:shadow-sm active:scale-95"
+              style={{
+                backgroundColor: theme.colors.background.primary,
+                borderColor: theme.colors.border.light,
+                color: theme.colors.text.secondary
+              }}
+              title="Clique para preencher automaticamente"
+            >
+              <div className="text-left">
+                <div className="text-xs font-medium" style={{ color: theme.colors.text.primary }}>
+                  Admin
+                </div>
+                <div className="text-xs opacity-75">
+                  admin@sabercon.edu.br
+                </div>
+              </div>
+              <span className="material-symbols-outlined text-sm opacity-60">
+                login
+              </span>
+            </button>
+
+            <button
+              type="button"
+              onClick={() => {
+                setEmail('gestor@sabercon.edu.br');
+                setPassword('password');
+              }}
+              className="flex items-center justify-between p-2 rounded-md border transition-all duration-200 hover:shadow-sm active:scale-95"
+              style={{
+                backgroundColor: theme.colors.background.primary,
+                borderColor: theme.colors.border.light,
+                color: theme.colors.text.secondary
+              }}
+              title="Clique para preencher automaticamente"
+            >
+              <div className="text-left">
+                <div className="text-xs font-medium" style={{ color: theme.colors.text.primary }}>
+                  Gestor
+                </div>
+                <div className="text-xs opacity-75">
+                  gestor@sabercon.edu.br
+                </div>
+              </div>
+              <span className="material-symbols-outlined text-sm opacity-60">
+                login
+              </span>
+            </button>
+
+            <button
+              type="button"
+              onClick={() => {
+                setEmail('coordenador@sabercon.edu.br');
+                setPassword('password');
+              }}
+              className="flex items-center justify-between p-2 rounded-md border transition-all duration-200 hover:shadow-sm active:scale-95"
+              style={{
+                backgroundColor: theme.colors.background.primary,
+                borderColor: theme.colors.border.light,
+                color: theme.colors.text.secondary
+              }}
+              title="Clique para preencher automaticamente"
+            >
+              <div className="text-left">
+                <div className="text-xs font-medium" style={{ color: theme.colors.text.primary }}>
+                  Coordenador
+                </div>
+                <div className="text-xs opacity-75">
+                  coordenador@sabercon.edu.br
+                </div>
+              </div>
+              <span className="material-symbols-outlined text-sm opacity-60">
+                login
+              </span>
+            </button>
+
+            <button
+              type="button"
+              onClick={() => {
+                setEmail('professor@sabercon.edu.br');
+                setPassword('password');
+              }}
+              className="flex items-center justify-between p-2 rounded-md border transition-all duration-200 hover:shadow-sm active:scale-95"
+              style={{
+                backgroundColor: theme.colors.background.primary,
+                borderColor: theme.colors.border.light,
+                color: theme.colors.text.secondary
+              }}
+              title="Clique para preencher automaticamente"
+            >
+              <div className="text-left">
+                <div className="text-xs font-medium" style={{ color: theme.colors.text.primary }}>
+                  Professor
+                </div>
+                <div className="text-xs opacity-75">
+                  professor@sabercon.edu.br
+                </div>
+              </div>
+              <span className="material-symbols-outlined text-sm opacity-60">
+                login
+              </span>
+            </button>
+
+            <button
+              type="button"
+              onClick={() => {
+                setEmail('julia.c@ifsp.com');
+                setPassword('password');
+              }}
+              className="flex items-center justify-between p-2 rounded-md border transition-all duration-200 hover:shadow-sm active:scale-95"
+              style={{
+                backgroundColor: theme.colors.background.primary,
+                borderColor: theme.colors.border.light,
+                color: theme.colors.text.secondary
+              }}
+              title="Clique para preencher automaticamente"
+            >
+              <div className="text-left">
+                <div className="text-xs font-medium" style={{ color: theme.colors.text.primary }}>
+                  Aluna
+                </div>
+                <div className="text-xs opacity-75">
+                  julia.c@ifsp.com
+                </div>
+              </div>
+              <span className="material-symbols-outlined text-sm opacity-60">
+                login
+              </span>
+            </button>
+
+            <button
+              type="button"
+              onClick={() => {
+                setEmail('renato@gmail.com');
+                setPassword('password');
+              }}
+              className="flex items-center justify-between p-2 rounded-md border transition-all duration-200 hover:shadow-sm active:scale-95"
+              style={{
+                backgroundColor: theme.colors.background.primary,
+                borderColor: theme.colors.border.light,
+                color: theme.colors.text.secondary
+              }}
+              title="Clique para preencher automaticamente"
+            >
+              <div className="text-left">
+                <div className="text-xs font-medium" style={{ color: theme.colors.text.primary }}>
+                  Responsável
+                </div>
+                <div className="text-xs opacity-75">
+                  renato@gmail.com
+                </div>
+              </div>
+              <span className="material-symbols-outlined text-sm opacity-60">
+                login
+              </span>
+            </button>
           </div>
         </MotionDiv>
       </form>

@@ -1,24 +1,70 @@
 import { Request, Response } from 'express';
+import { TagRepository } from '../repositories/TagRepository';
+import { BaseController } from './BaseController';
+import { Tag } from '../entities/Tag';
 
-class TagController {
-    async getAll(req: Request, res: Response) {
-        res.json({ message: `getAll tags with query ${JSON.stringify(req.query)}` });
+const tagRepository = new TagRepository();
+
+class TagController extends BaseController<Tag> {
+    constructor() {
+        super(tagRepository);
     }
 
-    async getById(req: Request, res: Response) {
-        res.json({ message: `get tag by id ${req.params.id}` });
+    async search(req: Request, res: Response) {
+        try {
+            const { q } = req.query;
+            if (!q) {
+                return res.status(400).json({ success: false, message: 'Query parameter "q" is required' });
+            }
+            
+            const tags = await tagRepository.findByName(q as string);
+            return res.status(200).json({ success: true, data: tags });
+        } catch (error) {
+            console.error(`Error in search tags: ${error}`);
+            return res.status(500).json({ success: false, message: 'Internal Server Error' });
+        }
     }
 
-    async create(req: Request, res: Response) {
-        res.status(201).json({ message: 'create tag', data: req.body });
+    async getActive(req: Request, res: Response) {
+        try {
+            const tags = await tagRepository.findActive();
+            return res.status(200).json({ success: true, data: tags });
+        } catch (error) {
+            console.error(`Error in getActive: ${error}`);
+            return res.status(500).json({ success: false, message: 'Internal Server Error' });
+        }
     }
 
-    async update(req: Request, res: Response) {
-        res.json({ message: `update tag ${req.params.id}`, data: req.body });
+    async findByExactName(req: Request, res: Response) {
+        try {
+            const { name } = req.params;
+            const tag = await tagRepository.findByExactName(name);
+            
+            if (!tag) {
+                return res.status(404).json({ success: false, message: 'Tag not found' });
+            }
+            
+            return res.status(200).json({ success: true, data: tag });
+        } catch (error) {
+            console.error(`Error in findByExactName: ${error}`);
+            return res.status(500).json({ success: false, message: 'Internal Server Error' });
+        }
     }
 
-    async delete(req: Request, res: Response) {
-        res.status(204).send();
+    async softDelete(req: Request, res: Response) {
+        try {
+            const { id } = req.params;
+            const success = await tagRepository.softDelete(id);
+            
+            if (!success) {
+                return res.status(404).json({ success: false, message: 'Tag not found' });
+            }
+            
+            return res.status(200).json({ success: true, message: 'Tag deleted successfully' });
+        } catch (error) {
+            console.error(`Error in softDelete: ${error}`);
+            return res.status(500).json({ success: false, message: 'Internal Server Error' });
+        }
     }
 }
 

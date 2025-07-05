@@ -1,29 +1,52 @@
 import { Request, Response } from 'express';
+import { PublisherRepository } from '../repositories/PublisherRepository';
+import { BaseController } from './BaseController';
+import { Publisher } from '../entities/Publisher';
 
-class PublisherController {
-    async getAll(req: Request, res: Response) {
-        res.json({ message: `getAll publishers with query ${JSON.stringify(req.query)}` });
-    }
+const publisherRepository = new PublisherRepository();
 
-    async getById(req: Request, res: Response) {
-        res.json({ message: `get publisher by id ${req.params.id}` });
-    }
-
-    async create(req: Request, res: Response) {
-        res.status(201).json({ message: 'create publisher', data: req.body });
-    }
-
-    async update(req: Request, res: Response) {
-        res.json({ message: `update publisher ${req.params.id}`, data: req.body });
-    }
-
-    async delete(req: Request, res: Response) {
-        res.status(204).send();
+class PublisherController extends BaseController<Publisher> {
+    constructor() {
+        super(publisherRepository);
     }
 
     async toggleStatus(req: Request, res: Response) {
-        const { id } = req.params;
-        res.json({ message: `toggle status for publisher ${id}`, data: req.body });
+        try {
+            const { id } = req.params;
+            const publisher = await publisherRepository.toggleStatus(id);
+            if (!publisher) {
+                return res.status(404).json({ success: false, message: 'Publisher not found' });
+            }
+            return res.status(200).json({ success: true, data: publisher });
+        } catch (error) {
+            console.error(`Error in toggleStatus: ${error}`);
+            return res.status(500).json({ success: false, message: 'Internal Server Error' });
+        }
+    }
+
+    async search(req: Request, res: Response) {
+        try {
+            const { q } = req.query;
+            if (!q) {
+                return res.status(400).json({ success: false, message: 'Query parameter "q" is required' });
+            }
+            
+            const publishers = await publisherRepository.findByName(q as string);
+            return res.status(200).json({ success: true, data: publishers });
+        } catch (error) {
+            console.error(`Error in search publishers: ${error}`);
+            return res.status(500).json({ success: false, message: 'Internal Server Error' });
+        }
+    }
+
+    async getActive(req: Request, res: Response) {
+        try {
+            const publishers = await publisherRepository.findActive();
+            return res.status(200).json({ success: true, data: publishers });
+        } catch (error) {
+            console.error(`Error in getActive: ${error}`);
+            return res.status(500).json({ success: false, message: 'Internal Server Error' });
+        }
     }
 }
 

@@ -1,30 +1,53 @@
 import { Request, Response } from 'express';
+import { TargetAudienceRepository } from '../repositories/TargetAudienceRepository';
+import { BaseController } from './BaseController';
+import { TargetAudience } from '../entities/TargetAudience';
 
-class TargetAudienceController {
-    async getAll(req: Request, res: Response) {
-        res.json({ message: `getAll target audiences with query ${JSON.stringify(req.query)}` });
-    }
+const targetAudienceRepository = new TargetAudienceRepository();
 
-    async getById(req: Request, res: Response) {
-        res.json({ message: `get target audience by id ${req.params.id}` });
-    }
+class TargetAudienceController extends BaseController<TargetAudience> {
+  constructor() {
+    super(targetAudienceRepository);
+  }
 
-    async create(req: Request, res: Response) {
-        res.status(201).json({ message: 'create target audience', data: req.body });
+  async toggleStatus(req: Request, res: Response) {
+    try {
+      const { id } = req.params;
+      const targetAudience = await targetAudienceRepository.toggleStatus(id);
+      if (!targetAudience) {
+        return res.status(404).json({ success: false, message: 'Target Audience not found' });
+      }
+      return res.status(200).json({ success: true, data: targetAudience });
+    } catch (error) {
+      console.error(`Error in toggleStatus: ${error}`);
+      return res.status(500).json({ success: false, message: 'Internal Server Error' });
     }
+  }
 
-    async update(req: Request, res: Response) {
-        res.json({ message: `update target audience ${req.params.id}`, data: req.body });
+  async search(req: Request, res: Response) {
+    try {
+      const { q } = req.query;
+      if (!q) {
+        return res.status(400).json({ success: false, message: 'Query parameter "q" is required' });
+      }
+      
+      const targetAudiences = await targetAudienceRepository.findByName(q as string);
+      return res.status(200).json({ success: true, data: targetAudiences });
+    } catch (error) {
+      console.error(`Error in search target audiences: ${error}`);
+      return res.status(500).json({ success: false, message: 'Internal Server Error' });
     }
+  }
 
-    async delete(req: Request, res: Response) {
-        res.status(204).send();
+  async getActive(req: Request, res: Response) {
+    try {
+      const targetAudiences = await targetAudienceRepository.findActive();
+      return res.status(200).json({ success: true, data: targetAudiences });
+    } catch (error) {
+      console.error(`Error in getActive: ${error}`);
+      return res.status(500).json({ success: false, message: 'Internal Server Error' });
     }
-
-    async toggleStatus(req: Request, res: Response) {
-        const { id } = req.params;
-        res.json({ message: `toggle status for target audience ${id}`, data: req.body });
-    }
+  }
 }
 
 export default new TargetAudienceController();

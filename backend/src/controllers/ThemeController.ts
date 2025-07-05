@@ -1,29 +1,52 @@
 import { Request, Response } from 'express';
+import { ThemeRepository } from '../repositories/ThemeRepository';
+import { BaseController } from './BaseController';
+import { Theme } from '../entities/Theme';
 
-class ThemeController {
-    async getAll(req: Request, res: Response) {
-        res.json({ message: `getAll themes with query ${JSON.stringify(req.query)}` });
-    }
+const themeRepository = new ThemeRepository();
 
-    async getById(req: Request, res: Response) {
-        res.json({ message: `get theme by id ${req.params.id}` });
-    }
-
-    async create(req: Request, res: Response) {
-        res.status(201).json({ message: 'create theme', data: req.body });
-    }
-
-    async update(req: Request, res: Response) {
-        res.json({ message: `update theme ${req.params.id}`, data: req.body });
-    }
-
-    async delete(req: Request, res: Response) {
-        res.status(204).send();
+class ThemeController extends BaseController<Theme> {
+    constructor() {
+        super(themeRepository);
     }
 
     async toggleStatus(req: Request, res: Response) {
-        const { id } = req.params;
-        res.json({ message: `toggle status for theme ${id}`, data: req.body });
+        try {
+            const { id } = req.params;
+            const theme = await themeRepository.toggleStatus(id);
+            if (!theme) {
+                return res.status(404).json({ success: false, message: 'Theme not found' });
+            }
+            return res.status(200).json({ success: true, data: theme });
+        } catch (error) {
+            console.error(`Error in toggleStatus: ${error}`);
+            return res.status(500).json({ success: false, message: 'Internal Server Error' });
+        }
+    }
+
+    async search(req: Request, res: Response) {
+        try {
+            const { q } = req.query;
+            if (!q) {
+                return res.status(400).json({ success: false, message: 'Query parameter "q" is required' });
+            }
+            
+            const themes = await themeRepository.findByName(q as string);
+            return res.status(200).json({ success: true, data: themes });
+        } catch (error) {
+            console.error(`Error in search themes: ${error}`);
+            return res.status(500).json({ success: false, message: 'Internal Server Error' });
+        }
+    }
+
+    async getActive(req: Request, res: Response) {
+        try {
+            const themes = await themeRepository.findActive();
+            return res.status(200).json({ success: true, data: themes });
+        } catch (error) {
+            console.error(`Error in getActive: ${error}`);
+            return res.status(500).json({ success: false, message: 'Internal Server Error' });
+        }
     }
 }
 

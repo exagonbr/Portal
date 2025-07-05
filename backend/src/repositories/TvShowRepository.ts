@@ -24,38 +24,38 @@ export interface TvShowListResult {
 
 export class TvShowRepository extends BaseRepository<TvShow> {
   constructor() {
-    super('tv_shows'); // Usando a tabela tv_shows (plural)
+    super('tv_show'); // Corrigido: usar tv_show (singular)
   }
 
-  // Mapear dados da tabela tv_shows para o formato esperado pela API
+  // Mapear dados da tabela tv_show para o formato esperado pela API
   private mapToResponseDto(tvShow: any): TvShowResponseDto {
     return {
       id: tvShow.id?.toString() || '',
       version: tvShow.version || 1,
       api_id: tvShow.api_id || undefined,
-      backdrop_image_id: tvShow.backdrop_image_id || undefined,
-      backdrop_path: tvShow.poster_url || undefined, // Usando poster_url como backdrop
-      contract_term_end: tvShow.last_air_date || new Date().toISOString(),
-      date_created: tvShow.created_at || new Date().toISOString(),
-      deleted: !tvShow.is_active || false,
+      backdrop_image_id: tvShow.backdrop_image_id?.toString() || undefined,
+      backdrop_path: tvShow.backdrop_path || undefined,
+      contract_term_end: tvShow.contract_term_end || new Date().toISOString(),
+      date_created: tvShow.date_created || new Date().toISOString(),
+      deleted: tvShow.deleted || false,
       first_air_date: tvShow.first_air_date || new Date().toISOString(),
       imdb_id: tvShow.imdb_id || undefined,
-      last_updated: tvShow.updated_at || new Date().toISOString(),
-      manual_input: false,
-      manual_support_id: tvShow.manual_support_id || undefined,
+      last_updated: tvShow.last_updated || new Date().toISOString(),
+      manual_input: tvShow.manual_input || false,
+      manual_support_id: tvShow.manual_support_id?.toString() || undefined,
       manual_support_path: tvShow.manual_support_path || undefined,
-      name: tvShow.title || tvShow.name || '',
-      original_language: 'pt-BR',
-      overview: tvShow.description || '',
-      popularity: tvShow.view_count || 0,
-      poster_image_id: tvShow.poster_image_id || undefined,
-      poster_path: tvShow.poster_url || undefined,
-      producer: 'Sabercon', // Valor padrão
-      vote_average: tvShow.rating || 0,
-      vote_count: tvShow.view_count || 0,
-      total_load: tvShow.episodes ? `${Math.floor(tvShow.episodes * 25 / 60)}h ${(tvShow.episodes * 25) % 60}m` : undefined,
-      created_at: tvShow.created_at || new Date().toISOString(),
-      updated_at: tvShow.updated_at || new Date().toISOString()
+      name: tvShow.name || '',
+      original_language: tvShow.original_language || 'pt-BR',
+      overview: tvShow.overview || '',
+      popularity: tvShow.popularity || 0,
+      poster_image_id: tvShow.poster_image_id?.toString() || undefined,
+      poster_path: tvShow.poster_path || undefined,
+      producer: tvShow.producer || 'SABERCON EDUCATIVA',
+      vote_average: tvShow.vote_average || 0,
+      vote_count: tvShow.vote_count || 0,
+      total_load: tvShow.total_load || undefined,
+      created_at: tvShow.date_created || new Date().toISOString(),
+      updated_at: tvShow.last_updated || new Date().toISOString()
     };
   }
 
@@ -63,34 +63,41 @@ export class TvShowRepository extends BaseRepository<TvShow> {
     const {
       page = 1,
       limit = 10,
-      sortBy = 'title',
+      sortBy = 'name', // Corrigido: usar 'name' em vez de 'title'
       sortOrder = 'asc',
       search,
       ...otherFilters
     } = filters;
 
     try {
+      // Corrigido: usar campos que realmente existem na tabela
       const query = this.db(this.tableName)
         .select('*')
-        .where('is_active', true)
+        .where(function() {
+          this.whereNull('deleted').orWhere('deleted', false);
+        })
         .timeout(20000); // 20 segundos timeout
       
       const countQuery = this.db(this.tableName)
         .count('* as total')
-        .where('is_active', true)
+        .where(function() {
+          this.whereNull('deleted').orWhere('deleted', false);
+        })
         .timeout(20000) // 20 segundos timeout
         .first();
 
       if (search) {
         query.where(builder => {
           builder
-            .where('title', 'ilike', `%${search}%`)
-            .orWhere('description', 'ilike', `%${search}%`);
+            .where('name', 'ilike', `%${search}%`)
+            .orWhere('overview', 'ilike', `%${search}%`)
+            .orWhere('producer', 'ilike', `%${search}%`);
         });
         countQuery.where(builder => {
           builder
-            .where('title', 'ilike', `%${search}%`)
-            .orWhere('description', 'ilike', `%${search}%`);
+            .where('name', 'ilike', `%${search}%`)
+            .orWhere('overview', 'ilike', `%${search}%`)
+            .orWhere('producer', 'ilike', `%${search}%`);
         });
       }
 
@@ -148,7 +155,9 @@ export class TvShowRepository extends BaseRepository<TvShow> {
       const tvShow = await this.db(this.tableName)
         .select('*')
         .where('id', id)
-        .where('is_active', true)
+        .where(function() {
+          this.whereNull('deleted').orWhere('deleted', false);
+        })
         .timeout(20000) // 20 segundos timeout
         .first();
 

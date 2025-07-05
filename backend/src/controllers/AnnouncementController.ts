@@ -1,5 +1,6 @@
 import { Request, Response } from 'express';
-import { AnnouncementRepository, Announcement } from '../repositories/AnnouncementRepository';
+import { AnnouncementRepository } from '../repositories/AnnouncementRepository';
+import { Announcement } from '../entities/Announcement';
 import { BaseController } from './BaseController';
 
 const announcementRepository = new AnnouncementRepository();
