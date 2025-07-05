@@ -109,7 +109,7 @@ async function checkVideoFileRelations() {
       const showVideos = await db('video')
         .select('*')
         .where('show_id', firstShow.id)
-        .whereNull('deleted')
+        .where('deleted', false)
         .orWhere('deleted', false)
         .orderBy('season_number')
         .orderBy('episode_number');

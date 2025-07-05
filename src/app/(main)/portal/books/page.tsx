@@ -643,8 +643,8 @@ export default function KoodoReaderPage() {
     <div className="flex-1 bg-gray-50 p-6">
       <div className="max-w-2xl mx-auto text-center">
         <div className="text-6xl mb-6">📚</div>
-        <h2 className="text-3xl font-bold text-gray-800 mb-2">Koodo Reader</h2>
-        <p className="text-gray-600 mb-8">Versão 1.6.6</p>
+        <h2 className="text-3xl font-bold text-gray-800 mb-2">Ex$4G Leitor - Portal de Livros</h2>
+        <p className="text-gray-600 mb-8">Versão 4.1.3</p>
         
         <div className="bg-white rounded-lg shadow-sm p-6 text-left">
           <p className="text-gray-700 mb-6">
@@ -662,10 +662,6 @@ export default function KoodoReaderPage() {
             <li>• Organização inteligente da biblioteca</li>
             <li>• Busca avançada e filtros</li>
           </ul>
-          
-          <p className="text-gray-600 mt-6 text-center">
-            Desenvolvido com ❤️ para amantes da leitura
-          </p>
         </div>
       </div>
     </div>
@@ -679,14 +675,6 @@ export default function KoodoReaderPage() {
           isSidebarCollapsed ? 'w-16' : 'w-64'
         }`}>
           <div className="p-4">
-            <div className="flex items-center space-x-3 mb-8">
-              <div className="w-8 h-8 bg-blue-600 rounded-lg flex items-center justify-center">
-                <span className="text-white font-bold">K</span>
-              </div>
-              {!isSidebarCollapsed && (
-                <h1 className="text-xl font-bold text-gray-800">Koodo Reader</h1>
-              )}
-            </div>
             
             <nav className="space-y-2">
               {updatedSidebarItems.map((item) => (

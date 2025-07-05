@@ -53,7 +53,7 @@ async function testWithConfig(config, index) {
     // Verificar TV Shows
     const tvShows = await db('tv_show')
       .select('id', 'name')
-      .whereNull('deleted')
+      .where('deleted', false)
       .limit(3);
     
     console.log(`📺 Encontrados ${tvShows.length} TV Shows:`);
@@ -68,7 +68,7 @@ async function testWithConfig(config, index) {
       const videos = await db('video')
         .select('id', 'title', 'name', 'season_number', 'episode_number')
         .where('show_id', firstShow.id)
-        .whereNull('deleted')
+        .where('deleted', false)
         .limit(5);
       
       console.log(`🎬 Encontrados ${videos.length} vídeos para "${firstShow.name}":`);

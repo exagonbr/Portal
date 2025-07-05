@@ -407,7 +407,7 @@ export class TvShowRepository extends BaseRepository<TvShow> {
           'f.size as file_size'
         )
         .where('v.show_id', tvShowId)
-        .where("deleted", false)
+        .where("v.deleted", false)
         .orderBy('v.season_number')
         .orderBy('v.episode_number')
         .timeout(20000);
@@ -483,7 +483,7 @@ export class TvShowRepository extends BaseRepository<TvShow> {
           'f.size as file_size'
         )
         .where('v.show_id', tvShowId)
-        .where("deleted", false)
+        .where("v.deleted", false)
         .orderBy('v.season_number')
         .orderBy('v.episode_number')
         .timeout(20000);
@@ -543,7 +543,7 @@ export class TvShowRepository extends BaseRepository<TvShow> {
         .join('video_file as vf', 'v.id', 'vf.video_files_id')
         .count('vf.id as total')
         .where('v.show_id', tvShowId)
-        .where("deleted", false)
+        .where("v.deleted", false)
         .timeout(20000)
         .first();
 

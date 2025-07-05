@@ -21,7 +21,7 @@ async function testVideoQuery() {
     console.log('📺 1. Verificando TV Shows...');
     const tvShows = await db('tv_show')
       .select('id', 'name', 'producer')
-      .whereNull('deleted')
+      .where('deleted', false)
       .limit(5);
     
     console.log(`✅ Encontrados ${tvShows.length} TV Shows:`);
@@ -37,7 +37,7 @@ async function testVideoQuery() {
       const videos = await db('video')
         .select('id', 'title', 'name', 'season_number', 'episode_number', 'show_id')
         .where('show_id', firstShow.id)
-        .whereNull('deleted')
+        .where('deleted', false)
         .limit(10);
       
       console.log(`✅ Encontrados ${videos.length} vídeos:`);

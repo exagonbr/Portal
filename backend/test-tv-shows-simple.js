@@ -11,7 +11,7 @@ async function testTvShowsDirectly() {
     console.log('📋 1. Testando query básica de TV Shows...');
     const tvShows = await knex('tv_show')
       .select('id', 'name', 'producer', 'total_load')
-      .whereNull('deleted')
+      .where('deleted', false)
       .limit(3);
     
     console.log(`✅ Encontrados ${tvShows.length} TV Shows:`);
@@ -43,7 +43,7 @@ async function testTvShowsDirectly() {
       const videoCount = await knex('video')
         .count('* as total')
         .where('show_id', firstShow.id)
-        .whereNull('deleted')
+        .where('deleted', false)
         .first();
       
       console.log(`✅ Vídeos encontrados: ${videoCount.total}`);
@@ -82,7 +82,7 @@ async function testTvShowsDirectly() {
           knex('video')
             .select('show_id')
             .count('* as video_count')
-            .whereNull('deleted')
+            .where('deleted', false)
             .groupBy('show_id')
             .as('video_counts'),
           'ts.id',

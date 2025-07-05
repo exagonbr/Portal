@@ -39,7 +39,7 @@ async function investigateData() {
       console.log(`Total de registros: ${totalCount.total}`);
       
       // 4. Verificar registros com deleted = null
-      const nullDeletedCount = await db('tv_show').whereNull('deleted').count('* as total').first();
+      const nullDeletedCount = await db('tv_show').where('deleted', false).count('* as total').first();
       console.log(`Registros com deleted = null: ${nullDeletedCount.total}`);
       
       // 5. Verificar registros com deleted = false
