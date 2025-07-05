@@ -8,6 +8,12 @@
  * @returns URL completa ou caminho relativo se não houver variável de ambiente
  */
 export function buildUrl(path: string): string {
+  // No lado do cliente, usar apenas caminhos relativos para evitar problemas de redirecionamento
+  if (typeof window !== 'undefined') {
+    return path;
+  }
+  
+  // No servidor, usar FRONTEND_URL se disponível
   const frontendUrl = process.env.FRONTEND_URL;
   
   // Se não há URL base ou o path já é uma URL completa, retorna o path original

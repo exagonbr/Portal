@@ -167,6 +167,18 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   const router = useRouter();
   const initializationRef = useRef(false);
   
+  // Debug: monitorar mudanças no estado do usuário
+  useEffect(() => {
+    console.log('AuthProvider: User state changed:', {
+      hasUser: !!user,
+      userId: user?.id,
+      userRole: user?.role,
+      userEmail: user?.email,
+      isLoading,
+      isClient
+    });
+  }, [user, isLoading, isClient]);
+  
   // Hook para limpeza de cache
 
   const isAuthenticated = !!user;
@@ -272,7 +284,8 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
       
       if (token) {
         console.log('AuthProvider: Token found, validating...');
-        setupUserFromToken(token);
+        const success = setupUserFromToken(token);
+        console.log('AuthProvider: Token validation result:', success);
       } else if (useTestToken) {
         console.log('AuthProvider: No token found, using test token');
         const testToken = createTestToken({
@@ -280,13 +293,15 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
           role: UserRole.SYSTEM_ADMIN,
         });
         setStoredToken(testToken);
-        setupUserFromToken(testToken);
+        const success = setupUserFromToken(testToken);
+        console.log('AuthProvider: Test token setup result:', success);
       } else {
         console.log('AuthProvider: No token found');
       }
     } catch (error) {
       console.error("Error during auth initialization:", error);
     } finally {
+      console.log('AuthProvider: Setting isLoading to false');
       setIsLoading(false);
     }
   }, [isClient, setupUserFromToken]);
@@ -333,7 +348,15 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
         
         // Redirecionar para o dashboard apropriado
         const targetPath = getDashboardPath(user.role);
-        router.push(buildDashboardUrl(user.role));
+        console.log('🎯 Redirecionando para dashboard:', targetPath);
+        
+        if (targetPath) {
+          // Usar caminho relativo para evitar problemas com URLs absolutas
+          router.push(targetPath);
+        } else {
+          console.warn('⚠️ Caminho do dashboard não encontrado, usando fallback');
+          router.push('/dashboard');
+        }
       } else {
         throw new Error(response.data.message || 'Falha no login');
       }
@@ -369,7 +392,15 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
       if (setupUserFromToken(accessToken)) {
         toast.success('Login com Google realizado com sucesso!');
         const decoded: { role: UserRole } = jwtDecode(accessToken);
-        router.push(buildDashboardUrl(decoded.role));
+        const targetPath = getDashboardPath(decoded.role);
+        console.log('🎯 Redirecionando Google login para:', targetPath);
+        
+        if (targetPath) {
+          router.push(targetPath);
+        } else {
+          console.warn('⚠️ Caminho do dashboard não encontrado para Google login, usando fallback');
+          router.push('/dashboard');
+        }
       } else {
         throw new Error('Token inválido recebido do servidor');
       }
