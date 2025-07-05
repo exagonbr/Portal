@@ -69,67 +69,104 @@ export class TvShowRepository extends BaseRepository<TvShow> {
       ...otherFilters
     } = filters;
 
-    const query = this.db(this.tableName)
-      .select('*')
-      .where('is_active', true); // Apenas shows ativos
-    
-    const countQuery = this.db(this.tableName)
-      .count('* as total')
-      .where('is_active', true)
-      .first();
+    try {
+      const query = this.db(this.tableName)
+        .select('*')
+        .where('is_active', true)
+        .timeout(20000); // 20 segundos timeout
+      
+      const countQuery = this.db(this.tableName)
+        .count('* as total')
+        .where('is_active', true)
+        .timeout(20000) // 20 segundos timeout
+        .first();
 
-    if (search) {
-      query.where(builder => {
-        builder
-          .where('title', 'ilike', `%${search}%`)
-          .orWhere('description', 'ilike', `%${search}%`);
-      });
-      countQuery.where(builder => {
-        builder
-          .where('title', 'ilike', `%${search}%`)
-          .orWhere('description', 'ilike', `%${search}%`);
-      });
-    }
-
-    if (Object.keys(otherFilters).length > 0) {
-      query.where(otherFilters);
-      countQuery.where(otherFilters);
-    }
-    
-    query.orderBy(sortBy, sortOrder).limit(limit).offset((page - 1) * limit);
-
-    const [items, totalResult] = await Promise.all([query, countQuery]);
-    
-    const total = totalResult ? parseInt(totalResult.total as string, 10) : 0;
-    const totalPages = Math.ceil(total / limit);
-
-    // Mapear os dados para o formato esperado
-    const mappedItems = items.map(item => this.mapToResponseDto(item));
-
-    return {
-      items: mappedItems,
-      pagination: {
-        page,
-        limit,
-        total,
-        totalPages,
-        hasNext: page < totalPages,
-        hasPrev: page > 1
+      if (search) {
+        query.where(builder => {
+          builder
+            .where('title', 'ilike', `%${search}%`)
+            .orWhere('description', 'ilike', `%${search}%`);
+        });
+        countQuery.where(builder => {
+          builder
+            .where('title', 'ilike', `%${search}%`)
+            .orWhere('description', 'ilike', `%${search}%`);
+        });
       }
-    };
+
+      if (Object.keys(otherFilters).length > 0) {
+        query.where(otherFilters);
+        countQuery.where(otherFilters);
+      }
+      
+      query.orderBy(sortBy, sortOrder).limit(limit).offset((page - 1) * limit);
+
+      const [items, totalResult] = await Promise.all([query, countQuery]);
+      
+      const total = totalResult ? parseInt(totalResult.total as string, 10) : 0;
+      const totalPages = Math.ceil(total / limit);
+
+      // Mapear os dados para o formato esperado
+      const mappedItems = items.map(item => this.mapToResponseDto(item));
+
+      return {
+        items: mappedItems,
+        pagination: {
+          page,
+          limit,
+          total,
+          totalPages,
+          hasNext: page < totalPages,
+          hasPrev: page > 1
+        }
+      };
+    } catch (error) {
+      console.error('Erro na query de TV Shows:', error);
+      
+      // Se for timeout, retornar resultado vazio em vez de erro
+      if (error instanceof Error && error.message.includes('timeout')) {
+        console.warn('Timeout na query de TV Shows, retornando resultado vazio');
+        return {
+          items: [],
+          pagination: {
+            page: 1,
+            limit: 10,
+            total: 0,
+            totalPages: 0,
+            hasNext: false,
+            hasPrev: false
+          }
+        };
+      }
+      
+      throw error;
+    }
   }
 
   async findByIdForApi(id: string): Promise<TvShowResponseDto | null> {
-    const tvShow = await this.db(this.tableName)
-      .select('*')
-      .where('id', id)
-      .where('is_active', true)
-      .first();
+    try {
+      const tvShow = await this.db(this.tableName)
+        .select('*')
+        .where('id', id)
+        .where('is_active', true)
+        .timeout(20000) // 20 segundos timeout
+        .first();
 
-    if (!tvShow) {
-      return null;
+      if (!tvShow) {
+        return null;
+      }
+
+      return this.mapToResponseDto(tvShow);
+    } catch (error) {
+      console.error('Erro na query de TV Show por ID:', error);
+      
+      // Se for timeout, retornar null em vez de erro
+      if (error instanceof Error && error.message.includes('timeout')) {
+        console.warn('Timeout na query de TV Show por ID, retornando null');
+        return null;
+      }
+      
+      throw error;
     }
-
-    return this.mapToResponseDto(tvShow);
   }
 }

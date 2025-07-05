@@ -52,7 +52,7 @@ export default function TvShowManagePage() {
   const searchTimeoutRef = useRef<NodeJS.Timeout>();
 
   // Carregar TV Shows com controle de duplicação
-  const fetchTvShows = useCallback(async (page = 1, search = '') => {
+  const fetchTvShows = useCallback(async (page: number = 1, search: string = '') => {
     // Evitar múltiplas requisições simultâneas
     if (fetchingRef.current) {
       console.log('⚠️ fetchTvShows já está executando, ignorando chamada duplicada');
@@ -73,11 +73,19 @@ export default function TvShowManagePage() {
         headers: {
           'Authorization': `Bearer ${localStorage.getItem('token')}`,
           'Cache-Control': 'no-cache',
-        }
+        },
+        // Adicionar timeout para evitar travamentos
+        signal: AbortSignal.timeout(30000) // 30 segundos
       });
 
       if (!response.ok) {
         throw new Error(`HTTP error! status: ${response.status}`);
+      }
+
+      // Verificar se a resposta é JSON válido
+      const contentType = response.headers.get('content-type');
+      if (!contentType || !contentType.includes('application/json')) {
+        throw new Error('Resposta não é JSON válido - servidor pode estar com problemas');
       }
 
       const data = await response.json();
@@ -93,6 +101,12 @@ export default function TvShowManagePage() {
     } catch (error) {
       console.log('Erro ao carregar TV Shows:', error);
       setTvShows([]);
+      
+      // Se for erro de timeout ou servidor, não tentar novamente automaticamente
+      if (error instanceof Error && (error.message.includes('timeout') || error.message.includes('504'))) {
+        console.log('⚠️ Erro de timeout detectado, parando tentativas automáticas');
+        return;
+      }
     } finally {
       setLoading(false);
       fetchingRef.current = false;
@@ -106,11 +120,18 @@ export default function TvShowManagePage() {
         headers: {
           'Authorization': `Bearer ${localStorage.getItem('token')}`,
           'Cache-Control': 'no-cache',
-        }
+        },
+        signal: AbortSignal.timeout(30000) // 30 segundos
       });
 
       if (!response.ok) {
         throw new Error(`HTTP error! status: ${response.status}`);
+      }
+
+      // Verificar se a resposta é JSON válido
+      const contentType = response.headers.get('content-type');
+      if (!contentType || !contentType.includes('application/json')) {
+        throw new Error('Resposta não é JSON válido - servidor pode estar com problemas');
       }
 
       const data = await response.json();
@@ -168,7 +189,7 @@ export default function TvShowManagePage() {
         clearTimeout(searchTimeoutRef.current);
       }
     };
-  }, [searchTerm, fetchTvShows]); // Removido currentPage e tvShows das dependências
+  }, [searchTerm]); // Removido fetchTvShows das dependências para evitar loop infinito
 
   const handleSelectTvShow = async (tvShow: TvShow) => {
     setSelectedTvShow(tvShow);

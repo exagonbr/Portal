@@ -52,7 +52,7 @@ export class UserService {
       fullName: rest.fullName,
       email: rest.email,
       enabled: rest.enabled,
-      role: rest.role ? { authority: rest.role.authority } : undefined,
+      role: rest.role ? { authority: rest.role.name } : undefined,
       institution: rest.institution ? { name: rest.institution.name } : undefined,
     };
   }

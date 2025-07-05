@@ -12,8 +12,9 @@ const getNodeEnv = () => {
 };
 
 const NODE_ENV = getNodeEnv();
-const isProduction = NODE_ENV === 'production';
-const isDevelopment = NODE_ENV === 'development';
+// Forçar desenvolvimento se estiver rodando localmente
+const isProduction = NODE_ENV === 'production' && typeof window === 'undefined' && process.env.FRONTEND_URL;
+const isDevelopment = !isProduction;
 const isServer = typeof window === 'undefined';
 
 // URLs otimizadas para cada ambiente
@@ -36,10 +37,11 @@ const getBaseUrls = () => {
   
   return {
     FRONTEND_URL: frontendUrl,
-    // Em produção, o backend está no mesmo domínio sob /api
+    // Em produção, o backend está no mesmo domínio sob /api para o cliente
     BACKEND_URL: `${frontendUrl}/api`,
     API_BASE_URL: `${frontendUrl}/api`,
-    INTERNAL_API_URL: `${frontendUrl}/api`
+    // IMPORTANTE: Para chamadas internas do Next.js, usar localhost para evitar loop
+    INTERNAL_API_URL: 'http://localhost:3001'
   };
 };
 
