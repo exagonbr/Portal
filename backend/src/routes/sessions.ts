@@ -9,6 +9,7 @@ const router = Router();
 router.use(requireAuth);
 
 router.get('/active', SessionController.getActiveSessions);
+router.post('/create', SessionController.create);
 router.post('/:sessionId/terminate', SessionController.terminateSession);
 
 export default router;

@@ -16,7 +16,7 @@ export class SessionService {
     const sessionData: SessionData = {
       userId: user.id,
       email: user.email,
-      role: user.role?.authority,
+      role: user.role?.name,
     };
 
     await this.redis.setex(`session:${sessionId}`, 86400, JSON.stringify(sessionData));

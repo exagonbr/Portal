@@ -96,6 +96,9 @@ router.use('/video-collections', requireAuth, videoCollectionsRouter);
 router.use('/video-modules', requireAuth, videoModulesRouter);
 router.use('/videos', requireAuth, videosRouter);
 
+// Rotas de Sessões
+router.use('/sessions', requireAuth, sessionsRouter);
+
 // Rotas de Admin
 router.use('/admin/sessions', requireAuth, sessionsRouter);
 
