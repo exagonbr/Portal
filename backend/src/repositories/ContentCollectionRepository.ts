@@ -25,7 +25,7 @@ export class ContentCollectionRepository extends BaseRepository<Collection> {
   }
 
   async findByCreator(creatorId: string): Promise<Collection[]> {
-    return this.findAll({ created_by: creatorId } as Partial<Collection>);
+    return this.findAll({ created_by: parseInt(creatorId) } as Partial<Collection>);
   }
 
   async findBySubject(subject: string): Promise<Collection[]> {

@@ -22,7 +22,7 @@ export class QuestionRepository extends BaseRepository<Question> {
   }
 
   async findByQuiz(quizId: string): Promise<Question[]> {
-    return this.findAll({ quiz_id: quizId } as Partial<Question>);
+    return this.findAll({ quiz_id: parseInt(quizId) } as Partial<Question>);
   }
 
   async findByType(type: string): Promise<Question[]> {

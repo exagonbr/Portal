@@ -2,7 +2,7 @@ import { BaseRepository } from '../repositories/BaseRepository';
 import { Logger } from '../utils/Logger';
 import { ServiceResult, PaginationParams, PaginationResult, FilterOptions } from '../types/common';
 
-export abstract class BaseService<T, CreateData, UpdateData> {
+export abstract class BaseService<T extends { id: string | number }, CreateData, UpdateData> {
   protected repository: BaseRepository<T>;
   protected logger: Logger;
   protected entityName: string;

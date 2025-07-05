@@ -35,7 +35,7 @@ export class ForumThreadRepository extends BaseRepository<ForumThread> {
   }
 
   async findByAuthor(authorId: string): Promise<ForumThread[]> {
-    return this.findAll({ author_id: authorId } as Partial<ForumThread>);
+    return this.findAll({ author_id: parseInt(authorId) } as Partial<ForumThread>);
   }
 
   async findByTag(tag: string): Promise<ForumThread[]> {
@@ -50,7 +50,7 @@ export class ForumThreadRepository extends BaseRepository<ForumThread> {
   }
 
   async getReplies(threadId: string): Promise<ForumReply[]> {
-    return this.db('forum_replies').where('thread_id', threadId).orderBy('created_at', 'asc');
+    return this.db('forum_replies').where('thread_id', parseInt(threadId)).orderBy('created_at', 'asc');
   }
 }
 
@@ -73,10 +73,10 @@ export class ForumReplyRepository extends BaseRepository<ForumReply> {
   }
 
   async findByThread(threadId: string): Promise<ForumReply[]> {
-    return this.findAll({ thread_id: threadId } as Partial<ForumReply>);
+    return this.findAll({ thread_id: parseInt(threadId) } as Partial<ForumReply>);
   }
 
   async findByAuthor(authorId: string): Promise<ForumReply[]> {
-    return this.findAll({ author_id: authorId } as Partial<ForumReply>);
+    return this.findAll({ author_id: parseInt(authorId) } as Partial<ForumReply>);
   }
 }

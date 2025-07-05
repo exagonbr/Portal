@@ -29,53 +29,53 @@ export interface InstitutionResponseDto {
   has_student_platform: boolean;
 }
 
-export interface CreateInstitutionDto {
-  accountable_contact: string;
-  accountable_name: string;
-  company_name: string;
-  contract_disabled: boolean;
-  contract_term_end: Date;
-  contract_term_start: Date;
-  deleted: boolean;
-  district: string;
-  document: string;
+export interface InstitutionDto {
+  id: string;
   name: string;
-  postal_code: string;
-  state: string;
-  street: string;
-  has_library_platform: boolean;
-  has_principal_platform: boolean;
-  has_student_platform: boolean;
-  complement?: string;
-  contract_invoice_num?: string;
-  contract_num?: number;
-  invoice_date?: Date;
-  score?: number;
-}
-
-export interface UpdateInstitutionDto {
-  accountable_contact?: string;
-  accountable_name?: string;
-  company_name?: string;
-  contract_disabled?: boolean;
-  contract_term_end?: Date;
-  contract_term_start?: Date;
-  deleted?: boolean;
-  district?: string;
-  document?: string;
-  name?: string;
-  postal_code?: string;
+  accountableContact?: string;
+  accountableName?: string;
+  companyName?: string;
+  email?: string;
+  contractDisabled?: boolean;
+  contractInvoiceNum?: string;
+  contractNum?: number;
+  contractTermEnd?: Date;
+  contractTermStart?: Date;
+  dateCreated?: Date;
+  disabled?: boolean;
+  location?: string;
+  phone?: string;
+  invoiceDate?: Date;
+  lastUpdated?: Date;
+  postalCode?: string;
   state?: string;
   street?: string;
-  has_library_platform?: boolean;
-  has_principal_platform?: boolean;
-  has_student_platform?: boolean;
-  complement?: string;
-  contract_invoice_num?: string;
-  contract_num?: number;
-  invoice_date?: Date;
-  score?: number;
+  hasLibraryPlatform?: boolean;
+  hasPrincipalPlatform?: boolean;
+  hasStudentPlatform?: boolean;
+  created_at?: Date;
+  updated_at?: Date;
 }
+
+export interface CreateInstitutionDto {
+  name: string;
+  accountableContact: string;
+  accountableName: string;
+  companyName: string;
+  email: string;
+  location: string;
+  phone: string;
+  postalCode: string;
+  state: string;
+  street: string;
+  contractTermEnd: Date;
+  contractTermStart: Date;
+  hasLibraryPlatform?: boolean;
+  hasPrincipalPlatform?: boolean;
+  hasStudentPlatform?: boolean;
+}
+
+export interface UpdateInstitutionDto extends Partial<CreateInstitutionDto> {}
 
 // Removido "extends PaginationParams" pois page e limit já estão aqui. Offset é calculado depois.
 export interface InstitutionFilterDto {
