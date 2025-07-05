@@ -1,6 +1,7 @@
 'use client';
 
 import { LoginForm } from './LoginForm';
+import { DemoCredentials } from './DemoCredentials';
 import Image from 'next/image';
 import { useSearchParams, useRouter } from 'next/navigation';
 import { ThemeSelectorCompact } from '@/components/ui/ThemeSelector';
@@ -10,7 +11,7 @@ import { clearAllDataForUnauthorized } from '@/utils/clearAllData';
 import { getDashboardPath } from '@/utils/roleRedirect';
 import { MotionDiv, MotionH1, MotionP } from '@/components/ui/MotionWrapper';
 import { getTheme } from '@/config/themes';
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useRef } from 'react';
 import { buildUrl } from '@/utils/urlBuilder';
 
 
@@ -27,6 +28,16 @@ export function LoginPage() {
   const [showExpiredMessage, setShowExpiredMessage] = useState(false);
   const [contextLoading, setContextLoading] = useState(true);
   const [mounted, setMounted] = useState(false);
+  const loginFormRef = useRef<{ setCredentials: (email: string, password: string) => void }>(null);
+  
+  // Função para lidar com a seleção de credenciais
+  const handleCredentialSelect = (email: string, password: string) => {
+    // Criar um evento customizado para comunicar com o LoginForm
+    const event = new CustomEvent('demoCredentialSelected', {
+      detail: { email, password }
+    });
+    window.dispatchEvent(event);
+  };
   
   // Usar tema padrão seguro
   const [theme, setTheme] = useState(() => getTheme('academic'));
@@ -346,6 +357,9 @@ export function LoginPage() {
       <div className="absolute top-4 right-4 z-20">
         <ThemeSelectorCompact />
       </div>
+
+      {/* Demo Credentials - Flutuante na lateral esquerda */}
+      <DemoCredentials onCredentialSelect={handleCredentialSelect} />
 
       {/* Content */}
       <MotionDiv 

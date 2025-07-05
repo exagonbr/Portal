@@ -28,9 +28,21 @@ export function LoginForm() {
       setIsMobile(isMobileDevice || isTouchDevice);
     };
     
+    // Escutar evento de seleção de credenciais demo
+    const handleDemoCredentialSelected = (event: CustomEvent) => {
+      const { email, password } = event.detail;
+      setEmail(email);
+      setPassword(password);
+    };
+    
     checkMobile();
     window.addEventListener('resize', checkMobile);
-    return () => window.removeEventListener('resize', checkMobile);
+    window.addEventListener('demoCredentialSelected', handleDemoCredentialSelected as EventListener);
+    
+    return () => {
+      window.removeEventListener('resize', checkMobile);
+      window.removeEventListener('demoCredentialSelected', handleDemoCredentialSelected as EventListener);
+    };
   }, []);
 
   const handleLogin = useCallback(async (e?: React.FormEvent) => {
@@ -213,48 +225,12 @@ export function LoginForm() {
           </button>
         </MotionDiv>
 
-        <MotionDiv 
-          className="relative"
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          transition={{ delay: 0.4 }}
-        >
-          <div className="absolute inset-0 flex items-center">
-            <div className="w-full border-t" style={{ borderColor: theme.colors.border.light }} />
-          </div>
-          <div className="relative flex justify-center text-sm">
-            <span 
-              className="px-2" 
-              style={{ 
-                backgroundColor: theme.type === 'modern' ? theme.colors.background.card : theme.colors.background.primary,
-                color: theme.colors.text.tertiary 
-              }}
-            >
-              ou continue com
-            </span>
-          </div>
-        </MotionDiv>
-
-        <MotionDiv 
-          className="space-y-3"
+        {/* Botão de Validação de Licença */}
+        <MotionDiv
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.5 }}
         >
-          <a
-            href={`https://portal.sabercon.com.br/api/auth/signin/google`}
-            className="w-full flex items-center justify-center px-4 py-2 border border-gray-300 rounded-md shadow-sm text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 transition-all duration-200 transform hover:scale-105 active:scale-95"
-            style={{
-              color: theme.colors.text.primary,
-              backgroundColor: theme.colors.background.primary,
-              borderColor: theme.colors.border.DEFAULT,
-              minHeight: isMobile ? '48px' : 'auto',
-            }}
-          >
-            <Image src="/google-logo.svg" alt="Google logo" width={20} height={20} className="mr-2" />
-            Entrar com o Google
-          </a>
-
           <button
             type="button"
             onClick={() => setIsModalOpen(true)}
@@ -268,185 +244,6 @@ export function LoginForm() {
             <span className="material-symbols-outlined" aria-hidden="true">verified</span>
             Validar Licença
           </button>
-        </MotionDiv>
-
-        {/* Credenciais de Demonstração */}
-        <MotionDiv
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.5 }}
-          className="mt-4 p-2 sm:p-3 rounded-lg border"
-          style={{
-            backgroundColor: `${theme.colors.primary.DEFAULT}10`,
-            borderColor: `${theme.colors.primary.DEFAULT}30`
-          }}
-        >
-          <h3 className="text-xs font-medium mb-3" style={{ color: theme.colors.text.primary }}>
-            Credenciais de Demonstração:
-          </h3>
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
-            <button
-              type="button"
-              onClick={() => {
-                setEmail('admin@sabercon.edu.br');
-                setPassword('password');
-              }}
-              className="flex items-center justify-between p-2 rounded-md border transition-all duration-200 hover:shadow-sm active:scale-95"
-              style={{
-                backgroundColor: theme.colors.background.primary,
-                borderColor: theme.colors.border.light,
-                color: theme.colors.text.secondary
-              }}
-              title="Clique para preencher automaticamente"
-            >
-              <div className="text-left">
-                <div className="text-xs font-medium" style={{ color: theme.colors.text.primary }}>
-                  Admin
-                </div>
-                <div className="text-xs opacity-75">
-                  admin@sabercon.edu.br
-                </div>
-              </div>
-              <span className="material-symbols-outlined text-sm opacity-60">
-                login
-              </span>
-            </button>
-
-            <button
-              type="button"
-              onClick={() => {
-                setEmail('gestor@sabercon.edu.br');
-                setPassword('password');
-              }}
-              className="flex items-center justify-between p-2 rounded-md border transition-all duration-200 hover:shadow-sm active:scale-95"
-              style={{
-                backgroundColor: theme.colors.background.primary,
-                borderColor: theme.colors.border.light,
-                color: theme.colors.text.secondary
-              }}
-              title="Clique para preencher automaticamente"
-            >
-              <div className="text-left">
-                <div className="text-xs font-medium" style={{ color: theme.colors.text.primary }}>
-                  Gestor
-                </div>
-                <div className="text-xs opacity-75">
-                  gestor@sabercon.edu.br
-                </div>
-              </div>
-              <span className="material-symbols-outlined text-sm opacity-60">
-                login
-              </span>
-            </button>
-
-            <button
-              type="button"
-              onClick={() => {
-                setEmail('coordenador@sabercon.edu.br');
-                setPassword('password');
-              }}
-              className="flex items-center justify-between p-2 rounded-md border transition-all duration-200 hover:shadow-sm active:scale-95"
-              style={{
-                backgroundColor: theme.colors.background.primary,
-                borderColor: theme.colors.border.light,
-                color: theme.colors.text.secondary
-              }}
-              title="Clique para preencher automaticamente"
-            >
-              <div className="text-left">
-                <div className="text-xs font-medium" style={{ color: theme.colors.text.primary }}>
-                  Coordenador
-                </div>
-                <div className="text-xs opacity-75">
-                  coordenador@sabercon.edu.br
-                </div>
-              </div>
-              <span className="material-symbols-outlined text-sm opacity-60">
-                login
-              </span>
-            </button>
-
-            <button
-              type="button"
-              onClick={() => {
-                setEmail('professor@sabercon.edu.br');
-                setPassword('password');
-              }}
-              className="flex items-center justify-between p-2 rounded-md border transition-all duration-200 hover:shadow-sm active:scale-95"
-              style={{
-                backgroundColor: theme.colors.background.primary,
-                borderColor: theme.colors.border.light,
-                color: theme.colors.text.secondary
-              }}
-              title="Clique para preencher automaticamente"
-            >
-              <div className="text-left">
-                <div className="text-xs font-medium" style={{ color: theme.colors.text.primary }}>
-                  Professor
-                </div>
-                <div className="text-xs opacity-75">
-                  professor@sabercon.edu.br
-                </div>
-              </div>
-              <span className="material-symbols-outlined text-sm opacity-60">
-                login
-              </span>
-            </button>
-
-            <button
-              type="button"
-              onClick={() => {
-                setEmail('julia.c@ifsp.com');
-                setPassword('password');
-              }}
-              className="flex items-center justify-between p-2 rounded-md border transition-all duration-200 hover:shadow-sm active:scale-95"
-              style={{
-                backgroundColor: theme.colors.background.primary,
-                borderColor: theme.colors.border.light,
-                color: theme.colors.text.secondary
-              }}
-              title="Clique para preencher automaticamente"
-            >
-              <div className="text-left">
-                <div className="text-xs font-medium" style={{ color: theme.colors.text.primary }}>
-                  Aluna
-                </div>
-                <div className="text-xs opacity-75">
-                  julia.c@ifsp.com
-                </div>
-              </div>
-              <span className="material-symbols-outlined text-sm opacity-60">
-                login
-              </span>
-            </button>
-
-            <button
-              type="button"
-              onClick={() => {
-                setEmail('renato@gmail.com');
-                setPassword('password');
-              }}
-              className="flex items-center justify-between p-2 rounded-md border transition-all duration-200 hover:shadow-sm active:scale-95"
-              style={{
-                backgroundColor: theme.colors.background.primary,
-                borderColor: theme.colors.border.light,
-                color: theme.colors.text.secondary
-              }}
-              title="Clique para preencher automaticamente"
-            >
-              <div className="text-left">
-                <div className="text-xs font-medium" style={{ color: theme.colors.text.primary }}>
-                  Responsável
-                </div>
-                <div className="text-xs opacity-75">
-                  renato@gmail.com
-                </div>
-              </div>
-              <span className="material-symbols-outlined text-sm opacity-60">
-                login
-              </span>
-            </button>
-          </div>
         </MotionDiv>
       </form>
 

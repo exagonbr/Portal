@@ -18,7 +18,7 @@ export async function GET(request: NextRequest) {
 
     // URL do backend baseada nas variáveis de ambiente
     const backendUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001/api';
-    const validateUrl = `${backendUrl}/auth/optimized/validate`;
+    const validateUrl = `${backendUrl}/auth/validate`;
 
     console.log('🔍 [VALIDATE-API] Validando token');
     console.log('🔗 [VALIDATE-API] URL do backend:', validateUrl);

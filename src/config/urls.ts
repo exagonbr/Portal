@@ -15,7 +15,7 @@ export const FRONTEND_URL = ENV_CONFIG.FRONTEND_URL;
 
 export const API_ROUTES = {
   AUTH: {
-    LOGIN: '/auth/optimized/login',
+    LOGIN: '/auth/login',
     LOGOUT: '/auth/logout',
     REGISTER: '/auth/register',
     REFRESH: '/auth/refresh',

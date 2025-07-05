@@ -36,16 +36,13 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // URL do backend baseada nas variáveis de ambiente
-    const backendUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001/api';
-    const loginUrl = `${backendUrl}/auth/optimized/login`;
+    // CORREÇÃO: Usar localhost para o backend real, não a URL do frontend
+    const backendUrl = process.env.BACKEND_URL || 'http://localhost:3001/api';
+    const loginUrl = `${backendUrl}/auth/login`;
 
     console.log('🔐 [LOGIN-API] Tentativa de login para:', email);
     console.log('🔗 [LOGIN-API] URL do backend:', loginUrl);
-    console.log('🔍 [LOGIN-API] Variáveis de ambiente:', {
-      NEXT_PUBLIC_API_URL: process.env.NEXT_PUBLIC_API_URL,
-      NODE_ENV: process.env.NODE_ENV
-    });
+    console.log('🔍 [LOGIN-API] Evitando loop - usando backend real');
 
     // Verificar se o backend está acessível antes de fazer a requisição principal
     try {
@@ -63,10 +60,10 @@ export async function POST(request: NextRequest) {
       // Continuar mesmo com falha no health check
     }
 
-    // Fazer requisição para o backend com timeout
+    // Fazer requisição para o backend REAL com timeout
     console.log('📡 [LOGIN-API] Iniciando requisição de login...');
     const controller = new AbortController();
-    const timeoutId = setTimeout(() => controller.abort(), 10000); // 10 segundos de timeout
+    const timeoutId = setTimeout(() => controller.abort(), 30000); // 30 segundos timeout
     
     try {
       const response = await fetch(loginUrl, {
@@ -81,6 +78,27 @@ export async function POST(request: NextRequest) {
       
       clearTimeout(timeoutId);
       
+      // Verificar se a resposta é HTML (indicando erro de roteamento)
+      const contentType = response.headers.get('content-type');
+      if (contentType && contentType.includes('text/html')) {
+        console.log('❌ [LOGIN-API] Recebido HTML em vez de JSON - possível erro de roteamento');
+        return NextResponse.json(
+          { 
+            success: false, 
+            message: 'Erro de comunicação com o servidor de autenticação',
+            details: {
+              error: 'Backend retornou HTML em vez de JSON',
+              contentType,
+              status: response.status
+            }
+          },
+          { 
+            status: 502,
+            headers: corsHeaders
+          }
+        );
+      }
+
       const data = await response.json();
 
       console.log('📡 [LOGIN-API] Resposta do backend:', {
@@ -120,15 +138,32 @@ export async function POST(request: NextRequest) {
       });
     } catch (fetchError: any) {
       clearTimeout(timeoutId);
+      
+      // Verificar se é um erro de timeout
+      if (fetchError.name === 'AbortError') {
+        console.log('❌ [LOGIN-API] Timeout na requisição para o backend');
+        return NextResponse.json(
+          { 
+            success: false, 
+            message: 'Timeout na comunicação com o servidor de autenticação',
+            details: {
+              error: 'Timeout após 30 segundos',
+              type: 'AbortError'
+            }
+          },
+          { 
+            status: 504,
+            headers: corsHeaders
+          }
+        );
+      }
+      
       throw fetchError; // Propagar o erro para ser tratado no catch externo
     }
 
   } catch (error: any) {
     console.log('❌ [LOGIN-API] Erro no login:', error.name, error.message);
     console.log('❌ [LOGIN-API] Stack:', error.stack);
-    
-    // Verificar se é um erro de timeout
-    const isTimeout = error.name === 'AbortError' || error.message.includes('timeout');
     
     // Verificar se é um erro de conexão
     const isConnectionError = 
@@ -140,10 +175,7 @@ export async function POST(request: NextRequest) {
     let errorMessage = 'Erro interno do servidor';
     let errorStatus = 500;
     
-    if (isTimeout) {
-      errorMessage = 'Tempo limite excedido ao conectar ao servidor de autenticação';
-      errorStatus = 504; // Gateway Timeout
-    } else if (isConnectionError) {
+    if (isConnectionError) {
       errorMessage = 'Não foi possível conectar ao servidor de autenticação';
       errorStatus = 503; // Service Unavailable
     }
@@ -170,7 +202,7 @@ export async function GET() {
   return NextResponse.json(
     { 
       success: true,
-      message: 'API de login customizada ativa - ROTA PÚBLICA',
+      message: 'API de login ativa - Endpoint original /auth/login',
       timestamp: new Date().toISOString(),
       public: true
     },
