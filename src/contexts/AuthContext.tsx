@@ -102,11 +102,36 @@ const decodeToken = (token: string): any | null => {
     }
 
     // Tentar decodificar como JWT
-    return jwtDecode(token);
+    const decoded = jwtDecode(token);
+    
+    // Verificar se o payload decodificado tem estrutura básica esperada
+    if (!decoded || typeof decoded !== 'object') {
+      console.error("Token decodificado não tem estrutura válida:", decoded);
+      return null;
+    }
+
+    return decoded;
   } catch (error) {
     console.error("Failed to decode token:", error);
     return null;
   }
+};
+
+// Helper para verificar se um token decodificado é válido
+const isValidDecodedToken = (decodedToken: any): boolean => {
+  if (!decodedToken || typeof decodedToken !== 'object') {
+    return false;
+  }
+
+  // Verificar se tem propriedades mínimas necessárias
+  const hasRequiredFields = decodedToken.id || decodedToken.email || decodedToken.role;
+  
+  if (!hasRequiredFields) {
+    console.warn("Token decodificado não tem campos obrigatórios:", decodedToken);
+    return false;
+  }
+
+  return true;
 };
 
 // Helper para acessar localStorage de forma segura
@@ -246,8 +271,8 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
 
     const decodedPayload = decodeToken(token);
     
-    if (!decodedPayload) {
-      console.log('AuthProvider: Failed to decode token, removing from storage');
+    if (!decodedPayload || !isValidDecodedToken(decodedPayload)) {
+      console.log('AuthProvider: Failed to decode token or token is invalid, removing from storage');
       removeStoredToken();
       return false;
     }
@@ -269,10 +294,10 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
 
     apiClient.defaults.headers.common['Authorization'] = `Bearer ${token}`;
     setUser({
-      id: decodedPayload.id,
-      name: decodedPayload.name,
-      email: decodedPayload.email,
-      role: decodedPayload.role as UserRole,
+      id: decodedPayload.id || 0,
+      name: decodedPayload.name || 'Usuário',
+      email: decodedPayload.email || '',
+      role: decodedPayload.role as UserRole || UserRole.STUDENT,
       permissions: decodedPayload.permissions || [],
     });
     
@@ -343,17 +368,22 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
         // Decodificar o token para obter informações do usuário
         const decodedToken = decodeToken(accessToken);
         
-        // Configurar o usuário no estado
+        if (!decodedToken || !isValidDecodedToken(decodedToken)) {
+          console.error('❌ Erro: Token não pôde ser decodificado ou é inválido');
+          throw new Error('Token inválido recebido do servidor');
+        }
+        
+        // Configurar o usuário no estado com valores padrão seguros
         const user: User = {
-          id: userData.id || decodedToken.id,
-          name: userData.name || decodedToken.name,
-          email: userData.email || decodedToken.email,
-          role: userData.role || decodedToken.role,
+          id: userData.id || decodedToken.id || 0,
+          name: userData.name || decodedToken.name || 'Usuário',
+          email: userData.email || decodedToken.email || '',
+          role: userData.role || decodedToken.role || UserRole.STUDENT,
           permissions: userData.permissions || decodedToken.permissions || [],
-          telefone: userData.telefone,
-          endereco: userData.endereco,
-          unidadeEnsino: userData.unidadeEnsino,
-          institution_name: userData.institution_name
+          telefone: userData.telefone || undefined,
+          endereco: userData.endereco || undefined,
+          unidadeEnsino: userData.unidadeEnsino || undefined,
+          institution_name: userData.institution_name || decodedToken.institution_name || undefined
         };
         
         // Salvar dados em todos os locais usando o serviço unificado
@@ -430,7 +460,14 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
       
       if (setupUserFromToken(accessToken)) {
         toast.success('Login com Google realizado com sucesso!');
-        const decoded: { role: UserRole } = jwtDecode(accessToken);
+        
+        // Decodificar token com verificação de segurança
+        const decoded = decodeToken(accessToken);
+        if (!decoded || !isValidDecodedToken(decoded) || !decoded.role) {
+          console.error('❌ Erro: Token do Google não pôde ser decodificado, é inválido ou não tem role');
+          throw new Error('Token inválido recebido do servidor Google');
+        }
+        
         const targetPath = getDashboardPath(decoded.role);
         console.log('🎯 Redirecionando Google login para:', targetPath);
         

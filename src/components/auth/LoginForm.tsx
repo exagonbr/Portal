@@ -286,8 +286,6 @@ export function LoginForm() {
           </h3>
           <div className="space-y-1 text-xs" style={{ color: theme.colors.text.secondary }}>
             <p><strong>Admin:</strong> admin@sabercon.edu.br / password</p>
-            <p><strong>Professor:</strong> teacher@sabercon.edu.br / password</p>
-            <p><strong>Aluno:</strong> student@sabercon.edu.br / password</p>
           </div>
         </MotionDiv>
       </form>
