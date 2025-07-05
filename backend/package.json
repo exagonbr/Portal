@@ -6,7 +6,7 @@
   "description": "Backend API para o Portal Sabercon - Sistema de Gestão Educacional com Redis Sessions e Dashboard Analytics",
   "main": "dist/index.js",
   "scripts": {
-    "dev": "ts-node src/index.ts",
+    "dev": "nodemon src/index.ts",
     "build": "tsc",
     "start": "node dist/index.js",
     "test": "jest",
