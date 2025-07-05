@@ -233,18 +233,14 @@ async function createDefaultUsers(db: Knex): Promise<void> {
       const hashedPassword = await bcrypt.hash(userData.password, 12);
 
       // Criar usuário
+      const { status, account_status, verification_status, ...mysqlUserData } = userData;
+      
       await db('user').insert({
-        ...userData,
+        ...mysqlUserData,
         password: hashedPassword,
         date_created: new Date(),
         last_updated: new Date(),
-        version: 1,
-        entity_version: 1,
-        revision: 0,
-        login_count: 0,
-        failed_login_attempts: 0,
-        created_at: new Date(),
-        updated_at: new Date()
+        version: 1
       });
 
       console.log(`   ✅ Usuário ${userData.email} criado com sucesso!`);
@@ -274,7 +270,7 @@ async function createCompleteUserStructure(): Promise<void> {
     
     // Verificar se as tabelas necessárias existem
     const tablesExist = await Promise.all([
-      tableExists(db, 'institution'),
+      tableExists(db, 'institutions'),
       tableExists(db, 'roles'),
       tableExists(db, 'user')
     ]);
@@ -286,7 +282,7 @@ async function createCompleteUserStructure(): Promise<void> {
     }
     
     if (!tablesExist[2]) {
-      console.log('❌ Tabela users não encontrada!');
+      console.log('❌ Tabela user não encontrada!');
       console.log('   Execute primeiro: npm run migrate');
       process.exit(1);
     }
@@ -296,7 +292,7 @@ async function createCompleteUserStructure(): Promise<void> {
     
     console.log('\n🎉 PROCESSO CONCLUÍDO COM SUCESSO!\n');
     console.log('📋 Usuários criados:');
-    console.log('   • Tabela users populada com usuários padrão');
+    console.log('   • Tabela user populada com usuários padrão');
     console.log('   • Roles e permissions já configuradas');
     console.log('   • Campos OAuth Google disponíveis');
     
