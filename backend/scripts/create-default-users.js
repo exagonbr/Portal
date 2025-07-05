@@ -788,7 +788,7 @@ async function createDefaultUsers() {
     
     console.log('\n⚠️  Recomenda-se alterar as senhas após o primeiro login!');
     
-  } catch (error) {
+} catch (error) {
     console.log('\n❌ ERRO DURANTE A CRIAÇÃO DOS USUÁRIOS:');
     console.log(error.message);
     console.log('\nStack trace:');
@@ -811,8 +811,8 @@ if (require.main === module) {
     })
     .catch(err => {
       console.log('\n❌ Erro fatal:', err.message);
-      process.exit(1);
+  process.exit(1);
     });
-}
+} 
 
 module.exports = { createDefaultUsers }; 
