@@ -19,29 +19,18 @@ const isServer = typeof window === 'undefined';
 
 // URLs otimizadas para cada ambiente
 const getBaseUrls = () => {
-  // Em desenvolvimento, usar URLs locais
-  if (isDevelopment) {
-    const frontendUrl = process.env.NEXT_PUBLIC_FRONTEND_URL || 'http://localhost:3000';
-    const backendUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001';
-    
-    return {
-      FRONTEND_URL: frontendUrl,
-      BACKEND_URL: backendUrl,
-      API_BASE_URL: backendUrl,
-      INTERNAL_API_URL: backendUrl
-    };
-  }
+  // FORÇAR LOCALHOST PARA EVITAR LOOP INFINITO
+  // Sempre usar localhost para desenvolvimento local
+  console.log('🔧 [ENV] Forçando configuração de localhost para evitar loop infinito');
   
-  // Em produção, usar URLs de produção
-  const frontendUrl = process.env.FRONTEND_URL || 'https://portal.sabercon.com.br';
+  const frontendUrl = 'http://localhost:3000';
+  const backendUrl = 'http://localhost:3001';
   
   return {
     FRONTEND_URL: frontendUrl,
-    // Em produção, o backend está no mesmo domínio sob /api para o cliente
-    BACKEND_URL: `${frontendUrl}/api`,
-    API_BASE_URL: `${frontendUrl}/api`,
-    // IMPORTANTE: Para chamadas internas do Next.js, usar localhost para evitar loop
-    INTERNAL_API_URL: 'http://localhost:3001'
+    BACKEND_URL: backendUrl,
+    API_BASE_URL: backendUrl,
+    INTERNAL_API_URL: backendUrl
   };
 };
 

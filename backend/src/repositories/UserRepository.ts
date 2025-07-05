@@ -13,7 +13,7 @@ export interface UpdateUserData extends Partial<Omit<CreateUserData, 'password'>
 
 export class UserRepository extends BaseRepository<User> {
   constructor() {
-    super('user');
+    super('users');
   }
 
   async findByEmail(email: string): Promise<User | null> {
@@ -51,11 +51,11 @@ export class UserRepository extends BaseRepository<User> {
   async findByIdWithRelations(id: number): Promise<User | null> {
     const user = await this.db(this.tableName)
       .where({ [`${this.tableName}.id`]: id })
-      .leftJoin('role', `${this.tableName}.roleId`, 'role.id')
-      .leftJoin('institution', `${this.tableName}.institutionId`, 'institution.id')
+      .leftJoin('roles', `${this.tableName}.role_id`, 'roles.id')
+      .leftJoin('institution', `${this.tableName}.institution_id`, 'institution.id')
       .select(
         `${this.tableName}.*`,
-        'role.displayName as roleName',
+        'roles.name as roleName',
         'institution.name as institutionName'
       )
       .first();
@@ -73,7 +73,7 @@ export class UserRepository extends BaseRepository<User> {
 
   async search(term: string, limit: number = 20): Promise<User[]> {
     return this.db(this.tableName)
-      .where('fullName', 'ilike', `%${term}%`)
+      .where('full_name', 'ilike', `%${term}%`)
       .orWhere('email', 'ilike', `%${term}%`)
       .orWhere('username', 'ilike', `%${term}%`)
       .limit(limit);

@@ -42,7 +42,7 @@ export interface UsersListResult {
 
 export class UsersRepository extends BaseRepository<User> {
   constructor() {
-    super('user'); // Corrigindo o nome da tabela
+    super('users'); // Corrigindo o nome da tabela para users (plural)
   }
 
   async findByEmail(email: string): Promise<User | null> {
@@ -77,11 +77,11 @@ export class UsersRepository extends BaseRepository<User> {
     } = filters;
 
     const query = this.db(this.tableName)
-      .leftJoin('role', 'user.role_id', 'role.id')
-      .leftJoin('institution', 'user.institution_id', 'institution.id')
+      .leftJoin('roles', 'users.role_id', 'roles.id')
+      .leftJoin('institution', 'users.institution_id', 'institution.id')
       .select(
-        'user.*',
-        'role.name as role_name',
+        'users.*',
+        'roles.name as role_name',
         'institution.name as institution_name'
       );
 
@@ -90,13 +90,13 @@ export class UsersRepository extends BaseRepository<User> {
     if (search) {
       query.where((builder: any) => {
         builder
-          .where('user.full_name', 'ilike', `%${search}%`)
-          .orWhere('user.email', 'ilike', `%${search}%`);
+          .where('users.full_name', 'ilike', `%${search}%`)
+          .orWhere('users.email', 'ilike', `%${search}%`);
       });
       (countQuery as any).where((builder: any) => {
         builder
-          .where('user.full_name', 'ilike', `%${search}%`)
-          .orWhere('user.email', 'ilike', `%${search}%`);
+          .where('users.full_name', 'ilike', `%${search}%`)
+          .orWhere('users.email', 'ilike', `%${search}%`);
       });
     }
 
@@ -105,7 +105,7 @@ export class UsersRepository extends BaseRepository<User> {
         (countQuery as any).where(otherFilters);
     }
 
-    query.orderBy(`user.${sortBy}`, sortOrder).limit(limit).offset((page - 1) * limit);
+    query.orderBy(`users.${sortBy}`, sortOrder).limit(limit).offset((page - 1) * limit);
 
     const [items, totalResult] = await Promise.all([query, countQuery]);
     

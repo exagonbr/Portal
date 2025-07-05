@@ -10,26 +10,93 @@ import {
 } from '@/types/api';
 import { apiGet, apiPost, apiPut, apiDelete, apiPatch } from './apiService';
 
-// Função para mapear a resposta da API para o DTO do frontend
-const mapToTvShowDto = (data: ApiTvShowResponseDto): TvShowDto => ({
-  id: String(data.id),
-  name: data.name,
-  overview: data.overview,
-  producer: data.producer,
-  poster_path: data.poster_path,
-  backdrop_path: data.backdrop_path,
-  first_air_date: data.first_air_date,
-  contract_term_end: data.contract_term_end,
-  is_active: !data.deleted,
-  created_at: data.date_created,
-  updated_at: data.last_updated,
-});
+// Tipo para os dados mock que podem ter estrutura diferente
+interface MockTvShowData {
+  id: number;
+  name: string;
+  overview?: string;
+  producer?: string;
+  poster_path?: string;
+  backdrop_path?: string;
+  total_load?: string;
+  popularity?: number;
+  vote_average?: number;
+  vote_count?: number;
+  video_count?: number;
+  created_at?: string;
+  // Campos opcionais que podem estar presentes no TvShowResponseDto
+  date_created?: string;
+  last_updated?: string;
+  first_air_date?: string;
+  contract_term_end?: string;
+  deleted?: boolean;
+}
+
+// Função para mapear dados mock ou da API para o DTO do frontend
+const mapToTvShowDto = (data: MockTvShowData | ApiTvShowResponseDto): TvShowDto => {
+  // Detectar se é dados mock ou dados da API
+  const isMockData = 'video_count' in data || 'created_at' in data;
+  
+  if (isMockData) {
+    const mockData = data as MockTvShowData;
+    return {
+      id: String(mockData.id),
+      name: mockData.name,
+      overview: mockData.overview || '',
+      producer: mockData.producer || '',
+      poster_path: mockData.poster_path,
+      backdrop_path: mockData.backdrop_path,
+      first_air_date: mockData.created_at || new Date().toISOString(),
+      contract_term_end: mockData.created_at || new Date().toISOString(),
+      is_active: true, // Dados mock são sempre ativos
+      created_at: mockData.created_at || new Date().toISOString(),
+      updated_at: mockData.created_at || new Date().toISOString(),
+    };
+  } else {
+    // Dados da API
+    const apiData = data as ApiTvShowResponseDto;
+    return {
+      id: String(apiData.id),
+      name: apiData.name,
+      overview: apiData.overview,
+      producer: apiData.producer,
+      poster_path: apiData.poster_path,
+      backdrop_path: apiData.backdrop_path,
+      first_air_date: apiData.first_air_date,
+      contract_term_end: apiData.contract_term_end,
+      is_active: !apiData.deleted,
+      created_at: apiData.date_created,
+      updated_at: apiData.last_updated,
+    };
+  }
+};
+
+// Interface para a resposta da API que contém a estrutura real
+interface TvShowApiResponse {
+  success: boolean;
+  data: {
+    tvShows: MockTvShowData[];
+    page: number;
+    totalPages: number;
+    total: number;
+  };
+  message?: string;
+}
 
 export const getTvShows = async (params: TvShowFilter): Promise<PaginatedResponse<TvShowDto>> => {
-  const response = await apiGet<PaginatedResponse<ApiTvShowResponseDto>>('/tv-shows', params);
+  const response = await apiGet<TvShowApiResponse>('/tv-shows', params);
+  
+  // Verificar se a resposta tem a estrutura esperada
+  if (!response.data || !response.data.tvShows) {
+    throw new Error('Resposta da API não contém dados de TV Shows');
+  }
+  
   return {
-    ...response,
-    items: response.items.map(mapToTvShowDto),
+    items: response.data.tvShows.map(mapToTvShowDto),
+    total: response.data.total,
+    page: response.data.page,
+    limit: Math.ceil(response.data.total / response.data.totalPages) || 10,
+    totalPages: response.data.totalPages,
   };
 };
 

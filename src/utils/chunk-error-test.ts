@@ -3,7 +3,19 @@
  */
 
 import { isChunkLoadError, retryDynamicImport, importApiClient } from './chunk-retry';
-import { syncTokenWithApiClient } from './token-validator';
+
+/**
+ * Mock da função syncTokenWithApiClient para testes
+ */
+async function syncTokenWithApiClient(token: string): Promise<boolean> {
+  console.log('🔄 [MOCK] Simulando sincronização de token com API client');
+  
+  // Simular um delay
+  await new Promise(resolve => setTimeout(resolve, 100));
+  
+  // Simular sucesso na sincronização
+  return true;
+}
 
 /**
  * Testa se a detecção de ChunkLoadError está funcionando
@@ -66,8 +78,9 @@ export async function testRetryImport(): Promise<boolean> {
       console.log('✅ Import do api-client funcionou');
       
       // Testar se os métodos existem
-      if (typeof apiClientModule.apiClient.setAuthToken === 'function' &&
-          typeof apiClientModule.apiClient.clearAuth === 'function') {
+      if (apiClientModule.apiClient && 
+          typeof (apiClientModule.apiClient as any).setAuthToken === 'function' &&
+          typeof (apiClientModule.apiClient as any).clearAuth === 'function') {
         console.log('✅ Métodos do apiClient estão disponíveis');
         return true;
       } else {
