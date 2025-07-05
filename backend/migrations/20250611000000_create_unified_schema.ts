@@ -23,7 +23,7 @@ export async function up(knex: Knex): Promise<void> {
   });
 
   // SEÇÃO 2: USUÁRIOS E ESTRUTURA EDUCACIONAL
-  await knex.schema.createTable('users', (table) => {
+  await knex.schema.createTable('user', (table) => {
     table.uuid('id').primary().defaultTo(knex.raw('gen_random_uuid()'));
     table.string('email').unique().notNullable();
     table.string('password').notNullable();
@@ -60,7 +60,7 @@ export async function up(knex: Knex): Promise<void> {
     table.unique(['code', 'institution_id']);
   });
 
-  await knex.schema.alterTable('users', (table) => {
+  await knex.schema.alterTable('user', (table) => {
     table.uuid('school_id').references('id').inTable('schools').onDelete('SET NULL');
   });
 
@@ -109,7 +109,7 @@ export async function up(knex: Knex): Promise<void> {
     table.enum('category', ['literario', 'professor', 'aluno']).notNullable();
     table.json('metadata').defaultTo('{}');
     table.string('checksum', 64);
-    table.uuid('uploaded_by').references('id').inTable('users').onDelete('SET NULL');
+    table.uuid('uploaded_by').references('id').inTable('user').onDelete('SET NULL');
     table.boolean('is_active').defaultTo(true);
     table.specificType('tags', 'text[]').defaultTo('{}');
     table.timestamp('linked_at');
@@ -154,7 +154,7 @@ export async function up(knex: Knex): Promise<void> {
     table.string('difficulty_level');
     table.string('category');
     table.string('thumbnail_url');
-    table.uuid('teacher_id').references('id').inTable('users').onDelete('SET NULL');
+    table.uuid('teacher_id').references('id').inTable('user').onDelete('SET NULL');
     table.uuid('institution_id').references('id').inTable('instittution').onDelete('CASCADE');
     table.enum('status', ['draft', 'published', 'archived']).defaultTo('draft');
     table.timestamps(true, true);
@@ -219,7 +219,7 @@ export async function up(knex: Knex): Promise<void> {
   // SEÇÃO 6: RELACIONAMENTOS E INTERAÇÕES
   await knex.schema.createTable('user_classes', (table) => {
     table.uuid('id').primary().defaultTo(knex.raw('gen_random_uuid()'));
-    table.uuid('user_id').references('id').inTable('users').onDelete('CASCADE');
+    table.uuid('user_id').references('id').inTable('user').onDelete('CASCADE');
     table.uuid('class_id').references('id').inTable('classes').onDelete('CASCADE');
     table.enum('role', ['student', 'teacher', 'assistant']).defaultTo('student');
     table.date('enrollment_date').defaultTo(knex.fn.now());
@@ -232,7 +232,7 @@ export async function up(knex: Knex): Promise<void> {
     table.uuid('id').primary().defaultTo(knex.raw('gen_random_uuid()'));
     table.string('title').notNullable();
     table.text('content').notNullable();
-    table.uuid('author_id').references('id').inTable('users').onDelete('CASCADE');
+    table.uuid('author_id').references('id').inTable('user').onDelete('CASCADE');
     table.uuid('course_id').references('id').inTable('courses').onDelete('CASCADE');
     table.boolean('is_pinned').defaultTo(false);
     table.boolean('is_locked').defaultTo(false);
@@ -245,7 +245,7 @@ export async function up(knex: Knex): Promise<void> {
   await knex.schema.createTable('forum_replies', (table) => {
     table.uuid('id').primary().defaultTo(knex.raw('gen_random_uuid()'));
     table.text('content').notNullable();
-    table.uuid('author_id').references('id').inTable('users').onDelete('CASCADE');
+    table.uuid('author_id').references('id').inTable('user').onDelete('CASCADE');
     table.uuid('thread_id').references('id').inTable('forum_threads').onDelete('CASCADE');
     table.uuid('parent_reply_id').references('id').inTable('forum_replies').onDelete('CASCADE');
     table.boolean('is_solution').defaultTo(false);
@@ -260,8 +260,8 @@ export async function up(knex: Knex): Promise<void> {
     table.string('title').notNullable();
     table.text('message').notNullable();
     table.enum('type', ['info', 'warning', 'error', 'success']).defaultTo('info');
-    table.uuid('user_id').references('id').inTable('users').onDelete('CASCADE');
-    table.uuid('sent_by').references('id').inTable('users').onDelete('SET NULL');
+    table.uuid('user_id').references('id').inTable('user').onDelete('CASCADE');
+    table.uuid('sent_by').references('id').inTable('user').onDelete('SET NULL');
     table.boolean('is_read').defaultTo(false);
     table.json('metadata');
     table.timestamp('read_at');
@@ -272,7 +272,7 @@ export async function up(knex: Knex): Promise<void> {
 
   await knex.schema.createTable('push_subscriptions', (table) => {
     table.uuid('id').primary().defaultTo(knex.raw('gen_random_uuid()'));
-    table.uuid('user_id').references('id').inTable('users').onDelete('CASCADE');
+    table.uuid('user_id').references('id').inTable('user').onDelete('CASCADE');
     table.text('endpoint').notNullable();
     table.text('p256dh_key').notNullable();
     table.text('auth_key').notNullable();
@@ -300,7 +300,7 @@ export async function up(knex: Knex): Promise<void> {
 
   await knex.schema.createTable('school_managers', (table) => {
     table.uuid('id').primary().defaultTo(knex.raw('gen_random_uuid()'));
-    table.uuid('user_id').references('id').inTable('users').onDelete('CASCADE');
+    table.uuid('user_id').references('id').inTable('user').onDelete('CASCADE');
     table.uuid('school_id').references('id').inTable('schools').onDelete('CASCADE');
     table.enum('role', ['director', 'coordinator', 'supervisor']).defaultTo('coordinator');
     table.date('start_date').defaultTo(knex.fn.now());
@@ -315,7 +315,7 @@ export async function up(knex: Knex): Promise<void> {
     table.string('title').notNullable();
     table.text('content').notNullable();
     table.enum('type', ['general', 'urgent', 'academic', 'administrative']).defaultTo('general');
-    table.uuid('author_id').references('id').inTable('users').onDelete('CASCADE');
+    table.uuid('author_id').references('id').inTable('user').onDelete('CASCADE');
     table.uuid('institution_id').references('id').inTable('instittution').onDelete('CASCADE');
     table.uuid('school_id').references('id').inTable('schools').onDelete('SET NULL');
     table.uuid('class_id').references('id').inTable('classes').onDelete('SET NULL');
@@ -330,7 +330,7 @@ export async function up(knex: Knex): Promise<void> {
     table.string('name').notNullable();
     table.text('description');
     table.enum('type', ['books', 'videos', 'documents', 'mixed']).defaultTo('mixed');
-    table.uuid('created_by').references('id').inTable('users').onDelete('CASCADE');
+    table.uuid('created_by').references('id').inTable('user').onDelete('CASCADE');
     table.uuid('institution_id').references('id').inTable('instittution').onDelete('CASCADE');
     table.boolean('is_public').defaultTo(false);
     table.integer('items_count').defaultTo(0);
@@ -373,7 +373,7 @@ export async function up(knex: Knex): Promise<void> {
     table.enum('type', ['assignment', 'quiz', 'project', 'exam']).notNullable();
     table.uuid('course_id').references('id').inTable('courses').onDelete('CASCADE');
     table.uuid('class_id').references('id').inTable('classes').onDelete('CASCADE');
-    table.uuid('teacher_id').references('id').inTable('users').onDelete('CASCADE');
+    table.uuid('teacher_id').references('id').inTable('user').onDelete('CASCADE');
     table.datetime('due_date').notNullable();
     table.integer('points').notNullable().defaultTo(100);
     table.text('instructions');
@@ -386,7 +386,7 @@ export async function up(knex: Knex): Promise<void> {
   await knex.schema.createTable('activity_submissions', (table) => {
     table.uuid('id').primary().defaultTo(knex.raw('gen_random_uuid()'));
     table.uuid('activity_id').references('id').inTable('activities').onDelete('CASCADE');
-    table.uuid('student_id').references('id').inTable('users').onDelete('CASCADE');
+    table.uuid('student_id').references('id').inTable('user').onDelete('CASCADE');
     table.text('content');
     table.json('attachments');
     table.datetime('submitted_at').notNullable();
@@ -399,9 +399,9 @@ export async function up(knex: Knex): Promise<void> {
   await knex.schema.createTable('grades', (table) => {
     table.uuid('id').primary().defaultTo(knex.raw('gen_random_uuid()'));
     table.uuid('activity_id').references('id').inTable('activities').onDelete('CASCADE');
-    table.uuid('student_id').references('id').inTable('users').onDelete('CASCADE');
+    table.uuid('student_id').references('id').inTable('user').onDelete('CASCADE');
     table.uuid('submission_id').references('id').inTable('activity_submissions').onDelete('CASCADE');
-    table.uuid('graded_by').references('id').inTable('users').onDelete('SET NULL');
+    table.uuid('graded_by').references('id').inTable('user').onDelete('SET NULL');
     table.decimal('points_earned', 8, 2).notNullable();
     table.decimal('points_possible', 8, 2).notNullable();
     table.decimal('percentage', 5, 2).notNullable();
@@ -415,11 +415,11 @@ export async function up(knex: Knex): Promise<void> {
   await knex.schema.createTable('attendance', (table) => {
     table.uuid('id').primary().defaultTo(knex.raw('gen_random_uuid()'));
     table.uuid('class_id').references('id').inTable('classes').onDelete('CASCADE');
-    table.uuid('student_id').references('id').inTable('users').onDelete('CASCADE');
+    table.uuid('student_id').references('id').inTable('user').onDelete('CASCADE');
     table.date('date').notNullable();
     table.enum('status', ['present', 'absent', 'late', 'excused']).notNullable();
     table.text('notes');
-    table.uuid('recorded_by').references('id').inTable('users').onDelete('SET NULL');
+    table.uuid('recorded_by').references('id').inTable('user').onDelete('SET NULL');
     table.timestamps(true, true);
     table.unique(['class_id', 'student_id', 'date']);
   });
@@ -453,7 +453,7 @@ export async function up(knex: Knex): Promise<void> {
 
   await knex.schema.createTable('student_progress', (table) => {
     table.uuid('id').primary().defaultTo(knex.raw('gen_random_uuid()'));
-    table.uuid('student_id').references('id').inTable('users').onDelete('CASCADE');
+    table.uuid('student_id').references('id').inTable('user').onDelete('CASCADE');
     table.uuid('course_id').references('id').inTable('courses').onDelete('CASCADE');
     table.uuid('module_id').references('id').inTable('course_modules').onDelete('CASCADE');
     table.uuid('lesson_id').references('id').inTable('lessons').onDelete('CASCADE');
@@ -481,7 +481,7 @@ export async function up(knex: Knex): Promise<void> {
 
   await knex.schema.createTable('audit_logs', (table) => {
     table.uuid('id').primary().defaultTo(knex.raw('gen_random_uuid()'));
-    table.uuid('user_id').references('id').inTable('users').onDelete('SET NULL');
+    table.uuid('user_id').references('id').inTable('user').onDelete('SET NULL');
     table.string('action').notNullable();
     table.string('entity_type').notNullable();
     table.uuid('entity_id');
@@ -505,7 +505,7 @@ export async function down(knex: Knex): Promise<void> {
     'announcements', 'school_managers', 'queue_jobs', 'push_subscriptions',
     'notifications', 'forum_replies', 'forum_threads', 'user_classes',
     'questions', 'quizzes', 'content', 'modules', 'courses', 'books', 'files',
-    'classes', 'education_cycles', 'schools', 'users', 'instittution'
+    'classes', 'education_cycles', 'schools', 'user', 'instittution'
   ];
 
   for (const table of tables) {
