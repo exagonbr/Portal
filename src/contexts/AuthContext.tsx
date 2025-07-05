@@ -10,6 +10,7 @@ import { buildLoginUrl, buildDashboardUrl, buildUrl } from '../utils/urlBuilder'
 import { getDashboardPath } from '@/utils/roleRedirect';
 import { isDevelopment } from '../utils/env';
 import { clearAllDataForUnauthorized } from '@/utils/clearAllData';
+import { debugToken, cleanupTokens } from '@/utils/token-debug';
 
 // Variável de ambiente para controlar o uso do token de teste
 const useTestToken = process.env.NEXT_PUBLIC_USE_TEST_TOKEN === 'true' && isDevelopment();
@@ -70,6 +71,36 @@ const AuthContext = createContext<AuthContextType | undefined>(undefined);
 // Helper para decodificar o token e extrair dados do usuário
 const decodeToken = (token: string): any | null => {
   try {
+    // Verificar se o token é válido antes de tentar decodificar
+    if (!token || typeof token !== 'string') {
+      console.warn("Token inválido ou não fornecido:", token);
+      return null;
+    }
+
+    // Verificar se o token tem o formato JWT (3 partes separadas por pontos)
+    const parts = token.split('.');
+    if (parts.length !== 3) {
+      console.warn("Token não tem formato JWT válido (deve ter 3 partes):", {
+        parts: parts.length,
+        tokenPreview: token.substring(0, 50) + '...'
+      });
+      
+      // Tentar decodificar como token base64 simples
+      try {
+        const decoded = atob(token);
+        const parsed = JSON.parse(decoded);
+        if (parsed && typeof parsed === 'object') {
+          console.log("Token decodificado como base64 simples:", parsed);
+          return parsed;
+        }
+      } catch (base64Error) {
+        console.warn("Falha ao decodificar como base64:", base64Error);
+      }
+      
+      return null;
+    }
+
+    // Tentar decodificar como JWT
     return jwtDecode(token);
   } catch (error) {
     console.error("Failed to decode token:", error);
@@ -103,6 +134,28 @@ const removeStoredToken = (): void => {
     localStorage.removeItem('accessToken');
   } catch (error) {
     console.error('Error removing from localStorage:', error);
+  }
+};
+
+// Função para limpar tokens inválidos
+const clearInvalidTokens = (): void => {
+  if (typeof window === 'undefined') return;
+  
+  try {
+    const token = localStorage.getItem('accessToken');
+    if (token) {
+      // Verificar se o token tem formato válido
+      const parts = token.split('.');
+      if (parts.length !== 3) {
+        console.warn('Token inválido encontrado no localStorage, removendo...', {
+          parts: parts.length,
+          tokenPreview: token.substring(0, 50) + '...'
+        });
+        localStorage.removeItem('accessToken');
+      }
+    }
+  } catch (error) {
+    console.error('Erro ao limpar tokens inválidos:', error);
   }
 };
 
@@ -149,23 +202,52 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
 
   // Função para validar e configurar usuário a partir do token
   const setupUserFromToken = useCallback((token: string): boolean => {
+    console.log('AuthProvider: setupUserFromToken called with token:', {
+      hasToken: !!token,
+      tokenType: typeof token,
+      tokenLength: token?.length,
+      tokenPreview: token?.substring(0, 50) + '...'
+    });
+
+    // Debug detalhado em desenvolvimento
+    if (isDevelopment()) {
+      debugToken(token);
+    }
+
     const decodedPayload = decodeToken(token);
-    if (decodedPayload && decodedPayload.exp * 1000 > Date.now()) {
-      apiClient.defaults.headers.common['Authorization'] = `Bearer ${token}`;
-      setUser({
-        id: decodedPayload.id,
-        name: decodedPayload.name,
-        email: decodedPayload.email,
-        role: decodedPayload.role as UserRole,
-        permissions: decodedPayload.permissions || [],
-      });
-      console.log('AuthProvider: User set from token:', decodedPayload);
-      return true;
-    } else {
-      console.log('AuthProvider: Token expired or invalid, removing token');
+    
+    if (!decodedPayload) {
+      console.log('AuthProvider: Failed to decode token, removing from storage');
       removeStoredToken();
       return false;
     }
+
+    // Verificar se o token está expirado
+    const isExpired = decodedPayload.exp && decodedPayload.exp * 1000 <= Date.now();
+    if (isExpired) {
+      console.log('AuthProvider: Token expired, removing from storage');
+      removeStoredToken();
+      return false;
+    }
+
+    console.log('AuthProvider: Token decoded successfully:', {
+      id: decodedPayload.id,
+      email: decodedPayload.email,
+      role: decodedPayload.role,
+      exp: decodedPayload.exp ? new Date(decodedPayload.exp * 1000).toISOString() : 'No expiration'
+    });
+
+    apiClient.defaults.headers.common['Authorization'] = `Bearer ${token}`;
+    setUser({
+      id: decodedPayload.id,
+      name: decodedPayload.name,
+      email: decodedPayload.email,
+      role: decodedPayload.role as UserRole,
+      permissions: decodedPayload.permissions || [],
+    });
+    
+    console.log('AuthProvider: User set from token successfully');
+    return true;
   }, []);
 
   // Efeito de inicialização único - executa apenas uma vez quando o cliente está pronto
@@ -178,6 +260,14 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     console.log('AuthProvider: Initializing authentication check');
 
     try {
+      // Primeiro, limpar tokens inválidos
+      clearInvalidTokens();
+      
+      // Debug: verificar estado do localStorage
+      if (isDevelopment()) {
+        cleanupTokens();
+      }
+      
       const token = getStoredToken();
       
       if (token) {
