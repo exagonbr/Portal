@@ -26,7 +26,7 @@ export async function GET(req: NextRequest) {
     if (search) {
       users = await prisma.$queryRaw<UserQueryResult[]>`
         SELECT id, full_name, email
-        FROM "user"
+        FROM "users"
         WHERE full_name ILIKE ${'%' + search + '%'} OR email ILIKE ${'%' + search + '%'}
         ORDER BY full_name ASC
         LIMIT ${Math.min(limit, 1000)}
@@ -34,7 +34,7 @@ export async function GET(req: NextRequest) {
     } else {
       users = await prisma.$queryRaw<UserQueryResult[]>`
         SELECT id, full_name, email
-        FROM "user"
+        FROM "users"
         ORDER BY full_name ASC
         LIMIT ${Math.min(limit, 1000)}
       `

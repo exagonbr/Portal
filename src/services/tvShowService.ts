@@ -71,8 +71,8 @@ const mapToTvShowDto = (data: MockTvShowData | ApiTvShowResponseDto): TvShowDto 
   }
 };
 
-// Interface para a resposta da API que contém a estrutura real
-interface TvShowApiResponse {
+// Interface para a resposta da API mock
+interface TvShowMockApiResponse {
   success: boolean;
   data: {
     tvShows: MockTvShowData[];
@@ -83,21 +83,55 @@ interface TvShowApiResponse {
   message?: string;
 }
 
+// Interface para a resposta real do backend
+interface TvShowBackendApiResponse {
+  success: boolean;
+  data: {
+    items: ApiTvShowResponseDto[];
+    pagination: {
+      page: number;
+      limit: number;
+      total: number;
+      totalPages: number;
+      hasNext: boolean;
+      hasPrev: boolean;
+    };
+  };
+  message?: string;
+}
+
 export const getTvShows = async (params: TvShowFilter): Promise<PaginatedResponse<TvShowDto>> => {
-  const response = await apiGet<TvShowApiResponse>('/tv-shows', params);
+  const response = await apiGet<TvShowMockApiResponse | TvShowBackendApiResponse>('/tv-shows', params);
   
   // Verificar se a resposta tem a estrutura esperada
-  if (!response.data || !response.data.tvShows) {
-    throw new Error('Resposta da API não contém dados de TV Shows');
+  if (!response.data) {
+    throw new Error('Resposta da API não contém dados');
   }
   
-  return {
-    items: response.data.tvShows.map(mapToTvShowDto),
-    total: response.data.total,
-    page: response.data.page,
-    limit: Math.ceil(response.data.total / response.data.totalPages) || 10,
-    totalPages: response.data.totalPages,
-  };
+  // Detectar se é resposta mock ou real do backend
+  if ('tvShows' in response.data) {
+    // Resposta mock
+    const mockResponse = response as TvShowMockApiResponse;
+    return {
+      items: mockResponse.data.tvShows.map(mapToTvShowDto),
+      total: mockResponse.data.total,
+      page: mockResponse.data.page,
+      limit: Math.ceil(mockResponse.data.total / mockResponse.data.totalPages) || 10,
+      totalPages: mockResponse.data.totalPages,
+    };
+  } else if ('items' in response.data) {
+    // Resposta real do backend
+    const backendResponse = response as TvShowBackendApiResponse;
+    return {
+      items: backendResponse.data.items.map(mapToTvShowDto),
+      total: backendResponse.data.pagination.total,
+      page: backendResponse.data.pagination.page,
+      limit: backendResponse.data.pagination.limit,
+      totalPages: backendResponse.data.pagination.totalPages,
+    };
+  } else {
+    throw new Error('Estrutura de resposta da API não reconhecida');
+  }
 };
 
 export const getTvShowById = async (id: number): Promise<TvShowDto> => {

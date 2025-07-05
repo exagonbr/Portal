@@ -13,7 +13,7 @@ export interface UpdateRoleData extends Partial<CreateRoleData> {}
 
 export class RoleRepository extends BaseRepository<Role> {
   constructor() {
-    super('role');
+    super('roles');
   }
 
   async createRole(data: CreateRoleData): Promise<Role> {
@@ -25,7 +25,7 @@ export class RoleRepository extends BaseRepository<Role> {
   }
 
   async deleteRole(id: number): Promise<boolean> {
-    const userCount = await this.db('user').where('roleId', id).count('* as count').first();
+    const userCount = await this.db('users').where('role_id', id).count('* as count').first();
     if (parseInt(userCount?.count as string, 10) > 0) {
       throw new Error('Não é possível deletar um papel que está sendo utilizado por usuários.');
     }

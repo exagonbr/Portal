@@ -80,11 +80,11 @@ export class UserRepository extends BaseRepository<User> {
   }
 
   async findByRole(roleId: number): Promise<User[]> {
-    return this.findAll({ roleId } as Partial<User>);
+    return this.findAll({ role_id: roleId } as Partial<User>);
   }
 
   async findByInstitution(institutionId: number): Promise<User[]> {
-    return this.findAll({ institutionId } as Partial<User>);
+    return this.findAll({ institution_id: institutionId } as Partial<User>);
   }
 
   async updateLastLogin(id: number): Promise<void> {

@@ -36,7 +36,7 @@ export const requireAuth: RequestHandler = async (req: Request, res: Response, n
       return;
     }
 
-    const user = await db('user')
+    const user = await db('users')
       .where({ id: decoded.id, enabled: true })
       .first();
 

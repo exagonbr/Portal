@@ -25,7 +25,7 @@ export async function up(knex: Knex): Promise<void> {
     table.integer('version');
     table.text('description').notNullable();
     table.string('email');
-    table.string('is_active').defaultTo('b'1'');
+    table.string('is_active').defaultTo("b'1'");
     table.string('name').notNullable();
     table.timestamps(true, true);
   });
@@ -43,7 +43,7 @@ export async function up(knex: Knex): Promise<void> {
     table.string('document');
     table.string('license_code');
     table.string('tv_show_name');
-    table.string('recreate').defaultTo('b'1'');
+    table.string('recreate').defaultTo("b'1'");
     table.timestamps(true, true);
   });
 
@@ -59,7 +59,7 @@ export async function up(knex: Knex): Promise<void> {
     table.increments('id').primary();
     table.integer('version');
     table.string('description').notNullable();
-    table.string('is_active').defaultTo('b'1'');
+    table.string('is_active').defaultTo("b'1'");
     table.timestamps(true, true);
   });
 
@@ -354,7 +354,7 @@ export async function up(knex: Knex): Promise<void> {
     table.increments('id').primary();
     table.integer('version');
     table.string('description').notNullable();
-    table.string('is_active').defaultTo('b'1'');
+    table.string('is_active').defaultTo("b'1'");
     table.string('name').notNullable();
     table.timestamps(true, true);
   });
@@ -375,7 +375,7 @@ export async function up(knex: Knex): Promise<void> {
     table.increments('id').primary();
     table.integer('version');
     table.string('description').notNullable();
-    table.string('is_active').defaultTo('b'1'');
+    table.string('is_active').defaultTo("b'1'");
     table.string('name').notNullable();
     table.timestamps(true, true);
   });
@@ -474,13 +474,13 @@ export async function up(knex: Knex): Promise<void> {
     table.string('password_expired');
     table.string('pause_video_on_click');
     table.string('phone');
-    table.string('reset_password').notNullable().defaultTo('b'1'');
+    table.string('reset_password').notNullable().defaultTo("b'1'");
     table.string('username').unique();
     table.string('uuid');
     table.string('is_manager').notNullable();
     table.integer('type');
     table.string('certificate_path');
-    table.string('is_certified').defaultTo('b'0'');
+    table.string('is_certified').defaultTo("b'0'");
     table.string('is_student').notNullable();
     table.string('is_teacher').notNullable();
     table.integer('institution_id');
