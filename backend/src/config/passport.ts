@@ -32,7 +32,7 @@ export function setupPassport() {
         callbackURL: process.env.GOOGLE_CALLBACK_URL || `${process.env.FRONTEND_URL || 'https://portal.sabercon.com.br'}/api/auth/google/callback`,
       },
 
-      async (accessToken, refreshToken, profile, done) => {
+      async (accessToken: string, refreshToken: string, profile: any, done: (error: Error | null, user?: any) => void) => {
         try {
           const userRepository = AppDataSource.getRepository(User);
           
@@ -95,18 +95,18 @@ export function setupPassport() {
             done(new Error("Failed to retrieve user after creation."), false);
           }
 
-        } catch (error) {
+        } catch (error: any) {
           done(error, false);
         }
       }
     )
   );
 
-  passport.serializeUser((user: any, done) => {
+  passport.serializeUser((user: any, done: any) => {
     done(null, user.id);
   });
 
-  passport.deserializeUser(async (id: number, done) => {
+  passport.deserializeUser(async (id: number, done: any) => {
     try {
       const userRepository = AppDataSource.getRepository(User);
       const user = await userRepository.findOne({
@@ -129,7 +129,7 @@ export function setupPassport() {
       }
 
     } catch (error) {
-      done(error, false);
+      done(error, null);
     }
   });
 }

@@ -104,7 +104,7 @@ export abstract class BaseController {
    */
   protected asyncHandler(fn: Function) {
     return (req: Request, res: Response, next: Function) => {
-      Promise.resolve(fn(req, res, next)).catch((error) => {
+      Promise.resolve(fn(req, res, next)).catch((error: Error) => {
         this.logger.error('Unhandled error in controller', error);
         this.error(res, 'Internal server error');
       });
