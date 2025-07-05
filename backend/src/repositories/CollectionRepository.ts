@@ -1,6 +1,6 @@
 import { BaseRepository } from './BaseRepository';
 
-// Interface para desacoplar
+// Interface para desacoplar (tabela collections original)
 export interface Collection {
     id: string;
     name: string;
@@ -15,7 +15,8 @@ export interface Collection {
     updated_at: Date;
 }
 
-export class CollectionRepository extends BaseRepository<Collection> {
+// Repository para a tabela collections original (não tv_show)
+export class ContentCollectionRepository extends BaseRepository<Collection> {
   constructor() {
     super('collections');
   }

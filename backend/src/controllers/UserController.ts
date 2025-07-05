@@ -15,23 +15,6 @@ class UserController extends BaseController<User> {
   // Por exemplo, um método para buscar usuários por role ou instituição.
 
   public async login(req: Request, res: Response): Promise<Response> {
-    // Teste simples primeiro
-    if (req.body.email === 'test@test.com') {
-      return res.json({
-        success: true,
-        message: 'Endpoint /users/login funcionando!',
-        data: {
-          accessToken: 'test-token',
-          user: {
-            id: 1,
-            email: 'test@test.com',
-            name: 'Usuário Teste',
-            role: 'STUDENT'
-          }
-        }
-      });
-    }
-
     const { email, password } = req.body;
 
     if (!email || !password) {
