@@ -106,6 +106,72 @@ async function tableExists(db, tableName) {
   return db.schema.hasTable(tableName);
 }
 
+// Função para criar a tabela user se não existir
+async function createUserTableIfNotExists(db) {
+  const userTableExists = await tableExists(db, 'user');
+  
+  if (!userTableExists) {
+    console.log('🏗️ Criando tabela user...');
+    
+    await db.schema.createTable('user', (table) => {
+      // Chave primária
+      table.uuid('id').primary().defaultTo(db.raw('gen_random_uuid()'));
+      
+      // Campos básicos
+      table.string('email', 255).unique().notNullable();
+      table.string('password', 255).nullable();
+      table.string('name', 255).nullable();
+      table.string('full_name', 255).nullable();
+      table.string('username', 255).unique().nullable();
+      
+      // Campos de role (booleanos)
+      table.boolean('is_admin').defaultTo(false);
+      table.boolean('is_manager').defaultTo(false);
+      table.boolean('is_coordinator').defaultTo(false);
+      table.boolean('is_teacher').defaultTo(false);
+      table.boolean('is_student').defaultTo(false);
+      table.boolean('is_guardian').defaultTo(false);
+      
+      // Campos de status
+      table.boolean('is_active').defaultTo(true);
+      table.boolean('enabled').defaultTo(true);
+      table.boolean('account_expired').defaultTo(false);
+      table.boolean('account_locked').defaultTo(false);
+      table.boolean('password_expired').defaultTo(false);
+      table.boolean('deleted').defaultTo(false);
+      table.boolean('reset_password').defaultTo(false);
+      
+      // Campos de relacionamento
+      table.uuid('role_id').nullable();
+      table.uuid('institution_id').nullable();
+      
+      // Campos adicionais
+      table.string('address', 255).nullable();
+      table.string('phone', 255).nullable();
+      table.string('usuario', 255).nullable();
+      table.text('endereco').nullable();
+      table.string('telefone', 255).nullable();
+      table.string('unidade_ensino', 255).nullable();
+      
+      // Timestamps
+      table.timestamp('created_at').defaultTo(db.fn.now());
+      table.timestamp('updated_at').defaultTo(db.fn.now());
+      table.timestamp('date_created').defaultTo(db.fn.now());
+      table.timestamp('last_updated').defaultTo(db.fn.now());
+      
+      // Índices
+      table.index('email');
+      table.index('role_id');
+      table.index('institution_id');
+      table.index('is_active');
+    });
+    
+    console.log('   ✅ Tabela user criada com sucesso!');
+  } else {
+    console.log('   ℹ️  Tabela user já existe');
+  }
+}
+
 // Função para obter colunas de uma tabela
 async function getTableColumns(db, tableName) {
   const columns = await db.raw(`
@@ -361,6 +427,9 @@ async function createDefaultUsers() {
     
     // Criar roles padrão
     const roleMap = await createDefaultRoles(db);
+    
+    // Criar tabela user se não existir
+    await createUserTableIfNotExists(db);
     
     // Verificar quais tabelas de usuários existem
     const userTables = [];
