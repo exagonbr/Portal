@@ -52,7 +52,7 @@ console.log = function(...args) {
   
   // Detectar requisições de login
   if (message.includes('🔐 LOGIN REQUEST START') || 
-      message.includes('Middleware: Processando /api/auth/login')) {
+      message.includes('Middleware: Processando /api/users/login')) {
     requestCount++;
     requestHistory.push({
       timestamp: Date.now(),

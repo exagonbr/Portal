@@ -4,7 +4,7 @@
 
 /**
  * Constrói uma URL completa usando as variáveis de ambiente
- * @param path - Caminho relativo (ex: '/auth/login', '/dashboard')
+ * @param path - Caminho relativo (ex: '/users/login', '/dashboard')
  * @returns URL completa ou caminho relativo se não houver variável de ambiente
  */
 export function buildUrl(path: string): string {
