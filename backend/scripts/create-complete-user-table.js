@@ -72,7 +72,6 @@ async function createCompleteUserTable(db) {
       table.string('phone', 255).nullable();
       table.boolean('reset_password').notNullable().defaultTo(true);
       table.string('username', 255).nullable();
-      table.string('uuid', 255).nullable();
       table.boolean('is_manager').notNullable();
       table.integer('type').nullable();
       table.string('certificate_path', 255).nullable();
@@ -381,7 +380,6 @@ async function createDefaultUsers(db) {
         password: hashedPassword,
         date_created: new Date(),
         last_updated: new Date(),
-        uuid: db.raw('gen_random_uuid()::text'),
         version: 1,
         entity_version: 1,
         revision: 0,
