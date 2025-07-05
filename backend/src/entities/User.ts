@@ -34,26 +34,26 @@ export class User {
   @PrimaryGeneratedColumn('increment')
   id!: number;
 
-  @Column({ type: 'bigint', nullable: true })
-  version?: number;
+  // @Column({ type: 'bigint', nullable: true })
+  // version?: number;
 
-  @Column({ name: 'account_expired', type: 'boolean', nullable: true })
-  accountExpired?: boolean;
+  // @Column({ name: 'account_expired', type: 'boolean', nullable: true })
+  // accountExpired?: boolean;
 
-  @Column({ name: 'account_locked', type: 'boolean', nullable: true })
-  accountLocked?: boolean;
+  // @Column({ name: 'account_locked', type: 'boolean', nullable: true })
+  // accountLocked?: boolean;
 
   @Column({ type: 'varchar', length: 255, nullable: true })
   address?: string;
 
-  @Column({ name: 'amount_of_media_entries', type: 'int', nullable: true })
-  amountOfMediaEntries?: number;
+  // @Column({ name: 'amount_of_media_entries', type: 'int', nullable: true })
+  // amountOfMediaEntries?: number;
 
-  @Column({ name: 'date_created', type: 'timestamp', nullable: true })
-  dateCreated?: Date;
+  // @Column({ name: 'date_created', type: 'timestamp', nullable: true })
+  // dateCreated?: Date;
 
-  @Column({ type: 'boolean', nullable: true })
-  deleted?: boolean;
+  // @Column({ type: 'boolean', nullable: true })
+  // deleted?: boolean;
 
   @Column({ type: 'varchar', length: 255 })
   email!: string;
@@ -107,8 +107,8 @@ export class User {
   @Column({ type: 'varchar', length: 255, nullable: true, unique: true })
   username?: string;
 
-  @Column({ type: 'varchar', length: 255, nullable: true })
-  uuid?: string;
+  // @Column({ type: 'varchar', length: 255, nullable: true })
+  // uuid?: string;
 
   @Column({ name: 'is_manager', type: 'boolean' })
   isManager!: boolean;
