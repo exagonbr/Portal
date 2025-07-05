@@ -20,7 +20,9 @@
     "cache:clear": "node scripts/clear-cache.js",
     "cache:version": "node scripts/cache-version.js",
     "cache:test": "node scripts/test-cache-performance.js",
-    "migrate:settings": "ts-node scripts/migrate-settings.ts"
+    "migrate:settings": "ts-node scripts/migrate-settings.ts",
+    "fix:oracledb": "node scripts/fix-oracledb-error.js",
+    "test:settings": "ts-node scripts/test-settings.ts"
   },
   "dependencies": {
     "@aws-sdk/client-s3": "^3.825.0",

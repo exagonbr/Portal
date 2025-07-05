@@ -1,4 +1,4 @@
-import knex from 'knex';
+const knex = require('knex');
 
 // Configuração do banco de dados
 const connection = knex({
