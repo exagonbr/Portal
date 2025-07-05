@@ -1,21 +1,4 @@
-const knex = require('knex');
-
-// Configuração do banco de dados
-const connection = knex({
-  client: 'postgresql',
-  connection: {
-    host: process.env.DB_HOST || 'localhost',
-    port: parseInt(process.env.DB_PORT || '5432'),
-    database: process.env.DB_NAME || 'portal_sabercon',
-    user: process.env.DB_USER || 'postgres',
-    password: String(process.env.DB_PASSWORD || 'root'),
-    ssl: process.env.DB_SSL === 'true' ? { rejectUnauthorized: false } : false,
-  },
-  pool: {
-    min: 2,
-    max: 10,
-  },
-});
+import { getSafeConnection } from './database-safe';
 
 export interface SystemSettings {
   site_name: string;
@@ -131,6 +114,7 @@ export async function loadSystemSettings(): Promise<SystemSettings> {
   try {
     console.log('🔄 Carregando configurações do sistema do banco...');
     
+    const connection = await getSafeConnection();
     const settings = await connection('system_settings').select('key', 'value', 'type');
     
     const result: any = { ...defaultSettings };
@@ -154,6 +138,7 @@ export async function loadPublicSettings(): Promise<PublicSettings> {
   try {
     console.log('🔄 Carregando configurações públicas do banco...');
     
+    const connection = await getSafeConnection();
     const settings = await connection('system_settings')
       .select('key', 'value', 'type')
       .where('is_public', true);
@@ -205,6 +190,7 @@ export async function saveSystemSettings(settings: Partial<SystemSettings>): Pro
   try {
     console.log('💾 Salvando configurações do sistema...');
     
+    const connection = await getSafeConnection();
     const settingsToSave = Object.entries(settings);
     console.log('📝 Configurações a salvar:', settingsToSave.length);
     
@@ -258,6 +244,7 @@ export async function resetSystemSettings(): Promise<boolean> {
   try {
     console.log('🔄 Resetando configurações do sistema...');
     
+    const connection = await getSafeConnection();
     for (const [key, value] of Object.entries(defaultSettings)) {
       const stringValue = convertToString(value);
       

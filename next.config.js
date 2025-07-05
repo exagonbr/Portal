@@ -1,37 +1,83 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
+  // Configurações básicas
+  reactStrictMode: true,
+  swcMinify: true,
+  
+  // Configurações experimentais para resolver problemas de módulos
   experimental: {
-    cpus: 10,
-    workerThreads: true,
-    webpackBuildWorker: true,
+    serverComponentsExternalPackages: [
+      'oracledb',
+      'mysql',
+      'mysql2', 
+      'sqlite3',
+      'better-sqlite3',
+      'tedious',
+      'pg-native',
+      'sharp',
+      'knex'
+    ],
   },
-  // Permitir origens de desenvolvimento para resolver problemas de CORS
-  allowedDevOrigins: [
-    'portal.sabercon.com.br',
-    'localhost:3000',
-    '10.0.14.254:3000'
-  ],
-  // Configuração de headers para CORS
-  async headers() {
-    return [
-      {
-        source: '/api/:path*',
-        headers: [
-          { key: 'Access-Control-Allow-Origin', value: '*' },
-          { key: 'Access-Control-Allow-Methods', value: 'GET, POST, PUT, DELETE, OPTIONS' },
-          { key: 'Access-Control-Allow-Headers', value: 'Content-Type, Authorization' },
-        ],
-      },
-    ];
-  },
-  // Configuração de rewrites para proxy
-  async rewrites() {
-    return [
-      {
-        source: '/api/backend/:path*',
-        destination: 'http://localhost:3001/:path*',
-      },
-    ];
+
+  // Configuração do Webpack para resolver o problema do oracledb
+  webpack: (config, { isServer }) => {
+    // Configurações específicas para servidor
+    if (isServer) {
+      // Marcar drivers de banco como externos
+      config.externals.push(
+        'oracledb', 
+        'mysql', 
+        'mysql2', 
+        'sqlite3', 
+        'better-sqlite3', 
+        'tedious', 
+        'pg-native'
+      );
+    } else {
+      // Fallbacks para o cliente
+      config.resolve.fallback = {
+        ...config.resolve.fallback,
+        'oracledb': false,
+        'mysql': false,
+        'mysql2': false,
+        'sqlite3': false,
+        'better-sqlite3': false,
+        'tedious': false,
+        'pg-native': false,
+      };
+    }
+
+    // Plugins para ignorar módulos problemáticos
+    const webpack = require('webpack');
+    config.plugins.push(
+      // Ignorar drivers de banco específicos do Knex
+      new webpack.IgnorePlugin({
+        resourceRegExp: /^oracledb$/,
+        contextRegExp: /knex/,
+      }),
+      new webpack.IgnorePlugin({
+        resourceRegExp: /^mysql$/,
+        contextRegExp: /knex/,
+      }),
+      new webpack.IgnorePlugin({
+        resourceRegExp: /^mysql2$/,
+        contextRegExp: /knex/,
+      }),
+      new webpack.IgnorePlugin({
+        resourceRegExp: /^sqlite3$/,
+        contextRegExp: /knex/,
+      }),
+      new webpack.IgnorePlugin({
+        resourceRegExp: /^better-sqlite3$/,
+        contextRegExp: /knex/,
+      }),
+      new webpack.IgnorePlugin({
+        resourceRegExp: /^tedious$/,
+        contextRegExp: /knex/,
+      })
+    );
+
+    return config;
   },
 };
 
