@@ -150,6 +150,32 @@ CREATE TABLE "user" (
 );
 ```
 
+## 🔐 Campos OAuth do Google
+
+A tabela `user` inclui campos completos para integração com OAuth do Google:
+
+### Campos de Identificação
+- **`google_id`**: ID único do usuário no Google (VARCHAR 255, UNIQUE)
+- **`google_email`**: Email do Google associado à conta
+- **`google_name`**: Nome completo do usuário no Google
+
+### Campos de Perfil
+- **`google_picture`**: URL da foto de perfil do Google (VARCHAR 500)
+
+### Campos de Autenticação
+- **`google_access_token`**: Token de acesso OAuth (TEXT)
+- **`google_refresh_token`**: Token de renovação OAuth (TEXT)
+- **`google_token_expires_at`**: Data de expiração do token
+
+### Campos de Controle
+- **`is_google_verified`**: Indica se a conta Google foi verificada (BOOLEAN, default false)
+- **`google_linked_at`**: Data/hora quando a conta Google foi vinculada
+
+### Índices para Performance
+- Índice em `google_id` para busca rápida
+- Índice em `google_email` para consultas por email
+- Índice em `is_google_verified` para filtros de verificação
+
 ## 🔐 Permissões por Role
 
 ### SYSTEM_ADMIN (Administrador do Sistema)
@@ -218,6 +244,7 @@ Os scripts são inteligentes e se adaptam automaticamente à estrutura do banco:
 - **Usa senhas hasheadas** com bcrypt (12 rounds)
 - **Cria apenas** o que não existe
 - **Relatórios detalhados** do que foi criado
+- **Campos OAuth Google** inicializados como `null` (prontos para vinculação posterior)
 
 ## 🔐 Segurança
 
@@ -319,6 +346,38 @@ Os scripts podem ser executados múltiplas vezes sem problemas:
 - Usuários existentes não são alterados
 - Instituições e roles existentes são reutilizadas
 - Apenas novos registros são criados
+
+## 🔗 Script de Exemplo OAuth Google
+
+Incluído também um script de demonstração para trabalhar com OAuth do Google:
+
+```bash
+# Executar demonstração OAuth
+cd backend
+npx ts-node scripts/link-google-oauth-example.ts
+```
+
+### Funções Disponíveis:
+- `linkGoogleOAuthToUser()` - Vincular conta Google a usuário existente
+- `unlinkGoogleOAuthFromUser()` - Desvincular conta Google
+- `listUsersWithGoogleOAuth()` - Listar usuários com Google vinculado
+
+### Exemplo de Uso:
+```typescript
+import { linkGoogleOAuthToUser } from './link-google-oauth-example';
+
+const googleData = {
+  google_id: "123456789012345678901",
+  google_email: "admin@sabercon.edu.br", 
+  google_name: "Administrador do Sistema",
+  google_picture: "https://lh3.googleusercontent.com/a/example",
+  google_access_token: "ya29.a0AfH6SMC...",
+  google_refresh_token: "1//04...",
+  google_token_expires_at: new Date(Date.now() + 3600000)
+};
+
+await linkGoogleOAuthToUser(db, "admin@sabercon.edu.br", googleData);
+```
 
 ## 📞 Suporte
 
