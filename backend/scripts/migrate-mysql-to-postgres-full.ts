@@ -76,6 +76,8 @@ function normalizeTableName(name: string): string {
     'autores': 'authors',
     'perguntas': 'questions',
     'respostas': 'answers',
+    'tv_shows': 'tv_shows',
+    'tv_show': 'tv_shows',
     
     // Singular para plural - NOTA: Estes só serão aplicados se não
     // estiverem em conflito com as regras acima ou abaixo
@@ -93,7 +95,7 @@ function normalizeTableName(name: string): string {
     'author': 'authors',
     'question': 'questions',
     'answer': 'answers',
-    'video': 'videos'
+    'video': 'videos',
   };
   
   // Verificar mapeamento específico

@@ -29,7 +29,7 @@ class TvShowController {
 
     async getById(req: Request, res: Response) {
         try {
-            const tvShow = await tvShowRepository.findById(req.params.id);
+            const tvShow = await tvShowRepository.findByIdForApi(req.params.id);
             if (!tvShow) {
                 return res.status(404).json({ success: false, message: 'TV Shows not found' });
             }
