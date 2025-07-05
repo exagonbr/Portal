@@ -56,28 +56,40 @@ node scripts/create-default-users.js
 2. **Criam instituições padrão**:
    - Sabercon Educacional
    - Instituto Federal de São Paulo (IFSP)
-3. **Criam roles padrão**:
-   - SYSTEM_ADMIN
-   - INSTITUTION_MANAGER
-   - COORDINATOR
-   - TEACHER
-   - STUDENT
-   - GUARDIAN
-4. **Criam a tabela `user`** se ela não existir com estrutura completa:
-   - Campos básicos (email, password, name, etc.)
-   - Campos de roles (is_admin, is_teacher, etc.)
-   - Campos de status (is_active, enabled, etc.)
-   - Relacionamentos (role_id, institution_id)
-   - Timestamps automáticos
-5. **Detectam automaticamente** quais tabelas de usuários existem:
+3. **Criam tabelas necessárias** se não existirem:
+   - `roles` (funções/papéis)
+   - `permissions` (permissões)
+   - `role_permissions` (associação roles-permissões)
+   - `user` (usuários)
+4. **Criam 24 permissões padrão** organizadas por categoria:
+   - **Sistema**: system.manage, system.view
+   - **Instituições**: institution.manage, institution.view
+   - **Usuários**: users.manage, users.view, users.create, users.edit, users.delete
+   - **Escolas**: schools.manage, schools.view
+   - **Turmas**: classes.manage, classes.view, classes.teach
+   - **Currículo**: curriculum.manage, curriculum.view
+   - **Notas**: grades.manage, grades.view
+   - **Frequência**: attendance.manage, attendance.view
+   - **Relatórios**: reports.view, reports.generate
+   - **Materiais**: materials.manage, materials.view
+   - **Comunicação**: communication.send, communication.view
+5. **Criam 6 roles padrão**:
+   - **SYSTEM_ADMIN**: Administrador do Sistema (**TODAS as permissões**)
+   - **INSTITUTION_MANAGER**: Gestor Institucional
+   - **COORDINATOR**: Coordenador Acadêmico
+   - **TEACHER**: Professor
+   - **STUDENT**: Estudante
+   - **GUARDIAN**: Responsável
+6. **Associam permissões específicas** a cada role automaticamente
+7. **Detectam automaticamente** quais tabelas de usuários existem:
    - `users` (tabela principal)
-   - `user` (tabela legada/criada automaticamente)
-6. **Criam usuários** com senhas hasheadas usando bcrypt
-7. **Associam usuários** às instituições e roles apropriadas
+   - `user` (tabela criada automaticamente)
+8. **Criam usuários** com senhas hasheadas usando bcrypt
+9. **Associam usuários** às instituições e roles apropriadas
 
 ## 🗃️ Estrutura da Tabela `user` Criada
 
-Se a tabela `user` não existir, o script criará com a seguinte estrutura:
+Se a tabela `user` não existir, o script criará com a seguinte estrutura completa, incluindo suporte para OAuth do Google:
 
 ```sql
 CREATE TABLE "user" (
@@ -89,6 +101,17 @@ CREATE TABLE "user" (
   name VARCHAR(255),
   full_name VARCHAR(255),
   username VARCHAR(255) UNIQUE,
+  
+  -- Campos OAuth Google
+  google_id VARCHAR(255) UNIQUE,
+  google_email VARCHAR(255),
+  google_name VARCHAR(255),
+  google_picture VARCHAR(500),
+  google_access_token TEXT,
+  google_refresh_token TEXT,
+  google_token_expires_at TIMESTAMP,
+  is_google_verified BOOLEAN DEFAULT false,
+  google_linked_at TIMESTAMP,
   
   -- Campos de role (booleanos)
   is_admin BOOLEAN DEFAULT false,
@@ -126,6 +149,54 @@ CREATE TABLE "user" (
   last_updated TIMESTAMP DEFAULT NOW()
 );
 ```
+
+## 🔐 Permissões por Role
+
+### SYSTEM_ADMIN (Administrador do Sistema)
+- **TODAS as 24 permissões** disponíveis no sistema
+- Acesso completo a todas as funcionalidades
+
+### INSTITUTION_MANAGER (Gestor Institucional)
+- `institution.view` - Visualizar instituições
+- `users.manage`, `users.view`, `users.create`, `users.edit` - Gerenciar usuários
+- `schools.manage`, `schools.view` - Gerenciar escolas
+- `classes.manage`, `classes.view` - Gerenciar turmas
+- `curriculum.manage`, `curriculum.view` - Gerenciar currículo
+- `grades.view` - Visualizar notas
+- `attendance.view` - Visualizar frequência
+- `reports.view`, `reports.generate` - Relatórios
+- `materials.manage`, `materials.view` - Gerenciar materiais
+- `communication.send`, `communication.view` - Comunicação
+
+### COORDINATOR (Coordenador Acadêmico)
+- `classes.manage`, `classes.view` - Gerenciar turmas
+- `curriculum.manage`, `curriculum.view` - Gerenciar currículo
+- `grades.view` - Visualizar notas
+- `attendance.view` - Visualizar frequência
+- `reports.view` - Visualizar relatórios
+- `materials.view` - Visualizar materiais
+- `communication.send`, `communication.view` - Comunicação
+
+### TEACHER (Professor)
+- `classes.view`, `classes.teach` - Visualizar e lecionar turmas
+- `curriculum.view` - Visualizar currículo
+- `grades.manage`, `grades.view` - Gerenciar e visualizar notas
+- `attendance.manage`, `attendance.view` - Gerenciar frequência
+- `materials.manage`, `materials.view` - Gerenciar materiais
+- `communication.send`, `communication.view` - Comunicação
+
+### STUDENT (Estudante)
+- `classes.view` - Visualizar turmas
+- `curriculum.view` - Visualizar currículo
+- `grades.view` - Visualizar próprias notas
+- `attendance.view` - Visualizar própria frequência
+- `materials.view` - Visualizar materiais
+- `communication.view` - Visualizar comunicações
+
+### GUARDIAN (Responsável)
+- `grades.view` - Visualizar notas dos dependentes
+- `attendance.view` - Visualizar frequência dos dependentes
+- `communication.view` - Visualizar comunicações
 
 ## 🔍 Detecção Automática de Estrutura
 
@@ -193,13 +264,35 @@ Os scripts são inteligentes e se adaptam automaticamente à estrutura do banco:
    ✅ Instituição Sabercon criada
    ✅ Instituição IFSP criada
 
+🏗️ Verificando e criando tabelas necessárias...
+   📋 Criando tabela roles...
+   ✅ Tabela roles criada!
+   🔐 Criando tabela permissions...
+   ✅ Tabela permissions criada!
+   🔗 Criando tabela role_permissions...
+   ✅ Tabela role_permissions criada!
+   👤 Criando tabela user...
+   ✅ Tabela user criada!
+
+🔐 Criando permissões padrão...
+   ✅ Permissão system.manage criada
+   ✅ Permissão users.manage criada
+   ✅ Permissão classes.teach criada
+   ... (24 permissões criadas)
+
 🎭 Criando roles padrão...
    ✅ Role SYSTEM_ADMIN criada
+   ✅ Role INSTITUTION_MANAGER criada
    ✅ Role TEACHER criada
    ✅ Role STUDENT criada
+   ✅ Role GUARDIAN criada
 
-🏗️ Criando tabela user...
-   ✅ Tabela user criada com sucesso!
+🔗 Associando permissões às roles...
+   ✅ Permissões associadas à role SYSTEM_ADMIN
+   ✅ Permissões associadas à role INSTITUTION_MANAGER
+   ✅ Permissões associadas à role TEACHER
+   ✅ Permissões associadas à role STUDENT
+   ✅ Permissões associadas à role GUARDIAN
 
 📋 Tabelas de usuários encontradas: users, user
 
@@ -210,6 +303,14 @@ Os scripts são inteligentes e se adaptam automaticamente à estrutura do banco:
    ✅ Usuário admin@sabercon.edu.br criado na tabela user
 
 🎉 USUÁRIOS PADRÃO CRIADOS COM SUCESSO!
+
+📋 Resumo:
+   • 6 usuários processados
+   • 2 tabela(s) de usuários atualizadas
+   • 2 instituições criadas/verificadas
+   • 6 roles criadas/verificadas
+   • 24 permissões criadas
+   • Todas as associações role-permissão configuradas
 ```
 
 ## 🔄 Executar Novamente

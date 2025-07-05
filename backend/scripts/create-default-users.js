@@ -196,6 +196,17 @@ async function createRequiredTablesIfNotExist(db) {
       table.string('full_name', 255).nullable();
       table.string('username', 255).unique().nullable();
       
+      // Campos OAuth Google
+      table.string('google_id', 255).unique().nullable();
+      table.string('google_email', 255).nullable();
+      table.string('google_name', 255).nullable();
+      table.string('google_picture', 500).nullable();
+      table.text('google_access_token').nullable();
+      table.text('google_refresh_token').nullable();
+      table.timestamp('google_token_expires_at').nullable();
+      table.boolean('is_google_verified').defaultTo(false);
+      table.timestamp('google_linked_at').nullable();
+      
       // Campos de role (booleanos)
       table.boolean('is_admin').defaultTo(false);
       table.boolean('is_manager').defaultTo(false);
@@ -236,6 +247,9 @@ async function createRequiredTablesIfNotExist(db) {
       table.index('role_id');
       table.index('institution_id');
       table.index('is_active');
+      table.index('google_id');
+      table.index('google_email');
+      table.index('is_google_verified');
       
       // Foreign keys
       table.foreign('role_id').references('id').inTable('roles').onDelete('SET NULL');
@@ -584,6 +598,35 @@ async function createUserInTable(db, tableName, user, hashedPassword, roleId, in
     }
     if (columns.includes('full_name')) {
       userData.full_name = user.name;
+    }
+    
+    // Campos OAuth Google (inicialmente vazios)
+    if (columns.includes('google_id')) {
+      userData.google_id = null;
+    }
+    if (columns.includes('google_email')) {
+      userData.google_email = null;
+    }
+    if (columns.includes('google_name')) {
+      userData.google_name = null;
+    }
+    if (columns.includes('google_picture')) {
+      userData.google_picture = null;
+    }
+    if (columns.includes('google_access_token')) {
+      userData.google_access_token = null;
+    }
+    if (columns.includes('google_refresh_token')) {
+      userData.google_refresh_token = null;
+    }
+    if (columns.includes('google_token_expires_at')) {
+      userData.google_token_expires_at = null;
+    }
+    if (columns.includes('is_google_verified')) {
+      userData.is_google_verified = false;
+    }
+    if (columns.includes('google_linked_at')) {
+      userData.google_linked_at = null;
     }
     
     // Campos booleanos de role
