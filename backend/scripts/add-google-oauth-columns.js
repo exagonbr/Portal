@@ -1,23 +1,19 @@
-import knex from 'knex';
-import { Knex } from 'knex';
-import knexConfig from '../knexfile.js';
-import dotenv from 'dotenv';
-
-// Carrega variáveis de ambiente
-dotenv.config();
+const knex = require('knex');
+const knexConfig = require('../knexfile');
+require('dotenv').config();
 
 // Função para verificar se uma tabela existe
-async function tableExists(db: Knex, tableName: string): Promise<boolean> {
+async function tableExists(db, tableName) {
   return db.schema.hasTable(tableName);
 }
 
 // Função para verificar se uma coluna existe
-async function columnExists(db: Knex, tableName: string, columnName: string): Promise<boolean> {
+async function columnExists(db, tableName, columnName) {
   return db.schema.hasColumn(tableName, columnName);
 }
 
 // Função para adicionar colunas OAuth do Google a uma tabela
-async function addGoogleOAuthColumns(db: Knex, tableName: string): Promise<boolean> {
+async function addGoogleOAuthColumns(db, tableName) {
   try {
     console.log(`🔍 Verificando tabela ${tableName}...`);
     
@@ -28,9 +24,8 @@ async function addGoogleOAuthColumns(db: Knex, tableName: string): Promise<boole
       return false;
     }
     
-    // Lista de colunas OAuth do Google e perfil para adicionar
+    // Lista de colunas OAuth do Google para adicionar
     const googleColumns = [
-      // Colunas OAuth Google
       { name: 'google_id', type: 'string', length: 255, unique: true },
       { name: 'google_email', type: 'string', length: 255 },
       { name: 'google_name', type: 'string', length: 255 },
@@ -39,25 +34,7 @@ async function addGoogleOAuthColumns(db: Knex, tableName: string): Promise<boole
       { name: 'google_refresh_token', type: 'text' },
       { name: 'google_token_expires_at', type: 'timestamp' },
       { name: 'is_google_verified', type: 'boolean', default: false },
-      { name: 'google_linked_at', type: 'timestamp' },
-      
-      // Colunas de perfil comuns
-      { name: 'profile_image', type: 'string', length: 500 },
-      { name: 'avatar', type: 'string', length: 500 },
-      { name: 'avatar_url', type: 'string', length: 500 },
-      { name: 'profile_picture', type: 'string', length: 500 },
-      { name: 'bio', type: 'text' },
-      { name: 'description', type: 'text' },
-      { name: 'first_name', type: 'string', length: 255 },
-      { name: 'last_name', type: 'string', length: 255 },
-      { name: 'display_name', type: 'string', length: 255 },
-      { name: 'locale', type: 'string', length: 10 },
-      { name: 'timezone', type: 'string', length: 50 },
-      { name: 'birth_date', type: 'date' },
-      { name: 'gender', type: 'string', length: 20 },
-      { name: 'phone_verified', type: 'boolean', default: false },
-      { name: 'email_verified', type: 'boolean', default: false },
-      { name: 'two_factor_enabled', type: 'boolean', default: false }
+      { name: 'google_linked_at', type: 'timestamp' }
     ];
     
     let columnsAdded = 0;
@@ -89,9 +66,6 @@ async function addGoogleOAuthColumns(db: Knex, tableName: string): Promise<boole
           case 'timestamp':
             table.timestamp(column.name).nullable();
             break;
-          case 'date':
-            table.date(column.name).nullable();
-            break;
           case 'boolean':
             table.boolean(column.name).defaultTo(column.default || false);
             break;
@@ -119,7 +93,7 @@ async function addGoogleOAuthColumns(db: Knex, tableName: string): Promise<boole
         }
         
         console.log(`   ✅ Índices adicionados`);
-      } catch (indexError: any) {
+      } catch (indexError) {
         console.log(`   ⚠️  Alguns índices podem já existir: ${indexError.message}`);
       }
     }
@@ -127,17 +101,17 @@ async function addGoogleOAuthColumns(db: Knex, tableName: string): Promise<boole
     console.log(`   📊 Resumo: ${columnsAdded} colunas adicionadas, ${columnsSkipped} já existiam`);
     return columnsAdded > 0;
     
-  } catch (error: any) {
+  } catch (error) {
     console.log(`   ❌ Erro ao processar tabela ${tableName}: ${error.message}`);
     return false;
   }
 }
 
 // Função principal
-async function addGoogleOAuthToAllUserTables(): Promise<void> {
+async function addGoogleOAuthToAllUserTables() {
   console.log('🚀 ADICIONANDO COLUNAS OAUTH GOOGLE ÀS TABELAS DE USUÁRIOS\n');
   
-  let db: Knex | null = null;
+  let db = null;
   
   try {
     // Conectar ao banco
@@ -185,7 +159,7 @@ async function addGoogleOAuthToAllUserTables(): Promise<void> {
     console.log('   • Use o script link-google-oauth-example.ts para testar');
     console.log('   • Implemente autenticação OAuth no seu frontend');
     
-  } catch (error: any) {
+  } catch (error) {
     console.log('\n❌ ERRO DURANTE O PROCESSO:');
     console.log(error.message);
     console.log('\nStack trace:');
@@ -199,7 +173,7 @@ async function addGoogleOAuthToAllUserTables(): Promise<void> {
   }
 }
 
-// Executar script
+// Executar script se chamado diretamente
 if (require.main === module) {
   addGoogleOAuthToAllUserTables()
     .then(() => {
@@ -212,4 +186,4 @@ if (require.main === module) {
     });
 }
 
-export { addGoogleOAuthToAllUserTables, addGoogleOAuthColumns }; 
+module.exports = { addGoogleOAuthToAllUserTables, addGoogleOAuthColumns }; 
