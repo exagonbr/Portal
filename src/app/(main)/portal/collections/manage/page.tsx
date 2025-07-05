@@ -492,7 +492,7 @@ export default function TVShowsManagePage() {
       }
 
       // Buscar TODAS as coleções para calcular estatísticas corretas
-      const response = await fetch('https://portal.sabercon.com.br/api/tv-shows?page=1&limit=10000', { headers })
+      const response = await fetch('https://portal.sabercon.com.br/api/tv-shows?page=1&limit=10', { headers })
       
       if (response.ok) {
         const data = await response.json()

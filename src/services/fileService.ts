@@ -20,8 +20,16 @@ export const uploadFile = async (file: File, onUploadProgress?: (progressEvent: 
 
   // A função apiPost precisaria ser adaptada para lidar com FormData e onUploadProgress
   // Por agora, vamos assumir uma implementação simplificada.
+  const token = localStorage.getItem('authToken');
+  const headers = new Headers();
+  if (token) {
+    headers.set('Authorization', `Bearer ${token}`);
+  }
+
   const response = await fetch('/api/upload', {
     method: 'POST',
+    headers,
+    credentials: 'omit',
     body: formData,
     // onUploadProgress pode ser implementado com Axios ou XHR
   });

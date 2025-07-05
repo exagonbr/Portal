@@ -157,7 +157,7 @@ export default function AuthenticatedLayout({ children }: AuthenticatedLayoutPro
     <>
       <AnimatePresence>
         {isLoggingOut && (
-          <LogoutLoadingState message="Saindo do Sistema... Volte Sempre!" />
+          <LogoutLoadingState message="Estamos finalizando sua sessão. Sempre bom ter você por aqui!" />
         )}
       </AnimatePresence>
 

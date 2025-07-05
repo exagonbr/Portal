@@ -1,6 +1,12 @@
 import { BaseRepository } from './BaseRepository';
 import { Role } from '../entities/Role';
-import { Permission } from '../models/Role'; // Supondo que Permission venha de um local diferente da entidade
+
+// Definindo um tipo Permission simples para evitar erros
+export interface Permission {
+  id: number;
+  name: string;
+  description?: string;
+}
 
 export interface CreateRoleData extends Omit<Role, 'id' | 'users'> {}
 export interface UpdateRoleData extends Partial<CreateRoleData> {}

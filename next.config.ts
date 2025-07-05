@@ -137,6 +137,33 @@ const nextConfig: NextConfig = {
     ];
 
     return [
+  // Headers específicos para rotas de login (PÚBLICAS)
+  {
+    source: '/api/auth/login',
+    headers: [
+      { key: 'Access-Control-Allow-Origin', value: '*' },
+      { key: 'Access-Control-Allow-Methods', value: 'GET, POST, PUT, DELETE, OPTIONS, PATCH' },
+      { key: 'Access-Control-Allow-Headers', value: 'X-Requested-With, Content-Type, Authorization, X-CSRF-Token, Cache-Control, Pragma, Accept, Origin, Cookie' },
+      { key: 'Access-Control-Allow-Credentials', value: 'false' },
+      { key: 'Access-Control-Max-Age', value: '86400' },
+      { key: 'Allow', value: 'GET, POST, PUT, DELETE, OPTIONS, PATCH' },
+      { key: 'Cache-Control', value: 'no-store, no-cache, must-revalidate' },
+      { key: 'Vary', value: 'Accept-Encoding, Authorization' },
+    ],
+  },
+  {
+    source: '/api/custom-auth/login',
+    headers: [
+      { key: 'Access-Control-Allow-Origin', value: '*' },
+      { key: 'Access-Control-Allow-Methods', value: 'GET, POST, PUT, DELETE, OPTIONS, PATCH' },
+      { key: 'Access-Control-Allow-Headers', value: 'X-Requested-With, Content-Type, Authorization, X-CSRF-Token, Cache-Control, Pragma, Accept, Origin, Cookie' },
+      { key: 'Access-Control-Allow-Credentials', value: 'false' },
+      { key: 'Access-Control-Max-Age', value: '86400' },
+      { key: 'Allow', value: 'GET, POST, PUT, DELETE, OPTIONS, PATCH' },
+      { key: 'Cache-Control', value: 'no-store, no-cache, must-revalidate' },
+      { key: 'Vary', value: 'Accept-Encoding, Authorization' },
+    ],
+  },
   // Headers para API
   {
     source: '/api/:path*',

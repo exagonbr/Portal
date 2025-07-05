@@ -15,70 +15,70 @@ import {
 @Index(['deleted'])
 export class TvShowComplete {
   @PrimaryGeneratedColumn()
-  id: number;
+  id!: number;
 
   @Column({ type: 'varchar', length: 500 })
-  name: string;
+  name!: string;
 
   @Column({ type: 'text', nullable: true })
-  overview: string;
+  overview?: string;
 
   @Column({ type: 'varchar', length: 255, nullable: true })
-  producer: string;
+  producer?: string;
 
   @Column({ type: 'varchar', length: 500, nullable: true })
-  poster_path: string;
+  poster_path?: string;
 
   @Column({ type: 'varchar', length: 500, nullable: true })
-  backdrop_path: string;
+  backdrop_path?: string;
 
   @Column({ type: 'int', nullable: true, default: 0 })
-  total_load: number;
+  total_load?: number;
 
   @Column({ type: 'decimal', precision: 4, scale: 2, nullable: true, default: 0 })
-  popularity: number;
+  popularity?: number;
 
   @Column({ type: 'decimal', precision: 3, scale: 1, nullable: true, default: 0 })
-  vote_average: number;
+  vote_average?: number;
 
   @Column({ type: 'int', nullable: true, default: 0 })
-  vote_count: number;
+  vote_count?: number;
 
   @Column({ type: 'varchar', length: 100, nullable: true })
-  api_id: string;
+  api_id?: string;
 
   @Column({ type: 'varchar', length: 100, nullable: true })
-  imdb_id: string;
+  imdb_id?: string;
 
   @Column({ type: 'varchar', length: 10, nullable: true })
-  original_language: string;
+  original_language?: string;
 
   @Column({ type: 'date', nullable: true })
-  first_air_date: Date;
+  first_air_date?: Date;
 
   @Column({ type: 'date', nullable: true })
-  contract_term_end: Date;
+  contract_term_end?: Date;
 
   @Column({ type: 'int', nullable: true })
-  poster_image_id: number;
+  poster_image_id?: number;
 
   @Column({ type: 'int', nullable: true })
-  backdrop_image_id: number;
+  backdrop_image_id?: number;
 
   @Column({ type: 'varchar', length: 50, nullable: true, default: '1.0' })
-  version: string;
+  version?: string;
 
-  @Column({ type: 'bit', nullable: true, default: 0 })
-  deleted: boolean;
+  @Column({ type: 'boolean', nullable: true, default: false })
+  deleted?: boolean;
 
-  @Column({ type: 'bit', nullable: true, default: 0 })
-  manual_input: boolean;
+  @Column({ type: 'boolean', nullable: true, default: false })
+  manual_input?: boolean;
 
   @CreateDateColumn()
-  date_created: Date;
+  date_created!: Date;
 
   @UpdateDateColumn()
-  last_updated: Date;
+  last_updated!: Date;
 
   // Comentadas para evitar problemas de relação
   // @OneToMany(() => TvShowVideo, video => video.tvShow)
@@ -114,40 +114,40 @@ export class TvShowComplete {
 @Index(['is_active'])
 export class TvShowVideo {
   @PrimaryGeneratedColumn()
-  id: number;
+  id!: number;
 
   @Column({ type: 'int' })
-  tv_show_id: number;
+  tv_show_id!: number;
 
   @Column({ type: 'varchar', length: 500 })
-  title: string;
+  title!: string;
 
   @Column({ type: 'text', nullable: true })
-  description: string;
+  description?: string;
 
   @Column({ type: 'varchar', length: 500, nullable: true })
-  video_url: string;
+  video_url?: string;
 
   @Column({ type: 'int', nullable: true, default: 1 })
-  module_number: number;
+  module_number?: number;
 
   @Column({ type: 'int', nullable: true, default: 1 })
-  episode_number: number;
+  episode_number?: number;
 
   @Column({ type: 'int', nullable: true, default: 0 })
-  duration_seconds: number;
+  duration_seconds?: number;
 
   @Column({ type: 'varchar', length: 500, nullable: true })
-  thumbnail_url: string;
+  thumbnail_url?: string;
 
-  @Column({ type: 'bit', default: 1 })
-  is_active: boolean;
+  @Column({ type: 'boolean', default: true })
+  is_active!: boolean;
 
   @CreateDateColumn()
-  created_at: Date;
+  created_at!: Date;
 
   @UpdateDateColumn()
-  updated_at: Date;
+  updated_at!: Date;
 
   // Comentado para evitar problemas de relação
   // @ManyToOne(() => TvShowComplete, tvShow => tvShow.videos)
@@ -165,28 +165,28 @@ export class TvShowVideo {
 @Index(['is_active'])
 export class TvShowQuestion {
   @PrimaryGeneratedColumn()
-  id: number;
+  id!: number;
 
   @Column({ type: 'int' })
-  tv_show_id: number;
+  tv_show_id!: number;
 
   @Column({ type: 'text' })
-  question_text: string;
+  question_text!: string;
 
   @Column({ type: 'varchar', length: 50, default: 'multiple_choice' })
-  question_type: string;
+  question_type!: string;
 
   @Column({ type: 'int', nullable: true, default: 1 })
-  order_number: number;
+  order_number?: number;
 
-  @Column({ type: 'bit', default: 1 })
-  is_active: boolean;
+  @Column({ type: 'boolean', default: true })
+  is_active!: boolean;
 
   @CreateDateColumn()
-  created_at: Date;
+  created_at!: Date;
 
   @UpdateDateColumn()
-  updated_at: Date;
+  updated_at!: Date;
 
   // Comentado para evitar problemas de relação
   // @ManyToOne(() => TvShowComplete, tvShow => tvShow.questions)
@@ -204,28 +204,28 @@ export class TvShowQuestion {
 @Index(['is_active'])
 export class TvShowAnswer {
   @PrimaryGeneratedColumn()
-  id: number;
+  id!: number;
 
   @Column({ type: 'int' })
-  question_id: number;
+  question_id!: number;
 
   @Column({ type: 'text' })
-  answer_text: string;
+  answer_text!: string;
 
-  @Column({ type: 'bit', default: 0 })
-  is_correct: boolean;
+  @Column({ type: 'boolean', default: false })
+  is_correct!: boolean;
 
   @Column({ type: 'int', nullable: true, default: 1 })
-  order_number: number;
+  order_number?: number;
 
-  @Column({ type: 'bit', default: 1 })
-  is_active: boolean;
+  @Column({ type: 'boolean', default: true })
+  is_active!: boolean;
 
   @CreateDateColumn()
-  created_at: Date;
+  created_at!: Date;
 
   @UpdateDateColumn()
-  updated_at: Date;
+  updated_at!: Date;
 
   // Comentado para evitar problemas de relação
   // @ManyToOne(() => TvShowQuestion, question => question.answers)
@@ -239,31 +239,31 @@ export class TvShowAnswer {
 @Index(['tv_show_id'])
 export class TvShowFile {
   @PrimaryGeneratedColumn()
-  id: number;
+  id!: number;
 
   @Column({ type: 'int' })
-  tv_show_id: number;
+  tv_show_id!: number;
 
   @Column({ type: 'varchar', length: 500 })
-  file_name: string;
+  file_name!: string;
 
   @Column({ type: 'varchar', length: 500 })
-  file_path: string;
+  file_path!: string;
 
   @Column({ type: 'varchar', length: 100, nullable: true })
-  file_type: string;
+  file_type?: string;
 
   @Column({ type: 'bigint', nullable: true })
-  file_size: number;
+  file_size?: number;
 
   @Column({ type: 'varchar', length: 500, nullable: true })
-  description: string;
+  description?: string;
 
   @CreateDateColumn()
-  created_at: Date;
+  created_at!: Date;
 
   @UpdateDateColumn()
-  updated_at: Date;
+  updated_at!: Date;
 
   // Comentado para evitar problemas de relação
   // @ManyToOne(() => TvShowComplete, tvShow => tvShow.files)
@@ -277,28 +277,28 @@ export class TvShowFile {
 @Index(['video_id'])
 export class TvShowVideoFile {
   @PrimaryGeneratedColumn()
-  id: number;
+  id!: number;
 
   @Column({ type: 'int' })
-  video_id: number;
+  video_id!: number;
 
   @Column({ type: 'varchar', length: 500 })
-  file_name: string;
+  file_name!: string;
 
   @Column({ type: 'varchar', length: 500 })
-  file_path: string;
+  file_path!: string;
 
   @Column({ type: 'varchar', length: 100, nullable: true })
-  file_type: string;
+  file_type?: string;
 
   @Column({ type: 'bigint', nullable: true })
-  file_size: number;
+  file_size?: number;
 
   @CreateDateColumn()
-  created_at: Date;
+  created_at!: Date;
 
   @UpdateDateColumn()
-  updated_at: Date;
+  updated_at!: Date;
 
   // Comentado para evitar problemas de relação
   // @ManyToOne(() => TvShowVideo, video => video.files)
@@ -311,19 +311,19 @@ export class TvShowVideoFile {
 @Entity('tv_show_author')
 export class TvShowAuthor {
   @PrimaryGeneratedColumn()
-  id: number;
+  id!: number;
 
   @Column({ type: 'varchar', length: 255 })
-  name: string;
+  name!: string;
 
   @Column({ type: 'text', nullable: true })
-  biography: string;
+  biography?: string;
 
   @CreateDateColumn()
-  created_at: Date;
+  created_at!: Date;
 
   @UpdateDateColumn()
-  updated_at: Date;
+  updated_at!: Date;
 }
 
 // ===================== GENRE ENTITY =====================
@@ -331,17 +331,17 @@ export class TvShowAuthor {
 @Entity('tv_show_genre')
 export class TvShowGenre {
   @PrimaryGeneratedColumn()
-  id: number;
+  id!: number;
 
   @Column({ type: 'varchar', length: 100 })
-  name: string;
+  name!: string;
 
   @Column({ type: 'text', nullable: true })
-  description: string;
+  description?: string;
 
   @CreateDateColumn()
-  created_at: Date;
+  created_at!: Date;
 
   @UpdateDateColumn()
-  updated_at: Date;
+  updated_at!: Date;
 } 

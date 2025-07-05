@@ -24,7 +24,7 @@ export const authOptions: NextAuthOptions = {
 
         try {
           // Fazer requisição para o backend de autenticação
-          const response = await fetch(getInternalApiUrl('/auth/optimized/login'), {
+          const response = await fetch(getInternalApiUrl('/auth/login'), {
             method: 'POST',
             headers: {
               'Content-Type': 'application/json',

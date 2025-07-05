@@ -3,6 +3,22 @@ import { PaginatedResponse } from '@/types/api';
 const API_BASE_URL = '/api';
 
 /**
+ * Retorna os headers padrões para as requisições à API.
+ * Inclui o token de autenticação se estiver disponível.
+ */
+const getHeaders = (): Headers => {
+  const headers = new Headers();
+  headers.set('Content-Type', 'application/json');
+
+  // Busca o accessToken no localStorage
+  const accessToken = localStorage.getItem('accessToken') || localStorage.getItem('authToken');
+  if (accessToken) {
+    headers.set('Authorization', `Bearer ${accessToken}`);
+  }
+  return headers;
+};
+
+/**
  * Manipulador de resposta de fetch.
  * @param response A resposta do fetch.
  * @returns Uma promessa que resolve com os dados JSON.
@@ -32,7 +48,10 @@ async function handleResponse<T>(response: Response): Promise<T> {
  */
 export const apiGet = async <T>(endpoint: string, params?: Record<string, any>): Promise<T> => {
   const query = params ? new URLSearchParams(params).toString() : '';
-  const response = await fetch(`${API_BASE_URL}${endpoint}?${query}`);
+  const response = await fetch(`${API_BASE_URL}${endpoint}?${query}`, {
+    headers: getHeaders(),
+    credentials: 'include',
+  });
   return handleResponse<T>(response);
 };
 
@@ -45,7 +64,8 @@ export const apiGet = async <T>(endpoint: string, params?: Record<string, any>):
 export const apiPost = async <T>(endpoint: string, data: any): Promise<T> => {
   const response = await fetch(`${API_BASE_URL}${endpoint}`, {
     method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
+    headers: getHeaders(),
+    credentials: 'include',
     body: JSON.stringify(data),
   });
   return handleResponse<T>(response);
@@ -60,7 +80,8 @@ export const apiPost = async <T>(endpoint: string, data: any): Promise<T> => {
 export const apiPut = async <T>(endpoint: string, data: any): Promise<T> => {
   const response = await fetch(`${API_BASE_URL}${endpoint}`, {
     method: 'PUT',
-    headers: { 'Content-Type': 'application/json' },
+    headers: getHeaders(),
+    credentials: 'include',
     body: JSON.stringify(data),
   });
   return handleResponse<T>(response);
@@ -75,7 +96,8 @@ export const apiPut = async <T>(endpoint: string, data: any): Promise<T> => {
 export const apiPatch = async <T>(endpoint: string, data: any): Promise<T> => {
     const response = await fetch(`${API_BASE_URL}${endpoint}`, {
         method: 'PATCH',
-        headers: { 'Content-Type': 'application/json' },
+        headers: getHeaders(),
+        credentials: 'include',
         body: JSON.stringify(data),
     });
     return handleResponse<T>(response);
@@ -90,6 +112,8 @@ export const apiPatch = async <T>(endpoint: string, data: any): Promise<T> => {
 export const apiDelete = async (endpoint: string): Promise<void> => {
   const response = await fetch(`${API_BASE_URL}${endpoint}`, {
     method: 'DELETE',
+    headers: getHeaders(),
+    credentials: 'include',
   });
   await handleResponse<void>(response);
 };

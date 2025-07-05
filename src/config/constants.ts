@@ -86,3 +86,43 @@ export const ROUTES = {
   USERS: '/users',
   COURSES: '/courses',
 };
+
+// API URLs
+export const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001/api';
+
+// Configurações de paginação
+export const DEFAULT_PAGE_SIZES = ['10', '20', '50', '100'];
+
+// Tempos de cache (em segundos)
+export const CACHE_DURATION = {
+  SHORT: 60, // 1 minuto
+  MEDIUM: 300, // 5 minutos
+  LONG: 3600, // 1 hora
+  VERY_LONG: 86400 // 24 horas
+};
+
+// Status de entidades
+export const STATUS = {
+  ACTIVE: 'active',
+  INACTIVE: 'inactive',
+  PENDING: 'pending',
+  DELETED: 'deleted'
+};
+
+// Roles do sistema
+export const ROLES = {
+  SYSTEM_ADMIN: 'SYSTEM_ADMIN',
+  INSTITUTION_MANAGER: 'INSTITUTION_MANAGER',
+  TEACHER: 'TEACHER',
+  STUDENT: 'STUDENT',
+  COORDINATOR: 'COORDINATOR',
+  GUARDIAN: 'GUARDIAN'
+};
+
+// Tipos de notificações
+export const NOTIFICATION_TYPES = {
+  INFO: 'info',
+  WARNING: 'warning',
+  ERROR: 'error',
+  SUCCESS: 'success'
+};

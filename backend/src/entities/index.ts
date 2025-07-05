@@ -45,7 +45,7 @@ export { Settings } from './Settings';
 export { Tag } from './Tag';
 export { TargetAudience } from './TargetAudience';
 export { Theme } from './Theme';
-export { TvShow } from './TVShow';
+export { TvShow } from './TvShow';
 export { Unit } from './Unit';
 export { UnitClass } from './UnitClass';
 export { Video } from './Video';

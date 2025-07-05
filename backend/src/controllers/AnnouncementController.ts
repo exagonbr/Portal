@@ -1,0 +1,27 @@
+import { Request, Response } from 'express';
+import { AnnouncementRepository, Announcement } from '../repositories/AnnouncementRepository';
+import { BaseController } from './BaseController';
+
+const announcementRepository = new AnnouncementRepository();
+
+class AnnouncementController extends BaseController<Announcement> {
+  constructor() {
+    super(announcementRepository);
+  }
+
+  async toggleStatus(req: Request, res: Response) {
+    try {
+      const { id } = req.params;
+      const announcement = await announcementRepository.toggleStatus(id);
+      if (!announcement) {
+        return res.status(404).json({ success: false, message: 'Announcement not found' });
+      }
+      return res.status(200).json({ success: true, data: announcement });
+    } catch (error) {
+      console.error(`Error in toggleStatus: ${error}`);
+      return res.status(500).json({ success: false, message: 'Internal Server Error' });
+    }
+  }
+}
+
+export default new AnnouncementController();

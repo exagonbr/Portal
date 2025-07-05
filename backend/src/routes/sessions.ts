@@ -1,14 +1,14 @@
-import express from 'express';
+import { Router } from 'express';
+import { requireAuth } from '../middleware/requireAuth';
 
-const router = express.Router();
+import SessionController from '../controllers/SessionController';
 
-// Exemplo de uma rota de sessão
-router.post('/login', (req, res) => {
-  res.json({ message: 'Login bem-sucedido' });
-});
+const router = Router();
 
-router.post('/logout', (req, res) => {
-  res.json({ message: 'Logout bem-sucedido' });
-});
+// Estas são rotas de administração, então a autenticação é necessária.
+router.use(requireAuth);
+
+router.get('/active', SessionController.getActiveSessions);
+router.post('/:sessionId/terminate', SessionController.terminateSession);
 
 export default router;

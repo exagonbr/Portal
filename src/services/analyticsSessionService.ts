@@ -11,7 +11,20 @@ import {
  * Idealmente, isso seria compartilhado em toda a aplicação.
  */
 const fetcher = async <T>(url: string, options?: RequestInit): Promise<T> => {
-  const res = await fetch(url, options);
+  const token = localStorage.getItem('authToken');
+  const headers = new Headers(options?.headers);
+  headers.set('Content-Type', 'application/json');
+
+  if (token) {
+    headers.set('Authorization', `Bearer ${token}`);
+  }
+
+  const res = await fetch(url, {
+    ...options,
+    headers,
+    credentials: 'omit',
+  });
+
   if (!res.ok) {
     const error = new Error('Ocorreu um erro ao buscar os dados de análise.');
     try {

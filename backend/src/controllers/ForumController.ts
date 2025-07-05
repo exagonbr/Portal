@@ -1,0 +1,33 @@
+import { Request, Response } from 'express';
+
+class ForumController {
+    async getThreads(req: Request, res: Response) {
+        res.json({ message: `get forum threads with query ${JSON.stringify(req.query)}` });
+    }
+
+    async getThreadById(req: Request, res: Response) {
+        res.json({ message: `get forum thread by id ${req.params.id}` });
+    }
+
+    async createThread(req: Request, res: Response) {
+        res.status(201).json({ message: 'create forum thread', data: req.body });
+    }
+
+    async updateThread(req: Request, res: Response) {
+        res.json({ message: `update forum thread ${req.params.id}`, data: req.body });
+    }
+
+    async deleteThread(req: Request, res: Response) {
+        res.status(204).send();
+    }
+
+    async getReplies(req: Request, res: Response) {
+        res.json({ message: `get replies for thread ${req.params.threadId}` });
+    }
+
+    async createReply(req: Request, res: Response) {
+        res.status(201).json({ message: 'create reply', data: req.body });
+    }
+}
+
+export default new ForumController();

@@ -27,12 +27,44 @@ app.use(passport.initialize());
 // Segurança com Helmet (configurações básicas)
 app.use(helmet());
 
-// CORS permissivo para desenvolvimento
+// CORS permissivo - PERMITE TODAS AS ORIGENS
+const allowedOrigins = [
+  'http://localhost:3000',
+  'http://localhost:3001',
+  'http://localhost:5173', // Vite
+  'https://portal.sabercon.com.br',
+  process.env.FRONTEND_URL || ''
+].filter(Boolean);
+
 app.use(cors({
-  origin: true, // Reflete a origem da requisição
-  credentials: true,
-  methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'OPTIONS'],
-  allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With', 'Accept', 'Origin'],
+  origin: '*', // PERMITE TODAS AS ORIGENS para rotas públicas como login
+  credentials: false, // Deve ser false quando origin é '*'
+  methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'OPTIONS', 'HEAD'],
+  allowedHeaders: [
+    'Content-Type', 
+    'Authorization', 
+    'X-Requested-With', 
+    'Accept', 
+    'Origin',
+    'X-CSRF-Token',
+    'Cache-Control',
+    'Pragma',
+    'Cookie',
+    'User-Agent',
+    'Referer',
+    'Host',
+    'Connection',
+    'Accept-Encoding',
+    'Accept-Language'
+  ],
+  exposedHeaders: [
+    'Access-Control-Allow-Origin',
+    'Access-Control-Allow-Headers',
+    'Access-Control-Allow-Methods',
+    'Set-Cookie'
+  ],
+  preflightContinue: false,
+  optionsSuccessStatus: 200
 }));
 
 // Compressão

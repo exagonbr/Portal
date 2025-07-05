@@ -1,4 +1,21 @@
 import { NextRequest, NextResponse } from 'next/server';
+import { corsHeaders } from '../../route-config';
+
+// Configuração da rota como pública e dinâmica
+export const dynamic = 'force-dynamic';
+export const runtime = 'nodejs';
+export const revalidate = 0;
+
+// Handler para requisições OPTIONS (preflight CORS)
+export async function OPTIONS() {
+  return new NextResponse(null, {
+    status: 200,
+    headers: {
+      ...corsHeaders,
+      'Content-Length': '0',
+    },
+  });
+}
 
 export async function POST(request: NextRequest) {
   try {
@@ -12,7 +29,10 @@ export async function POST(request: NextRequest) {
           success: false, 
           message: 'Email e senha são obrigatórios' 
         },
-        { status: 400 }
+        { 
+          status: 400,
+          headers: corsHeaders
+        }
       );
     }
 
@@ -48,7 +68,10 @@ export async function POST(request: NextRequest) {
           message: data.message || 'Erro ao fazer login',
           details: data
         },
-        { status: response.status }
+        { 
+          status: response.status,
+          headers: corsHeaders
+        }
       );
     }
 
@@ -62,6 +85,8 @@ export async function POST(request: NextRequest) {
         user: data.user || data.data?.user,
         expiresIn: data.expiresIn || data.data?.expiresIn
       }
+    }, {
+      headers: corsHeaders
     });
 
   } catch (error: any) {
@@ -76,7 +101,10 @@ export async function POST(request: NextRequest) {
           stack: process.env.NODE_ENV === 'development' ? error.stack : undefined
         }
       },
-      { status: 500 }
+      { 
+        status: 500,
+        headers: corsHeaders
+      }
     );
   }
 }
@@ -85,8 +113,12 @@ export async function GET() {
   return NextResponse.json(
     { 
       success: true,
-      message: 'API de login customizada ativa',
-      timestamp: new Date().toISOString()
+      message: 'API de login customizada ativa - ROTA PÚBLICA',
+      timestamp: new Date().toISOString(),
+      public: true
+    },
+    {
+      headers: corsHeaders
     }
   );
 }

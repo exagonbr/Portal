@@ -1,7 +1,6 @@
 import { Request, Response } from 'express';
+import { CourseRepository, Course } from '../repositories/CourseRepository';
 import { BaseController } from './BaseController';
-import { Course } from '../entities/Course';
-import { CourseRepository } from '../repositories/CourseRepository';
 
 const courseRepository = new CourseRepository();
 
@@ -49,6 +48,13 @@ class CourseController extends BaseController<Course> {
       console.error(`Error in removeStudent: ${error}`);
       return res.status(500).json({ success: false, message: 'Internal Server Error' });
     }
+  }
+
+  public async toggleStatus(req: Request, res: Response): Promise<Response> {
+    const { id } = req.params;
+    // A lógica real para alterar o status estaria aqui.
+    console.log(`Toggling status for course ${id}`);
+    return res.status(200).json({ success: true, message: `Status for course ${id} toggled.` });
   }
 }
 

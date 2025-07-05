@@ -56,18 +56,25 @@ export function setupPassport() {
           }
 
           // Criar novo usuário se não existir
-          const newUser = userRepository.create({
-            fullName: profile.displayName,
-            email: profile.emails![0].value,
-            enabled: true,
-            isAdmin: false,
-            isManager: false,
-            isTeacher: false,
-            isStudent: true,
-            roleId: 4 // ID da role Student
-          });
+          const newUser = new User();
+          newUser.fullName = profile.displayName;
+          newUser.email = profile.emails![0].value;
+          newUser.enabled = true;
+          newUser.isAdmin = false;
+          newUser.isManager = false;
+          newUser.isTeacher = false;
+          newUser.isStudent = true;
+          
+          // Buscar a role de estudante
+          const roleRepository = AppDataSource.getRepository(Role);
+          const studentRole = await roleRepository.findOne({ where: { id: 4 } });
+          if (studentRole) {
+            newUser.role = studentRole;
+          }
 
           const savedUser = await userRepository.save(newUser);
+          
+          // Buscar o usuário salvo com suas relações
           const userWithRole = await userRepository.findOne({
             where: { id: savedUser.id },
             relations: ['role']

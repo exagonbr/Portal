@@ -69,10 +69,23 @@ class NotificationController {
       return res.status(500).json({ success: false, message: 'Internal Server Error' });
     }
   }
-  
-  // O envio de notificações geralmente é feito por um serviço, não diretamente pelo controller.
-  // O controller apenas receberia a requisição e chamaria o serviço.
-  // A lógica de criação de notificação foi omitida por ser mais complexa e depender de um serviço.
+
+  public async getNotificationById(req: Request, res: Response): Promise<Response> {
+    const { id } = req.params;
+    // Lógica para buscar notificação por ID
+    const notification = await notificationRepository.findById(id);
+    if (!notification) {
+      return res.status(404).json({ success: false, message: 'Notification not found' });
+    }
+    return res.status(200).json({ success: true, data: notification });
+  }
+
+  public async createNotification(req: Request, res: Response): Promise<Response> {
+    // O envio de notificações geralmente é feito por um serviço, não diretamente pelo controller.
+    // O controller apenas receberia a requisição e chamaria o serviço.
+    console.log('Creating notification with body:', req.body);
+    return res.status(201).json({ success: true, message: 'Notification created (mock)', data: req.body });
+  }
 }
 
 export default new NotificationController();

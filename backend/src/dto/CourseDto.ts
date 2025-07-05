@@ -1,8 +1,10 @@
-import { CourseLevel } from '../models/Course';
 import { InstitutionDto } from './InstitutionDto'; // Para incluir dados da instituição
 import { UserResponseDto as UserDto } from './UserDto'; // Corrigido para UserResponseDto e usando alias UserDto
 import { ModuleDto } from './ModuleDto'; // Supondo que ModuleDto existirá
 import { PaginationParams, PaginationResult } from '../types/common';
+
+// Definindo tipos locais para evitar erros de import
+export type CourseLevel = 'BEGINNER' | 'INTERMEDIATE' | 'ADVANCED';
 
 export interface CourseDto {
   id: string;

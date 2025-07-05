@@ -3,7 +3,6 @@ import { Inter } from 'next/font/google';
 import './globals.css';
 import SimpleProviders from '@/providers/SimpleProviders';
 import { isDevelopment } from '@/utils/env';
-import { LoopPreventionInit } from '@/components/LoopPreventionInit';
 
 const inter = Inter({ subsets: ['latin'] });
 
@@ -67,7 +66,6 @@ export default function RootLayout({
       </head>
       <body className={`${inter.className} m-0 p-0 h-full w-full`} suppressHydrationWarning>
         <SimpleProviders>
-          <LoopPreventionInit />
           <div className="flex flex-col min-h-screen w-full">
             {children}
           </div>

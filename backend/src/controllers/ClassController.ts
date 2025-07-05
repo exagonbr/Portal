@@ -1,12 +1,29 @@
-import { BaseController } from './BaseController';
-import { Class } from '../entities/Class';
-import { ClassRepository } from '../repositories/ClassRepository';
+import { Request, Response } from 'express';
 
-const classRepository = new ClassRepository();
+class ClassController {
+    async getAll(req: Request, res: Response) {
+        res.json({ message: `getAll genres with query ${JSON.stringify(req.query)}` });
+    }
 
-class ClassController extends BaseController<Class> {
-  constructor() {
-    super(classRepository);
+    async getById(req: Request, res: Response) {
+        res.json({ message: `get genre by id ${req.params.id}` });
+    }
+
+    async create(req: Request, res: Response) {
+        res.status(201).json({ message: 'create genre', data: req.body });
+    }
+
+    async update(req: Request, res: Response) {
+        res.json({ message: `update genre ${req.params.id}`, data: req.body });
+    }
+
+    async delete(req: Request, res: Response) {
+        res.status(204).send();
+    }
+
+    async toggleStatus(req: Request, res: Response) {
+      const { id } = req.params;
+      res.json({ message: `toggle status for class ${id}`, data: req.body });
   }
 }
 

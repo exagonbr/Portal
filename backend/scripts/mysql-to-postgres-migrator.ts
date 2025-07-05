@@ -20,6 +20,7 @@ interface MigrationStats {
   schools: { migrated: number; skipped: number; errors: number };
   files: { migrated: number; skipped: number; errors: number };
   collections: { migrated: number; skipped: number; errors: number };
+  defaultUsers: { created: number; skipped: number; errors: number };
 }
 
 class MySQLToPostgresMigrator {
@@ -29,6 +30,7 @@ class MySQLToPostgresMigrator {
   private teacherRoleId: string | null = null;
   private defaultInstitutionId: string | null = null;
   private defaultSchoolId: string | null = null;
+  private roleIds: Record<string, string> = {};
 
   constructor() {
     this.pg = knex(knexConfig.development);
@@ -37,7 +39,8 @@ class MySQLToPostgresMigrator {
       institutions: { migrated: 0, skipped: 0, errors: 0 },
       schools: { migrated: 0, skipped: 0, errors: 0 },
       files: { migrated: 0, skipped: 0, errors: 0 },
-      collections: { migrated: 0, skipped: 0, errors: 0 }
+      collections: { migrated: 0, skipped: 0, errors: 0 },
+      defaultUsers: { created: 0, skipped: 0, errors: 0 }
     };
   }
 
@@ -77,6 +80,7 @@ class MySQLToPostgresMigrator {
       console.log('   ✅ Role TEACHER criada');
     }
     this.teacherRoleId = teacherRole.id;
+    this.roleIds['TEACHER'] = teacherRole.id;
 
     // 2. Garantir instituição padrão
     let institution = await this.pg('institutions').where('code', 'MYSQL_MIGRATED').first();
@@ -121,8 +125,46 @@ class MySQLToPostgresMigrator {
     }
     this.defaultSchoolId = school.id;
 
-    // 4. Garantir permissões básicas para TEACHER
+    // 4. Garantir todas as roles do sistema
+    await this.setupAllRoles();
+
+    // 5. Garantir permissões básicas para TEACHER
     await this.setupTeacherPermissions();
+  }
+
+  private async setupAllRoles(): Promise<void> {
+    console.log('   🔑 Verificando roles do sistema...');
+    
+    const requiredRoles = [
+      { name: 'SYSTEM_ADMIN', description: 'Administrador do Sistema - Acesso completo' },
+      { name: 'INSTITUTION_MANAGER', description: 'Gestor Institucional - Gerencia operações institucionais' },
+      { name: 'TEACHER', description: 'Professor - Acesso a turmas e conteúdos' },
+      { name: 'STUDENT', description: 'Estudante - Acesso a materiais e atividades' },
+      { name: 'COORDINATOR', description: 'Coordenador - Coordena atividades acadêmicas' },
+      { name: 'GUARDIAN', description: 'Responsável - Acompanha estudantes' }
+    ];
+
+    for (const roleData of requiredRoles) {
+      let role = await this.pg('roles').where('name', roleData.name).first();
+      
+      if (!role) {
+        const [roleId] = await this.pg('roles').insert({
+          id: uuidv4(),
+          name: roleData.name,
+          description: roleData.description,
+          type: 'system',
+          status: 'active',
+          user_count: 0
+        }).returning('id');
+        
+        this.roleIds[roleData.name] = roleId;
+        console.log(`   ✅ Role ${roleData.name} criada`);
+      } else {
+        this.roleIds[roleData.name] = role.id;
+      }
+    }
+    
+    console.log(`   ✅ Todas as roles verificadas`);
   }
 
   private async setupTeacherPermissions(): Promise<void> {
@@ -157,6 +199,108 @@ class MySQLToPostgresMigrator {
         console.log(`   ✅ ${basicPermissions.length} permissões atribuídas`);
       }
     }
+  }
+
+  async createDefaultUsers(): Promise<void> {
+    console.log('👤 Criando usuários padrão...');
+
+    const defaultUsers = [
+      {
+        email: 'admin@sabercon.edu.br',
+        name: 'Administrador do Sistema',
+        roleName: 'SYSTEM_ADMIN',
+        emoji: '👑'
+      },
+      {
+        email: 'gestor@sabercon.edu.br',
+        name: 'Gestor Institucional',
+        roleName: 'INSTITUTION_MANAGER',
+        emoji: '🏢'
+      },
+      {
+        email: 'professor@sabercon.edu.br',
+        name: 'Professor Demonstração',
+        roleName: 'TEACHER',
+        emoji: '👨‍🏫'
+      },
+      {
+        email: 'julia.c@ifsp.com',
+        name: 'Julia Campos',
+        roleName: 'STUDENT',
+        emoji: '🎓'
+      },
+      {
+        email: 'coordenador@sabercon.edu.com',
+        name: 'Coordenador Acadêmico',
+        roleName: 'COORDINATOR',
+        emoji: '📚'
+      },
+      {
+        email: 'renato@gmail.com',
+        name: 'Renato Silva',
+        roleName: 'GUARDIAN',
+        emoji: '👨‍👩‍👧‍👦'
+      }
+    ];
+
+    // Senha padrão para todos os usuários
+    const hashedPassword = await bcrypt.hash('password123', 10);
+
+    for (const userData of defaultUsers) {
+      try {
+        // Verificar se usuário já existe
+        const existing = await this.pg('users').where('email', userData.email).first();
+        
+        if (existing) {
+          console.log(`   ${userData.emoji} Usuário ${userData.email} já existe, pulando...`);
+          this.stats.defaultUsers.skipped++;
+          continue;
+        }
+
+        // Verificar se a role existe
+        if (!this.roleIds[userData.roleName]) {
+          console.log(`   ❌ Role ${userData.roleName} não encontrada para ${userData.email}`);
+          this.stats.defaultUsers.errors++;
+          continue;
+        }
+
+        console.log(`   ${userData.emoji} Criando usuário ${userData.email}...`);
+
+        // Gerar ID único para o usuário
+        const userId = uuidv4();
+        
+        // Inserir usuário na tabela users com o ID gerado
+        await this.pg('users').insert({
+          id: userId,
+          email: userData.email,
+          password: hashedPassword,
+          name: userData.name,
+          is_active: true,
+          institution_id: this.defaultInstitutionId,
+          school_id: this.defaultSchoolId,
+          created_at: new Date(),
+          updated_at: new Date()
+        });
+        
+        console.log(`      ✓ Usuário inserido com ID: ${userId}`);
+
+        // Vincular à role na tabela user_roles
+        await this.pg('user_roles').insert({
+          user_id: userId,
+          role_id: this.roleIds[userData.roleName]
+        });
+
+        console.log(`      ✓ Role ${userData.roleName} vinculada ao usuário`);
+        this.stats.defaultUsers.created++;
+      } catch (error: any) {
+        this.stats.defaultUsers.errors++;
+        console.log(`   ❌ Erro ao criar usuário ${userData.email}: ${error.message}`);
+      }
+    }
+
+    console.log(`   ✅ ${this.stats.defaultUsers.created} usuários padrão criados`);
+    console.log(`   ⚠️ ${this.stats.defaultUsers.skipped} usuários já existiam`);
+    console.log(`   ❌ ${this.stats.defaultUsers.errors} erros`);
   }
 
   async migrateUsers(): Promise<void> {
@@ -461,9 +605,11 @@ class MySQLToPostgresMigrator {
     console.log(`🏫 Escolas: ${this.stats.schools.migrated} migradas, ${this.stats.schools.skipped} puladas, ${this.stats.schools.errors} erros`);
     console.log(`📁 Arquivos: ${this.stats.files.migrated} migrados, ${this.stats.files.skipped} pulados, ${this.stats.files.errors} erros`);
     console.log(`📚 Coleções: ${this.stats.collections.migrated} migradas, ${this.stats.collections.skipped} puladas, ${this.stats.collections.errors} erros`);
+    console.log(`👤 Usuários Padrão: ${this.stats.defaultUsers.created} criados, ${this.stats.defaultUsers.skipped} pulados, ${this.stats.defaultUsers.errors} erros`);
     console.log('==========================================');
     console.log('✅ Todos os usuários migrados têm role TEACHER');
     console.log('✅ Dados organizados em instituição/escola padrão');
+    console.log('✅ Usuários padrão criados para todas as roles');
   }
 
   async migrate(): Promise<void> {
@@ -481,10 +627,35 @@ class MySQLToPostgresMigrator {
       await this.migrateFiles();
       await this.migrateCollections();
       
+      // Criar usuários padrão após migração
+      console.log('\n👤 Criando usuários padrão para todas as roles...\n');
+      await this.createDefaultUsers();
+      
       await this.printSummary();
       
     } catch (error) {
       console.log('❌ ERRO NA MIGRAÇÃO:', error);
+      throw error;
+    } finally {
+      await this.disconnect();
+    }
+  }
+
+  async createDefaultUsersOnly(): Promise<void> {
+    try {
+      console.log('🚀 Iniciando criação de usuários padrão\n');
+      
+      await this.connect();
+      await this.setupDefaults();
+      await this.createDefaultUsers();
+      
+      console.log('\n✅ Usuários padrão criados com sucesso!');
+      console.log(`   👤 Criados: ${this.stats.defaultUsers.created}`);
+      console.log(`   ⚠️ Pulados: ${this.stats.defaultUsers.skipped}`);
+      console.log(`   ❌ Erros: ${this.stats.defaultUsers.errors}`);
+      
+    } catch (error) {
+      console.log('❌ ERRO AO CRIAR USUÁRIOS:', error);
       throw error;
     } finally {
       await this.disconnect();
@@ -498,8 +669,20 @@ async function runMigration() {
   await migrator.migrate();
 }
 
+// Criar apenas usuários padrão
+async function createDefaultUsers() {
+  const migrator = new MySQLToPostgresMigrator();
+  await migrator.createDefaultUsersOnly();
+}
+
 if (require.main === module) {
-  runMigration().catch(console.log);
+  // Verificar argumentos para determinar a operação
+  const args = process.argv.slice(2);
+  if (args.includes('--create-default-users')) {
+    createDefaultUsers().catch(console.log);
+  } else {
+    runMigration().catch(console.log);
+  }
 }
 
 export default MySQLToPostgresMigrator; 

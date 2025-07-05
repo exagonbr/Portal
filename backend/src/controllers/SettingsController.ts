@@ -42,6 +42,12 @@ class SettingsController {
       return res.status(500).json({ success: false, message: 'Internal Server Error' });
     }
   }
+
+  public async updateSettings(req: Request, res: Response): Promise<Response> {
+    // A lógica para atualizar múltiplas configurações estaria aqui.
+    console.log('Updating settings with body:', req.body);
+    return res.status(200).json({ success: true, message: 'Settings updated successfully' });
+  }
 }
 
 export default new SettingsController();

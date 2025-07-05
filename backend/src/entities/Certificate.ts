@@ -5,7 +5,7 @@ import {
   ManyToOne,
   JoinColumn
 } from 'typeorm';
-import { TvShow } from './TVShow';
+import { TvShow } from './TvShow';
 import { User } from './User';
 
 @Entity('certificate')
