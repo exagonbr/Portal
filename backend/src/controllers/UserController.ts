@@ -2,6 +2,7 @@ import { Request, Response } from 'express';
 import { BaseController } from './BaseController';
 import { User } from '../entities/User';
 import { UserRepository } from '../repositories/UserRepository';
+import authService from '../services/AuthService';
 
 const userRepository = new UserRepository();
 
@@ -14,7 +15,29 @@ class UserController extends BaseController<User> {
   // Por exemplo, um método para buscar usuários por role ou instituição.
 
   public async login(req: Request, res: Response): Promise<Response> {
-    return res.json({ message: 'login', data: req.body });
+    const { email, password } = req.body;
+
+    if (!email || !password) {
+      return res.status(400).json({ success: false, message: 'Email e senha são obrigatórios.' });
+    }
+
+    const result = await authService.login(email, password);
+
+    if (!result.success || !result.data) {
+      return res.status(401).json({ success: false, message: result.message || 'Credenciais inválidas.' });
+    }
+
+    // Envia o refresh token em um cookie seguro
+    authService.sendRefreshToken(res, result.data.refreshToken);
+
+    // Retorna o access token e os dados do usuário no corpo da resposta
+    return res.json({
+      success: true,
+      data: {
+        accessToken: result.data.accessToken,
+        user: result.data.user,
+      },
+    });
   }
 
   public async toggleStatus(req: Request, res: Response): Promise<Response> {

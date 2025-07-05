@@ -83,7 +83,7 @@ async function testBackendLogin() {
   console.log('\n🔐 Testando login no backend...');
   
   try {
-    const response = await makeRequest(`${BACKEND_URL}/auth/optimized/login`, {
+    const response = await makeRequest(`${BACKEND_URL}/users/login`, {
       method: 'POST',
       body: TEST_CREDENTIALS
     });

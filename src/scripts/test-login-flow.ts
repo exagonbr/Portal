@@ -37,7 +37,7 @@ async function testLoginFlow() {
 
     try {
       // 1. Fazer login
-      const loginResponse = await fetch(`${API_BASE_URL}/auth/login`, {
+      const loginResponse = await fetch(`${API_BASE_URL}/users/login`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',

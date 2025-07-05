@@ -62,7 +62,7 @@ export const authOptionsDebug: NextAuthOptions = {
             ? 'https://portal.sabercon.com.br/api'
             : 'https://portal.sabercon.com.br/api';
           
-          const response = await fetch(`${backendUrl}/auth/optimized/login`, {
+          const response = await fetch(`${backendUrl}/users/login`, {
             method: 'POST',
             headers: {
               'Content-Type': 'application/json',

@@ -8,6 +8,7 @@ const router = Router();
 // A rota de login é pública
 router.post('/login', UserController.login);
 
+// Aplicar autenticação para todas as outras rotas
 router.use(requireAuth);
 
 router.get('/', UserController.getAll);

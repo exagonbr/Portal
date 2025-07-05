@@ -46,7 +46,7 @@ export function useOptimizedAuth() {
     try {
       console.log('🔐 Iniciando login otimizado...');
       
-      const response = await fetch(`${getApiUrl()}/auth/login`, {
+      const response = await fetch(`${getApiUrl()}/users/login`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',

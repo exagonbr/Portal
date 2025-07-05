@@ -139,7 +139,7 @@ const nextConfig: NextConfig = {
     return [
   // Headers específicos para rotas de login (PÚBLICAS)
   {
-    source: '/api/auth/login',
+            source: '/api/users/login',
     headers: [
       { key: 'Access-Control-Allow-Origin', value: '*' },
       { key: 'Access-Control-Allow-Methods', value: 'GET, POST, PUT, DELETE, OPTIONS, PATCH' },

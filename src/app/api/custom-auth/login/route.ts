@@ -38,7 +38,7 @@ export async function POST(request: NextRequest) {
 
     // URL do backend baseada nas variáveis de ambiente
     const backendUrl = process.env.NEXT_PUBLIC_API_URL || process.env.BACKEND_URL || 'http://localhost:3001/api';
-    const loginUrl = `${backendUrl}/auth/optimized/login`;
+    const loginUrl = `${backendUrl}/users/login`;
 
     console.log('🔐 [CUSTOM-AUTH-LOGIN] Tentativa de login para:', email);
     console.log('🔗 [CUSTOM-AUTH-LOGIN] URL do backend:', loginUrl);

@@ -10,7 +10,7 @@ const ENDPOINTS = [
   { path: '/health', method: 'GET', auth: false },
   
   // APIs que devem funcionar sem autenticação
-  { path: '/auth/login', method: 'POST', auth: false, body: { email: 'admin@sabercon.edu.br', password: 'password123' } },
+  { path: '/users/login', method: 'POST', auth: false, body: { email: 'admin@sabercon.edu.br', password: 'password123' } },
   
   // APIs que precisam de autenticação
   { path: '/dashboard/analytics', method: 'GET', auth: true },
@@ -42,7 +42,7 @@ async function login() {
   try {
     log('🔐 Fazendo login...', 'blue');
     
-    const response = await fetch(`${BASE_URL}/auth/login`, {
+    const response = await fetch(`${BASE_URL}/users/login`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',

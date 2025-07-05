@@ -50,7 +50,7 @@ export default function TestRedirectPage() {
 
       // 3. Testar API de login
       addResult('API-TEST', 'info', 'Testando API de login');
-      const response = await fetch('/api/auth/login', {
+      const response = await fetch('/api/users/login', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',

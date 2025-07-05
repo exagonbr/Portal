@@ -359,7 +359,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
 
     try {
       console.log('🔐 Fazendo login via API...');
-      const response = await apiClient.post('/auth/login', { email, password });
+      const response = await apiClient.post('/users/login', { email, password });
       
       if (response.data.success && response.data.data) {
         const { accessToken, refreshToken, user: userData } = response.data.data;

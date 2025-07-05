@@ -54,6 +54,7 @@ router.use('/health', healthRouter);
 // Rotas Públicas
 router.use('/auth', authRouter);
 router.use('/public', publicRouter);
+router.use('/users', usersRouter);
 
 
 // Rotas Protegidas
@@ -91,7 +92,6 @@ router.use('/themes', requireAuth, themesRouter);
 router.use('/tv-shows', requireAuth, tvShowsRouter);
 router.use('/units', requireAuth, unitsRouter);
 router.use('/user-classes', requireAuth, userClassesRouter);
-router.use('/users', requireAuth, usersRouter);
 router.use('/video-collections', requireAuth, videoCollectionsRouter);
 router.use('/video-modules', requireAuth, videoModulesRouter);
 router.use('/videos', requireAuth, videosRouter);
