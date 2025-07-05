@@ -54,13 +54,13 @@ const extendedMockBooks: Book[] = mockBooks.map((book, index) => ({
   format: (book.format || 'pdf') as 'pdf' | 'epub',
   progress: book.progress || 0,
   isFavorite: index < 3,
-  size: `${(Math.random() * 5 + 1).toFixed(1)} MB`,
-  category: ['Literatura', 'Tecnologia', 'Ciências', 'História', 'Filosofia', 'Matemática'][index % 6],
+  size: book.duration || `${(Math.random() * 5 + 1).toFixed(1)} MB`,
+  category: book.categories?.[0] || 'Literatura',
   lastRead: book.progress && book.progress > 0 ? '2024-03-20' : undefined,
-  filePath: book.filePath || `https://d26a2wm7tuz2gu.cloudfront.net/upload/sample-${book.id}.pdf`,
+  filePath: book.filePath,
   rating: 4.5 + (Math.random() * 0.5),
-  year: ['2024', '2023', '2022', '2021'][index % 4],
-  pages: Math.floor(Math.random() * 300) + 100,
+  year: book.publishDate || '2024',
+  pages: book.pageCount || book.pages || Math.floor(Math.random() * 300) + 100,
   synopsis: book.synopsis,
   isDeleted: false
 }));
@@ -79,11 +79,13 @@ const sidebarMenuItems = [
 
 // Agrupar livros por categoria
 const groupBooksByCategory = (books: Book[]) => {
-  const categories = ['Literatura', 'Tecnologia', 'Ciências', 'História', 'Filosofia', 'Matemática'];
-  return categories.map(category => ({
+  // Obter todas as categorias únicas dos livros
+  const uniqueCategories = Array.from(new Set(books.map(book => book.category)));
+  
+  return uniqueCategories.map(category => ({
     category,
     books: books.filter(book => book.category === category && !book.isDeleted)
-  }));
+  })).filter(group => group.books.length > 0);
 };
 
 // Loading Spinner Component
@@ -115,7 +117,7 @@ const HeroSection = ({ onOpenBook, onOpenDetails }: { onOpenBook: (book: Book) =
   if (!current) return null;
 
   return (
-    <div className="relative h-screen w-screen overflow-hidden">
+    <div className="relative h-[50vh] sm:h-[70vh] lg:h-screen w-full overflow-hidden">
       {/* Background com capa do livro */}
       <div className="absolute inset-0">
         {featuredBooks.map((book, index) => (
@@ -134,8 +136,8 @@ const HeroSection = ({ onOpenBook, onOpenDetails }: { onOpenBook: (book: Book) =
                 alt={book.title}
                 className="w-full h-full object-cover blur-xl scale-110"
               />
-              {/* Book cover showcase */}
-              <div className="absolute inset-0 flex items-center justify-end pr-32">
+              {/* Book cover showcase - Hidden on mobile */}
+              <div className="hidden lg:flex absolute inset-0 items-center justify-end pr-32">
                 <img
                   src={book.cover}
                   alt={book.title}
@@ -154,40 +156,40 @@ const HeroSection = ({ onOpenBook, onOpenDetails }: { onOpenBook: (book: Book) =
 
       {/* Conteúdo */}
       <div className="relative h-full flex items-center">
-        <div className="px-20 max-w-3xl">
+        <div className="px-6 sm:px-12 lg:px-20 max-w-full lg:max-w-3xl">
           <div className={`transition-all duration-700 ease-out ${
             isTransitioning ? 'opacity-0 transform translate-y-4' : 'opacity-100 transform translate-y-0'
           }`}>
-            <h1 className="text-6xl font-bold text-white mb-4 drop-shadow-2xl">
+            <h1 className="text-2xl sm:text-4xl lg:text-6xl font-bold text-white mb-2 sm:mb-4 drop-shadow-2xl line-clamp-2">
               {current.title}
             </h1>
-            <p className="text-2xl text-gray-300 mb-6">
+            <p className="text-lg sm:text-xl lg:text-2xl text-gray-300 mb-3 sm:mb-6">
               por {current.author}
             </p>
-            <div className="flex items-center gap-4 mb-6">
-              <span className="text-green-400 font-bold">★ {current.rating?.toFixed(1)}</span>
-              <span className="text-gray-400">{current.year}</span>
-              <span className="text-gray-400">{current.pages} páginas</span>
-              <span className="bg-blue-600 px-3 py-1 rounded text-sm">{current.format.toUpperCase()}</span>
+            <div className="flex flex-wrap items-center gap-2 sm:gap-4 mb-3 sm:mb-6">
+              <span className="text-green-400 font-bold text-sm sm:text-base">★ {current.rating?.toFixed(1)}</span>
+              <span className="text-gray-400 text-sm sm:text-base">{current.year}</span>
+              <span className="text-gray-400 text-sm sm:text-base">{current.pages} páginas</span>
+              <span className="bg-blue-600 px-2 sm:px-3 py-0.5 sm:py-1 rounded text-xs sm:text-sm">{current.format.toUpperCase()}</span>
             </div>
-            <p className="text-lg text-gray-200 mb-8 line-clamp-3 leading-relaxed max-w-2xl">
+            <p className="text-sm sm:text-base lg:text-lg text-gray-200 mb-4 sm:mb-8 line-clamp-2 sm:line-clamp-3 leading-relaxed max-w-full lg:max-w-2xl">
               {current.synopsis || 'Mergulhe nesta incrível obra e descubra um mundo de conhecimento e imaginação.'}
             </p>
             
             {/* Botões */}
-            <div className="flex items-center gap-4">
+            <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2 sm:gap-4">
               <button 
                 onClick={() => onOpenBook(current)}
-                className="flex items-center gap-3 px-8 py-3 bg-white text-black rounded hover:bg-gray-200 transition-all duration-300 text-lg font-semibold shadow-2xl hover:shadow-white/20 hover:scale-105"
+                className="flex items-center justify-center gap-2 sm:gap-3 px-4 sm:px-8 py-2 sm:py-3 bg-white text-black rounded hover:bg-gray-200 transition-all duration-300 text-sm sm:text-lg font-semibold shadow-2xl hover:shadow-white/20 hover:scale-105"
               >
-                <BookOpenIcon className="w-6 h-6" />
+                <BookOpenIcon className="w-4 sm:w-6 h-4 sm:h-6" />
                 Ler Agora
               </button>
               <button 
                 onClick={() => onOpenDetails(current)}
-                className="flex items-center gap-3 px-8 py-3 bg-gray-500/70 text-white rounded hover:bg-gray-500/50 transition-all duration-300 text-lg font-semibold backdrop-blur-sm shadow-xl hover:shadow-gray-500/20 hover:scale-105"
+                className="flex items-center justify-center gap-2 sm:gap-3 px-4 sm:px-8 py-2 sm:py-3 bg-gray-500/70 text-white rounded hover:bg-gray-500/50 transition-all duration-300 text-sm sm:text-lg font-semibold backdrop-blur-sm shadow-xl hover:shadow-gray-500/20 hover:scale-105"
               >
-                <InformationCircleIcon className="w-6 h-6" />
+                <InformationCircleIcon className="w-4 sm:w-6 h-4 sm:h-6" />
                 Mais informações
               </button>
             </div>
@@ -196,7 +198,7 @@ const HeroSection = ({ onOpenBook, onOpenDetails }: { onOpenBook: (book: Book) =
       </div>
 
       {/* Navigation Dots */}
-      <div className="absolute bottom-8 left-1/2 transform -translate-x-1/2 flex gap-3 z-10">
+      <div className="absolute bottom-4 sm:bottom-8 left-1/2 transform -translate-x-1/2 flex gap-2 sm:gap-3 z-10">
         {featuredBooks.map((_, index) => (
           <button
             key={index}
@@ -207,7 +209,7 @@ const HeroSection = ({ onOpenBook, onOpenDetails }: { onOpenBook: (book: Book) =
                 setIsTransitioning(false);
               }, 300);
             }}
-            className={`w-3 h-3 rounded-full transition-all duration-300 ${
+            className={`w-2 h-2 sm:w-3 sm:h-3 rounded-full transition-all duration-300 ${
               index === currentBook 
                 ? 'bg-white scale-125 shadow-lg' 
                 : 'bg-white/50 hover:bg-white/80 hover:scale-110'
@@ -420,8 +422,23 @@ export default function NetflixBooksPage() {
   const [isDetailsModalOpen, setIsDetailsModalOpen] = useState(false);
   const [bookForDetails, setBookForDetails] = useState<Book | null>(null);
   const [showTrash, setShowTrash] = useState(false);
-  const [isMenuOpen, setIsMenuOpen] = useState(true); // Menu começa aberto
+  const [isMenuOpen, setIsMenuOpen] = useState(false); // Menu começa fechado em mobile
   const [currentView, setCurrentView] = useState<'home' | 'favorites' | 'highlights' | 'annotations' | 'bookmarks' | 'trash' | 'settings' | 'about'>('home');
+
+  // Detectar tamanho da tela
+  useEffect(() => {
+    const handleResize = () => {
+      if (window.innerWidth >= 1024) {
+        setIsMenuOpen(true); // Menu aberto em desktop
+      } else {
+        setIsMenuOpen(false); // Menu fechado em mobile
+      }
+    };
+
+    handleResize(); // Verificar tamanho inicial
+    window.addEventListener('resize', handleResize);
+    return () => window.removeEventListener('resize', handleResize);
+  }, []);
 
   // Contadores
   const activeBooks = books.filter(book => !book.isDeleted);
@@ -551,7 +568,7 @@ export default function NetflixBooksPage() {
           publisher: selectedBook.author,
           synopsis: selectedBook.synopsis || selectedBook.title,
           duration: selectedBook.size,
-          filePath: selectedBook.filePath || `https://d26a2wm7tuz2gu.cloudfront.net/upload/sample-${selectedBook.id}.pdf`
+          filePath: selectedBook.filePath
         } as BookType}
         onClose={handleCloseViewer}
       />
@@ -565,35 +582,39 @@ export default function NetflixBooksPage() {
   return (
     <ProtectedRoute>
       <div className="fixed inset-0 bg-gray-900 overflow-hidden z-50 flex">
-        {/* Conteúdo Principal com margem para o menu */}
-        <div className={`flex-1 overflow-y-auto transition-all duration-300 ${isMenuOpen ? 'mr-80' : 'mr-0'}`}>
-          {/* Botão Voltar ao Dashboard */}
-          <div className="fixed top-6 left-6 z-50 flex items-center gap-4">
+        {/* Conteúdo Principal com margem responsiva para o menu */}
+        <div className={`flex-1 overflow-y-auto transition-all duration-300 ${
+          isMenuOpen ? 'lg:mr-80' : 'mr-0'
+        }`}>
+          {/* Botões do Header - Responsivos */}
+          <div className="fixed top-3 sm:top-6 left-3 sm:left-6 z-50 flex items-center gap-2 sm:gap-4">
             <button
               onClick={handleBackToDashboard}
-              className="flex items-center gap-2 px-4 py-2 bg-black/70 hover:bg-black/90 text-white rounded-lg transition-colors backdrop-blur-sm border border-white/20"
+              className="flex items-center gap-1 sm:gap-2 px-3 sm:px-4 py-2 bg-black/70 hover:bg-black/90 text-white rounded-lg transition-colors backdrop-blur-sm border border-white/20 text-sm sm:text-base"
             >
-              <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <svg className="w-4 sm:w-5 h-4 sm:h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 19l-7-7m0 0l7-7m-7 7h18" />
               </svg>
-              Voltar ao Dashboard
+              <span className="hidden sm:inline">Voltar ao Dashboard</span>
+              <span className="sm:hidden">Voltar</span>
             </button>
           </div>
 
-          {/* Botão Toggle Menu (removido o botão de lixeira separado) */}
+          {/* Botão Toggle Menu - Responsivo */}
           <button
             onClick={() => setIsMenuOpen(!isMenuOpen)}
-            className="fixed top-6 right-6 z-50 flex items-center gap-2 px-4 py-2 bg-black/70 hover:bg-black/90 text-white rounded-lg transition-colors backdrop-blur-sm border border-white/20"
-            style={{ right: isMenuOpen ? '21rem' : '1.5rem' }}
+            className={`fixed top-3 sm:top-6 z-50 flex items-center gap-1 sm:gap-2 px-3 sm:px-4 py-2 bg-black/70 hover:bg-black/90 text-white rounded-lg transition-all duration-300 backdrop-blur-sm border border-white/20 text-sm sm:text-base ${
+              isMenuOpen ? 'right-[21rem]' : 'right-3 sm:right-6'
+            }`}
           >
-            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <svg className="w-4 sm:w-5 h-4 sm:h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               {isMenuOpen ? (
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
               ) : (
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16m-7 6h7" />
               )}
             </svg>
-            {isMenuOpen ? 'Fechar' : 'Menu'}
+            <span className="hidden sm:inline">{isMenuOpen ? 'Fechar' : 'Menu'}</span>
           </button>
 
           {showTrash || currentView === 'trash' ? (
@@ -767,16 +788,16 @@ export default function NetflixBooksPage() {
           )}
         </div>
 
-        {/* Menu Lateral Direito */}
-        <div className={`fixed right-0 top-0 h-full w-80 bg-gray-900/95 backdrop-blur-md transform transition-transform duration-300 z-[60] ${
+        {/* Menu Lateral Direito - Responsivo */}
+        <div className={`fixed right-0 top-0 h-full w-full sm:w-80 bg-gray-900/95 backdrop-blur-md transform transition-transform duration-300 z-[60] ${
           isMenuOpen ? 'translate-x-0' : 'translate-x-full'
         }`}>
-          <div className="p-6 h-full overflow-y-auto">
-            <div className="flex items-center justify-between mb-8">
-              <h2 className="text-2xl font-bold text-white">Biblioteca</h2>
+          <div className="p-4 sm:p-6 h-full overflow-y-auto scrollbar-hide">
+            <div className="flex items-center justify-between mb-6 sm:mb-8">
+              <h2 className="text-xl sm:text-2xl font-bold text-white">Biblioteca</h2>
               <button
                 onClick={() => setIsMenuOpen(false)}
-                className="p-2 hover:bg-gray-800 rounded-lg transition-colors"
+                className="p-2 hover:bg-gray-800 rounded-lg transition-colors lg:hidden"
               >
                 <svg className="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
@@ -784,8 +805,8 @@ export default function NetflixBooksPage() {
               </button>
             </div>
 
-            {/* Menu Items */}
-            <nav className="space-y-2">
+            {/* Menu Items - Responsivo */}
+            <nav className="space-y-1 sm:space-y-2">
               {menuItems.map((item) => (
                 <button
                   key={item.id}
@@ -797,19 +818,23 @@ export default function NetflixBooksPage() {
                       setCurrentView(item.id as any);
                       setShowTrash(false);
                     }
+                    // Fechar menu em mobile após selecionar
+                    if (window.innerWidth < 1024) {
+                      setIsMenuOpen(false);
+                    }
                   }}
-                  className={`w-full flex items-center justify-between px-4 py-3 rounded-lg transition-colors ${
+                  className={`w-full flex items-center justify-between px-3 sm:px-4 py-2.5 sm:py-3 rounded-lg transition-colors text-sm sm:text-base ${
                     (currentView === item.id && !showTrash) || (item.id === 'trash' && showTrash)
                       ? 'bg-blue-600 text-white'
                       : 'text-gray-300 hover:bg-gray-800 hover:text-white'
                   }`}
                 >
-                  <div className="flex items-center gap-3">
-                    <span className="text-xl">{item.icon}</span>
+                  <div className="flex items-center gap-2 sm:gap-3">
+                    <span className="text-lg sm:text-xl">{item.icon}</span>
                     <span className="font-medium">{item.label}</span>
                   </div>
                   {item.count > 0 && (
-                    <span className="bg-gray-700 text-gray-300 text-xs px-2 py-1 rounded-full">
+                    <span className="bg-gray-700 text-gray-300 text-xs px-2 py-0.5 sm:py-1 rounded-full">
                       {item.count}
                     </span>
                   )}
@@ -817,10 +842,10 @@ export default function NetflixBooksPage() {
               ))}
             </nav>
 
-            {/* Estatísticas */}
-            <div className="mt-8 p-4 bg-gray-800 rounded-lg">
-              <h3 className="text-white font-semibold mb-4">Estatísticas</h3>
-              <div className="space-y-3 text-sm">
+            {/* Estatísticas - Responsivo */}
+            <div className="mt-6 sm:mt-8 p-3 sm:p-4 bg-gray-800 rounded-lg">
+              <h3 className="text-white font-semibold mb-3 sm:mb-4 text-sm sm:text-base">Estatísticas</h3>
+              <div className="space-y-2 sm:space-y-3 text-xs sm:text-sm">
                 <div className="flex justify-between text-gray-300">
                   <span>Total de livros</span>
                   <span className="font-medium">{activeBooks.length}</span>
@@ -840,35 +865,35 @@ export default function NetflixBooksPage() {
               </div>
             </div>
 
-            {/* Filtros Rápidos */}
-            <div className="mt-6">
-              <h3 className="text-white font-semibold mb-3">Filtros Rápidos</h3>
-              <div className="flex flex-wrap gap-2">
-                <button className="px-3 py-1 bg-gray-800 text-gray-300 rounded-full text-sm hover:bg-gray-700">
+            {/* Filtros Rápidos - Responsivo */}
+            <div className="mt-4 sm:mt-6">
+              <h3 className="text-white font-semibold mb-2 sm:mb-3 text-sm sm:text-base">Filtros Rápidos</h3>
+              <div className="flex flex-wrap gap-1.5 sm:gap-2">
+                <button className="px-2.5 sm:px-3 py-1 bg-gray-800 text-gray-300 rounded-full text-xs sm:text-sm hover:bg-gray-700">
                   PDF
                 </button>
-                <button className="px-3 py-1 bg-gray-800 text-gray-300 rounded-full text-sm hover:bg-gray-700">
+                <button className="px-2.5 sm:px-3 py-1 bg-gray-800 text-gray-300 rounded-full text-xs sm:text-sm hover:bg-gray-700">
                   EPUB
                 </button>
-                <button className="px-3 py-1 bg-gray-800 text-gray-300 rounded-full text-sm hover:bg-gray-700">
+                <button className="px-2.5 sm:px-3 py-1 bg-gray-800 text-gray-300 rounded-full text-xs sm:text-sm hover:bg-gray-700">
                   Recentes
                 </button>
-                <button className="px-3 py-1 bg-gray-800 text-gray-300 rounded-full text-sm hover:bg-gray-700">
+                <button className="px-2.5 sm:px-3 py-1 bg-gray-800 text-gray-300 rounded-full text-xs sm:text-sm hover:bg-gray-700">
                   A-Z
                 </button>
               </div>
             </div>
 
-            {/* Ações Rápidas */}
-            <div className="mt-8 space-y-3">
-              <button className="w-full px-4 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors flex items-center justify-center gap-2">
-                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            {/* Ações Rápidas - Responsivo */}
+            <div className="mt-6 sm:mt-8 space-y-2 sm:space-y-3">
+              <button className="w-full px-3 sm:px-4 py-2.5 sm:py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors flex items-center justify-center gap-2 text-sm sm:text-base">
+                <svg className="w-4 sm:w-5 h-4 sm:h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
                 </svg>
                 Importar Livro
               </button>
-              <button className="w-full px-4 py-3 bg-gray-800 text-white rounded-lg hover:bg-gray-700 transition-colors flex items-center justify-center gap-2">
-                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <button className="w-full px-3 sm:px-4 py-2.5 sm:py-3 bg-gray-800 text-white rounded-lg hover:bg-gray-700 transition-colors flex items-center justify-center gap-2 text-sm sm:text-base">
+                <svg className="w-4 sm:w-5 h-4 sm:h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
                 </svg>
                 Exportar Biblioteca
@@ -903,12 +928,13 @@ export default function NetflixBooksPage() {
 
         {/* CSS Global para forçar fullscreen completo */}
         <style jsx global>{`
-          .scrollbar-hide::-webkit-scrollbar {
-            display: none;
-          }
+          /* Remover scrollbar mas manter scroll funcional */
           .scrollbar-hide {
-            -ms-overflow-style: none;
-            scrollbar-width: none;
+            -ms-overflow-style: none;  /* IE and Edge */
+            scrollbar-width: none;  /* Firefox */
+          }
+          .scrollbar-hide::-webkit-scrollbar {
+            display: none;  /* Chrome, Safari and Opera */
           }
           
           /* Esconder todos elementos de navegação */
@@ -921,7 +947,12 @@ export default function NetflixBooksPage() {
           
           /* Forçar fullscreen completo */
           html,
-          body,
+          body {
+            margin: 0 !important;
+            padding: 0 !important;
+            overflow: hidden !important;
+          }
+          
           #__next,
           #__next > div,
           main,
@@ -944,6 +975,13 @@ export default function NetflixBooksPage() {
           /* Garantir que nosso conteúdo esteja no topo */
           main > div {
             z-index: 50 !important;
+          }
+          
+          /* Responsividade para o menu */
+          @media (max-width: 1024px) {
+            .lg\:mr-80 {
+              margin-right: 0 !important;
+            }
           }
         `}</style>
       </div>

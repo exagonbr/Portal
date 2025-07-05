@@ -168,7 +168,7 @@ export const mockBooks: Book[] = [
   // Livros em PDF - Domínio Público e Educacionais
   {
     id: 'pdf-1',
-    thumbnail: 'https://m.media-amazon.com/images/I/51YUYsBp2CL._SY445_SX342_.jpg',
+    thumbnail: 'https://images-na.ssl-images-amazon.com/images/I/81m1s4wIPML.jpg',
     title: 'Dom Casmurro',
     author: 'Machado de Assis',
     publisher: 'Domínio Público',
@@ -184,7 +184,7 @@ export const mockBooks: Book[] = [
   },
   {
     id: 'pdf-2',
-    thumbnail: 'https://m.media-amazon.com/images/I/51W5YnF6dBL._SY445_SX342_.jpg',
+    thumbnail: 'https://images-na.ssl-images-amazon.com/images/I/91yZX5BvODL.jpg',
     title: 'O Cortiço',
     author: 'Aluísio Azevedo',
     publisher: 'Domínio Público',
@@ -200,7 +200,7 @@ export const mockBooks: Book[] = [
   },
   {
     id: 'pdf-3',
-    thumbnail: 'https://m.media-amazon.com/images/I/51jczaJiRML._SY445_SX342_.jpg',
+    thumbnail: 'https://images-na.ssl-images-amazon.com/images/I/81VStYnDGrL.jpg',
     title: 'Os Lusíadas',
     author: 'Luís de Camões',
     publisher: 'Domínio Público',
@@ -216,7 +216,7 @@ export const mockBooks: Book[] = [
   },
   {
     id: 'pdf-4',
-    thumbnail: 'https://m.media-amazon.com/images/I/51hJZn5QvwL._SY445_SX342_.jpg',
+    thumbnail: 'https://images-na.ssl-images-amazon.com/images/I/81iqH8dpjuL.jpg',
     title: 'A Metamorfose',
     author: 'Franz Kafka',
     publisher: 'Domínio Público',
@@ -232,7 +232,7 @@ export const mockBooks: Book[] = [
   },
   {
     id: 'pdf-5',
-    thumbnail: 'https://m.media-amazon.com/images/I/41PxcZWmLfL._SY445_SX342_.jpg',
+    thumbnail: 'https://images-na.ssl-images-amazon.com/images/I/81zN7udGRUL.jpg',
     title: 'Memórias Póstumas de Brás Cubas',
     author: 'Machado de Assis',
     publisher: 'Domínio Público',
@@ -248,7 +248,7 @@ export const mockBooks: Book[] = [
   },
   {
     id: 'pdf-6',
-    thumbnail: 'https://m.media-amazon.com/images/I/41g9HZN2TiL._SY445_SX342_.jpg',
+    thumbnail: 'https://images-na.ssl-images-amazon.com/images/I/71yJLhcDW4L.jpg',
     title: 'O Alienista',
     author: 'Machado de Assis',
     publisher: 'Domínio Público',
@@ -264,7 +264,7 @@ export const mockBooks: Book[] = [
   },
   {
     id: 'pdf-7',
-    thumbnail: 'https://m.media-amazon.com/images/I/51TfH6mTKhL._SY445_SX342_.jpg',
+    thumbnail: 'https://images-na.ssl-images-amazon.com/images/I/71Lu4sXSw1L.jpg',
     title: 'Iracema',
     author: 'José de Alencar',
     publisher: 'Domínio Público',
@@ -280,7 +280,7 @@ export const mockBooks: Book[] = [
   },
   {
     id: 'pdf-8',
-    thumbnail: 'https://m.media-amazon.com/images/I/51NcdxMZqzL._SY445_SX342_.jpg',
+    thumbnail: 'https://images-na.ssl-images-amazon.com/images/I/71KUJsQ+BxL.jpg',
     title: 'A Moreninha',
     author: 'Joaquim Manuel de Macedo',
     publisher: 'Domínio Público',
@@ -298,7 +298,7 @@ export const mockBooks: Book[] = [
   // Livros em EPUB - Literatura Internacional e Técnicos
   {
     id: 'epub-1',
-    thumbnail: 'https://www.gutenberg.org/files/1342/1342-h/images/cover.jpg',
+    thumbnail: 'https://images-na.ssl-images-amazon.com/images/I/91R8S52UP6L.jpg',
     title: 'Pride and Prejudice',
     author: 'Jane Austen',
     publisher: 'Project Gutenberg',
@@ -314,7 +314,7 @@ export const mockBooks: Book[] = [
   },
   {
     id: 'epub-2',
-    thumbnail: 'https://www.gutenberg.org/files/84/84-h/images/cover.jpg',
+    thumbnail: 'https://images-na.ssl-images-amazon.com/images/I/81z7E0uWdtL.jpg',
     title: 'Frankenstein',
     author: 'Mary Shelley',
     publisher: 'Project Gutenberg',
@@ -330,7 +330,7 @@ export const mockBooks: Book[] = [
   },
   {
     id: 'epub-3',
-    thumbnail: 'https://www.gutenberg.org/files/11/11-h/images/cover.jpg',
+    thumbnail: 'https://images-na.ssl-images-amazon.com/images/I/91OINeHnJGL.jpg',
     title: 'Alice\'s Adventures in Wonderland',
     author: 'Lewis Carroll',
     publisher: 'Project Gutenberg',
@@ -346,7 +346,7 @@ export const mockBooks: Book[] = [
   },
   {
     id: 'epub-4',
-    thumbnail: 'https://www.gutenberg.org/files/1661/1661-h/images/cover.jpg',
+    thumbnail: 'https://images-na.ssl-images-amazon.com/images/I/81P0+wzpS2L.jpg',
     title: 'The Adventures of Sherlock Holmes',
     author: 'Arthur Conan Doyle',
     publisher: 'Project Gutenberg',
@@ -362,7 +362,7 @@ export const mockBooks: Book[] = [
   },
   {
     id: 'epub-5',
-    thumbnail: 'https://www.gutenberg.org/files/2701/2701-h/images/cover.jpg',
+    thumbnail: 'https://images-na.ssl-images-amazon.com/images/I/81T8gvU6TiL.jpg',
     title: 'Moby Dick',
     author: 'Herman Melville',
     publisher: 'Project Gutenberg',
@@ -378,7 +378,7 @@ export const mockBooks: Book[] = [
   },
   {
     id: 'epub-6',
-    thumbnail: 'https://www.gutenberg.org/files/46/46-h/images/cover.jpg',
+    thumbnail: 'https://images-na.ssl-images-amazon.com/images/I/91vS2L5YfEL.jpg',
     title: 'A Christmas Carol',
     author: 'Charles Dickens',
     publisher: 'Project Gutenberg',
@@ -394,7 +394,7 @@ export const mockBooks: Book[] = [
   },
   {
     id: 'epub-7',
-    thumbnail: 'https://www.gutenberg.org/files/74/74-h/images/cover.jpg',
+    thumbnail: 'https://images-na.ssl-images-amazon.com/images/I/81c+o9fKuML.jpg',
     title: 'The Adventures of Tom Sawyer',
     author: 'Mark Twain',
     publisher: 'Project Gutenberg',
@@ -410,7 +410,7 @@ export const mockBooks: Book[] = [
   },
   {
     id: 'epub-8',
-    thumbnail: 'https://www.gutenberg.org/files/345/345-h/images/cover.jpg',
+    thumbnail: 'https://images-na.ssl-images-amazon.com/images/I/91LUbAcpACL.jpg',
     title: 'Dracula',
     author: 'Bram Stoker',
     publisher: 'Project Gutenberg',
@@ -444,7 +444,7 @@ export const mockBooks: Book[] = [
   },
   {
     id: 'pdf-tech-2',
-    thumbnail: 'https://github.com/progit/progit2/raw/main/book/cover.png',
+    thumbnail: 'https://git-scm.com/images/progit2.png',
     title: 'Pro Git',
     author: 'Scott Chacon and Ben Straub',
     publisher: 'Apress',
@@ -478,7 +478,7 @@ export const mockBooks: Book[] = [
   // Mais livros em português
   {
     id: 'pdf-br-1',
-    thumbnail: 'https://m.media-amazon.com/images/I/51vGR3YXZBL._SY445_SX342_.jpg',
+    thumbnail: 'https://images-na.ssl-images-amazon.com/images/I/91BsZhxCRjL.jpg',
     title: 'Quincas Borba',
     author: 'Machado de Assis',
     publisher: 'Domínio Público',
@@ -494,7 +494,7 @@ export const mockBooks: Book[] = [
   },
   {
     id: 'pdf-br-2',
-    thumbnail: 'https://m.media-amazon.com/images/I/51k5HiC2IKL._SY445_SX342_.jpg',
+    thumbnail: 'https://images-na.ssl-images-amazon.com/images/I/71HbYElfY0L.jpg',
     title: 'Senhora',
     author: 'José de Alencar',
     publisher: 'Domínio Público',
@@ -510,7 +510,7 @@ export const mockBooks: Book[] = [
   },
   {
     id: 'pdf-br-3',
-    thumbnail: 'https://m.media-amazon.com/images/I/51J7bfH2jKL._SY445_SX342_.jpg',
+    thumbnail: 'https://images-na.ssl-images-amazon.com/images/I/91Y8rEqomYL.jpg',
     title: 'O Primo Basílio',
     author: 'Eça de Queirós',
     publisher: 'Domínio Público',
@@ -523,6 +523,72 @@ export const mockBooks: Book[] = [
     language: 'pt-BR',
     categories: ['Literatura', 'Realismo Português'],
     publishDate: '1878'
+  },
+
+  // Adicionando mais livros clássicos com capas bonitas
+  {
+    id: 'pdf-br-4',
+    thumbnail: 'https://images-na.ssl-images-amazon.com/images/I/81PW-rBdgSL.jpg',
+    title: 'Grande Sertão: Veredas',
+    author: 'Guimarães Rosa',
+    publisher: 'Domínio Público',
+    synopsis: 'Uma das maiores obras da literatura brasileira, narra a história do jagunço Riobaldo e suas reflexões sobre o sertão, o amor e o diabo.',
+    duration: '8h 00min',
+    format: 'pdf',
+    filePath: 'https://www.dominiopublico.gov.br/download/texto/bv00054a.pdf',
+    pageCount: 600,
+    progress: 5,
+    language: 'pt-BR',
+    categories: ['Literatura', 'Modernismo'],
+    publishDate: '1956'
+  },
+  {
+    id: 'pdf-br-5',
+    thumbnail: 'https://images-na.ssl-images-amazon.com/images/I/91J+-jBKBFL.jpg',
+    title: 'Capitães da Areia',
+    author: 'Jorge Amado',
+    publisher: 'Domínio Público',
+    synopsis: 'Romance que retrata a vida de meninos de rua em Salvador, explorando temas de abandono, amizade e esperança.',
+    duration: '4h 00min',
+    format: 'pdf',
+    filePath: 'https://www.dominiopublico.gov.br/download/texto/bv00292a.pdf',
+    pageCount: 280,
+    progress: 70,
+    language: 'pt-BR',
+    categories: ['Literatura', 'Romance Social'],
+    publishDate: '1937'
+  },
+  {
+    id: 'epub-br-1',
+    thumbnail: 'https://images-na.ssl-images-amazon.com/images/I/81vpsIs58WL.jpg',
+    title: '1984',
+    author: 'George Orwell',
+    publisher: 'Project Gutenberg',
+    synopsis: 'Distopia clássica que retrata um futuro totalitário onde o Grande Irmão vigia todos os cidadãos e o pensamento independente é crime.',
+    duration: '6h 00min',
+    format: 'epub',
+    filePath: 'https://www.gutenberg.org/ebooks/1984.epub3.images',
+    pageCount: 328,
+    progress: 85,
+    language: 'en',
+    categories: ['Literatura', 'Ficção Científica', 'Distopia'],
+    publishDate: '1949'
+  },
+  {
+    id: 'epub-br-2',
+    thumbnail: 'https://images-na.ssl-images-amazon.com/images/I/91SZSW8qSsL.jpg',
+    title: 'Don Quixote',
+    author: 'Miguel de Cervantes',
+    publisher: 'Project Gutenberg',
+    synopsis: 'A história do fidalgo que enlouquece lendo romances de cavalaria e sai pelo mundo com seu fiel escudeiro Sancho Pança.',
+    duration: '10h 00min',
+    format: 'epub',
+    filePath: 'https://www.gutenberg.org/ebooks/996.epub3.images',
+    pageCount: 863,
+    progress: 20,
+    language: 'en',
+    categories: ['Literatura', 'Clássicos', 'Aventura'],
+    publishDate: '1605'
   }
 ];
 
@@ -663,34 +729,12 @@ export const mockContentCollections: CollectionDto[] = [
     synopsis: 'Coleção completa de matemática para ensino fundamental com conceitos básicos e exercícios práticos.',
     cover_image: 'https://images.unsplash.com/photo-1635070041078-e363dbe005cb?w=800&h=450&fit=crop',
     support_material: '/materials/matematica-fundamental.pdf',
-    totalDuration: 7200, // 2 horas em segundos
+    total_duration: 7200, // 2 horas em segundos
     subject: 'Matemática',
-    modules: [
-      {
-        id: 'module_1',
-        name: 'Números e Operações',
-        description: 'Introdução aos números naturais e operações básicas',
-        coverImage: 'https://images.unsplash.com/photo-1635070041078-e363dbe005cb?w=800&h=450&fit=crop',
-        videoIds: ['video-1', 'video-2'],
-        order: 1,
-        createdAt: new Date('2024-01-15'),
-        updatedAt: new Date('2024-01-15')
-      },
-      {
-        id: 'module_2',
-        name: 'Geometria Básica',
-        description: 'Formas geométricas e suas propriedades',
-        coverImage: 'https://images.unsplash.com/photo-1596495578065-6e0763fa1178?w=800&h=450&fit=crop',
-        videoIds: ['video-3', 'video-4'],
-        order: 2,
-        createdAt: new Date('2024-01-16'),
-        updatedAt: new Date('2024-01-16')
-      }
-    ],
     tags: ['matemática', 'fundamental', 'básico'],
-    createdBy: 'admin1',
-    createdAt: new Date('2024-01-15'),
-    updatedAt: new Date('2024-01-15')
+    created_by: 'admin1',
+    created_at: '2024-01-15T00:00:00.000Z',
+    updated_at: '2024-01-15T00:00:00.000Z'
   },
   {
     id: 'collection_2',
@@ -698,24 +742,12 @@ export const mockContentCollections: CollectionDto[] = [
     synopsis: 'Exploração do mundo natural através de experimentos e observações científicas.',
     cover_image: 'https://images.unsplash.com/photo-1559757148-5c350d0d3c56?w=800&h=450&fit=crop',
     support_material: '/materials/ciencias-natureza.pdf',
-    totalDuration: 5400, // 1.5 horas em segundos
+    total_duration: 5400, // 1.5 horas em segundos
     subject: 'Ciências',
-    modules: [
-      {
-        id: 'module_3',
-        name: 'O Corpo Humano',
-        description: 'Sistemas do corpo humano e suas funções',
-        coverImage: 'https://images.unsplash.com/photo-1576086213369-97a306d36557?w=800&h=450&fit=crop',
-        videoIds: ['video-5', 'video-6'],
-        order: 1,
-        createdAt: new Date('2024-01-17'),
-        updatedAt: new Date('2024-01-17')
-      }
-    ],
     tags: ['ciências', 'biologia', 'corpo humano'],
-    createdBy: 'admin1',
-    createdAt: new Date('2024-01-17'),
-    updatedAt: new Date('2024-01-17')
+    created_by: 'admin1',
+    created_at: '2024-01-17T00:00:00.000Z',
+    updated_at: '2024-01-17T00:00:00.000Z'
   },
   {
     id: 'collection_3',
@@ -723,34 +755,12 @@ export const mockContentCollections: CollectionDto[] = [
     synopsis: 'Jornada através da história brasileira desde o descobrimento até os dias atuais.',
     cover_image: 'https://images.unsplash.com/photo-1481627834876-b7833e8f5570?w=800&h=450&fit=crop',
     support_material: '/materials/historia-brasil.pdf',
-    totalDuration: 9000, // 2.5 horas em segundos
+    total_duration: 9000, // 2.5 horas em segundos
     subject: 'História',
-    modules: [
-      {
-        id: 'module_4',
-        name: 'Brasil Colônia',
-        description: 'O período colonial brasileiro e suas características',
-        coverImage: 'https://images.unsplash.com/photo-1524995997946-a1c2e315a42f?w=800&h=450&fit=crop',
-        videoIds: ['video-7', 'video-8'],
-        order: 1,
-        createdAt: new Date('2024-01-18'),
-        updatedAt: new Date('2024-01-18')
-      },
-      {
-        id: 'module_5',
-        name: 'Independência',
-        description: 'O processo de independência do Brasil',
-        coverImage: 'https://images.unsplash.com/photo-1497633762265-9d179a990aa6?w=800&h=450&fit=crop',
-        videoIds: ['video-9', 'video-10'],
-        order: 2,
-        createdAt: new Date('2024-01-19'),
-        updatedAt: new Date('2024-01-19')
-      }
-    ],
     tags: ['história', 'brasil', 'colonial'],
-    createdBy: 'admin1',
-    createdAt: new Date('2024-01-18'),
-    updatedAt: new Date('2024-01-18')
+    created_by: 'admin1',
+    created_at: '2024-01-18T00:00:00.000Z',
+    updated_at: '2024-01-18T00:00:00.000Z'
   }
 ];
 
