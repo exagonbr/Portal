@@ -1,14 +1,32 @@
 import knex from 'knex';
 import { Knex } from 'knex';
-import knexConfigFile from '../knexfile.js';
 import dotenv from 'dotenv';
 import bcrypt from 'bcrypt';
 
-// Obter a configuração correta do knexfile
-const knexConfig: any = knexConfigFile.default || knexConfigFile;
-
 // Carrega variáveis de ambiente
 dotenv.config();
+
+// Configuração do Knex
+const knexConfig = {
+  development: {
+    client: 'pg',
+    connection: {
+      host: process.env.DB_HOST || 'localhost',
+      port: parseInt(process.env.DB_PORT || '5432'),
+      user: process.env.DB_USER || 'postgres',
+      password: process.env.DB_PASSWORD || '',
+      database: process.env.DB_NAME || 'portal_sabercon'
+    },
+    migrations: {
+      directory: './src/database/migrations',
+      extension: 'js'
+    },
+    seeds: {
+      directory: './src/database/seeds',
+      extension: 'js'
+    }
+  }
+};
 
 // Interface para definir as colunas
 interface ColumnDefinition {
@@ -27,212 +45,21 @@ async function tableExists(db: Knex, tableName: string): Promise<boolean> {
   return db.schema.hasTable(tableName);
 }
 
-// Função para fazer DROP da tabela user se existir
-async function dropUserTableIfExists(db: Knex): Promise<void> {
-  console.log('🗑️  REMOVENDO TABELA USER EXISTENTE\n');
+// Função para fazer DROP da tabela users se existir
+async function dropUsersTableIfExists(db: Knex): Promise<void> {
+  console.log('🗑️  REMOVENDO TABELA USERS EXISTENTE\n');
 
   try {
-    const exists = await tableExists(db, 'user');
+    const exists = await tableExists(db, 'users');
     if (exists) {
-      console.log('   ⚠️  Tabela user existe, fazendo DROP...');
-      await db.schema.dropTable('user');
-      console.log('   ✅ Tabela user removida com sucesso!');
+      console.log('   ⚠️  Tabela users existe, fazendo DROP...');
+      await db.schema.dropTable('users');
+      console.log('   ✅ Tabela users removida com sucesso!');
     } else {
-      console.log('   ℹ️  Tabela user não existe, continuando...');
+      console.log('   ℹ️  Tabela users não existe, continuando...');
     }
   } catch (error: any) {
-    console.log(`   ❌ Erro ao remover tabela user: ${error.message}`);
-    throw error;
-  }
-}
-
-// Função para criar a tabela user completa baseada na estrutura MySQL
-async function createCompleteUserTable(db: Knex): Promise<void> {
-  console.log('🏗️  CRIANDO TABELA USER COMPLETA (BASEADA NO MYSQL)\n');
-
-  try {
-    // Verificar se a tabela já existe
-    const exists = await tableExists(db, 'user');
-    if (exists) {
-      console.log('   ⚠️  Tabela user já existe, pulando criação...');
-      return;
-    }
-
-    console.log('   📋 Criando tabela user com estrutura completa...');
-
-    await db.schema.createTable('user', (table) => {
-      // Chave primária
-      table.bigIncrements('id').primary();
-
-      // Campos básicos da estrutura MySQL original
-      table.bigInteger('version').nullable();
-      table.boolean('account_expired').nullable();
-      table.boolean('account_locked').nullable();
-      table.string('address', 255).nullable();
-      table.integer('amount_of_media_entries').nullable();
-      table.datetime('date_created').nullable();
-      table.boolean('deleted').nullable();
-      table.string('email', 255).notNullable();
-      table.boolean('enabled').nullable();
-      table.string('full_name', 255).notNullable();
-      table.boolean('invitation_sent').nullable();
-      table.boolean('is_admin').notNullable();
-      table.string('language', 255).nullable();
-      table.datetime('last_updated').nullable();
-      table.string('password', 255).nullable();
-      table.boolean('password_expired').nullable();
-      table.boolean('pause_video_on_click').nullable();
-      table.string('phone', 255).nullable();
-      table.boolean('reset_password').notNullable().defaultTo(true);
-      table.string('username', 255).nullable();
-      table.boolean('is_manager').notNullable();
-      table.integer('type').nullable();
-      table.string('certificate_path', 255).nullable();
-      table.boolean('is_certified').defaultTo(false);
-      table.boolean('is_student').notNullable();
-      table.boolean('is_teacher').notNullable();
-      table.bigInteger('institution_id').nullable();
-      table.bigInteger('role_id').nullable();
-      table.string('subject', 255).nullable();
-      table.bigInteger('subject_data_id').nullable();
-
-      // Campos adicionais encontrados em algumas versões
-      table.boolean('is_institution_manager').defaultTo(false);
-      table.boolean('is_coordinator').defaultTo(false);
-      table.boolean('is_guardian').defaultTo(false);
-
-      // ===== CAMPOS OAUTH GOOGLE =====
-      table.string('google_id', 255).unique().nullable();
-      table.string('google_email', 255).nullable();
-      table.string('google_name', 255).nullable();
-      table.string('google_picture', 500).nullable();
-      table.text('google_access_token').nullable();
-      table.text('google_refresh_token').nullable();
-      table.timestamp('google_token_expires_at').nullable();
-      table.boolean('is_google_verified').defaultTo(false);
-      table.timestamp('google_linked_at').nullable();
-
-      // ===== CAMPOS DE PERFIL ADICIONAIS =====
-      table.string('profile_image', 500).nullable();
-      table.string('avatar', 500).nullable();
-      table.string('avatar_url', 500).nullable();
-      table.string('profile_picture', 500).nullable();
-      table.text('bio').nullable();
-      table.text('description').nullable();
-      table.string('first_name', 255).nullable();
-      table.string('last_name', 255).nullable();
-      table.string('display_name', 255).nullable();
-      table.string('locale', 10).nullable();
-      table.string('timezone', 50).nullable();
-      table.date('birth_date').nullable();
-      table.string('gender', 20).nullable();
-      table.boolean('phone_verified').defaultTo(false);
-      table.boolean('email_verified').defaultTo(false);
-      table.boolean('two_factor_enabled').defaultTo(false);
-
-      // ===== CAMPOS DE CONTROLE E VERSIONAMENTO =====
-      table.bigInteger('entity_version').defaultTo(1);
-      table.integer('revision').defaultTo(0);
-
-      // ===== CAMPOS DE STATUS E CONTROLE =====
-      table.string('status', 50).defaultTo('active');
-      table.string('account_status', 50).defaultTo('active');
-      table.string('verification_status', 50).defaultTo('pending');
-      table.timestamp('last_login_at').nullable();
-      table.timestamp('last_activity_at').nullable();
-      table.integer('login_count').defaultTo(0);
-      table.integer('failed_login_attempts').defaultTo(0);
-      table.timestamp('locked_until').nullable();
-
-      // ===== CAMPOS DE CONFIGURAÇÕES =====
-      table.json('preferences').nullable();
-      table.json('settings').nullable();
-      table.json('metadata').nullable();
-
-      // ===== CAMPOS DE RELACIONAMENTO EXTRAS =====
-      table.uuid('manager_id').nullable();
-      table.uuid('department_id').nullable();
-      table.uuid('organization_id').nullable();
-
-      // ===== CAMPOS DE CONTATO ADICIONAIS =====
-      table.string('mobile_phone', 50).nullable();
-      table.string('work_phone', 50).nullable();
-      table.string('alternative_email', 255).nullable();
-
-      // ===== CAMPOS DE ENDEREÇO =====
-      table.string('street_address', 255).nullable();
-      table.string('city', 100).nullable();
-      table.string('state', 100).nullable();
-      table.string('postal_code', 20).nullable();
-      table.string('country', 100).nullable();
-
-      // ===== CAMPOS DE AUDITORIA ADICIONAIS =====
-      table.uuid('created_by').nullable();
-      table.uuid('updated_by').nullable();
-      table.timestamp('deleted_at').nullable();
-      table.uuid('deleted_by').nullable();
-
-      // ===== CAMPOS DE TIMESTAMPS =====
-      table.timestamps(true, true);
-    });
-
-    console.log('   ✅ Tabela user criada com sucesso!');
-
-    // Criar índices para performance
-    console.log('   🔍 Criando índices...');
-    
-    const indexQueries = [
-      // Índices básicos
-      'CREATE INDEX IF NOT EXISTS idx_user_email ON "user" (email);',
-      'CREATE INDEX IF NOT EXISTS idx_user_username ON "user" (username);',
-      'CREATE INDEX IF NOT EXISTS idx_user_institution_id ON "user" (institution_id);',
-      'CREATE INDEX IF NOT EXISTS idx_user_role_id ON "user" (role_id);',
-      
-      // Índices OAuth Google
-      'CREATE INDEX IF NOT EXISTS idx_user_google_id ON "user" (google_id);',
-      'CREATE INDEX IF NOT EXISTS idx_user_google_email ON "user" (google_email);',
-      'CREATE INDEX IF NOT EXISTS idx_user_is_google_verified ON "user" (is_google_verified);',
-      
-      // Índices de roles
-      'CREATE INDEX IF NOT EXISTS idx_user_is_admin ON "user" (is_admin);',
-      'CREATE INDEX IF NOT EXISTS idx_user_is_manager ON "user" (is_manager);',
-      'CREATE INDEX IF NOT EXISTS idx_user_is_teacher ON "user" (is_teacher);',
-      'CREATE INDEX IF NOT EXISTS idx_user_is_student ON "user" (is_student);',
-      'CREATE INDEX IF NOT EXISTS idx_user_is_coordinator ON "user" (is_coordinator);',
-      'CREATE INDEX IF NOT EXISTS idx_user_is_guardian ON "user" (is_guardian);',
-      
-      // Índices de status
-      'CREATE INDEX IF NOT EXISTS idx_user_enabled ON "user" (enabled);',
-      'CREATE INDEX IF NOT EXISTS idx_user_deleted ON "user" (deleted);',
-      'CREATE INDEX IF NOT EXISTS idx_user_account_expired ON "user" (account_expired);',
-      'CREATE INDEX IF NOT EXISTS idx_user_account_locked ON "user" (account_locked);',
-      'CREATE INDEX IF NOT EXISTS idx_user_status ON "user" (status);',
-      'CREATE INDEX IF NOT EXISTS idx_user_account_status ON "user" (account_status);',
-      
-      // Índices de atividade
-      'CREATE INDEX IF NOT EXISTS idx_user_last_login_at ON "user" (last_login_at);',
-      'CREATE INDEX IF NOT EXISTS idx_user_last_activity_at ON "user" (last_activity_at);',
-      'CREATE INDEX IF NOT EXISTS idx_user_date_created ON "user" (date_created);',
-      'CREATE INDEX IF NOT EXISTS idx_user_last_updated ON "user" (last_updated);',
-      
-      // Índices compostos
-      'CREATE INDEX IF NOT EXISTS idx_user_institution_role ON "user" (institution_id, role_id);',
-      'CREATE INDEX IF NOT EXISTS idx_user_email_enabled ON "user" (email, enabled);',
-      'CREATE INDEX IF NOT EXISTS idx_user_status_deleted ON "user" (status, deleted);'
-    ];
-
-    for (const query of indexQueries) {
-      try {
-        await db.raw(query);
-      } catch (error: any) {
-        console.log(`   ⚠️  Índice pode já existir: ${error.message}`);
-      }
-    }
-
-    console.log('   ✅ Índices criados com sucesso!');
-
-  } catch (error: any) {
-    console.log(`   ❌ Erro ao criar tabela user: ${error.message}`);
+    console.log(`   ❌ Erro ao remover tabela users: ${error.message}`);
     throw error;
   }
 }
@@ -253,6 +80,7 @@ async function createDefaultUsers(db: Knex): Promise<void> {
       is_teacher: false,
       is_student: false,
       is_guardian: false,
+      is_institution_manager: false,
       enabled: true,
       deleted: false,
       account_expired: false,
@@ -261,7 +89,9 @@ async function createDefaultUsers(db: Knex): Promise<void> {
       reset_password: false,
       status: 'active',
       account_status: 'active',
-      verification_status: 'verified'
+      verification_status: 'verified',
+      role_id: 1, // SYSTEM_ADMIN
+      institution_id: 1
     },
     {
       email: 'gestor@sabercon.edu.br',
@@ -269,11 +99,12 @@ async function createDefaultUsers(db: Knex): Promise<void> {
       full_name: 'Gestor Institucional',
       username: 'gestor',
       is_admin: false,
-      is_manager: true,
+      is_manager: false,
       is_coordinator: false,
       is_teacher: false,
       is_student: false,
       is_guardian: false,
+      is_institution_manager: true,
       enabled: true,
       deleted: false,
       account_expired: false,
@@ -282,7 +113,9 @@ async function createDefaultUsers(db: Knex): Promise<void> {
       reset_password: false,
       status: 'active',
       account_status: 'active',
-      verification_status: 'verified'
+      verification_status: 'verified',
+      role_id: 2, // INSTITUTION_MANAGER
+      institution_id: 1
     },
     {
       email: 'coordenador@sabercon.edu.br',
@@ -295,6 +128,7 @@ async function createDefaultUsers(db: Knex): Promise<void> {
       is_teacher: false,
       is_student: false,
       is_guardian: false,
+      is_institution_manager: false,
       enabled: true,
       deleted: false,
       account_expired: false,
@@ -303,7 +137,9 @@ async function createDefaultUsers(db: Knex): Promise<void> {
       reset_password: false,
       status: 'active',
       account_status: 'active',
-      verification_status: 'verified'
+      verification_status: 'verified',
+      role_id: 3, // COORDINATOR
+      institution_id: 1
     },
     {
       email: 'professor@sabercon.edu.br',
@@ -316,6 +152,7 @@ async function createDefaultUsers(db: Knex): Promise<void> {
       is_teacher: true,
       is_student: false,
       is_guardian: false,
+      is_institution_manager: false,
       enabled: true,
       deleted: false,
       account_expired: false,
@@ -324,7 +161,9 @@ async function createDefaultUsers(db: Knex): Promise<void> {
       reset_password: false,
       status: 'active',
       account_status: 'active',
-      verification_status: 'verified'
+      verification_status: 'verified',
+      role_id: 4, // TEACHER
+      institution_id: 1
     },
     {
       email: 'julia.c@ifsp.com',
@@ -337,6 +176,7 @@ async function createDefaultUsers(db: Knex): Promise<void> {
       is_teacher: false,
       is_student: true,
       is_guardian: false,
+      is_institution_manager: false,
       enabled: true,
       deleted: false,
       account_expired: false,
@@ -345,7 +185,9 @@ async function createDefaultUsers(db: Knex): Promise<void> {
       reset_password: false,
       status: 'active',
       account_status: 'active',
-      verification_status: 'verified'
+      verification_status: 'verified',
+      role_id: 5, // STUDENT
+      institution_id: 2
     },
     {
       email: 'renato@gmail.com',
@@ -358,6 +200,7 @@ async function createDefaultUsers(db: Knex): Promise<void> {
       is_teacher: false,
       is_student: false,
       is_guardian: true,
+      is_institution_manager: false,
       enabled: true,
       deleted: false,
       account_expired: false,
@@ -366,7 +209,9 @@ async function createDefaultUsers(db: Knex): Promise<void> {
       reset_password: false,
       status: 'active',
       account_status: 'active',
-      verification_status: 'verified'
+      verification_status: 'verified',
+      role_id: 6, // GUARDIAN
+      institution_id: 2
     }
   ];
 
@@ -376,7 +221,7 @@ async function createDefaultUsers(db: Knex): Promise<void> {
   for (const userData of defaultUsers) {
     try {
       // Verificar se o usuário já existe
-      const existingUser = await db('user').where('email', userData.email).first();
+      const existingUser = await db('users').where('email', userData.email).first();
       
       if (existingUser) {
         console.log(`   ℹ️  Usuário ${userData.email} já existe, pulando...`);
@@ -388,7 +233,7 @@ async function createDefaultUsers(db: Knex): Promise<void> {
       const hashedPassword = await bcrypt.hash(userData.password, 12);
 
       // Criar usuário
-      await db('user').insert({
+      await db('users').insert({
         ...userData,
         password: hashedPassword,
         date_created: new Date(),
@@ -397,7 +242,9 @@ async function createDefaultUsers(db: Knex): Promise<void> {
         entity_version: 1,
         revision: 0,
         login_count: 0,
-        failed_login_attempts: 0
+        failed_login_attempts: 0,
+        created_at: new Date(),
+        updated_at: new Date()
       });
 
       console.log(`   ✅ Usuário ${userData.email} criado com sucesso!`);
@@ -415,7 +262,7 @@ async function createDefaultUsers(db: Knex): Promise<void> {
 
 // Função principal
 async function createCompleteUserStructure(): Promise<void> {
-  console.log('🚀 CRIANDO ESTRUTURA COMPLETA DA TABELA USER\n');
+  console.log('🚀 CRIANDO ESTRUTURA COMPLETA DE USUÁRIOS\n');
   
   let db: Knex | null = null;
   
@@ -425,22 +272,33 @@ async function createCompleteUserStructure(): Promise<void> {
     db = knex(knexConfig.development);
     console.log('✅ Conectado ao PostgreSQL!\n');
     
-    // Fazer DROP da tabela existente
-    await dropUserTableIfExists(db);
+    // Verificar se as tabelas necessárias existem
+    const tablesExist = await Promise.all([
+      tableExists(db, 'institutions'),
+      tableExists(db, 'roles'),
+      tableExists(db, 'users')
+    ]);
     
-    // Criar tabela user completa
-    await createCompleteUserTable(db);
+    if (!tablesExist[0] || !tablesExist[1]) {
+      console.log('❌ Tabelas necessárias não encontradas!');
+      console.log('   Execute primeiro: npm run migrate && npm run seed');
+      process.exit(1);
+    }
+    
+    if (!tablesExist[2]) {
+      console.log('❌ Tabela users não encontrada!');
+      console.log('   Execute primeiro: npm run migrate');
+      process.exit(1);
+    }
     
     // Criar usuários padrão
     await createDefaultUsers(db);
     
     console.log('\n🎉 PROCESSO CONCLUÍDO COM SUCESSO!\n');
-    console.log('📋 Estrutura criada:');
-    console.log('   • Tabela user com todos os campos do MySQL');
-    console.log('   • Campos OAuth Google completos');
-    console.log('   • Campos de perfil e controle adicionais');
-    console.log('   • Índices otimizados para performance');
-    console.log('   • Usuários padrão do sistema');
+    console.log('📋 Usuários criados:');
+    console.log('   • Tabela users populada com usuários padrão');
+    console.log('   • Roles e permissions já configuradas');
+    console.log('   • Campos OAuth Google disponíveis');
     
     console.log('\n🔐 Campos OAuth Google incluídos:');
     console.log('   • google_id (VARCHAR 255, UNIQUE)');
@@ -454,12 +312,12 @@ async function createCompleteUserStructure(): Promise<void> {
     console.log('   • google_linked_at (TIMESTAMP)');
     
     console.log('\n👥 Usuários padrão criados:');
-    console.log('   • admin@sabercon.edu.br (Administrador)');
-    console.log('   • gestor@sabercon.edu.br (Gestor)');
-    console.log('   • coordenador@sabercon.edu.br (Coordenador)');
-    console.log('   • professor@sabercon.edu.br (Professor)');
-    console.log('   • julia.c@ifsp.com (Aluna)');
-    console.log('   • renato@gmail.com (Responsável)');
+    console.log('   • admin@sabercon.edu.br (SYSTEM_ADMIN)');
+    console.log('   • gestor@sabercon.edu.br (INSTITUTION_MANAGER)');
+    console.log('   • coordenador@sabercon.edu.br (COORDINATOR)');
+    console.log('   • professor@sabercon.edu.br (TEACHER)');
+    console.log('   • julia.c@ifsp.com (STUDENT)');
+    console.log('   • renato@gmail.com (GUARDIAN)');
     
     console.log('\n💡 Próximos passos:');
     console.log('   • Reinicie sua aplicação');
@@ -493,4 +351,4 @@ if (require.main === module) {
     });
 }
 
-export { createCompleteUserStructure, createCompleteUserTable, createDefaultUsers, dropUserTableIfExists }; 
+export { createCompleteUserStructure, createDefaultUsers, dropUsersTableIfExists }; 

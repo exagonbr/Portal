@@ -1,10 +1,10 @@
 #!/bin/bash
 
-# Script para criar tabela user completa com estrutura MySQL + campos Google OAuth
+# Script para criar usuários padrão na tabela users
 # Autor: Portal Sabercon
 # Data: $(date)
 
-echo "🚀 CRIANDO ESTRUTURA COMPLETA DA TABELA USER"
+echo "🚀 CRIANDO USUÁRIOS PADRÃO NA TABELA USERS"
 echo "============================================="
 echo ""
 
@@ -33,7 +33,7 @@ log_error() {
 }
 
 # Verificar se estamos no diretório correto
-if [ ! -f "backend/scripts/create-complete-user-table.js" ]; then
+if [ ! -f "backend/scripts/create-complete-user-table.ts" ]; then
     log_error "Script não encontrado. Execute este comando a partir do diretório raiz do projeto."
     exit 1
 fi
@@ -67,8 +67,8 @@ if [ ! -d "node_modules" ]; then
 fi
 
 # Verificar se o arquivo de configuração existe
-if [ ! -f "knexfile.js" ]; then
-    log_error "Arquivo knexfile.js não encontrado. Configure o banco de dados primeiro."
+if [ ! -f "knexfile.js" ] && [ ! -f "knexfile.ts" ]; then
+    log_error "Arquivo knexfile.js ou knexfile.ts não encontrado. Configure o banco de dados primeiro."
     exit 1
 fi
 
@@ -77,38 +77,49 @@ if [ ! -f "../.env" ] && [ ! -f ".env" ]; then
     log_warning "Arquivo .env não encontrado. Certifique-se de que as variáveis de ambiente estão configuradas."
 fi
 
-log_info "Executando script de criação da tabela user..."
+log_info "Executando script de criação de usuários..."
 echo ""
 
-# Executar o script JavaScript
-node scripts/create-complete-user-table.js
+# Executar o script TypeScript
+npx ts-node scripts/create-complete-user-table.ts
 
 # Verificar se o script foi executado com sucesso
 if [ $? -eq 0 ]; then
     echo ""
     log_success "Script executado com sucesso!"
     echo ""
-    echo "🎉 TABELA USER CRIADA COM SUCESSO!"
-    echo "=================================="
+    echo "🎉 USUÁRIOS CRIADOS COM SUCESSO!"
+    echo "================================"
     echo ""
     echo "📋 O que foi criado:"
-    echo "   • Tabela 'user' com estrutura completa do MySQL"
-    echo "   • Campos OAuth Google adicionados"
-    echo "   • Índices otimizados para performance"
-    echo "   • Usuários padrão do sistema"
+    echo "   • Usuários padrão na tabela 'users'"
+    echo "   • Roles e permissions já configuradas"
+    echo "   • Campos OAuth Google disponíveis"
+    echo "   • Relacionamentos com instituições"
     echo ""
     echo "👥 Usuários criados (senha: password):"
-    echo "   • admin@sabercon.edu.br (Administrador)"
-    echo "   • gestor@sabercon.edu.br (Gestor)"
-    echo "   • coordenador@sabercon.edu.br (Coordenador)"
-    echo "   • professor@sabercon.edu.br (Professor)"
-    echo "   • julia.c@ifsp.com (Aluna)"
-    echo "   • renato@gmail.com (Responsável)"
+    echo "   • admin@sabercon.edu.br (SYSTEM_ADMIN)"
+    echo "   • gestor@sabercon.edu.br (INSTITUTION_MANAGER)"
+    echo "   • coordenador@sabercon.edu.br (COORDINATOR)"
+    echo "   • professor@sabercon.edu.br (TEACHER)"
+    echo "   • julia.c@ifsp.com (STUDENT)"
+    echo "   • renato@gmail.com (GUARDIAN)"
+    echo ""
+    echo "🏢 Instituições associadas:"
+    echo "   • Portal Sabercon - Sede (ID: 1)"
+    echo "   • Instituto Federal de São Paulo - IFSP (ID: 2)"
+    echo ""
+    echo "🔐 Campos OAuth Google incluídos:"
+    echo "   • google_id, google_email, google_name"
+    echo "   • google_picture, google_access_token"
+    echo "   • google_refresh_token, google_token_expires_at"
+    echo "   • is_google_verified, google_linked_at"
     echo ""
     echo "💡 Próximos passos:"
     echo "   • Reinicie sua aplicação"
     echo "   • Teste o login com os usuários criados"
     echo "   • Configure OAuth Google se necessário"
+    echo "   • Acesse o sistema com admin@sabercon.edu.br"
     echo ""
 else
     echo ""
@@ -118,6 +129,7 @@ else
     echo "   • Verifique se o PostgreSQL está rodando"
     echo "   • Verifique as credenciais do banco de dados"
     echo "   • Verifique se o arquivo .env está configurado"
+    echo "   • Execute primeiro: npm run db:fresh"
     echo "   • Verifique os logs acima para mais detalhes"
     echo ""
     exit 1

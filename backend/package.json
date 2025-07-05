@@ -33,6 +33,7 @@
     "roles:update": "npm run seed:fresh",
     "database:fresh": "ts-node scripts/database-fresh.ts",
     "db:fresh": "npx ts-node --project tsconfig.json src/scripts/db-fresh.ts",
+    "create-users": "npx ts-node --project tsconfig.json scripts/create-complete-user-table.ts",
     "lint": "eslint src/**/*.ts",
     "lint:fix": "eslint src/**/*.ts --fix",
     "format": "prettier --write src/**/*.ts",
