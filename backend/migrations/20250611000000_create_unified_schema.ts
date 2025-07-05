@@ -22,13 +22,6 @@ export async function up(knex: Knex): Promise<void> {
     table.timestamps(true, true);
   });
 
-  await knex.schema.createTable('role_permissions', (table) => {
-    table.uuid('role_id').references('id').inTable('roles').onDelete('CASCADE');
-    table.uuid('permission_id').references('id').inTable('permissions').onDelete('CASCADE');
-    table.primary(['role_id', 'permission_id']);
-    table.timestamps(true, true);
-  });
-
   // SEÇÃO 2: USUÁRIOS E ESTRUTURA EDUCACIONAL
   await knex.schema.createTable('users', (table) => {
     table.uuid('id').primary().defaultTo(knex.raw('gen_random_uuid()'));
@@ -512,8 +505,7 @@ export async function down(knex: Knex): Promise<void> {
     'announcements', 'school_managers', 'queue_jobs', 'push_subscriptions',
     'notifications', 'forum_replies', 'forum_threads', 'user_classes',
     'questions', 'quizzes', 'content', 'modules', 'courses', 'books', 'files',
-    'classes', 'education_cycles', 'schools', 'users', 'role_permissions',
-    'instittution'
+    'classes', 'education_cycles', 'schools', 'users', 'instittution'
   ];
 
   for (const table of tables) {
