@@ -140,12 +140,7 @@ export default function TestLoginPage() {
         </div>
 
         <div className="mt-4 space-y-2">
-          <button
-            onClick={() => router.push('/debug-auth')}
-            className="w-full bg-gray-600 text-white py-2 px-4 rounded-md hover:bg-gray-700"
-          >
-            Ver Debug de Autenticação
-          </button>
+
           
           <button
             onClick={() => router.push('/auth/login')}

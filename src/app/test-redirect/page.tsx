@@ -3,7 +3,7 @@
 import { useState, useEffect } from 'react';
 import { useAuth } from '@/contexts/AuthContext';
 import { useRouter } from 'next/navigation';
-import { loginDiagnostics } from '@/utils/login-diagnostics';
+
 import { getDashboardPath } from '@/utils/roleRedirect';
 
 export default function TestRedirectPage() {
@@ -168,7 +168,6 @@ export default function TestRedirectPage() {
 
   const clearResults = () => {
     setTestResults([]);
-    loginDiagnostics.clearLogs();
   };
 
   return (
@@ -211,7 +210,7 @@ export default function TestRedirectPage() {
                 </button>
                 
                 <button
-                  onClick={() => loginDiagnostics.diagnoseCurrentState()}
+                  onClick={() => console.log('Diagnóstico removido')}
                   className="w-full bg-yellow-500 text-white px-4 py-2 rounded"
                 >
                   Diagnosticar Estado

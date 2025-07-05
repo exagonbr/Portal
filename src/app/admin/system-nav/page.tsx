@@ -80,7 +80,7 @@ export default function SystemNavigationPage() {
       description: 'Páginas para teste e demonstração de funcionalidades',
       links: [
         { name: 'Demo de Modais', url: '/admin/demo-modals', description: 'Demonstração de todos os modais CRUD criados' },
-        { name: 'Debug de Autenticação', url: '/debug-auth', description: 'Página para debug de autenticação' },
+
         { name: 'Modo Offline', url: '/offline', description: 'Funcionalidades offline do sistema' },
       ]
     },

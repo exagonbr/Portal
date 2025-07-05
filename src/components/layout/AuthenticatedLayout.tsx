@@ -652,17 +652,24 @@ export default function AuthenticatedLayout({ children }: AuthenticatedLayoutPro
                           
                           <button
                             onClick={handleLogout}
-                            className="w-full text-left px-3 py-2 text-sm rounded-lg transition-colors flex items-center space-x-2"
+                            disabled={isLoggingOut}
+                            className="w-full text-left px-3 py-2 text-sm rounded-lg transition-colors flex items-center space-x-2 disabled:opacity-50"
                             style={{ color: theme.colors.status.error }}
                             onMouseEnter={(e) => {
-                              e.currentTarget.style.backgroundColor = theme.colors.status.error + '10'
+                              if (!isLoggingOut) {
+                                e.currentTarget.style.backgroundColor = theme.colors.status.error + '10'
+                              }
                             }}
                             onMouseLeave={(e) => {
-                              e.currentTarget.style.backgroundColor = 'transparent'
+                              if (!isLoggingOut) {
+                                e.currentTarget.style.backgroundColor = 'transparent'
+                              }
                             }}
                           >
-                            <span className="material-symbols-outlined text-sm">logout</span>
-                            <span>Sair da Plataforma</span>
+                            <span className="material-symbols-outlined text-sm">
+                              {isLoggingOut ? 'hourglass_empty' : 'logout'}
+                            </span>
+                            <span>{isLoggingOut ? 'Saindo...' : 'Sair da Plataforma'}</span>
                           </button>
                         </div>
                       </div>

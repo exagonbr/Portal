@@ -10,6 +10,7 @@ import { UserRole, ROLE_PERMISSIONS, ROLE_LABELS, hasPermission, getAccessibleRo
 import { motion, AnimatePresence } from 'framer-motion'
 import { getSystemAdminMenuItems } from '@/components/admin/SystemAdminMenu'
 import { useNavigationWithLoading } from '@/hooks/useNavigationWithLoading'
+import { LogoutLoadingState } from '@/components/ui/LoadingStates'
 
 interface NavItem {
   href: string
@@ -286,73 +287,100 @@ const LogoutButton = memo(({ isCollapsed, onLogout, theme, isSystemAdmin = false
   onLogout: () => void, 
   theme: any,
   isSystemAdmin?: boolean 
-}) => (
-  <motion.button
-    onClick={onLogout}
-    className={`flex items-center gap-2 px-2 transition-all duration-200 rounded-md mx-1 text-xs font-medium group relative w-full
-      ${isCollapsed ? 'justify-center' : ''}
-      py-2 min-h-[36px]`}
-    style={{
-      color: theme.colors.sidebar.text
-    }}
-    onMouseEnter={(e) => {
-      e.currentTarget.style.backgroundColor = theme.colors.status.error + '20'
-      e.currentTarget.style.color = theme.colors.status.error
-    }}
-    onMouseLeave={(e) => {
-      e.currentTarget.style.backgroundColor = 'transparent'
-      e.currentTarget.style.color = theme.colors.sidebar.text
-    }}
-    whileHover={{ scale: 1.02 }}
-    whileTap={{ scale: 0.98 }}
-    aria-label="Sair da Plataforma"
-  >
-    <motion.span
-      className={`material-symbols-outlined transition-transform duration-300 flex-shrink-0 ${
-        isCollapsed ? 'text-[18px]' : 'text-[16px]'
-      }`}
-      aria-hidden="true"
-      whileHover={{ rotate: -15 }}
-      transition={{ duration: 0.2 }}
-    >
-      logout
-    </motion.span>
+}) => {
+  const [isLoggingOut, setIsLoggingOut] = useState(false);
 
-    <AnimatePresence>
-      {!isCollapsed && (
+  const handleLogout = async () => {
+    setIsLoggingOut(true);
+    try {
+      await onLogout();
+    } finally {
+      setIsLoggingOut(false);
+    }
+  };
+
+  return (
+    <>
+      <motion.button
+        onClick={handleLogout}
+        disabled={isLoggingOut}
+        className={`flex items-center gap-2 px-2 transition-all duration-200 rounded-md mx-1 text-xs font-medium group relative w-full
+          ${isCollapsed ? 'justify-center' : ''}
+          py-2 min-h-[36px] disabled:opacity-50`}
+        style={{
+          color: theme.colors.sidebar.text
+        }}
+        onMouseEnter={(e) => {
+          if (!isLoggingOut) {
+            e.currentTarget.style.backgroundColor = theme.colors.status.error + '20'
+            e.currentTarget.style.color = theme.colors.status.error
+          }
+        }}
+        onMouseLeave={(e) => {
+          if (!isLoggingOut) {
+            e.currentTarget.style.backgroundColor = 'transparent'
+            e.currentTarget.style.color = theme.colors.sidebar.text
+          }
+        }}
+        whileHover={{ scale: isLoggingOut ? 1 : 1.02 }}
+        whileTap={{ scale: isLoggingOut ? 1 : 0.98 }}
+        aria-label="Sair da Plataforma"
+      >
         <motion.span
-          className="font-medium truncate leading-tight text-xs"
-          initial={{ opacity: 0, width: 0 }}
-          animate={{ opacity: 1, width: 'auto' }}
-          exit={{ opacity: 0, width: 0 }}
+          className={`material-symbols-outlined transition-transform duration-300 flex-shrink-0 ${
+            isCollapsed ? 'text-[18px]' : 'text-[16px]'
+          }`}
+          aria-hidden="true"
+          whileHover={{ rotate: isLoggingOut ? 0 : -15 }}
           transition={{ duration: 0.2 }}
         >
-          Sair da Plataforma
+          {isLoggingOut ? 'hourglass_empty' : 'logout'}
         </motion.span>
-      )}
-    </AnimatePresence>
 
-    {/* Tooltip for collapsed state */}
-    <AnimatePresence>
-      {isCollapsed && (
-        <motion.div
-          className="absolute left-full ml-2 px-2 py-1 text-xs rounded-md opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-opacity duration-300 whitespace-nowrap z-50 shadow-lg font-medium"
-          style={{
-            backgroundColor: theme.colors.status.error,
-            color: theme.colors.text.inverse
-          }}
-          role="tooltip"
-          initial={{ opacity: 0, scale: 0.8 }}
-          animate={{ opacity: 1, scale: 1 }}
-          exit={{ opacity: 0, scale: 0.8 }}
-          transition={{ duration: 0.2 }}
-        >
-          Sair da Plataforma
-        </motion.div>
-      )}
-    </AnimatePresence>
-  </motion.button>
-));
+        <AnimatePresence>
+          {!isCollapsed && (
+            <motion.span
+              className="font-medium truncate leading-tight text-xs"
+              initial={{ opacity: 0, width: 0 }}
+              animate={{ opacity: 1, width: 'auto' }}
+              exit={{ opacity: 0, width: 0 }}
+              transition={{ duration: 0.2 }}
+            >
+              {isLoggingOut ? 'Saindo...' : 'Sair da Plataforma'}
+            </motion.span>
+          )}
+        </AnimatePresence>
+
+        {/* Tooltip for collapsed state */}
+        <AnimatePresence>
+          {isCollapsed && (
+            <motion.div
+              className="absolute left-full ml-2 px-2 py-1 text-xs rounded-md opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-opacity duration-300 whitespace-nowrap z-50 shadow-lg font-medium"
+              style={{
+                backgroundColor: theme.colors.status.error,
+                color: theme.colors.text.inverse
+              }}
+              role="tooltip"
+              initial={{ opacity: 0, scale: 0.8 }}
+              animate={{ opacity: 1, scale: 1 }}
+              exit={{ opacity: 0, scale: 0.8 }}
+              transition={{ duration: 0.2 }}
+            >
+              {isLoggingOut ? 'Saindo...' : 'Sair da Plataforma'}
+            </motion.div>
+          )}
+        </AnimatePresence>
+      </motion.button>
+
+      {/* Glass effect loading state */}
+      <AnimatePresence>
+        {isLoggingOut && (
+          <LogoutLoadingState message="Saindo da plataforma... Obrigado por usar nosso sistema!" />
+        )}
+      </AnimatePresence>
+    </>
+  );
+});
 LogoutButton.displayName = 'LogoutButton';
 
 const RoleSelector = memo(({ userRole, selectedRole, onRoleChange, theme, isSystemAdmin = false }: { 

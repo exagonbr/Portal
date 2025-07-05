@@ -7,7 +7,7 @@ import { UserRole } from '../types/auth';
 import { ROLE_LABELS } from '@/types/roles';
 import { useTheme } from '@/contexts/ThemeContext';
 import { motion } from 'framer-motion';
-import { EnhancedLoadingState } from './ui/LoadingStates';
+import { EnhancedLoadingState, LogoutLoadingState } from './ui/LoadingStates';
 
 interface StandardHeaderProps {
   title?: string;
@@ -368,10 +368,8 @@ const StandardHeader = ({
     <>
       {/* Loading State para Logout */}
       {isLoggingOut && (
-        <EnhancedLoadingState
-          message="Saindo do sistema..."
-          submessage="Limpando dados e finalizando sessão"
-          showProgress={false}
+        <LogoutLoadingState
+          message="Saindo do sistema... Obrigado por usar nossa plataforma!"
         />
       )}
 
@@ -825,19 +823,24 @@ const StandardHeader = ({
                   
                   <button
                     onClick={handleLogout}
-                    className="flex items-center w-full px-4 py-3 text-sm transition-colors"
+                    disabled={isLoggingOut}
+                    className="flex items-center w-full px-4 py-3 text-sm transition-colors disabled:opacity-50"
                     style={{ color: theme.colors.status.error }}
                     onMouseEnter={(e) => {
-                      e.currentTarget.style.backgroundColor = `${theme.colors.status.error}10`;
+                      if (!isLoggingOut) {
+                        e.currentTarget.style.backgroundColor = `${theme.colors.status.error}10`;
+                      }
                     }}
                     onMouseLeave={(e) => {
-                      e.currentTarget.style.backgroundColor = 'transparent';
+                      if (!isLoggingOut) {
+                        e.currentTarget.style.backgroundColor = 'transparent';
+                      }
                     }}
                   >
                     <svg className="mr-3 h-4 w-4" style={{ color: theme.colors.status.error }} fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
                     </svg>
-                    <span className="font-medium">Sair da Plataforma</span>
+                    <span className="font-medium">{isLoggingOut ? 'Saindo...' : 'Sair da Plataforma'}</span>
                   </button>
                 </motion.div>
               )}

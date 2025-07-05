@@ -23,7 +23,7 @@ const publicRoutes = [
   '/test-simple',
   '/test-dashboard',
   '/test-student',
-  '/debug-auth',
+  
   '/test-dashboard-simple',
   '/test-auth-integration',
   '/test-julia-login',

@@ -286,6 +286,11 @@ export function LoginForm() {
           </h3>
           <div className="space-y-1 text-xs" style={{ color: theme.colors.text.secondary }}>
             <p><strong>Admin:</strong> admin@sabercon.edu.br / password</p>
+            <p><strong>Gestor:</strong> gestor@sabercon.edu.br / password</p>
+            <p><strong>Coordenador Pedagógico:</strong> coordenador@sabercon.edu.br / password</p>
+            <p><strong>Professor:</strong> professor@sabercon.edu.br / password</p>
+            <p><strong>Aluna:</strong> julia.c@ifsp.com / password</p>
+            <p><strong>Responsável:</strong> renato@gmail.com / password</p>
           </div>
         </MotionDiv>
       </form>

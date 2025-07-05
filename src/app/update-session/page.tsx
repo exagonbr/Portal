@@ -94,12 +94,7 @@ export default function UpdateSessionPage() {
               Ir para Dashboard
             </button>
             
-            <button
-              onClick={() => router.push('/debug-auth')}
-              className="w-full bg-gray-600 text-white py-2 px-4 rounded-md hover:bg-gray-700"
-            >
-              Ver Debug
-            </button>
+
           </div>
         </div>
       </div>

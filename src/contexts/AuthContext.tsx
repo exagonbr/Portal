@@ -12,7 +12,7 @@ import { isDevelopment } from '../utils/env';
 import { clearAllDataForUnauthorized } from '@/utils/clearAllData';
 import { debugToken, cleanupTokens } from '@/utils/token-debug';
 import { UnifiedAuthService } from '@/services/unifiedAuthService';
-import { loginDiagnostics } from '@/utils/login-diagnostics';
+
 
 // Variável de ambiente para controlar o uso do token de teste
 const useTestToken = process.env.NEXT_PUBLIC_USE_TEST_TOKEN === 'true' && isDevelopment();
@@ -355,15 +355,13 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     if (!isClient) return;
 
     setIsLoading(true);
-    loginDiagnostics.info('LOGIN-START', 'Iniciando processo de login', { email });
+
 
     try {
       console.log('🔐 Fazendo login via API...');
-      loginDiagnostics.info('API-CALL', 'Chamando API de login');
       const response = await apiClient.post('/auth/login', { email, password });
       
       if (response.data.success && response.data.data) {
-        loginDiagnostics.success('API-RESPONSE', 'API de login respondeu com sucesso');
         const { accessToken, refreshToken, user: userData } = response.data.data;
         
         console.log('🔍 [AuthContext] Dados recebidos da API:', {
@@ -375,29 +373,19 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
         
         // Verificar se o token existe antes de prosseguir
         if (!accessToken) {
-          loginDiagnostics.error('TOKEN-MISSING', 'Token não foi retornado pela API');
           throw new Error('Token não foi retornado pelo servidor');
         }
         
         // Configurar o header de autorização
         apiClient.defaults.headers.common['Authorization'] = `Bearer ${accessToken}`;
-        loginDiagnostics.info('TOKEN-HEADER', 'Header de autorização configurado');
         
         // Decodificar o token para obter informações do usuário
-        loginDiagnostics.info('TOKEN-DECODE', 'Decodificando token JWT');
         const decodedToken = decodeToken(accessToken);
         
         if (!decodedToken || !isValidDecodedToken(decodedToken)) {
-          loginDiagnostics.error('TOKEN-INVALID', 'Token não pôde ser decodificado ou é inválido');
           console.error('❌ Erro: Token não pôde ser decodificado ou é inválido');
           throw new Error('Token inválido recebido do servidor');
         }
-        
-        loginDiagnostics.success('TOKEN-DECODE', 'Token decodificado com sucesso', {
-          id: decodedToken.id,
-          email: decodedToken.email,
-          role: decodedToken.role
-        });
         
         // Configurar o usuário no estado com valores padrão seguros
         const user: User = {
@@ -437,7 +425,6 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
         }
         
         setUser(user);
-        loginDiagnostics.success('USER-SET', 'Usuário configurado no estado', { role: user.role });
         
         console.log('✅ Login realizado com sucesso!', user);
         toast.success('Login realizado com sucesso!');
@@ -445,15 +432,10 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
         // Redirecionar para o dashboard apropriado
         const targetPath = getDashboardPath(user.role);
         console.log('🎯 Redirecionando para dashboard:', targetPath);
-        loginDiagnostics.info('DASHBOARD-PATH', 'Obtendo caminho do dashboard', { 
-          role: user.role, 
-          path: targetPath 
-        });
         
         if (targetPath) {
           // Usar caminho relativo para evitar problemas com URLs absolutas
           console.log('🔄 [AuthContext] Chamando router.push para:', targetPath);
-          loginDiagnostics.info('REDIRECT-START', 'Iniciando redirecionamento', { targetPath });
           router.push(targetPath);
           
           // Verificar se o redirecionamento aconteceu após um delay
@@ -465,25 +447,11 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
                 expectedPath: targetPath,
                 redirectSuccessful
               });
-              
-              if (redirectSuccessful) {
-                loginDiagnostics.success('REDIRECT-SUCCESS', 'Redirecionamento bem-sucedido', {
-                  expectedPath: targetPath,
-                  currentPath: window.location.pathname
-                });
-              } else {
-                loginDiagnostics.error('REDIRECT-FAILED', 'Redirecionamento falhou', {
-                  expectedPath: targetPath,
-                  currentPath: window.location.pathname,
-                  currentUrl: window.location.href
-                });
-              }
             }
           }, 1000);
         } else {
           console.warn('⚠️ Caminho do dashboard não encontrado, usando fallback');
           console.log('🔄 [AuthContext] Chamando router.push para fallback: /dashboard');
-          loginDiagnostics.warning('DASHBOARD-FALLBACK', 'Usando dashboard fallback', { role: user.role });
           router.push('/dashboard');
         }
       } else {

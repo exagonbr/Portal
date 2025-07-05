@@ -6,6 +6,7 @@ import { useTheme } from '@/contexts/ThemeContext'
 import { useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { ROLE_LABELS, UserRole } from '@/types/roles'
+import { LogoutLoadingState } from '@/components/ui/LoadingStates'
 interface Notification {
   id: number
   type: 'info' | 'warning' | 'success'
@@ -19,6 +20,7 @@ export default function DashboardHeader() {
   const { theme } = useTheme()
   const [showNotifications, setShowNotifications] = useState(false)
   const [showProfileMenu, setShowProfileMenu] = useState(false)
+  const [isLoggingOut, setIsLoggingOut] = useState(false)
   const router = useRouter()
 
   // Mock notifications data
@@ -76,6 +78,11 @@ export default function DashboardHeader() {
 
   return (
     <>
+      {/* Glass effect loading state */}
+      {isLoggingOut && (
+        <LogoutLoadingState message="Saindo da plataforma... Obrigado por usar nosso sistema!" />
+      )}
+      
       <header
         className="border-b h-16 flex-shrink-0"
         style={{ 
@@ -368,24 +375,34 @@ export default function DashboardHeader() {
                   <button
                     onClick={async () => {
                       setShowProfileMenu(false);
-                      await logout();
+                      setIsLoggingOut(true);
+                      try {
+                        await logout();
+                      } finally {
+                        setIsLoggingOut(false);
+                      }
                     }}
-                    className="w-full px-4 py-2 text-sm hover:bg-opacity-10 flex items-center transition-colors"
+                    disabled={isLoggingOut}
+                    className="w-full px-4 py-2 text-sm hover:bg-opacity-10 flex items-center transition-colors disabled:opacity-50"
                     style={{ color: theme.colors.status.error }}
                     onMouseEnter={(e) => {
-                      e.currentTarget.style.backgroundColor = theme.colors.status.error + '10'
+                      if (!isLoggingOut) {
+                        e.currentTarget.style.backgroundColor = theme.colors.status.error + '10'
+                      }
                     }}
                     onMouseLeave={(e) => {
-                      e.currentTarget.style.backgroundColor = 'transparent'
+                      if (!isLoggingOut) {
+                        e.currentTarget.style.backgroundColor = 'transparent'
+                      }
                     }}
                   >
                     <span 
                       className="material-symbols-outlined mr-2"
                       style={{ color: theme.colors.status.error }}
                     >
-                      logout
+                      {isLoggingOut ? 'hourglass_empty' : 'logout'}
                     </span>
-                    Sair da Plataforma
+                    {isLoggingOut ? 'Saindo...' : 'Sair da Plataforma'}
                   </button>
                 </div>
               </div>
