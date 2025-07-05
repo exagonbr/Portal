@@ -144,12 +144,24 @@ export function useSystemSettings() {
     loadSettings();
     // Lista de vídeos disponíveis
     setAvailableVideos([
-      '/back_video.mp4',
-      '/back_video1.mp4',
-      '/back_video2.mp4',
-      '/back_video3.mp4',
-      '/back_video4.mp4'
-    ]);
+        '/back_video.mp4',
+        '/back_video1.mp4',
+        '/back_video2.mp4',
+        '/back_video3.mp4',
+        '/back_video4.mp4',
+        '/back_video5.mp4',
+        '/back_video6.mp4',
+        '/back_video7.mp4',
+        '/back_video8.mp4',
+        '/back_video9.mp4',
+        '/back_video10.mp4',
+        '/back_video11.mp4',
+        '/back_video12.mp4',
+        '/back_video13.mp4',
+        '/back_video14.mp4',
+        '/back_video15.mp4',
+        '/back_video16.mp4'
+      ]);
   }, [loadSettings]);
 
   const updateSettings = (newSettings: Partial<FullSystemSettings>) => {
