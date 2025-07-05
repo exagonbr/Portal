@@ -10,6 +10,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 interface BookModalProps {
   isOpen: boolean;
   onClose: () => void;
+  onBookOpen?: () => void;
   book: {
     id?: string;
     thumbnail: string;
@@ -23,7 +24,7 @@ interface BookModalProps {
   };
 }
 
-export default function BookModal({ isOpen, onClose, book }: BookModalProps): JSX.Element | null {
+export default function BookModal({ isOpen, onClose, onBookOpen, book }: BookModalProps): JSX.Element | null {
   const [mounted, setMounted] = useState(false);
   const [isFavorite, setIsFavorite] = useState(false);
   const { theme } = useTheme();
@@ -202,6 +203,7 @@ export default function BookModal({ isOpen, onClose, book }: BookModalProps): JS
                       <motion.button 
                         whileHover={{ scale: 1.05 }}
                         whileTap={{ scale: 0.95 }}
+                        onClick={onBookOpen}
                         className="w-full text-white px-6 py-4 rounded-2xl font-bold flex items-center justify-center gap-3 shadow-lg hover:shadow-xl transition-all duration-200"
                         style={{
                           background: `linear-gradient(135deg, ${theme.colors.primary.DEFAULT}, ${theme.colors.secondary.DEFAULT})`

@@ -4,8 +4,10 @@ import React, { useState, useMemo, useEffect, useRef } from 'react';
 import { useRouter } from 'next/navigation';
 import { useAuth } from '@/contexts/AuthContext';
 import ProtectedRoute from '@/components/auth/ProtectedRoute';
-import { mockBooks } from '@/constants/mockData';
+import { mockBooks, Book as BookType, carouselBookImages } from '@/constants/mockData';
 import dynamic from 'next/dynamic';
+import { PlayIcon, InformationCircleIcon, ChevronLeftIcon, ChevronRightIcon, BookOpenIcon } from '@heroicons/react/24/solid';
+import BookModal from '@/components/BookModal';
 
 // Importação dinâmica do KoodoViewer
 const KoodoViewer = dynamic(
@@ -14,7 +16,7 @@ const KoodoViewer = dynamic(
 );
 
 // Tipos para o sistema de roteamento (copiados do koodo-reader)
-type RouteType = 'home' | 'pdf' | 'epub' | 'favorites' | 'highlights' | 'annotations' | 'content' | 'trash' | 'settings' | 'about';
+type RouteType = 'home' | 'pdf' | 'epub' | 'favorites' | 'highlights' | 'annotations' | 'bookmarks' | 'trash' | 'settings' | 'about';
 
 interface RouteState {
   type: RouteType;
@@ -36,9 +38,14 @@ interface Book {
   category: string;
   lastRead?: string;
   filePath?: string;
+  rating?: number;
+  year?: string;
+  pages?: number;
+  synopsis?: string;
+  isDeleted?: boolean;
 }
 
-// Dados mockados estendidos
+// Dados mockados estendidos com mais informações
 const extendedMockBooks: Book[] = mockBooks.map((book, index) => ({
   id: book.id,
   title: book.title,
@@ -46,11 +53,16 @@ const extendedMockBooks: Book[] = mockBooks.map((book, index) => ({
   cover: book.thumbnail,
   format: (book.format || 'pdf') as 'pdf' | 'epub',
   progress: book.progress || 0,
-  isFavorite: index < 3, // Primeiros 3 são favoritos
+  isFavorite: index < 3,
   size: `${(Math.random() * 5 + 1).toFixed(1)} MB`,
-  category: ['Literatura', 'Tecnologia', 'Ciências', 'História'][index % 4],
+  category: ['Literatura', 'Tecnologia', 'Ciências', 'História', 'Filosofia', 'Matemática'][index % 6],
   lastRead: book.progress && book.progress > 0 ? '2024-03-20' : undefined,
-  filePath: book.filePath || `https://d26a2wm7tuz2gu.cloudfront.net/upload/sample-${book.id}.pdf`
+  filePath: book.filePath || `https://d26a2wm7tuz2gu.cloudfront.net/upload/sample-${book.id}.pdf`,
+  rating: 4.5 + (Math.random() * 0.5),
+  year: ['2024', '2023', '2022', '2021'][index % 4],
+  pages: Math.floor(Math.random() * 300) + 100,
+  synopsis: book.synopsis,
+  isDeleted: false
 }));
 
 // Itens da sidebar (copiados do koodo-reader)
@@ -65,113 +77,442 @@ const sidebarMenuItems = [
   { id: 'about', label: 'Sobre', icon: '❓', count: 0 }
 ];
 
-export default function KoodoReaderPage() {
+// Agrupar livros por categoria
+const groupBooksByCategory = (books: Book[]) => {
+  const categories = ['Literatura', 'Tecnologia', 'Ciências', 'História', 'Filosofia', 'Matemática'];
+  return categories.map(category => ({
+    category,
+    books: books.filter(book => book.category === category && !book.isDeleted)
+  }));
+};
+
+// Loading Spinner Component
+const LoadingSpinner = () => (
+  <div className="flex justify-center items-center min-h-screen bg-black">
+    <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-blue-600"></div>
+  </div>
+);
+
+// Netflix-style Hero Section para Livros
+const HeroSection = ({ onOpenBook, onOpenDetails }: { onOpenBook: (book: Book) => void; onOpenDetails: (book: Book) => void }) => {
+  const [currentBook, setCurrentBook] = useState(0);
+  const [isTransitioning, setIsTransitioning] = useState(false);
+  const featuredBooks = extendedMockBooks.filter(book => book.isFavorite && !book.isDeleted);
+
+  useEffect(() => {
+    const timer = setInterval(() => {
+      setIsTransitioning(true);
+      setTimeout(() => {
+        setCurrentBook((prev) => (prev + 1) % featuredBooks.length);
+        setIsTransitioning(false);
+      }, 500);
+    }, 8000);
+    return () => clearInterval(timer);
+  }, [featuredBooks.length]);
+
+  const current = featuredBooks[currentBook];
+
+  if (!current) return null;
+
+  return (
+    <div className="relative h-screen w-screen overflow-hidden">
+      {/* Background com capa do livro */}
+      <div className="absolute inset-0">
+        {featuredBooks.map((book, index) => (
+          <div
+            key={index}
+            className={`absolute inset-0 transition-all duration-1000 ease-in-out ${
+              index === currentBook 
+                ? 'opacity-100 scale-100' 
+                : 'opacity-0 scale-105'
+            }`}
+          >
+            <div className="relative w-full h-full">
+              {/* Blur background */}
+              <img
+                src={book.cover}
+                alt={book.title}
+                className="w-full h-full object-cover blur-xl scale-110"
+              />
+              {/* Book cover showcase */}
+              <div className="absolute inset-0 flex items-center justify-end pr-32">
+                <img
+                  src={book.cover}
+                  alt={book.title}
+                  className="h-[70%] w-auto rounded-lg shadow-2xl cursor-pointer hover:scale-105 transition-transform"
+                  onClick={() => onOpenDetails(book)}
+                />
+              </div>
+            </div>
+          </div>
+        ))}
+        
+        {/* Gradientes */}
+        <div className="absolute inset-0 bg-gradient-to-t from-black via-black/50 to-transparent" />
+        <div className="absolute inset-0 bg-gradient-to-r from-black via-black/70 to-transparent" />
+      </div>
+
+      {/* Conteúdo */}
+      <div className="relative h-full flex items-center">
+        <div className="px-20 max-w-3xl">
+          <div className={`transition-all duration-700 ease-out ${
+            isTransitioning ? 'opacity-0 transform translate-y-4' : 'opacity-100 transform translate-y-0'
+          }`}>
+            <h1 className="text-6xl font-bold text-white mb-4 drop-shadow-2xl">
+              {current.title}
+            </h1>
+            <p className="text-2xl text-gray-300 mb-6">
+              por {current.author}
+            </p>
+            <div className="flex items-center gap-4 mb-6">
+              <span className="text-green-400 font-bold">★ {current.rating?.toFixed(1)}</span>
+              <span className="text-gray-400">{current.year}</span>
+              <span className="text-gray-400">{current.pages} páginas</span>
+              <span className="bg-blue-600 px-3 py-1 rounded text-sm">{current.format.toUpperCase()}</span>
+            </div>
+            <p className="text-lg text-gray-200 mb-8 line-clamp-3 leading-relaxed max-w-2xl">
+              {current.synopsis || 'Mergulhe nesta incrível obra e descubra um mundo de conhecimento e imaginação.'}
+            </p>
+            
+            {/* Botões */}
+            <div className="flex items-center gap-4">
+              <button 
+                onClick={() => onOpenBook(current)}
+                className="flex items-center gap-3 px-8 py-3 bg-white text-black rounded hover:bg-gray-200 transition-all duration-300 text-lg font-semibold shadow-2xl hover:shadow-white/20 hover:scale-105"
+              >
+                <BookOpenIcon className="w-6 h-6" />
+                Ler Agora
+              </button>
+              <button 
+                onClick={() => onOpenDetails(current)}
+                className="flex items-center gap-3 px-8 py-3 bg-gray-500/70 text-white rounded hover:bg-gray-500/50 transition-all duration-300 text-lg font-semibold backdrop-blur-sm shadow-xl hover:shadow-gray-500/20 hover:scale-105"
+              >
+                <InformationCircleIcon className="w-6 h-6" />
+                Mais informações
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {/* Navigation Dots */}
+      <div className="absolute bottom-8 left-1/2 transform -translate-x-1/2 flex gap-3 z-10">
+        {featuredBooks.map((_, index) => (
+          <button
+            key={index}
+            onClick={() => {
+              setIsTransitioning(true);
+              setTimeout(() => {
+                setCurrentBook(index);
+                setIsTransitioning(false);
+              }, 300);
+            }}
+            className={`w-3 h-3 rounded-full transition-all duration-300 ${
+              index === currentBook 
+                ? 'bg-white scale-125 shadow-lg' 
+                : 'bg-white/50 hover:bg-white/80 hover:scale-110'
+            }`}
+          />
+        ))}
+      </div>
+    </div>
+  );
+};
+
+// Netflix-style Book Card
+const NetflixBookCard = ({ book, onOpen }: { book: Book; onOpen: (book: Book) => void }) => {
+  const [isHovered, setIsHovered] = useState(false);
+  const progressPercentage = book.progress || 0;
+
+  return (
+    <div
+      className="relative group cursor-pointer h-full"
+      onMouseEnter={() => setIsHovered(true)}
+      onMouseLeave={() => setIsHovered(false)}
+      onClick={() => onOpen(book)}
+    >
+      <div className={`relative transition-all duration-300 h-full ${isHovered ? 'scale-105 z-50' : 'scale-100'}`}>
+        {/* Card Container */}
+        <div className="bg-gray-800 rounded-lg overflow-hidden h-full flex flex-col shadow-lg">
+          {/* Book Cover */}
+          <div className="relative w-full h-64 bg-gray-700 flex-shrink-0">
+            <img
+              src={book.cover}
+              alt={book.title}
+              className="w-full h-full object-cover"
+            />
+            
+            {/* Progress Bar */}
+            {progressPercentage > 0 && (
+              <div className="absolute bottom-0 left-0 right-0 h-1.5 bg-gray-600">
+                <div
+                  className="h-full bg-blue-600"
+                  style={{ width: `${progressPercentage}%` }}
+                />
+              </div>
+            )}
+
+            {/* Hover Overlay */}
+            {isHovered && (
+              <div className="absolute inset-0 bg-black/60 flex items-center justify-center">
+                <BookOpenIcon className="w-12 h-12 text-white" />
+              </div>
+            )}
+
+            {/* Deleted Badge */}
+            {book.isDeleted && (
+              <div className="absolute top-2 right-2 bg-red-600 text-white px-2 py-1 rounded text-xs">
+                Na lixeira
+              </div>
+            )}
+          </div>
+
+          {/* Book Info */}
+          <div className="p-4 flex-grow flex flex-col justify-between">
+            <div>
+              <h3 className="text-white font-medium text-sm mb-1 line-clamp-2">
+                {book.title}
+              </h3>
+              <p className="text-gray-400 text-xs mb-2">{book.author}</p>
+            </div>
+            
+            <div className="flex items-center justify-between text-xs mt-2">
+              <div className="flex items-center gap-2">
+                <span className="text-green-400">★ {book.rating?.toFixed(1)}</span>
+                <span className="text-gray-500">{book.pages}p</span>
+              </div>
+              {progressPercentage > 0 && (
+                <span className="text-blue-400 font-medium">{progressPercentage}%</span>
+              )}
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+};
+
+// Netflix-style Carousel Row
+const CarouselRow = ({ title, books, onOpenBook }: { title: string; books: Book[]; onOpenBook: (book: Book) => void }) => {
+  const [showLeftArrow, setShowLeftArrow] = useState(false);
+  const [showRightArrow, setShowRightArrow] = useState(true);
+  const scrollRef = useRef<HTMLDivElement>(null);
+
+  const scroll = (direction: 'left' | 'right') => {
+    if (scrollRef.current) {
+      const scrollAmount = scrollRef.current.clientWidth * 0.8;
+      scrollRef.current.scrollBy({
+        left: direction === 'left' ? -scrollAmount : scrollAmount,
+        behavior: 'smooth'
+      });
+    }
+  };
+
+  const handleScroll = () => {
+    if (scrollRef.current) {
+      const { scrollLeft, scrollWidth, clientWidth } = scrollRef.current;
+      setShowLeftArrow(scrollLeft > 0);
+      setShowRightArrow(scrollLeft < scrollWidth - clientWidth - 10);
+    }
+  };
+
+  if (books.length === 0) return null;
+
+  return (
+    <div className="relative group mb-12">
+      <h2 className="text-2xl font-semibold text-white mb-4 px-12">{title}</h2>
+      
+      {/* Left Arrow */}
+      {showLeftArrow && (
+        <button
+          onClick={() => scroll('left')}
+          className="absolute left-2 top-1/2 transform -translate-y-1/2 z-40 w-10 h-16 bg-black/80 hover:bg-black/95 transition-all duration-200 opacity-0 group-hover:opacity-100 flex items-center justify-center rounded-md"
+        >
+          <ChevronLeftIcon className="w-6 h-6 text-white" />
+        </button>
+      )}
+
+      {/* Books Container */}
+      <div
+        ref={scrollRef}
+        onScroll={handleScroll}
+        className="flex gap-4 overflow-x-auto scrollbar-hide px-12 pb-4"
+        style={{ scrollbarWidth: 'none', msOverflowStyle: 'none' }}
+      >
+        {books.map((book) => (
+          <div key={book.id} className="flex-shrink-0 w-48 h-80">
+            <NetflixBookCard book={book} onOpen={onOpenBook} />
+          </div>
+        ))}
+      </div>
+
+      {/* Right Arrow */}
+      {showRightArrow && (
+        <button
+          onClick={() => scroll('right')}
+          className="absolute right-2 top-1/2 transform -translate-y-1/2 z-40 w-10 h-16 bg-black/80 hover:bg-black/95 transition-all duration-200 opacity-0 group-hover:opacity-100 flex items-center justify-center rounded-md"
+        >
+          <ChevronRightIcon className="w-6 h-6 text-white" />
+        </button>
+      )}
+    </div>
+  );
+};
+
+// Trash Section Component
+const TrashSection = ({ books, onOpenBook, onRestore, onPermanentDelete }: { 
+  books: Book[]; 
+  onOpenBook: (book: Book) => void;
+  onRestore: (bookId: string) => void;
+  onPermanentDelete: (bookId: string) => void;
+}) => {
+  if (books.length === 0) {
+    return (
+      <div className="flex flex-col items-center justify-center h-64 text-white">
+        <div className="text-6xl mb-4">🗑️</div>
+        <h3 className="text-xl font-semibold mb-2">Lixeira vazia</h3>
+        <p className="text-gray-400">Livros excluídos aparecerão aqui</p>
+      </div>
+    );
+  }
+
+  return (
+    <div className="px-12">
+      <h2 className="text-2xl font-semibold text-white mb-6">Lixeira</h2>
+      <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4">
+        {books.map((book) => (
+          <div key={book.id} className="bg-gray-800 rounded-lg overflow-hidden">
+            <img
+              src={book.cover}
+              alt={book.title}
+              className="w-full h-48 object-cover"
+            />
+            <div className="p-4">
+              <h3 className="text-white font-medium text-sm mb-2 line-clamp-1">{book.title}</h3>
+              <div className="flex gap-2">
+                <button
+                  onClick={() => onRestore(book.id)}
+                  className="flex-1 px-2 py-1 bg-green-600 text-white text-xs rounded hover:bg-green-700"
+                >
+                  Restaurar
+                </button>
+                <button
+                  onClick={() => onPermanentDelete(book.id)}
+                  className="flex-1 px-2 py-1 bg-red-600 text-white text-xs rounded hover:bg-red-700"
+                >
+                  Excluir
+                </button>
+              </div>
+            </div>
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+};
+
+export default function NetflixBooksPage() {
   const { user } = useAuth();
   const router = useRouter();
-  
-  // Estados principais (copiados do koodo-reader)
-  const [currentRoute, setCurrentRoute] = useState<RouteState>({ type: 'home' });
-  const [books, setBooks] = useState<Book[]>(extendedMockBooks);
-  const [searchQuery, setSearchQuery] = useState('');
-  const [selectedCategory, setSelectedCategory] = useState('Todos');
-  const [selectedFormat, setSelectedFormat] = useState('Todos');
-  const [sortBy, setSortBy] = useState('recent');
-  const [viewMode, setViewMode] = useState<'grid' | 'list' | 'cover' | 'table'>('grid');
-  const [showImportModal, setShowImportModal] = useState(false);
-  const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(false);
   const [selectedBook, setSelectedBook] = useState<Book | null>(null);
   const [isViewerOpen, setIsViewerOpen] = useState(false);
+  const [books, setBooks] = useState<Book[]>(extendedMockBooks);
+  const [isDetailsModalOpen, setIsDetailsModalOpen] = useState(false);
+  const [bookForDetails, setBookForDetails] = useState<Book | null>(null);
+  const [showTrash, setShowTrash] = useState(false);
+  const [isMenuOpen, setIsMenuOpen] = useState(true); // Menu começa aberto
+  const [currentView, setCurrentView] = useState<'home' | 'favorites' | 'highlights' | 'annotations' | 'bookmarks' | 'trash' | 'settings' | 'about'>('home');
 
-  // Contar favoritos
-  const favoritesCount = books.filter(book => book.isFavorite).length;
+  // Contadores
+  const activeBooks = books.filter(book => !book.isDeleted);
+  const deletedBooks = books.filter(book => book.isDeleted);
+  const favoriteBooks = activeBooks.filter(book => book.isFavorite);
+  const continueReadingBooks = activeBooks.filter(book => book.progress && book.progress > 0 && book.progress < 100);
 
-  // Atualizar contadores da sidebar
-  const updatedSidebarItems = useMemo(() => {
-    return sidebarMenuItems.map(item => {
-      let count = 0;
-      switch (item.id) {
-        case 'home': count = books.length; break;
-        case 'favorites': count = favoritesCount; break;
-        case 'highlights': count = 23; break; // Mock
-        case 'annotations': count = 15; break; // Mock
-        case 'bookmarks': count = 8; break; // Mock
-        case 'trash': count = 0; break; // Mock
+  // Menu items com contadores atualizados
+  const menuItems = [
+    { id: 'home', label: 'Biblioteca', icon: '📚', count: activeBooks.length },
+    { id: 'favorites', label: 'Favoritos', icon: '❤️', count: favoriteBooks.length },
+    { id: 'highlights', label: 'Destaques', icon: '🎨', count: 23 }, // Mock
+    { id: 'annotations', label: 'Anotações', icon: '📝', count: 15 }, // Mock
+    { id: 'bookmarks', label: 'Marcadores', icon: '🔖', count: 8 }, // Mock
+    { id: 'trash', label: 'Lixeira', icon: '🗑️', count: deletedBooks.length },
+    { id: 'settings', label: 'Configurações', icon: '⚙️', count: 0 },
+    { id: 'about', label: 'Sobre', icon: '❓', count: 0 }
+  ];
+
+  // Efeito para fazer a página completamente fullscreen
+  useEffect(() => {
+    // Esconder sidebar e header
+    const sidebar = document.querySelector('aside');
+    const header = document.querySelector('header');
+    const sidebarContainer = document.querySelector('[class*="sidebar"]');
+    
+    if (sidebar) {
+      (sidebar as HTMLElement).style.display = 'none';
+    }
+    if (header) {
+      (header as HTMLElement).style.display = 'none';
+    }
+    if (sidebarContainer) {
+      (sidebarContainer as HTMLElement).style.display = 'none';
+    }
+
+    // Forçar body para fullscreen
+    document.body.style.overflow = 'hidden';
+    document.body.style.margin = '0';
+    document.body.style.padding = '0';
+
+    // Cleanup
+    return () => {
+      if (sidebar) {
+        (sidebar as HTMLElement).style.display = '';
       }
-      return { ...item, count };
-    });
-  }, [books.length, favoritesCount]);
-
-  // Filtrar livros
-  const filteredBooks = useMemo(() => {
-    let filtered = books;
-
-    // Filtro por rota
-    if (currentRoute.type === 'favorites') {
-      filtered = filtered.filter(book => book.isFavorite);
-    }
-
-    // Filtro por busca
-    if (searchQuery) {
-      filtered = filtered.filter(book => 
-        book.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        book.author.toLowerCase().includes(searchQuery.toLowerCase())
-      );
-    }
-
-    // Filtro por categoria
-    if (selectedCategory !== 'Todos') {
-      filtered = filtered.filter(book => book.category === selectedCategory);
-    }
-
-    // Filtro por formato
-    if (selectedFormat !== 'Todos') {
-      filtered = filtered.filter(book => book.format === selectedFormat.toLowerCase());
-    }
-
-    // Ordenação
-    filtered.sort((a, b) => {
-      switch (sortBy) {
-        case 'title': return a.title.localeCompare(b.title);
-        case 'author': return a.author.localeCompare(b.author);
-        case 'recent': return (b.lastRead || '').localeCompare(a.lastRead || '');
-        case 'progress': return (b.progress || 0) - (a.progress || 0);
-        default: return 0;
+      if (header) {
+        (header as HTMLElement).style.display = '';
       }
-    });
-
-    return filtered;
-  }, [books, currentRoute, searchQuery, selectedCategory, selectedFormat, sortBy]);
-
-  // Navegação (como koodo-reader)
-  const navigateTo = (route: RouteState) => {
-    setCurrentRoute(route);
-    // Abre viewer se for PDF/EPUB
-    if ((route.type === 'pdf' || route.type === 'epub') && route.id) {
-      const book = books.find(b => b.id === route.id);
-      if (book) {
-        setSelectedBook(book);
-        setIsViewerOpen(true);
+      if (sidebarContainer) {
+        (sidebarContainer as HTMLElement).style.display = '';
       }
-    }
-  };
-
-  // Abrir livro
-  const handleBookOpen = (book: Book) => {
-    const route: RouteState = {
-      type: book.format,
-      id: book.id,
-      title: book.title,
-      file: book.id,
-      bookId: book.id
+      
+      document.body.style.overflow = '';
+      document.body.style.margin = '';
+      document.body.style.padding = '';
     };
-    navigateTo(route);
+  }, []);
+
+  const handleBackToDashboard = () => {
+    router.push('/dashboard');
   };
 
-  // Fechar viewer
+  const handleOpenBook = (book: Book) => {
+    setSelectedBook(book);
+    setIsViewerOpen(true);
+  };
+
   const handleCloseViewer = () => {
     setIsViewerOpen(false);
     setSelectedBook(null);
-    navigateTo({ type: 'home' });
+  };
+
+  // Abrir modal de detalhes
+  const handleOpenDetails = (book: Book) => {
+    setBookForDetails(book);
+    setIsDetailsModalOpen(true);
+  };
+
+  // Fechar modal de detalhes
+  const handleCloseDetails = () => {
+    setIsDetailsModalOpen(false);
+    setBookForDetails(null);
+  };
+
+  // Abrir livro do modal
+  const handleOpenBookFromModal = () => {
+    if (bookForDetails) {
+      handleCloseDetails();
+      handleOpenBook(bookForDetails);
+    }
   };
 
   // Toggle favorito
@@ -181,559 +522,430 @@ export default function KoodoReaderPage() {
     ));
   };
 
-  // Renderizar conteúdo baseado na rota
-  const renderMainContent = () => {
-    // Se viewer está aberto, renderizar KoodoViewer
-    if (isViewerOpen && selectedBook) {
-      return (
-        <KoodoViewer
-          book={selectedBook}
-          onClose={handleCloseViewer}
-        />
-      );
-    }
-
-    // Renderizar página específica baseada na rota
-    switch (currentRoute.type) {
-      case 'favorites':
-        return renderFavoritesPage();
-      case 'highlights':
-        return renderHighlightsPage();
-      case 'annotations':
-        return renderAnnotationsPage();
-      case 'bookmarks':
-        return renderBookmarksPage();
-      case 'trash':
-        return renderTrashPage();
-      case 'settings':
-        return renderSettingsPage();
-      case 'about':
-        return renderAboutPage();
-      default:
-        return renderHomePage();
-    }
+  // Deletar livro (mover para lixeira)
+  const handleDeleteBook = (bookId: string) => {
+    setBooks(prev => prev.map(book => 
+      book.id === bookId ? { ...book, isDeleted: true } : book
+    ));
   };
 
-  // Página principal (biblioteca)
-  const renderHomePage = () => (
-    <div className="flex-1 flex flex-col bg-gray-50">
-      {/* Barra de ferramentas */}
-      <div className="bg-white border-b border-gray-200 p-4">
-        <div className="flex items-center justify-between mb-4">
-          <div className="flex items-center space-x-4">
-            <button
-              onClick={() => setIsSidebarCollapsed(!isSidebarCollapsed)}
-              className="p-2 hover:bg-gray-100 rounded-lg transition-colors"
-            >
-              <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" />
-              </svg>
-            </button>
-            <h1 className="text-xl font-semibold text-gray-800">
-              {currentRoute.type === 'favorites' ? 'Favoritos' : 'Biblioteca'}
-            </h1>
-          </div>
-          
-          <div className="flex items-center space-x-2">
-            <button
-              onClick={() => setShowImportModal(true)}
-              className="flex items-center space-x-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
-            >
-              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
-              </svg>
-              <span>Importar</span>
-            </button>
-          </div>
-        </div>
-
-        {/* Barra de busca e filtros */}
-        <div className="flex items-center space-x-4 mb-4">
-          <div className="flex-1 relative">
-            <input
-              type="text"
-              placeholder="Buscar livros..."
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-              className="w-full px-4 py-2 pl-10 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-            />
-            <svg className="absolute left-3 top-2.5 w-5 h-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
-            </svg>
-          </div>
-          
-          <select
-            value={selectedCategory}
-            onChange={(e) => setSelectedCategory(e.target.value)}
-            className="px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-          >
-            <option value="Todos">Todas as categorias</option>
-            <option value="Literatura">Literatura</option>
-            <option value="Tecnologia">Tecnologia</option>
-            <option value="Ciências">Ciências</option>
-            <option value="História">História</option>
-          </select>
-          
-          <select
-            value={selectedFormat}
-            onChange={(e) => setSelectedFormat(e.target.value)}
-            className="px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-          >
-            <option value="Todos">Todos os formatos</option>
-            <option value="PDF">PDF</option>
-            <option value="EPUB">EPUB</option>
-          </select>
-        </div>
-
-        {/* Modos de visualização */}
-        <div className="flex items-center justify-between">
-          <div className="flex items-center space-x-2">
-            <span className="text-sm text-gray-600">Visualização:</span>
-            <div className="flex bg-gray-100 rounded-lg p-1">
-              {['grid', 'list', 'cover', 'table'].map((mode) => (
-                <button
-                  key={mode}
-                  onClick={() => setViewMode(mode as any)}
-                  className={`px-3 py-1 rounded text-sm transition-colors ${
-                    viewMode === mode
-                      ? 'bg-white shadow-sm text-blue-600'
-                      : 'text-gray-600 hover:text-gray-800'
-                  }`}
-                >
-                  {mode === 'grid' && '⊞'}
-                  {mode === 'list' && '☰'}
-                  {mode === 'cover' && '📚'}
-                  {mode === 'table' && '📋'}
-                  <span className="ml-1 capitalize">{mode}</span>
-                </button>
-              ))}
-            </div>
-          </div>
-          
-          <div className="flex items-center space-x-2">
-            <span className="text-sm text-gray-600">Ordenar por:</span>
-            <select
-              value={sortBy}
-              onChange={(e) => setSortBy(e.target.value)}
-              className="px-3 py-1 border border-gray-300 rounded text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
-            >
-              <option value="recent">Mais recentes</option>
-              <option value="title">Título</option>
-              <option value="author">Autor</option>
-              <option value="progress">Progresso</option>
-            </select>
-          </div>
-        </div>
-      </div>
-
-      {/* Conteúdo dos livros */}
-      <div className="flex-1 p-4">
-        {renderBooksView()}
-      </div>
-    </div>
-  );
-
-  // Renderizar livros baseado no modo de visualização
-  const renderBooksView = () => {
-    if (filteredBooks.length === 0) {
-      return (
-        <div className="flex flex-col items-center justify-center h-64">
-          <div className="text-6xl mb-4">📚</div>
-          <h3 className="text-lg font-semibold text-gray-600 mb-2">Nenhum livro encontrado</h3>
-          <p className="text-gray-500">Tente ajustar os filtros ou importar novos livros</p>
-        </div>
-      );
-    }
-
-    switch (viewMode) {
-      case 'grid':
-        return (
-          <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 2xl:grid-cols-6 gap-4">
-            {filteredBooks.map((book) => (
-              <div
-                key={book.id}
-                className="bg-white rounded-lg shadow-md overflow-hidden hover:shadow-lg transition-shadow cursor-pointer"
-                onClick={() => handleBookOpen(book)}
-              >
-                <div className="relative aspect-[3/4]">
-                  <img
-                    src={book.cover}
-                    alt={book.title}
-                    className="w-full h-full object-cover"
-                  />
-                  <button
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      toggleFavorite(book.id);
-                    }}
-                    className="absolute top-2 right-2 p-1 bg-white rounded-full shadow-md hover:shadow-lg transition-shadow"
-                  >
-                    <svg className={`w-4 h-4 ${book.isFavorite ? 'text-red-500' : 'text-gray-400'}`} fill="currentColor" viewBox="0 0 24 24">
-                      <path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z"/>
-                    </svg>
-                  </button>
-                  {book.progress && book.progress > 0 && (
-                    <div className="absolute bottom-0 left-0 right-0 h-1 bg-gray-200">
-                      <div
-                        className="h-full bg-blue-500"
-                        style={{ width: `${book.progress}%` }}
-                      />
-                    </div>
-                  )}
-                </div>
-                <div className="p-3">
-                  <h3 className="font-semibold text-sm text-gray-800 line-clamp-2 mb-1">
-                    {book.title}
-                  </h3>
-                  <p className="text-xs text-gray-600 line-clamp-1">
-                    {book.author}
-                  </p>
-                </div>
-              </div>
-            ))}
-          </div>
-        );
-
-      case 'list':
-        return (
-          <div className="space-y-2">
-            {filteredBooks.map((book) => (
-              <div
-                key={book.id}
-                className="flex items-center space-x-4 p-3 bg-white rounded-lg shadow-sm hover:shadow-md transition-shadow cursor-pointer"
-                onClick={() => handleBookOpen(book)}
-              >
-                <img
-                  src={book.cover}
-                  alt={book.title}
-                  className="w-12 h-16 object-cover rounded"
-                />
-                <div className="flex-1">
-                  <h3 className="font-semibold text-gray-800">{book.title}</h3>
-                  <p className="text-sm text-gray-600">{book.author}</p>
-                  <p className="text-xs text-gray-500">{book.category} • {book.format.toUpperCase()}</p>
-                </div>
-                {book.progress && book.progress > 0 && (
-                  <div className="flex items-center space-x-2">
-                    <div className="w-20 h-2 bg-gray-200 rounded-full">
-                      <div
-                        className="h-full bg-blue-500 rounded-full"
-                        style={{ width: `${book.progress}%` }}
-                      />
-                    </div>
-                    <span className="text-xs text-gray-600">{book.progress}%</span>
-                  </div>
-                )}
-                <button
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    toggleFavorite(book.id);
-                  }}
-                  className="p-1 hover:bg-gray-100 rounded"
-                >
-                  <svg className={`w-4 h-4 ${book.isFavorite ? 'text-red-500' : 'text-gray-400'}`} fill="currentColor" viewBox="0 0 24 24">
-                    <path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z"/>
-                  </svg>
-                </button>
-              </div>
-            ))}
-          </div>
-        );
-
-      case 'cover':
-        return (
-          <div className="grid grid-cols-4 md:grid-cols-6 lg:grid-cols-8 xl:grid-cols-10 2xl:grid-cols-12 gap-2">
-            {filteredBooks.map((book) => (
-              <div
-                key={book.id}
-                className="aspect-[3/4] cursor-pointer hover:scale-105 transition-transform"
-                onClick={() => handleBookOpen(book)}
-              >
-                <img
-                  src={book.cover}
-                  alt={book.title}
-                  className="w-full h-full object-cover rounded shadow-md"
-                />
-              </div>
-            ))}
-          </div>
-        );
-
-      case 'table':
-        return (
-          <div className="bg-white rounded-lg shadow-sm overflow-hidden">
-            <table className="w-full">
-              <thead className="bg-gray-50">
-                <tr>
-                  <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Livro</th>
-                  <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Autor</th>
-                  <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Formato</th>
-                  <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Progresso</th>
-                  <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Ações</th>
-                </tr>
-              </thead>
-              <tbody className="bg-white divide-y divide-gray-200">
-                {filteredBooks.map((book) => (
-                  <tr key={book.id} className="hover:bg-gray-50">
-                    <td className="px-4 py-3 whitespace-nowrap">
-                      <div className="flex items-center">
-                        <img
-                          src={book.cover}
-                          alt={book.title}
-                          className="w-8 h-10 object-cover rounded mr-3"
-                        />
-                        <div>
-                          <div className="text-sm font-medium text-gray-900">{book.title}</div>
-                          <div className="text-sm text-gray-500">{book.category}</div>
-                        </div>
-                      </div>
-                    </td>
-                    <td className="px-4 py-3 whitespace-nowrap text-sm text-gray-900">
-                      {book.author}
-                    </td>
-                    <td className="px-4 py-3 whitespace-nowrap text-sm text-gray-900">
-                      {book.format.toUpperCase()}
-                    </td>
-                    <td className="px-4 py-3 whitespace-nowrap">
-                      {book.progress && book.progress > 0 ? (
-                        <div className="flex items-center">
-                          <div className="w-16 h-2 bg-gray-200 rounded-full mr-2">
-                            <div
-                              className="h-full bg-blue-500 rounded-full"
-                              style={{ width: `${book.progress}%` }}
-                            />
-                          </div>
-                          <span className="text-xs text-gray-600">{book.progress}%</span>
-                        </div>
-                      ) : (
-                        <span className="text-xs text-gray-500">Não iniciado</span>
-                      )}
-                    </td>
-                    <td className="px-4 py-3 whitespace-nowrap text-sm font-medium">
-                      <button
-                        onClick={() => handleBookOpen(book)}
-                        className="text-blue-600 hover:text-blue-900 mr-2"
-                      >
-                        Ler
-                      </button>
-                      <button
-                        onClick={() => toggleFavorite(book.id)}
-                        className={`${book.isFavorite ? 'text-red-600 hover:text-red-900' : 'text-gray-400 hover:text-gray-600'}`}
-                      >
-                        ♥
-                      </button>
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
-        );
-
-      default:
-        return null;
-    }
+  // Restaurar livro da lixeira
+  const handleRestoreBook = (bookId: string) => {
+    setBooks(prev => prev.map(book => 
+      book.id === bookId ? { ...book, isDeleted: false } : book
+    ));
   };
 
-  // Páginas específicas (copiadas do koodo-reader)
-  const renderFavoritesPage = () => (
-    <div className="flex-1 bg-gray-50 p-6">
-      <div className="text-center py-12">
-        <div className="text-6xl mb-4">❤️</div>
-        <h2 className="text-2xl font-bold text-gray-800 mb-2">Seus Livros Favoritos</h2>
-        <p className="text-gray-600 mb-8">Adicione livros aos favoritos para vê-los aqui.</p>
-        {favoritesCount > 0 && (
-          <div className="max-w-4xl mx-auto">
-            {renderBooksView()}
-          </div>
-        )}
-      </div>
-    </div>
-  );
+  // Deletar permanentemente
+  const handlePermanentDelete = (bookId: string) => {
+    setBooks(prev => prev.filter(book => book.id !== bookId));
+  };
 
-  const renderHighlightsPage = () => (
-    <div className="flex-1 bg-gray-50 p-6">
-      <div className="text-center py-12">
-        <div className="text-6xl mb-4">🎨</div>
-        <h2 className="text-2xl font-bold text-gray-800 mb-2">Seus Destaques</h2>
-        <p className="text-gray-600">Destaques dos seus livros aparecerão aqui.</p>
-      </div>
-    </div>
-  );
+  // Se o viewer está aberto, renderizar apenas ele
+  if (isViewerOpen && selectedBook) {
+    return (
+      <KoodoViewer
+        book={{
+          ...selectedBook,
+          thumbnail: selectedBook.cover,
+          publisher: selectedBook.author,
+          synopsis: selectedBook.synopsis || selectedBook.title,
+          duration: selectedBook.size,
+          filePath: selectedBook.filePath || `https://d26a2wm7tuz2gu.cloudfront.net/upload/sample-${selectedBook.id}.pdf`
+        } as BookType}
+        onClose={handleCloseViewer}
+      />
+    );
+  }
 
-  const renderAnnotationsPage = () => (
-    <div className="flex-1 bg-gray-50 p-6">
-      <div className="text-center py-12">
-        <div className="text-6xl mb-4">📝</div>
-        <h2 className="text-2xl font-bold text-gray-800 mb-2">Suas Anotações</h2>
-        <p className="text-gray-600">Anotações dos seus livros aparecerão aqui.</p>
-      </div>
-    </div>
-  );
-
-  const renderBookmarksPage = () => (
-    <div className="flex-1 bg-gray-50 p-6">
-      <div className="text-center py-12">
-        <div className="text-6xl mb-4">🔖</div>
-        <h2 className="text-2xl font-bold text-gray-800 mb-2">Seus Marcadores</h2>
-        <p className="text-gray-600">Marcadores dos seus livros aparecerão aqui.</p>
-      </div>
-    </div>
-  );
-
-  const renderTrashPage = () => (
-    <div className="flex-1 bg-gray-50 p-6">
-      <div className="text-center py-12">
-        <div className="text-6xl mb-4">🗑️</div>
-        <h2 className="text-2xl font-bold text-gray-800 mb-2">Lixeira</h2>
-        <p className="text-gray-600">Livros removidos aparecerão aqui.</p>
-      </div>
-    </div>
-  );
-
-  const renderSettingsPage = () => (
-    <div className="flex-1 bg-gray-50 p-6">
-      <div className="max-w-2xl mx-auto">
-        <h2 className="text-2xl font-bold text-gray-800 mb-6">Configurações</h2>
-        
-        <div className="bg-white rounded-lg shadow-sm p-6 mb-6">
-          <h3 className="text-lg font-semibold text-gray-800 mb-4">Preferências de Leitura</h3>
-          <div className="space-y-4">
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
-                Tema Padrão
-              </label>
-              <select className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500">
-                <option>Claro</option>
-                <option>Escuro</option>
-                <option>Automático</option>
-              </select>
-            </div>
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
-                Modo de Leitura
-              </label>
-              <select className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500">
-                <option>Simples</option>
-                <option>Dupla Página</option>
-                <option>Rolagem</option>
-              </select>
-            </div>
-          </div>
-        </div>
-
-        <div className="bg-white rounded-lg shadow-sm p-6">
-          <h3 className="text-lg font-semibold text-gray-800 mb-4">Sincronização</h3>
-          <div className="space-y-3">
-            <label className="flex items-center">
-              <input type="checkbox" className="mr-3" defaultChecked />
-              <span className="text-sm text-gray-700">Sincronizar posições de leitura</span>
-            </label>
-            <label className="flex items-center">
-              <input type="checkbox" className="mr-3" defaultChecked />
-              <span className="text-sm text-gray-700">Sincronizar anotações e destaques</span>
-            </label>
-          </div>
-        </div>
-      </div>
-    </div>
-  );
-
-  const renderAboutPage = () => (
-    <div className="flex-1 bg-gray-50 p-6">
-      <div className="max-w-2xl mx-auto text-center">
-        <div className="text-6xl mb-6">📚</div>
-        <h2 className="text-3xl font-bold text-gray-800 mb-2">Ex$4G Leitor - Portal de Livros</h2>
-        <p className="text-gray-600 mb-8">Versão 4.1.3</p>
-        
-        <div className="bg-white rounded-lg shadow-sm p-6 text-left">
-          <p className="text-gray-700 mb-6">
-            Um leitor de livros eletrônicos moderno e elegante, projetado para proporcionar 
-            a melhor experiência de leitura possível.
-          </p>
-          
-          <h3 className="text-lg font-semibold text-gray-800 mb-4">Funcionalidades:</h3>
-          <ul className="space-y-2 text-gray-700">
-            <li>• Suporte para formatos PDF e EPUB</li>
-            <li>• Anotações e destaques personalizáveis</li>
-            <li>• Sincronização de progresso de leitura</li>
-            <li>• Temas personalizáveis (claro/escuro)</li>
-            <li>• Modos de leitura flexíveis</li>
-            <li>• Organização inteligente da biblioteca</li>
-            <li>• Busca avançada e filtros</li>
-          </ul>
-        </div>
-      </div>
-    </div>
-  );
+  // Organizar livros
+  const newBooks = activeBooks.slice(0, 8);
+  const booksByCategory = groupBooksByCategory(activeBooks);
 
   return (
     <ProtectedRoute>
-      <div className="flex h-screen bg-gray-100">
-        {/* Sidebar (copiada do koodo-reader) */}
-        <div className={`bg-white shadow-lg transition-all duration-300 ${
-          isSidebarCollapsed ? 'w-16' : 'w-64'
+      <div className="fixed inset-0 bg-gray-900 overflow-hidden z-50 flex">
+        {/* Conteúdo Principal com margem para o menu */}
+        <div className={`flex-1 overflow-y-auto transition-all duration-300 ${isMenuOpen ? 'mr-80' : 'mr-0'}`}>
+          {/* Botão Voltar ao Dashboard */}
+          <div className="fixed top-6 left-6 z-50 flex items-center gap-4">
+            <button
+              onClick={handleBackToDashboard}
+              className="flex items-center gap-2 px-4 py-2 bg-black/70 hover:bg-black/90 text-white rounded-lg transition-colors backdrop-blur-sm border border-white/20"
+            >
+              <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 19l-7-7m0 0l7-7m-7 7h18" />
+              </svg>
+              Voltar ao Dashboard
+            </button>
+          </div>
+
+          {/* Botão Toggle Menu (removido o botão de lixeira separado) */}
+          <button
+            onClick={() => setIsMenuOpen(!isMenuOpen)}
+            className="fixed top-6 right-6 z-50 flex items-center gap-2 px-4 py-2 bg-black/70 hover:bg-black/90 text-white rounded-lg transition-colors backdrop-blur-sm border border-white/20"
+            style={{ right: isMenuOpen ? '21rem' : '1.5rem' }}
+          >
+            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              {isMenuOpen ? (
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+              ) : (
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16m-7 6h7" />
+              )}
+            </svg>
+            {isMenuOpen ? 'Fechar' : 'Menu'}
+          </button>
+
+          {showTrash || currentView === 'trash' ? (
+            <div className="pt-24 pb-20">
+              <TrashSection
+                books={deletedBooks}
+                onOpenBook={handleOpenDetails}
+                onRestore={handleRestoreBook}
+                onPermanentDelete={handlePermanentDelete}
+              />
+            </div>
+          ) : currentView === 'favorites' ? (
+            <div className="pt-24 pb-20">
+              <div className="px-12">
+                <h2 className="text-3xl font-bold text-white mb-8">Seus Favoritos</h2>
+                {favoriteBooks.length > 0 ? (
+                  <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4">
+                    {favoriteBooks.map((book) => (
+                      <div key={book.id} className="w-full h-80">
+                        <NetflixBookCard book={book} onOpen={handleOpenDetails} />
+                      </div>
+                    ))}
+                  </div>
+                ) : (
+                  <div className="flex flex-col items-center justify-center h-64 text-white">
+                    <div className="text-6xl mb-4">❤️</div>
+                    <h3 className="text-xl font-semibold mb-2">Nenhum favorito ainda</h3>
+                    <p className="text-gray-400">Marque livros como favoritos para vê-los aqui</p>
+                  </div>
+                )}
+              </div>
+            </div>
+          ) : currentView === 'highlights' ? (
+            <div className="pt-24 pb-20">
+              <div className="flex flex-col items-center justify-center h-64 text-white">
+                <div className="text-6xl mb-4">🎨</div>
+                <h3 className="text-xl font-semibold mb-2">Destaques</h3>
+                <p className="text-gray-400">Seus destaques aparecerão aqui</p>
+              </div>
+            </div>
+          ) : currentView === 'annotations' ? (
+            <div className="pt-24 pb-20">
+              <div className="flex flex-col items-center justify-center h-64 text-white">
+                <div className="text-6xl mb-4">📝</div>
+                <h3 className="text-xl font-semibold mb-2">Anotações</h3>
+                <p className="text-gray-400">Suas anotações aparecerão aqui</p>
+              </div>
+            </div>
+          ) : currentView === 'bookmarks' ? (
+            <div className="pt-24 pb-20">
+              <div className="flex flex-col items-center justify-center h-64 text-white">
+                <div className="text-6xl mb-4">🔖</div>
+                <h3 className="text-xl font-semibold mb-2">Marcadores</h3>
+                <p className="text-gray-400">Seus marcadores aparecerão aqui</p>
+              </div>
+            </div>
+          ) : currentView === 'settings' ? (
+            <div className="pt-24 pb-20">
+              <div className="max-w-4xl mx-auto px-12">
+                <h2 className="text-3xl font-bold text-white mb-8">Configurações</h2>
+                <div className="space-y-6">
+                  <div className="bg-gray-800 rounded-lg p-6">
+                    <h3 className="text-xl font-semibold text-white mb-4">Preferências de Leitura</h3>
+                    <div className="space-y-4">
+                      <div>
+                        <label className="block text-sm font-medium text-gray-300 mb-2">Tema Padrão</label>
+                        <select className="w-full px-4 py-2 bg-gray-700 text-white rounded-lg">
+                          <option>Claro</option>
+                          <option>Escuro</option>
+                          <option>Automático</option>
+                        </select>
+                      </div>
+                      <div>
+                        <label className="block text-sm font-medium text-gray-300 mb-2">Tamanho da Fonte</label>
+                        <input type="range" className="w-full" min="12" max="24" />
+                      </div>
+                    </div>
+                  </div>
+                  <div className="bg-gray-800 rounded-lg p-6">
+                    <h3 className="text-xl font-semibold text-white mb-4">Sincronização</h3>
+                    <div className="space-y-3">
+                      <label className="flex items-center text-gray-300">
+                        <input type="checkbox" className="mr-3" defaultChecked />
+                        <span>Sincronizar progresso de leitura</span>
+                      </label>
+                      <label className="flex items-center text-gray-300">
+                        <input type="checkbox" className="mr-3" defaultChecked />
+                        <span>Sincronizar anotações e destaques</span>
+                      </label>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          ) : currentView === 'about' ? (
+            <div className="pt-24 pb-20">
+              <div className="max-w-4xl mx-auto px-12 text-center">
+                <div className="text-6xl mb-6">📚</div>
+                <h2 className="text-3xl font-bold text-white mb-4">Biblioteca Netflix Style</h2>
+                <p className="text-gray-300 mb-8">Versão 1.0.0</p>
+                <div className="bg-gray-800 rounded-lg p-6 text-left">
+                  <p className="text-gray-300 mb-6">
+                    Uma experiência de leitura moderna e elegante, inspirada na interface da Netflix.
+                  </p>
+                  <h3 className="text-lg font-semibold text-white mb-4">Funcionalidades:</h3>
+                  <ul className="space-y-2 text-gray-300">
+                    <li>• Interface estilo Netflix</li>
+                    <li>• Suporte para PDF e EPUB</li>
+                    <li>• Anotações e destaques</li>
+                    <li>• Sincronização de progresso</li>
+                    <li>• Temas personalizáveis</li>
+                    <li>• Organização inteligente</li>
+                  </ul>
+                </div>
+              </div>
+            </div>
+          ) : (
+            <>
+              {/* Hero Section */}
+              <HeroSection onOpenBook={handleOpenBook} onOpenDetails={handleOpenDetails} />
+
+              {/* Book Rows */}
+              <div className="relative -mt-20 z-20 pb-20 bg-gray-900">
+                {/* Continue Lendo */}
+                {continueReadingBooks.length > 0 && (
+                  <div className="pt-16">
+                    <CarouselRow
+                      title="Continue lendo"
+                      books={continueReadingBooks}
+                      onOpenBook={handleOpenDetails}
+                    />
+                  </div>
+                )}
+
+                {/* Favoritos */}
+                {favoriteBooks.length > 0 && (
+                  <CarouselRow
+                    title="Seus favoritos"
+                    books={favoriteBooks}
+                    onOpenBook={handleOpenDetails}
+                  />
+                )}
+
+                {/* Novidades */}
+                <CarouselRow
+                  title="Acabaram de chegar"
+                  books={newBooks}
+                  onOpenBook={handleOpenDetails}
+                />
+
+                {/* Por Categoria */}
+                {booksByCategory.map(({ category, books: categoryBooks }) => (
+                  categoryBooks.length > 0 && (
+                    <CarouselRow
+                      key={category}
+                      title={category}
+                      books={categoryBooks}
+                      onOpenBook={handleOpenDetails}
+                    />
+                  )
+                ))}
+
+                {/* Mais Populares */}
+                <CarouselRow
+                  title="Mais populares"
+                  books={activeBooks.slice(0, 10)}
+                  onOpenBook={handleOpenDetails}
+                />
+              </div>
+            </>
+          )}
+        </div>
+
+        {/* Menu Lateral Direito */}
+        <div className={`fixed right-0 top-0 h-full w-80 bg-gray-900/95 backdrop-blur-md transform transition-transform duration-300 z-[60] ${
+          isMenuOpen ? 'translate-x-0' : 'translate-x-full'
         }`}>
-          <div className="p-4">
-            
+          <div className="p-6 h-full overflow-y-auto">
+            <div className="flex items-center justify-between mb-8">
+              <h2 className="text-2xl font-bold text-white">Biblioteca</h2>
+              <button
+                onClick={() => setIsMenuOpen(false)}
+                className="p-2 hover:bg-gray-800 rounded-lg transition-colors"
+              >
+                <svg className="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                </svg>
+              </button>
+            </div>
+
+            {/* Menu Items */}
             <nav className="space-y-2">
-              {updatedSidebarItems.map((item) => (
+              {menuItems.map((item) => (
                 <button
                   key={item.id}
-                  onClick={() => navigateTo({ type: item.id as RouteType })}
-                  className={`w-full flex items-center space-x-3 px-3 py-2 rounded-lg transition-colors ${
-                    currentRoute.type === item.id
-                      ? 'bg-blue-50 text-blue-600 shadow-sm'
-                      : 'text-gray-700 hover:bg-gray-50'
+                  onClick={() => {
+                    if (item.id === 'trash') {
+                      setShowTrash(true);
+                      setCurrentView('home');
+                    } else {
+                      setCurrentView(item.id as any);
+                      setShowTrash(false);
+                    }
+                  }}
+                  className={`w-full flex items-center justify-between px-4 py-3 rounded-lg transition-colors ${
+                    (currentView === item.id && !showTrash) || (item.id === 'trash' && showTrash)
+                      ? 'bg-blue-600 text-white'
+                      : 'text-gray-300 hover:bg-gray-800 hover:text-white'
                   }`}
                 >
-                  <span className="text-lg">{item.icon}</span>
-                  {!isSidebarCollapsed && (
-                    <>
-                      <span className="flex-1 text-left">{item.label}</span>
-                      {item.count > 0 && (
-                        <span className="bg-gray-200 text-gray-600 text-xs px-2 py-1 rounded-full">
-                          {item.count}
-                        </span>
-                      )}
-                    </>
+                  <div className="flex items-center gap-3">
+                    <span className="text-xl">{item.icon}</span>
+                    <span className="font-medium">{item.label}</span>
+                  </div>
+                  {item.count > 0 && (
+                    <span className="bg-gray-700 text-gray-300 text-xs px-2 py-1 rounded-full">
+                      {item.count}
+                    </span>
                   )}
                 </button>
               ))}
             </nav>
-          </div>
-        </div>
 
-        {/* Conteúdo principal */}
-        {renderMainContent()}
-
-        {/* Modal de importação */}
-        {showImportModal && (
-          <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-            <div className="bg-white rounded-lg p-6 w-96">
-              <h3 className="text-lg font-semibold mb-4">Importar Livros</h3>
-              <div className="border-2 border-dashed border-gray-300 rounded-lg p-8 text-center">
-                <div className="text-4xl mb-4">📁</div>
-                <p className="text-gray-600 mb-4">Arraste e solte seus arquivos aqui</p>
-                <p className="text-sm text-gray-500">ou</p>
-                <button className="mt-4 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700">
-                  Selecionar Arquivos
-                </button>
+            {/* Estatísticas */}
+            <div className="mt-8 p-4 bg-gray-800 rounded-lg">
+              <h3 className="text-white font-semibold mb-4">Estatísticas</h3>
+              <div className="space-y-3 text-sm">
+                <div className="flex justify-between text-gray-300">
+                  <span>Total de livros</span>
+                  <span className="font-medium">{activeBooks.length}</span>
+                </div>
+                <div className="flex justify-between text-gray-300">
+                  <span>Em leitura</span>
+                  <span className="font-medium">{continueReadingBooks.length}</span>
+                </div>
+                <div className="flex justify-between text-gray-300">
+                  <span>Concluídos</span>
+                  <span className="font-medium">{activeBooks.filter(b => b.progress === 100).length}</span>
+                </div>
+                <div className="flex justify-between text-gray-300">
+                  <span>Favoritos</span>
+                  <span className="font-medium">{favoriteBooks.length}</span>
+                </div>
               </div>
-              <div className="flex justify-end space-x-2 mt-6">
-                <button
-                  onClick={() => setShowImportModal(false)}
-                  className="px-4 py-2 text-gray-600 hover:text-gray-800"
-                >
-                  Cancelar
+            </div>
+
+            {/* Filtros Rápidos */}
+            <div className="mt-6">
+              <h3 className="text-white font-semibold mb-3">Filtros Rápidos</h3>
+              <div className="flex flex-wrap gap-2">
+                <button className="px-3 py-1 bg-gray-800 text-gray-300 rounded-full text-sm hover:bg-gray-700">
+                  PDF
                 </button>
-                <button className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700">
-                  Importar
+                <button className="px-3 py-1 bg-gray-800 text-gray-300 rounded-full text-sm hover:bg-gray-700">
+                  EPUB
+                </button>
+                <button className="px-3 py-1 bg-gray-800 text-gray-300 rounded-full text-sm hover:bg-gray-700">
+                  Recentes
+                </button>
+                <button className="px-3 py-1 bg-gray-800 text-gray-300 rounded-full text-sm hover:bg-gray-700">
+                  A-Z
                 </button>
               </div>
             </div>
+
+            {/* Ações Rápidas */}
+            <div className="mt-8 space-y-3">
+              <button className="w-full px-4 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors flex items-center justify-center gap-2">
+                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
+                </svg>
+                Importar Livro
+              </button>
+              <button className="w-full px-4 py-3 bg-gray-800 text-white rounded-lg hover:bg-gray-700 transition-colors flex items-center justify-center gap-2">
+                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
+                </svg>
+                Exportar Biblioteca
+              </button>
+            </div>
           </div>
+        </div>
+
+        {/* Overlay para fechar menu */}
+        {isMenuOpen && (
+          <div
+            className="fixed inset-0 bg-black/50 z-[59]"
+            onClick={() => setIsMenuOpen(false)}
+          />
         )}
+
+        {/* Book Details Modal */}
+        {isDetailsModalOpen && bookForDetails && (
+          <BookModal
+            book={{
+              ...bookForDetails,
+              thumbnail: bookForDetails.cover,
+              duration: bookForDetails.size,
+              publisher: bookForDetails.author,
+              synopsis: bookForDetails.synopsis || bookForDetails.title
+            }}
+            isOpen={isDetailsModalOpen}
+            onClose={handleCloseDetails}
+            onBookOpen={handleOpenBookFromModal}
+          />
+        )}
+
+        {/* CSS Global para forçar fullscreen completo */}
+        <style jsx global>{`
+          .scrollbar-hide::-webkit-scrollbar {
+            display: none;
+          }
+          .scrollbar-hide {
+            -ms-overflow-style: none;
+            scrollbar-width: none;
+          }
+          
+          /* Esconder todos elementos de navegação */
+          aside,
+          header,
+          [class*="sidebar"],
+          [class*="header"] {
+            display: none !important;
+          }
+          
+          /* Forçar fullscreen completo */
+          html,
+          body,
+          #__next,
+          #__next > div,
+          main,
+          [class*="dashboard"],
+          [class*="page"],
+          [class*="content"],
+          [class*="container"] {
+            margin: 0 !important;
+            padding: 0 !important;
+            width: 100vw !important;
+            height: 100vh !important;
+            max-width: none !important;
+            max-height: none !important;
+            position: fixed !important;
+            top: 0 !important;
+            left: 0 !important;
+            overflow: hidden !important;
+          }
+          
+          /* Garantir que nosso conteúdo esteja no topo */
+          main > div {
+            z-index: 50 !important;
+          }
+        `}</style>
       </div>
     </ProtectedRoute>
   );

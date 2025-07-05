@@ -263,7 +263,124 @@ model books {
   updated_at  DateTime
   units       units    @relation(fields: [unit_id], references: [id])
 
+  // New relations
+  book_progress    book_progress[]
+  book_highlights  book_highlights[]
+  book_bookmarks   book_bookmarks[]
+  book_annotations book_annotations[]
+  book_favorites   book_favorites[]
+
   @@index([unit_id])
+}
+
+// Tabela para armazenar o progresso de leitura de cada usuário
+model book_progress {
+  id                String    @id @default(dbgenerated("public.gen_random_uuid()")) @db.Uuid
+  book_id           Int
+  user_id           BigInt
+  current_page      Int       @default(0)
+  total_pages       Int
+  progress_percent  Float     @default(0)
+  last_position     String?   // Armazena a posição exata (pode incluir parágrafo, linha, etc)
+  reading_time      Int       @default(0) // Tempo total de leitura em segundos
+  last_read_at      DateTime  @default(now())
+  completed_at      DateTime?
+  started_at        DateTime  @default(now())
+  created_at        DateTime  @default(now())
+  updated_at        DateTime  @default(now())
+  
+  // Relations
+  book              books     @relation(fields: [book_id], references: [id], onDelete: Cascade)
+  user              users     @relation(fields: [user_id], references: [id], onDelete: Cascade)
+
+  @@unique([book_id, user_id])
+  @@index([user_id])
+  @@index([book_id])
+  @@index([last_read_at])
+}
+
+// Tabela para armazenar destaques/highlights
+model book_highlights {
+  id                String    @id @default(dbgenerated("public.gen_random_uuid()")) @db.Uuid
+  book_id           Int
+  user_id           BigInt
+  page_number       Int
+  start_position    String    // Posição inicial do destaque
+  end_position      String    // Posição final do destaque
+  highlighted_text  String
+  color             String    @default("#FFFF00") // Cor do destaque
+  note              String?   // Nota opcional associada ao destaque
+  created_at        DateTime  @default(now())
+  updated_at        DateTime  @default(now())
+  
+  // Relations
+  book              books     @relation(fields: [book_id], references: [id], onDelete: Cascade)
+  user              users     @relation(fields: [user_id], references: [id], onDelete: Cascade)
+
+  @@index([user_id])
+  @@index([book_id])
+  @@index([page_number])
+}
+
+// Tabela para armazenar marcadores/bookmarks
+model book_bookmarks {
+  id                String    @id @default(dbgenerated("public.gen_random_uuid()")) @db.Uuid
+  book_id           Int
+  user_id           BigInt
+  page_number       Int
+  position          String    // Posição específica na página
+  title             String?   // Título opcional do marcador
+  note              String?   // Nota opcional
+  created_at        DateTime  @default(now())
+  updated_at        DateTime  @default(now())
+  
+  // Relations
+  book              books     @relation(fields: [book_id], references: [id], onDelete: Cascade)
+  user              users     @relation(fields: [user_id], references: [id], onDelete: Cascade)
+
+  @@index([user_id])
+  @@index([book_id])
+  @@index([page_number])
+}
+
+// Tabela para armazenar anotações
+model book_annotations {
+  id                String    @id @default(dbgenerated("public.gen_random_uuid()")) @db.Uuid
+  book_id           Int
+  user_id           BigInt
+  page_number       Int
+  position          String?   // Posição específica na página
+  referenced_text   String?   // Texto ao qual a anotação se refere
+  annotation        String    // Conteúdo da anotação
+  type              String    @default("note") // note, question, comment, etc
+  is_private        Boolean   @default(true)
+  created_at        DateTime  @default(now())
+  updated_at        DateTime  @default(now())
+  
+  // Relations
+  book              books     @relation(fields: [book_id], references: [id], onDelete: Cascade)
+  user              users     @relation(fields: [user_id], references: [id], onDelete: Cascade)
+
+  @@index([user_id])
+  @@index([book_id])
+  @@index([page_number])
+  @@index([type])
+}
+
+// Tabela para armazenar favoritos
+model book_favorites {
+  id                String    @id @default(dbgenerated("public.gen_random_uuid()")) @db.Uuid
+  book_id           Int
+  user_id           BigInt
+  created_at        DateTime  @default(now())
+  
+  // Relations
+  book              books     @relation(fields: [book_id], references: [id], onDelete: Cascade)
+  user              users     @relation(fields: [user_id], references: [id], onDelete: Cascade)
+
+  @@unique([book_id, user_id])
+  @@index([user_id])
+  @@index([book_id])
 }
 
 model certificate {
@@ -522,10 +639,10 @@ model enrollments {
   status       String    @default("ACTIVE")
   enrolled_at  DateTime  @default(now())
   completed_at DateTime?
-  grade        Decimal?  @db.Decimal(5, 2)
-  progress     Int       @default(0)
-  classes      classes?  @relation(fields: [class_id], references: [id])
-  courses      courses   @relation(fields: [course_id], references: [id])
+  grade        Decimal?    @db.Decimal(5, 2)
+  progress     Int         @default(0)
+  classes      classes?    @relation(fields: [class_id], references: [id])
+  courses      courses       @relation(fields: [course_id], references: [id])
 
   @@unique([student_id, course_id])
   @@index([class_id])
@@ -1547,6 +1664,11 @@ model users {
 
   // Relations
   certificates            certificate[]
+  book_progress           book_progress[]
+  book_highlights         book_highlights[]
+  book_bookmarks          book_bookmarks[]
+  book_annotations        book_annotations[]
+  book_favorites          book_favorites[]
 
   @@index([email], map: "idx_users_email")
 }
