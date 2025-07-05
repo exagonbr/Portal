@@ -366,6 +366,19 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
         loginDiagnostics.success('API-RESPONSE', 'API de login respondeu com sucesso');
         const { accessToken, refreshToken, user: userData } = response.data.data;
         
+        console.log('🔍 [AuthContext] Dados recebidos da API:', {
+          hasAccessToken: !!accessToken,
+          hasRefreshToken: !!refreshToken,
+          hasUser: !!userData,
+          tokenPreview: accessToken ? accessToken.substring(0, 50) + '...' : 'N/A'
+        });
+        
+        // Verificar se o token existe antes de prosseguir
+        if (!accessToken) {
+          loginDiagnostics.error('TOKEN-MISSING', 'Token não foi retornado pela API');
+          throw new Error('Token não foi retornado pelo servidor');
+        }
+        
         // Configurar o header de autorização
         apiClient.defaults.headers.common['Authorization'] = `Bearer ${accessToken}`;
         loginDiagnostics.info('TOKEN-HEADER', 'Header de autorização configurado');
@@ -500,7 +513,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     setIsLoading(true);
     try {
       
-      const { data } = await apiClient.post('/auth/google-login', { token });
+      const { data } = await apiClient.post('https://portal.sabercon.com.br/api/auth/google-login', { token });
       const { accessToken } = data.data;
       
       setStoredToken(accessToken);

@@ -5,6 +5,7 @@ import { useAuth } from '@/contexts/AuthContext';
 import { useRouter } from 'next/navigation';
 import { getDashboardPath } from '@/utils/roleRedirect';
 import { loginDiagnostics, LoginDiagnostics } from '@/utils/login-diagnostics';
+import { testTokenResponse } from '@/utils/test-token-response';
 
 export function LoginDebugger() {
   const { user, isAuthenticated, isLoading } = useAuth();
@@ -94,9 +95,15 @@ export function LoginDebugger() {
         </button>
         <button
           onClick={() => loginDiagnostics.clearLogs()}
-          className="bg-red-500 text-white px-4 py-2 rounded text-sm"
+          className="bg-red-500 text-white px-4 py-2 rounded mr-2 text-sm"
         >
           Clear Logs
+        </button>
+        <button
+          onClick={() => testTokenResponse()}
+          className="bg-purple-500 text-white px-4 py-2 rounded text-sm"
+        >
+          Test Token
         </button>
       </div>
 
