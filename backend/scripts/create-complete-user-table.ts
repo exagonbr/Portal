@@ -14,7 +14,7 @@ const knexConfig = {
       host: process.env.DB_HOST || 'localhost',
       port: parseInt(process.env.DB_PORT || '5432'),
       user: process.env.DB_USER || 'postgres',
-      password: process.env.DB_PASSWORD || '',
+      password: process.env.DB_PASSWORD || 'root',
       database: process.env.DB_NAME || 'portal_sabercon'
     },
     migrations: {
@@ -50,10 +50,10 @@ async function dropUsersTableIfExists(db: Knex): Promise<void> {
   console.log('🗑️  REMOVENDO TABELA USERS EXISTENTE\n');
 
   try {
-    const exists = await tableExists(db, 'users');
+    const exists = await tableExists(db, 'user');
     if (exists) {
       console.log('   ⚠️  Tabela users existe, fazendo DROP...');
-      await db.schema.dropTable('users');
+      await db.schema.dropTable('user');
       console.log('   ✅ Tabela users removida com sucesso!');
     } else {
       console.log('   ℹ️  Tabela users não existe, continuando...');
@@ -221,7 +221,7 @@ async function createDefaultUsers(db: Knex): Promise<void> {
   for (const userData of defaultUsers) {
     try {
       // Verificar se o usuário já existe
-      const existingUser = await db('users').where('email', userData.email).first();
+      const existingUser = await db('user').where('email', userData.email).first();
       
       if (existingUser) {
         console.log(`   ℹ️  Usuário ${userData.email} já existe, pulando...`);
@@ -233,7 +233,7 @@ async function createDefaultUsers(db: Knex): Promise<void> {
       const hashedPassword = await bcrypt.hash(userData.password, 12);
 
       // Criar usuário
-      await db('users').insert({
+      await db('user').insert({
         ...userData,
         password: hashedPassword,
         date_created: new Date(),
@@ -274,9 +274,9 @@ async function createCompleteUserStructure(): Promise<void> {
     
     // Verificar se as tabelas necessárias existem
     const tablesExist = await Promise.all([
-      tableExists(db, 'institutions'),
+      tableExists(db, 'institution'),
       tableExists(db, 'roles'),
-      tableExists(db, 'users')
+      tableExists(db, 'user')
     ]);
     
     if (!tablesExist[0] || !tablesExist[1]) {
