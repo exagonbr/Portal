@@ -22,15 +22,6 @@ export async function up(knex: Knex): Promise<void> {
     table.timestamps(true, true);
   });
 
-  await knex.schema.createTable('permissions', (table) => {
-    table.uuid('id').primary().defaultTo(knex.raw('gen_random_uuid()'));
-    table.string('name').notNullable().unique();
-    table.string('resource').notNullable();
-    table.string('action').notNullable();
-    table.text('description');
-    table.timestamps(true, true);
-  });
-
   await knex.schema.createTable('role_permissions', (table) => {
     table.uuid('role_id').references('id').inTable('roles').onDelete('CASCADE');
     table.uuid('permission_id').references('id').inTable('permissions').onDelete('CASCADE');
@@ -522,7 +513,7 @@ export async function down(knex: Knex): Promise<void> {
     'notifications', 'forum_replies', 'forum_threads', 'user_classes',
     'questions', 'quizzes', 'content', 'modules', 'courses', 'books', 'files',
     'classes', 'education_cycles', 'schools', 'users', 'role_permissions',
-    'permissions', 'instittution'
+    'instittution'
   ];
 
   for (const table of tables) {
