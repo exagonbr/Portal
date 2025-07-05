@@ -1,4 +1,4 @@
-import { Institution } from '@/entities';
+import { Institution } from '../entities';
 import { BaseRepository } from './BaseRepository';
 
 // Interface para desacoplar

@@ -5,6 +5,7 @@ import { setupMiddlewares } from './config/middlewares';
 import { setupRoutes } from './config/routes';
 import { setupErrorHandling } from './config/errorHandling';
 import { db } from './database/connection';
+import { AppDataSource } from './config/typeorm.config';
 
 // Carrega variáveis de ambiente
 dotenv.config();
@@ -36,8 +37,15 @@ async function startServer(): Promise<void> {
   try {
     logger.info('🚀 Iniciando Portal Sabercon Backend...');
     
-    // Testar conexão com banco
-    logger.info('📊 Testando conexão com banco de dados...');
+    // Inicializar TypeORM
+    logger.info('🔧 Inicializando TypeORM...');
+    if (!AppDataSource.isInitialized) {
+      await AppDataSource.initialize();
+      logger.info('✅ TypeORM inicializado com sucesso');
+    }
+    
+    // Testar conexão com banco (Knex)
+    logger.info('📊 Testando conexão com banco de dados (Knex)...');
     await db.raw('SELECT 1');
     logger.info('✅ Conexão com banco de dados OK');
     
@@ -68,10 +76,17 @@ function setupGracefulShutdown(): void {
     logger.info(`🛑 ${signal} recebido, encerrando servidor...`);
     
     try {
+      // Finalizar TypeORM
+      if (AppDataSource.isInitialized) {
+        await AppDataSource.destroy();
+        logger.info('✅ TypeORM finalizado com sucesso');
+      }
+      
+      // Finalizar Knex
       await db.destroy();
       logger.info('✅ Knex finalizado com sucesso');
     } catch (error) {
-      logger.error('❌ Erro ao finalizar Knex:', error);
+      logger.error('❌ Erro ao finalizar conexões:', error);
     }
     
     process.exit(0);

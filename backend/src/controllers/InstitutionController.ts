@@ -1,7 +1,7 @@
 import { Request, Response } from 'express';
 import { BaseController } from './BaseController';
 import { InstitutionRepository } from '../repositories/InstitutionRepository';
-import { Institution } from '@/entities';
+import { Institution } from '../entities';
 
 const institutionRepository = new InstitutionRepository();
 
