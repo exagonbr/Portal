@@ -4,7 +4,7 @@ import { LoginForm } from './LoginForm';
 import { DemoCredentials } from './DemoCredentials';
 import Image from 'next/image';
 import { useSearchParams, useRouter } from 'next/navigation';
-import { ThemeSelectorCompact } from '@/components/ui/ThemeSelector';
+
 import { useAuthSafe as useAuth } from '@/contexts/AuthContext';
 import { usePublicSettings } from '@/hooks/usePublicSettings';
 import { clearAllDataForUnauthorized } from '@/utils/clearAllData';
@@ -353,10 +353,7 @@ export function LoginPage() {
         )}
       </div>
 
-      {/* Theme Selector */}
-      <div className="absolute top-4 right-4 z-20">
-        <ThemeSelectorCompact />
-      </div>
+
 
       {/* Demo Credentials - Flutuante na lateral esquerda */}
       <DemoCredentials onCredentialSelect={handleCredentialSelect} />

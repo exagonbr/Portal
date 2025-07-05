@@ -28,10 +28,10 @@ export function DemoCredentials({ onCredentialSelect }: DemoCredentialsProps) {
       transition={{ delay: 0.3 }}
       className="hidden lg:block fixed left-4 top-4 z-50 w-64 p-3 rounded-xl border backdrop-blur-sm hover:opacity-100 transition-all duration-300 shadow-lg"
       style={{
-        backgroundColor: 'rgba(255, 255, 255, 0.75)',
-        borderColor: `${theme.colors.primary.DEFAULT}30`,
-        opacity: 0.85,
-        boxShadow: '0 6px 20px rgba(0, 0, 0, 0.1)'
+        backgroundColor: 'rgba(255, 255, 255, 0.5)',
+        borderColor: `${theme.colors.primary.DEFAULT}20`,
+        opacity: 0.75,
+        boxShadow: '0 3px 12px rgba(0, 0, 0, 0.06)'
       }}
     >
       <h3 className="text-sm font-semibold mb-4 text-center px-2 py-1 rounded-lg" style={{ 
