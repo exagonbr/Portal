@@ -2,22 +2,19 @@
 const nextConfig = {
   // Configurações básicas
   reactStrictMode: true,
-  swcMinify: true,
   
-  // Configurações experimentais para resolver problemas de módulos
-  experimental: {
-    serverComponentsExternalPackages: [
-      'oracledb',
-      'mysql',
-      'mysql2', 
-      'sqlite3',
-      'better-sqlite3',
-      'tedious',
-      'pg-native',
-      'sharp',
-      'knex'
-    ],
-  },
+  // Configuração para resolver problemas de módulos (Nova sintaxe do Next.js 15)
+  serverExternalPackages: [
+    'oracledb',
+    'mysql',
+    'mysql2', 
+    'sqlite3',
+    'better-sqlite3',
+    'tedious',
+    'pg-native',
+    'sharp',
+    'knex'
+  ],
 
   // Configuração do Webpack para resolver o problema do oracledb
   webpack: (config, { isServer }) => {
