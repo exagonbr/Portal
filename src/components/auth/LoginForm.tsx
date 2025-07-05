@@ -275,22 +275,34 @@ export function LoginForm() {
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.5 }}
-          className="mt-4 p-4 rounded-lg border"
+          className="mt-4 p-2 sm:p-3 rounded-lg border"
           style={{
             backgroundColor: `${theme.colors.primary.DEFAULT}10`,
             borderColor: `${theme.colors.primary.DEFAULT}30`
           }}
         >
-          <h3 className="text-sm font-medium mb-2" style={{ color: theme.colors.text.primary }}>
+          <h3 className="text-xs font-medium mb-2" style={{ color: theme.colors.text.primary }}>
             Credenciais de Demonstração:
           </h3>
-          <div className="space-y-1 text-xs" style={{ color: theme.colors.text.secondary }}>
-            <p><strong>Admin:</strong> admin@sabercon.edu.br / password</p>
-            <p><strong>Gestor:</strong> gestor@sabercon.edu.br / password</p>
-            <p><strong>Coordenador Pedagógico:</strong> coordenador@sabercon.edu.br / password</p>
-            <p><strong>Professor:</strong> professor@sabercon.edu.br / password</p>
-            <p><strong>Aluna:</strong> julia.c@ifsp.com / password</p>
-            <p><strong>Responsável:</strong> renato@gmail.com / password</p>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-1 text-xs leading-relaxed" style={{ color: theme.colors.text.secondary }}>
+            <p className="truncate hover:text-clip hover:overflow-visible hover:whitespace-normal" title="admin@sabercon.edu.br / password">
+              <strong>Admin:</strong> admin@sabercon.edu.br / password
+            </p>
+            <p className="truncate hover:text-clip hover:overflow-visible hover:whitespace-normal" title="gestor@sabercon.edu.br / password">
+              <strong>Gestor:</strong> gestor@sabercon.edu.br / password
+            </p>
+            <p className="truncate hover:text-clip hover:overflow-visible hover:whitespace-normal" title="coordenador@sabercon.edu.br / password">
+              <strong>Coordenador:</strong> coordenador@sabercon.edu.br / password
+            </p>
+            <p className="truncate hover:text-clip hover:overflow-visible hover:whitespace-normal" title="professor@sabercon.edu.br / password">
+              <strong>Professor:</strong> professor@sabercon.edu.br / password
+            </p>
+            <p className="truncate hover:text-clip hover:overflow-visible hover:whitespace-normal" title="julia.c@ifsp.com / password">
+              <strong>Aluna:</strong> julia.c@ifsp.com / password
+            </p>
+            <p className="truncate hover:text-clip hover:overflow-visible hover:whitespace-normal" title="renato@gmail.com / password">
+              <strong>Responsável:</strong> renato@gmail.com / password
+            </p>
           </div>
         </MotionDiv>
       </form>

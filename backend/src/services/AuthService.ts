@@ -147,6 +147,49 @@ class AuthService {
     });
   }
 
+  /**
+   * Gera tokens para um usuário específico (usado para Google OAuth)
+   */
+  public async generateTokensForUser(user: User) {
+    try {
+      if (!user.hasValidRole()) {
+        const determinedRole = user.determineRoleFromFlags();
+        user.role = await this.assignRoleToUser(user, determinedRole);
+      }
+      
+      const userRole = user.role;
+      if (!userRole) {
+        return { success: false, message: 'Usuário não possui uma role associada.' };
+      }
+
+      // Buscar permissões da role
+      const permissions = await this.getRolePermissions(userRole.id);
+
+      const sessionId = `session_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
+      const accessToken = this.generateAccessToken(user, userRole, sessionId, permissions);
+      const refreshToken = this.generateRefreshToken(user.id.toString(), sessionId);
+
+      return {
+        success: true,
+        data: {
+          accessToken,
+          refreshToken,
+          user: {
+            id: user.id,
+            email: user.email,
+            name: user.fullName,
+            role: userRole.name,
+            permissions: permissions,
+            institutionId: user.institutionId,
+          },
+        },
+      };
+    } catch (error) {
+      console.error('Erro ao gerar tokens para usuário:', error);
+      return { success: false, message: 'Erro ao gerar tokens de autenticação.' };
+    }
+  }
+
   private async assignRoleToUser(user: User, roleName: UserRole): Promise<Role> {
     // Mapear o enum UserRole para o nome da role na tabela
     const roleNameMap: Record<UserRole, string> = {

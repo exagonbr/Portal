@@ -3,6 +3,7 @@ import authService from '../services/AuthService';
 import { AuthenticatedUser } from '../types/auth.types';
 import { AppDataSource } from '../config/typeorm.config';
 import { User } from '../entities/User';
+import { Role } from '../entities/Role';
 import jwt from 'jsonwebtoken';
 import { JWT_CONFIG } from '../config/jwt';
 
@@ -87,6 +88,95 @@ class AuthController {
     return res.json({ success: true, message: 'Token válido.' });
   }
 
+  /**
+   * 🔐 POST /google-signin
+   * Autentica ou cria usuário com dados do Google OAuth
+   */
+  public async googleSignin(req: Request, res: Response): Promise<Response> {
+    try {
+      const { email, name, googleId, image } = req.body;
+
+      if (!email || !name || !googleId) {
+        return res.status(400).json({ 
+          success: false, 
+          message: 'Dados do Google OAuth são obrigatórios.' 
+        });
+      }
+
+      const userRepository = AppDataSource.getRepository(User);
+      const roleRepository = AppDataSource.getRepository(Role);
+      
+      // Buscar usuário existente por email
+      let user = await userRepository.findOne({
+        where: { email },
+        relations: ['role']
+      });
+
+      if (!user) {
+        // Criar novo usuário se não existir
+        user = new User();
+        user.email = email;
+        user.fullName = name;
+        user.googleId = googleId;
+        user.profileImage = image;
+        user.enabled = true;
+        user.emailVerified = true; // Google OAuth já verifica email
+        
+        // Definir role padrão como STUDENT
+        const defaultRole = await roleRepository.findOne({
+          where: { name: 'STUDENT' }
+        });
+        
+        if (defaultRole) {
+          user.role = defaultRole;
+        }
+
+        await userRepository.save(user);
+      } else {
+        // Atualizar dados do Google se usuário já existe
+        user.googleId = googleId;
+        if (image) {
+          user.profileImage = image;
+        }
+        await userRepository.save(user);
+      }
+
+      // Gerar tokens
+      const result = await authService.generateTokensForUser(user);
+      
+      if (!result.success || !result.data) {
+        return res.status(500).json({ 
+          success: false, 
+          message: 'Erro ao gerar tokens de autenticação.' 
+        });
+      }
+
+      // Enviar refresh token em cookie
+      authService.sendRefreshToken(res, result.data.refreshToken);
+
+      return res.json({
+        success: true,
+        data: {
+          accessToken: result.data.accessToken,
+          user: {
+            id: user.id,
+            email: user.email,
+            name: user.fullName,
+            role: user.role?.name || 'STUDENT',
+            image: user.profileImage
+          }
+        }
+      });
+
+    } catch (error) {
+      console.error('Erro no Google signin:', error);
+      return res.status(500).json({ 
+        success: false, 
+        message: 'Erro interno do servidor.' 
+      });
+    }
+  }
+
   public async googleCallback(req: Request, res: Response): Promise<void> {
     try {
       // O req.user pode ser AuthenticatedUser (do Passport) ou User (do requireAuth)
@@ -125,7 +215,7 @@ class AuthController {
       console.log('❌ Erro durante autenticação Google:', error);
       
       // Redirecionar para página de erro em caso de falha
-      const frontendUrl = process.env.FRONTEND_URL || 'https://portal.sabercon.com.br';
+      const frontendUrl = 'https://portal.sabercon.com.br';
       res.redirect(`${frontendUrl}/auth/login?error=google_auth_failed`);
     }
   }

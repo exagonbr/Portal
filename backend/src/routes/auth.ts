@@ -7,10 +7,12 @@ const router = Router();
 // Rotas de Autenticação PÚBLICAS
 router.post('/login', AuthController.login);
 router.post('/refresh_token', AuthController.refreshToken);
+router.post('/google-signin', AuthController.googleSignin);
 
 // Rotas otimizadas PÚBLICAS (aliases para compatibilidade com frontend)
 router.post('/optimized/login', AuthController.login);
 router.post('/optimized/refresh_token', AuthController.refreshToken);
+router.post('/optimized/google-signin', AuthController.googleSignin);
 
 // Rotas PROTEGIDAS
 router.post('/logout', requireAuth, AuthController.logout);

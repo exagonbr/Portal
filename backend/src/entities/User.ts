@@ -23,9 +23,13 @@ import { Notification } from './Notification';
 
 @Entity('user')
 export class User {
+  [x: string]: any;
   
   @Column({ name: 'google_id', type: 'varchar', length: 255, nullable: true, unique: true })
   googleId?: string;
+
+  @Column({ name: 'profile_image', type: 'varchar', length: 500, nullable: true })
+  profileImage?: string;
 
   @PrimaryGeneratedColumn('increment')
   id!: number;
@@ -54,11 +58,15 @@ export class User {
   @Column({ type: 'varchar', length: 255 })
   email!: string;
 
+  @Column({ name: 'email_verified', type: 'boolean', default: false })
+  emailVerified?: boolean;
+
   @Column({ type: 'boolean', nullable: true })
   enabled?: boolean;
 
   @Column({ name: 'full_name', type: 'varchar', length: 255 })
   fullName!: string;
+  user: any;
 
   // Alias para compatibilidade
   get name(): string {

@@ -5,6 +5,14 @@ import GoogleProvider from 'next-auth/providers/google';
 import CredentialsProvider from 'next-auth/providers/credentials';
 import { getInternalApiUrl } from '@/config/urls';
 
+// Estender os tipos do NextAuth para incluir role e permissions
+declare module 'next-auth' {
+  interface User {
+    role?: string;
+    permissions?: string[];
+  }
+}
+
 export const authOptions: NextAuthOptions = {
   providers: [
     GoogleProvider({
@@ -60,9 +68,61 @@ export const authOptions: NextAuthOptions = {
     }),
   ],
   callbacks: {
+    async signIn({ user, account, profile }) {
+      // Para login com Google, verificar/criar usuário no backend
+      if (account?.provider === 'google') {
+        try {
+          const response = await fetch(getInternalApiUrl('/auth/google-signin'), {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({
+              email: user.email,
+              name: user.name,
+              googleId: user.id,
+              image: user.image,
+            }),
+          });
+
+          if (response.ok) {
+            const data = await response.json();
+            if (data.success && data.data && data.data.user) {
+              // Adicionar informações do backend ao usuário
+              user.role = data.data.user.role?.toUpperCase() || 'STUDENT';
+              user.permissions = data.data.user.permissions || [];
+              user.id = data.data.user.id;
+              return true;
+            }
+          }
+          
+          // Se não conseguir criar/buscar no backend, ainda permitir login
+          // mas com role padrão
+          user.role = 'STUDENT';
+          user.permissions = [
+            'students.communicate',
+            'schedule.view.own',
+            'grades.view.own',
+            'materials.access',
+            'assignments.submit',
+            'progress.track.own',
+            'teachers.message',
+            'announcements.receive'
+          ];
+          return true;
+        } catch (error) {
+          console.error('Erro ao processar login do Google:', error);
+          // Ainda permitir login mesmo com erro
+          user.role = 'STUDENT';
+          user.permissions = [];
+          return true;
+        }
+      }
+      return true;
+    },
     async jwt({ token, user }: { token: JWT; user: any }) {
       if (user) {
-        token.role = user.role.toUpperCase() || 'STUDENT';
+        token.role = user.role?.toUpperCase() || 'STUDENT';
         token.permissions = user.permissions || [
           'students.communicate',
           'schedule.view.own',
