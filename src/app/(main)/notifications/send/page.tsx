@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useState } from 'react';
-import { useSession } from 'next-auth/react';
+import { useAuth } from '@/contexts/AuthContext';
 import Card, { CardHeader, CardBody as CardContent } from '@/components/ui/Card';
 import { Button } from '@/components/ui/Button';
 import Input from '@/components/ui/Input';
@@ -68,7 +68,7 @@ interface Template {
 
 export default function SendNotificationPage() {
   const { showSuccess, showError } = useToast();
-  const { data: session } = useSession();
+  const { user } = useAuth();
   
   const [activeTab, setActiveTab] = useState<'templates' | 'content' | 'recipients' | 'preview'>('templates');
   const [selectedTemplate, setSelectedTemplate] = useState<Template | null>(null);
@@ -338,7 +338,7 @@ export default function SendNotificationPage() {
 
     setIsLoading(true);
     try {
-      if (!session?.user?.id) {
+      if (!user?.id) {
         showError('Sessão inválida. Por favor, faça login novamente.');
         setIsLoading(false);
         return;
@@ -356,7 +356,7 @@ export default function SendNotificationPage() {
         category: formData.category,
         priority: formData.priority,
         recipients: recipientData,
-        sent_by_id: session.user.id,
+        sent_by_id: user.id.toString(),
       });
 
       showSuccess(`Notificação ${formData.isScheduled ? 'agendada' : 'enviada'} com sucesso para ${recipients.length} destinatário(s)!`);
