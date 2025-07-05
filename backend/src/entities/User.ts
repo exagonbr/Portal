@@ -77,32 +77,32 @@ export class User {
     this.fullName = value;
   }
 
-  @Column({ name: 'invitation_sent', type: 'boolean', nullable: true })
-  invitationSent?: boolean;
+  // @Column({ name: 'invitation_sent', type: 'boolean', nullable: true })
+  // invitationSent?: boolean;
 
   @Column({ name: 'is_admin', type: 'boolean' })
   isAdmin!: boolean;
 
-  @Column({ type: 'varchar', length: 255, nullable: true })
-  language?: string;
+  // @Column({ type: 'varchar', length: 255, nullable: true })
+  // language?: string;
 
-  @Column({ name: 'last_updated', type: 'timestamp', nullable: true })
-  lastUpdated?: Date;
+  // @Column({ name: 'last_updated', type: 'timestamp', nullable: true })
+  // lastUpdated?: Date;
 
   @Column({ type: 'varchar', length: 255, nullable: true })
   password?: string;
 
-  @Column({ name: 'password_expired', type: 'boolean', nullable: true })
-  passwordExpired?: boolean;
+  // @Column({ name: 'password_expired', type: 'boolean', nullable: true })
+  // passwordExpired?: boolean;
 
-  @Column({ name: 'pause_video_on_click', type: 'boolean', nullable: true })
-  pauseVideoOnClick?: boolean;
+  // @Column({ name: 'pause_video_on_click', type: 'boolean', nullable: true })
+  // pauseVideoOnClick?: boolean;
 
   @Column({ type: 'varchar', length: 255, nullable: true })
   phone?: string;
 
-  @Column({ name: 'reset_password', type: 'boolean', default: true })
-  resetPassword!: boolean;
+  // @Column({ name: 'reset_password', type: 'boolean', default: true })
+  // resetPassword!: boolean;
 
   @Column({ type: 'varchar', length: 255, nullable: true, unique: true })
   username?: string;
@@ -113,14 +113,14 @@ export class User {
   @Column({ name: 'is_manager', type: 'boolean' })
   isManager!: boolean;
 
-  @Column({ type: 'int', nullable: true })
-  type?: number;
+  // @Column({ type: 'int', nullable: true })
+  // type?: number;
 
-  @Column({ name: 'certificate_path', type: 'varchar', length: 255, nullable: true })
-  certificatePath?: string;
+  // @Column({ name: 'certificate_path', type: 'varchar', length: 255, nullable: true })
+  // certificatePath?: string;
 
-  @Column({ name: 'is_certified', type: 'boolean', default: false })
-  isCertified!: boolean;
+  // @Column({ name: 'is_certified', type: 'boolean', default: false })
+  // isCertified!: boolean;
 
   @Column({ name: 'is_student', type: 'boolean' })
   isStudent!: boolean;
@@ -144,11 +144,11 @@ export class User {
   @JoinColumn({ name: 'institution_id' })
   institution?: Institution;
 
-  @Column({ type: 'varchar', length: 255, nullable: true })
-  subject?: string;
+  // @Column({ type: 'varchar', length: 255, nullable: true })
+  // subject?: string;
 
-  @Column({ name: 'subject_data_id', type: 'bigint', nullable: true })
-  subjectDataId?: number;
+  // @Column({ name: 'subject_data_id', type: 'bigint', nullable: true })
+  // subjectDataId?: number;
 
   @ManyToOne(() => TeacherSubject, { nullable: true })
   @JoinColumn({ name: 'subject_data_id' })
