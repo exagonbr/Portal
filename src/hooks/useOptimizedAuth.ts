@@ -2,6 +2,9 @@ import { useState, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
 import { buildLoginUrl, buildUrl } from '../utils/urlBuilder';
 import { getApiUrl } from '@/config/urls';
+import { UnifiedAuthService, AuthData } from '@/services/unifiedAuthService';
+import { getDashboardPath } from '@/utils/roleRedirect';
+import { toast } from 'react-hot-toast';
 
 interface LoginData {
   email: string;
@@ -11,13 +14,13 @@ interface LoginData {
 interface LoginResponse {
   success: boolean;
   data?: {
-    token: string;
+    accessToken: string;
     refreshToken: string;
     user: {
       id: string;
       email: string;
       name: string;
-      role_slug: string;
+      role: string;
       permissions: string[];
       institution_name?: string;
     };
@@ -60,13 +63,36 @@ export function useOptimizedAuth() {
       if (result.success && result.data) {
         console.log('✅ Login otimizado realizado com sucesso');
         
-        // Armazenar tokens de forma segura
-        localStorage.setItem('accessToken', result.data.token);
-        localStorage.setItem('refreshToken', result.data.refreshToken);
-        localStorage.setItem('user', JSON.stringify(result.data.user));
+        // Preparar dados para o serviço unificado
+        const authData: AuthData = {
+          accessToken: result.data.accessToken,
+          refreshToken: result.data.refreshToken,
+          user: result.data.user,
+          expiresIn: result.data.expiresIn
+        };
+
+        // Salvar em todos os locais (localStorage, cookies, Redis)
+        const saveResult = await UnifiedAuthService.saveAuthData(authData);
         
-        // Redirecionar para dashboard
-        router.push(buildUrl('/dashboard'));
+        if (saveResult.success) {
+          console.log('✅ Dados salvos em todos os locais');
+          
+          // Obter caminho do dashboard baseado na role
+          const dashboardPath = getDashboardPath(result.data.user.role);
+          
+          if (dashboardPath) {
+            console.log('🎯 Redirecionando para dashboard:', dashboardPath);
+            toast.success('Login realizado com sucesso!');
+            router.push(dashboardPath);
+          } else {
+            console.warn('⚠️ Dashboard não encontrado para role:', result.data.user.role);
+            toast.success('Login realizado com sucesso!');
+            router.push('/dashboard'); // Fallback
+          }
+        } else {
+          console.warn('⚠️ Erro ao salvar dados:', saveResult.message);
+          toast.error('Login realizado, mas houve problemas ao salvar os dados');
+        }
       }
 
       return result;
@@ -91,7 +117,8 @@ export function useOptimizedAuth() {
     try {
       console.log('🔓 Iniciando logout otimizado...');
       
-      const token = localStorage.getItem('accessToken');
+      const token = UnifiedAuthService.getAccessToken();
+      const sessionId = UnifiedAuthService.getSessionId();
       
       const response = await fetch(`${getApiUrl()}/auth/logout`, {
         method: 'POST',
@@ -103,12 +130,11 @@ export function useOptimizedAuth() {
 
       const result: LogoutResponse = await response.json();
 
-      // Sempre limpar dados locais, mesmo se a requisição falhar
-      localStorage.removeItem('accessToken');
-      localStorage.removeItem('refreshToken');
-      localStorage.removeItem('user');
+      // Limpar dados de todos os locais (localStorage, cookies, Redis)
+      await UnifiedAuthService.clearAuthData(sessionId || undefined, token || undefined);
       
-      console.log('✅ Logout otimizado realizado');
+      console.log('✅ Logout otimizado realizado - dados limpos de todos os locais');
+      toast.success('Logout realizado com sucesso!');
       
       // Redirecionar para login
       router.push(buildLoginUrl());
@@ -116,9 +142,9 @@ export function useOptimizedAuth() {
       return result;
     } catch (err: any) {
       // Mesmo com erro, limpar dados locais
-      localStorage.removeItem('accessToken');
-      localStorage.removeItem('refreshToken');
-      localStorage.removeItem('user');
+      const token = UnifiedAuthService.getAccessToken();
+      const sessionId = UnifiedAuthService.getSessionId();
+      await UnifiedAuthService.clearAuthData(sessionId || undefined, token || undefined);
       
       const errorMessage = err.message || 'Erro no logout';
       setError(errorMessage);
@@ -138,7 +164,7 @@ export function useOptimizedAuth() {
 
   const validateToken = useCallback(async (): Promise<boolean> => {
     try {
-      const token = localStorage.getItem('accessToken');
+      const token = UnifiedAuthService.getAccessToken();
       
       if (!token) {
         return false;
@@ -152,6 +178,12 @@ export function useOptimizedAuth() {
       });
 
       const result = await response.json();
+      
+      // Se token válido, atualizar atividade da sessão
+      if (result.success && result.data?.valid) {
+        await UnifiedAuthService.updateActivity();
+      }
+      
       return result.success && result.data?.valid;
     } catch (err) {
       console.log('❌ Erro na validação do token:', err);
@@ -161,7 +193,8 @@ export function useOptimizedAuth() {
 
   const refreshToken = useCallback(async (): Promise<boolean> => {
     try {
-      const refreshToken = localStorage.getItem('refreshToken');
+      const authData = UnifiedAuthService.loadAuthData();
+      const refreshToken = authData.merged?.refreshToken;
       
       if (!refreshToken) {
         return false;
@@ -178,7 +211,11 @@ export function useOptimizedAuth() {
       const result = await response.json();
 
       if (result.success && result.data) {
-        localStorage.setItem('accessToken', result.data.token);
+        // Atualizar token em todos os locais
+        const sessionId = UnifiedAuthService.getSessionId();
+        await UnifiedAuthService.updateAccessToken(result.data.accessToken, sessionId || undefined);
+        
+        console.log('✅ Token renovado em todos os locais');
         return true;
       }
 
@@ -191,12 +228,31 @@ export function useOptimizedAuth() {
 
   const getCurrentUser = useCallback(() => {
     try {
-      const userStr = localStorage.getItem('user');
-      return userStr ? JSON.parse(userStr) : null;
+      return UnifiedAuthService.getCurrentUser();
     } catch (err) {
       console.log('❌ Erro ao obter usuário atual:', err);
       return null;
     }
+  }, []);
+
+  // Função para verificar se está autenticado
+  const isAuthenticated = useCallback(() => {
+    return UnifiedAuthService.isAuthenticated();
+  }, []);
+
+  // Função para sincronizar dados entre storages
+  const syncStorages = useCallback(() => {
+    UnifiedAuthService.syncStorages();
+  }, []);
+
+  // Função para obter dados completos de autenticação
+  const getAuthData = useCallback(() => {
+    return UnifiedAuthService.loadAuthData();
+  }, []);
+
+  // Função para atualizar atividade (heartbeat)
+  const updateActivity = useCallback(async () => {
+    await UnifiedAuthService.updateActivity();
   }, []);
 
   return {
@@ -205,6 +261,10 @@ export function useOptimizedAuth() {
     validateToken,
     refreshToken,
     getCurrentUser,
+    isAuthenticated,
+    syncStorages,
+    getAuthData,
+    updateActivity,
     isLoading,
     error,
     clearError: () => setError(null)

@@ -11,6 +11,7 @@ import { getDashboardPath } from '@/utils/roleRedirect';
 import { isDevelopment } from '../utils/env';
 import { clearAllDataForUnauthorized } from '@/utils/clearAllData';
 import { debugToken, cleanupTokens } from '@/utils/token-debug';
+import { UnifiedAuthService } from '@/services/unifiedAuthService';
 
 // Variável de ambiente para controlar o uso do token de teste
 const useTestToken = process.env.NEXT_PUBLIC_USE_TEST_TOKEN === 'true' && isDevelopment();
@@ -193,23 +194,40 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     console.log('Starting logout process...');
     setIsLoggingOut(true);
 
-    // Aguarda um tempo para o usuário ver a mensagem
-    await new Promise(resolve => setTimeout(resolve, 2000));
+    try {
+      // Obter dados antes de limpar
+      const token = UnifiedAuthService.getAccessToken();
+      const sessionId = UnifiedAuthService.getSessionId();
 
-    console.log('Clearing all client data...');
-    await clearAllDataForUnauthorized();
-    
-    console.log('Logging out: removing token and user');
-    
-    setUser(null);
-    apiClient.defaults.headers.common['Authorization'] = '';
-    apiClient.post('/auth/logout').catch(err => console.error("Logout API call failed:", err));
-    
-    router.push(buildLoginUrl());
-    toast.success('Até a próxima!');
-    
-    // Reseta o estado após a conclusão
-    setIsLoggingOut(false);
+      // Chamar API de logout
+      if (token) {
+        apiClient.post('/auth/logout').catch(err => console.error("Logout API call failed:", err));
+      }
+
+      // Limpar dados de todos os locais (localStorage, cookies, Redis)
+      await UnifiedAuthService.clearAuthData(sessionId || undefined, token || undefined);
+      
+      // Limpar outros dados não relacionados à autenticação
+      await clearAllDataForUnauthorized();
+      
+      console.log('✅ Logout concluído - dados limpos de todos os locais');
+      
+      setUser(null);
+      apiClient.defaults.headers.common['Authorization'] = '';
+      
+      router.push(buildLoginUrl());
+      toast.success('Até a próxima!');
+      
+    } catch (error) {
+      console.error('❌ Erro durante logout:', error);
+      // Forçar limpeza mesmo com erro
+      setUser(null);
+      apiClient.defaults.headers.common['Authorization'] = '';
+      router.push(buildLoginUrl());
+    } finally {
+      // Reseta o estado após a conclusão
+      setIsLoggingOut(false);
+    }
   }, [router]);
 
   // Função para validar e configurar usuário a partir do token
@@ -317,10 +335,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
       const response = await apiClient.post('/auth/login', { email, password });
       
       if (response.data.success && response.data.data) {
-        const { accessToken, user: userData } = response.data.data;
-        
-        // Armazenar o token
-        setStoredToken(accessToken);
+        const { accessToken, refreshToken, user: userData } = response.data.data;
         
         // Configurar o header de autorização
         apiClient.defaults.headers.common['Authorization'] = `Bearer ${accessToken}`;
@@ -340,6 +355,30 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
           unidadeEnsino: userData.unidadeEnsino,
           institution_name: userData.institution_name
         };
+        
+        // Salvar dados em todos os locais usando o serviço unificado
+        const authData = {
+          accessToken,
+          refreshToken: refreshToken || accessToken, // Fallback se não houver refresh token
+          user: {
+            id: user.id.toString(),
+            email: user.email,
+            name: user.name,
+            role: user.role,
+            permissions: user.permissions,
+            institution_name: user.institution_name
+          },
+          expiresIn: decodedToken.exp ? decodedToken.exp - Math.floor(Date.now() / 1000) : 60 * 60 * 24
+        };
+
+        const saveResult = await UnifiedAuthService.saveAuthData(authData);
+        
+        if (saveResult.success) {
+          console.log('✅ Dados salvos em todos os locais com sessão:', saveResult.sessionId);
+        } else {
+          console.warn('⚠️ Erro ao salvar dados:', saveResult.message);
+          // Continuar mesmo com erro, dados já estão no contexto
+        }
         
         setUser(user);
         
