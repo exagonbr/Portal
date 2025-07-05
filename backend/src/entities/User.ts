@@ -21,7 +21,7 @@ import { ForumThread } from './ForumThread';
 import { ForumReply } from './ForumReply';
 import { Notification } from './Notification';
 
-@Entity('user')
+@Entity('users')
 export class User {
   [x: string]: any;
   
