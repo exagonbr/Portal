@@ -24,8 +24,9 @@ async function addGoogleOAuthColumns(db, tableName) {
       return false;
     }
     
-    // Lista de colunas OAuth do Google para adicionar
+    // Lista de colunas OAuth do Google e perfil para adicionar
     const googleColumns = [
+      // Colunas OAuth Google
       { name: 'google_id', type: 'string', length: 255, unique: true },
       { name: 'google_email', type: 'string', length: 255 },
       { name: 'google_name', type: 'string', length: 255 },
@@ -34,7 +35,68 @@ async function addGoogleOAuthColumns(db, tableName) {
       { name: 'google_refresh_token', type: 'text' },
       { name: 'google_token_expires_at', type: 'timestamp' },
       { name: 'is_google_verified', type: 'boolean', default: false },
-      { name: 'google_linked_at', type: 'timestamp' }
+      { name: 'google_linked_at', type: 'timestamp' },
+      
+      // Colunas de perfil comuns
+      { name: 'profile_image', type: 'string', length: 500 },
+      { name: 'avatar', type: 'string', length: 500 },
+      { name: 'avatar_url', type: 'string', length: 500 },
+      { name: 'profile_picture', type: 'string', length: 500 },
+      { name: 'bio', type: 'text' },
+      { name: 'description', type: 'text' },
+      { name: 'first_name', type: 'string', length: 255 },
+      { name: 'last_name', type: 'string', length: 255 },
+      { name: 'display_name', type: 'string', length: 255 },
+      { name: 'locale', type: 'string', length: 10 },
+      { name: 'timezone', type: 'string', length: 50 },
+      { name: 'birth_date', type: 'date' },
+      { name: 'gender', type: 'string', length: 20 },
+      { name: 'phone_verified', type: 'boolean', default: false },
+      { name: 'email_verified', type: 'boolean', default: false },
+      { name: 'two_factor_enabled', type: 'boolean', default: false },
+      
+      // Colunas de controle e versionamento
+      { name: 'version', type: 'bigint', default: 0 },
+      { name: 'revision', type: 'integer', default: 0 },
+      { name: 'entity_version', type: 'integer', default: 1 },
+      
+      // Colunas de status e controle
+      { name: 'status', type: 'string', length: 50, default: 'active' },
+      { name: 'account_status', type: 'string', length: 50, default: 'active' },
+      { name: 'verification_status', type: 'string', length: 50, default: 'pending' },
+      { name: 'last_login_at', type: 'timestamp' },
+      { name: 'last_activity_at', type: 'timestamp' },
+      { name: 'login_count', type: 'integer', default: 0 },
+      { name: 'failed_login_attempts', type: 'integer', default: 0 },
+      { name: 'locked_until', type: 'timestamp' },
+      
+      // Colunas de configurações
+      { name: 'preferences', type: 'json' },
+      { name: 'settings', type: 'json' },
+      { name: 'metadata', type: 'json' },
+      
+      // Colunas de relacionamento extras
+      { name: 'manager_id', type: 'uuid' },
+      { name: 'department_id', type: 'uuid' },
+      { name: 'organization_id', type: 'uuid' },
+      
+      // Colunas de contato adicionais
+      { name: 'mobile_phone', type: 'string', length: 50 },
+      { name: 'work_phone', type: 'string', length: 50 },
+      { name: 'alternative_email', type: 'string', length: 255 },
+      
+      // Colunas de endereço
+      { name: 'street_address', type: 'string', length: 255 },
+      { name: 'city', type: 'string', length: 100 },
+      { name: 'state', type: 'string', length: 100 },
+      { name: 'postal_code', type: 'string', length: 20 },
+      { name: 'country', type: 'string', length: 100 },
+      
+      // Colunas de auditoria adicionais
+      { name: 'created_by', type: 'uuid' },
+      { name: 'updated_by', type: 'uuid' },
+      { name: 'deleted_at', type: 'timestamp' },
+      { name: 'deleted_by', type: 'uuid' }
     ];
     
     let columnsAdded = 0;
@@ -55,9 +117,17 @@ async function addGoogleOAuthColumns(db, tableName) {
         switch (column.type) {
           case 'string':
             if (column.unique) {
-              table.string(column.name, column.length).unique().nullable();
+              if (column.default) {
+                table.string(column.name, column.length).unique().nullable().defaultTo(column.default);
+              } else {
+                table.string(column.name, column.length).unique().nullable();
+              }
             } else {
-              table.string(column.name, column.length).nullable();
+              if (column.default) {
+                table.string(column.name, column.length).nullable().defaultTo(column.default);
+              } else {
+                table.string(column.name, column.length).nullable();
+              }
             }
             break;
           case 'text':
@@ -66,8 +136,23 @@ async function addGoogleOAuthColumns(db, tableName) {
           case 'timestamp':
             table.timestamp(column.name).nullable();
             break;
+          case 'date':
+            table.date(column.name).nullable();
+            break;
           case 'boolean':
             table.boolean(column.name).defaultTo(column.default || false);
+            break;
+          case 'integer':
+            table.integer(column.name).defaultTo(column.default || 0);
+            break;
+          case 'bigint':
+            table.bigInteger(column.name).defaultTo(column.default || 0);
+            break;
+          case 'json':
+            table.json(column.name).nullable();
+            break;
+          case 'uuid':
+            table.uuid(column.name).nullable();
             break;
         }
       });

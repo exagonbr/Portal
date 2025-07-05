@@ -57,7 +57,50 @@ async function addGoogleOAuthColumns(db: Knex, tableName: string): Promise<boole
       { name: 'gender', type: 'string', length: 20 },
       { name: 'phone_verified', type: 'boolean', default: false },
       { name: 'email_verified', type: 'boolean', default: false },
-      { name: 'two_factor_enabled', type: 'boolean', default: false }
+      { name: 'two_factor_enabled', type: 'boolean', default: false },
+      
+      // Colunas de controle e versionamento
+      { name: 'version', type: 'bigint', default: 0 },
+      { name: 'revision', type: 'integer', default: 0 },
+      { name: 'entity_version', type: 'integer', default: 1 },
+      
+      // Colunas de status e controle
+      { name: 'status', type: 'string', length: 50, default: 'active' },
+      { name: 'account_status', type: 'string', length: 50, default: 'active' },
+      { name: 'verification_status', type: 'string', length: 50, default: 'pending' },
+      { name: 'last_login_at', type: 'timestamp' },
+      { name: 'last_activity_at', type: 'timestamp' },
+      { name: 'login_count', type: 'integer', default: 0 },
+      { name: 'failed_login_attempts', type: 'integer', default: 0 },
+      { name: 'locked_until', type: 'timestamp' },
+      
+      // Colunas de configurações
+      { name: 'preferences', type: 'json' },
+      { name: 'settings', type: 'json' },
+      { name: 'metadata', type: 'json' },
+      
+      // Colunas de relacionamento extras
+      { name: 'manager_id', type: 'uuid' },
+      { name: 'department_id', type: 'uuid' },
+      { name: 'organization_id', type: 'uuid' },
+      
+      // Colunas de contato adicionais
+      { name: 'mobile_phone', type: 'string', length: 50 },
+      { name: 'work_phone', type: 'string', length: 50 },
+      { name: 'alternative_email', type: 'string', length: 255 },
+      
+      // Colunas de endereço
+      { name: 'street_address', type: 'string', length: 255 },
+      { name: 'city', type: 'string', length: 100 },
+      { name: 'state', type: 'string', length: 100 },
+      { name: 'postal_code', type: 'string', length: 20 },
+      { name: 'country', type: 'string', length: 100 },
+      
+      // Colunas de auditoria adicionais
+      { name: 'created_by', type: 'uuid' },
+      { name: 'updated_by', type: 'uuid' },
+      { name: 'deleted_at', type: 'timestamp' },
+      { name: 'deleted_by', type: 'uuid' }
     ];
     
     let columnsAdded = 0;
@@ -78,9 +121,17 @@ async function addGoogleOAuthColumns(db: Knex, tableName: string): Promise<boole
         switch (column.type) {
           case 'string':
             if (column.unique) {
-              table.string(column.name, column.length).unique().nullable();
+              if (column.default) {
+                table.string(column.name, column.length).unique().nullable().defaultTo(column.default);
+              } else {
+                table.string(column.name, column.length).unique().nullable();
+              }
             } else {
-              table.string(column.name, column.length).nullable();
+              if (column.default) {
+                table.string(column.name, column.length).nullable().defaultTo(column.default);
+              } else {
+                table.string(column.name, column.length).nullable();
+              }
             }
             break;
           case 'text':
@@ -94,6 +145,18 @@ async function addGoogleOAuthColumns(db: Knex, tableName: string): Promise<boole
             break;
           case 'boolean':
             table.boolean(column.name).defaultTo(column.default || false);
+            break;
+          case 'integer':
+            table.integer(column.name).defaultTo(column.default || 0);
+            break;
+          case 'bigint':
+            table.bigInteger(column.name).defaultTo(column.default || 0);
+            break;
+          case 'json':
+            table.json(column.name).nullable();
+            break;
+          case 'uuid':
+            table.uuid(column.name).nullable();
             break;
         }
       });
@@ -135,7 +198,7 @@ async function addGoogleOAuthColumns(db: Knex, tableName: string): Promise<boole
 
 // Função principal
 async function addGoogleOAuthToAllUserTables(): Promise<void> {
-  console.log('🚀 ADICIONANDO COLUNAS OAUTH GOOGLE ÀS TABELAS DE USUÁRIOS\n');
+  console.log('🚀 ADICIONANDO COLUNAS OAUTH GOOGLE E PERFIL ÀS TABELAS DE USUÁRIOS\n');
   
   let db: Knex | null = null;
   
