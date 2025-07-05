@@ -1,8 +1,11 @@
 import knex from 'knex';
 import { Knex } from 'knex';
-import knexConfig from '../knexfile.js';
+import knexConfigFile from '../knexfile.js';
 import dotenv from 'dotenv';
 import bcrypt from 'bcrypt';
+
+// Obter a configuração correta do knexfile
+const knexConfig: any = knexConfigFile.default || knexConfigFile;
 
 // Carrega variáveis de ambiente
 dotenv.config();

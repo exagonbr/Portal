@@ -1,7 +1,10 @@
 const knex = require('knex');
-const knexConfig = require('../knexfile.js');
+const knexConfigFile = require('../knexfile.js');
 const dotenv = require('dotenv');
 const bcrypt = require('bcrypt');
+
+// Obter a configuração correta do knexfile
+const knexConfig = knexConfigFile.default || knexConfigFile;
 
 // Carrega variáveis de ambiente
 dotenv.config();
