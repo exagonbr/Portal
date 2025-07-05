@@ -1,5 +1,5 @@
 import { BaseRepository } from './BaseRepository';
-import { TvShow } from '../entities/TvShow';
+import { TvShow } from '../entities/TVShow';
 import { TvShowResponseDto } from '../dto/TvShowDto';
 
 export interface TvShowFilters {

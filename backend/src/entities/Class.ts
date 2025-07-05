@@ -54,10 +54,10 @@ export class Class {
   @Column({ default: true })
   is_active!: boolean;
 
-  @OneToMany(() => UserClass, userClass => userClass.class)
+  @OneToMany(() => UserClass, (userClass: UserClass) => userClass.class)
   userClasses!: UserClass[];
 
-  @ManyToMany(() => EducationCycle, educationCycle => educationCycle.classes)
+  @ManyToMany(() => EducationCycle, (educationCycle: EducationCycle) => educationCycle.classes)
   @JoinTable({
     name: 'class_education_cycles',
     joinColumn: { name: 'class_id', referencedColumnName: 'id' },

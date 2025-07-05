@@ -16,7 +16,7 @@ export class ChatMessage {
   @Column()
   sender_id!: number;
 
-  @ManyToOne(() => User, user => user.sentMessages)
+  @ManyToOne(() => User, (user: User) => user.sentMessages)
   @JoinColumn({ name: 'sender_id' })
   sender!: User;
 
