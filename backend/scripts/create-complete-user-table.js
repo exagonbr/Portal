@@ -14,6 +14,25 @@ async function tableExists(db, tableName) {
   return db.schema.hasTable(tableName);
 }
 
+// Função para fazer DROP da tabela user se existir
+async function dropUserTableIfExists(db) {
+  console.log('🗑️  REMOVENDO TABELA USER EXISTENTE\n');
+
+  try {
+    const exists = await tableExists(db, 'user');
+    if (exists) {
+      console.log('   ⚠️  Tabela user existe, fazendo DROP...');
+      await db.schema.dropTable('user');
+      console.log('   ✅ Tabela user removida com sucesso!');
+    } else {
+      console.log('   ℹ️  Tabela user não existe, continuando...');
+    }
+  } catch (error) {
+    console.log(`   ❌ Erro ao remover tabela user: ${error.message}`);
+    throw error;
+  }
+}
+
 // Função para criar a tabela user completa baseada na estrutura MySQL
 async function createCompleteUserTable(db) {
   console.log('🏗️  CRIANDO TABELA USER COMPLETA (BASEADA NO MYSQL)\n');
@@ -395,6 +414,9 @@ async function createCompleteUserStructure() {
     db = knex(knexConfig.development);
     console.log('✅ Conectado ao PostgreSQL!\n');
     
+    // Fazer DROP da tabela existente
+    await dropUserTableIfExists(db);
+    
     // Criar tabela user completa
     await createCompleteUserTable(db);
     
@@ -460,4 +482,4 @@ if (require.main === module) {
     });
 }
 
-module.exports = { createCompleteUserStructure, createCompleteUserTable, createDefaultUsers }; 
+module.exports = { createCompleteUserStructure, createCompleteUserTable, createDefaultUsers, dropUserTableIfExists }; 
