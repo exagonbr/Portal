@@ -89,9 +89,9 @@ export class SchoolRepository extends BaseRepository<School> {
         return null;
       }
 
-      // Assumindo que a entidade School tem um campo 'isActive' 
-      const newActiveStatus = !school.isActive;
-      const updatedSchool = await this.update(parseInt(id), { isActive: newActiveStatus } as UpdateSchoolData);
+      // Usando a propriedade deleted da entidade School
+      const newDeletedStatus = !school.deleted;
+      const updatedSchool = await this.update(parseInt(id), { deleted: newDeletedStatus } as UpdateSchoolData);
       
       return updatedSchool;
     } catch (error) {

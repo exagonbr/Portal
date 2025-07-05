@@ -2,7 +2,7 @@ import { Course } from '../types/education';
 import { ForumThread, ForumTagCategory, ChatMessage } from '../types/communication';
 import { User, UserRole } from '../types/auth';
 import { Annotation, Highlight } from '../components/books/BookViewer/types';
-import { Collection } from '../types/collection';
+import { CollectionDto } from '../types/collection';
 
 // Interfaces
 export interface Book {
@@ -323,12 +323,12 @@ export const mockCourses = [
 ];
 
 // Mock Content Collections
-export const mockContentCollections: Collection[] = [
+export const mockContentCollections: CollectionDto[] = [
   {
     id: 'collection_1',
     name: 'Matemática Fundamental',
     synopsis: 'Coleção completa de matemática para ensino fundamental com conceitos básicos e exercícios práticos.',
-    coverImage: 'https://images.unsplash.com/photo-1635070041078-e363dbe005cb?w=800&h=450&fit=crop',
+    cover_image: 'https://images.unsplash.com/photo-1635070041078-e363dbe005cb?w=800&h=450&fit=crop',
     supportMaterial: '/materials/matematica-fundamental.pdf',
     totalDuration: 7200, // 2 horas em segundos
     subject: 'Matemática',
@@ -422,7 +422,7 @@ export const mockContentCollections: Collection[] = [
 ];
 
 // Mock Module Collection (for ModuleManager)
-export const mockModuleCollection: Collection = mockContentCollections[0];
+export const mockModuleCollection: CollectionDto = mockContentCollections[0];
 
 // Mock Content Videos (for ModuleManager)
 export const mockContentVideos = mockVideos.map(video => ({
@@ -440,64 +440,84 @@ export const mockContentVideos = mockVideos.map(video => ({
   updatedAt: new Date()
 }));
 
-export const mockAnnotations: { [bookId: string]: Annotation[] } = {
-  'local-epub-1': [
+// Dados mockados para anotações e destaques
+export const mockAnnotations: { [bookId: string]: any[] } = {
+  '1747075735459': [
     {
-      id: 'anno-1',
+      id: 1,
+      bookId: '1747075735459',
       pageNumber: 15,
-      content: 'Este é um ponto crucial para a trama principal.',
-      position: { x: 100, y: 250 },
-      createdAt: '2024-01-20T10:30:00Z'
+      content: 'Conceito muito importante sobre estruturas de dados',
+      position: { x: 200, y: 300 },
+      createdAt: '2024-03-15T10:30:00Z'
     },
     {
-      id: 'anno-2',
+      id: 2,
+      bookId: '1747075735459',
+      pageNumber: 28,
+      content: 'Lembrar de revisar este algoritmo',
+      position: { x: 150, y: 450 },
+      createdAt: '2024-03-16T14:20:00Z'
+    }
+  ],
+  '1747075735460': [
+    {
+      id: 3,
+      bookId: '1747075735460',
       pageNumber: 42,
-      content: 'Achei a descrição do personagem muito detalhada aqui.',
-      position: { x: 50, y: 150 },
-      createdAt: '2024-01-22T15:00:00Z'
+      content: 'Excelente explicação sobre o tema',
+      position: { x: 180, y: 250 },
+      createdAt: '2024-03-17T09:15:00Z'
     }
   ]
 };
 
-export const mockHighlights: { [bookId: string]: Highlight[] } = {
-  'local-epub-1': [
+export const mockHighlights: { [bookId: string]: any[] } = {
+  '1747075735459': [
     {
-      id: '1',
-      pageNumber: 25,
-      content: 'O sol se punha no horizonte, pintando o céu com cores de fogo e ouro.',
+      id: 1,
+      bookId: '1747075735459',
+      pageNumber: 12,
+      content: 'A complexidade computacional é um conceito fundamental na ciência da computação',
       color: 'yellow',
-      position: {
-        x: 120, y: 300,
-        width: 200,
-        height: 20
-      },
-      createdAt: '2024-01-21T18:00:00Z'
+      createdAt: '2024-03-15T08:45:00Z'
     },
     {
-      id: '2',
+      id: 2,
+      bookId: '1747075735459',
       pageNumber: 25,
-      content: 'Uma brisa suave soprava do leste, trazendo consigo o cheiro do mar.',
-      color: 'blue',
-      position: {
-        x: 80, y: 350,
-        width: 250,
-        height: 20
-      },
-      createdAt: '2024-01-21T18:05:00Z'
+      content: 'Os algoritmos de ordenação são essenciais para o desenvolvimento de software eficiente',
+      color: 'green',
+      createdAt: '2024-03-16T11:30:00Z'
     }
   ],
-  'local-epub-2': [
+  '1747075735460': [
     {
-      id: '3',
-      pageNumber: 10,
-      content: 'A decisão foi tomada. Não havia mais volta.',
-      color: 'green',
-      position: {
-        x: 200, y: 180,
-        width: 180,
-        height: 20
-      },
-      createdAt: '2024-01-23T11:45:00Z'
+      id: 3,
+      bookId: '1747075735460',
+      pageNumber: 8,
+      content: 'A literatura brasileira do século XIX apresenta características únicas',
+      color: 'blue',
+      createdAt: '2024-03-17T16:20:00Z'
+    }
+  ]
+};
+
+export const mockBookmarks: { [bookId: string]: any[] } = {
+  '1747075735459': [
+    {
+      id: 1,
+      bookId: '1747075735459',
+      pageNumber: 50,
+      title: 'Capítulo sobre Grafos',
+      createdAt: '2024-03-15T12:00:00Z'
+    },
+    {
+      id: 2,
+      bookId: '1747075735459',
+      pageNumber: 75,
+      title: 'Algoritmos de Busca',
+      createdAt: '2024-03-16T15:45:00Z'
     }
   ]
 };

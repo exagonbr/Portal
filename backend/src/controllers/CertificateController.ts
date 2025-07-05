@@ -49,11 +49,11 @@ class CertificateController extends BaseController<Certificate> {
       // Retornar apenas informações públicas dos certificados
       const publicCertificates = certificates.map((cert: Certificate) => ({
         id: cert.id,
-        license_code: cert.license_code,
+        license_code: cert.licenseCode,
         document: cert.document,
-        tv_show_name: cert.tv_show_name,
+        tv_show_name: cert.tvShowName,
         score: cert.score,
-        date_created: cert.date_created,
+        date_created: cert.dateCreated,
         path: cert.path
       }));
 

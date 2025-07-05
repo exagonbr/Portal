@@ -1,5 +1,6 @@
 export interface Annotation {
-  id: string;
+  id: number;
+  bookId: string;
   pageNumber: number;
   content: string;
   position: {
@@ -10,24 +11,63 @@ export interface Annotation {
 }
 
 export interface Highlight {
-  id: string;
+  id: number;
+  bookId: string;
   pageNumber: number;
   content: string;
   color: string;
-  position: {
-    x: number;
-    y: number;
-    width: number;
-    height: number;
-  };
   createdAt: string;
 }
 
 export interface Bookmark {
-  id: string;
+  id: number;
+  bookId: string;
   pageNumber: number;
   title: string;
   createdAt: string;
+}
+
+export interface ReaderSettings {
+  theme: 'light' | 'dark' | 'sepia';
+  fontSize: number;
+  fontFamily: string;
+  lineHeight: number;
+  margin: number;
+  textAlign: 'left' | 'center' | 'right' | 'justify';
+  readingMode: 'single' | 'double' | 'scroll';
+  autoScroll: boolean;
+  speechRate: number;
+  speechVoice: string;
+  highlightColor: string;
+}
+
+export interface BookViewerProps {
+  book: any;
+  onClose?: () => void;
+  initialAnnotations?: Annotation[];
+  initialHighlights?: Highlight[];
+  initialBookmarks?: Bookmark[];
+  onAnnotationAdd?: (annotation: Annotation) => void;
+  onHighlightAdd?: (highlight: Highlight) => void;
+  onBookmarkAdd?: (bookmark: Bookmark) => void;
+}
+
+export interface TextSelection {
+  text: string;
+  rect: DOMRect;
+  pageNumber: number;
+}
+
+export interface SearchResult {
+  page: number;
+  excerpt: string;
+  position: number;
+}
+
+export interface TableOfContentsItem {
+  label: string;
+  href: string;
+  subitems?: TableOfContentsItem[];
 }
 
 export interface ViewerState {

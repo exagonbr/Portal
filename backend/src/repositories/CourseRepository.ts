@@ -1,26 +1,15 @@
 import { BaseRepository } from './BaseRepository';
-
-// Interface para desacoplar
-export interface Course {
-    id: string;
-    name: string;
-    description: string;
-    institution_id: string;
-    teacher_id?: string;
-    active: boolean;
-    created_at: Date;
-    updated_at: Date;
-}
+import { Course } from '../entities/Course';
 
 export class CourseRepository extends BaseRepository<Course> {
   constructor() {
     super('courses');
   }
 
-  async toggleStatus(id: string): Promise<Course | null> {
+  async toggleStatus(id: string | number): Promise<Course | null> {
     const course = await this.findById(id);
     if (!course) return null;
-    return this.update(id, { active: !course.active } as Partial<Course>);
+    return this.update(id, { is_active: !course.is_active } as Partial<Course>);
   }
 
   // Mock para os métodos de estudantes

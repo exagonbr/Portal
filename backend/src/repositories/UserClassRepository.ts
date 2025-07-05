@@ -5,11 +5,11 @@ export interface CreateUserClassData extends Omit<UserClass, 'id' | 'created_at'
 export interface UpdateUserClassData extends Partial<CreateUserClassData> {}
 
 export interface UserClassFilters {
-  user_id?: string;
-  class_id?: string;
+  user_id?: number;
+  class_id?: number;
   role?: UserClassRole;
   is_active?: boolean;
-  school_id?: string;
+  school_id?: number;
   year?: number;
   page?: number;
   limit?: number;
@@ -22,19 +22,19 @@ export class UserClassRepository extends BaseRepository<UserClass> {
     super('user_classes');
   }
 
-  async findByUserAndClass(userId: string, classId: string): Promise<UserClass | null> {
+  async findByUserAndClass(userId: number, classId: number): Promise<UserClass | null> {
     return this.findOne({ user_id: userId, class_id: classId } as Partial<UserClass>);
   }
 
-  async findActiveByUser(userId: string): Promise<UserClass[]> {
+  async findActiveByUser(userId: number): Promise<UserClass[]> {
     return this.findAll({ user_id: userId, is_active: true } as Partial<UserClass>);
   }
 
-  async findActiveByClass(classId: string): Promise<UserClass[]> {
+  async findActiveByClass(classId: number): Promise<UserClass[]> {
     return this.findAll({ class_id: classId, is_active: true } as Partial<UserClass>);
   }
 
-  async findByRole(classId: string, role: UserClassRole): Promise<UserClass[]> {
+  async findByRole(classId: number, role: UserClassRole): Promise<UserClass[]> {
     return this.findAll({ class_id: classId, role: role } as Partial<UserClass>);
   }
 

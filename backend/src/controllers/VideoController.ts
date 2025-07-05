@@ -10,24 +10,24 @@ class VideoController extends BaseController<Video> {
         super(videoRepository);
     }
 
-    async getAll(req: Request, res: Response) {
-        res.json({ message: `getAll videos with query ${JSON.stringify(req.query)}` });
+    async getAll(req: Request, res: Response): Promise<Response> {
+        return res.json({ message: `getAll videos with query ${JSON.stringify(req.query)}` });
     }
 
-    async getById(req: Request, res: Response) {
-        res.json({ message: `get video by id ${req.params.id}` });
+    async getById(req: Request, res: Response): Promise<Response> {
+        return res.json({ message: `get video by id ${req.params.id}` });
     }
 
-    async create(req: Request, res: Response) {
-        res.status(201).json({ message: 'create video', data: req.body });
+    async create(req: Request, res: Response): Promise<Response> {
+        return res.status(201).json({ message: 'create video', data: req.body });
     }
 
-    async update(req: Request, res: Response) {
-        res.json({ message: `update video ${req.params.id}`, data: req.body });
+    async update(req: Request, res: Response): Promise<Response> {
+        return res.json({ message: `update video ${req.params.id}`, data: req.body });
     }
 
-    async delete(req: Request, res: Response) {
-        res.status(204).send();
+    async delete(req: Request, res: Response): Promise<Response> {
+        return res.status(204).send();
     }
 }
 

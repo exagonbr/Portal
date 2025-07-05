@@ -5,8 +5,8 @@ export interface CreateSchoolManagerData extends Omit<SchoolManager, 'id' | 'cre
 export interface UpdateSchoolManagerData extends Partial<CreateSchoolManagerData> {}
 
 export interface SchoolManagerFilters {
-  user_id?: string;
-  school_id?: string;
+  user_id?: number;
+  school_id?: number;
   position?: ManagerPosition;
   is_active?: boolean;
   page?: number;
@@ -20,19 +20,19 @@ export class SchoolManagerRepository extends BaseRepository<SchoolManager> {
     super('school_managers');
   }
 
-  async findByUserAndSchool(userId: string, schoolId: string): Promise<SchoolManager[]> {
+  async findByUserAndSchool(userId: number, schoolId: number): Promise<SchoolManager[]> {
     return this.findAll({ user_id: userId, school_id: schoolId } as Partial<SchoolManager>);
   }
 
-  async findActiveBySchool(schoolId: string): Promise<SchoolManager[]> {
+  async findActiveBySchool(schoolId: number): Promise<SchoolManager[]> {
     return this.findAll({ school_id: schoolId, is_active: true } as Partial<SchoolManager>);
   }
 
-  async findActiveByUser(userId: string): Promise<SchoolManager[]> {
+  async findActiveByUser(userId: number): Promise<SchoolManager[]> {
     return this.findAll({ user_id: userId, is_active: true } as Partial<SchoolManager>);
   }
   
-  async findByPosition(schoolId: string, position: ManagerPosition): Promise<SchoolManager[]> {
+  async findByPosition(schoolId: number, position: ManagerPosition): Promise<SchoolManager[]> {
     return this.findAll({ school_id: schoolId, position: position } as Partial<SchoolManager>);
   }
 
