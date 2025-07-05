@@ -45,6 +45,19 @@ const mapToProfileDto = (data: ApiProfileResponseDto): ProfileDto => ({
 
 export const getUsers = async (params: UserFilter): Promise<PaginatedResponse<UserDto>> => {
   const response = await apiGet<PaginatedResponse<ApiUserResponseDto>>('/users', params);
+  
+  // Verificar se a resposta tem o formato esperado
+  if (!response || !response.items || !Array.isArray(response.items)) {
+    console.warn('Resposta da API de usuários não tem o formato esperado:', response);
+    return {
+      items: [],
+      total: 0,
+      page: 1,
+      limit: 10,
+      totalPages: 0,
+    };
+  }
+  
   return {
     ...response,
     items: response.items.map(mapToUserDto),

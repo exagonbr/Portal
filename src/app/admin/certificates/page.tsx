@@ -2,9 +2,10 @@
 
 import React, { useState, useEffect, useCallback } from 'react'
 import { useToast } from '@/components/ToastManager'
-import { certificateService } from '@/services/certificateService.mock'
-import { userService } from '@/services/userService.mock'
+import { certificateService } from '@/services/certificateService'
+import { userService } from '@/services/userService'
 import { CertificateResponseDto, BaseFilterDto } from '@/types/api'
+import { CertificateDto } from '@/types/certificate'
 import AuthenticatedLayout from '@/components/AuthenticatedLayout'
 import { Badge } from '@/components/ui/Badge'
 import { Button } from '@/components/ui/Button'
@@ -41,7 +42,7 @@ export default function AdminCertificatesPage() {
   const [refreshing, setRefreshing] = useState(false)
   
   // Dados principais
-  const [certificates, setCertificates] = useState<CertificateResponseDto[]>([])
+  const [certificates, setCertificates] = useState<CertificateDto[]>([])
   const [users, setUsers] = useState<any[]>([])
 
   // Paginação e Filtros
@@ -54,7 +55,7 @@ export default function AdminCertificatesPage() {
 
   // Modais (simplificado por enquanto)
   const [modalOpen, setModalOpen] = useState(false)
-  const [selectedCertificate, setSelectedCertificate] = useState<CertificateResponseDto | null>(null)
+  const [selectedCertificate, setSelectedCertificate] = useState<CertificateDto | null>(null)
 
   // Estatísticas
   const [stats, setStats] = useState<CertificateStats>({
@@ -64,7 +65,7 @@ export default function AdminCertificatesPage() {
     usersWithCerts: 0,
   })
 
-  const calculateStats = useCallback((allCertificates: CertificateResponseDto[]) => {
+  const calculateStats = useCallback((allCertificates: CertificateDto[]) => {
     const totalCertificates = allCertificates.length
     const recreatable = allCertificates.filter(c => c.recreate).length
     const programs = new Set(allCertificates.map(c => c.tv_show_name)).size
@@ -80,6 +81,7 @@ export default function AdminCertificatesPage() {
     await new Promise(resolve => setTimeout(resolve, 500))
 
     try {
+      // Converter filtros para o formato esperado pelo serviço real
       const params = {
         page,
         limit: itemsPerPage,
@@ -89,7 +91,7 @@ export default function AdminCertificatesPage() {
 
       const [certResponse, usersResponse] = await Promise.all([
         certificateService.getCertificates(params),
-        userService.getUsers({ limit: 1000 }) // Assumindo que userService está disponível
+        userService.getUsers({ limit: 1000 })
       ]);
 
       setCertificates(certResponse.items || [])
@@ -104,6 +106,7 @@ export default function AdminCertificatesPage() {
         showSuccess("Lista de certificados atualizada!")
       }
     } catch (error) {
+      console.error('Erro ao carregar certificados:', error)
       showError("Erro ao carregar certificados.")
     } finally {
       setLoading(false)
@@ -147,12 +150,12 @@ export default function AdminCertificatesPage() {
     fetchPageData(currentPage, searchQuery, filters, false)
   }
 
-  const handleDelete = async (certificate: CertificateResponseDto) => {
+  const handleDelete = async (certificate: CertificateDto) => {
     if (!confirm(`Tem certeza que deseja excluir o certificado "${certificate.document}"?`)) return
 
     try {
       setLoading(true)
-      await certificateService.deleteCertificate(certificate.id)
+      await certificateService.deleteCertificate(Number(certificate.id))
       showSuccess("Certificado excluído com sucesso.")
       await fetchPageData(currentPage, searchQuery, filters, false)
     } catch (error) {
@@ -167,7 +170,7 @@ export default function AdminCertificatesPage() {
   const getUserName = (userId: string | null | undefined) => {
     if (!userId) return 'N/A';
     const user = users.find(u => u.id.toString() === userId);
-    return user?.full_name || 'Usuário não encontrado';
+    return user?.name || 'Usuário não encontrado';
   }
 
   return (

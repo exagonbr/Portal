@@ -63,20 +63,41 @@ export async function GET(request: NextRequest) {
       params.set('sort_order', searchParams.get('sort_order')!);
     }
 
-    const response = await fetch(`${API_BASE_URL}/api/certificates?${params.toString()}`, {
-      method: 'GET',
-      headers: {
-        'Content-Type': 'application/json',
-        'Authorization': `Bearer ${token}`,
-      },
-    });
+    // Temporariamente retornar dados de teste para verificar se a estrutura está funcionando
+    const mockData = {
+      items: [
+        {
+          id: 1,
+          document: 'Certificado de Teste 1',
+          license_code: 'TEST-001',
+          tv_show_name: 'Programa Teste 1',
+          score: 95,
+          recreate: true,
+          user_id: '1',
+          tv_show_id: '1',
+          date_created: new Date().toISOString(),
+          last_updated: new Date().toISOString(),
+        },
+        {
+          id: 2,
+          document: 'Certificado de Teste 2',
+          license_code: 'TEST-002',
+          tv_show_name: 'Programa Teste 2',
+          score: 87,
+          recreate: false,
+          user_id: '2',
+          tv_show_id: '2',
+          date_created: new Date().toISOString(),
+          last_updated: new Date().toISOString(),
+        }
+      ],
+      total: 2,
+      page: 1,
+      limit: 10,
+      totalPages: 1,
+    };
 
-    if (!response.ok) {
-      throw new Error(`HTTP error! status: ${response.status}`);
-    }
-
-    const data = await response.json();
-    return NextResponse.json(data);
+    return NextResponse.json(mockData);
 
   } catch (error) {
     console.log('Erro ao buscar certificados:', error);

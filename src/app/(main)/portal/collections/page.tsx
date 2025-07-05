@@ -1073,22 +1073,22 @@ export default function TVShowsManagePage() {
             ) : Object.keys(modules).length === 0 ? (
               <div className="text-center py-16">
                 <Play className="w-20 h-20 text-gray-400 mx-auto mb-6" />
-                <h3 className="text-xl font-medium text-gray-600 mb-3">Coleção Carregada com Sucesso</h3>
-                <div className="bg-blue-50 border border-blue-200 rounded-lg p-6 max-w-2xl mx-auto">
+                <h3 className="text-xl font-medium text-gray-600 mb-3">Nenhum vídeo encontrado</h3>
+                <div className="bg-orange-50 border border-orange-200 rounded-lg p-6 max-w-2xl mx-auto">
                   <div className="flex items-start gap-4">
                     <div className="flex-shrink-0">
-                      <div className="w-10 h-10 bg-blue-100 rounded-full flex items-center justify-center">
-                        <BookOpen className="w-5 h-5 text-blue-600" />
+                      <div className="w-10 h-10 bg-orange-100 rounded-full flex items-center justify-center">
+                        <BookOpen className="w-5 h-5 text-orange-600" />
                       </div>
                     </div>
                     <div className="text-left">
-                      <h4 className="text-lg font-semibold text-blue-800 mb-2">
+                      <h4 className="text-lg font-semibold text-orange-800 mb-2">
                         {selectedTvShow.name}
                       </h4>
-                      <p className="text-blue-700 mb-3">
-                        Esta coleção foi carregada com sucesso! Os vídeos estão sendo configurados e em breve estarão disponíveis.
+                      <p className="text-orange-700 mb-3">
+                        Esta coleção ainda não possui vídeos disponíveis. Entre em contato com o administrador para mais informações.
                       </p>
-                      <div className="space-y-2 text-sm text-blue-600">
+                      <div className="space-y-2 text-sm text-orange-600">
                         <div className="flex items-center gap-2">
                           <Star className="w-4 h-4" />
                           <span>Produtor: {selectedTvShow.producer || 'Sistema Portal'}</span>
@@ -1109,9 +1109,6 @@ export default function TVShowsManagePage() {
                     </div>
                   </div>
                 </div>
-                <p className="text-gray-500 text-base mt-6">
-                  Em breve você poderá assistir aos vídeos organizados por sessões
-                </p>
               </div>
             ) : (
               <div className="space-y-6">

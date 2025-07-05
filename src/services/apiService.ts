@@ -47,8 +47,20 @@ async function handleResponse<T>(response: Response): Promise<T> {
  * @returns Uma promessa que resolve com os dados da resposta.
  */
 export const apiGet = async <T>(endpoint: string, params?: Record<string, any>): Promise<T> => {
-  const query = params ? new URLSearchParams(params).toString() : '';
-  const response = await fetch(`${API_BASE_URL}${endpoint}?${query}`, {
+  let query = '';
+  if (params) {
+    // Filtrar parâmetros undefined, null ou vazios
+    const filteredParams: Record<string, string> = {};
+    Object.entries(params).forEach(([key, value]) => {
+      if (value !== undefined && value !== null && value !== '') {
+        filteredParams[key] = String(value);
+      }
+    });
+    query = new URLSearchParams(filteredParams).toString();
+  }
+  
+  const url = query ? `${API_BASE_URL}${endpoint}?${query}` : `${API_BASE_URL}${endpoint}`;
+  const response = await fetch(url, {
     headers: getHeaders(),
     credentials: 'include',
   });

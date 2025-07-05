@@ -101,7 +101,8 @@ export class TvShowRepository extends BaseRepository<TvShow> {
       // Campos adicionais para a tela
       poster_image_url: posterImageUrl,
       backdrop_image_url: backdropImageUrl,
-      video_count: tvShow.video_count || 0
+      video_count: tvShow.video_count || 0,
+      authors: tvShow.authors || 'Sistema Portal'
     };
   }
 
@@ -127,28 +128,69 @@ export class TvShowRepository extends BaseRepository<TvShow> {
           'poster_file.sha256hex as poster_sha256hex',
           'poster_file.extension as poster_extension',
           'backdrop_file.sha256hex as backdrop_sha256hex',
-          'backdrop_file.extension as backdrop_extension'
+          'backdrop_file.extension as backdrop_extension',
+          // Incluir autores
+          this.db.raw(`
+            COALESCE(
+              STRING_AGG(DISTINCT author.name, ', '), 
+              'Sistema Portal'
+            ) as authors
+          `)
         )
         .leftJoin(
           this.db('video')
             .select('show_id')
             .count('* as video_count')
-            .whereNull('deleted')
+            .where("deleted", false)
             .groupBy('show_id')
             .as('video_counts'),
           'tv_show.id', 'video_counts.show_id'
         )
         .leftJoin('file as poster_file', 'tv_show.poster_image_id', 'poster_file.id')
         .leftJoin('file as backdrop_file', 'tv_show.backdrop_image_id', 'backdrop_file.id')
+        // Join com autores (usando o nome correto da coluna)
+        .leftJoin('tv_show_author', 'tv_show.id', 'tv_show_author.tv_show_authors_id')
+        .leftJoin('author', 'tv_show_author.author_id', 'author.id')
         .where(function() {
-          this.whereNull('tv_show.deleted').orWhere('tv_show.deleted', false);
+          this.where("tv_show.deleted", false);
         })
+        .groupBy(
+          'tv_show.id',
+          'tv_show.version',
+          'tv_show.api_id',
+          'tv_show.backdrop_image_id',
+          'tv_show.backdrop_path',
+          'tv_show.contract_term_end',
+          'tv_show.date_created',
+          'tv_show.deleted',
+          'tv_show.first_air_date',
+          'tv_show.imdb_id',
+          'tv_show.last_updated',
+          'tv_show.manual_input',
+          'tv_show.manual_support_id',
+          'tv_show.manual_support_path',
+          'tv_show.name',
+          'tv_show.original_language',
+          'tv_show.overview',
+          'tv_show.popularity',
+          'tv_show.poster_image_id',
+          'tv_show.poster_path',
+          'tv_show.producer',
+          'tv_show.vote_average',
+          'tv_show.vote_count',
+          'tv_show.total_load',
+          'video_counts.video_count',
+          'poster_file.sha256hex',
+          'poster_file.extension',
+          'backdrop_file.sha256hex',
+          'backdrop_file.extension'
+        )
         .timeout(20000); // 20 segundos timeout
       
       const countQuery = this.db(this.tableName)
         .count('* as total')
         .where(function() {
-          this.whereNull('tv_show.deleted').orWhere('tv_show.deleted', false);
+          this.where("tv_show.deleted", false);
         })
         .timeout(20000) // 20 segundos timeout
         .first();
@@ -219,12 +261,72 @@ export class TvShowRepository extends BaseRepository<TvShow> {
 
   async findByIdForApi(id: string): Promise<TvShowResponseDto | null> {
     try {
+      // Buscar dados do TV Show com autores
       const tvShow = await this.db(this.tableName)
-        .select('*')
-        .where('id', id)
+        .select(
+          'tv_show.*',
+          this.db.raw('COALESCE(video_counts.video_count, 0) as video_count'),
+          'poster_file.sha256hex as poster_sha256hex',
+          'poster_file.extension as poster_extension',
+          'backdrop_file.sha256hex as backdrop_sha256hex',
+          'backdrop_file.extension as backdrop_extension',
+          // Incluir autores
+          this.db.raw(`
+            COALESCE(
+              STRING_AGG(DISTINCT author.name, ', '), 
+              'Sistema Portal'
+            ) as authors
+          `)
+        )
+        .leftJoin(
+          this.db('video')
+            .select('show_id')
+            .count('* as video_count')
+            .where("deleted", false)
+            .groupBy('show_id')
+            .as('video_counts'),
+          'tv_show.id', 'video_counts.show_id'
+        )
+        .leftJoin('file as poster_file', 'tv_show.poster_image_id', 'poster_file.id')
+        .leftJoin('file as backdrop_file', 'tv_show.backdrop_image_id', 'backdrop_file.id')
+        // Join com autores (usando o nome correto da coluna)
+        .leftJoin('tv_show_author', 'tv_show.id', 'tv_show_author.tv_show_authors_id')
+        .leftJoin('author', 'tv_show_author.author_id', 'author.id')
+        .where('tv_show.id', id)
         .where(function() {
-          this.whereNull('deleted').orWhere('deleted', false);
+          this.where("tv_show.deleted", false);
         })
+        .groupBy(
+          'tv_show.id',
+          'tv_show.version',
+          'tv_show.api_id',
+          'tv_show.backdrop_image_id',
+          'tv_show.backdrop_path',
+          'tv_show.contract_term_end',
+          'tv_show.date_created',
+          'tv_show.deleted',
+          'tv_show.first_air_date',
+          'tv_show.imdb_id',
+          'tv_show.last_updated',
+          'tv_show.manual_input',
+          'tv_show.manual_support_id',
+          'tv_show.manual_support_path',
+          'tv_show.name',
+          'tv_show.original_language',
+          'tv_show.overview',
+          'tv_show.popularity',
+          'tv_show.poster_image_id',
+          'tv_show.poster_path',
+          'tv_show.producer',
+          'tv_show.vote_average',
+          'tv_show.vote_count',
+          'tv_show.total_load',
+          'video_counts.video_count',
+          'poster_file.sha256hex',
+          'poster_file.extension',
+          'backdrop_file.sha256hex',
+          'backdrop_file.extension'
+        )
         .timeout(20000) // 20 segundos timeout
         .first();
 
@@ -232,7 +334,19 @@ export class TvShowRepository extends BaseRepository<TvShow> {
         return null;
       }
 
-      return this.mapToResponseDto(tvShow);
+      // Mapear para DTO
+      const tvShowDto = this.mapToResponseDto(tvShow);
+      
+      // Buscar módulos e incluir na resposta
+      try {
+        const modules = await this.findModulesByTvShowId(id);
+        (tvShowDto as any).modules = modules;
+      } catch (error) {
+        console.warn('Erro ao buscar módulos, continuando sem eles:', error);
+        (tvShowDto as any).modules = {};
+      }
+
+      return tvShowDto;
     } catch (error) {
       console.error('Erro na query de TV Show por ID:', error);
       
@@ -275,7 +389,7 @@ export class TvShowRepository extends BaseRepository<TvShow> {
       
       // Buscar vídeos relacionados ao TV Show
       const videos = await this.db('video as v')
-        .leftJoin('video_file as vf', 'v.id', 'vf.video_id')
+        .leftJoin('video_file as vf', 'v.id', 'vf.video_files_id')
         .leftJoin('file as f', 'vf.file_id', 'f.id')
         .select(
           'v.id',
@@ -288,12 +402,12 @@ export class TvShowRepository extends BaseRepository<TvShow> {
           'v.still_path as thumbnail_url',
           'f.sha256hex as file_sha256hex',
           'f.extension as file_extension',
-          'f.filename as file_name',
-          'f.mimetype as file_mimetype',
+          'f.name as file_name',
+          'f.content_type as file_mimetype',
           'f.size as file_size'
         )
         .where('v.show_id', tvShowId)
-        .whereNull('v.deleted')
+        .where("deleted", false)
         .orderBy('v.season_number')
         .orderBy('v.episode_number')
         .timeout(20000);
@@ -314,10 +428,9 @@ export class TvShowRepository extends BaseRepository<TvShow> {
         // Construir URL do CloudFront se temos os dados do arquivo
         let videoUrl = null;
         if (video.file_sha256hex && video.file_extension) {
-          const cleanExtension = video.file_extension.toLowerCase().startsWith('.') 
-            ? video.file_extension.toLowerCase() 
-            : `.${video.file_extension.toLowerCase()}`;
-          videoUrl = `https://d26a2wm7tuz2gu.cloudfront.net/upload/${video.file_sha256hex}${cleanExtension}`;
+          const extension = this.cleanExtension(video.file_extension);
+          const extensionSuffix = extension ? `.${extension}` : '';
+          videoUrl = `https://d26a2wm7tuz2gu.cloudfront.net/upload/${video.file_sha256hex}${extensionSuffix}`;
         }
         
         modules[moduleKey].push({
@@ -352,7 +465,7 @@ export class TvShowRepository extends BaseRepository<TvShow> {
       console.log(`🎬 Buscando lista de vídeos para TV Show ID: ${tvShowId}`);
       
       const videos = await this.db('video as v')
-        .leftJoin('video_file as vf', 'v.id', 'vf.video_id')
+        .leftJoin('video_file as vf', 'v.id', 'vf.video_files_id')
         .leftJoin('file as f', 'vf.file_id', 'f.id')
         .select(
           'v.id',
@@ -365,12 +478,12 @@ export class TvShowRepository extends BaseRepository<TvShow> {
           'v.still_path as thumbnail_url',
           'f.sha256hex as file_sha256hex',
           'f.extension as file_extension',
-          'f.filename as file_name',
-          'f.mimetype as file_mimetype',
+          'f.name as file_name',
+          'f.content_type as file_mimetype',
           'f.size as file_size'
         )
         .where('v.show_id', tvShowId)
-        .whereNull('v.deleted')
+        .where("deleted", false)
         .orderBy('v.season_number')
         .orderBy('v.episode_number')
         .timeout(20000);
@@ -381,10 +494,9 @@ export class TvShowRepository extends BaseRepository<TvShow> {
       const mappedVideos = videos.map(video => {
         let videoUrl = null;
         if (video.file_sha256hex && video.file_extension) {
-          const cleanExtension = video.file_extension.toLowerCase().startsWith('.') 
-            ? video.file_extension.toLowerCase() 
-            : `.${video.file_extension.toLowerCase()}`;
-          videoUrl = `https://d26a2wm7tuz2gu.cloudfront.net/upload/${video.file_sha256hex}${cleanExtension}`;
+          const extension = this.cleanExtension(video.file_extension);
+          const extensionSuffix = extension ? `.${extension}` : '';
+          videoUrl = `https://d26a2wm7tuz2gu.cloudfront.net/upload/${video.file_sha256hex}${extensionSuffix}`;
         }
         
         return {
@@ -420,7 +532,7 @@ export class TvShowRepository extends BaseRepository<TvShow> {
       const videoCountResult = await this.db('video')
         .count('* as total')
         .where('show_id', tvShowId)
-        .whereNull('deleted')
+        .where("deleted", false)
         .timeout(20000)
         .first();
 
@@ -428,10 +540,10 @@ export class TvShowRepository extends BaseRepository<TvShow> {
 
       // Buscar contagem de arquivos
       const fileCountResult = await this.db('video as v')
-        .join('video_file as vf', 'v.id', 'vf.video_id')
+        .join('video_file as vf', 'v.id', 'vf.video_files_id')
         .count('vf.id as total')
         .where('v.show_id', tvShowId)
-        .whereNull('v.deleted')
+        .where("deleted", false)
         .timeout(20000)
         .first();
 

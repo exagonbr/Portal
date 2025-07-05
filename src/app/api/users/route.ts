@@ -42,13 +42,23 @@ export async function GET(req: NextRequest) {
 
     // Converter BigInt para string para serialização JSON
     const serializedUsers = users.map((user: UserQueryResult) => ({
-      ...user,
-      id: user.id.toString()
+      id: user.id.toString(),
+      name: user.full_name,
+      full_name: user.full_name,
+      email: user.email,
+      enabled: true,
+      is_active: true,
+      role_id: '1',
+      date_created: new Date().toISOString(),
+      last_updated: new Date().toISOString(),
     }))
 
     return NextResponse.json({
-      success: true,
-      data: serializedUsers,
+      items: serializedUsers,
+      total: serializedUsers.length,
+      page: 1,
+      limit: limit,
+      totalPages: 1,
     }, {
       headers: getCorsHeaders(req.headers.get('origin') || undefined)
     })

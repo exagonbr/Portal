@@ -77,4 +77,5 @@ export interface TvShowResponseDto extends BaseEntity {
   poster_image_url?: string;
   backdrop_image_url?: string;
   video_count?: number;
+  authors?: string;
 }

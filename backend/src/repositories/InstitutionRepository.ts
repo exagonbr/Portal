@@ -15,7 +15,7 @@ export interface Course {
 
 export class InstitutionRepository extends BaseRepository<Institution> {
   constructor() {
-    super('institutions');
+    super('institution');
   }
 
   async toggleStatus(id: string): Promise<Institution | null> {

@@ -1,40 +1,34 @@
-// Teste simples da API
-const testAPI = async () => {
+// Teste simples das APIs
+async function testAPIs() {
+  console.log('🧪 Testando APIs...\n');
+
+  // Teste da API de usuários
   try {
-    console.log('🔍 Testando API /api/tv-shows...')
-    
-    const response = await fetch('https://portal.sabercon.com.br/api/tv-shows?page=1&limit=5')
-    
-    console.log('Status:', response.status)
-    console.log('Status Text:', response.statusText)
-    console.log('Headers:', Object.fromEntries(response.headers.entries()))
-    
-    if (!response.ok) {
-      console.log('❌ Erro na resposta:', response.status, response.statusText)
-      const errorText = await response.text()
-      console.log('Erro detalhado:', errorText)
-      return
-    }
-    
-    const data = await response.json()
-    console.log('✅ Dados recebidos:', {
-      success: data.success,
-      message: data.message,
-      dataKeys: data.data ? Object.keys(data.data) : null,
-      tvShowsCount: data.data?.tvShows?.length || 0
-    })
-    
-    if (data.data?.tvShows?.length > 0) {
-      console.log('📺 Primeira coleção:', {
-        id: data.data.tvShows[0].id,
-        name: data.data.tvShows[0].name,
-        video_count: data.data.tvShows[0].video_count
-      })
-    }
-    
+    console.log('📋 Testando API de usuários...');
+    const usersResponse = await fetch('http://localhost:3003/api/users?limit=5');
+    const usersData = await usersResponse.json();
+    console.log('✅ API de usuários:', usersData);
+    console.log('   - Items:', usersData.items?.length || 0);
+    console.log('   - Total:', usersData.total || 0);
   } catch (error) {
-    console.log('❌ Erro na requisição:', error.message)
+    console.log('❌ Erro na API de usuários:', error.message);
   }
+
+  console.log('\n' + '─'.repeat(50) + '\n');
+
+  // Teste da API de certificados
+  try {
+    console.log('🏆 Testando API de certificados...');
+    const certsResponse = await fetch('http://localhost:3003/api/certificates?limit=5');
+    const certsData = await certsResponse.json();
+    console.log('✅ API de certificados:', certsData);
+    console.log('   - Items:', certsData.items?.length || 0);
+    console.log('   - Total:', certsData.total || 0);
+  } catch (error) {
+    console.log('❌ Erro na API de certificados:', error.message);
+  }
+
+  console.log('\n🎉 Teste concluído!');
 }
 
-testAPI() 
+testAPIs(); 

@@ -26,8 +26,8 @@ const mapToInstitutionDto = (data: InstitutionResponseDto): InstitutionDto => ({
   type: data.has_principal_platform ? InstitutionType.UNIVERSITY : InstitutionType.SCHOOL, // Lógica de exemplo
   nature: InstitutionNature.PRIVATE, // Valor padrão
   description: `Institution ${data.name}`,
-  email: `contact@${data.name.toLowerCase().replace(/\s/g, '')}.com`,
-  phone: data.accountable_contact,
+  email: data.accountable_contact || `contact@${data.name.toLowerCase().replace(/\s/g, '')}.com`,
+  phone: data.accountable_contact || '',
   website: `www.${data.name.toLowerCase().replace(/\s/g, '')}.com`,
   address: data.street,
   city: data.district,
@@ -37,8 +37,8 @@ const mapToInstitutionDto = (data: InstitutionResponseDto): InstitutionDto => ({
   is_active: !data.deleted,
   created_at: data.date_created || new Date().toISOString(),
   updated_at: data.last_updated || new Date().toISOString(),
-  schools_count: 0, // A API não parece fornecer isto
-  users_count: 0, // A API não parece fornecer isto
+  schools_count: 0, // A API não parece fornecer isto - será calculado separadamente
+  users_count: 0, // A API não parece fornecer isto - será calculado separadamente
 });
 
 // Parâmetros de filtro para getInstitutions

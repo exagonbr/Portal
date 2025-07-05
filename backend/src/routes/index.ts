@@ -110,13 +110,13 @@ router.get('/video-file/:videoId', requireAuth, async (req, res) => {
     
     // Buscar dados do arquivo associado ao vídeo
     const fileData = await req.app.locals.db('video as v')
-      .join('video_file as vf', 'v.id', 'vf.video_id')
+      .join('video_file as vf', 'v.id', 'vf.video_files_id')
       .join('file as f', 'vf.file_id', 'f.id')
       .select(
         'f.sha256hex',
         'f.extension',
-        'f.filename',
-        'f.mimetype',
+        'f.name as filename',
+        'f.content_type as mimetype',
         'f.size'
       )
       .where('v.id', videoId)

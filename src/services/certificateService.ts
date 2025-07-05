@@ -27,6 +27,19 @@ const mapToCertificateDto = (data: ApiCertificateResponseDto): CertificateDto =>
 
 export const getCertificates = async (params: CertificateFilter): Promise<PaginatedResponse<CertificateDto>> => {
   const response = await apiGet<PaginatedResponse<ApiCertificateResponseDto>>('/certificates', params);
+  
+  // Verificar se a resposta tem o formato esperado
+  if (!response || !response.items || !Array.isArray(response.items)) {
+    console.warn('Resposta da API de certificados não tem o formato esperado:', response);
+    return {
+      items: [],
+      total: 0,
+      page: 1,
+      limit: 10,
+      totalPages: 0,
+    };
+  }
+  
   return {
     ...response,
     items: response.items.map(mapToCertificateDto),

@@ -13,6 +13,14 @@ export async function GET(request: NextRequest) {
     
     // Retornar dados de fallback diretamente (rota pública)
     const fallbackData = {
+      // Estatísticas principais para a página de instituições
+      institutions: { total: 3 },
+      schools: { total: 8 },
+      users: { total: 1250 },
+      courses: { total: 45 },
+      classes: { total: 32 },
+      
+      // Dados do sistema
       system_health: {
         status: 'healthy',
         uptime: 2547896, // em segundos

@@ -70,3 +70,5 @@ export const schoolService = {
   deleteSchool,
   toggleSchoolStatus,
 };
+
+export default schoolService;

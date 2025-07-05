@@ -3,6 +3,8 @@
 import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import institutionService from '@/services/institutionService'
+import { dashboardService } from '@/services/dashboardService'
+import schoolService from '@/services/schoolService'
 import { InstitutionDto, InstitutionType } from '@/types/institution'
 import { useToast } from '@/components/ToastManager'
 import { InstitutionModalNew } from '@/components/modals/InstitutionModalNew'
@@ -56,34 +58,46 @@ export default function ManageInstitutions() {
     }
   })
 
-  const getMockInstitutions = (page: number, limit: number, search: string) => {
-    const allInstitutions: InstitutionDto[] = Array.from({ length: 53 }, (_, i) => ({
-      id: (i + 1).toString(),
-      name: `Instituição de Exemplo ${i + 1}`,
-      code: `IE${String(i + 1).padStart(3, '0')}`,
-      type: [InstitutionType.SCHOOL, InstitutionType.COLLEGE, InstitutionType.UNIVERSITY, InstitutionType.TECH_CENTER][i % 4],
-      is_active: i % 5 !== 0, // 1 a cada 5 inativa
-      schools_count: Math.floor(Math.random() * 10) + 1,
-      users_count: Math.floor(Math.random() * 500) + 50,
-      city: `Cidade ${i + 1}`,
-      state: ['SP', 'RJ', 'MG', 'BA'][i % 4],
-      email: `contato@instituicao${i + 1}.com`,
-      phone: `(11) 98765-43${String(i + 1).padStart(2, '0')}`,
-      created_at: new Date().toISOString(),
-      updated_at: new Date().toISOString(),
-    }));
-
-    const filteredInstitutions = allInstitutions.filter(inst =>
-      inst.name.toLowerCase().includes(search.toLowerCase()) ||
-      inst.code.toLowerCase().includes(search.toLowerCase())
-    );
-
-    const paginatedInstitutions = filteredInstitutions.slice((page - 1) * limit, page * limit);
-
-    return {
-      items: paginatedInstitutions,
-      total: filteredInstitutions.length,
-    };
+  const enrichInstitutionsWithSchoolData = async (institutions: InstitutionDto[]): Promise<InstitutionDto[]> => {
+    // Por enquanto, vamos comentar o enriquecimento para evitar erros
+    // e usar os dados básicos das instituições
+    console.log('📝 Usando dados básicos das instituições (sem enriquecimento por enquanto)');
+    return institutions;
+    
+    /* TODO: Implementar enriquecimento quando a API de escolas estiver funcionando
+    try {
+      const enrichedInstitutions = await Promise.all(
+        institutions.map(async (institution) => {
+          try {
+            // Buscar escolas da instituição
+            const schoolsResponse = await schoolService.getSchools({
+              institution_id: institution.id,
+              page: 1,
+              limit: 1000 // Buscar todas as escolas da instituição
+            });
+            
+            // Calcular totais de estudantes e professores
+            const totalStudents = schoolsResponse.items.reduce((sum, school) => sum + (school.students_count || 0), 0);
+            const totalTeachers = schoolsResponse.items.reduce((sum, school) => sum + (school.teachers_count || 0), 0);
+            
+            return {
+              ...institution,
+              schools_count: schoolsResponse.total || 0,
+              users_count: totalStudents + totalTeachers
+            };
+          } catch (error) {
+            console.warn(`⚠️ Erro ao buscar dados da instituição ${institution.name}:`, error);
+            return institution; // Retornar instituição original se houver erro
+          }
+        })
+      );
+      
+      return enrichedInstitutions;
+    } catch (error) {
+      console.warn('⚠️ Erro ao enriquecer dados das instituições:', error);
+      return institutions; // Retornar instituições originais se houver erro
+    }
+    */
   };
 
   const fetchInstitutions = async (page = 1, search = '', showLoadingIndicator = true) => {
@@ -93,27 +107,36 @@ export default function ManageInstitutions() {
       setRefreshing(true);
     }
 
-    // Simular atraso da API
-    await new Promise(resolve => setTimeout(resolve, 500));
-
     try {
-      const response = getMockInstitutions(page, itemsPerPage, search);
+      const params: any = {
+        page,
+        limit: itemsPerPage
+      };
       
-      console.log('📊 Mock response:', response);
+      // Só adicionar parâmetros se eles tiverem valor
+      if (search && search.trim()) {
+        params.search = search.trim();
+      }
       
-      setInstitutions(response.items || []);
+      const response = await institutionService.getInstitutions(params);
+      
+      console.log('📊 API response:', response);
+      
+      // Enriquecer instituições com dados de escolas
+      const enrichedInstitutions = await enrichInstitutionsWithSchoolData(response.items || []);
+      
+      setInstitutions(enrichedInstitutions);
       setTotalItems(response.total || 0);
       setCurrentPage(page);
 
-      // Calcular estatísticas com todos os dados mocados para uma visão geral
-      const allMockData = getMockInstitutions(1, 100, '').items;
-      calculateStats(allMockData);
+      // Buscar estatísticas do dashboard
+      await fetchDashboardStats();
       
       if (!showLoadingIndicator) {
         showSuccess("Atualizado", "Lista de instituições atualizada com sucesso!");
       }
     } catch (error) {
-      console.log('❌ Erro ao carregar instituições mocadas:', error);
+      console.error('❌ Erro ao carregar instituições:', error);
       showError("Erro ao carregar instituições", "Não foi possível carregar a lista de instituições.");
     } finally {
       setLoading(false);
@@ -121,26 +144,68 @@ export default function ManageInstitutions() {
     }
   };
 
-  const calculateStats = (institutions: InstitutionDto[]) => {
-    const totalInstitutions = institutions.length
-    const activeInstitutions = institutions.filter(inst => inst.is_active).length
-    
-    // Somar escolas reais das instituições
-    const totalSchools = institutions.reduce((total, inst) => {
-      return total + (inst.schools_count || 0)
-    }, 0)
+  const fetchDashboardStats = async () => {
+    try {
+      const dashboardData = await dashboardService.getSystemDashboardData();
+      
+      // Calcular estatísticas com base nos dados do dashboard
+      const totalInstitutions = dashboardData.institutions?.total || 0;
+      const totalSchools = dashboardData.schools?.total || 0;
+      const totalUsers = dashboardData.users?.total || 0;
 
-    // Somar usuários reais das instituições
-    const totalUsers = institutions.reduce((total, inst) => total + (inst.users_count || 0), 0)
+      // Calcular instituições ativas com base nos dados atuais
+      const activeInstitutions = institutions.filter(inst => inst.is_active).length;
+      
+      // Calcular distribuição de usuários por role (usando proporções típicas)
+      const usersByRole = {
+        STUDENT: Math.floor(totalUsers * 0.7), // 70% estudantes
+        TEACHER: Math.floor(totalUsers * 0.15), // 15% professores
+        COORDINATOR: Math.floor(totalUsers * 0.05), // 5% coordenadores
+        ADMIN: Math.floor(totalUsers * 0.03), // 3% administradores
+        PARENT: Math.floor(totalUsers * 0.07) // 7% responsáveis
+      };
+
+      setStats({
+        totalInstitutions,
+        activeInstitutions,
+        totalSchools,
+        totalUsers,
+        usersByRole
+      });
+      
+      console.log('📊 Estatísticas do dashboard carregadas:', {
+        totalInstitutions,
+        activeInstitutions,
+        totalSchools,
+        totalUsers
+      });
+    } catch (error) {
+      console.warn('⚠️ Erro ao carregar estatísticas do dashboard:', error);
+      // Manter estatísticas baseadas apenas nos dados das instituições carregadas
+      calculateStatsFromInstitutions();
+    }
+  };
+
+  const calculateStatsFromInstitutions = () => {
+    const totalInstitutions = institutions.length;
+    const activeInstitutions = institutions.filter(inst => inst.is_active).length;
     
-    // Calcular distribuição de usuários por role (usando proporções típicas se não houver dados específicos)
+    // Somar escolas das instituições
+    const totalSchools = institutions.reduce((total, inst) => {
+      return total + (inst.schools_count || 0);
+    }, 0);
+
+    // Somar usuários das instituições
+    const totalUsers = institutions.reduce((total, inst) => total + (inst.users_count || 0), 0);
+    
+    // Calcular distribuição de usuários por role (usando proporções típicas)
     const usersByRole = {
       STUDENT: Math.floor(totalUsers * 0.7), // 70% estudantes
       TEACHER: Math.floor(totalUsers * 0.15), // 15% professores
       COORDINATOR: Math.floor(totalUsers * 0.05), // 5% coordenadores
       ADMIN: Math.floor(totalUsers * 0.03), // 3% administradores
       PARENT: Math.floor(totalUsers * 0.07) // 7% responsáveis
-    }
+    };
 
     setStats({
       totalInstitutions,
@@ -148,12 +213,19 @@ export default function ManageInstitutions() {
       totalSchools,
       totalUsers,
       usersByRole
-    })
-  }
+    });
+  };
 
   useEffect(() => {
     fetchInstitutions(currentPage, searchQuery)
   }, [currentPage])
+
+  // Recalcular estatísticas quando as instituições mudarem
+  useEffect(() => {
+    if (institutions.length > 0) {
+      calculateStatsFromInstitutions()
+    }
+  }, [institutions])
 
   const handleSearch = (e: React.FormEvent) => {
     e.preventDefault()
@@ -195,7 +267,7 @@ export default function ManageInstitutions() {
       // Recarregar a lista
       await fetchInstitutions(currentPage, searchQuery, false)
     } catch (error) {
-      console.log('❌ Erro ao excluir instituição:', error)
+      console.error('❌ Erro ao excluir instituição:', error)
       showError("Erro ao excluir instituição", "Não foi possível excluir a instituição.")
     } finally {
       setLoading(false)
@@ -251,7 +323,7 @@ export default function ManageInstitutions() {
       // Recarregar a lista para garantir sincronização completa
       await fetchInstitutions(currentPage, searchQuery, false)
     } catch (error) {
-      console.log('❌ Erro ao salvar instituição:', error)
+      console.error('❌ Erro ao salvar instituição:', error)
       showError("Erro ao salvar instituição", "Não foi possível salvar a instituição.")
     } finally {
       setLoading(false)
@@ -281,10 +353,16 @@ export default function ManageInstitutions() {
           ? { ...inst, is_active: updatedInstitution.is_active }
           : inst
       )
-      calculateStats(updatedInstitutions)
+      
+      // Atualizar stats baseado nos dados atualizados
+      const activeInstitutions = updatedInstitutions.filter(inst => inst.is_active).length
+      setStats(prevStats => ({
+        ...prevStats,
+        activeInstitutions
+      }))
       
     } catch (error) {
-      console.log('❌ Erro ao alterar status da instituição:', error)
+      console.error('❌ Erro ao alterar status da instituição:', error)
       showError("Erro ao alterar status", "Não foi possível alterar o status da instituição.")
     } finally {
       setLoading(false)
