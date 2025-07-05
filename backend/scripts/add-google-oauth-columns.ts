@@ -6,6 +6,15 @@ import dotenv from 'dotenv';
 // Carrega variáveis de ambiente
 dotenv.config();
 
+// Interface para definir as colunas
+interface ColumnDefinition {
+  name: string;
+  type: 'string' | 'text' | 'timestamp' | 'date' | 'boolean' | 'integer' | 'bigint' | 'json' | 'uuid';
+  length?: number;
+  unique?: boolean;
+  default?: any;
+}
+
 // Função para verificar se uma tabela existe
 async function tableExists(db: Knex, tableName: string): Promise<boolean> {
   return db.schema.hasTable(tableName);
@@ -29,7 +38,7 @@ async function addGoogleOAuthColumns(db: Knex, tableName: string): Promise<boole
     }
     
     // Lista de colunas OAuth do Google e perfil para adicionar
-    const googleColumns = [
+    const googleColumns: ColumnDefinition[] = [
       // Colunas OAuth Google
       { name: 'google_id', type: 'string', length: 255, unique: true },
       { name: 'google_email', type: 'string', length: 255 },
