@@ -110,13 +110,85 @@ async function tableExists(db: Knex, tableName: string): Promise<boolean> {
   return db.schema.hasTable(tableName);
 }
 
-// Função para criar a tabela user se não existir
-async function createUserTableIfNotExists(db: Knex): Promise<void> {
-  const userTableExists = await tableExists(db, 'user');
+// Função para criar as tabelas necessárias se não existirem
+async function createRequiredTablesIfNotExist(db: Knex): Promise<void> {
+  console.log('🏗️ Verificando e criando tabelas necessárias...');
   
+  // Criar tabela roles se não existir
+  const rolesTableExists = await tableExists(db, 'roles');
+  if (!rolesTableExists) {
+    console.log('   📋 Criando tabela roles...');
+    await db.schema.createTable('roles', (table) => {
+      table.uuid('id').primary().defaultTo(db.raw('gen_random_uuid()'));
+      table.string('name', 100).unique().notNullable();
+      table.string('description', 255).nullable();
+      table.string('type', 50).defaultTo('system');
+      table.string('status', 50).defaultTo('active');
+      table.boolean('is_active').defaultTo(true);
+      table.integer('user_count').defaultTo(0);
+      table.timestamp('created_at').defaultTo(db.fn.now());
+      table.timestamp('updated_at').defaultTo(db.fn.now());
+      
+      table.index('name');
+      table.index('is_active');
+      table.index('status');
+    });
+    console.log('   ✅ Tabela roles criada!');
+  } else {
+    console.log('   ℹ️  Tabela roles já existe');
+  }
+  
+  // Criar tabela permissions se não existir
+  const permissionsTableExists = await tableExists(db, 'permissions');
+  if (!permissionsTableExists) {
+    console.log('   🔐 Criando tabela permissions...');
+    await db.schema.createTable('permissions', (table) => {
+      table.uuid('id').primary().defaultTo(db.raw('gen_random_uuid()'));
+      table.string('name', 100).unique().notNullable();
+      table.string('description', 255).nullable();
+      table.string('category', 100).nullable();
+      table.string('resource', 100).nullable();
+      table.string('action', 100).nullable();
+      table.boolean('is_active').defaultTo(true);
+      table.timestamp('created_at').defaultTo(db.fn.now());
+      table.timestamp('updated_at').defaultTo(db.fn.now());
+      
+      table.index('name');
+      table.index('category');
+      table.index('is_active');
+    });
+    console.log('   ✅ Tabela permissions criada!');
+  } else {
+    console.log('   ℹ️  Tabela permissions já existe');
+  }
+  
+  // Criar tabela role_permissions se não existir
+  const rolePermissionsTableExists = await tableExists(db, 'role_permissions');
+  if (!rolePermissionsTableExists) {
+    console.log('   🔗 Criando tabela role_permissions...');
+    await db.schema.createTable('role_permissions', (table) => {
+      table.uuid('id').primary().defaultTo(db.raw('gen_random_uuid()'));
+      table.uuid('role_id').notNullable();
+      table.uuid('permission_id').notNullable();
+      table.timestamp('created_at').defaultTo(db.fn.now());
+      table.timestamp('updated_at').defaultTo(db.fn.now());
+      
+      table.foreign('role_id').references('id').inTable('roles').onDelete('CASCADE');
+      table.foreign('permission_id').references('id').inTable('permissions').onDelete('CASCADE');
+      table.unique(['role_id', 'permission_id']);
+      
+      table.index('role_id');
+      table.index('permission_id');
+    });
+    console.log('   ✅ Tabela role_permissions criada!');
+  } else {
+    console.log('   ℹ️  Tabela role_permissions já existe');
+  }
+  
+  // Criar tabela user se não existir
+  const userTableExists = await tableExists(db, 'user');
   if (!userTableExists) {
-    console.log('🏗️ Criando tabela user...');
-    
+    console.log('   👤 Criando tabela user...');
     await db.schema.createTable('user', (table) => {
       // Chave primária
       table.uuid('id').primary().defaultTo(db.raw('gen_random_uuid()'));
@@ -168,9 +240,12 @@ async function createUserTableIfNotExists(db: Knex): Promise<void> {
       table.index('role_id');
       table.index('institution_id');
       table.index('is_active');
+      
+      // Foreign keys
+      table.foreign('role_id').references('id').inTable('roles').onDelete('SET NULL');
+      table.foreign('institution_id').references('id').inTable('institution').onDelete('SET NULL');
     });
-    
-    console.log('   ✅ Tabela user criada com sucesso!');
+    console.log('   ✅ Tabela user criada!');
   } else {
     console.log('   ℹ️  Tabela user já existe');
   }
@@ -245,6 +320,94 @@ async function createDefaultInstitutions(db: Knex): Promise<{ sabercon: string; 
   return { sabercon: saberconId, ifsp: ifspId };
 }
 
+// Função para criar permissões padrão
+async function createDefaultPermissions(db: Knex): Promise<Record<string, string>> {
+  console.log('🔐 Criando permissões padrão...');
+  
+  const permissionsExists = await tableExists(db, 'permissions');
+  if (!permissionsExists) {
+    console.log('⚠️  Tabela permissions não encontrada, pulando criação de permissões');
+    return {};
+  }
+  
+  const defaultPermissions = [
+    // System Management
+    { name: 'system.manage', description: 'Gerenciar sistema', category: 'system', resource: 'system', action: 'manage' },
+    { name: 'system.view', description: 'Visualizar sistema', category: 'system', resource: 'system', action: 'view' },
+    
+    // Institution Management
+    { name: 'institution.manage', description: 'Gerenciar instituições', category: 'institution', resource: 'institution', action: 'manage' },
+    { name: 'institution.view', description: 'Visualizar instituições', category: 'institution', resource: 'institution', action: 'view' },
+    
+    // User Management
+    { name: 'users.manage', description: 'Gerenciar usuários', category: 'users', resource: 'users', action: 'manage' },
+    { name: 'users.view', description: 'Visualizar usuários', category: 'users', resource: 'users', action: 'view' },
+    { name: 'users.create', description: 'Criar usuários', category: 'users', resource: 'users', action: 'create' },
+    { name: 'users.edit', description: 'Editar usuários', category: 'users', resource: 'users', action: 'edit' },
+    { name: 'users.delete', description: 'Excluir usuários', category: 'users', resource: 'users', action: 'delete' },
+    
+    // School Management
+    { name: 'schools.manage', description: 'Gerenciar escolas', category: 'schools', resource: 'schools', action: 'manage' },
+    { name: 'schools.view', description: 'Visualizar escolas', category: 'schools', resource: 'schools', action: 'view' },
+    
+    // Classes Management
+    { name: 'classes.manage', description: 'Gerenciar turmas', category: 'classes', resource: 'classes', action: 'manage' },
+    { name: 'classes.view', description: 'Visualizar turmas', category: 'classes', resource: 'classes', action: 'view' },
+    { name: 'classes.teach', description: 'Lecionar turmas', category: 'classes', resource: 'classes', action: 'teach' },
+    
+    // Curriculum Management
+    { name: 'curriculum.manage', description: 'Gerenciar currículo', category: 'curriculum', resource: 'curriculum', action: 'manage' },
+    { name: 'curriculum.view', description: 'Visualizar currículo', category: 'curriculum', resource: 'curriculum', action: 'view' },
+    
+    // Grades Management
+    { name: 'grades.manage', description: 'Gerenciar notas', category: 'grades', resource: 'grades', action: 'manage' },
+    { name: 'grades.view', description: 'Visualizar notas', category: 'grades', resource: 'grades', action: 'view' },
+    
+    // Attendance Management
+    { name: 'attendance.manage', description: 'Gerenciar frequência', category: 'attendance', resource: 'attendance', action: 'manage' },
+    { name: 'attendance.view', description: 'Visualizar frequência', category: 'attendance', resource: 'attendance', action: 'view' },
+    
+    // Reports
+    { name: 'reports.view', description: 'Visualizar relatórios', category: 'reports', resource: 'reports', action: 'view' },
+    { name: 'reports.generate', description: 'Gerar relatórios', category: 'reports', resource: 'reports', action: 'generate' },
+    
+    // Materials
+    { name: 'materials.manage', description: 'Gerenciar materiais', category: 'materials', resource: 'materials', action: 'manage' },
+    { name: 'materials.view', description: 'Visualizar materiais', category: 'materials', resource: 'materials', action: 'view' },
+    
+    // Communication
+    { name: 'communication.send', description: 'Enviar comunicações', category: 'communication', resource: 'communication', action: 'send' },
+    { name: 'communication.view', description: 'Visualizar comunicações', category: 'communication', resource: 'communication', action: 'view' }
+  ];
+  
+  const permissionMap: Record<string, string> = {};
+  
+  for (const permission of defaultPermissions) {
+    const existing = await db('permissions').where('name', permission.name).first();
+    
+    if (existing) {
+      permissionMap[permission.name] = existing.id;
+    } else {
+      const [newPermission] = await db('permissions').insert({
+        id: uuidv4(),
+        name: permission.name,
+        description: permission.description,
+        category: permission.category,
+        resource: permission.resource,
+        action: permission.action,
+        is_active: true,
+        created_at: new Date(),
+        updated_at: new Date()
+      }).returning('id');
+      
+      permissionMap[permission.name] = newPermission.id || newPermission;
+      console.log(`   ✅ Permissão ${permission.name} criada`);
+    }
+  }
+  
+  return permissionMap;
+}
+
 // Função para criar roles padrão
 async function createDefaultRoles(db: Knex): Promise<Record<string, string>> {
   console.log('🎭 Criando roles padrão...');
@@ -276,7 +439,10 @@ async function createDefaultRoles(db: Knex): Promise<Record<string, string>> {
         id: uuidv4(),
         name: role.name,
         description: role.description,
+        type: 'system',
+        status: 'active',
         is_active: true,
+        user_count: 0,
         created_at: new Date(),
         updated_at: new Date()
       }).returning('id');
@@ -287,6 +453,92 @@ async function createDefaultRoles(db: Knex): Promise<Record<string, string>> {
   }
   
   return roleMap;
+}
+
+// Função para associar permissões às roles
+async function assignPermissionsToRoles(db: Knex, roleMap: Record<string, string>, permissionMap: Record<string, string>): Promise<void> {
+  console.log('🔗 Associando permissões às roles...');
+  
+  const rolePermissionsExists = await tableExists(db, 'role_permissions');
+  if (!rolePermissionsExists) {
+    console.log('⚠️  Tabela role_permissions não encontrada, pulando associação de permissões');
+    return;
+  }
+  
+  // Definir permissões por role
+  const rolePermissions = {
+    'SYSTEM_ADMIN': Object.keys(permissionMap), // SYSTEM_ADMIN tem TODAS as permissões
+    'INSTITUTION_MANAGER': [
+      'institution.view',
+      'users.manage', 'users.view', 'users.create', 'users.edit',
+      'schools.manage', 'schools.view',
+      'classes.manage', 'classes.view',
+      'curriculum.manage', 'curriculum.view',
+      'grades.view',
+      'attendance.view',
+      'reports.view', 'reports.generate',
+      'materials.manage', 'materials.view',
+      'communication.send', 'communication.view'
+    ],
+    'COORDINATOR': [
+      'classes.manage', 'classes.view',
+      'curriculum.manage', 'curriculum.view',
+      'grades.view',
+      'attendance.view',
+      'reports.view',
+      'materials.view',
+      'communication.send', 'communication.view'
+    ],
+    'TEACHER': [
+      'classes.view', 'classes.teach',
+      'curriculum.view',
+      'grades.manage', 'grades.view',
+      'attendance.manage', 'attendance.view',
+      'materials.manage', 'materials.view',
+      'communication.send', 'communication.view'
+    ],
+    'STUDENT': [
+      'classes.view',
+      'curriculum.view',
+      'grades.view',
+      'attendance.view',
+      'materials.view',
+      'communication.view'
+    ],
+    'GUARDIAN': [
+      'grades.view',
+      'attendance.view',
+      'communication.view'
+    ]
+  };
+  
+  for (const [roleName, permissions] of Object.entries(rolePermissions)) {
+    const roleId = roleMap[roleName];
+    if (!roleId) continue;
+    
+    for (const permissionName of permissions) {
+      const permissionId = permissionMap[permissionName];
+      if (!permissionId) continue;
+      
+      // Verificar se a associação já existe
+      const existing = await db('role_permissions')
+        .where('role_id', roleId)
+        .where('permission_id', permissionId)
+        .first();
+      
+      if (!existing) {
+        await db('role_permissions').insert({
+          id: uuidv4(),
+          role_id: roleId,
+          permission_id: permissionId,
+          created_at: new Date(),
+          updated_at: new Date()
+        });
+      }
+    }
+    
+    console.log(`   ✅ Permissões associadas à role ${roleName}`);
+  }
 }
 
 // Função para criar usuário em uma tabela específica
@@ -436,11 +688,17 @@ async function createDefaultUsers(): Promise<void> {
     // Criar instituições padrão
     const institutions = await createDefaultInstitutions(db);
     
+    // Criar tabelas necessárias se não existirem
+    await createRequiredTablesIfNotExist(db);
+    
+    // Criar permissões padrão
+    const permissionMap = await createDefaultPermissions(db);
+    
     // Criar roles padrão
     const roleMap = await createDefaultRoles(db);
     
-    // Criar tabela user se não existir
-    await createUserTableIfNotExists(db);
+    // Associar permissões às roles
+    await assignPermissionsToRoles(db, roleMap, permissionMap);
     
     // Verificar quais tabelas de usuários existem
     const userTables = [];

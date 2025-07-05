@@ -63,11 +63,69 @@ node scripts/create-default-users.js
    - TEACHER
    - STUDENT
    - GUARDIAN
-4. **Detectam automaticamente** quais tabelas de usuários existem:
+4. **Criam a tabela `user`** se ela não existir com estrutura completa:
+   - Campos básicos (email, password, name, etc.)
+   - Campos de roles (is_admin, is_teacher, etc.)
+   - Campos de status (is_active, enabled, etc.)
+   - Relacionamentos (role_id, institution_id)
+   - Timestamps automáticos
+5. **Detectam automaticamente** quais tabelas de usuários existem:
    - `users` (tabela principal)
-   - `user` (tabela legada)
-5. **Criam usuários** com senhas hasheadas usando bcrypt
-6. **Associam usuários** às instituições e roles apropriadas
+   - `user` (tabela legada/criada automaticamente)
+6. **Criam usuários** com senhas hasheadas usando bcrypt
+7. **Associam usuários** às instituições e roles apropriadas
+
+## 🗃️ Estrutura da Tabela `user` Criada
+
+Se a tabela `user` não existir, o script criará com a seguinte estrutura:
+
+```sql
+CREATE TABLE "user" (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  
+  -- Campos básicos
+  email VARCHAR(255) UNIQUE NOT NULL,
+  password VARCHAR(255),
+  name VARCHAR(255),
+  full_name VARCHAR(255),
+  username VARCHAR(255) UNIQUE,
+  
+  -- Campos de role (booleanos)
+  is_admin BOOLEAN DEFAULT false,
+  is_manager BOOLEAN DEFAULT false,
+  is_coordinator BOOLEAN DEFAULT false,
+  is_teacher BOOLEAN DEFAULT false,
+  is_student BOOLEAN DEFAULT false,
+  is_guardian BOOLEAN DEFAULT false,
+  
+  -- Campos de status
+  is_active BOOLEAN DEFAULT true,
+  enabled BOOLEAN DEFAULT true,
+  account_expired BOOLEAN DEFAULT false,
+  account_locked BOOLEAN DEFAULT false,
+  password_expired BOOLEAN DEFAULT false,
+  deleted BOOLEAN DEFAULT false,
+  reset_password BOOLEAN DEFAULT false,
+  
+  -- Relacionamentos
+  role_id UUID,
+  institution_id UUID,
+  
+  -- Campos adicionais
+  address VARCHAR(255),
+  phone VARCHAR(255),
+  usuario VARCHAR(255),
+  endereco TEXT,
+  telefone VARCHAR(255),
+  unidade_ensino VARCHAR(255),
+  
+  -- Timestamps
+  created_at TIMESTAMP DEFAULT NOW(),
+  updated_at TIMESTAMP DEFAULT NOW(),
+  date_created TIMESTAMP DEFAULT NOW(),
+  last_updated TIMESTAMP DEFAULT NOW()
+);
+```
 
 ## 🔍 Detecção Automática de Estrutura
 
@@ -139,6 +197,9 @@ Os scripts são inteligentes e se adaptam automaticamente à estrutura do banco:
    ✅ Role SYSTEM_ADMIN criada
    ✅ Role TEACHER criada
    ✅ Role STUDENT criada
+
+🏗️ Criando tabela user...
+   ✅ Tabela user criada com sucesso!
 
 📋 Tabelas de usuários encontradas: users, user
 
