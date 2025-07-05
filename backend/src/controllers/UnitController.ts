@@ -61,8 +61,11 @@ class UnitController extends BaseController<Unit> {
                 return res.status(404).json({ success: false, message: 'Unit not found' });
             }
             
-    async delete(req: Request, res: Response) {
-        res.status(204).send();
+            return res.status(200).json({ success: true, message: 'Unit soft deleted successfully' });
+        } catch (error) {
+            console.error(`Error in softDelete: ${error}`);
+            return res.status(500).json({ success: false, message: 'Internal Server Error' });
+        }
     }
 }
 

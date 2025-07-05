@@ -1,4 +1,5 @@
-import { BookRepository, Book } from '../repositories/BookRepository';
+import { BookRepository } from '../repositories/BookRepository';
+import { Book } from '../entities/Book';
 import { BaseController } from './BaseController';
 
 const bookRepository = new BookRepository();

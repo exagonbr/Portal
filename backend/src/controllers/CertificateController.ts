@@ -1,5 +1,6 @@
 import { Request, Response } from 'express';
-import { CertificateRepository, Certificate } from '../repositories/CertificateRepository';
+import { CertificateRepository } from '../repositories/CertificateRepository';
+import { Certificate } from '../entities/Certificate';
 import { BaseController } from './BaseController';
 
 const certificateRepository = new CertificateRepository();

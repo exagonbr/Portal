@@ -81,4 +81,22 @@ export class SchoolRepository extends BaseRepository<School> {
 
     return { data, total };
   }
+
+  async toggleStatus(id: string): Promise<School | null> {
+    try {
+      const school = await this.findById(id);
+      if (!school) {
+        return null;
+      }
+
+      // Assumindo que a entidade School tem um campo 'isActive' 
+      const newActiveStatus = !school.isActive;
+      const updatedSchool = await this.update(parseInt(id), { isActive: newActiveStatus } as UpdateSchoolData);
+      
+      return updatedSchool;
+    } catch (error) {
+      console.error('Erro ao alternar status da School:', error);
+      throw error;
+    }
+  }
 }

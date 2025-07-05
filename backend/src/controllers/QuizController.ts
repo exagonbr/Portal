@@ -1,6 +1,15 @@
 import { Request, Response } from 'express';
+import { BaseController } from './BaseController';
+import { Quiz } from '../entities/Quiz';
+import { QuizRepository } from '../repositories/QuizRepository';
 
-class QuizController {
+const quizRepository = new QuizRepository();
+
+class QuizController extends BaseController<Quiz> {
+    constructor() {
+        super(quizRepository);
+    }
+
     async getAll(req: Request, res: Response) {
         res.json({ message: `getAll quizzes with query ${JSON.stringify(req.query)}` });
     }

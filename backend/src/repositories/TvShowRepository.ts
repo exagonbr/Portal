@@ -178,4 +178,26 @@ export class TvShowRepository extends BaseRepository<TvShow> {
       throw error;
     }
   }
+
+  async toggleStatus(id: string): Promise<TvShow | null> {
+    try {
+      const tvShow = await this.findById(id);
+      if (!tvShow) {
+        return null;
+      }
+
+      const newDeletedStatus = !tvShow.deleted;
+      await this.db(this.tableName)
+        .where('id', id)
+        .update({
+          deleted: newDeletedStatus,
+          last_updated: new Date()
+        });
+
+      return await this.findById(id);
+    } catch (error) {
+      console.error('Erro ao alternar status do TV Show:', error);
+      throw error;
+    }
+  }
 }

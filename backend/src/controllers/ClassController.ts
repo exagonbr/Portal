@@ -1,30 +1,28 @@
 import { Request, Response } from 'express';
+import { BaseController } from './BaseController';
+import { Class } from '../entities/Class';
+import { ClassRepository } from '../repositories/ClassRepository';
 
-class ClassController {
-    async getAll(req: Request, res: Response) {
-        res.json({ message: `getAll genres with query ${JSON.stringify(req.query)}` });
-    }
+const classRepository = new ClassRepository();
 
-    async getById(req: Request, res: Response) {
-        res.json({ message: `get genre by id ${req.params.id}` });
-    }
-
-    async create(req: Request, res: Response) {
-        res.status(201).json({ message: 'create genre', data: req.body });
-    }
-
-    async update(req: Request, res: Response) {
-        res.json({ message: `update genre ${req.params.id}`, data: req.body });
-    }
-
-    async delete(req: Request, res: Response) {
-        res.status(204).send();
+class ClassController extends BaseController<Class> {
+    constructor() {
+        super(classRepository);
     }
 
     async toggleStatus(req: Request, res: Response) {
-      const { id } = req.params;
-      res.json({ message: `toggle status for class ${id}`, data: req.body });
-  }
+        try {
+            const { id } = req.params;
+            const classEntity = await classRepository.toggleStatus(id);
+            if (!classEntity) {
+                return res.status(404).json({ success: false, message: 'Class not found' });
+            }
+            return res.status(200).json({ success: true, data: classEntity });
+        } catch (error) {
+            console.error(`Error in toggleStatus: ${error}`);
+            return res.status(500).json({ success: false, message: 'Internal Server Error' });
+        }
+    }
 }
 
 export default new ClassController();

@@ -59,4 +59,21 @@ export class RoleRepository extends BaseRepository<Role> {
     // await this.db('role_permissions').where({ role_id: roleId, permission_id: permissionId }).del();
     console.log(`Removendo permissão ${permissionId} do papel ${roleId}`);
   }
+
+  async toggleStatus(id: string): Promise<Role | null> {
+    try {
+      const role = await this.findById(id);
+      if (!role) {
+        return null;
+      }
+
+      const newActiveStatus = !role.isActive;
+      const updatedRole = await this.update(parseInt(id), { isActive: newActiveStatus } as UpdateRoleData);
+      
+      return updatedRole;
+    } catch (error) {
+      console.error('Erro ao alternar status do Role:', error);
+      throw error;
+    }
+  }
 }

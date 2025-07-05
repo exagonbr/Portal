@@ -1,9 +1,14 @@
 import { Request, Response } from 'express';
 import { TvShowRepository } from '../repositories/TvShowRepository';
+import { BaseController } from './BaseController';
+import { TvShow } from '../entities/TVShow';
 
 const tvShowRepository = new TvShowRepository();
 
-class TvShowController {
+class TvShowController extends BaseController<TvShow> {
+    constructor() {
+        super(tvShowRepository);
+    }
     
     async getAll(req: Request, res: Response) {
         try {
@@ -82,21 +87,18 @@ class TvShowController {
         }
     }
 
-    async create(req: Request, res: Response) {
-        res.status(201).json({ message: 'create tv show', data: req.body });
-    }
-
-    async update(req: Request, res: Response) {
-        res.json({ message: `update tv show ${req.params.id}`, data: req.body });
-    }
-
-    async delete(req: Request, res: Response) {
-        res.status(204).send();
-    }
-
     async toggleStatus(req: Request, res: Response) {
-        const { id } = req.params;
-        res.json({ message: `toggle status for tv show ${id}`, data: req.body });
+        try {
+            const { id } = req.params;
+            const tvShow = await tvShowRepository.toggleStatus(id);
+            if (!tvShow) {
+                return res.status(404).json({ success: false, message: 'TV Show not found' });
+            }
+            return res.status(200).json({ success: true, data: tvShow });
+        } catch (error) {
+            console.error(`Error in toggleStatus: ${error}`);
+            return res.status(500).json({ success: false, message: 'Internal Server Error' });
+        }
     }
 }
 

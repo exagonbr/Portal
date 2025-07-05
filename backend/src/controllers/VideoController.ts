@@ -1,6 +1,15 @@
 import { Request, Response } from 'express';
+import { BaseController } from './BaseController';
+import { Video } from '../entities/Video';
+import { VideoRepository } from '../repositories/VideoRepository';
 
-class VideoController {
+const videoRepository = new VideoRepository();
+
+class VideoController extends BaseController<Video> {
+    constructor() {
+        super(videoRepository);
+    }
+
     async getAll(req: Request, res: Response) {
         res.json({ message: `getAll videos with query ${JSON.stringify(req.query)}` });
     }

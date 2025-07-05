@@ -1,5 +1,6 @@
 import { Request, Response } from 'express';
-import { AuthorRepository, Author } from '../repositories/AuthorRepository';
+import { AuthorRepository } from '../repositories/AuthorRepository';
+import { Author } from '../entities/Author';
 import { BaseController } from './BaseController';
 
 const authorRepository = new AuthorRepository();

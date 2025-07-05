@@ -1,5 +1,6 @@
 import { Request, Response } from 'express';
-import { CourseRepository, Course } from '../repositories/CourseRepository';
+import { CourseRepository } from '../repositories/CourseRepository';
+import { Course } from '../entities/Course';
 import { BaseController } from './BaseController';
 
 const courseRepository = new CourseRepository();
