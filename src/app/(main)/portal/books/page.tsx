@@ -147,25 +147,32 @@ const LoadingSpinner = () => (
 const HeroSection = ({ onOpenBook, onOpenDetails }: { onOpenBook: (book: Book) => void; onOpenDetails: (book: Book) => void }) => {
   const [currentBook, setCurrentBook] = useState(0);
   const [isTransitioning, setIsTransitioning] = useState(false);
+  const [isPaused, setIsPaused] = useState(false);
   const featuredBooks = extendedMockBooks.filter(book => book.isFavorite && !book.isDeleted);
 
   useEffect(() => {
-    const timer = setInterval(() => {
-      setIsTransitioning(true);
-      setTimeout(() => {
-        setCurrentBook((prev) => (prev + 1) % featuredBooks.length);
-        setIsTransitioning(false);
-      }, 500);
-    }, 8000);
-    return () => clearInterval(timer);
-  }, [featuredBooks.length]);
+    if (!isPaused) {
+      const timer = setInterval(() => {
+        setIsTransitioning(true);
+        setTimeout(() => {
+          setCurrentBook((prev) => (prev + 1) % featuredBooks.length);
+          setIsTransitioning(false);
+        }, 500);
+      }, 8000);
+      return () => clearInterval(timer);
+    }
+  }, [featuredBooks.length, isPaused]);
 
   const current = featuredBooks[currentBook];
 
   if (!current) return null;
 
   return (
-    <div className="relative h-[50vh] sm:h-[70vh] lg:h-screen w-full overflow-hidden">
+    <div 
+      className="relative h-[50vh] sm:h-[70vh] lg:h-screen w-full overflow-hidden"
+      onMouseEnter={() => setIsPaused(true)}
+      onMouseLeave={() => setIsPaused(false)}
+    >
       {/* Background com capa do livro */}
       <div className="absolute inset-0">
         {featuredBooks.map((book, index) => (
@@ -338,6 +345,121 @@ const NetflixBookCard = ({ book, onOpen }: { book: Book; onOpen: (book: Book) =>
           </div>
         </div>
       </div>
+    </div>
+  );
+};
+
+// Book List View Component
+const BookListView = ({ books, onOpen }: { books: Book[]; onOpen: (book: Book) => void }) => {
+  return (
+    <div className="space-y-2">
+      {books.map((book) => (
+        <div
+          key={book.id}
+          onClick={() => onOpen(book)}
+          className="bg-gray-800 hover:bg-gray-700 rounded-lg p-4 flex items-center gap-4 cursor-pointer transition-colors"
+        >
+          <img
+            src={book.cover}
+            alt={book.title}
+            className="w-16 h-24 object-cover rounded"
+          />
+          <div className="flex-1">
+            <h3 className="text-white font-medium text-base">{book.title}</h3>
+            <p className="text-gray-400 text-sm">{book.author}</p>
+            <div className="flex items-center gap-4 mt-2 text-xs text-gray-500">
+              <span className="text-green-400">★ {book.rating?.toFixed(1)}</span>
+              <span>{book.pages} páginas</span>
+              <span className="bg-blue-600/20 text-blue-400 px-2 py-0.5 rounded">
+                {book.format.toUpperCase()}
+              </span>
+              {book.progress && book.progress > 0 && (
+                <span className="text-blue-400">{book.progress}% lido</span>
+              )}
+            </div>
+          </div>
+          <div className="flex items-center gap-2">
+            <button className="p-2 hover:bg-gray-600 rounded transition-colors">
+              <BookOpenIcon className="w-5 h-5 text-white" />
+            </button>
+          </div>
+        </div>
+      ))}
+    </div>
+  );
+};
+
+// Book Table View Component
+const BookTableView = ({ books, onOpen }: { books: Book[]; onOpen: (book: Book) => void }) => {
+  return (
+    <div className="overflow-x-auto">
+      <table className="w-full">
+        <thead>
+          <tr className="border-b border-gray-700">
+            <th className="text-left text-gray-400 font-medium text-sm pb-2">Capa</th>
+            <th className="text-left text-gray-400 font-medium text-sm pb-2">Título</th>
+            <th className="text-left text-gray-400 font-medium text-sm pb-2">Autor</th>
+            <th className="text-center text-gray-400 font-medium text-sm pb-2">Formato</th>
+            <th className="text-center text-gray-400 font-medium text-sm pb-2">Páginas</th>
+            <th className="text-center text-gray-400 font-medium text-sm pb-2">Avaliação</th>
+            <th className="text-center text-gray-400 font-medium text-sm pb-2">Progresso</th>
+            <th className="text-center text-gray-400 font-medium text-sm pb-2">Ações</th>
+          </tr>
+        </thead>
+        <tbody>
+          {books.map((book) => (
+            <tr
+              key={book.id}
+              className="border-b border-gray-800 hover:bg-gray-800/50 transition-colors"
+            >
+              <td className="py-3">
+                <img
+                  src={book.cover}
+                  alt={book.title}
+                  className="w-10 h-14 object-cover rounded cursor-pointer"
+                  onClick={() => onOpen(book)}
+                />
+              </td>
+              <td className="text-white text-sm cursor-pointer" onClick={() => onOpen(book)}>
+                {book.title}
+              </td>
+              <td className="text-gray-400 text-sm">{book.author}</td>
+              <td className="text-center">
+                <span className="bg-blue-600/20 text-blue-400 px-2 py-0.5 rounded text-xs">
+                  {book.format.toUpperCase()}
+                </span>
+              </td>
+              <td className="text-center text-gray-400 text-sm">{book.pages}</td>
+              <td className="text-center">
+                <span className="text-green-400 text-sm">★ {book.rating?.toFixed(1)}</span>
+              </td>
+              <td className="text-center">
+                {book.progress && book.progress > 0 ? (
+                  <div className="flex items-center gap-2">
+                    <div className="flex-1 bg-gray-700 rounded-full h-2">
+                      <div
+                        className="bg-blue-600 h-2 rounded-full"
+                        style={{ width: `${book.progress}%` }}
+                      />
+                    </div>
+                    <span className="text-xs text-gray-400">{book.progress}%</span>
+                  </div>
+                ) : (
+                  <span className="text-gray-500 text-sm">-</span>
+                )}
+              </td>
+              <td className="text-center">
+                <button
+                  onClick={() => onOpen(book)}
+                  className="p-1.5 hover:bg-gray-700 rounded transition-colors"
+                >
+                  <BookOpenIcon className="w-4 h-4 text-white" />
+                </button>
+              </td>
+            </tr>
+          ))}
+        </tbody>
+      </table>
     </div>
   );
 };
@@ -663,15 +785,67 @@ export default function NetflixBooksPage() {
           ) : currentView === 'favorites' ? (
             <div className="pt-20 sm:pt-24 pb-20 px-4 sm:px-6 lg:px-8">
               <div className="">
-                <h2 className="text-2xl sm:text-3xl font-bold text-white mb-6 sm:mb-8">Seus Favoritos</h2>
-                {favoriteBooks.length > 0 ? (
-                  <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4">
-                    {favoriteBooks.map((book) => (
-                      <div key={book.id} className="w-full h-80">
-                        <NetflixBookCard book={book} onOpen={handleOpenDetails} />
-                      </div>
-                    ))}
+                <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-6 sm:mb-8 gap-4">
+                  <h2 className="text-2xl sm:text-3xl font-bold text-white">Seus Favoritos</h2>
+                  
+                  {/* Botões de visualização */}
+                  <div className="flex items-center gap-2 bg-gray-800 p-1 rounded-lg">
+                    <button
+                      onClick={() => setViewMode('grid')}
+                      className={`p-2 rounded transition-colors ${
+                        viewMode === 'grid' 
+                          ? 'bg-blue-600 text-white' 
+                          : 'text-gray-400 hover:text-white hover:bg-gray-700'
+                      }`}
+                      title="Visualização em grade"
+                    >
+                      <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2V6zM14 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2V6zM4 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2v-2zM14 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2v-2z" />
+                      </svg>
+                    </button>
+                    <button
+                      onClick={() => setViewMode('list')}
+                      className={`p-2 rounded transition-colors ${
+                        viewMode === 'list' 
+                          ? 'bg-blue-600 text-white' 
+                          : 'text-gray-400 hover:text-white hover:bg-gray-700'
+                      }`}
+                      title="Visualização em lista"
+                    >
+                      <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" />
+                      </svg>
+                    </button>
+                    <button
+                      onClick={() => setViewMode('table')}
+                      className={`p-2 rounded transition-colors ${
+                        viewMode === 'table' 
+                          ? 'bg-blue-600 text-white' 
+                          : 'text-gray-400 hover:text-white hover:bg-gray-700'
+                      }`}
+                      title="Visualização em tabela"
+                    >
+                      <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 10h18M3 14h18m-9-4v8m-7 0h14a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z" />
+                      </svg>
+                    </button>
                   </div>
+                </div>
+
+                {favoriteBooks.length > 0 ? (
+                  viewMode === 'grid' ? (
+                    <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4">
+                      {favoriteBooks.map((book) => (
+                        <div key={book.id} className="w-full h-80">
+                          <NetflixBookCard book={book} onOpen={handleOpenDetails} />
+                        </div>
+                      ))}
+                    </div>
+                  ) : viewMode === 'list' ? (
+                    <BookListView books={favoriteBooks} onOpen={handleOpenDetails} />
+                  ) : (
+                    <BookTableView books={favoriteBooks} onOpen={handleOpenDetails} />
+                  )
                 ) : (
                   <div className="flex flex-col items-center justify-center h-64 text-white">
                     <div className="text-6xl mb-4">❤️</div>
@@ -817,6 +991,71 @@ export default function NetflixBooksPage() {
                   books={activeBooks.slice(0, 10)}
                   onOpenBook={handleOpenDetails}
                 />
+
+                {/* Seção Todos os Livros com controles de visualização */}
+                <div className="mt-12 px-4 sm:px-6 lg:px-12">
+                  <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-6 gap-4">
+                    <h2 className="text-2xl font-semibold text-white">Todos os Livros</h2>
+                    
+                    {/* Botões de visualização */}
+                    <div className="flex items-center gap-2 bg-gray-800 p-1 rounded-lg">
+                      <button
+                        onClick={() => setViewMode('grid')}
+                        className={`p-2 rounded transition-colors ${
+                          viewMode === 'grid' 
+                            ? 'bg-blue-600 text-white' 
+                            : 'text-gray-400 hover:text-white hover:bg-gray-700'
+                        }`}
+                        title="Visualização em grade"
+                      >
+                        <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2V6zM14 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2V6zM4 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2v-2zM14 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2v-2z" />
+                        </svg>
+                      </button>
+                      <button
+                        onClick={() => setViewMode('list')}
+                        className={`p-2 rounded transition-colors ${
+                          viewMode === 'list' 
+                            ? 'bg-blue-600 text-white' 
+                            : 'text-gray-400 hover:text-white hover:bg-gray-700'
+                        }`}
+                        title="Visualização em lista"
+                      >
+                        <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" />
+                        </svg>
+                      </button>
+                      <button
+                        onClick={() => setViewMode('table')}
+                        className={`p-2 rounded transition-colors ${
+                          viewMode === 'table' 
+                            ? 'bg-blue-600 text-white' 
+                            : 'text-gray-400 hover:text-white hover:bg-gray-700'
+                        }`}
+                        title="Visualização em tabela"
+                      >
+                        <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 10h18M3 14h18m-9-4v8m-7 0h14a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z" />
+                        </svg>
+                      </button>
+                    </div>
+                  </div>
+
+                  {/* Renderizar livros baseado no modo de visualização */}
+                  {viewMode === 'grid' ? (
+                    <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4">
+                      {activeBooks.map((book) => (
+                        <div key={book.id} className="w-full h-80">
+                          <NetflixBookCard book={book} onOpen={handleOpenDetails} />
+                        </div>
+                      ))}
+                    </div>
+                  ) : viewMode === 'list' ? (
+                    <BookListView books={activeBooks} onOpen={handleOpenDetails} />
+                  ) : (
+                    <BookTableView books={activeBooks} onOpen={handleOpenDetails} />
+                  )}
+                </div>
               </div>
             </>
           )}
