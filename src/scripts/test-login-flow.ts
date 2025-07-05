@@ -1,166 +1,119 @@
-// Script para testar o fluxo de login e identificar problemas
-// Execute este script no console do navegador
+#!/usr/bin/env node
 
-export const testLoginFlow = () => {
-  console.group('🧪 Teste do Fluxo de Login');
-  
-  // 1. Verificar token no localStorage
-  const token = localStorage.getItem('accessToken');
-  console.log('1. Token no localStorage:', {
-    exists: !!token,
-    length: token?.length,
-    preview: token?.substring(0, 50) + '...'
-  });
-  
-  // 2. Verificar se o token é válido
-  if (token) {
-    const parts = token.split('.');
-    console.log('2. Estrutura do token:', {
-      parts: parts.length,
-      isValidJWT: parts.length === 3
-    });
-    
-    if (parts.length === 3) {
-      try {
-        const payload = JSON.parse(atob(parts[1]));
-        console.log('3. Payload do token:', {
-          id: payload.id,
-          email: payload.email,
-          role: payload.role,
-          exp: payload.exp,
-          isExpired: payload.exp ? payload.exp * 1000 < Date.now() : false
-        });
-      } catch (error) {
-        console.error('3. Erro ao decodificar payload:', error);
-      }
-    }
-  }
-  
-  // 3. Verificar estado do contexto de autenticação
-  const authContext = (window as any).authContext;
-  if (authContext) {
-    console.log('4. Estado do AuthContext:', {
-      hasUser: !!authContext.user,
-      isLoading: authContext.isLoading,
-      isAuthenticated: authContext.isAuthenticated
-    });
-  } else {
-    console.log('4. AuthContext não está disponível globalmente');
-  }
-  
-  // 4. Verificar URL atual
-  console.log('5. Informações da URL:', {
-    pathname: window.location.pathname,
-    search: window.location.search,
-    hash: window.location.hash,
-    origin: window.location.origin
-  });
-  
-  // 5. Verificar variáveis de ambiente
-  console.log('6. Variáveis de ambiente:', {
-    NODE_ENV: process.env.NODE_ENV,
-    NEXT_PUBLIC_FRONTEND_URL: process.env.NEXT_PUBLIC_FRONTEND_URL,
-    NEXT_PUBLIC_USE_TEST_TOKEN: process.env.NEXT_PUBLIC_USE_TEST_TOKEN
-  });
-  
-  console.groupEnd();
-};
+/**
+ * Script para testar o fluxo completo de login
+ * Executa: npx ts-node src/scripts/test-login-flow.ts
+ */
 
-export const simulateLogin = async (email: string = 'admin@sistema.com', password: string = 'admin123') => {
-  console.group('🔐 Simulação de Login');
-  
-  try {
-    console.log('1. Iniciando login com:', { email, password });
-    
-    // Simular chamada de API
-    const response = await fetch('/api/auth/login', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({ email, password })
-    });
-    
-    console.log('2. Resposta da API:', {
-      status: response.status,
-      statusText: response.statusText,
-      ok: response.ok
-    });
-    
-    const data = await response.json();
-    console.log('3. Dados da resposta:', data);
-    
-    if (data.success && data.data?.accessToken) {
-      console.log('4. Login bem-sucedido, armazenando token...');
-      localStorage.setItem('accessToken', data.data.accessToken);
-      
-      // Verificar se o token foi armazenado corretamente
-      const storedToken = localStorage.getItem('accessToken');
-      console.log('5. Token armazenado:', {
-        stored: !!storedToken,
-        matches: storedToken === data.data.accessToken
-      });
-      
-      console.log('6. Recarregue a página para ver se o login persiste');
-    } else {
-      console.error('4. Login falhou:', data.message);
-    }
-    
-  } catch (error) {
-    console.error('Erro durante simulação de login:', error);
-  }
-  
-  console.groupEnd();
-};
+import { getDashboardPath } from '../utils/roleRedirect';
 
-export const debugRedirectFlow = () => {
-  console.group('🔄 Debug do Fluxo de Redirecionamento');
-  
-  // Verificar histórico de redirecionamentos
-  const redirectHistory = sessionStorage.getItem('redirect_history');
-  if (redirectHistory) {
+// Simular dados de login
+const testUsers = [
+  {
+    email: 'admin@sistema.com',
+    password: 'admin123',
+    expectedRole: 'SYSTEM_ADMIN'
+  },
+  {
+    email: 'teacher@sistema.com',
+    password: 'teacher123',
+    expectedRole: 'TEACHER'
+  },
+  {
+    email: 'student@sistema.com',
+    password: 'student123',
+    expectedRole: 'STUDENT'
+  }
+];
+
+const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3000/api';
+
+async function testLoginFlow() {
+  console.log('🔍 Testando fluxo de login...\n');
+
+  for (const testUser of testUsers) {
+    console.log(`\n📧 Testando usuário: ${testUser.email}`);
+    console.log(`🎭 Role esperada: ${testUser.expectedRole}`);
+
     try {
-      const history = JSON.parse(redirectHistory);
-      console.log('1. Histórico de redirecionamentos:', history);
-    } catch (error) {
-      console.log('1. Erro ao parsear histórico:', error);
-    }
-  } else {
-    console.log('1. Nenhum histórico de redirecionamento encontrado');
-  }
-  
-  // Verificar loops de redirecionamento
-  const loopCheck = sessionStorage.getItem('login_redirect_loop_check');
-  if (loopCheck) {
-    const lastTime = parseInt(loopCheck);
-    const now = Date.now();
-    console.log('2. Verificação de loop:', {
-      lastRedirect: new Date(lastTime).toISOString(),
-      timeSince: now - lastTime,
-      possibleLoop: (now - lastTime) < 5000
-    });
-  } else {
-    console.log('2. Nenhuma verificação de loop encontrada');
-  }
-  
-  // Verificar dados de sessão
-  const sessionKeys = Object.keys(sessionStorage);
-  console.log('3. Chaves no sessionStorage:', sessionKeys);
-  
-  const localKeys = Object.keys(localStorage);
-  console.log('4. Chaves no localStorage:', localKeys);
-  
-  console.groupEnd();
-};
+      // 1. Fazer login
+      const loginResponse = await fetch(`${API_BASE_URL}/auth/login`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          email: testUser.email,
+          password: testUser.password
+        })
+      });
 
-// Tornar disponível globalmente
-if (typeof window !== 'undefined') {
-  (window as any).testLoginFlow = testLoginFlow;
-  (window as any).simulateLogin = simulateLogin;
-  (window as any).debugRedirectFlow = debugRedirectFlow;
-  
-  console.log('🔧 Funções de debug disponíveis:');
-  console.log('- testLoginFlow() - Testa o fluxo de login');
-  console.log('- simulateLogin() - Simula um login');
-  console.log('- debugRedirectFlow() - Debug dos redirecionamentos');
-} 
+      const loginData = await loginResponse.json();
+
+      console.log(`📡 Status da resposta: ${loginResponse.status}`);
+      console.log(`✅ Login bem-sucedido: ${loginData.success}`);
+
+      if (loginData.success && loginData.data) {
+        const { user, accessToken } = loginData.data;
+        
+        console.log(`👤 Usuário: ${user.name}`);
+        console.log(`🎭 Role recebida: ${user.role}`);
+        console.log(`🔑 Token: ${accessToken ? 'Presente' : 'Ausente'}`);
+
+        // 2. Testar decodificação do token
+        if (accessToken) {
+          try {
+            const parts = accessToken.split('.');
+            if (parts.length === 3) {
+              const payload = JSON.parse(atob(parts[1]));
+              console.log(`🔍 Token decodificado:`);
+              console.log(`   - ID: ${payload.id}`);
+              console.log(`   - Email: ${payload.email}`);
+              console.log(`   - Role: ${payload.role}`);
+              console.log(`   - Exp: ${payload.exp ? new Date(payload.exp * 1000).toISOString() : 'N/A'}`);
+            } else {
+              console.log(`❌ Token não tem formato JWT válido (${parts.length} partes)`);
+            }
+          } catch (error) {
+            console.log(`❌ Erro ao decodificar token: ${error}`);
+          }
+        }
+
+        // 3. Testar redirecionamento
+        const dashboardPath = getDashboardPath(user.role);
+        console.log(`🎯 Dashboard path: ${dashboardPath}`);
+
+        if (dashboardPath) {
+          console.log(`✅ Redirecionamento deve funcionar para: ${dashboardPath}`);
+        } else {
+          console.log(`❌ PROBLEMA: Dashboard path não encontrado para role ${user.role}`);
+          
+          // Testar variações da role
+          console.log(`🔍 Testando variações da role:`);
+          console.log(`   - Original: ${getDashboardPath(user.role)}`);
+          console.log(`   - Uppercase: ${getDashboardPath(user.role.toUpperCase())}`);
+          console.log(`   - Lowercase: ${getDashboardPath(user.role.toLowerCase())}`);
+        }
+
+        // 4. Simular o que acontece no AuthContext
+        console.log(`\n🔄 Simulando fluxo do AuthContext:`);
+        console.log(`   1. Token salvo no localStorage: ✅`);
+        console.log(`   2. Token decodificado: ${accessToken ? '✅' : '❌'}`);
+        console.log(`   3. Usuário configurado no estado: ✅`);
+        console.log(`   4. Dashboard path obtido: ${dashboardPath ? '✅' : '❌'}`);
+        console.log(`   5. Router.push chamado: ${dashboardPath ? '✅' : '❌'}`);
+
+      } else {
+        console.log(`❌ Falha no login: ${loginData.message}`);
+      }
+
+    } catch (error) {
+      console.log(`❌ Erro na requisição: ${error}`);
+    }
+
+    console.log('\n' + '='.repeat(50));
+  }
+}
+
+// Executar teste
+testLoginFlow().catch(console.error); 

@@ -421,9 +421,22 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
         
         if (targetPath) {
           // Usar caminho relativo para evitar problemas com URLs absolutas
+          console.log('🔄 [AuthContext] Chamando router.push para:', targetPath);
           router.push(targetPath);
+          
+          // Verificar se o redirecionamento aconteceu após um delay
+          setTimeout(() => {
+            if (typeof window !== 'undefined') {
+              console.log('🔍 [AuthContext] Verificação pós-redirecionamento:', {
+                currentUrl: window.location.href,
+                expectedPath: targetPath,
+                redirectSuccessful: window.location.pathname === targetPath
+              });
+            }
+          }, 1000);
         } else {
           console.warn('⚠️ Caminho do dashboard não encontrado, usando fallback');
+          console.log('🔄 [AuthContext] Chamando router.push para fallback: /dashboard');
           router.push('/dashboard');
         }
       } else {
