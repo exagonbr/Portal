@@ -80,10 +80,10 @@ export async function POST(request: NextRequest) {
       success: true,
       message: 'Login realizado com sucesso',
       data: {
-        token: data.token || data.data?.token,
-        refreshToken: data.refreshToken || data.data?.refreshToken,
-        user: data.user || data.data?.user,
-        expiresIn: data.expiresIn || data.data?.expiresIn
+        accessToken: data.data?.accessToken || data.accessToken,
+        refreshToken: data.data?.refreshToken || data.refreshToken,
+        user: data.data?.user || data.user,
+        expiresIn: data.data?.expiresIn || data.expiresIn
       }
     }, {
       headers: corsHeaders
