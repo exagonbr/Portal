@@ -23,6 +23,11 @@ export interface ClientInfo {
  * Extrai o IP real do cliente considerando proxies e load balancers
  */
 function getRealIP(req: Request): string {
+  // Verificar se req é um objeto válido
+  if (!req) {
+    return 'unknown';
+  }
+  
   // Verificar headers de proxy na ordem de prioridade
   const forwardedFor = req.headers['x-forwarded-for'];
   if (forwardedFor) {
@@ -50,7 +55,7 @@ function getRealIP(req: Request): string {
   }
   
   // IP direto da conexão
-  return req.ip || req.socket.remoteAddress || 'unknown';
+  return req.ip || (req.socket?.remoteAddress || 'unknown');
 }
 
 /**

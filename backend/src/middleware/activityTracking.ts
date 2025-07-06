@@ -282,7 +282,14 @@ async function updateActiveSession(
         });
     } else {
       // Criar nova sessão
-      const clientInfo = getClientInfo({ headers: {} } as Request);
+      // Criar um objeto Request simulado com headers vazios
+      const mockRequest = {
+        headers: {},
+        ip: 'system',
+        socket: { remoteAddress: 'system' }
+      } as Request;
+      
+      const clientInfo = getClientInfo(mockRequest);
       
       await db('activity_sessions').insert({
         id: uuidv4(),

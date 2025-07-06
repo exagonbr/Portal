@@ -181,6 +181,21 @@ const HeroSection = () => {
 // Netflix-style Video Card
 const NetflixVideoCard = ({ video, onPlay }: { video: any, onPlay?: () => void }) => {
   const [isHovered, setIsHovered] = useState(false);
+  
+  // Verificar se o vídeo é válido
+  if (!video || typeof video !== 'object') {
+    return (
+      <div className="h-full bg-gray-800 rounded-lg overflow-hidden shadow-lg p-4 flex flex-col items-center justify-center">
+        <div className="w-12 h-12 bg-gray-700 rounded-full flex items-center justify-center mb-4">
+          <svg className="w-6 h-6 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+          </svg>
+        </div>
+        <p className="text-gray-400 text-sm text-center">Vídeo indisponível</p>
+      </div>
+    );
+  }
+  
   const progressPercentage = video.progress || video.completion_percentage || 0;
 
   return (
@@ -199,7 +214,7 @@ const NetflixVideoCard = ({ video, onPlay }: { video: any, onPlay?: () => void }
               src={video.thumbnail_url || 
                    (video.tv_show?.poster_image_url || video.tv_show?.backdrop_image_url) || 
                    (video.youtubeId ? `https://img.youtube.com/vi/${video.youtubeId}/maxresdefault.jpg` : '')}
-              alt={video.title}
+              alt={video.title || 'Vídeo'}
               className="w-full h-full object-cover"
               onError={(e) => {
                 const target = e.currentTarget as HTMLImageElement;
@@ -230,7 +245,7 @@ const NetflixVideoCard = ({ video, onPlay }: { video: any, onPlay?: () => void }
           {/* Video Info - Increased height and better spacing */}
           <div className="p-5 flex-grow flex flex-col justify-between min-h-[160px]">
             <h3 className="text-white font-medium text-sm mb-4 line-clamp-2 leading-tight">
-              {video.title}
+              {video.title || 'Vídeo sem título'}
             </h3>
             <div className="flex flex-col gap-3 mt-auto">
               <div className="flex items-center justify-between text-xs">
@@ -244,7 +259,7 @@ const NetflixVideoCard = ({ video, onPlay }: { video: any, onPlay?: () => void }
                 )}
               </div>
               <div className="flex items-center justify-between text-xs text-gray-400">
-                <span className="font-medium">{video.duration}</span>
+                <span className="font-medium">{video.duration || '00:00'}</span>
                 <span className="text-gray-500">HD</span>
               </div>
             </div>
@@ -262,6 +277,14 @@ const CarouselRow = ({ title, videos, onPlayVideo }: { title: string; videos: an
   const [isHovered, setIsHovered] = useState(false);
   const scrollRef = useRef<HTMLDivElement>(null);
   const autoScrollRef = useRef<NodeJS.Timeout | null>(null);
+
+  // Verificar se videos é um array válido
+  const validVideos = Array.isArray(videos) ? videos.filter(video => video && typeof video === 'object') : [];
+  
+  // Se não houver vídeos válidos, não renderizar o carrossel
+  if (validVideos.length === 0) {
+    return null;
+  }
 
   const scroll = (direction: 'left' | 'right') => {
     if (scrollRef.current) {
@@ -349,8 +372,8 @@ const CarouselRow = ({ title, videos, onPlayVideo }: { title: string; videos: an
         className="flex gap-4 overflow-x-auto scrollbar-hide px-12 pb-4"
         style={{ scrollbarWidth: 'none', msOverflowStyle: 'none' }}
       >
-        {videos.map((video) => (
-          <div key={video.id} className="flex-shrink-0 w-80 h-80">
+        {validVideos.map((video) => (
+          <div key={video.id || Math.random().toString(36).substring(7)} className="flex-shrink-0 w-80 h-80">
             <NetflixVideoCard 
               video={video} 
               onPlay={() => onPlayVideo && onPlayVideo(video)}
