@@ -1,9 +1,8 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { Button } from '@/components/ui/button';
+import { Button } from '@/components/ui/Button';
 import { RefreshCw, Trash2, AlertCircle } from 'lucide-react';
-import { toast } from 'sonner';
 
 export function CacheCleaner() {
   const [isClearing, setIsClearing] = useState(false);
@@ -96,7 +95,8 @@ export function CacheCleaner() {
         }
       }
 
-      toast.success('Cache limpo com sucesso!');
+      console.log('Cache limpo com sucesso!');
+      alert('Cache limpo com sucesso! A página será recarregada.');
       
       // Aguardar um momento e recarregar
       setTimeout(() => {
@@ -105,7 +105,7 @@ export function CacheCleaner() {
       
     } catch (error) {
       console.error('Erro ao limpar cache:', error);
-      toast.error('Erro ao limpar cache. Tente novamente.');
+      alert('Erro ao limpar cache. Tente novamente.');
       setIsClearing(false);
     }
   };

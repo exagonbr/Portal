@@ -1,104 +1,18 @@
 'use client'
 
 import React, { ReactNode, useEffect } from 'react'
-import dynamic from 'next/dynamic'
 import { setupGlobalErrorHandler } from '@/utils/errorHandling'
 import { initializeFactoryDiagnostic } from '@/utils/factory-diagnostic'
 import { isDevelopment } from '@/utils/env'
 import { suppressHydrationWarnings } from '@/utils/suppressHydrationWarnings'
 import { ErrorBoundary } from 'react-error-boundary';
-
-// Dynamically import AuthProvider to ensure client-side rendering
-const AuthProvider = dynamic(() =>
-  import('../contexts/AuthContext')
-    .then(mod => mod.AuthProvider)
-    .catch(error => {
-      if (isDevelopment()) {
-        console.log('Error loading AuthProvider:', error);
-      }
-      return ({ children }: { children: ReactNode }) => <>{children}</>;
-    }), {
-  ssr: false,
-  loading: () => null
-})
-
-const ThemeProvider = dynamic(() =>
-  import('@/contexts/ThemeContext')
-    .then(mod => mod.ThemeProvider)
-    .catch(error => {
-      if (isDevelopment()) {
-        console.log('Error loading ThemeProvider:', error);
-      }
-      return ({ children }: { children: ReactNode }) => <>{children}</>;
-    }), {
-  ssr: false,
-  loading: () => null
-})
-
-const GamificationProvider = dynamic(() =>
-  import('@/contexts/GamificationContext')
-    .then(mod => mod.GamificationProvider)
-    .catch(error => {
-      if (isDevelopment()) {
-        console.log('Error loading GamificationProvider:', error);
-      }
-      return ({ children }: { children: ReactNode }) => <>{children}</>;
-    }), {
-  ssr: false,
-  loading: () => null
-})
-
-const NavigationLoadingProvider = dynamic(() =>
-  import('@/contexts/NavigationLoadingContext')
-    .then(mod => mod.NavigationLoadingProvider)
-    .catch(error => {
-      if (isDevelopment()) {
-        console.log('Error loading NavigationLoadingProvider:', error);
-      }
-      return ({ children }: { children: ReactNode }) => <>{children}</>;
-    }), {
-  ssr: false,
-  loading: () => null
-})
-
-const ToastManager = dynamic(() =>
-  import('@/components/ToastManager')
-    .then(mod => mod.ToastManager)
-    .catch(error => {
-      if (isDevelopment()) {
-        console.log('Error loading ToastManager:', error);
-      }
-      return () => null;
-    }), {
-  ssr: false,
-  loading: () => null
-})
-
-const UpdateProvider = dynamic(() =>
-  import('@/components/PWAUpdateManager')
-    .then(mod => mod.UpdateProvider)
-    .catch(error => {
-      if (isDevelopment()) {
-        console.log('Error loading UpdateProvider:', error);
-      }
-      return ({ children }: { children: ReactNode }) => <>{children}</>;
-    }), {
-  ssr: false,
-  loading: () => null
-})
-
-const CacheCleanerProvider = dynamic(() =>
-  import('@/components/layout/CacheCleanerProvider')
-    .then(mod => mod.CacheCleanerProvider)
-    .catch(error => {
-      if (isDevelopment()) {
-        console.log('Error loading CacheCleanerProvider:', error);
-      }
-      return ({ children }: { children: ReactNode }) => <>{children}</>;
-    }), {
-  ssr: false,
-  loading: () => null
-})
+import { AuthProvider } from '../contexts/AuthContext'
+import { ThemeProvider } from '@/contexts/ThemeContext'
+import { GamificationProvider } from '@/contexts/GamificationContext'
+import { NavigationLoadingProvider } from '@/contexts/NavigationLoadingContext'
+import { ToastManager } from '@/components/ToastManager'
+import { UpdateProvider } from '@/components/PWAUpdateManager'
+import { CacheCleanerProvider } from '@/components/layout/CacheCleanerProvider'
 
 function ErrorBoundaryFallback({ error, resetErrorBoundary }: { error: Error, resetErrorBoundary?: () => void }) {
   return (

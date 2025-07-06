@@ -3,6 +3,8 @@ import { Inter } from 'next/font/google';
 import './globals.css';
 import SimpleProviders from '@/providers/SimpleProviders';
 import { isDevelopment } from '@/utils/env';
+import CacheManagerWrapper from '@/components/CacheManagerWrapper';
+import { ChunkErrorHandler } from '@/components/ChunkErrorHandler';
 
 const inter = Inter({ subsets: ['latin'] });
 
@@ -61,14 +63,19 @@ export default function RootLayout({
         />
         {/* Remover preload de fontes específicas para evitar avisos */}
         
+        {/* Script de limpeza de cache */}
+        <script src="/clear-cache.js" defer />
+        
         {/* Service Worker personalizado para limpeza de cache */}
         <script src="/register-sw.js" defer />
       </head>
       <body className={`${inter.className} m-0 p-0 h-full w-full`} suppressHydrationWarning>
+        <ChunkErrorHandler />
         <SimpleProviders>
           <div className="flex flex-col min-h-screen w-full">
             {children}
           </div>
+          <CacheManagerWrapper />
         </SimpleProviders>
       </body>
     </html>

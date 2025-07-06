@@ -61,7 +61,7 @@ const BookList: React.FC<BookListProps> = ({ books, showViewer = true }) => {
                 </div>
               </div>
             ) : (
-              <Link href={`/books/view/${book.id}?title=${encodeURIComponent(book.title)}`}>
+              <Link href={`/portal/books/${book.id}`}>
                 <div className="aspect-[3/4] bg-gray-200 dark:bg-gray-700 relative">
                   {book.coverImage ? (
                     <img 

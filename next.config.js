@@ -162,6 +162,36 @@ const nextConfig = {
             key: 'Referrer-Policy',
             value: 'origin-when-cross-origin',
           },
+          // Adicionar header para controle de cache mais agressivo
+          {
+            key: 'Cache-Control',
+            value: 'no-cache, no-store, must-revalidate',
+          },
+          {
+            key: 'Pragma',
+            value: 'no-cache',
+          },
+          {
+            key: 'Expires',
+            value: '0',
+          },
+        ],
+      },
+      // Headers específicos para páginas HTML
+      {
+        source: '/:path*',
+        has: [
+          {
+            type: 'header',
+            key: 'accept',
+            value: '.*text/html.*',
+          },
+        ],
+        headers: [
+          {
+            key: 'Cache-Control',
+            value: 'no-cache, no-store, must-revalidate',
+          },
         ],
       },
       // Headers específicos para chunks JavaScript
@@ -192,6 +222,26 @@ const nextConfig = {
           },
         ],
       },
+      // Headers para imagens e outros assets
+      {
+        source: '/_next/image/:path*',
+        headers: [
+          {
+            key: 'Cache-Control',
+            value: 'public, max-age=604800, stale-while-revalidate=86400',
+          },
+        ],
+      },
+      // Headers para API routes - sem cache
+      {
+        source: '/api/:path*',
+        headers: [
+          {
+            key: 'Cache-Control',
+            value: 'no-cache, no-store, must-revalidate',
+          },
+        ],
+      },
     ];
   },
   
@@ -199,6 +249,9 @@ const nextConfig = {
   experimental: {
     optimizeCss: true,
     optimizePackageImports: ['@ant-design/icons', 'antd', 'lodash'],
+    // Configuração de workers para build paralela
+    workerThreads: true,
+    cpus: 10,
   },
 };
 
