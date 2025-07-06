@@ -207,7 +207,6 @@ const nextConfig = {
   },
 
   // Configurações de build
-  swcMinify: true,
   compiler: {
     removeConsole: process.env.NODE_ENV === 'production',
   },

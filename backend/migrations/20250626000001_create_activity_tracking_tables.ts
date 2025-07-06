@@ -3,10 +3,10 @@ import type { Knex } from 'knex'
 export async function up(knex: Knex): Promise<void> {
   console.log('🔍 Verificando tabelas de rastreamento de atividade...')
 
-  // Criar tabela user_activity se não existir
+  // Verificar e atualizar tabela user_activity
   const hasUserActivity = await knex.schema.hasTable('user_activity')
   if (!hasUserActivity) {
-    console.log('📊 Criando tabela user_activity...')
+    // Criar tabela completamente nova
     await knex.schema.createTable('user_activity', (table) => {
       table.uuid('id').primary().defaultTo(knex.raw('gen_random_uuid()'))
       table.string('user_id').notNullable().index()
@@ -50,7 +50,122 @@ export async function up(knex: Knex): Promise<void> {
     })
     console.log('✅ Tabela user_activity criada com sucesso!')
   } else {
-    console.log('ℹ️ Tabela user_activity já existe')
+    // Tabela existe, verificar e adicionar colunas que faltam
+    console.log('📋 Tabela user_activity já existe, verificando colunas...')
+    
+    // Verificar se a coluna session_id existe
+    const hasSessionId = await knex.schema.hasColumn('user_activity', 'session_id')
+    if (!hasSessionId) {
+      console.log('➕ Adicionando coluna session_id...')
+      await knex.schema.alterTable('user_activity', (table) => {
+        table.string('session_id').nullable().index()
+      })
+    }
+    
+    // Verificar se a coluna activity_type existe
+    const hasActivityType = await knex.schema.hasColumn('user_activity', 'activity_type')
+    if (!hasActivityType) {
+      console.log('➕ Adicionando coluna activity_type...')
+      await knex.schema.alterTable('user_activity', (table) => {
+        table.string('activity_type').nullable().index()
+      })
+      
+      // Migrar dados da coluna 'type' para 'activity_type' se existir
+      const hasTypeColumn = await knex.schema.hasColumn('user_activity', 'type')
+      if (hasTypeColumn) {
+        console.log('🔄 Migrando dados de "type" para "activity_type"...')
+        await knex.raw(`
+          UPDATE user_activity 
+          SET activity_type = COALESCE(type, 'system_action')
+          WHERE activity_type IS NULL
+        `)
+      }
+    }
+    
+    // Verificar se a coluna entity_type existe
+    const hasEntityType = await knex.schema.hasColumn('user_activity', 'entity_type')
+    if (!hasEntityType) {
+      console.log('➕ Adicionando coluna entity_type...')
+      await knex.schema.alterTable('user_activity', (table) => {
+        table.string('entity_type').nullable()
+      })
+    }
+    
+    // Verificar se a coluna entity_id existe
+    const hasEntityId = await knex.schema.hasColumn('user_activity', 'entity_id')
+    if (!hasEntityId) {
+      console.log('➕ Adicionando coluna entity_id...')
+      await knex.schema.alterTable('user_activity', (table) => {
+        table.string('entity_id').nullable()
+      })
+      
+      // Migrar dados da coluna 'video_id' para 'entity_id' se existir
+      const hasVideoIdColumn = await knex.schema.hasColumn('user_activity', 'video_id')
+      if (hasVideoIdColumn) {
+        console.log('🔄 Migrando video_id para entity_id...')
+        await knex.raw(`
+          UPDATE user_activity 
+          SET entity_id = video_id::text, entity_type = 'video'
+          WHERE video_id IS NOT NULL AND entity_id IS NULL
+        `)
+      }
+    }
+    
+    // Verificar se a coluna action existe
+    const hasAction = await knex.schema.hasColumn('user_activity', 'action')
+    if (!hasAction) {
+      console.log('➕ Adicionando coluna action...')
+      await knex.schema.alterTable('user_activity', (table) => {
+        table.string('action').defaultTo('view').notNullable()
+      })
+    }
+    
+    // Verificar se a coluna created_at existe
+    const hasCreatedAt = await knex.schema.hasColumn('user_activity', 'created_at')
+    if (!hasCreatedAt) {
+      console.log('➕ Adicionando coluna created_at...')
+      await knex.schema.alterTable('user_activity', (table) => {
+        table.timestamp('created_at').defaultTo(knex.fn.now())
+      })
+    }
+    
+    // Verificar se a coluna updated_at existe
+    const hasUpdatedAt = await knex.schema.hasColumn('user_activity', 'updated_at')
+    if (!hasUpdatedAt) {
+      console.log('➕ Adicionando coluna updated_at...')
+      await knex.schema.alterTable('user_activity', (table) => {
+        table.timestamp('updated_at').defaultTo(knex.fn.now())
+      })
+    }
+    
+    // Adicionar outras colunas necessárias
+    const columnsToCheck = [
+      'duration_seconds', 'start_time', 'end_time', 'details', 
+      'user_agent', 'device_info', 'location'
+    ]
+    
+    const existingColumns = await knex('information_schema.columns')
+      .select('column_name')
+      .where('table_name', 'user_activity')
+      .where('table_schema', 'public')
+    
+    const existingColumnNames = existingColumns.map(col => col.column_name)
+    const missingColumns = columnsToCheck.filter(col => !existingColumnNames.includes(col))
+    
+    if (missingColumns.length > 0) {
+      console.log(`➕ Adicionando colunas: ${missingColumns.join(', ')}...`)
+      await knex.schema.alterTable('user_activity', (table) => {
+        if (!existingColumnNames.includes('duration_seconds')) table.integer('duration_seconds').nullable()
+        if (!existingColumnNames.includes('start_time')) table.timestamp('start_time').nullable()
+        if (!existingColumnNames.includes('end_time')) table.timestamp('end_time').nullable()
+        if (!existingColumnNames.includes('details')) table.json('details').nullable()
+        if (!existingColumnNames.includes('user_agent')) table.string('user_agent').nullable()
+        if (!existingColumnNames.includes('device_info')) table.string('device_info').nullable()
+        if (!existingColumnNames.includes('location')) table.string('location').nullable()
+      })
+    }
+    
+    console.log('✅ Tabela user_activity atualizada com sucesso!')
   }
 
   // Criar tabela activity_sessions para rastrear sessões de usuário
