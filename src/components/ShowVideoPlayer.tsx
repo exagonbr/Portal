@@ -91,43 +91,46 @@ export default function ShowVideoPlayer({
 
   return (
     <UniversalVideoPlayer
-      videos={videos.map(video => ({ 
-        id: video.id.toString(),
-        title: video.title,
-        url: video.video_url || '', 
-        type: 'mp4' as const,
-        thumbnail: video.thumbnail_url,
-        duration: video.duration ? `${Math.floor(video.duration / 60)}:${(video.duration % 60).toString().padStart(2, '0')}` : undefined,
-        description: video.description,
-        episode_number: video.episode_number,
-        label: video.label || (video.is_default ? 'Sem Legenda' : undefined),
-        is_default: video.is_default || false,
-        has_subtitles: video.has_subtitles || false,
-        alternative_versions: video.alternative_versions?.map((altVideo: {
-          id: string | number;
-          title?: string;
-          url: string;
-          thumbnail?: string;
-          duration?: string | number;
-          description?: string;
-          episode_number?: number;
-          label?: string;
-          is_default?: boolean;
-        }) => ({
-          id: altVideo.id.toString(),
-          title: altVideo.title || video.title,
-          url: altVideo.url || '',
+      videos={videos.map(video => {
+        // Transformar vídeo principal
+        const transformedVideo = { 
+          id: video.id.toString(),
+          title: video.title,
+          url: video.video_url || '', 
           type: 'mp4' as const,
-          thumbnail: altVideo.thumbnail || video.thumbnail_url,
-          duration: typeof altVideo.duration === 'number' 
-            ? `${Math.floor(altVideo.duration / 60)}:${(altVideo.duration % 60).toString().padStart(2, '0')}` 
-            : (altVideo.duration as string) || video.duration ? `${Math.floor(video.duration / 60)}:${(video.duration % 60).toString().padStart(2, '0')}` : undefined,
-          description: altVideo.description || video.description,
-          episode_number: altVideo.episode_number || video.episode_number,
-          label: altVideo.label || 'Com Legenda',
-          is_default: altVideo.is_default || false
-        }))
-      }))}
+          thumbnail: video.thumbnail_url,
+          duration: video.duration ? `${Math.floor(video.duration / 60)}:${(video.duration % 60).toString().padStart(2, '0')}` : undefined,
+          description: video.description,
+          episode_number: video.episode_number,
+          label: video.label || (video.is_default ? 'Sem Legenda' : undefined),
+          is_default: video.is_default || false,
+          has_subtitles: video.has_subtitles || false
+        };
+        
+        // Transformar versões alternativas se existirem
+        if (video.alternative_versions && video.alternative_versions.length > 0) {
+          transformedVideo.alternative_versions = video.alternative_versions.map(altVideo => ({
+            id: altVideo.id.toString(),
+            title: altVideo.title || video.title,
+            url: altVideo.url || '',
+            type: 'mp4' as const,
+            thumbnail: altVideo.thumbnail || video.thumbnail_url,
+            duration: typeof altVideo.duration === 'string' 
+              ? altVideo.duration 
+              : (typeof altVideo.duration === 'number' 
+                ? `${Math.floor(altVideo.duration / 60)}:${(altVideo.duration % 60).toString().padStart(2, '0')}`
+                : (video.duration && typeof video.duration === 'number' 
+                  ? `${Math.floor(video.duration / 60)}:${(video.duration % 60).toString().padStart(2, '0')}` 
+                  : undefined)),
+            description: altVideo.description || video.description,
+            episode_number: altVideo.episode_number || video.episode_number,
+            label: altVideo.label || 'Com Legenda',
+            is_default: altVideo.is_default || false
+          }));
+        }
+        
+        return transformedVideo;
+      })}
       initialVideoIndex={initialVideoIndex}
       collectionName={collectionName || 'Coleção de Vídeos'}
       onClose={onClose}

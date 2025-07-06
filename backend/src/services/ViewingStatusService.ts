@@ -1,6 +1,6 @@
 import { Repository, DataSource } from 'typeorm';
 import { ViewingStatus } from '../entities/ViewingStatus';
-import { AppDataSource } from '../config/database';
+import { AppDataSource } from '../config/typeorm';
 import { User } from '../entities/User';
 import { Video } from '../entities/Video';
 import { TvShow } from '../entities/TVShow';
@@ -79,8 +79,7 @@ export class ViewingStatusService {
           moduleId: data.moduleId,
           lessonId: data.lessonId,
           // Campos legados
-          version: 1,
-          runtime: data.totalDuration
+          version: 1
         });
       } else {
         // Atualizar registro existente
@@ -91,7 +90,6 @@ export class ViewingStatusService {
         
         if (data.totalDuration) {
           viewingStatus.totalDuration = data.totalDuration;
-          viewingStatus.runtime = data.totalDuration; // Campo legado
         }
         
         // Atualizar configurações se fornecidas
@@ -251,31 +249,27 @@ export class ViewingStatusService {
     }
   ): Promise<{ items: ViewingStatus[]; total: number }> {
     try {
-      const query = this.repository.createQueryBuilder('vs')
+      const limit = options?.limit || 10;
+      const offset = options?.offset || 0;
+      
+      let query = this.repository.createQueryBuilder('vs')
         .where('vs.userId = :userId', { userId })
         .andWhere('vs.deleted = false')
-        .leftJoinAndSelect('vs.video', 'video')
-        .leftJoinAndSelect('vs.tvShow', 'tvShow')
         .orderBy('vs.lastWatchedAt', 'DESC');
-
+      
       if (options?.completed !== undefined) {
-        query.andWhere('vs.completed = :completed', { completed: options.completed });
+        query = query.andWhere('vs.completed = :completed', { completed: options.completed });
       }
-
+      
       if (options?.contentType) {
-        query.andWhere('vs.contentType = :contentType', { contentType: options.contentType });
+        query = query.andWhere('vs.contentType = :contentType', { contentType: options.contentType });
       }
-
-      if (options?.limit) {
-        query.limit(options.limit);
-      }
-
-      if (options?.offset) {
-        query.offset(options.offset);
-      }
-
-      const [items, total] = await query.getManyAndCount();
-
+      
+      const [items, total] = await query
+        .take(limit)
+        .skip(offset)
+        .getManyAndCount();
+      
       return { items, total };
     } catch (error) {
       console.error('Erro ao buscar histórico de visualização:', error);
@@ -284,7 +278,7 @@ export class ViewingStatusService {
   }
 
   /**
-   * Obtém estatísticas de visualização de um usuário
+   * Obtém estatísticas de visualização do usuário
    */
   async getUserViewingStats(userId: number): Promise<{
     totalWatchTime: number;
@@ -295,49 +289,83 @@ export class ViewingStatusService {
     mostWatchedContent: any[];
   }> {
     try {
-      const stats = await this.repository
+      // Total de tempo assistido
+      const totalWatchTimeResult = await this.repository
         .createQueryBuilder('vs')
         .select('SUM(vs.totalWatchTime)', 'totalWatchTime')
-        .addSelect('COUNT(CASE WHEN vs.completed = true THEN 1 END)', 'completedVideos')
-        .addSelect('COUNT(CASE WHEN vs.completed = false AND vs.currentPlayTime > 0 THEN 1 END)', 'inProgressVideos')
-        .addSelect('COUNT(*)', 'totalVideos')
-        .addSelect('AVG(vs.completionPercentage)', 'averageCompletion')
         .where('vs.userId = :userId', { userId })
         .andWhere('vs.deleted = false')
         .getRawOne();
-
-      // Buscar conteúdos mais assistidos
-      const mostWatched = await this.repository
+      
+      // Contagem de vídeos completos
+      const completedVideosResult = await this.repository
         .createQueryBuilder('vs')
-        .select('vs.videoId', 'videoId')
-        .addSelect('vs.tvShowId', 'tvShowId')
-        .addSelect('vs.contentType', 'contentType')
-        .addSelect('vs.contentId', 'contentId')
-        .addSelect('SUM(vs.totalWatchTime)', 'watchTime')
-        .addSelect('MAX(vs.completionPercentage)', 'completion')
+        .select('COUNT(*)', 'count')
+        .where('vs.userId = :userId', { userId })
+        .andWhere('vs.completed = true')
+        .andWhere('vs.deleted = false')
+        .getRawOne();
+      
+      // Contagem de vídeos em progresso
+      const inProgressVideosResult = await this.repository
+        .createQueryBuilder('vs')
+        .select('COUNT(*)', 'count')
+        .where('vs.userId = :userId', { userId })
+        .andWhere('vs.completed = false')
+        .andWhere('vs.currentPlayTime > 0')
+        .andWhere('vs.deleted = false')
+        .getRawOne();
+      
+      // Contagem total de vídeos
+      const totalVideosResult = await this.repository
+        .createQueryBuilder('vs')
+        .select('COUNT(*)', 'count')
         .where('vs.userId = :userId', { userId })
         .andWhere('vs.deleted = false')
-        .groupBy('vs.videoId, vs.tvShowId, vs.contentType, vs.contentId')
-        .orderBy('watchTime', 'DESC')
-        .limit(10)
+        .getRawOne();
+      
+      // Média de conclusão
+      const averageCompletionResult = await this.repository
+        .createQueryBuilder('vs')
+        .select('AVG(vs.completionPercentage)', 'averageCompletion')
+        .where('vs.userId = :userId', { userId })
+        .andWhere('vs.deleted = false')
+        .getRawOne();
+      
+      // Conteúdos mais assistidos
+      const mostWatchedContent = await this.repository
+        .createQueryBuilder('vs')
+        .select([
+          'vs.videoId',
+          'vs.tvShowId',
+          'vs.contentType',
+          'vs.contentId',
+          'vs.totalWatchTime',
+          'vs.watchSessionsCount',
+          'vs.completionPercentage'
+        ])
+        .where('vs.userId = :userId', { userId })
+        .andWhere('vs.deleted = false')
+        .orderBy('vs.totalWatchTime', 'DESC')
+        .limit(5)
         .getRawMany();
-
+      
       return {
-        totalWatchTime: parseInt(stats.totalWatchTime) || 0,
-        completedVideos: parseInt(stats.completedVideos) || 0,
-        inProgressVideos: parseInt(stats.inProgressVideos) || 0,
-        totalVideos: parseInt(stats.totalVideos) || 0,
-        averageCompletion: parseFloat(stats.averageCompletion) || 0,
-        mostWatchedContent: mostWatched
+        totalWatchTime: parseInt(totalWatchTimeResult?.totalWatchTime || '0'),
+        completedVideos: parseInt(completedVideosResult?.count || '0'),
+        inProgressVideos: parseInt(inProgressVideosResult?.count || '0'),
+        totalVideos: parseInt(totalVideosResult?.count || '0'),
+        averageCompletion: parseFloat(averageCompletionResult?.averageCompletion || '0'),
+        mostWatchedContent
       };
     } catch (error) {
-      console.error('Erro ao buscar estatísticas de visualização:', error);
+      console.error('Erro ao obter estatísticas de visualização:', error);
       throw error;
     }
   }
 
   /**
-   * Busca registro existente de visualização
+   * Método auxiliar para buscar um registro existente
    */
   private async findExistingStatus(data: {
     userId: number;
@@ -346,28 +374,32 @@ export class ViewingStatusService {
     contentType?: string;
     contentId?: number;
   }): Promise<ViewingStatus | null> {
-    const query = this.repository.createQueryBuilder('vs')
+    let query = this.repository.createQueryBuilder('vs')
       .where('vs.userId = :userId', { userId: data.userId })
       .andWhere('vs.deleted = false');
-
-    if (data.videoId) {
-      query.andWhere('vs.videoId = :videoId', { videoId: data.videoId });
-    }
-
-    if (data.tvShowId) {
-      query.andWhere('vs.tvShowId = :tvShowId', { tvShowId: data.tvShowId });
-    }
-
-    if (data.contentType && data.contentId) {
-      query.andWhere('vs.contentType = :contentType', { contentType: data.contentType })
+    
+    if (data.videoId && data.tvShowId) {
+      query = query
+        .andWhere('vs.videoId = :videoId', { videoId: data.videoId })
+        .andWhere('vs.tvShowId = :tvShowId', { tvShowId: data.tvShowId });
+    } else if (data.videoId) {
+      query = query
+        .andWhere('vs.videoId = :videoId', { videoId: data.videoId })
+        .andWhere('vs.tvShowId IS NULL');
+    } else if (data.contentType && data.contentId) {
+      query = query
+        .andWhere('vs.contentType = :contentType', { contentType: data.contentType })
         .andWhere('vs.contentId = :contentId', { contentId: data.contentId });
+    } else if (data.tvShowId) {
+      query = query
+        .andWhere('vs.tvShowId = :tvShowId', { tvShowId: data.tvShowId });
     }
-
+    
     return await query.getOne();
   }
 
   /**
-   * Remove (soft delete) um registro de visualização
+   * Remove um registro de visualização
    */
   async removeViewingStatus(
     userId: number,
@@ -378,6 +410,7 @@ export class ViewingStatusService {
       const viewingStatus = await this.findExistingStatus({ userId, videoId, tvShowId });
       
       if (viewingStatus) {
+        // Soft delete
         viewingStatus.deleted = true;
         await this.repository.save(viewingStatus);
       }

@@ -1,6 +1,6 @@
 import { Request, Response } from 'express';
 import { ViewingStatusService, UpdateViewingStatusDTO, ViewingInteractionDTO } from '../services/ViewingStatusService';
-import { AppDataSource } from '../config/database';
+import { AppDataSource } from '../config/typeorm';
 import { getUserFromRequest } from '../utils/auth';
 
 export class ViewingStatusController {
@@ -22,7 +22,7 @@ export class ViewingStatusController {
       }
 
       const data: UpdateViewingStatusDTO = {
-        userId: user.id,
+        userId: Number(user.id),
         ...req.body
       };
 
@@ -110,7 +110,7 @@ export class ViewingStatusController {
         value
       };
 
-      await this.service.recordInteraction(user.id, videoId, interaction);
+      await this.service.recordInteraction(Number(user.id), videoId, interaction);
       
       return res.status(200).json({ success: true });
     } catch (error) {
@@ -136,7 +136,7 @@ export class ViewingStatusController {
         return res.status(400).json({ error: 'É necessário informar videoId' });
       }
 
-      const result = await this.service.startWatchSession(user.id, videoId, tvShowId);
+      const result = await this.service.startWatchSession(Number(user.id), videoId, tvShowId);
       
       return res.status(200).json(result);
     } catch (error) {
@@ -168,7 +168,7 @@ export class ViewingStatusController {
       }
 
       const result = await this.service.getViewingStatus(
-        user.id,
+        Number(user.id),
         videoId,
         tvShowId,
         contentType,
@@ -203,7 +203,7 @@ export class ViewingStatusController {
                        req.query.completed === 'false' ? false : undefined;
       const contentType = req.query.contentType as string | undefined;
 
-      const result = await this.service.getUserWatchHistory(user.id, {
+      const result = await this.service.getUserWatchHistory(Number(user.id), {
         limit,
         offset,
         completed,
@@ -228,7 +228,7 @@ export class ViewingStatusController {
         return res.status(401).json({ error: 'Usuário não autenticado' });
       }
 
-      const result = await this.service.getUserViewingStats(user.id);
+      const result = await this.service.getUserViewingStats(Number(user.id));
       
       return res.status(200).json(result);
     } catch (error) {
@@ -255,7 +255,7 @@ export class ViewingStatusController {
         return res.status(400).json({ error: 'É necessário informar videoId ou tvShowId' });
       }
 
-      await this.service.removeViewingStatus(user.id, videoId, tvShowId);
+      await this.service.removeViewingStatus(Number(user.id), videoId, tvShowId);
       
       return res.status(200).json({ success: true });
     } catch (error) {

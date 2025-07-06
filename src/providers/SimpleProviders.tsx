@@ -1,6 +1,6 @@
 'use client'
 
-import React, { ReactNode, useEffect } from 'react'
+import React, { ReactNode, useEffect, Suspense } from 'react'
 import { setupGlobalErrorHandler } from '@/utils/errorHandling'
 import { initializeFactoryDiagnostic } from '@/utils/factory-diagnostic'
 import { isDevelopment } from '@/utils/env'
@@ -8,11 +8,24 @@ import { suppressHydrationWarnings } from '@/utils/suppressHydrationWarnings'
 import { ErrorBoundary } from 'react-error-boundary';
 import { AuthProvider } from '../contexts/AuthContext'
 import { ThemeProvider } from '@/contexts/ThemeContext'
-import { GamificationProvider } from '@/contexts/GamificationContext'
-import { NavigationLoadingProvider } from '@/contexts/NavigationLoadingContext'
-import { ToastManager } from '@/components/ToastManager'
-import { UpdateProvider } from '@/components/PWAUpdateManager'
-import { CacheCleanerProvider } from '@/components/layout/CacheCleanerProvider'
+import dynamic from 'next/dynamic'
+
+// Carregamento dinâmico dos providers menos críticos
+const GamificationProvider = dynamic(() => import('@/contexts/GamificationContext').then(mod => mod.GamificationProvider), {
+  ssr: false
+})
+const NavigationLoadingProvider = dynamic(() => import('@/contexts/NavigationLoadingContext').then(mod => mod.NavigationLoadingProvider), {
+  ssr: false
+})
+const ToastManager = dynamic(() => import('@/components/ToastManager').then(mod => mod.ToastManager), {
+  ssr: false
+})
+const UpdateProvider = dynamic(() => import('@/components/PWAUpdateManager').then(mod => mod.UpdateProvider), {
+  ssr: false
+})
+const CacheCleanerProvider = dynamic(() => import('@/components/layout/CacheCleanerProvider').then(mod => mod.default), {
+  ssr: false
+})
 
 function ErrorBoundaryFallback({ error, resetErrorBoundary }: { error: Error, resetErrorBoundary?: () => void }) {
   return (
@@ -90,19 +103,21 @@ export default function SimpleProviders({ children }: { children: ReactNode }) {
             }
           }}
         >
-          <CacheCleanerProvider>
-            <ThemeProvider>
-              <GamificationProvider>
-                <NavigationLoadingProvider>
-                  <UpdateProvider>
-                    <ToastManager>
-                      {children}
-                    </ToastManager>
-                  </UpdateProvider>
-                </NavigationLoadingProvider>
-              </GamificationProvider>
-            </ThemeProvider>
-          </CacheCleanerProvider>
+          <Suspense fallback={null}>
+            <CacheCleanerProvider>
+              <ThemeProvider>
+                <GamificationProvider>
+                  <NavigationLoadingProvider>
+                    <UpdateProvider>
+                      <ToastManager>
+                        {children}
+                      </ToastManager>
+                    </UpdateProvider>
+                  </NavigationLoadingProvider>
+                </GamificationProvider>
+              </ThemeProvider>
+            </CacheCleanerProvider>
+          </Suspense>
         </ErrorBoundary>
       </AuthProvider>
     </ErrorBoundary>

@@ -17,6 +17,8 @@ export class FactoryDiagnostic {
   private static instance: FactoryDiagnostic;
   private diagnostics: DiagnosticInfo[] = [];
   private maxDiagnostics = 10;
+  private retryAttempts = new Map<string, number>();
+  private maxRetries = 3;
 
   static getInstance(): FactoryDiagnostic {
     if (!FactoryDiagnostic.instance) {
@@ -27,6 +29,50 @@ export class FactoryDiagnostic {
 
   private constructor() {
     this.setupErrorListeners();
+    this.setupWebpackHooks();
+  }
+
+  private setupWebpackHooks() {
+    if (typeof window === 'undefined') return;
+
+    // Interceptar __webpack_require__ para adicionar tratamento de erro
+    const originalRequire = (window as any).__webpack_require__;
+    if (originalRequire && typeof originalRequire === 'function') {
+      (window as any).__webpack_require__ = (...args: any[]) => {
+        try {
+          return originalRequire.apply(this, args);
+        } catch (error) {
+          if (this.isFactoryError(error)) {
+            const moduleId = args[0];
+            this.handleFactoryError(moduleId, error);
+          }
+          throw error;
+        }
+      };
+    }
+  }
+
+  private handleFactoryError(moduleId: string, error: unknown) {
+    const attempts = this.retryAttempts.get(moduleId) || 0;
+    
+    if (attempts < this.maxRetries) {
+      this.retryAttempts.set(moduleId, attempts + 1);
+      
+      // Tentar recarregar o chunk
+      if (typeof window !== 'undefined') {
+        const runtime = (window as any).webpackChunk;
+        if (runtime && typeof runtime.push === 'function') {
+          setTimeout(() => {
+            try {
+              // Forçar recarga do chunk
+              runtime.push([[moduleId], {}, (require: any) => require(moduleId)]);
+            } catch (e) {
+              console.warn(`Falha ao recarregar módulo ${moduleId}:`, e);
+            }
+          }, Math.pow(2, attempts) * 1000); // Backoff exponencial
+        }
+      }
+    }
   }
 
   private setupErrorListeners() {
@@ -79,7 +125,9 @@ export class FactoryDiagnostic {
       errorMessage.includes("Cannot read properties of undefined (reading 'call')") ||
       errorMessage.includes("factory is undefined") ||
       errorMessage.includes("ChunkLoadError") ||
-      errorMessage.includes("Loading chunk")
+      errorMessage.includes("Loading chunk") ||
+      errorMessage.includes("Failed to fetch dynamically imported module") ||
+      errorMessage.includes("NetworkError when attempting to fetch resource")
     );
   }
 
