@@ -2,6 +2,7 @@ import express from 'express';
 import { requireAuth } from '../middleware/requireAuth';
 
 // Importação das rotas
+import activityTrackingRouter from './activity-tracking';
 import announcementsRouter from './announcements';
 import authorsRouter from './authors';
 import awsRouter from './aws';
@@ -44,6 +45,7 @@ import videoModulesRouter from './video-modules';
 import videosRouter from './videos';
 import authRouter from './auth';
 import healthRouter from './health';
+import viewingStatusRouter from './viewingStatusRoutes';
 
 
 const router = express.Router();
@@ -58,6 +60,7 @@ router.use('/users', usersRouter);
 
 
 // Rotas Protegidas
+router.use('/activity-tracking', requireAuth, activityTrackingRouter);
 router.use('/announcements', requireAuth, announcementsRouter);
 router.use('/authors', requireAuth, authorsRouter);
 router.use('/aws', requireAuth, awsRouter);
@@ -84,6 +87,7 @@ router.use('/quizzes', requireAuth, quizzesRouter);
 router.use('/roles', requireAuth, rolesRouter);
 router.use('/school-managers', requireAuth, schoolManagersRouter);
 router.use('/schools', requireAuth, schoolsRouter);
+router.use('/sessions', requireAuth, sessionsRouter);
 router.use('/settings', requireAuth, settingsRouter);
 router.use('/subjects', requireAuth, subjectsRouter);
 router.use('/tags', requireAuth, tagsRouter);
@@ -95,6 +99,7 @@ router.use('/user-classes', requireAuth, userClassesRouter);
 router.use('/video-collections', requireAuth, videoCollectionsRouter);
 router.use('/video-modules', requireAuth, videoModulesRouter);
 router.use('/videos', requireAuth, videosRouter);
+router.use('/viewing-status', requireAuth, viewingStatusRouter);
 
 // Rotas de Sessões
 router.use('/sessions', requireAuth, sessionsRouter);

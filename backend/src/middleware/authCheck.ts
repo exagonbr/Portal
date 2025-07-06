@@ -1,26 +1,25 @@
-import { Response, NextFunction } from 'express';
+import { Request, Response, NextFunction } from 'express';
 import jwt from 'jsonwebtoken';
 import { JWT_CONFIG } from '../config/jwt';
-import { AuthenticatedRequest } from '../types/express.d';
 
 
 /**
  * Middleware to check if the request has a valid access token.
  * Sets req.authenticated to true if valid, false otherwise.
  */
-export function authCheckMiddleware(req: AuthenticatedRequest, res: Response, next: NextFunction) {
+export function authCheckMiddleware(req: Request, res: Response, next: NextFunction) {
   const authHeader = req.headers['authorization'];
   const token = authHeader && authHeader.split(' ')[1];
 
   if (!token) {
-    req.authenticated = false;
+    (req as any).authenticated = false;
     return next();
   }
 
   const secret = JWT_CONFIG.SECRET;
   if (!secret) {
     console.error('JWT_SECRET is not configured.');
-    req.authenticated = false;
+    (req as any).authenticated = false;
     return next();
   }
 
@@ -32,10 +31,10 @@ export function authCheckMiddleware(req: AuthenticatedRequest, res: Response, ne
     }) as any;
 
     // Set authentication status and user info
-    req.authenticated = true;
-    req.userId = payload.id;
+    (req as any).authenticated = true;
+    (req as any).userId = payload.id;
   } catch (error) {
-    req.authenticated = false;
+    (req as any).authenticated = false;
   }
 
   next();

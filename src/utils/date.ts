@@ -102,44 +102,44 @@ export const formatYear = (date: string | Date | number | undefined): string => 
 };
 
 /**
- * Formata tempo de vídeo em segundos para formato MM:SS ou HH:MM:SS
- * @param time Tempo em segundos
- * @returns String formatada no formato de tempo
+ * Formata o tempo em segundos para o formato MM:SS ou HH:MM:SS
  */
-export const formatVideoTime = (time: number): string => {
-  if (!time || isNaN(time)) return '0:00';
+export function formatVideoTime(seconds: number): string {
+  if (isNaN(seconds) || seconds < 0) {
+    return '00:00';
+  }
   
-  const hours = Math.floor(time / 3600);
-  const minutes = Math.floor((time % 3600) / 60);
-  const seconds = Math.floor(time % 60);
+  const hours = Math.floor(seconds / 3600);
+  const minutes = Math.floor((seconds % 3600) / 60);
+  const secs = Math.floor(seconds % 60);
   
   if (hours > 0) {
-    return `${hours}:${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
+    return `${hours.toString().padStart(2, '0')}:${minutes.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
   }
-  return `${minutes}:${seconds.toString().padStart(2, '0')}`;
-};
+  
+  return `${minutes.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
+}
 
 /**
- * Formata duração de vídeo a partir de string no formato HH:MM:SS ou MM:SS
- * @param duration String de duração
- * @returns String formatada
+ * Formata a duração de um vídeo para exibição
  */
-export const formatVideoDuration = (duration: string | undefined): string => {
-  if (!duration) return '0:00';
+export function formatVideoDuration(duration: string | number | undefined): string {
+  if (!duration) {
+    return '--:--';
+  }
   
-  // Se já está no formato correto, retorna como está
-  if (duration.match(/^\d{1,2}:\d{2}(:\d{2})?$/)) {
+  // Se for uma string no formato "HH:MM:SS"
+  if (typeof duration === 'string' && duration.includes(':')) {
     return duration;
   }
   
-  // Tenta converter se estiver em segundos
-  const seconds = parseFloat(duration);
-  if (!isNaN(seconds)) {
-    return formatVideoTime(seconds);
+  // Se for um número em segundos
+  if (typeof duration === 'number' || !isNaN(Number(duration))) {
+    return formatVideoTime(Number(duration));
   }
   
-  return duration;
-};
+  return '--:--';
+}
 
 /**
  * Formata a diferença entre uma data e agora em formato relativo

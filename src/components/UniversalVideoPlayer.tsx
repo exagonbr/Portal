@@ -4,6 +4,8 @@ import React, { useEffect, useState, useRef } from 'react';
 import { createPortal } from 'react-dom';
 import { Play, Pause, Volume2, VolumeX, Maximize, SkipBack, SkipForward, Settings, Clock, ChevronLeft, ChevronRight } from 'lucide-react';
 import { formatVideoTime, formatVideoDuration } from '@/utils/date';
+import { useAuth } from '@/hooks/useAuth';
+import { trackVideoProgress, getVideoStatus, startVideoSession } from '@/services/viewingStatusService';
 
 interface VideoSource {
   id: string;
@@ -57,6 +59,10 @@ export default function UniversalVideoPlayer({
   const [showBottomBar, setShowBottomBar] = useState(true);
   const [isMobile, setIsMobile] = useState(false);
   const [isCinemaMode, setIsCinemaMode] = useState(false);
+  const [showMessage, setShowMessage] = useState(false);
+  const [message, setMessage] = useState('');
+  const [selectedQuality, setSelectedQuality] = useState<string>('auto');
+  const [playbackSpeed, setPlaybackSpeed] = useState<number>(1.0);
 
   const videoRef = useRef<HTMLVideoElement>(null);
   const containerRef = useRef<HTMLDivElement>(null);
@@ -74,6 +80,11 @@ export default function UniversalVideoPlayer({
       hasUrl: !!currentVideo.url
     } : null
   })
+
+  const { user } = useAuth();
+  const progressTrackingInterval = useRef<NodeJS.Timeout | null>(null);
+  const lastProgressUpdate = useRef<number>(0);
+  const totalDurationRef = useRef<number | null>(null);
 
   useEffect(() => {
     setMounted(true);
@@ -215,11 +226,14 @@ export default function UniversalVideoPlayer({
   };
 
   const handleSeek = (e: React.ChangeEvent<HTMLInputElement>) => {
+    if (!videoRef.current) return;
+    
     const newTime = parseFloat(e.target.value);
+    videoRef.current.currentTime = newTime;
     setCurrentTime(newTime);
-    if (videoRef.current) {
-      videoRef.current.currentTime = newTime;
-    }
+    
+    // Registrar a interação de busca
+    trackProgress();
   };
 
   const enterFullscreen = () => {
@@ -529,6 +543,139 @@ export default function UniversalVideoPlayer({
     adjustVideoForCinemaMode();
   }, [isCinemaMode]);
 
+  // Função para rastrear o progresso do vídeo
+  const trackProgress = async () => {
+    if (!user || !videoRef.current) return;
+    
+    const currentVideo = videos[currentVideoIndex];
+    if (!currentVideo) return;
+    
+    const videoId = parseInt(currentVideo.id);
+    if (isNaN(videoId)) return;
+    
+    const currentTime = Math.floor(videoRef.current.currentTime);
+    const totalDuration = Math.floor(videoRef.current.duration);
+    totalDurationRef.current = totalDuration;
+    
+    // Evitar atualizações muito frequentes (a cada 5 segundos ou quando avançar mais de 10 segundos)
+    if (
+      currentTime - lastProgressUpdate.current >= 10 || 
+      Date.now() - lastProgressUpdate.current >= 5000
+    ) {
+      try {
+        await trackVideoProgress({
+          videoId,
+          currentPlayTime: currentTime,
+          totalDuration,
+          tvShowId: sessionNumber ? parseInt(sessionNumber.toString()) : undefined,
+          contentType: sessionNumber ? 'tv_show' : 'video',
+          contentId: sessionNumber ? parseInt(sessionNumber.toString()) : videoId,
+          quality: selectedQuality,
+          playbackSpeed: playbackSpeed
+        });
+        
+        lastProgressUpdate.current = currentTime;
+      } catch (error) {
+        console.error('Erro ao rastrear progresso do vídeo:', error);
+      }
+    }
+  };
+  
+  // Iniciar rastreamento de progresso
+  useEffect(() => {
+    if (videoRef.current && user) {
+      // Rastrear progresso a cada 5 segundos
+      progressTrackingInterval.current = setInterval(trackProgress, 5000);
+      
+      // Também rastrear em eventos importantes
+      const handleTimeUpdate = () => {
+        trackProgress();
+      };
+      
+      const handleEnded = () => {
+        trackProgress();
+      };
+      
+      videoRef.current.addEventListener('ended', handleEnded);
+      videoRef.current.addEventListener('pause', handleTimeUpdate);
+      
+      return () => {
+        if (progressTrackingInterval.current) {
+          clearInterval(progressTrackingInterval.current);
+        }
+        
+        if (videoRef.current) {
+          videoRef.current.removeEventListener('ended', handleEnded);
+          videoRef.current.removeEventListener('pause', handleTimeUpdate);
+        }
+      };
+    }
+  }, [currentVideoIndex, user]);
+  
+  // Quando o vídeo terminar, registrar como concluído
+  const handleVideoEnd = () => {
+    if (!videoRef.current) return;
+    
+    // Registrar o vídeo como concluído
+    trackProgress();
+    
+    // Reproduzir o próximo vídeo se existir
+    if (currentVideoIndex < videos.length - 1) {
+      setCurrentVideoIndex(currentVideoIndex + 1);
+    }
+  };
+
+  // Carregar o progresso anterior do vídeo
+  useEffect(() => {
+    const loadVideoProgress = async () => {
+      if (!user || !videos[currentVideoIndex]) return;
+      
+      const videoId = parseInt(videos[currentVideoIndex].id);
+      if (isNaN(videoId)) return;
+      
+      try {
+        // Iniciar uma nova sessão de visualização
+        await startVideoSession(
+          videoId, 
+          sessionNumber ? parseInt(sessionNumber.toString()) : undefined
+        );
+        
+        // Carregar o progresso anterior
+        const status = await getVideoStatus(
+          videoId, 
+          sessionNumber ? parseInt(sessionNumber.toString()) : undefined
+        );
+        
+        if (status && status.currentPlayTime > 0 && videoRef.current) {
+          // Se o vídeo já foi assistido mais de 95%, começar do início
+          if (status.completionPercentage >= 95) {
+            videoRef.current.currentTime = 0;
+          } 
+          // Caso contrário, continuar de onde parou
+          else {
+            videoRef.current.currentTime = status.currentPlayTime;
+            setCurrentTime(status.currentPlayTime);
+          }
+          
+          // Mostrar mensagem de continuação
+          if (status.currentPlayTime > 0 && status.completionPercentage < 95) {
+            setShowMessage(true);
+            setMessage(`Continuando de ${formatVideoTime(status.currentPlayTime)}`);
+            
+            // Esconder a mensagem após 3 segundos
+            setTimeout(() => {
+              setShowMessage(false);
+            }, 3000);
+          }
+        }
+      } catch (error) {
+        console.error('Erro ao carregar progresso do vídeo:', error);
+      }
+    };
+    
+    loadVideoProgress();
+  }, [currentVideoIndex, user]);
+
   if (!mounted) {
     return null;
   }
@@ -771,6 +918,15 @@ export default function UniversalVideoPlayer({
             <div className="absolute inset-0 flex items-center justify-center video-container">
               {renderVideoPlayer()}
             </div>
+            
+            {/* Mensagem de continuação */}
+            {showMessage && (
+              <div className="absolute top-4 left-0 right-0 flex justify-center">
+                <div className="bg-black bg-opacity-70 text-white px-4 py-2 rounded-lg shadow-lg">
+                  {message}
+                </div>
+              </div>
+            )}
             
             {/* Custom controls for MP4 videos */}
             {(currentVideo.type === 'mp4' || currentVideo.type === 'direct') && (

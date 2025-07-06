@@ -9,6 +9,7 @@ import { responseTimeMiddleware } from '../middleware/logging';
 import passport from 'passport';
 import { setupPassport } from './passport';
 import { authCheckMiddleware } from '../middleware/authCheck';
+import { activityTrackingMiddleware, errorTrackingMiddleware } from '../middleware/activityTracking';
 
 /**
 * Configura todos os middlewares da aplicação
@@ -77,4 +78,10 @@ app.use(responseTimeMiddleware);
 // Body parsers
 app.use(express.json({ limit: '10mb' }));
 app.use(express.urlencoded({ extended: true, limit: '10mb' }));
+
+// Activity Tracking - IMPORTANTE: Deve vir após body parsers e auth
+app.use(activityTrackingMiddleware);
+
+// Error tracking - Deve ser um dos últimos middlewares
+app.use(errorTrackingMiddleware);
 }

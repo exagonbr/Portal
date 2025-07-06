@@ -35,10 +35,10 @@ export default function EmailSendDemo() {
     <div className="max-w-6xl mx-auto p-6">
       <div className="mb-8">
         <h1 className="text-3xl font-bold text-gray-900 mb-2">
-          Demonstração: Botão "Enviar Agora"
+          Demonstração: Botão &quot;Enviar Agora&quot;
         </h1>
         <p className="text-gray-600">
-          Esta demonstração mostra como funciona o botão "Enviar Agora" no sistema de emails.
+          Esta demonstração mostra como funciona o botão &quot;Enviar Agora&quot; no sistema de emails.
         </p>
       </div>
 
@@ -75,10 +75,10 @@ export default function EmailSendDemo() {
       <div className="mb-8 p-6 bg-gray-50 rounded-lg">
         <h2 className="text-lg font-semibold text-gray-900 mb-3">Como testar:</h2>
         <ol className="list-decimal list-inside space-y-2 text-gray-700">
-          <li>Preencha o campo "Destinatários" selecionando ou digitando emails</li>
+          <li>Preencha o campo &quot;Destinatários&quot; selecionando ou digitando emails</li>
           <li>Digite um assunto para o email</li>
           <li>Escreva uma mensagem</li>
-          <li>Clique no botão <strong>"Enviar Agora"</strong></li>
+          <li>Clique no botão <strong>&quot;Enviar Agora&quot;</strong></li>
           <li>Observe o estado de carregamento e a mensagem de sucesso/erro</li>
         </ol>
         
