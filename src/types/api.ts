@@ -2300,6 +2300,8 @@ export interface SubjectResponseDto {
   description: string;
   is_active: boolean;
   name: string;
+  created_at?: string;
+  updated_at?: string;
 }
 
 export interface CreateSubjectDto {

@@ -11,6 +11,8 @@ import { api } from '@/lib/api';
 import { getWatchHistory } from '@/services/viewingStatusService';
 import { TVShowCollection, TVShowVideo } from '@/types/collections';
 import UniversalVideoPlayer from '@/components/UniversalVideoPlayer';
+import { suppressHydrationWarnings } from '@/utils/suppressHydrationWarnings';
+import { UnifiedAuthService } from '@/services/unifiedAuthService';
 
 // Interface para os dados de visualização
 interface ViewingStatus {
@@ -194,12 +196,14 @@ const NetflixVideoCard = ({ video, onPlay }: { video: any, onPlay?: () => void }
           {/* Thumbnail with fixed aspect ratio */}
           <div className="relative w-full h-44 bg-gray-700 flex-shrink-0">
             <img
-              src={video.thumbnail || video.thumbnail_url || (video.tv_show?.poster_image_url || video.tv_show?.backdrop_image_url) || 
-                    (video.youtubeId ? `https://img.youtube.com/vi/${video.youtubeId}/maxresdefault.jpg` : '')}
+              src={video.thumbnail_url || 
+                   (video.tv_show?.poster_image_url || video.tv_show?.backdrop_image_url) || 
+                   (video.youtubeId ? `https://img.youtube.com/vi/${video.youtubeId}/maxresdefault.jpg` : '')}
               alt={video.title}
               className="w-full h-full object-cover"
               onError={(e) => {
-                e.currentTarget.src = 'https://via.placeholder.com/320x180/374151/9CA3AF?text=Video';
+                const target = e.currentTarget as HTMLImageElement;
+                target.src = '/placeholder-collection.jpg';
               }}
             />
             
@@ -381,17 +385,6 @@ export default function VideoPortalPage() {
   const [currentVideo, setCurrentVideo] = useState<any>(null);
   const [currentVideoCollection, setCurrentVideoCollection] = useState<string>('');
 
-  // Função para obter o token de autenticação
-  const getAuthToken = (): string | null => {
-    if (typeof window === 'undefined') return null;
-    
-    return localStorage.getItem('auth_token') || 
-           localStorage.getItem('token') ||
-           localStorage.getItem('authToken') ||
-           sessionStorage.getItem('token') ||
-           sessionStorage.getItem('auth_token');
-  };
-
   // Carregar dados das coleções
   const loadTvShows = async () => {
     try {
@@ -401,6 +394,8 @@ export default function VideoPortalPage() {
         return;
       }
 
+      console.log('🔍 Carregando coleções de vídeos...');
+      
       const response = await fetch('/api/tv-shows?limit=50', {
         headers: {
           'Authorization': `Bearer ${token}`,
@@ -411,25 +406,51 @@ export default function VideoPortalPage() {
       if (response.ok) {
         const data = await response.json();
         if (data.success && data.data?.tvShows) {
-          setTvShows(data.data.tvShows);
+          console.log(`✅ ${data.data.tvShows.length} coleções carregadas com sucesso`);
+          
+          // Processar coleções para garantir URLs de imagens
+          const processedShows = data.data.tvShows.map((show: TVShowCollection) => {
+            // Verificar e ajustar URLs de imagens
+            if (!show.poster_image_url && show.poster_path) {
+              show.poster_image_url = show.poster_path.startsWith('http') 
+                ? show.poster_path 
+                : `/api/images/${show.poster_path}`;
+            }
+            
+            if (!show.backdrop_image_url && show.backdrop_path) {
+              show.backdrop_image_url = show.backdrop_path.startsWith('http') 
+                ? show.backdrop_path 
+                : `/api/images/${show.backdrop_path}`;
+            }
+            
+            return show;
+          });
+          
+          setTvShows(processedShows);
           
           // Ordenar por popularidade para os shows populares
-          const popular = [...data.data.tvShows]
+          const popular = [...processedShows]
             .sort((a, b) => (b.popularity || 0) - (a.popularity || 0))
             .slice(0, 10);
           setPopularShows(popular);
           
           // Ordenar por data para lançamentos recentes
-          const recent = [...data.data.tvShows]
+          const recent = [...processedShows]
             .sort((a, b) => new Date(b.first_air_date || '').getTime() - new Date(a.first_air_date || '').getTime())
             .slice(0, 10);
           setRecentReleases(recent);
+          
+          console.log('📊 Dados processados: ', {
+            total: processedShows.length,
+            popular: popular.length,
+            recent: recent.length
+          });
         }
       } else {
-        console.error('Erro ao carregar coleções:', response.status);
+        console.error('❌ Erro ao carregar coleções:', response.status);
       }
     } catch (error) {
-      console.error('Erro ao carregar coleções:', error);
+      console.error('❌ Erro ao carregar coleções:', error);
     }
   };
 
@@ -447,6 +468,12 @@ export default function VideoPortalPage() {
 
   // Carregar dados iniciais
   useEffect(() => {
+    // Suprimir avisos de hidratação
+    suppressHydrationWarnings();
+    
+    // Inicializar autenticação
+    initializeAuth();
+    
     if (!loading) {
       if (!user) {
         router.push('/auth/login');
@@ -459,6 +486,24 @@ export default function VideoPortalPage() {
       }
     }
   }, [user, loading, router]);
+
+  // Inicializar autenticação
+  const initializeAuth = () => {
+    try {
+      // Sincronizar storages (localStorage, cookies)
+      UnifiedAuthService.syncStorages();
+      
+      // Verificar se há token válido
+      const token = UnifiedAuthService.getAccessToken();
+      if (token) {
+        console.log('✅ Token encontrado no UnifiedAuthService');
+      } else {
+        console.warn('⚠️ Nenhum token encontrado no UnifiedAuthService');
+      }
+    } catch (error) {
+      console.error('Erro ao inicializar autenticação:', error);
+    }
+  };
 
   // Effect para fazer a página completamente fullscreen (sobre header e sidebar)
   useEffect(() => {
@@ -562,8 +607,26 @@ export default function VideoPortalPage() {
 
   // Função para reproduzir um vídeo
   const handlePlayVideo = (video: any) => {
+    console.log('🎬 Iniciando reprodução do vídeo:', {
+      id: video.id,
+      title: video.title,
+      hasUrl: !!video.video_url,
+      hasTvShow: !!video.tv_show
+    });
+    
+    // Verificar se o vídeo possui URL
+    if (!video.video_url) {
+      console.log('⚠️ Vídeo sem URL, tentando buscar URL alternativa');
+      // Aqui poderia implementar lógica para buscar URL do vídeo se necessário
+    }
+    
+    // Definir nome da coleção
+    const collectionName = video.tv_show?.name || 'Vídeo Educacional';
+    console.log('📺 Reproduzindo vídeo da coleção:', collectionName);
+    
+    // Configurar player
     setCurrentVideo(video);
-    setCurrentVideoCollection(video.tv_show?.name || 'Vídeo');
+    setCurrentVideoCollection(collectionName);
     setShowPlayer(true);
   };
 
@@ -589,6 +652,65 @@ export default function VideoPortalPage() {
     });
     
     return Object.entries(categories);
+  };
+
+  const getAuthToken = (): string | null => {
+    if (typeof window === 'undefined') {
+      return null;
+    }
+    
+    // Verificar todas as possíveis fontes de token
+    const possibleKeys = [
+      'accessToken',
+      'authToken',
+      'auth_token',
+      'token',
+      'jwt',
+      'bearerToken'
+    ];
+    
+    // Verificar em localStorage
+    for (const key of possibleKeys) {
+      const value = localStorage.getItem(key);
+      if (value && value.length > 10) {
+        return value;
+      }
+    }
+    
+    // Verificar em sessionStorage
+    for (const key of possibleKeys) {
+      const value = sessionStorage.getItem(key);
+      if (value && value.length > 10) {
+        return value;
+      }
+    }
+    
+    // Verificar cookies
+    const cookies = document.cookie.split(';');
+    for (const cookie of cookies) {
+      const [name, value] = cookie.trim().split('=');
+      if (possibleKeys.includes(name)) {
+        const decodedValue = decodeURIComponent(value);
+        if (decodedValue && decodedValue.length > 10) {
+          return decodedValue;
+        }
+      }
+    }
+    
+    // Último recurso: verificar se existe objeto de usuário com token
+    try {
+      const userStr = localStorage.getItem('user') || sessionStorage.getItem('user');
+      if (userStr) {
+        const userData = JSON.parse(userStr);
+        if (userData && userData.token && userData.token.length > 10) {
+          return userData.token;
+        }
+      }
+    } catch (error) {
+      console.error('Erro ao analisar dados do usuário:', error);
+    }
+    
+    return null;
   };
 
   if (loading || isLoading) {
@@ -632,7 +754,20 @@ export default function VideoPortalPage() {
           {popularShows.length > 0 && (
             <CarouselRow
               title="Populares na plataforma"
-              videos={popularShows}
+              videos={popularShows.map(show => ({
+                id: show.id,
+                title: show.name,
+                thumbnail_url: show.poster_image_url || show.backdrop_image_url,
+                description: show.overview,
+                duration: show.total_load || '',
+                popularity: show.popularity,
+                tv_show: {
+                  id: show.id,
+                  name: show.name,
+                  poster_image_url: show.poster_image_url,
+                  backdrop_image_url: show.backdrop_image_url
+                }
+              }))}
               onPlayVideo={handlePlayVideo}
             />
           )}
@@ -642,7 +777,20 @@ export default function VideoPortalPage() {
             <CarouselRow
               key={category}
               title={category}
-              videos={shows}
+              videos={shows.map(show => ({
+                id: show.id,
+                title: show.name,
+                thumbnail_url: show.poster_image_url || show.backdrop_image_url,
+                description: show.overview,
+                duration: show.total_load || '',
+                popularity: show.popularity,
+                tv_show: {
+                  id: show.id,
+                  name: show.name,
+                  poster_image_url: show.poster_image_url,
+                  backdrop_image_url: show.backdrop_image_url
+                }
+              }))}
               onPlayVideo={handlePlayVideo}
             />
           ))}
@@ -651,7 +799,20 @@ export default function VideoPortalPage() {
           {recentReleases.length > 0 && (
             <CarouselRow
               title="Lançamentos"
-              videos={recentReleases}
+              videos={recentReleases.map(show => ({
+                id: show.id,
+                title: show.name,
+                thumbnail_url: show.poster_image_url || show.backdrop_image_url,
+                description: show.overview,
+                duration: show.total_load || '',
+                popularity: show.popularity,
+                tv_show: {
+                  id: show.id,
+                  name: show.name,
+                  poster_image_url: show.poster_image_url,
+                  backdrop_image_url: show.backdrop_image_url
+                }
+              }))}
               onPlayVideo={handlePlayVideo}
             />
           )}
@@ -666,7 +827,10 @@ export default function VideoPortalPage() {
             title: currentVideo.title,
             url: currentVideo.video_url || '',
             type: 'mp4',
-            thumbnail: currentVideo.thumbnail_url || currentVideo.tv_show?.poster_image_url,
+            thumbnail: currentVideo.thumbnail_url || 
+                      currentVideo.tv_show?.poster_image_url || 
+                      currentVideo.tv_show?.backdrop_image_url || 
+                      '/placeholder-collection.jpg',
             duration: currentVideo.duration || '00:00',
             description: currentVideo.description || '',
           }]}

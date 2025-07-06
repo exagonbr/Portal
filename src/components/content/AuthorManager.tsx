@@ -5,14 +5,7 @@ import { authorService } from '@/services/authorService';
 import { AuthorDto, CreateAuthorDto, UpdateAuthorDto } from '@/types/author';
 import { PaginatedResponse } from '@/types/api';
 import { toast } from 'react-hot-toast';
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from '@/components/ui/table';
+import Table from '@/components/ui/Table';
 import {
   Dialog,
   DialogContent,
@@ -20,12 +13,12 @@ import {
   DialogHeader,
   DialogTitle,
 } from '@/components/ui/dialog';
-import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
+import { Button } from '@/components/ui/Button';
+import Input from '@/components/ui/Input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { Checkbox } from '@/components/ui/checkbox';
-import { Switch } from '@/components/ui/switch';
+import { Switch } from '@/components/ui/Switch';
 import { Pencil, Trash2, Plus } from 'lucide-react';
 
 export default function AuthorManager() {
@@ -190,54 +183,43 @@ export default function AuthorManager() {
         </div>
       ) : (
         <>
-          <Table>
-            <TableHeader>
-              <TableRow>
-                <TableHead>Nome</TableHead>
-                <TableHead>Descrição</TableHead>
-                <TableHead>Email</TableHead>
-                <TableHead>Status</TableHead>
-                <TableHead className="text-right">Ações</TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {authors.map((author) => (
-                <TableRow key={author.id}>
-                  <TableCell className="font-medium">{author.name}</TableCell>
-                  <TableCell className="max-w-xs truncate">{author.description}</TableCell>
-                  <TableCell>{author.email || '-'}</TableCell>
-                  <TableCell>
-                    <Switch
-                      checked={author.is_active}
-                      onCheckedChange={() => handleToggleStatus(Number(author.id))}
-                    />
-                  </TableCell>
-                  <TableCell className="text-right">
-                    <div className="flex justify-end gap-2">
-                      <Button
-                        variant="outline"
-                        size="icon"
-                        onClick={() => editAuthor(author)}
-                      >
-                        <Pencil size={16} />
-                      </Button>
-                      <Button
-                        variant="outline"
-                        size="icon"
-                        className="text-red-500 hover:text-red-700"
-                        onClick={() => handleDeleteAuthor(Number(author.id))}
-                      >
-                        <Trash2 size={16} />
-                      </Button>
-                    </div>
-                  </TableCell>
-                </TableRow>
-              ))}
-            </TableBody>
-          </Table>
+          <Table
+            columns={[
+              { key: 'name', title: 'Nome' },
+              { key: 'description', title: 'Descrição' },
+              { key: 'email', title: 'Email' },
+              { 
+                key: 'is_active', 
+                title: 'Status',
+                render: (value, record) => (
+                  <span className={record.is_active ? 'text-green-600' : 'text-red-600'}>
+                    {record.is_active ? 'Ativo' : 'Inativo'}
+                  </span>
+                )
+              },
+              {
+                key: 'actions',
+                title: 'Ações',
+                align: 'right',
+                render: (_, record) => (
+                  <div className="flex justify-end gap-2">
+                    <Button variant="outline" size="sm" onClick={() => editAuthor(record)}>
+                      <Pencil size={16} />
+                    </Button>
+                    <Button variant="destructive" size="sm" onClick={() => handleDeleteAuthor(Number(record.id))}>
+                      <Trash2 size={16} />
+                    </Button>
+                  </div>
+                )
+              }
+            ]}
+            data={authors}
+            loading={loading}
+            emptyText="Nenhum autor encontrado"
+          />
 
           {totalPages > 1 && (
-            <div className="flex justify-center mt-4 gap-2">
+            <div className="flex justify-center mt-6 gap-2">
               <Button
                 variant="outline"
                 onClick={() => setPage(p => Math.max(1, p - 1))}
@@ -245,15 +227,26 @@ export default function AuthorManager() {
               >
                 Anterior
               </Button>
-              <span className="py-2 px-4">
-                Página {page} de {totalPages}
-              </span>
+              
+              <div className="flex items-center gap-1">
+                {Array.from({ length: totalPages }, (_, i) => i + 1).map(p => (
+                  <Button
+                    key={p}
+                    variant={p === page ? 'default' : 'outline'}
+                    onClick={() => setPage(p)}
+                    className="w-10 h-10 p-0"
+                  >
+                    {p}
+                  </Button>
+                ))}
+              </div>
+              
               <Button
                 variant="outline"
                 onClick={() => setPage(p => Math.min(totalPages, p + 1))}
                 disabled={page === totalPages}
               >
-                Próxima
+                Próximo
               </Button>
             </div>
           )}
@@ -263,58 +256,47 @@ export default function AuthorManager() {
       <Dialog open={showModal} onOpenChange={setShowModal}>
         <DialogContent>
           <DialogHeader>
-            <DialogTitle>
-              {isEditing ? 'Editar Autor' : 'Criar Novo Autor'}
-            </DialogTitle>
+            <DialogTitle>{isEditing ? 'Editar Autor' : 'Novo Autor'}</DialogTitle>
           </DialogHeader>
-          <div className="space-y-4 py-4">
-            <div className="grid grid-cols-1 gap-4">
-              <div className="space-y-2">
-                <Label htmlFor="name">Nome *</Label>
-                <Input
-                  id="name"
-                  value={currentAuthor.name}
-                  onChange={(e) => setCurrentAuthor({ ...currentAuthor, name: e.target.value })}
-                  placeholder="Nome do autor"
-                  required
-                />
-              </div>
-              
-              <div className="space-y-2">
-                <Label htmlFor="email">Email</Label>
-                <Input
-                  id="email"
-                  type="email"
-                  value={currentAuthor.email}
-                  onChange={(e) => setCurrentAuthor({ ...currentAuthor, email: e.target.value })}
-                  placeholder="Email do autor"
-                />
-              </div>
-              
-              <div className="space-y-2">
-                <Label htmlFor="description">Descrição *</Label>
-                <Textarea
-                  id="description"
-                  value={currentAuthor.description}
-                  onChange={(e) => setCurrentAuthor({ ...currentAuthor, description: e.target.value })}
-                  placeholder="Descrição do autor"
-                  rows={4}
-                  required
-                />
-              </div>
-              
-              <div className="flex items-center space-x-2">
-                <Checkbox
-                  id="is_active"
-                  checked={currentAuthor.is_active}
-                  onCheckedChange={(checked) => 
-                    setCurrentAuthor({ ...currentAuthor, is_active: checked === true })
-                  }
-                />
-                <Label htmlFor="is_active">Ativo</Label>
-              </div>
+          
+          <div className="grid gap-4 py-4">
+            <div className="grid gap-2">
+              <Label htmlFor="name">Nome</Label>
+              <Input
+                id="name"
+                value={currentAuthor.name}
+                onChange={(e) => setCurrentAuthor({...currentAuthor, name: e.target.value})}
+              />
+            </div>
+            
+            <div className="grid gap-2">
+              <Label htmlFor="description">Descrição</Label>
+              <Textarea
+                id="description"
+                value={currentAuthor.description}
+                onChange={(e) => setCurrentAuthor({...currentAuthor, description: e.target.value})}
+              />
+            </div>
+            
+            <div className="grid gap-2">
+              <Label htmlFor="email">Email (opcional)</Label>
+              <Input
+                id="email"
+                type="email"
+                value={currentAuthor.email}
+                onChange={(e) => setCurrentAuthor({...currentAuthor, email: e.target.value})}
+              />
+            </div>
+            
+            <div className="flex items-center gap-2">
+              <Switch
+                checked={currentAuthor.is_active}
+                label="Autor ativo"
+                onChange={(checked) => setCurrentAuthor({...currentAuthor, is_active: checked})}
+              />
             </div>
           </div>
+          
           <DialogFooter>
             <Button variant="outline" onClick={() => setShowModal(false)}>
               Cancelar

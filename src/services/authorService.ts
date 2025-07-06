@@ -11,18 +11,26 @@ import {
 import { apiGet, apiPost, apiPut, apiDelete, apiPatch } from './apiService';
 
 // Função para mapear a resposta da API para o DTO do frontend
-const mapToAuthorDto = (data: ApiAuthorResponseDto): AuthorDto => ({
+const mapToAuthorDto = (data: any): AuthorDto => ({
   id: String(data.id),
   name: data.name,
   description: data.description,
   email: data.email,
-  is_active: data.is_active || false,
-  created_at: new Date().toISOString(), // API não parece fornecer
-  updated_at: new Date().toISOString(), // API não parece fornecer
+  is_active: data.isActive || false,
+  created_at: new Date().toISOString(),
+  updated_at: new Date().toISOString(),
+});
+
+// Função para mapear o DTO do frontend para o formato do backend
+const mapToApiAuthorDto = (data: CreateAuthorDto | UpdateAuthorDto) => ({
+  name: data.name,
+  description: data.description,
+  email: data.email,
+  isActive: data.is_active,
 });
 
 export const getAuthors = async (params: AuthorFilter): Promise<PaginatedResponse<AuthorDto>> => {
-  const response = await apiGet<PaginatedResponse<ApiAuthorResponseDto>>('/authors', params);
+  const response = await apiGet<PaginatedResponse<any>>('/authors', params);
   return {
     ...response,
     items: response.items.map(mapToAuthorDto),
@@ -30,17 +38,19 @@ export const getAuthors = async (params: AuthorFilter): Promise<PaginatedRespons
 };
 
 export const getAuthorById = async (id: number): Promise<AuthorDto> => {
-  const response = await apiGet<ApiAuthorResponseDto>(`/authors/${id}`);
+  const response = await apiGet<any>(`/authors/${id}`);
   return mapToAuthorDto(response);
 };
 
 export const createAuthor = async (data: CreateAuthorDto): Promise<AuthorDto> => {
-  const response = await apiPost<ApiAuthorResponseDto>('/authors', data);
+  const apiData = mapToApiAuthorDto(data);
+  const response = await apiPost<any>('/authors', apiData);
   return mapToAuthorDto(response);
 };
 
 export const updateAuthor = async (id: number, data: UpdateAuthorDto): Promise<AuthorDto> => {
-  const response = await apiPut<ApiAuthorResponseDto>(`/authors/${id}`, data);
+  const apiData = mapToApiAuthorDto(data);
+  const response = await apiPut<any>(`/authors/${id}`, apiData);
   return mapToAuthorDto(response);
 };
 
@@ -49,9 +59,8 @@ export const deleteAuthor = async (id: number): Promise<void> => {
 };
 
 export const toggleAuthorStatus = async (id: number): Promise<AuthorDto> => {
-    const author = await getAuthorById(id);
-    const response = await apiPatch<ApiAuthorResponseDto>(`/authors/${id}/status`, { active: !author.is_active });
-    return mapToAuthorDto(response);
+  const response = await apiPatch<any>(`/authors/${id}/status`, {});
+  return mapToAuthorDto(response);
 };
 
 export const authorService = {

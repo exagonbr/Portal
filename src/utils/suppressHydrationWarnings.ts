@@ -29,6 +29,7 @@ export function suppressHydrationWarnings() {
         'Warning: Extra attributes from the server', // Atributos extras do servidor
         'Warning: Prop `className` did not match', // Classes CSS diferentes
         'Warning: Expected server HTML to contain a matching', // HTML não correspondente
+        'Token de autenticação não encontrado', // Erro de autenticação
       ];
 
       // Se é um aviso de hidratação conhecido, não mostrar
