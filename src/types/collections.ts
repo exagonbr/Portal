@@ -58,6 +58,29 @@ export interface TVShowVideo {
   file_name?: string;
   file_mimetype?: string;
   file_size?: number;
+  // Campos para controle de legendas
+  label?: string; // Ex: "Com Legenda", "Sem Legenda"
+  is_default?: boolean; // Indica se é a versão padrão do vídeo
+  has_subtitles?: boolean; // Indica se o vídeo tem versão com legenda
+  alternative_versions?: TVShowVideoAlternative[]; // Versões alternativas do vídeo (com/sem legenda)
+}
+
+// Interface para versões alternativas de vídeo
+export interface TVShowVideoAlternative {
+  id: string | number;
+  title?: string;
+  url: string;
+  thumbnail?: string;
+  duration?: string;
+  description?: string;
+  episode_number?: number;
+  label?: string;
+  is_default?: boolean;
+  file_sha256hex?: string;
+  file_extension?: string;
+  file_name?: string;
+  file_mimetype?: string;
+  file_size?: number;
 }
 
 export interface TVShowModuleStructure {

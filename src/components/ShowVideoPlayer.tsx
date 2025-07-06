@@ -99,7 +99,34 @@ export default function ShowVideoPlayer({
         thumbnail: video.thumbnail_url,
         duration: video.duration ? `${Math.floor(video.duration / 60)}:${(video.duration % 60).toString().padStart(2, '0')}` : undefined,
         description: video.description,
-        episode_number: video.episode_number
+        episode_number: video.episode_number,
+        label: video.label || (video.is_default ? 'Sem Legenda' : undefined),
+        is_default: video.is_default || false,
+        has_subtitles: video.has_subtitles || false,
+        alternative_versions: video.alternative_versions?.map((altVideo: {
+          id: string | number;
+          title?: string;
+          url: string;
+          thumbnail?: string;
+          duration?: string | number;
+          description?: string;
+          episode_number?: number;
+          label?: string;
+          is_default?: boolean;
+        }) => ({
+          id: altVideo.id.toString(),
+          title: altVideo.title || video.title,
+          url: altVideo.url || '',
+          type: 'mp4' as const,
+          thumbnail: altVideo.thumbnail || video.thumbnail_url,
+          duration: typeof altVideo.duration === 'number' 
+            ? `${Math.floor(altVideo.duration / 60)}:${(altVideo.duration % 60).toString().padStart(2, '0')}` 
+            : (altVideo.duration as string) || video.duration ? `${Math.floor(video.duration / 60)}:${(video.duration % 60).toString().padStart(2, '0')}` : undefined,
+          description: altVideo.description || video.description,
+          episode_number: altVideo.episode_number || video.episode_number,
+          label: altVideo.label || 'Com Legenda',
+          is_default: altVideo.is_default || false
+        }))
       }))}
       initialVideoIndex={initialVideoIndex}
       collectionName={collectionName || 'Coleção de Vídeos'}

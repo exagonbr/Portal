@@ -1,12 +1,12 @@
 import { Router } from 'express';
 import { ViewingStatusController } from '../controllers/ViewingStatusController';
-import { authMiddleware } from '../middlewares/authMiddleware';
+import { requireAuth } from '../middleware/requireAuth';
 
 const router = Router();
 const controller = new ViewingStatusController();
 
 // Middleware de autenticação para todas as rotas
-router.use(authMiddleware);
+router.use(requireAuth);
 
 // Rotas para status de visualização
 router.post('/update', controller.updateStatus.bind(controller));

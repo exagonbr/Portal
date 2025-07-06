@@ -13,6 +13,21 @@ interface VideoData {
   session_number?: number;
   episode_number?: number;
   is_active?: boolean;
+  // Campos para controle de legendas
+  label?: string;
+  is_default?: boolean;
+  has_subtitles?: boolean;
+  alternative_versions?: {
+    id: string | number;
+    title?: string;
+    url: string;
+    thumbnail?: string;
+    duration?: string | number;
+    description?: string;
+    episode_number?: number;
+    label?: string;
+    is_default?: boolean;
+  }[];
 }
 
 interface ModuleData {

@@ -2,7 +2,7 @@
 
 import React, { useEffect, useState, useRef } from 'react';
 import { createPortal } from 'react-dom';
-import { Play, Pause, Volume2, VolumeX, Maximize, SkipBack, SkipForward, Settings, Clock, ChevronLeft, ChevronRight } from 'lucide-react';
+import { Play, Pause, Volume2, VolumeX, Maximize, SkipBack, SkipForward, Settings, Clock, ChevronLeft, ChevronRight, Subtitles } from 'lucide-react';
 import { formatVideoTime, formatVideoDuration } from '@/utils/date';
 import { useAuth } from '@/hooks/useAuth';
 import { trackVideoProgress, getVideoStatus, startVideoSession } from '@/services/viewingStatusService';
@@ -16,6 +16,11 @@ interface VideoSource {
   duration?: string;
   description?: string;
   episode_number?: number;
+  has_subtitles?: boolean;
+  subtitle_url?: string;
+  label?: string;
+  is_default?: boolean;
+  alternative_versions?: VideoSource[];
 }
 
 interface UniversalVideoPlayerProps {
@@ -63,6 +68,7 @@ export default function UniversalVideoPlayer({
   const [message, setMessage] = useState('');
   const [selectedQuality, setSelectedQuality] = useState<string>('auto');
   const [playbackSpeed, setPlaybackSpeed] = useState<number>(1.0);
+  const [subtitlesEnabled, setSubtitlesEnabled] = useState<boolean>(false);
 
   const videoRef = useRef<HTMLVideoElement>(null);
   const containerRef = useRef<HTMLDivElement>(null);
@@ -77,7 +83,11 @@ export default function UniversalVideoPlayer({
       title: currentVideo.title,
       url: currentVideo.url,
       type: currentVideo.type,
-      hasUrl: !!currentVideo.url
+      hasUrl: !!currentVideo.url,
+      label: currentVideo.label,
+      isDefault: currentVideo.is_default,
+      hasSubtitles: currentVideo.has_subtitles,
+      alternativeVersions: currentVideo.alternative_versions?.length || 0
     } : null
   })
 
@@ -145,12 +155,19 @@ export default function UniversalVideoPlayer({
             handleNextVideo();
           }
           break;
+        case 'c':
+        case 'C':
+          if (!e.ctrlKey && !e.altKey && !e.metaKey) {
+            e.preventDefault();
+            toggleSubtitles();
+          }
+          break;
       }
     };
 
     window.addEventListener('keydown', handleKeyDown);
     return () => window.removeEventListener('keydown', handleKeyDown);
-  }, [onClose, isFullscreen, showSidebars, showBottomBar, videos.length]);
+  }, [onClose, isFullscreen, showSidebars, showBottomBar, videos.length, currentVideo, subtitlesEnabled]);
 
   // Auto-hide controls and UI elements
   useEffect(() => {
@@ -282,6 +299,73 @@ export default function UniversalVideoPlayer({
       setTimeout(() => {
         setShowControls(false);
       }, 3000);
+    }
+  };
+
+  // Função para alternar entre versões com e sem legenda
+  const toggleSubtitles = () => {
+    // Se o vídeo atual não tem versões alternativas, não fazer nada
+    if (!currentVideo.alternative_versions || currentVideo.alternative_versions.length === 0) {
+      setShowMessage(true);
+      setMessage('Este vídeo não possui versão com legenda');
+      setTimeout(() => setShowMessage(false), 3000);
+      return;
+    }
+    
+    // Salvar a posição atual do vídeo
+    const currentPosition = videoRef.current?.currentTime || 0;
+    
+    // Encontrar a versão alternativa apropriada
+    const newSubtitlesState = !subtitlesEnabled;
+    setSubtitlesEnabled(newSubtitlesState);
+    
+    // Encontrar a versão apropriada do vídeo (com ou sem legenda)
+    const allVersions = [currentVideo, ...(currentVideo.alternative_versions || [])];
+    const targetVersion = allVersions.find(v => 
+      newSubtitlesState 
+        ? v.label === 'Com Legenda' || v.label?.includes('legenda')
+        : v.label === 'Sem Legenda' || v.is_default
+    );
+    
+    if (targetVersion && targetVersion !== currentVideo) {
+      // Substituir o vídeo atual pela versão alternativa
+      const updatedVideos = [...videos];
+      
+      // Guardar as versões alternativas
+      const allAlternatives = [
+        currentVideo,
+        ...(currentVideo.alternative_versions || [])
+      ].filter(v => v !== targetVersion);
+      
+      // Atualizar o vídeo atual com a nova versão, mantendo as alternativas
+      targetVersion.alternative_versions = allAlternatives;
+      updatedVideos[currentVideoIndex] = targetVersion;
+      
+      // Atualizar o estado
+      videos[currentVideoIndex] = targetVersion;
+      
+      // Recarregar o vídeo
+      setIsLoading(true);
+      
+      // Mostrar mensagem
+      setShowMessage(true);
+      setMessage(`Alternando para versão ${newSubtitlesState ? 'com' : 'sem'} legenda`);
+      setTimeout(() => setShowMessage(false), 3000);
+      
+      // Após o vídeo carregar, restaurar a posição
+      setTimeout(() => {
+        if (videoRef.current) {
+          videoRef.current.currentTime = currentPosition;
+        }
+      }, 500);
+    } else {
+      // Se não encontrar uma versão alternativa apropriada
+      setShowMessage(true);
+      setMessage(`Este vídeo não possui versão ${newSubtitlesState ? 'com' : 'sem'} legenda`);
+      setTimeout(() => setShowMessage(false), 3000);
+      
+      // Reverter o estado
+      setSubtitlesEnabled(!newSubtitlesState);
     }
   };
 
@@ -979,6 +1063,15 @@ export default function UniversalVideoPlayer({
                   </div>
                   
                   <div className="flex items-center gap-2">
+                    {(currentVideo.has_subtitles || (currentVideo.alternative_versions && currentVideo.alternative_versions.length > 0)) && (
+                      <button
+                        onClick={toggleSubtitles}
+                        className={`text-white hover:text-gray-300 transition-colors control-button ${subtitlesEnabled ? 'text-yellow-400' : ''}`}
+                        title={subtitlesEnabled ? 'Desativar Legenda' : 'Ativar Legenda'}
+                      >
+                        <Subtitles className="w-4 h-4 md:w-5 md:h-5" />
+                      </button>
+                    )}
                     <button
                       onClick={isFullscreen ? exitFullscreen : enterFullscreen}
                       className="text-white hover:text-gray-300 transition-colors control-button"
@@ -1195,6 +1288,12 @@ export default function UniversalVideoPlayer({
                   <span className="text-gray-400">Fechar player</span>
                   <kbd className="px-2 py-1 bg-gray-700 text-white rounded text-xs">Esc</kbd>
                 </div>
+                {(currentVideo.has_subtitles || (currentVideo.alternative_versions && currentVideo.alternative_versions.length > 0)) && (
+                  <div className="flex justify-between items-center">
+                    <span className="text-gray-400">Alternar legenda</span>
+                    <kbd className="px-2 py-1 bg-gray-700 text-white rounded text-xs">C</kbd>
+                  </div>
+                )}
               </div>
             </div>
           </div>

@@ -11,7 +11,7 @@ router.use(requireAuth);
 // Middleware para verificar permissões de auditoria
 const requireAuditPermission = (req: any, res: any, next: any) => {
   const allowedRoles = ['admin', 'system_admin', 'auditor', 'manager'];
-  const userRole = req.user?.role;
+  const userRole = (req.user as any)?.role;
   
   if (!allowedRoles.includes(userRole)) {
     return res.status(403).json({
@@ -114,7 +114,7 @@ router.get('/sessions/active', requireAuditPermission, async (req, res) => {
 router.get('/users/:userId/sessions', async (req, res) => {
   try {
     // Usuários podem ver suas próprias sessões
-    if (req.user?.id !== req.params.userId && !['admin', 'system_admin', 'auditor'].includes(req.user?.role)) {
+    if ((req.user as any)?.id !== req.params.userId && !['admin', 'system_admin', 'auditor'].includes((req.user as any)?.role)) {
       return res.status(403).json({
         success: false,
         message: 'Acesso negado'
@@ -270,7 +270,7 @@ router.get('/compliance-report', requireAuditPermission, async (req, res) => {
 router.post('/cleanup', requireAuditPermission, async (req, res) => {
   try {
     // Verificar permissão especial
-    if (req.user?.role !== 'system_admin') {
+    if ((req.user as any)?.role !== 'system_admin') {
       return res.status(403).json({
         success: false,
         message: 'Apenas administradores do sistema podem limpar logs'
@@ -302,7 +302,7 @@ router.post('/cleanup', requireAuditPermission, async (req, res) => {
 router.get('/users/:userId/summary', async (req, res) => {
   try {
     // Usuários podem ver seu próprio resumo
-    if (req.user?.id !== req.params.userId && !['admin', 'system_admin', 'auditor'].includes(req.user?.role)) {
+    if ((req.user as any)?.id !== req.params.userId && !['admin', 'system_admin', 'auditor'].includes((req.user as any)?.role)) {
       return res.status(403).json({
         success: false,
         message: 'Acesso negado'

@@ -1,5 +1,7 @@
 import { Request } from 'express';
+// @ts-ignore
 import UAParser from 'ua-parser-js';
+// @ts-ignore
 import geoip from 'geoip-lite';
 
 export interface ClientInfo {
@@ -58,8 +60,8 @@ export function getClientInfo(req: Request): ClientInfo {
   const ip = getRealIP(req);
   const userAgent = req.headers['user-agent'] || 'unknown';
   
-  // Parser do User Agent
-  const parser = UAParser(userAgent);
+  // Parser do User Agent - usando asserção de tipo
+  const parser = new (UAParser as any)(userAgent);
   const browser = parser.getBrowser();
   const os = parser.getOS();
   const device = parser.getDevice();
@@ -71,7 +73,7 @@ export function getClientInfo(req: Request): ClientInfo {
   let city: string | undefined;
   
   if (ip && ip !== 'unknown') {
-    const geo = geoip.lookup(ip);
+    const geo = (geoip as any).lookup(ip);
     if (geo) {
       country = geo.country;
       region = geo.region;
@@ -163,7 +165,7 @@ export function getDeviceInfo(req: Request): {
   isBot: boolean;
 } {
   const userAgent = req.headers['user-agent'] || '';
-  const parser = UAParser(userAgent);
+  const parser = new (UAParser as any)(userAgent);
   const device = parser.getDevice();
   
   const isMobile = /mobile/i.test(userAgent) || device.type === 'mobile';

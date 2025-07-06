@@ -400,11 +400,14 @@ export class TvShowRepository extends BaseRepository<TvShow> {
           'v.season_number',
           'v.episode_number',
           'v.still_path as thumbnail_url',
+          'f.id as file_id',
           'f.sha256hex as file_sha256hex',
           'f.extension as file_extension',
           'f.name as file_name',
           'f.content_type as file_mimetype',
-          'f.size as file_size'
+          'f.size as file_size',
+          'f.label',
+          'f.is_default'
         )
         .where('v.show_id', tvShowId)
         .where("v.deleted", false)
@@ -414,16 +417,11 @@ export class TvShowRepository extends BaseRepository<TvShow> {
 
       console.log(`✅ Encontrados ${videos.length} vídeos para TV Show ${tvShowId}`);
 
-      // Agrupar vídeos por sessão (season_number)
-      const modules: Record<string, any[]> = {};
+      // Agrupar vídeos por ID para consolidar arquivos alternativos
+      const videoMap = new Map();
       
       videos.forEach(video => {
-        const sessionNumber = video.season_number || 1;
-        const moduleKey = `session_${sessionNumber}`;
-        
-        if (!modules[moduleKey]) {
-          modules[moduleKey] = [];
-        }
+        const videoId = video.id;
         
         // Construir URL do CloudFront se temos os dados do arquivo
         let videoUrl = null;
@@ -433,21 +431,120 @@ export class TvShowRepository extends BaseRepository<TvShow> {
           videoUrl = `https://d26a2wm7tuz2gu.cloudfront.net/upload/${video.file_sha256hex}${extensionSuffix}`;
         }
         
-        modules[moduleKey].push({
-          id: video.id,
-          title: video.title || video.name || 'Vídeo sem título',
-          description: video.description || '',
-          video_url: videoUrl,
-          module_number: sessionNumber,
-          episode_number: video.episode_number || 1,
-          duration: video.duration || '00:00:00',
-          thumbnail_url: video.thumbnail_url,
-          file_sha256hex: video.file_sha256hex,
-          file_extension: video.file_extension,
-          file_name: video.file_name,
-          file_mimetype: video.file_mimetype,
-          file_size: video.file_size
-        });
+        // Criar objeto do arquivo
+        const fileObj = video.file_id ? {
+          id: video.file_id,
+          url: videoUrl,
+          sha256hex: video.file_sha256hex,
+          extension: video.file_extension,
+          name: video.file_name,
+          mimetype: video.file_mimetype,
+          size: video.file_size,
+          label: video.label || (video.is_default ? 'Sem Legenda' : null),
+          is_default: video.is_default || false
+        } : null;
+        
+        // Se o vídeo já existe no mapa, adicionar como arquivo alternativo
+        if (videoMap.has(videoId)) {
+          const existingVideo = videoMap.get(videoId);
+          
+          // Se temos um arquivo válido, adicionar à lista de alternativas
+          if (fileObj && fileObj.url) {
+            if (!existingVideo.alternative_files) {
+              existingVideo.alternative_files = [];
+            }
+            
+            // Adicionar apenas se não for o arquivo padrão
+            if (!fileObj.is_default) {
+              existingVideo.alternative_files.push(fileObj);
+            }
+            
+            // Se este arquivo for o padrão, torná-lo o principal
+            if (fileObj.is_default && !existingVideo.is_default_set) {
+              existingVideo.video_url = fileObj.url;
+              existingVideo.file_sha256hex = fileObj.sha256hex;
+              existingVideo.file_extension = fileObj.extension;
+              existingVideo.file_name = fileObj.name;
+              existingVideo.file_mimetype = fileObj.mimetype;
+              existingVideo.file_size = fileObj.size;
+              existingVideo.label = fileObj.label;
+              existingVideo.is_default = true;
+              existingVideo.is_default_set = true;
+            }
+          }
+        } else {
+          // Criar novo objeto de vídeo
+          const videoObj = {
+            id: videoId,
+            title: video.title || video.name || 'Vídeo sem título',
+            description: video.description || '',
+            video_url: videoUrl,
+            module_number: video.season_number || 1,
+            episode_number: video.episode_number || 1,
+            duration: video.duration || '00:00:00',
+            thumbnail_url: video.thumbnail_url,
+            file_sha256hex: video.file_sha256hex,
+            file_extension: video.file_extension,
+            file_name: video.file_name,
+            file_mimetype: video.file_mimetype,
+            file_size: video.file_size,
+            label: video.label || (video.is_default ? 'Sem Legenda' : null),
+            is_default: video.is_default || false,
+            is_default_set: video.is_default || false,
+            alternative_files: []
+          };
+          
+          videoMap.set(videoId, videoObj);
+        }
+      });
+      
+      // Processar vídeos e organizar em módulos
+      const processedVideos = Array.from(videoMap.values()).map((video: any) => {
+        // Converter arquivos alternativos para o formato esperado
+        if (video.alternative_files && video.alternative_files.length > 0) {
+          video.alternative_versions = video.alternative_files.map((file: any) => ({
+            id: `${video.id}_${file.id}`,
+            title: video.title,
+            url: file.url,
+            type: 'mp4',
+            thumbnail: video.thumbnail_url,
+            duration: video.duration,
+            description: video.description,
+            episode_number: video.episode_number,
+            label: file.label || 'Com Legenda',
+            is_default: file.is_default || false,
+            file_sha256hex: file.sha256hex,
+            file_extension: file.extension,
+            file_name: file.name,
+            file_mimetype: file.mimetype,
+            file_size: file.size
+          }));
+        }
+        
+        // Remover propriedades temporárias
+        delete video.alternative_files;
+        delete video.is_default_set;
+        
+        // Adicionar informação sobre legendas
+        video.has_subtitles = video.alternative_versions && video.alternative_versions.some((v: any) => 
+          v.label && (v.label === 'Com Legenda' || v.label.includes('legenda'))
+        );
+        
+        return video;
+      });
+
+      // Agrupar vídeos por sessão (season_number)
+      const modules: Record<string, any[]> = {};
+      
+      processedVideos.forEach((video: any) => {
+        const sessionNumber = video.module_number || 1;
+        const moduleKey = `session_${sessionNumber}`;
+        
+        if (!modules[moduleKey]) {
+          modules[moduleKey] = [];
+        }
+        
+        modules[moduleKey].push(video);
       });
 
       console.log(`📊 Módulos organizados: ${Object.keys(modules).length} sessões`);
@@ -464,6 +561,7 @@ export class TvShowRepository extends BaseRepository<TvShow> {
     try {
       console.log(`🎬 Buscando lista de vídeos para TV Show ID: ${tvShowId}`);
       
+      // Primeiro, buscar todos os vídeos e seus arquivos associados
       const videos = await this.db('video as v')
         .leftJoin('video_file as vf', 'v.id', 'vf.video_files_id')
         .leftJoin('file as f', 'vf.file_id', 'f.id')
@@ -476,11 +574,14 @@ export class TvShowRepository extends BaseRepository<TvShow> {
           'v.season_number as session_number',
           'v.episode_number',
           'v.still_path as thumbnail_url',
+          'f.id as file_id',
           'f.sha256hex as file_sha256hex',
           'f.extension as file_extension',
           'f.name as file_name',
           'f.content_type as file_mimetype',
-          'f.size as file_size'
+          'f.size as file_size',
+          'f.label',
+          'f.is_default'
         )
         .where('v.show_id', tvShowId)
         .where("v.deleted", false)
@@ -490,8 +591,13 @@ export class TvShowRepository extends BaseRepository<TvShow> {
 
       console.log(`✅ Encontrados ${videos.length} vídeos para TV Show ${tvShowId}`);
 
-      // Mapear vídeos com URLs do CloudFront
-      const mappedVideos = videos.map(video => {
+      // Agrupar por vídeo e organizar arquivos alternativos
+      const videoMap = new Map();
+      
+      videos.forEach(video => {
+        const videoId = video.id;
+        
+        // Construir URL do CloudFront se temos os dados do arquivo
         let videoUrl = null;
         if (video.file_sha256hex && video.file_extension) {
           const extension = this.cleanExtension(video.file_extension);
@@ -499,21 +605,106 @@ export class TvShowRepository extends BaseRepository<TvShow> {
           videoUrl = `https://d26a2wm7tuz2gu.cloudfront.net/upload/${video.file_sha256hex}${extensionSuffix}`;
         }
         
-        return {
-          id: video.id,
-          title: video.title || video.name || 'Vídeo sem título',
-          description: video.description || '',
-          video_url: videoUrl,
-          session_number: video.session_number || 1,
-          episode_number: video.episode_number || 1,
-          duration: video.duration || '00:00:00',
-          thumbnail_url: video.thumbnail_url,
-          file_sha256hex: video.file_sha256hex,
-          file_extension: video.file_extension,
-          file_name: video.file_name,
-          file_mimetype: video.file_mimetype,
-          file_size: video.file_size
-        };
+        // Criar objeto do arquivo
+        const fileObj = video.file_id ? {
+          id: video.file_id,
+          url: videoUrl,
+          sha256hex: video.file_sha256hex,
+          extension: video.file_extension,
+          name: video.file_name,
+          mimetype: video.file_mimetype,
+          size: video.file_size,
+          label: video.label || (video.is_default ? 'Sem Legenda' : null),
+          is_default: video.is_default || false
+        } : null;
+        
+        // Se o vídeo já existe no mapa, adicionar como arquivo alternativo
+        if (videoMap.has(videoId)) {
+          const existingVideo = videoMap.get(videoId);
+          
+          // Se temos um arquivo válido, adicionar à lista de alternativas
+          if (fileObj && fileObj.url) {
+            if (!existingVideo.alternative_files) {
+              existingVideo.alternative_files = [];
+            }
+            
+            // Adicionar apenas se não for o arquivo padrão
+            if (!fileObj.is_default) {
+              existingVideo.alternative_files.push(fileObj);
+            }
+            
+            // Se este arquivo for o padrão, torná-lo o principal
+            if (fileObj.is_default && !existingVideo.is_default_set) {
+              existingVideo.video_url = fileObj.url;
+              existingVideo.file_sha256hex = fileObj.sha256hex;
+              existingVideo.file_extension = fileObj.extension;
+              existingVideo.file_name = fileObj.name;
+              existingVideo.file_mimetype = fileObj.mimetype;
+              existingVideo.file_size = fileObj.size;
+              existingVideo.label = fileObj.label;
+              existingVideo.is_default = true;
+              existingVideo.is_default_set = true;
+            }
+          }
+        } else {
+          // Criar novo objeto de vídeo
+          const videoObj = {
+            id: videoId,
+            title: video.title || video.name || 'Vídeo sem título',
+            description: video.description || '',
+            video_url: videoUrl,
+            session_number: video.session_number || 1,
+            episode_number: video.episode_number || 1,
+            duration: video.duration || '00:00:00',
+            thumbnail_url: video.thumbnail_url,
+            file_sha256hex: video.file_sha256hex,
+            file_extension: video.file_extension,
+            file_name: video.file_name,
+            file_mimetype: video.file_mimetype,
+            file_size: video.file_size,
+            label: video.label || (video.is_default ? 'Sem Legenda' : null),
+            is_default: video.is_default || false,
+            is_default_set: video.is_default || false,
+            alternative_files: []
+          };
+          
+          videoMap.set(videoId, videoObj);
+        }
+      });
+      
+      // Converter o mapa para uma lista e processar arquivos alternativos
+      const mappedVideos = Array.from(videoMap.values()).map(video => {
+        // Converter arquivos alternativos para o formato esperado
+        if (video.alternative_files && video.alternative_files.length > 0) {
+          video.alternative_versions = video.alternative_files.map((file: any) => ({
+            id: `${video.id}_${file.id}`,
+            title: video.title,
+            url: file.url,
+            type: 'mp4',
+            thumbnail: video.thumbnail_url,
+            duration: video.duration,
+            description: video.description,
+            episode_number: video.episode_number,
+            label: file.label || 'Com Legenda',
+            is_default: file.is_default || false,
+            file_sha256hex: file.sha256hex,
+            file_extension: file.extension,
+            file_name: file.name,
+            file_mimetype: file.mimetype,
+            file_size: file.size
+          }));
+        }
+        
+        // Remover propriedades temporárias
+        delete video.alternative_files;
+        delete video.is_default_set;
+        
+        // Adicionar informação sobre legendas
+        video.has_subtitles = video.alternative_versions && video.alternative_versions.some((v: any) => 
+          v.label && (v.label === 'Com Legenda' || v.label.includes('legenda'))
+        );
+        
+        return video;
       });
 
       return mappedVideos;

@@ -29,7 +29,22 @@ export default function SessionVideoPlayer({
     thumbnail: video.thumbnail_url,
     duration: video.duration,
     description: video.description,
-    episode_number: video.episode_number || index + 1
+    episode_number: video.episode_number || index + 1,
+    label: video.label || (video.is_default ? 'Sem Legenda' : undefined),
+    is_default: video.is_default || false,
+    has_subtitles: video.has_subtitles || false,
+    alternative_versions: video.alternative_versions?.map(altVideo => ({
+      id: altVideo.id.toString(),
+      title: altVideo.title || video.title,
+      url: altVideo.url || '',
+      type: detectVideoType(altVideo.url || '') as 'mp4' | 'youtube' | 'vimeo' | 'direct',
+      thumbnail: altVideo.thumbnail || video.thumbnail_url,
+      duration: altVideo.duration || video.duration,
+      description: altVideo.description || video.description,
+      episode_number: altVideo.episode_number || video.episode_number || index + 1,
+      label: altVideo.label || 'Com Legenda',
+      is_default: altVideo.is_default || false
+    }))
   }));
 
   function detectVideoType(url: string): 'mp4' | 'youtube' | 'vimeo' | 'direct' {
