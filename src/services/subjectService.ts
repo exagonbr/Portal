@@ -48,9 +48,8 @@ export const deleteSubject = async (id: number): Promise<void> => {
 };
 
 export const toggleSubjectStatus = async (id: number): Promise<SubjectDto> => {
-    const subject = await getSubjectById(id);
-    const response = await apiPatch<ApiSubjectResponseDto>(`/subjects/${id}/status`, { active: !subject.is_active });
-    return mapToSubjectDto(response);
+  const response = await apiPatch<ApiSubjectResponseDto>(`/subjects/${id}/toggle-status`, {});
+  return mapToSubjectDto(response);
 };
 
 export const subjectService = {

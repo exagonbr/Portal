@@ -124,6 +124,18 @@ export const getSystemAdminMenuItems = (): AdminMenuSection[] => {
           icon: 'archive',
           label: 'Arquivos do Sistema',
           permission: 'canManageSystem'
+        },
+        {
+          href: '/admin/content/authors',
+          icon: 'person',
+          label: 'Autores',
+          permission: 'canManageSystem'
+        },
+        {
+          href: '/admin/content/subjects',
+          icon: 'book',
+          label: 'Disciplinas',
+          permission: 'canManageSystem'
         }
       ]
     },

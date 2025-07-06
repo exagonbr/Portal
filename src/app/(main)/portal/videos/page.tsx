@@ -6,148 +6,36 @@ import { useTheme } from '@/contexts/ThemeContext';
 import { useAuth } from '@/contexts/AuthContext';
 import { useRouter } from 'next/navigation';
 import VideoPlayer from '@/components/VideoPlayer';
-import { mockVideos, carouselVideoImages } from '@/constants/mockData';
+import { carouselVideoImages } from '@/constants/mockData';
+import { api } from '@/lib/api';
+import { getWatchHistory } from '@/services/viewingStatusService';
+import { TVShowCollection, TVShowVideo } from '@/types/collections';
+import UniversalVideoPlayer from '@/components/UniversalVideoPlayer';
 
-// Create comprehensive video data with real educational YouTube videos
-const createVideoLibrary = () => {
-  const videoCategories = [
-    {
-      category: "Matemática",
-      videos: [
-        { id: "LuDQ_utewGw", title: "Função Quadrática - Conceitos Básicos", duration: "15:30", progress: 75 },
-        { id: "9bZkp7q19f0", title: "Derivadas - Regra da Cadeia", duration: "22:15", progress: 45 },
-        { id: "kJQP7kiw5Fk", title: "Geometria Analítica - Reta", duration: "18:45", progress: 0 },
-        { id: "YQHsXMglC9A", title: "Logaritmos - Propriedades", duration: "25:10", progress: 30 },
-        { id: "oHg5SJYRHA0", title: "Trigonometria - Círculo Trigonométrico", duration: "20:35", progress: 0 }
-      ]
-    },
-    {
-      category: "Física",
-      videos: [
-        { id: "rAu1h2NfT6Q", title: "Cinemática - Movimento Uniforme", duration: "28:20", progress: 60 },
-        { id: "Hyp7WuuTAeI", title: "Eletrostática - Lei de Coulomb", duration: "32:45", progress: 0 },
-        { id: "kJQP7kiw5Fk", title: "Termodinâmica - Primeira Lei", duration: "24:15", progress: 85 },
-        { id: "9bZkp7q19f0", title: "Óptica - Espelhos Esféricos", duration: "19:30", progress: 0 },
-        { id: "YQHsXMglC9A", title: "Mecânica - Leis de Newton", duration: "35:50", progress: 20 }
-      ]
-    },
-    {
-      category: "Química",
-      videos: [
-        { id: "Cz3O0NrgHfE", title: "Química Orgânica - Hidrocarbonetos", duration: "26:40", progress: 0 },
-        { id: "oHg5SJYRHA0", title: "Ácidos e Bases - pH e pOH", duration: "21:25", progress: 55 },
-        { id: "kJQP7kiw5Fk", title: "Cinética Química - Velocidade", duration: "29:15", progress: 0 },
-        { id: "9bZkp7q19f0", title: "Estequiometria - Cálculos", duration: "33:10", progress: 40 },
-        { id: "YQHsXMglC9A", title: "Tabela Periódica - Propriedades", duration: "17:55", progress: 0 }
-      ]
-    },
-    {
-      category: "Biologia",
-      videos: [
-        { id: "3KUvxI_u1Ys", title: "Genética - Leis de Mendel", duration: "31:20", progress: 70 },
-        { id: "oHg5SJYRHA0", title: "Ecologia - Cadeia Alimentar", duration: "27:45", progress: 0 },
-        { id: "kJQP7kiw5Fk", title: "Citologia - Mitose e Meiose", duration: "24:30", progress: 25 },
-        { id: "9bZkp7q19f0", title: "Evolução - Darwin", duration: "22:15", progress: 0 },
-        { id: "YQHsXMglC9A", title: "Anatomia - Sistema Circulatório", duration: "19:40", progress: 90 }
-      ]
-    },
-    {
-      category: "História",
-      videos: [
-        { id: "jNQXAC9IVRw", title: "Brasil Colônia - Capitanias Hereditárias", duration: "34:25", progress: 0 },
-        { id: "oHg5SJYRHA0", title: "Revolução Francesa - Antecedentes", duration: "28:50", progress: 35 },
-        { id: "kJQP7kiw5Fk", title: "Segunda Guerra - Holocausto", duration: "42:15", progress: 0 },
-        { id: "9bZkp7q19f0", title: "Era Vargas - Getúlio Vargas", duration: "26:30", progress: 65 },
-        { id: "YQHsXMglC9A", title: "Idade Média - Sistema Feudal", duration: "30:45", progress: 0 }
-      ]
-    },
-    {
-      category: "Geografia",
-      videos: [
-        { id: "Me02kzqcwK0", title: "Geologia - Placas Tectônicas", duration: "25:35", progress: 50 },
-        { id: "oHg5SJYRHA0", title: "Climatologia - Aquecimento Global", duration: "29:20", progress: 0 },
-        { id: "kJQP7kiw5Fk", title: "Cartografia - Fusos Horários", duration: "18:45", progress: 80 },
-        { id: "9bZkp7q19f0", title: "Geografia Urbana - Urbanização", duration: "32:10", progress: 0 },
-        { id: "YQHsXMglC9A", title: "Geopolítica - BRICS", duration: "27:55", progress: 15 }
-      ]
-    },
-    {
-      category: "Literatura",
-      videos: [
-        { id: "jNQXAC9IVRw", title: "Machado de Assis - Dom Casmurro", duration: "23:40", progress: 0 },
-        { id: "oHg5SJYRHA0", title: "Modernismo - Mário de Andrade", duration: "26:15", progress: 45 },
-        { id: "kJQP7kiw5Fk", title: "Romantismo - José de Alencar", duration: "21:30", progress: 0 },
-        { id: "9bZkp7q19f0", title: "Barroco - Padre Antônio Vieira", duration: "19:25", progress: 70 },
-        { id: "YQHsXMglC9A", title: "Parnasianismo - Raimundo Correia", duration: "17:50", progress: 0 }
-      ]
-    },
-    {
-      category: "Filosofia",
-      videos: [
-        { id: "Me02kzqcwK0", title: "Platão - Alegoria da Caverna", duration: "28:15", progress: 25 },
-        { id: "oHg5SJYRHA0", title: "Aristóteles - Ética a Nicômaco", duration: "31:40", progress: 0 },
-        { id: "kJQP7kiw5Fk", title: "Kant - Imperativo Categórico", duration: "35:20", progress: 60 },
-        { id: "9bZkp7q19f0", title: "Nietzsche - Além do Bem e do Mal", duration: "29:55", progress: 0 },
-        { id: "YQHsXMglC9A", title: "Descartes - Discurso do Método", duration: "24:30", progress: 40 }
-      ]
-    },
-    {
-      category: "Português",
-      videos: [
-        { id: "3KUvxI_u1Ys", title: "Gramática - Concordância Verbal", duration: "22:10", progress: 0 },
-        { id: "oHg5SJYRHA0", title: "Redação - Dissertação Argumentativa", duration: "28:30", progress: 50 },
-        { id: "kJQP7kiw5Fk", title: "Interpretação de Texto - ENEM", duration: "25:45", progress: 0 },
-        { id: "9bZkp7q19f0", title: "Sintaxe - Período Composto", duration: "30:20", progress: 35 },
-        { id: "YQHsXMglC9A", title: "Figuras de Linguagem", duration: "18:15", progress: 0 }
-      ]
-    },
-    {
-      category: "Inglês",
-      videos: [
-        { id: "Cz3O0NrgHfE", title: "Grammar - Present Perfect", duration: "20:45", progress: 60 },
-        { id: "oHg5SJYRHA0", title: "Vocabulary - Business English", duration: "24:30", progress: 0 },
-        { id: "kJQP7kiw5Fk", title: "Conversation - Daily Routines", duration: "18:20", progress: 80 },
-        { id: "9bZkp7q19f0", title: "Reading - Text Comprehension", duration: "26:15", progress: 0 },
-        { id: "YQHsXMglC9A", title: "Writing - Essay Structure", duration: "22:40", progress: 25 }
-      ]
-    }
-  ];
-
-  // Flatten all videos into a single array with proper structure
-  const allVideos = videoCategories.flatMap(cat => 
-    cat.videos.map(video => ({
-      id: `${cat.category.toLowerCase()}-${video.id}`,
-      thumbnail: `https://img.youtube.com/vi/${video.id}/maxresdefault.jpg`,
-      title: `${cat.category}: ${video.title}`,
-      duration: video.duration,
-      progress: video.progress,
-      youtubeId: video.id
-    }))
-  );
-
-  return { videoCategories, allVideos };
-};
-
-// Get videos in progress
-const getVideosInProgress = (videos: any[]) => {
-  return videos.filter(video => video.progress && video.progress > 0 && video.progress < 100)
-    .sort((a, b) => (b.progress || 0) - (a.progress || 0));
-};
-
-// Group videos by subject
-const groupVideosBySubject = (videoCategories: any[]) => {
-  return videoCategories.map(cat => ({
-    subject: cat.category,
-    videos: cat.videos.map((video: any) => ({
-      id: `${cat.category.toLowerCase()}-${video.id}`,
-      thumbnail: `https://img.youtube.com/vi/${video.id}/maxresdefault.jpg`,
-      title: `${cat.category}: ${video.title}`,
-      duration: video.duration,
-      progress: video.progress,
-      youtubeId: video.id
-    }))
-  }));
-};
+// Interface para os dados de visualização
+interface ViewingStatus {
+  id: number;
+  video_id: string;
+  tv_show_id?: string;
+  current_play_time: number;
+  completion_percentage?: number;
+  completed?: boolean;
+  last_watched_at?: string;
+  content_type?: string;
+  video?: {
+    id: number;
+    title: string;
+    thumbnail_url?: string;
+    duration?: string;
+    tv_show_id?: number;
+  };
+  tv_show?: {
+    id: number;
+    name: string;
+    poster_image_url?: string;
+    backdrop_image_url?: string;
+  };
+}
 
 // Loading Spinner Component
 const LoadingSpinner = () => (
@@ -289,95 +177,82 @@ const HeroSection = () => {
 };
 
 // Netflix-style Video Card
-const NetflixVideoCard = ({ video }: { video: any }) => {
+const NetflixVideoCard = ({ video, onPlay }: { video: any, onPlay?: () => void }) => {
   const [isHovered, setIsHovered] = useState(false);
-  const [showPlayer, setShowPlayer] = useState(false);
-  const progressPercentage = video.progress || 0;
-
-  const getVideoId = () => {
-    return video.youtubeId || video.id;
-  };
+  const progressPercentage = video.progress || video.completion_percentage || 0;
 
   return (
-    <>
-      <div
-        className="relative group cursor-pointer h-full"
-        onMouseEnter={() => setIsHovered(true)}
-        onMouseLeave={() => setIsHovered(false)}
-      >
-        <div className={`relative transition-all duration-300 h-full ${isHovered ? 'scale-105 z-50' : 'scale-100'}`}>
-          {/* Card Container with fixed dimensions */}
-          <div className="bg-gray-800 rounded-lg overflow-hidden h-full flex flex-col shadow-lg">
-            {/* Thumbnail with fixed aspect ratio */}
-            <div className="relative w-full h-44 bg-gray-700 flex-shrink-0">
-              <img
-                src={video.thumbnail}
-                alt={video.title}
-                className="w-full h-full object-cover"
-                onError={(e) => {
-                  e.currentTarget.src = 'https://via.placeholder.com/320x180/374151/9CA3AF?text=Video';
-                }}
-              />
-              
-              {/* Progress Bar */}
-              {progressPercentage > 0 && (
-                <div className="absolute bottom-0 left-0 right-0 h-1.5 bg-gray-600">
-                  <div
-                    className="h-full bg-red-600"
-                    style={{ width: `${progressPercentage}%` }}
-                  />
-                </div>
-              )}
+    <div
+      className="relative group cursor-pointer h-full"
+      onMouseEnter={() => setIsHovered(true)}
+      onMouseLeave={() => setIsHovered(false)}
+      onClick={onPlay}
+    >
+      <div className={`relative transition-all duration-300 h-full ${isHovered ? 'scale-105 z-50' : 'scale-100'}`}>
+        {/* Card Container with fixed dimensions */}
+        <div className="bg-gray-800 rounded-lg overflow-hidden h-full flex flex-col shadow-lg">
+          {/* Thumbnail with fixed aspect ratio */}
+          <div className="relative w-full h-44 bg-gray-700 flex-shrink-0">
+            <img
+              src={video.thumbnail || video.thumbnail_url || (video.tv_show?.poster_image_url || video.tv_show?.backdrop_image_url) || 
+                    (video.youtubeId ? `https://img.youtube.com/vi/${video.youtubeId}/maxresdefault.jpg` : '')}
+              alt={video.title}
+              className="w-full h-full object-cover"
+              onError={(e) => {
+                e.currentTarget.src = 'https://via.placeholder.com/320x180/374151/9CA3AF?text=Video';
+              }}
+            />
+            
+            {/* Progress Bar */}
+            {progressPercentage > 0 && (
+              <div className="absolute bottom-0 left-0 right-0 h-1.5 bg-gray-600">
+                <div
+                  className="h-full bg-red-600"
+                  style={{ width: `${progressPercentage}%` }}
+                />
+              </div>
+            )}
 
-              {/* Play Button on Hover */}
-              {isHovered && (
-                <div 
-                  className="absolute inset-0 bg-black/60 flex items-center justify-center cursor-pointer"
-                  onClick={() => setShowPlayer(true)}
-                >
-                  <PlayIcon className="w-12 h-12 text-white" />
-                </div>
-              )}
-            </div>
+            {/* Play Button on Hover */}
+            {isHovered && (
+              <div 
+                className="absolute inset-0 bg-black/60 flex items-center justify-center cursor-pointer"
+              >
+                <PlayIcon className="w-12 h-12 text-white" />
+              </div>
+            )}
+          </div>
 
-            {/* Video Info - Increased height and better spacing */}
-            <div className="p-5 flex-grow flex flex-col justify-between min-h-[160px]">
-              <h3 className="text-white font-medium text-sm mb-4 line-clamp-2 leading-tight">
-                {video.title}
-              </h3>
-              <div className="flex flex-col gap-3 mt-auto">
-                <div className="flex items-center justify-between text-xs">
-                  <span className="text-green-400 font-bold text-sm bg-green-400/20 px-3 py-1.5 rounded-md border border-green-400/30">
-                    ✓ Educacional
+          {/* Video Info - Increased height and better spacing */}
+          <div className="p-5 flex-grow flex flex-col justify-between min-h-[160px]">
+            <h3 className="text-white font-medium text-sm mb-4 line-clamp-2 leading-tight">
+              {video.title}
+            </h3>
+            <div className="flex flex-col gap-3 mt-auto">
+              <div className="flex items-center justify-between text-xs">
+                <span className="text-green-400 font-bold text-sm bg-green-400/20 px-3 py-1.5 rounded-md border border-green-400/30">
+                  ✓ Educacional
+                </span>
+                {progressPercentage > 0 && (
+                  <span className="text-gray-300 bg-gray-700 px-3 py-1.5 rounded-md font-medium">
+                    {Math.round(progressPercentage)}%
                   </span>
-                  {progressPercentage > 0 && (
-                    <span className="text-gray-300 bg-gray-700 px-3 py-1.5 rounded-md font-medium">
-                      {progressPercentage}%
-                    </span>
-                  )}
-                </div>
-                <div className="flex items-center justify-between text-xs text-gray-400">
-                  <span className="font-medium">{video.duration}</span>
-                  <span className="text-gray-500">HD</span>
-                </div>
+                )}
+              </div>
+              <div className="flex items-center justify-between text-xs text-gray-400">
+                <span className="font-medium">{video.duration}</span>
+                <span className="text-gray-500">HD</span>
               </div>
             </div>
           </div>
         </div>
       </div>
-
-      {showPlayer && (
-        <VideoPlayer
-          videoId={getVideoId()}
-          onClose={() => setShowPlayer(false)}
-        />
-      )}
-    </>
+    </div>
   );
 };
 
 // Netflix-style Carousel Row
-const CarouselRow = ({ title, videos }: { title: string; videos: any[] }) => {
+const CarouselRow = ({ title, videos, onPlayVideo }: { title: string; videos: any[]; onPlayVideo?: (video: any) => void }) => {
   const [showLeftArrow, setShowLeftArrow] = useState(false);
   const [showRightArrow, setShowRightArrow] = useState(true);
   const [isHovered, setIsHovered] = useState(false);
@@ -472,7 +347,10 @@ const CarouselRow = ({ title, videos }: { title: string; videos: any[] }) => {
       >
         {videos.map((video) => (
           <div key={video.id} className="flex-shrink-0 w-80 h-80">
-            <NetflixVideoCard video={video} />
+            <NetflixVideoCard 
+              video={video} 
+              onPlay={() => onPlayVideo && onPlayVideo(video)}
+            />
           </div>
         ))}
       </div>
@@ -495,18 +373,94 @@ export default function VideoPortalPage() {
   const { user, loading } = useAuth();
   const router = useRouter();
   const [isLoading, setIsLoading] = useState(true);
+  const [tvShows, setTvShows] = useState<TVShowCollection[]>([]);
+  const [continueWatching, setContinueWatching] = useState<ViewingStatus[]>([]);
+  const [popularShows, setPopularShows] = useState<TVShowCollection[]>([]);
+  const [recentReleases, setRecentReleases] = useState<TVShowCollection[]>([]);
+  const [showPlayer, setShowPlayer] = useState(false);
+  const [currentVideo, setCurrentVideo] = useState<any>(null);
+  const [currentVideoCollection, setCurrentVideoCollection] = useState<string>('');
 
+  // Função para obter o token de autenticação
+  const getAuthToken = (): string | null => {
+    if (typeof window === 'undefined') return null;
+    
+    return localStorage.getItem('auth_token') || 
+           localStorage.getItem('token') ||
+           localStorage.getItem('authToken') ||
+           sessionStorage.getItem('token') ||
+           sessionStorage.getItem('auth_token');
+  };
+
+  // Carregar dados das coleções
+  const loadTvShows = async () => {
+    try {
+      const token = getAuthToken();
+      if (!token) {
+        console.error('Token de autenticação não encontrado');
+        return;
+      }
+
+      const response = await fetch('/api/tv-shows?limit=50', {
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json'
+        }
+      });
+
+      if (response.ok) {
+        const data = await response.json();
+        if (data.success && data.data?.tvShows) {
+          setTvShows(data.data.tvShows);
+          
+          // Ordenar por popularidade para os shows populares
+          const popular = [...data.data.tvShows]
+            .sort((a, b) => (b.popularity || 0) - (a.popularity || 0))
+            .slice(0, 10);
+          setPopularShows(popular);
+          
+          // Ordenar por data para lançamentos recentes
+          const recent = [...data.data.tvShows]
+            .sort((a, b) => new Date(b.first_air_date || '').getTime() - new Date(a.first_air_date || '').getTime())
+            .slice(0, 10);
+          setRecentReleases(recent);
+        }
+      } else {
+        console.error('Erro ao carregar coleções:', response.status);
+      }
+    } catch (error) {
+      console.error('Erro ao carregar coleções:', error);
+    }
+  };
+
+  // Carregar histórico de visualização (Continue assistindo)
+  const loadWatchHistory = async () => {
+    try {
+      const result = await getWatchHistory(10, 0, false);
+      if (result && result.items) {
+        setContinueWatching(result.items);
+      }
+    } catch (error) {
+      console.error('Erro ao carregar histórico de visualização:', error);
+    }
+  };
+
+  // Carregar dados iniciais
   useEffect(() => {
     if (!loading) {
       if (!user) {
         router.push('/auth/login');
       } else {
-        setIsLoading(false);
+        const loadData = async () => {
+          await Promise.all([loadTvShows(), loadWatchHistory()]);
+          setIsLoading(false);
+        };
+        loadData();
       }
     }
   }, [user, loading, router]);
 
-  // Effect to make page completely fullscreen (over header and sidebar)
+  // Effect para fazer a página completamente fullscreen (sobre header e sidebar)
   useEffect(() => {
     // Hide sidebar and header
     const sidebar = document.querySelector('aside');
@@ -606,14 +560,43 @@ export default function VideoPortalPage() {
     router.push('/dashboard');
   };
 
+  // Função para reproduzir um vídeo
+  const handlePlayVideo = (video: any) => {
+    setCurrentVideo(video);
+    setCurrentVideoCollection(video.tv_show?.name || 'Vídeo');
+    setShowPlayer(true);
+  };
+
+  // Função para fechar o player
+  const handleClosePlayer = () => {
+    setShowPlayer(false);
+    setCurrentVideo(null);
+  };
+
+  // Agrupar coleções por categoria
+  const groupByCategory = (collections: TVShowCollection[]) => {
+    const categories: Record<string, TVShowCollection[]> = {};
+    
+    collections.forEach(show => {
+      // Usar o produtor como categoria, ou "Geral" se não houver
+      const category = show.producer || 'Geral';
+      
+      if (!categories[category]) {
+        categories[category] = [];
+      }
+      
+      categories[category].push(show);
+    });
+    
+    return Object.entries(categories);
+  };
+
   if (loading || isLoading) {
     return <LoadingSpinner />;
   }
 
-  // Get video data
-  const { videoCategories, allVideos } = createVideoLibrary();
-  const continueWatchingVideos = getVideosInProgress(allVideos);
-  const videoCollections = groupVideosBySubject(videoCategories);
+  // Agrupar por categoria
+  const categorizedShows = groupByCategory(tvShows);
 
   return (
     <>
@@ -635,37 +618,64 @@ export default function VideoPortalPage() {
         {/* Video Rows */}
         <div className="relative -mt-20 z-20 pb-20 bg-gray-900">
           {/* Continue Watching */}
-          {continueWatchingVideos.length > 0 && (
+          {continueWatching.length > 0 && (
             <div className="pt-16">
               <CarouselRow
                 title="Continue assistindo"
-                videos={continueWatchingVideos}
+                videos={continueWatching}
+                onPlayVideo={handlePlayVideo}
               />
             </div>
           )}
 
-          {/* Popular Videos */}
-          <CarouselRow
-            title="Populares na plataforma"
-            videos={allVideos.slice(0, 10)}
-          />
-
-          {/* Subject Collections */}
-          {videoCollections.map(({ subject, videos }) => (
+          {/* Popular Shows */}
+          {popularShows.length > 0 && (
             <CarouselRow
-              key={subject}
-              title={subject}
-              videos={videos}
+              title="Populares na plataforma"
+              videos={popularShows}
+              onPlayVideo={handlePlayVideo}
+            />
+          )}
+
+          {/* Categorized Collections */}
+          {categorizedShows.map(([category, shows]) => (
+            <CarouselRow
+              key={category}
+              title={category}
+              videos={shows}
+              onPlayVideo={handlePlayVideo}
             />
           ))}
 
-          {/* New Releases */}
-          <CarouselRow
-            title="Lançamentos"
-            videos={allVideos.slice(-8)}
-          />
+          {/* Recent Releases */}
+          {recentReleases.length > 0 && (
+            <CarouselRow
+              title="Lançamentos"
+              videos={recentReleases}
+              onPlayVideo={handlePlayVideo}
+            />
+          )}
         </div>
       </div>
+
+      {/* Video Player Modal */}
+      {showPlayer && currentVideo && (
+        <UniversalVideoPlayer
+          videos={[{
+            id: currentVideo.id,
+            title: currentVideo.title,
+            url: currentVideo.video_url || '',
+            type: 'mp4',
+            thumbnail: currentVideo.thumbnail_url || currentVideo.tv_show?.poster_image_url,
+            duration: currentVideo.duration || '00:00',
+            description: currentVideo.description || '',
+          }]}
+          initialVideoIndex={0}
+          collectionName={currentVideoCollection}
+          onClose={handleClosePlayer}
+          autoplay={true}
+        />
+      )}
 
       {/* Global CSS to force complete fullscreen */}
       <style jsx global>{`
