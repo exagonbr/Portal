@@ -306,4 +306,7 @@ export class SessionService {
       };
     }
   }
-} 
+}
+
+// Export para compatibilidade com imports existentes
+export const sessionService = SessionService; 

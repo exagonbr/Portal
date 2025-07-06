@@ -59,3 +59,5 @@ export const fileService = {
   getFiles,
   deleteFile,
 };
+
+export const FileService = fileService;

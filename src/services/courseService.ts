@@ -58,6 +58,16 @@ export const toggleCourseStatus = async (id: number): Promise<CourseDto> => {
   return mapToCourseDto(response);
 };
 
+export const getCoursesByTeacher = async (teacherId: string): Promise<CourseDto[]> => {
+  const response = await apiGet<ApiCourseResponseDto[]>(`/courses/teacher/${teacherId}`);
+  return response.map(mapToCourseDto);
+};
+
+export const getCoursesByStudent = async (studentId: string): Promise<CourseDto[]> => {
+  const response = await apiGet<ApiCourseResponseDto[]>(`/courses/student/${studentId}`);
+  return response.map(mapToCourseDto);
+};
+
 export const courseService = {
   getCourses,
   getCourseById,
@@ -65,4 +75,6 @@ export const courseService = {
   updateCourse,
   deleteCourse,
   toggleCourseStatus,
+  getCoursesByTeacher,
+  getCoursesByStudent,
 };

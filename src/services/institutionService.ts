@@ -126,4 +126,5 @@ const institutionService = {
   getInstitutionAnalytics,
 };
 
+export { institutionService };
 export default institutionService;
