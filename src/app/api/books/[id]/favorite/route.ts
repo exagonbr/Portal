@@ -5,7 +5,7 @@ import { BookReadingService } from '@/services/bookReadingService';
 
 export async function GET(
   request: NextRequest,
-  { params }: { params: { bookId: string } }
+  { params }: { params: { id: string } }
 ) {
   try {
     const session = await getServerSession(authOptions);
@@ -13,7 +13,7 @@ export async function GET(
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
-    const bookId = parseInt(params.bookId);
+    const bookId = parseInt(params.id);
     const userId = BigInt(session.user.id);
 
     const isFavorite = await BookReadingService.isFavorite(bookId, userId);
@@ -30,7 +30,7 @@ export async function GET(
 
 export async function POST(
   request: NextRequest,
-  { params }: { params: { bookId: string } }
+  { params }: { params: { id: string } }
 ) {
   try {
     const session = await getServerSession(authOptions);
@@ -38,7 +38,7 @@ export async function POST(
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
-    const bookId = parseInt(params.bookId);
+    const bookId = parseInt(params.id);
     const userId = BigInt(session.user.id);
 
     const isFavorite = await BookReadingService.toggleFavorite(bookId, userId);

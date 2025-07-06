@@ -7,6 +7,7 @@ import { IOSInstallBanner } from './IOSInstallBanner';
 import { OfflineIndicator } from './OfflineIndicator';
 import { startPWALoopMonitoring, isPWALoopActive, emergencyPWAFix } from '@/utils/pwa-fix';
 import { setupRequestLoopDetection, setupLoginLoopProtection } from '@/utils/request-loop-detector';
+import { PWAChunkErrorHandler } from './PWAChunkErrorHandler';
 
 export function PWARegistration() {
   const [isOnline, setIsOnline] = useState(true);
@@ -258,6 +259,7 @@ export function PWARegistration() {
       )}
 
       <PWAInstallPrompt registration={registration} />
+      <PWAChunkErrorHandler />
     </>
   );
 }

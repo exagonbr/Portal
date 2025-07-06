@@ -5,7 +5,7 @@ import { BookReadingService } from '@/services/bookReadingService';
 
 export async function GET(
   request: NextRequest,
-  { params }: { params: { bookId: string } }
+  { params }: { params: { id: string } }
 ) {
   try {
     const session = await getServerSession(authOptions);
@@ -13,16 +13,16 @@ export async function GET(
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
-    const bookId = parseInt(params.bookId);
+    const bookId = parseInt(params.id);
     const userId = BigInt(session.user.id);
 
-    const progress = await BookReadingService.getProgress(bookId, userId);
+    const highlights = await BookReadingService.getHighlights(bookId, userId);
     
-    return NextResponse.json({ progress });
+    return NextResponse.json({ highlights });
   } catch (error) {
-    console.error('Error fetching book progress:', error);
+    console.error('Error fetching book highlights:', error);
     return NextResponse.json(
-      { error: 'Failed to fetch book progress' },
+      { error: 'Failed to fetch book highlights' },
       { status: 500 }
     );
   }
@@ -30,7 +30,7 @@ export async function GET(
 
 export async function POST(
   request: NextRequest,
-  { params }: { params: { bookId: string } }
+  { params }: { params: { id: string } }
 ) {
   try {
     const session = await getServerSession(authOptions);
@@ -38,29 +38,29 @@ export async function POST(
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
-    const bookId = parseInt(params.bookId);
+    const bookId = parseInt(params.id);
     const userId = BigInt(session.user.id);
     const body = await request.json();
 
-    const progress = await BookReadingService.createOrUpdateProgress({
+    const highlight = await BookReadingService.createHighlight({
       bookId,
       userId,
       ...body
     });
     
-    return NextResponse.json({ progress });
+    return NextResponse.json({ highlight });
   } catch (error) {
-    console.error('Error updating book progress:', error);
+    console.error('Error creating book highlight:', error);
     return NextResponse.json(
-      { error: 'Failed to update book progress' },
+      { error: 'Failed to create book highlight' },
       { status: 500 }
     );
   }
 }
 
-export async function PATCH(
+export async function DELETE(
   request: NextRequest,
-  { params }: { params: { bookId: string } }
+  { params }: { params: { id: string } }
 ) {
   try {
     const session = await getServerSession(authOptions);
@@ -68,17 +68,16 @@ export async function PATCH(
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
-    const bookId = parseInt(params.bookId);
     const userId = BigInt(session.user.id);
-    const { additionalSeconds } = await request.json();
+    const { highlightId } = await request.json();
 
-    await BookReadingService.updateReadingTime(bookId, userId, additionalSeconds);
+    await BookReadingService.deleteHighlight(highlightId, userId);
     
     return NextResponse.json({ success: true });
   } catch (error) {
-    console.error('Error updating reading time:', error);
+    console.error('Error deleting book highlight:', error);
     return NextResponse.json(
-      { error: 'Failed to update reading time' },
+      { error: 'Failed to delete book highlight' },
       { status: 500 }
     );
   }

@@ -74,7 +74,131 @@ const nextConfig = {
       })
     );
 
+    // Otimizações para PWA e chunks
+    if (!isServer) {
+      // Configurar split chunks para melhor carregamento
+      config.optimization = {
+        ...config.optimization,
+        runtimeChunk: 'single',
+        splitChunks: {
+          chunks: 'all',
+          cacheGroups: {
+            default: false,
+            vendors: false,
+            // Vendor chunk
+            vendor: {
+              name: 'vendor',
+              chunks: 'all',
+              test: /node_modules/,
+              priority: 20,
+              reuseExistingChunk: true,
+            },
+            // Commons chunk
+            commons: {
+              name: 'commons',
+              minChunks: 2,
+              priority: 10,
+              reuseExistingChunk: true,
+            },
+            // React/Next.js framework chunk
+            framework: {
+              name: 'framework',
+              test: /[\\/]node_modules[\\/](react|react-dom|next)[\\/]/,
+              priority: 30,
+              reuseExistingChunk: true,
+            },
+          },
+        },
+        // Usar IDs determinísticos para melhor cache
+        moduleIds: 'deterministic',
+        chunkIds: 'deterministic',
+      };
+
+      // Configurar output para melhor compatibilidade
+      config.output = {
+        ...config.output,
+        // Timeout maior para carregamento de chunks
+        chunkLoadTimeout: 120000, // 2 minutos
+        // Nome de chunks mais limpo
+        chunkFilename: 'static/chunks/[name].[contenthash].js',
+        // Configurar CORS para chunks
+        crossOriginLoading: 'anonymous',
+      };
+
+      // Adicionar plugin para melhor tratamento de erros
+      config.plugins.push(
+        new webpack.DefinePlugin({
+          '__CACHE_VERSION__': JSON.stringify(new Date().toISOString()),
+        })
+      );
+    }
+
     return config;
+  },
+  
+  // Headers customizados para melhor controle de cache
+  async headers() {
+    return [
+      {
+        source: '/:path*',
+        headers: [
+          {
+            key: 'X-DNS-Prefetch-Control',
+            value: 'on',
+          },
+          {
+            key: 'X-XSS-Protection',
+            value: '1; mode=block',
+          },
+          {
+            key: 'X-Frame-Options',
+            value: 'SAMEORIGIN',
+          },
+          {
+            key: 'X-Content-Type-Options',
+            value: 'nosniff',
+          },
+          {
+            key: 'Referrer-Policy',
+            value: 'origin-when-cross-origin',
+          },
+        ],
+      },
+      // Headers específicos para chunks JavaScript
+      {
+        source: '/_next/static/chunks/:path*',
+        headers: [
+          {
+            key: 'Cache-Control',
+            value: 'public, max-age=31536000, immutable',
+          },
+          {
+            key: 'Content-Type',
+            value: 'application/javascript; charset=utf-8',
+          },
+        ],
+      },
+      // Headers para CSS
+      {
+        source: '/_next/static/css/:path*',
+        headers: [
+          {
+            key: 'Cache-Control',
+            value: 'public, max-age=31536000, immutable',
+          },
+          {
+            key: 'Content-Type',
+            value: 'text/css; charset=utf-8',
+          },
+        ],
+      },
+    ];
+  },
+  
+  // Configurações experimentais para melhor performance
+  experimental: {
+    optimizeCss: true,
+    optimizePackageImports: ['@ant-design/icons', 'antd', 'lodash'],
   },
 };
 

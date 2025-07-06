@@ -15,6 +15,19 @@ const STATIC_ASSETS = [
   '/icons/icon-512x512.png',
 ];
 
+// Função para limpar caches antigos
+async function deleteOldCaches() {
+  const cacheWhitelist = [CACHE_NAME, STATIC_CACHE_NAME];
+  const cacheNames = await caches.keys();
+  const deletePromises = cacheNames
+    .filter(cacheName => !cacheWhitelist.includes(cacheName))
+    .map(cacheName => {
+      console.log('Service Worker: Deletando cache antigo', cacheName);
+      return caches.delete(cacheName);
+    });
+  return Promise.all(deletePromises);
+}
+
 // Instalar service worker
 self.addEventListener('install', (event) => {
   console.log('Service Worker: Installing...');
@@ -25,7 +38,7 @@ self.addEventListener('install', (event) => {
         // Tentar fazer cache de cada asset individualmente
         const cachePromises = STATIC_ASSETS.map(async (url) => {
           try {
-            const response = await fetch(url);
+            const response = await fetch(url, { cache: 'no-cache' });
             if (response.ok) {
               await cache.put(url, response);
               console.log(`✅ Cached: ${url}`);
@@ -51,19 +64,12 @@ self.addEventListener('install', (event) => {
 self.addEventListener('activate', (event) => {
   console.log('Service Worker: Activating...');
   event.waitUntil(
-    caches.keys().then((cacheNames) => {
-      return Promise.all(
-        cacheNames.map((cacheName) => {
-          // Deleta todos os caches que não são os atuais
-          if (cacheName !== CACHE_NAME && cacheName !== STATIC_CACHE_NAME) {
-            console.log('Service Worker: Deleting old cache', cacheName);
-            return caches.delete(cacheName);
-          }
-        })
-      );
-    })
+    deleteOldCaches()
+      .then(() => {
+        console.log('Service Worker: Old caches deleted');
+        return self.clients.claim();
+      })
   );
-  self.clients.claim();
 });
 
 // Escutar mensagens do cliente
@@ -73,16 +79,72 @@ self.addEventListener('message', (event) => {
     case 'SKIP_WAITING':
       self.skipWaiting();
       break;
-    // Outros cases podem ser adicionados aqui
+    case 'CLEAR_CACHE':
+      event.waitUntil(
+        deleteOldCaches()
+          .then(() => caches.delete(CACHE_NAME))
+          .then(() => caches.delete(STATIC_CACHE_NAME))
+          .then(() => {
+            if (event.ports && event.ports[0]) {
+              event.ports[0].postMessage({ success: true });
+            }
+          })
+          .catch((error) => {
+            if (event.ports && event.ports[0]) {
+              event.ports[0].postMessage({ success: false, error: error.message });
+            }
+          })
+      );
+      break;
+    case 'GET_VERSION':
+      if (event.ports && event.ports[0]) {
+        event.ports[0].postMessage({ version: CACHE_VERSION });
+      }
+      break;
   }
 });
 
 // Função para verificar se uma resposta é cacheable
 function isCacheableResponse(response) {
-  if (!response || !response.ok || response.status === 206 || response.type === 'opaque' || response.type === 'error') {
+  if (!response || response.status !== 200 || response.type === 'error') {
+    return false;
+  }
+  // Não cachear respostas opacas (CORS)
+  if (response.type === 'opaque') {
     return false;
   }
   return true;
+}
+
+// Função para verificar se é um erro de chunk
+function isChunkError(error) {
+  return error && (
+    error.message.includes('Loading chunk') ||
+    error.message.includes('ChunkLoadError') ||
+    error.message.includes('originalFactory')
+  );
+}
+
+// Função para retry de requisições
+async function fetchWithRetry(request, retries = 3) {
+  for (let i = 0; i < retries; i++) {
+    try {
+      const response = await fetch(request.clone(), {
+        cache: 'no-cache',
+        credentials: 'same-origin'
+      });
+      if (response.ok) return response;
+      
+      // Se não for ok e for a última tentativa, retornar a resposta de erro
+      if (i === retries - 1) return response;
+      
+      // Aguardar antes de tentar novamente
+      await new Promise(resolve => setTimeout(resolve, 1000 * (i + 1)));
+    } catch (error) {
+      if (i === retries - 1) throw error;
+      await new Promise(resolve => setTimeout(resolve, 1000 * (i + 1)));
+    }
+  }
 }
 
 // Interceptar requisições
@@ -95,59 +157,125 @@ self.addEventListener('fetch', (event) => {
     return;
   }
 
+  // Ignorar requisições do webpack HMR
+  if (url.pathname.includes('_next/webpack-hmr') || 
+      url.pathname.includes('__nextjs_original-stack-frame')) {
+    return;
+  }
+
   // Estratégia para API: Sempre buscar da rede
   if (url.pathname.startsWith('/api/')) {
-    event.respondWith(networkOnlyStrategy(request));
+    event.respondWith(networkFirstStrategy(request));
     return;
   }
 
-  // Estratégia para documentos de navegação: Sempre buscar da rede para garantir conteúdo fresco
+  // Estratégia para documentos de navegação: Network First com fallback
   if (request.mode === 'navigate') {
-    event.respondWith(networkOnlyStrategy(request));
+    event.respondWith(networkFirstWithCacheFallback(request));
     return;
   }
 
-  // Estratégia para assets estáticos: Cache, depois rede (Stale-While-Revalidate)
-  if (request.destination === 'script' || request.destination === 'style' || request.destination === 'image') {
-    event.respondWith(staleWhileRevalidateStrategy(request, STATIC_CACHE_NAME));
+  // Estratégia para assets do Next.js: Network First com cache
+  if (url.pathname.startsWith('/_next/')) {
+    event.respondWith(networkFirstWithCacheFallback(request));
     return;
   }
 
-  // Estratégia padrão para outros recursos: Stale-While-Revalidate
-  event.respondWith(staleWhileRevalidateStrategy(request, CACHE_NAME));
+  // Estratégia para assets estáticos: Cache First com revalidação
+  if (request.destination === 'script' || 
+      request.destination === 'style' || 
+      request.destination === 'image' ||
+      request.destination === 'font') {
+    event.respondWith(cacheFirstWithRevalidation(request));
+    return;
+  }
+
+  // Estratégia padrão: Network First
+  event.respondWith(networkFirstWithCacheFallback(request));
 });
-
 
 // --- ESTRATÉGIAS DE CACHE ---
 
-// Estratégia Network Only (para APIs e navegação)
-async function networkOnlyStrategy(request) {
+// Network First com fallback para cache
+async function networkFirstWithCacheFallback(request) {
   try {
-    return await fetch(request);
+    const networkResponse = await fetchWithRetry(request, 2);
+    
+    // Se a resposta for boa, cachear
+    if (isCacheableResponse(networkResponse)) {
+      const cache = await caches.open(CACHE_NAME);
+      cache.put(request, networkResponse.clone());
+    }
+    
+    return networkResponse;
   } catch (error) {
-    console.error('Service Worker: Network request failed', { url: request.url, error });
-    // Retornar uma resposta de erro genérica
+    console.warn('Service Worker: Network request failed, trying cache', { url: request.url, error });
+    
+    // Tentar buscar do cache
+    const cachedResponse = await caches.match(request);
+    if (cachedResponse) {
+      console.log('Service Worker: Serving from cache', request.url);
+      return cachedResponse;
+    }
+    
+    // Se não houver cache, retornar erro
     return new Response(
-      JSON.stringify({ success: false, message: 'Falha na conexão de rede.' }), 
-      { status: 503, statusText: 'Service Unavailable', headers: { 'Content-Type': 'application/json' } }
+      JSON.stringify({ success: false, message: 'Offline - sem cache disponível' }), 
+      { 
+        status: 503, 
+        statusText: 'Service Unavailable', 
+        headers: { 'Content-Type': 'application/json' } 
+      }
     );
   }
 }
 
-// Estratégia Stale While Revalidate (para assets)
-async function staleWhileRevalidateStrategy(request, cacheName) {
-  const cache = await caches.open(cacheName);
-  const cachedResponse = await cache.match(request);
+// Network First (sem cache)
+async function networkFirstStrategy(request) {
+  try {
+    return await fetch(request, {
+      cache: 'no-cache',
+      credentials: 'same-origin'
+    });
+  } catch (error) {
+    console.error('Service Worker: Network request failed', { url: request.url, error });
+    return new Response(
+      JSON.stringify({ success: false, message: 'Falha na conexão de rede.' }), 
+      { 
+        status: 503, 
+        statusText: 'Service Unavailable', 
+        headers: { 'Content-Type': 'application/json' } 
+      }
+    );
+  }
+}
 
-  const fetchPromise = fetch(request).then((networkResponse) => {
+// Cache First com revalidação em background
+async function cacheFirstWithRevalidation(request) {
+  const cache = await caches.open(STATIC_CACHE_NAME);
+  const cachedResponse = await cache.match(request);
+  
+  // Buscar da rede em background para atualizar o cache
+  const fetchPromise = fetch(request, {
+    cache: 'no-cache',
+    credentials: 'same-origin'
+  }).then((networkResponse) => {
     if (isCacheableResponse(networkResponse)) {
       cache.put(request, networkResponse.clone());
     }
     return networkResponse;
   }).catch(error => {
-    console.error('Service Worker: Background fetch failed', { url: request.url, error });
+    console.warn('Service Worker: Background fetch failed', { url: request.url, error });
+    return null;
   });
 
-  // Retorna do cache se disponível, senão aguarda a rede
-  return cachedResponse || fetchPromise;
+  // Retornar do cache imediatamente se disponível
+  if (cachedResponse) {
+    console.log('Service Worker: Serving from cache', request.url);
+    return cachedResponse;
+  }
+
+  // Se não houver cache, aguardar a rede
+  const networkResponse = await fetchPromise;
+  return networkResponse || new Response('Network error', { status: 503 });
 }
