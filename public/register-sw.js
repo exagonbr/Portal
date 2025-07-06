@@ -2,37 +2,34 @@
 // Deve ser carregado no HTML principal
 
 if ('serviceWorker' in navigator) {
-  window.addEventListener('load', () => {
-    navigator.serviceWorker.register('/sw.js', { scope: '/' })
-      .then((registration) => {
-        console.log('✅ Service Worker registrado com sucesso:', registration.scope);
-
-        // Escutar atualizações
+  window.addEventListener('load', function() {
+    navigator.serviceWorker.register('/sw.js').then(
+      function(registration) {
+        console.log('Service Worker registrado com sucesso:', registration.scope);
+        
+        // Verificar atualizações a cada 1 hora
+        setInterval(() => {
+          registration.update();
+        }, 60 * 60 * 1000);
+        
+        // Atualizar imediatamente quando houver nova versão
         registration.addEventListener('updatefound', () => {
           const newWorker = registration.installing;
-          if (newWorker) {
-            newWorker.addEventListener('statechange', () => {
-              if (newWorker.state === 'installed' && navigator.serviceWorker.controller) {
-                console.log('🔄 Nova versão do Service Worker disponível');
-                // Forçar ativação imediata da nova versão
-                newWorker.postMessage({ type: 'SKIP_WAITING' });
+          
+          newWorker.addEventListener('statechange', () => {
+            if (newWorker.state === 'installed' && navigator.serviceWorker.controller) {
+              // Novo Service Worker disponível
+              if (confirm('Nova versão disponível! Deseja atualizar agora?')) {
+                window.location.reload();
               }
-            });
-          }
+            }
+          });
         });
-
-        // Escutar mudanças de controller (nova versão ativada)
-        navigator.serviceWorker.addEventListener('controllerchange', () => {
-          console.log('🔄 Service Worker atualizado, recarregando página...');
-          // Pequeno delay para garantir que o novo SW está pronto
-          setTimeout(() => {
-            window.location.reload();
-          }, 100);
-        });
-      })
-      .catch((error) => {
-        console.log('❌ Erro ao registrar Service Worker:', error);
-      });
+      },
+      function(err) {
+        console.log('Erro ao registrar Service Worker:', err);
+      }
+    );
   });
 
   // Escutar mensagens do Service Worker

@@ -1069,7 +1069,9 @@ export default function UniversalVideoPlayer({
                         className={`text-white hover:text-gray-300 transition-colors control-button ${subtitlesEnabled ? 'text-yellow-400' : ''}`}
                         title={subtitlesEnabled ? 'Desativar Legenda' : 'Ativar Legenda'}
                       >
-                        <Subtitles className="w-4 h-4 md:w-5 md:h-5" />
+                        <svg className="w-4 h-4 md:w-5 md:h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 8h10M7 12h4m1 0h4M7 16h10M5 5h14a2 2 0 012 2v10a2 2 0 01-2 2H5a2 2 0 01-2-2V7a2 2 0 012-2z" />
+                        </svg>
                       </button>
                     )}
                     <button

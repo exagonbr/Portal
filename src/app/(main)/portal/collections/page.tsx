@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect } from 'react'
 import { TVShowCollection, TVShowVideo, TVShowModuleStructure } from '@/types/collections'
-import { Search, Filter, Clock, Play, Folder, Calendar, Star, Eye, BookOpen, FileText } from 'lucide-react'
+import { Search, Filter, Clock, Play, Folder, Calendar, Star, Eye, BookOpen, FileText, ChevronDown } from 'lucide-react'
 import { formatDate, formatYear } from '@/utils/date'
 // Importar o UniversalVideoPlayer em vez dos players customizados
 import UniversalVideoPlayer from '@/components/UniversalVideoPlayer'
@@ -408,18 +408,18 @@ export default function TVShowsManagePage() {
           const totalCollections = allCollections.length
           
           // Somar TODOS os vídeos de TODAS as coleções ativas
-          let totalVideos = 0
-          let totalMinutes = 0
-          let ratingsSum = 0
-          let ratingsCount = 0
-          let collectionsWithVideos = 0
+          let totalVideos: number = 0
+          let totalMinutes: number = 0
+          let ratingsSum: number = 0
+          let ratingsCount: number = 0
+          let collectionsWithVideos: number = 0
           
           console.log('=== CALCULANDO TOTAL DE VÍDEOS ===')
           console.log('Total de coleções encontradas:', allCollections.length)
           
           allCollections.forEach((show: TVShowListItem, index: number) => {
             // Contar vídeos - somar TODOS os vídeos de cada coleção
-            let videoCount = show.video_count || 0
+            let videoCount = parseInt(String(show.video_count || '0'), 10)
             
             // VALIDAÇÃO: Detectar valores absurdos e resetar para 0
             if (videoCount > 10000) {
@@ -428,7 +428,7 @@ export default function TVShowsManagePage() {
             }
             
             if (videoCount > 0) {
-              totalVideos += videoCount
+              totalVideos = parseInt(String(totalVideos), 10) + videoCount
               collectionsWithVideos++
               console.log(`${index + 1}. ${show.name}: ${videoCount} vídeos (total acumulado: ${totalVideos})`)
             } else {
@@ -494,7 +494,7 @@ export default function TVShowsManagePage() {
       
       // Em caso de erro, calcular com base nos dados já carregados
       const fallbackTotalVideos = tvShows.reduce((sum, show) => {
-        const videoCount = show.video_count || 0
+        const videoCount = parseInt(String(show.video_count || '0'), 10)
         return sum + videoCount
       }, 0)
       
@@ -1141,22 +1141,109 @@ export default function TVShowsManagePage() {
                               </p>
                             </div>
                             <div className="flex items-center gap-4">
-                              <button
-                                onClick={(e) => {
-                                  e.stopPropagation();
-                                  console.log('🎬 Clique em Assistir Sessão:', {
-                                    moduleKey,
-                                    videosCount: moduleVideos.length,
-                                    videos: moduleVideos.map(v => ({ title: v.title, url: v.video_url }))
-                                  });
-                                  handleWatchSession(moduleKey, moduleVideos);
-                                }}
-                                className="flex items-center gap-2 text-white bg-gradient-to-r from-blue-500 to-blue-600 hover:from-blue-600 hover:to-blue-700 transition-all duration-200 px-4 py-2 rounded-lg border border-blue-300 shadow-md hover:shadow-lg transform hover:scale-105"
-                              >
-                                <Play className="w-4 h-4" />
-                                <span className="font-semibold text-sm">Assistir Sessão</span>
-                                <span className="text-blue-100 text-xs">({moduleVideos.length})</span>
-                              </button>
+                              {moduleVideos.some(v => v.has_subtitles || (v.alternative_versions && v.alternative_versions.length > 0)) ? (
+                                <div className="relative group">
+                                  <button
+                                    className="flex items-center gap-2 text-white bg-gradient-to-r from-blue-500 to-blue-600 hover:from-blue-600 hover:to-blue-700 transition-all duration-200 px-4 py-2 rounded-lg border border-blue-300 shadow-md hover:shadow-lg transform hover:scale-105"
+                                    onClick={(e) => {
+                                      e.stopPropagation();
+                                      // Abrir menu de opções
+                                    }}
+                                  >
+                                    <Play className="w-4 h-4" />
+                                    <span className="font-semibold text-sm">Assistir Sessão</span>
+                                    <span className="text-blue-100 text-xs">({moduleVideos.length})</span>
+                                    <ChevronDown className="w-4 h-4 ml-1" />
+                                  </button>
+                                  <div className="absolute left-0 mt-1 w-40 bg-white rounded-lg shadow-lg opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-200 z-50">
+                                    <button 
+                                      className="w-full px-4 py-2 text-left text-sm text-gray-700 hover:bg-gray-100 rounded-t-lg flex items-center gap-2"
+                                      onClick={(e) => {
+                                        e.stopPropagation();
+                                        handleWatchSession(moduleKey, moduleVideos);
+                                      }}
+                                    >
+                                      <span className="w-3 h-3">🎬</span>
+                                      Sem Legenda
+                                    </button>
+                                    <button 
+                                      className="w-full px-4 py-2 text-left text-sm text-gray-700 hover:bg-gray-100 rounded-b-lg flex items-center gap-2"
+                                      onClick={(e) => {
+                                        e.stopPropagation();
+                                        // Criar versão com legenda dos vídeos
+                                        const videosComLegenda = moduleVideos.map(video => {
+                                          const legendaVersion = video.alternative_versions?.find(v => 
+                                            v.label === 'Com Legenda' || v.label?.includes('legenda')
+                                          );
+                                          if (legendaVersion) {
+                                            return {
+                                              id: video.id,
+                                              tv_show_id: video.tv_show_id,
+                                              title: video.title,
+                                              description: video.description,
+                                              video_url: legendaVersion.url,
+                                              module_number: video.module_number,
+                                              episode_number: video.episode_number,
+                                              duration_seconds: video.duration_seconds,
+                                              duration: video.duration,
+                                              thumbnail_url: video.thumbnail_url,
+                                              is_active: video.is_active,
+                                              created_at: video.created_at,
+                                              updated_at: video.updated_at,
+                                              file_sha256hex: legendaVersion.file_sha256hex,
+                                              file_extension: legendaVersion.file_extension,
+                                              file_name: legendaVersion.file_name,
+                                              file_mimetype: legendaVersion.file_mimetype,
+                                              file_size: legendaVersion.file_size,
+                                              label: legendaVersion.label,
+                                              is_default: legendaVersion.is_default,
+                                              has_subtitles: true,
+                                              alternative_versions: [{
+                                                id: video.id.toString(),
+                                                url: video.video_url || '',
+                                                title: video.title,
+                                                thumbnail: video.thumbnail_url,
+                                                duration: video.duration,
+                                                description: video.description,
+                                                episode_number: video.episode_number,
+                                                label: 'Sem Legenda',
+                                                is_default: true,
+                                                file_sha256hex: video.file_sha256hex,
+                                                file_extension: video.file_extension,
+                                                file_name: video.file_name,
+                                                file_mimetype: video.file_mimetype,
+                                                file_size: video.file_size
+                                              }]
+                                            };
+                                          }
+                                          return video;
+                                        });
+                                        handleWatchSession(moduleKey, videosComLegenda);
+                                      }}
+                                    >
+                                      <span className="w-3 h-3">📝</span>
+                                      Com Legenda
+                                    </button>
+                                  </div>
+                                </div>
+                              ) : (
+                                <button
+                                  onClick={(e) => {
+                                    e.stopPropagation();
+                                    console.log('🎬 Clique em Assistir Sessão:', {
+                                      moduleKey,
+                                      videosCount: moduleVideos.length,
+                                      videos: moduleVideos.map(v => ({ title: v.title, url: v.video_url }))
+                                    });
+                                    handleWatchSession(moduleKey, moduleVideos);
+                                  }}
+                                  className="flex items-center gap-2 text-white bg-gradient-to-r from-blue-500 to-blue-600 hover:from-blue-600 hover:to-blue-700 transition-all duration-200 px-4 py-2 rounded-lg border border-blue-300 shadow-md hover:shadow-lg transform hover:scale-105"
+                                >
+                                  <Play className="w-4 h-4" />
+                                  <span className="font-semibold text-sm">Assistir Sessão</span>
+                                  <span className="text-blue-100 text-xs">({moduleVideos.length})</span>
+                                </button>
+                              )}
                               
                               {selectedTvShow.manual_support_path ? (
                                 <button 

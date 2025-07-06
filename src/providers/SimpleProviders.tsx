@@ -1,6 +1,6 @@
 'use client'
 
-import React, { ReactNode, useEffect, Suspense } from 'react'
+import React, { ReactNode, useEffect, Suspense, useState } from 'react'
 import { setupGlobalErrorHandler } from '@/utils/errorHandling'
 import { initializeFactoryDiagnostic } from '@/utils/factory-diagnostic'
 import { isDevelopment } from '@/utils/env'
@@ -28,6 +28,71 @@ const CacheCleanerProvider = dynamic(() => import('@/components/layout/CacheClea
 })
 
 function ErrorBoundaryFallback({ error, resetErrorBoundary }: { error: Error, resetErrorBoundary?: () => void }) {
+  const [retryCount, setRetryCount] = useState(0);
+  const maxRetries = 2;
+  const isMobile = typeof window !== 'undefined' && /Mobile|Android|iPhone|iPad|iPod|BlackBerry|Windows Phone/i.test(navigator.userAgent);
+
+  useEffect(() => {
+    // Armazenar contagem de tentativas
+    const storedCount = parseInt(sessionStorage.getItem('error-retry-count') || '0');
+    setRetryCount(storedCount);
+  }, []);
+
+  const handleRetry = () => {
+    const newCount = retryCount + 1;
+    setRetryCount(newCount);
+    sessionStorage.setItem('error-retry-count', newCount.toString());
+
+    if (newCount <= maxRetries) {
+      if (resetErrorBoundary) {
+        resetErrorBoundary();
+      } else {
+        window.location.reload();
+      }
+    } else {
+      // Em dispositivos móveis, apenas limpar cache sem deslogar
+      if (isMobile) {
+        // Salvar dados de autenticação
+        const authToken = localStorage.getItem('auth-token');
+        const refreshToken = localStorage.getItem('refresh-token');
+        const userId = localStorage.getItem('user-id');
+        const userPrefs = localStorage.getItem('user-preferences');
+
+        // Limpar storage
+        if ('caches' in window) {
+          caches.keys().then(names => {
+            names.forEach(name => {
+              caches.delete(name);
+            });
+          });
+        }
+        sessionStorage.clear();
+        localStorage.clear();
+
+        // Restaurar dados de autenticação
+        if (authToken) localStorage.setItem('auth-token', authToken);
+        if (refreshToken) localStorage.setItem('refresh-token', refreshToken);
+        if (userId) localStorage.setItem('user-id', userId);
+        if (userPrefs) localStorage.setItem('user-preferences', userPrefs);
+
+        // Recarregar a página
+        window.location.reload();
+      } else {
+        // Em desktop, manter comportamento original
+        if ('caches' in window) {
+          caches.keys().then(names => {
+            names.forEach(name => {
+              caches.delete(name);
+            });
+          });
+        }
+        sessionStorage.clear();
+        localStorage.clear();
+        window.location.href = '/auth/login';
+      }
+    }
+  };
+
   return (
     <div className="min-h-screen flex items-center justify-center bg-gray-50 p-4">
       <div className="max-w-md w-full space-y-4 p-8 bg-white rounded-lg shadow-lg">
@@ -39,25 +104,23 @@ function ErrorBoundaryFallback({ error, resetErrorBoundary }: { error: Error, re
             Erro de Carregamento
           </h2>
           <p className="text-sm text-gray-600 mb-4">
-            Houve um problema ao carregar a aplicação. Isso pode ser devido a problemas de rede ou atualizações.
+            {retryCount >= maxRetries 
+              ? (isMobile 
+                ? "Precisamos recarregar alguns recursos. Você continuará logado."
+                : "Não foi possível carregar a aplicação após várias tentativas. Tente limpar o cache e fazer login novamente.")
+              : "Houve um problema ao carregar a aplicação. Isso pode ser devido a problemas de rede ou atualizações."}
           </p>
           <div className="space-y-2">
             <button
-              onClick={() => window.location.reload()}
+              onClick={handleRetry}
               className="w-full px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
             >
-              Recarregar Página
+              {retryCount >= maxRetries 
+                ? (isMobile ? 'Recarregar Recursos' : 'Limpar Cache e Voltar ao Login')
+                : 'Tentar Novamente'}
             </button>
-            {resetErrorBoundary && (
-              <button
-                onClick={resetErrorBoundary}
-                className="w-full px-4 py-2 bg-gray-600 text-white rounded-lg hover:bg-gray-700 transition-colors"
-              >
-                Tentar Novamente
-              </button>
-            )}
           </div>
-          {isDevelopment() && (
+          {error && error.message && (
             <details className="mt-4 text-left">
               <summary className="cursor-pointer text-sm text-gray-500">Detalhes do erro</summary>
               <pre className="mt-2 text-xs text-red-600 bg-red-50 p-2 rounded overflow-auto">

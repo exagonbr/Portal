@@ -4,6 +4,7 @@ import { useEffect } from 'react';
 import { initializeLoopPrevention } from '@/utils/loop-prevention';
 import { isDevelopment, isProduction } from '@/utils/env';
 import { setupHydrationErrorPrevention } from '@/utils/hydration-fix';
+import { initializeChunkErrorHandler } from '@/utils/chunk-error-handler';
 
 // Declarações de tipos para bibliotecas globais
 declare global {
@@ -34,18 +35,15 @@ export default function GlobalSetup() {
       console.log('❌ Erro ao inicializar prevenção de loops:', error);
     }
 
+    // Inicializar handler de erros de chunk
+    const chunkErrorCleanup = initializeChunkErrorHandler();
+
     // Desabilitar logs desnecessários em produção
     if (isProduction()) {
       const noop = () => {};
       console.debug = noop;
       console.info = noop;
     }
-
-    // Configurar tratamento global de erros
-    window.addEventListener('unhandledrejection', (event) => {
-      console.log('Unhandled promise rejection:', event.reason);
-      event.preventDefault();
-    });
 
     // Configurar detecção de conexão
     window.addEventListener('online', () => {
@@ -99,9 +97,9 @@ export default function GlobalSetup() {
 
     // Cleanup
     return () => {
-      window.removeEventListener('unhandledrejection', () => {});
       window.removeEventListener('online', () => {});
       window.removeEventListener('offline', () => {});
+      if (chunkErrorCleanup) chunkErrorCleanup();
     };
   }, []);
 

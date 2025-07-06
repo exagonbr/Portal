@@ -42,6 +42,18 @@ const nextConfig = {
         'tedious': false,
         'pg-native': false,
       };
+
+      // Adicionar retry logic para carregamento de chunks
+      config.output.chunkLoadingGlobal = 'webpackChunkportal';
+      config.output.crossOriginLoading = 'anonymous';
+      
+      // Adicionar plugin para retry de chunks
+      const webpack = require('webpack');
+      config.plugins.push(
+        new webpack.DefinePlugin({
+          'process.env.NEXT_RUNTIME': JSON.stringify('browser'),
+        })
+      );
     }
 
     // Plugins para ignorar módulos problemáticos
@@ -79,9 +91,13 @@ const nextConfig = {
       // Configurar split chunks para melhor carregamento
       config.optimization = {
         ...config.optimization,
-        runtimeChunk: 'single',
+        runtimeChunk: {
+          name: 'runtime',
+        },
         splitChunks: {
           chunks: 'all',
+          maxInitialRequests: 25,
+          minSize: 20000,
           cacheGroups: {
             default: false,
             vendors: false,
@@ -89,8 +105,9 @@ const nextConfig = {
             vendor: {
               name: 'vendor',
               chunks: 'all',
-              test: /node_modules/,
+              test: /[\\/]node_modules[\\/]/,
               priority: 20,
+              enforce: true,
               reuseExistingChunk: true,
             },
             // Commons chunk
@@ -99,19 +116,22 @@ const nextConfig = {
               minChunks: 2,
               priority: 10,
               reuseExistingChunk: true,
+              enforce: true,
             },
             // React/Next.js framework chunk
             framework: {
               name: 'framework',
+              chunks: 'all',
               test: /[\\/]node_modules[\\/](react|react-dom|next)[\\/]/,
               priority: 30,
+              enforce: true,
               reuseExistingChunk: true,
             },
           },
         },
         // Usar IDs determinísticos para melhor cache
         moduleIds: 'deterministic',
-        chunkIds: 'deterministic',
+        chunkIds: 'named',
       };
 
       // Configurar output para melhor compatibilidade
@@ -119,8 +139,10 @@ const nextConfig = {
         ...config.output,
         // Timeout maior para carregamento de chunks
         chunkLoadTimeout: 120000, // 2 minutos
-        // Nome de chunks mais limpo
-        chunkFilename: 'static/chunks/[name].[contenthash].js',
+        // Nome de chunks mais limpo e determinístico
+        chunkFilename: isServer
+          ? 'static/chunks/[name].[chunkhash].js'
+          : 'static/chunks/[name].[contenthash].js',
         // Configurar CORS para chunks
         crossOriginLoading: 'anonymous',
       };
@@ -174,23 +196,6 @@ const nextConfig = {
           {
             key: 'Expires',
             value: '0',
-          },
-        ],
-      },
-      // Headers específicos para páginas HTML
-      {
-        source: '/:path*',
-        has: [
-          {
-            type: 'header',
-            key: 'accept',
-            value: '.*text/html.*',
-          },
-        ],
-        headers: [
-          {
-            key: 'Cache-Control',
-            value: 'no-cache, no-store, must-revalidate',
           },
         ],
       },
@@ -248,11 +253,18 @@ const nextConfig = {
   // Configurações experimentais para melhor performance
   experimental: {
     optimizeCss: true,
-    optimizePackageImports: ['@ant-design/icons', 'antd', 'lodash'],
-    // Configuração de workers para build paralela
+    scrollRestoration: true,
     workerThreads: true,
-    cpus: 10,
-  },
+    cpus: 4,
+    optimizePackageImports: [
+      'react',
+      'react-dom',
+      'next',
+      '@heroicons/react',
+      'lucide-react',
+      'framer-motion'
+    ]
+  }
 };
 
 module.exports = nextConfig; 

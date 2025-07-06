@@ -35,8 +35,8 @@ export const viewport: Viewport = {
   width: 'device-width',
   initialScale: 1,
   minimumScale: 1,
-  maximumScale: 1, // Prevenir zoom para melhorar UX mobile
-  userScalable: false, // Desabilitar zoom do usuário para evitar problemas de layout
+  maximumScale: 5, // Permitir zoom até 5x
+  userScalable: true, // Permitir zoom do usuário
   viewportFit: 'cover',
 };
 
