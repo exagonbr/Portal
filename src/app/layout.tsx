@@ -5,6 +5,7 @@ import SimpleProviders from '@/providers/SimpleProviders';
 import { isDevelopment } from '@/utils/env';
 import CacheManagerWrapper from '@/components/CacheManagerWrapper';
 import { ChunkErrorHandler } from '@/components/ChunkErrorHandler';
+import Script from 'next/script';
 
 const inter = Inter({ subsets: ['latin'] });
 
@@ -77,6 +78,7 @@ export default function RootLayout({
           </div>
           <CacheManagerWrapper />
         </SimpleProviders>
+        <Script src="/register-sw.js" strategy="lazyOnload" />
       </body>
     </html>
   );

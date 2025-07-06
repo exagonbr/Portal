@@ -2,6 +2,8 @@
 const nextConfig = {
   // Configurações básicas
   reactStrictMode: true,
+  poweredByHeader: false,
+  compress: true,
   
   // Configuração para resolver problemas de módulos (Nova sintaxe do Next.js 15)
   serverExternalPackages: [
@@ -17,7 +19,7 @@ const nextConfig = {
   ],
 
   // Configuração do Webpack para resolver o problema do oracledb
-  webpack: (config, { isServer }) => {
+  webpack: (config, { dev, isServer }) => {
     // Configurações específicas para servidor
     if (isServer) {
       // Marcar drivers de banco como externos
@@ -46,14 +48,6 @@ const nextConfig = {
       // Adicionar retry logic para carregamento de chunks
       config.output.chunkLoadingGlobal = 'webpackChunkportal';
       config.output.crossOriginLoading = 'anonymous';
-      
-      // Adicionar plugin para retry de chunks
-      const webpack = require('webpack');
-      config.plugins.push(
-        new webpack.DefinePlugin({
-          'process.env.NEXT_RUNTIME': JSON.stringify('browser'),
-        })
-      );
     }
 
     // Plugins para ignorar módulos problemáticos
@@ -87,70 +81,51 @@ const nextConfig = {
     );
 
     // Otimizações para PWA e chunks
-    if (!isServer) {
-      // Configurar split chunks para melhor carregamento
+    if (!dev && !isServer) {
       config.optimization = {
         ...config.optimization,
-        runtimeChunk: {
-          name: 'runtime',
-        },
         splitChunks: {
           chunks: 'all',
-          maxInitialRequests: 25,
           minSize: 20000,
+          maxSize: 90000,
+          minChunks: 1,
+          maxAsyncRequests: 30,
+          maxInitialRequests: 30,
           cacheGroups: {
-            default: false,
-            vendors: false,
-            // Vendor chunk
-            vendor: {
-              name: 'vendor',
-              chunks: 'all',
+            defaultVendors: {
               test: /[\\/]node_modules[\\/]/,
-              priority: 20,
-              enforce: true,
+              priority: -10,
               reuseExistingChunk: true,
+              name(module) {
+                const packageName = module.context.match(
+                  /[\\/]node_modules[\\/](.*?)([\\/]|$)/
+                )[1];
+                return `vendor.${packageName.replace('@', '')}`;
+              },
             },
-            // Commons chunk
-            commons: {
-              name: 'commons',
+            default: {
               minChunks: 2,
-              priority: 10,
-              reuseExistingChunk: true,
-              enforce: true,
-            },
-            // React/Next.js framework chunk
-            framework: {
-              name: 'framework',
-              chunks: 'all',
-              test: /[\\/]node_modules[\\/](react|react-dom|next)[\\/]/,
-              priority: 30,
-              enforce: true,
+              priority: -20,
               reuseExistingChunk: true,
             },
           },
         },
-        // Usar IDs determinísticos para melhor cache
-        moduleIds: 'deterministic',
-        chunkIds: 'named',
       };
 
       // Configurar output para melhor compatibilidade
       config.output = {
         ...config.output,
-        // Timeout maior para carregamento de chunks
-        chunkLoadTimeout: 120000, // 2 minutos
-        // Nome de chunks mais limpo e determinístico
+        chunkLoadTimeout: 120000,
         chunkFilename: isServer
           ? 'static/chunks/[name].[chunkhash].js'
           : 'static/chunks/[name].[contenthash].js',
-        // Configurar CORS para chunks
         crossOriginLoading: 'anonymous',
       };
 
       // Adicionar plugin para melhor tratamento de erros
       config.plugins.push(
         new webpack.DefinePlugin({
-          '__CACHE_VERSION__': JSON.stringify(new Date().toISOString()),
+          '__CACHE_VERSION__': JSON.stringify(new Date().toISOString())
         })
       );
     }
@@ -184,7 +159,6 @@ const nextConfig = {
             key: 'Referrer-Policy',
             value: 'origin-when-cross-origin',
           },
-          // Adicionar header para controle de cache mais agressivo
           {
             key: 'Cache-Control',
             value: 'no-cache, no-store, must-revalidate',
@@ -199,7 +173,6 @@ const nextConfig = {
           },
         ],
       },
-      // Headers específicos para chunks JavaScript
       {
         source: '/_next/static/chunks/:path*',
         headers: [
@@ -212,41 +185,7 @@ const nextConfig = {
             value: 'application/javascript; charset=utf-8',
           },
         ],
-      },
-      // Headers para CSS
-      {
-        source: '/_next/static/css/:path*',
-        headers: [
-          {
-            key: 'Cache-Control',
-            value: 'public, max-age=31536000, immutable',
-          },
-          {
-            key: 'Content-Type',
-            value: 'text/css; charset=utf-8',
-          },
-        ],
-      },
-      // Headers para imagens e outros assets
-      {
-        source: '/_next/image/:path*',
-        headers: [
-          {
-            key: 'Cache-Control',
-            value: 'public, max-age=604800, stale-while-revalidate=86400',
-          },
-        ],
-      },
-      // Headers para API routes - sem cache
-      {
-        source: '/api/:path*',
-        headers: [
-          {
-            key: 'Cache-Control',
-            value: 'no-cache, no-store, must-revalidate',
-          },
-        ],
-      },
+      }
     ];
   },
   
@@ -263,8 +202,23 @@ const nextConfig = {
       '@heroicons/react',
       'lucide-react',
       'framer-motion'
-    ]
-  }
+    ],
+    optimisticClientCache: true,
+  },
+
+  // Configurações de build
+  swcMinify: true,
+  compiler: {
+    removeConsole: process.env.NODE_ENV === 'production',
+  },
+
+  // Configurações de imagens
+  images: {
+    domains: ['d26a2wm7tuz2gu.cloudfront.net'],
+    deviceSizes: [640, 750, 828, 1080, 1200, 1920, 2048, 3840],
+    imageSizes: [16, 32, 48, 64, 96, 128, 256, 384],
+    minimumCacheTTL: 60,
+  },
 };
 
 module.exports = nextConfig; 

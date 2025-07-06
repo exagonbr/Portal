@@ -2,6 +2,7 @@
 
 const fs = require('fs');
 const path = require('path');
+const rimraf = require('rimraf');
 
 /**
  * Script para limpar caches do Next.js e resolver problemas de chunk loading
@@ -10,42 +11,38 @@ const path = require('path');
 
 const projectRoot = path.resolve(__dirname, '..');
 
-const pathsToClean = [
-  '.next',
+// Diretórios para limpar
+const CACHE_DIRS = [
+  '.next/cache',
   'node_modules/.cache',
-  '.swc',
-  'dist',
-  'build',
 ];
 
-function removeDirectory(dirPath) {
-  if (fs.existsSync(dirPath)) {
-    console.log(`🗑️  Removendo: ${dirPath}`);
-    try {
-      fs.rmSync(dirPath, { recursive: true, force: true });
-      console.log(`✅ Removido: ${dirPath}`);
-    } catch (error) {
-      console.log(`❌ Erro ao remover ${dirPath}:`, error.message);
+// Função para limpar um diretório
+function clearDirectory(dir) {
+  const fullPath = path.join(process.cwd(), dir);
+  
+  try {
+    if (fs.existsSync(fullPath)) {
+      console.log(`🗑️  Limpando ${dir}...`);
+      rimraf.sync(fullPath);
+      console.log(`✅ ${dir} limpo com sucesso`);
+    } else {
+      console.log(`ℹ️  ${dir} não existe`);
     }
-  } else {
-    console.log(`⏭️  Não encontrado: ${dirPath}`);
+  } catch (error) {
+    console.error(`❌ Erro ao limpar ${dir}:`, error);
   }
 }
 
-function clearNextCache() {
+// Função principal
+function clearCache() {
   console.log('🧹 Iniciando limpeza de cache...\n');
-  
-  pathsToClean.forEach(relativePath => {
-    const fullPath = path.join(projectRoot, relativePath);
-    removeDirectory(fullPath);
-  });
-  
-  console.log('\n🎉 Limpeza concluída!');
-  console.log('\n📝 Próximos passos:');
-  console.log('1. npm install (se necessário)');
-  console.log('2. npm run dev (para desenvolvimento)');
-  console.log('3. npm run build (para produção)');
+
+  // Limpar cada diretório
+  CACHE_DIRS.forEach(clearDirectory);
+
+  console.log('\n✨ Limpeza de cache concluída!');
 }
 
 // Executar limpeza
-clearNextCache(); 
+clearCache(); 

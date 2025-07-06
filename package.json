@@ -21,7 +21,9 @@
     "cache:version": "node scripts/cache-version.js",
     "cache:test": "node scripts/test-cache-performance.js",
     "migrate:settings": "ts-node scripts/migrate-settings.ts",
-    "fix:oracledb": "node scripts/fix-oracledb-error.js"
+    "fix:oracledb": "node scripts/fix-oracledb-error.js",
+    "clean": "node scripts/clear-cache.js",
+    "clean:build": "npm run clean && npm run build"
   },
   "dependencies": {
     "@aws-sdk/client-s3": "^3.825.0",
@@ -89,7 +91,8 @@
     "workbox-routing": "^7.3.0",
     "workbox-strategies": "^7.3.0",
     "workbox-window": "^7.0.0",
-    "zod": "^3.25.53"
+    "zod": "^3.25.53",
+    "rimraf": "^5.0.5"
   },
   "devDependencies": {
     "@prisma/client": "^6.9.0",

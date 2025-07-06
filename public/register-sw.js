@@ -1,59 +1,66 @@
 // Script para registrar o Service Worker com Workbox
 // Deve ser carregado no HTML principal
 
-if ('serviceWorker' in navigator) {
-  window.addEventListener('load', function() {
-    navigator.serviceWorker.register('/sw.js').then(
-      function(registration) {
-        console.log('Service Worker registrado com sucesso:', registration.scope);
-        
-        // Verificar atualizações a cada 1 hora
-        setInterval(() => {
-          registration.update();
-        }, 60 * 60 * 1000);
-        
-        // Atualizar imediatamente quando houver nova versão
-        registration.addEventListener('updatefound', () => {
-          const newWorker = registration.installing;
-          
-          newWorker.addEventListener('statechange', () => {
-            if (newWorker.state === 'installed' && navigator.serviceWorker.controller) {
-              // Novo Service Worker disponível
-              if (confirm('Nova versão disponível! Deseja atualizar agora?')) {
-                window.location.reload();
-              }
-            }
-          });
-        });
-      },
-      function(err) {
-        console.log('Erro ao registrar Service Worker:', err);
+// Função para registrar o Service Worker
+async function registerServiceWorker() {
+  if ('serviceWorker' in navigator) {
+    try {
+      const registration = await navigator.serviceWorker.register('/sw.js', {
+        scope: '/'
+      });
+
+      if (registration.installing) {
+        console.log('Service worker instalando');
+      } else if (registration.waiting) {
+        console.log('Service worker instalado');
+      } else if (registration.active) {
+        console.log('Service worker ativo');
       }
-    );
-  });
 
-  // Escutar mensagens do Service Worker
-  navigator.serviceWorker.addEventListener('message', (event) => {
-    if (!event.data) return;
+      // Atualizar o service worker imediatamente se houver uma nova versão
+      registration.addEventListener('updatefound', () => {
+        const newWorker = registration.installing;
+        
+        newWorker.addEventListener('statechange', () => {
+          if (newWorker.state === 'installed' && navigator.serviceWorker.controller) {
+            // Recarregar a página para usar o novo service worker
+            window.location.reload();
+          }
+        });
+      });
 
-    const { type, data } = event.data;
-
-    switch (type) {
-      case 'CACHE_CLEARED':
-        console.log('✅ Cache limpo pelo Service Worker:', data);
-        break;
-
-      case 'CACHE_ERROR':
-        console.log('❌ Erro no cache do Service Worker:', data);
-        break;
-
-      default:
-        console.log('📨 Mensagem do Service Worker:', event.data);
+    } catch (error) {
+      console.error('Erro ao registrar service worker:', error);
     }
-  });
-} else {
-  console.warn('⚠️ Service Worker não suportado ou desabilitado em desenvolvimento');
+  }
 }
+
+// Registrar o service worker quando a página carregar
+if (document.readyState === 'complete') {
+  registerServiceWorker();
+} else {
+  window.addEventListener('load', registerServiceWorker);
+}
+
+// Escutar mensagens do Service Worker
+navigator.serviceWorker.addEventListener('message', (event) => {
+  if (!event.data) return;
+
+  const { type, data } = event.data;
+
+  switch (type) {
+    case 'CACHE_CLEARED':
+      console.log('✅ Cache limpo pelo Service Worker:', data);
+      break;
+
+    case 'CACHE_ERROR':
+      console.log('❌ Erro no cache do Service Worker:', data);
+      break;
+
+    default:
+      console.log('📨 Mensagem do Service Worker:', event.data);
+  }
+});
 
 // Função para mostrar notificação de atualização
 function showUpdateNotification() {

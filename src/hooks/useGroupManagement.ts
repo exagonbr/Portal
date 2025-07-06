@@ -26,6 +26,29 @@ export const useGroupManagement = (filters?: GroupFilter) => {
       if (filters?.search) searchParams.set('search', filters.search);
 
       const response = await fetch(`/api/groups?${searchParams.toString()}`);
+      
+      if (response.status === 401) {
+        setError('Sessão expirada. Por favor, faça login novamente.');
+        return;
+      }
+
+      if (response.status === 504) {
+        setError('Tempo limite excedido. Por favor, tente novamente.');
+        return;
+      }
+
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => null);
+        setError(errorData?.error || 'Erro ao carregar grupos');
+        return;
+      }
+
+      const contentType = response.headers.get('content-type');
+      if (!contentType || !contentType.includes('application/json')) {
+        setError('Resposta inválida do servidor');
+        return;
+      }
+
       const data = await response.json();
 
       if (data.success) {
@@ -34,15 +57,37 @@ export const useGroupManagement = (filters?: GroupFilter) => {
         setError(data.error || 'Erro ao carregar grupos');
       }
     } catch (err) {
+      console.error('Erro ao buscar grupos:', err);
       setError('Erro de conexão ao carregar grupos');
-      console.log('Erro ao buscar grupos:', err);
     } finally {
       setLoading(false);
     }
   }, [filters]);
 
+  // Limitar o número de retentativas em caso de erro
   useEffect(() => {
-    fetchGroups();
+    let retryCount = 0;
+    const maxRetries = 3;
+    let retryTimeout: NodeJS.Timeout;
+
+    const tryFetchGroups = async () => {
+      try {
+        await fetchGroups();
+      } catch (err) {
+        if (retryCount < maxRetries) {
+          retryCount++;
+          // Backoff exponencial: 2s, 4s, 8s
+          const delay = Math.pow(2, retryCount) * 1000;
+          retryTimeout = setTimeout(tryFetchGroups, delay);
+        }
+      }
+    };
+
+    tryFetchGroups();
+
+    return () => {
+      if (retryTimeout) clearTimeout(retryTimeout);
+    };
   }, [fetchGroups]);
 
   const createGroup = async (groupData: CreateGroupData): Promise<UserGroup | null> => {
