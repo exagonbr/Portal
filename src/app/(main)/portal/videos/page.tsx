@@ -457,12 +457,28 @@ export default function VideoPortalPage() {
   // Carregar histórico de visualização (Continue assistindo)
   const loadWatchHistory = async () => {
     try {
-      const result = await getWatchHistory(10, 0, false);
-      if (result && result.items) {
-        setContinueWatching(result.items);
+      console.log('🔍 Tentando carregar histórico de visualização...');
+      
+      // Tentar carregar o histórico de visualização
+      try {
+        const result = await getWatchHistory(10, 0, false);
+        if (result && result.items) {
+          console.log(`✅ Histórico de visualização carregado: ${result.items.length} itens`);
+          setContinueWatching(result.items);
+          return;
+        }
+      } catch (apiError) {
+        console.error('❌ Erro na API de histórico:', apiError);
+        // Continuar para o fallback
       }
+      
+      // Fallback: usar dados mockados
+      console.log('⚠️ Usando dados mockados para o histórico de visualização');
+      setContinueWatching([]);
+      
     } catch (error) {
-      console.error('Erro ao carregar histórico de visualização:', error);
+      console.error('❌ Erro ao carregar histórico de visualização:', error);
+      setContinueWatching([]);
     }
   };
 
@@ -479,9 +495,30 @@ export default function VideoPortalPage() {
         router.push('/auth/login');
       } else {
         const loadData = async () => {
-          await Promise.all([loadTvShows(), loadWatchHistory()]);
-          setIsLoading(false);
+          try {
+            console.log('🔄 Carregando dados iniciais...');
+            
+            // Usar Promise.allSettled para garantir que um erro em uma promessa não afete as outras
+            const results = await Promise.allSettled([
+              loadTvShows(),
+              loadWatchHistory()
+            ]);
+            
+            // Verificar resultados
+            results.forEach((result, index) => {
+              if (result.status === 'rejected') {
+                console.error(`❌ Erro ao carregar dados (promessa ${index}):`, result.reason);
+              }
+            });
+            
+            console.log('✅ Carregamento de dados concluído');
+          } catch (error) {
+            console.error('❌ Erro geral ao carregar dados:', error);
+          } finally {
+            setIsLoading(false);
+          }
         };
+        
         loadData();
       }
     }
@@ -740,7 +777,7 @@ export default function VideoPortalPage() {
         {/* Video Rows */}
         <div className="relative -mt-20 z-20 pb-20 bg-gray-900">
           {/* Continue Watching */}
-          {continueWatching.length > 0 && (
+          {continueWatching && continueWatching.length > 0 && (
             <div className="pt-16">
               <CarouselRow
                 title="Continue assistindo"
@@ -751,7 +788,7 @@ export default function VideoPortalPage() {
           )}
 
           {/* Popular Shows */}
-          {popularShows.length > 0 && (
+          {popularShows && popularShows.length > 0 && (
             <CarouselRow
               title="Populares na plataforma"
               videos={popularShows.map(show => ({
@@ -773,7 +810,7 @@ export default function VideoPortalPage() {
           )}
 
           {/* Categorized Collections */}
-          {categorizedShows.map(([category, shows]) => (
+          {categorizedShows && categorizedShows.length > 0 && categorizedShows.map(([category, shows]) => (
             <CarouselRow
               key={category}
               title={category}
@@ -796,7 +833,7 @@ export default function VideoPortalPage() {
           ))}
 
           {/* Recent Releases */}
-          {recentReleases.length > 0 && (
+          {recentReleases && recentReleases.length > 0 && (
             <CarouselRow
               title="Lançamentos"
               videos={recentReleases.map(show => ({
@@ -815,6 +852,23 @@ export default function VideoPortalPage() {
               }))}
               onPlayVideo={handlePlayVideo}
             />
+          )}
+          
+          {/* Mensagem quando não há conteúdo */}
+          {(!popularShows || popularShows.length === 0) && 
+           (!categorizedShows || categorizedShows.length === 0) && 
+           (!recentReleases || recentReleases.length === 0) && (
+            <div className="flex flex-col items-center justify-center py-20">
+              <div className="w-20 h-20 bg-gray-800 rounded-full flex items-center justify-center mb-6">
+                <svg className="w-10 h-10 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 4v16M17 4v16M3 8h4m10 0h4M3 12h18M3 16h4m10 0h4M4 20h16a1 1 0 001-1V5a1 1 0 00-1-1H4a1 1 0 00-1 1v14a1 1 0 001 1z" />
+                </svg>
+              </div>
+              <h3 className="text-xl font-semibold text-gray-300 mb-2">Nenhum conteúdo disponível</h3>
+              <p className="text-gray-500 max-w-md text-center">
+                Não foi possível carregar as coleções de vídeos. Verifique sua conexão ou tente novamente mais tarde.
+              </p>
+            </div>
           )}
         </div>
       </div>

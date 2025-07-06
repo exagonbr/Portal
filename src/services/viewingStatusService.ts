@@ -99,11 +99,48 @@ export async function getWatchHistory(
       params.append('contentType', contentType);
     }
     
-    const response = await api.get(`/viewing-status/history?${params.toString()}`);
-    return response.data;
+    // Adicionar timeout para evitar que a requisição fique pendente por muito tempo
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), 5000); // 5 segundos
+    
+    try {
+      const response = await api.get(`/viewing-status/history?${params.toString()}`, {
+        signal: controller.signal
+      });
+      clearTimeout(timeoutId);
+      return response.data;
+    } catch (error) {
+      clearTimeout(timeoutId);
+      
+      // Verificar se é um erro de timeout
+      if (error instanceof Error && error.name === 'AbortError') {
+        console.error('Timeout ao buscar histórico de visualização');
+      }
+      
+      // Verificar se é um erro relacionado a tabela não existente
+      if (error instanceof Error && 
+          (error.message.includes('does not exist') || 
+           error.message.includes('relation') || 
+           error.message.includes('42P01'))) {
+        console.error('Erro de tabela não existente no banco de dados');
+      }
+      
+      // Retornar um objeto vazio como fallback
+      return { 
+        success: false, 
+        items: [],
+        message: 'Erro ao carregar histórico - funcionalidade temporariamente indisponível'
+      };
+    }
   } catch (error) {
     console.error('Erro ao obter histórico de visualização:', error);
-    throw error;
+    
+    // Retornar um objeto vazio como fallback
+    return { 
+      success: false, 
+      items: [],
+      message: 'Erro ao carregar histórico - funcionalidade temporariamente indisponível'
+    };
   }
 }
 
