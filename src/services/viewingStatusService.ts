@@ -25,7 +25,7 @@ interface VideoInteractionParams {
  */
 export async function trackVideoProgress(params: TrackVideoProgressParams): Promise<any> {
   try {
-    const response = await api.post('/viewing-status/update', params);
+    const response = await api.post('/api/activity/viewing-status', params);
     return response.data;
   } catch (error) {
     console.error('Erro ao registrar progresso de vídeo:', error);
