@@ -85,6 +85,7 @@ export async function up(knex: Knex): Promise<void> {
     { key: 'logo_dark', value: '/logo-dark.png', type: 'string', category: 'appearance', description: 'Logo para tema escuro', is_public: true },
     { key: 'background_type', value: 'video', type: 'string', category: 'appearance', description: 'Tipo de background (video, image, color)', is_public: true },
     { key: 'main_background', value: '/back_video4.mp4', type: 'string', category: 'appearance', description: 'Background principal', is_public: true },
+    { key: 'background_video_url', value: '', type: 'string', category: 'appearance', description: 'URL personalizada para vídeo de background', is_public: true },
     { key: 'primary_color', value: '#1e3a8a', type: 'string', category: 'appearance', description: 'Cor primária', is_public: true },
     { key: 'secondary_color', value: '#3b82f6', type: 'string', category: 'appearance', description: 'Cor secundária', is_public: true },
     

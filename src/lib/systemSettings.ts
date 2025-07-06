@@ -10,6 +10,7 @@ export interface SystemSettings {
   logo_dark: string;
   background_type: 'video' | 'image' | 'color';
   main_background: string;
+  background_video_url: string;
   primary_color: string;
   secondary_color: string;
   aws_access_key: string;
@@ -41,6 +42,7 @@ export interface PublicSettings {
   logo_dark: string;
   background_type: 'video' | 'image' | 'color';
   main_background: string;
+  background_video_url: string;
   primary_color: string;
   secondary_color: string;
 }
@@ -56,6 +58,7 @@ const defaultSettings: SystemSettings = {
   logo_dark: '/logo-dark.png',
   background_type: 'video',
   main_background: '/back_video4.mp4',
+  background_video_url: '',
   primary_color: '#1e3a8a',
   secondary_color: '#3b82f6',
   aws_access_key: '',

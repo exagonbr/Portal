@@ -68,9 +68,11 @@ export default function DynamicBackground({
   }, [settings, loading])
 
   const renderVideoBackground = () => {
-    if (settings?.background_type !== 'video' || !settings?.main_background) {
+    if (settings?.background_type !== 'video' || (!settings?.main_background && !settings?.background_video_url)) {
       return null
     }
+
+    const videoSource = settings.background_video_url || settings.main_background;
 
     return (
       <video
@@ -81,7 +83,7 @@ export default function DynamicBackground({
         className="absolute inset-0 w-full h-full object-cover z-0"
         style={{ minWidth: '100%', minHeight: '100%' }}
       >
-        <source src={settings.main_background} type="video/mp4" />
+        <source src={videoSource} type="video/mp4" />
         {/* Fallback para navegadores que não suportam o vídeo */}
         <div 
           className="absolute inset-0 w-full h-full"

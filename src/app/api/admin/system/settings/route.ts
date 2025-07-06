@@ -7,7 +7,7 @@ import { updatePublicSettings } from '../../../public/settings/route';
 import { 
   loadSystemSettings, 
   saveSystemSettings, 
-  SystemSettings 
+  SystemSettings as ImportedSystemSettings 
 } from '@/lib/systemSettings';
 
 // Interface para as configurações do sistema
@@ -21,6 +21,7 @@ interface SystemSettings {
   logo_dark: string;
   background_type: 'video' | 'image' | 'color';
   main_background: string;
+  background_video_url: string;
   primary_color: string;
   secondary_color: string;
   aws_access_key: string;
@@ -71,7 +72,8 @@ const defaultSettings: SystemSettings = {
   notifications_email_enabled: false,
   notifications_sms_enabled: false,
   notifications_push_enabled: false,
-  notifications_digest_frequency: 'daily'
+  notifications_digest_frequency: 'daily',
+  background_video_url: ''
 };
 
 // Função auxiliar para verificar autenticação via JWT ou NextAuth
@@ -134,6 +136,7 @@ export async function GET(request: NextRequest) {
         logo_dark: currentSettings.logo_dark,
         background_type: currentSettings.background_type,
         main_background: currentSettings.main_background,
+        background_video_url: currentSettings.background_video_url,
         primary_color: currentSettings.primary_color,
         secondary_color: currentSettings.secondary_color,
       };
@@ -157,6 +160,7 @@ export async function GET(request: NextRequest) {
         logo_dark: currentSettings.logo_dark,
         background_type: currentSettings.background_type,
         main_background: currentSettings.main_background,
+        background_video_url: currentSettings.background_video_url,
         primary_color: currentSettings.primary_color,
         secondary_color: currentSettings.secondary_color,
         notifications_email_enabled: currentSettings.notifications_email_enabled,
@@ -236,6 +240,7 @@ export async function PUT(request: NextRequest) {
       logo_dark: currentSettings.logo_dark,
       background_type: currentSettings.background_type,
       main_background: currentSettings.main_background,
+      background_video_url: currentSettings.background_video_url,
       primary_color: currentSettings.primary_color,
       secondary_color: currentSettings.secondary_color,
     };

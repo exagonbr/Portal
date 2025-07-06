@@ -118,6 +118,7 @@ export default function AdminSettingsPage() {
         const backgroundChanged = settings && (
           settings.background_type !== localSettings.background_type ||
           settings.main_background !== localSettings.main_background ||
+          settings.background_video_url !== localSettings.background_video_url ||
           settings.primary_color !== localSettings.primary_color ||
           settings.secondary_color !== localSettings.secondary_color
         )
@@ -496,6 +497,22 @@ export default function AdminSettingsPage() {
                             </option>
                           ))}
                         </select>
+                        
+                        <div className="mt-4">
+                          <label className="block text-sm font-medium text-gray-700 mb-2">
+                            URL Personalizada para Vídeo de Background
+                          </label>
+                          <input
+                            type="text"
+                            value={localSettings.background_video_url || ''}
+                            onChange={(e) => updateLocalSetting('background_video_url', e.target.value)}
+                            placeholder="https://exemplo.com/video.mp4"
+                            className="w-full px-4 py-2 rounded-lg border border-gray-300 focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent"
+                          />
+                          <p className="text-xs text-gray-500 mt-1">
+                            Se preenchido, este URL terá prioridade sobre o vídeo selecionado acima.
+                          </p>
+                        </div>
                       </div>
                     )}
 
@@ -593,9 +610,9 @@ export default function AdminSettingsPage() {
                         backgroundPosition: 'center'
                       }}
                     >
-                      {localSettings.background_type === 'video' && localSettings.main_background && (
+                      {localSettings.background_type === 'video' && (localSettings.background_video_url || localSettings.main_background) && (
                         <video
-                          key={localSettings.main_background} // Força re-render quando o vídeo muda
+                          key={localSettings.background_video_url || localSettings.main_background} // Força re-render quando o vídeo muda
                           autoPlay
                           muted
                           loop
@@ -605,7 +622,7 @@ export default function AdminSettingsPage() {
                             console.error('Erro ao carregar vídeo:', e);
                           }}
                         >
-                          <source src={localSettings.main_background} type="video/mp4" />
+                          <source src={localSettings.background_video_url || localSettings.main_background} type="video/mp4" />
                         </video>
                       )}
                       <div className="absolute inset-0 bg-black/20 group-hover:bg-black/30 transition-colors" />
@@ -1108,16 +1125,16 @@ export default function AdminSettingsPage() {
                 </button>
                 
                 <div className="absolute inset-0">
-                  {localSettings.background_type === 'video' && localSettings.main_background && (
+                  {localSettings.background_type === 'video' && (localSettings.background_video_url || localSettings.main_background) && (
                     <video
-                      key={localSettings.main_background}
+                      key={localSettings.background_video_url || localSettings.main_background}
                       autoPlay
                       muted
                       loop
                       playsInline
                       className="w-full h-full object-cover"
                     >
-                      <source src={localSettings.main_background} type="video/mp4" />
+                      <source src={localSettings.background_video_url || localSettings.main_background} type="video/mp4" />
                     </video>
                   )}
                   
@@ -1145,7 +1162,8 @@ export default function AdminSettingsPage() {
                 
                 <div className="absolute bottom-8 left-1/2 transform -translate-x-1/2 bg-black/70 text-white px-6 py-3 rounded-lg backdrop-blur-sm">
                   <p className="text-sm">
-                    {localSettings.background_type === 'video' && `Vídeo: ${localSettings.main_background}`}
+                    {localSettings.background_type === 'video' && localSettings.background_video_url && `Vídeo (URL personalizada): ${localSettings.background_video_url}`}
+                    {localSettings.background_type === 'video' && !localSettings.background_video_url && `Vídeo: ${localSettings.main_background}`}
                     {localSettings.background_type === 'image' && `Imagem: ${localSettings.main_background}`}
                     {localSettings.background_type === 'color' && `Cor: ${localSettings.main_background}`}
                   </p>

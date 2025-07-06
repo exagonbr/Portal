@@ -229,10 +229,10 @@ export function LoginPage() {
       );
     }
 
-    const { background_type, main_background } = settings;
+    const { background_type, main_background, background_video_url } = settings;
 
     // Sempre usar o vídeo como padrão se não houver configuração
-    if (!background_type || !main_background) {
+    if (!background_type || (!main_background && !background_video_url)) {
       return (
         <video
           autoPlay
