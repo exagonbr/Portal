@@ -5,11 +5,47 @@ import { User } from '../entities/User';
 
 class SessionController {
     async getActiveSessions(req: Request, res: Response) {
-        res.json({ message: 'get active sessions' });
+        try {
+            const activeSessions = await SessionService.getActiveSessions();
+            
+            return res.status(200).json({
+                success: true,
+                data: activeSessions,
+                total: activeSessions.length
+            });
+        } catch (error) {
+            console.error('Erro ao buscar sessões ativas:', error);
+            return res.status(500).json({
+                success: false,
+                message: 'Erro ao buscar sessões ativas'
+            });
+        }
     }
 
     async terminateSession(req: Request, res: Response) {
-        res.status(200).json({ success: true, message: `terminate session ${req.params.sessionId}` });
+        try {
+            const { sessionId } = req.params;
+            
+            if (!sessionId) {
+                return res.status(400).json({
+                    success: false,
+                    message: 'ID da sessão é obrigatório'
+                });
+            }
+            
+            await SessionService.deleteSession(sessionId);
+            
+            return res.status(200).json({
+                success: true,
+                message: `Sessão ${sessionId} encerrada com sucesso`
+            });
+        } catch (error) {
+            console.error('Erro ao encerrar sessão:', error);
+            return res.status(500).json({
+                success: false,
+                message: 'Erro ao encerrar sessão'
+            });
+        }
     }
 
     async create(req: Request, res: Response) {

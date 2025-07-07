@@ -121,7 +121,6 @@ function extractEntityInfo(path: string): { entityType?: string; entityId?: stri
 async function createActivityLog(data: Partial<UserActivity>): Promise<void> {
   try {
     await db('user_activity').insert({
-      id: uuidv4(),
       ...data,
       created_at: new Date(),
       updated_at: new Date()
@@ -152,7 +151,7 @@ export const activityTrackingMiddleware = async (
   
   // Preparar dados da atividade
   req.activityData = {
-    user_id: (req.user as any)?.id || 'anonymous',
+    user_id: (req.user as any)?.id ? String((req.user as any)?.id) : 'anonymous',
     session_id: req.sessionId,
     activity_type: activityType,
     entity_type: entityType,
@@ -256,7 +255,8 @@ async function handleResponse(req: Request, res: Response, responseData: any): P
   await createActivityLog(activityData);
   
   // Atualizar sessão ativa
-  await updateActiveSession(req.sessionId!, (req.user as any)?.id || 'anonymous', duration);
+  const userId = (req.user as any)?.id ? String((req.user as any)?.id) : 'anonymous';
+  await updateActiveSession(req.sessionId!, userId, duration);
 }
 
 // Função para atualizar sessão ativa

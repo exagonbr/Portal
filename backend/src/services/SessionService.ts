@@ -8,6 +8,15 @@ interface SessionData {
   role?: string;
 }
 
+interface ActiveSession {
+  sessionId: string;
+  userId: number;
+  email: string;
+  role?: string;
+  createdAt: Date;
+  lastActivity: Date;
+}
+
 export class SessionService {
   private static redis = getRedisClient;
 
@@ -19,7 +28,12 @@ export class SessionService {
       role: user.role?.name,
     };
 
-    await this.redis.setex(`session:${sessionId}`, 86400, JSON.stringify(sessionData));
+    const now = new Date();
+    await this.redis.setex(`session:${sessionId}`, 86400, JSON.stringify({
+      ...sessionData,
+      createdAt: now.toISOString(),
+      lastActivity: now.toISOString()
+    }));
     return sessionId;
   }
 
@@ -30,11 +44,44 @@ export class SessionService {
     }
     // Atualiza o tempo de expiração da sessão a cada acesso
     await this.redis.expire(`session:${sessionId}`, 86400);
-    return JSON.parse(data);
+    
+    // Atualiza o timestamp de última atividade
+    const sessionData = JSON.parse(data);
+    sessionData.lastActivity = new Date().toISOString();
+    await this.redis.setex(`session:${sessionId}`, 86400, JSON.stringify(sessionData));
+    
+    return sessionData;
   }
 
   static async deleteSession(sessionId: string): Promise<void> {
     await this.redis.del(`session:${sessionId}`);
+  }
+
+  static async getActiveSessions(): Promise<ActiveSession[]> {
+    const activeSessions: ActiveSession[] = [];
+    
+    // Busca todas as chaves de sessão
+    const keys = await this.redis.keys('session:*');
+    
+    // Para cada chave, busca os dados da sessão
+    for (const key of keys) {
+      const sessionId = key.replace('session:', '');
+      const data = await this.redis.get(key);
+      
+      if (data) {
+        const sessionData = JSON.parse(data);
+        activeSessions.push({
+          sessionId,
+          userId: sessionData.userId,
+          email: sessionData.email,
+          role: sessionData.role,
+          createdAt: new Date(sessionData.createdAt || Date.now()),
+          lastActivity: new Date(sessionData.lastActivity || Date.now())
+        });
+      }
+    }
+    
+    return activeSessions;
   }
 }
 

@@ -78,7 +78,7 @@ export type ActivityType =
   | 'system_action';
 
 export interface UserActivity {
-  id: string;
+  id?: string | number;
   user_id: string;
   session_id?: string;
   activity_type: ActivityType;
