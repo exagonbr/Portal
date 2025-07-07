@@ -1,3 +1,10 @@
+// Estender a interface Window para incluir nossa propriedade personalizada
+declare global {
+  interface Window {
+    _originalConsoleError?: typeof console.error;
+  }
+}
+
 /**
  * Suprime avisos de hidratação específicos em desenvolvimento
  * Use apenas quando os avisos são inevitáveis e você tem certeza de que não afetam a funcionalidade
@@ -10,7 +17,12 @@ export function suppressHydrationWarnings() {
   // Capturar console.error original
   const originalError = console.error;
 
-  console.error = (...args: any[]) => {
+  // Armazenar o console.error original em uma propriedade para restauração posterior
+  if (!window._originalConsoleError) {
+    window._originalConsoleError = originalError;
+  }
+
+  console.error = function(...args: any[]) {
     // Suprimir avisos específicos de hidratação que são conhecidos e seguros
     const message = args[0];
     
@@ -62,7 +74,7 @@ export function suppressHydrationWarnings() {
     }
 
     // Para outros erros, usar comportamento normal
-    originalError.apply(console, args);
+    originalError.call(console, ...args);
   };
 }
 
@@ -74,6 +86,9 @@ export function restoreConsoleError() {
     return;
   }
 
-  // Esta implementação é básica - em produção você pode querer uma implementação mais robusta
-  console.error = console.error;
+  // Restaurar o console.error original se ele foi armazenado
+  if (window._originalConsoleError) {
+    console.error = window._originalConsoleError;
+    delete window._originalConsoleError;
+  }
 } 

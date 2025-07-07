@@ -5,6 +5,7 @@ import Script from 'next/script';
 import SimpleProviders from '@/providers/SimpleProviders';
 import CacheManagerWrapper from '@/components/CacheManagerWrapper';
 import { ChunkErrorHandler } from '@/components/ChunkErrorHandler';
+import { suppressHydrationWarnings } from '@/utils/suppressHydrationWarnings';
 
 interface ClientLayoutProps {
   children: React.ReactNode;
@@ -15,23 +16,10 @@ export default function ClientLayout({ children }: ClientLayoutProps) {
     // Suprimir avisos de hidratação em desenvolvimento
     if (process.env.NODE_ENV === 'development') {
       try {
-        // Implementação inline para evitar problemas de importação
-        const originalError = console.error;
-        console.error = (...args: any[]) => {
-          if (
-            typeof args[0] === 'string' &&
-            (args[0].includes('Hydration') || 
-             args[0].includes('hydration') ||
-             args[0].includes('Text content does not match') ||
-             args[0].includes('Prop `') ||
-             args[0].includes('Warning: '))
-          ) {
-            return;
-          }
-          originalError.apply(console, args);
-        };
+        suppressHydrationWarnings();
       } catch (error) {
         // Ignorar erros na configuração
+        console.warn('Erro ao configurar supressão de avisos de hidratação:', error);
       }
     }
   }, []);
