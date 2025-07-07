@@ -27,7 +27,7 @@ export const { GET, OPTIONS } = createStandardApiRoute({
       // Tentar buscar do banco local primeiro
       let roles = [];
       try {
-        roles = await prisma.role.findMany({
+        roles = await prisma.roles.findMany({
           orderBy: { name: 'asc' },
         });
       } catch (dbError) {
@@ -127,7 +127,6 @@ export async function POST(request: NextRequest) {
 
     // Criar role
     const newRole = {
-      id: `role_${Date.now()}`,
       name: roleData.name,
       description: roleData.description,
       permissions: roleData.permissions,

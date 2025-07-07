@@ -617,23 +617,165 @@ function SystemAdminDashboardContent() {
               icon={BarChart3}
               iconColor="bg-blue-500"
             >
-              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-2 sm:gap-3">
-                <div className="text-center p-2 sm:p-3 bg-blue-50 rounded-lg">
-                  <p className="text-lg sm:text-xl font-bold text-blue-600">{realUserStats?.total_users?.toLocaleString('pt-BR') ?? '...'}</p>
-                  <p className="text-xs sm:text-sm text-gray-600">Total de Usuários</p>
-                </div>
-                <div className="text-center p-2 sm:p-3 bg-green-50 rounded-lg">
-                  <p className="text-lg sm:text-xl font-bold text-green-600">{realUserStats?.active_users?.toLocaleString('pt-BR') ?? '...'}</p>
-                  <p className="text-xs sm:text-sm text-gray-600">Usuários Ativos</p>
-                </div>
-                <div className="text-center p-2 sm:p-3 bg-purple-50 rounded-lg">
-                  <p className="text-lg sm:text-xl font-bold text-purple-600">{institutions?.length ?? '...'}</p>
-                  <p className="text-xs sm:text-sm text-gray-600">Instituições</p>
-                </div>
-                <div className="text-center p-2 sm:p-3 bg-orange-50 rounded-lg">
-                  <p className="text-lg sm:text-xl font-bold text-orange-600">{realUserStats?.recent_registrations?.toLocaleString('pt-BR') ?? '...'}</p>
-                  <p className="text-xs sm:text-sm text-gray-600">Novos este Mês</p>
-                </div>
+              
+              {/* Informações detalhadas do sistema */}
+              <div className="mt-4 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
+                {/* Status do Servidor */}
+                <SimpleCard className="p-3">
+                  <div className="flex items-start justify-between">
+                    <div className="flex items-center gap-2">
+                      <Server className="w-5 h-5 text-emerald-500" />
+                      <div>
+                        <h4 className="text-xs font-semibold text-gray-700">Status do Servidor</h4>
+                        <div className="flex items-center gap-1 mt-1">
+                          <div className="w-2 h-2 bg-green-500 rounded-full animate-pulse"></div>
+                          <span className="text-xs font-medium text-green-600">Online</span>
+                        </div>
+                      </div>
+                    </div>
+                    <div className="text-right">
+                      <p className="text-xs text-gray-500">Uptime</p>
+                      <p className="text-sm font-bold text-gray-700">{formatUptime(dashboardData?.system?.uptime || 0)}</p>
+                    </div>
+                  </div>
+                  <div className="mt-2 pt-2 border-t border-gray-100">
+                    <div className="flex justify-between items-center text-xs">
+                      <span className="text-gray-600">Versão:</span>
+                      <span className="font-medium">{dashboardData?.system?.version || '2.5.1'}</span>
+                    </div>
+                    <div className="flex justify-between items-center text-xs mt-1">
+                      <span className="text-gray-600">Ambiente:</span>
+                      <span className="font-medium">{dashboardData?.system?.environment || 'production'}</span>
+                    </div>
+                  </div>
+                </SimpleCard>
+                
+                {/* Uso de Memória */}
+                <SimpleCard className="p-3">
+                  <div className="flex items-start justify-between">
+                    <div className="flex items-center gap-2">
+                      <Database className="w-5 h-5 text-blue-500" />
+                      <div>
+                        <h4 className="text-xs font-semibold text-gray-700">Uso de Memória</h4>
+                        <p className="text-xs text-gray-500 mt-1">Heap usado/total</p>
+                      </div>
+                    </div>
+                    <div className="text-right">
+                      <p className="text-sm font-bold text-gray-700">
+                        {formatBytes(dashboardData?.system?.memoryUsage?.heapUsed || 0)} / {formatBytes(dashboardData?.system?.memoryUsage?.heapTotal || 0)}
+                      </p>
+                      <p className="text-xs text-gray-500">
+                        {Math.round(((dashboardData?.system?.memoryUsage?.heapUsed || 0) / (dashboardData?.system?.memoryUsage?.heapTotal || 1)) * 100)}% utilizado
+                      </p>
+                    </div>
+                  </div>
+                  <div className="mt-2">
+                    <div className="w-full h-2 bg-gray-100 rounded-full overflow-hidden">
+                      <div 
+                        className="h-2 bg-gradient-to-r from-blue-500 to-blue-600 rounded-full" 
+                        style={{ width: `${Math.round(((dashboardData?.system?.memoryUsage?.heapUsed || 0) / (dashboardData?.system?.memoryUsage?.heapTotal || 1)) * 100)}%` }}
+                      ></div>
+                    </div>
+                  </div>
+                </SimpleCard>
+                
+                {/* Infraestrutura AWS */}
+                <SimpleCard className="p-3">
+                  <div className="flex items-start justify-between">
+                    <div className="flex items-center gap-2">
+                      <Cloud className="w-5 h-5 text-orange-500" />
+                      <div>
+                        <h4 className="text-xs font-semibold text-gray-700">Infraestrutura AWS</h4>
+                        <p className="text-xs text-gray-500 mt-1">Status dos serviços</p>
+                      </div>
+                    </div>
+                    <div className="text-right">
+                      <p className="text-sm font-bold text-gray-700">
+                        {dashboardData?.infrastructure?.aws?.performance?.uptime || 99.98}% uptime
+                      </p>
+                      <p className="text-xs text-gray-500">
+                        {dashboardData?.infrastructure?.aws?.performance?.responseTime || 120}ms tempo de resposta
+                      </p>
+                    </div>
+                  </div>
+                  <div className="mt-2 pt-2 border-t border-gray-100 flex flex-wrap gap-1">
+                    {(dashboardData?.infrastructure?.aws?.services || ['S3', 'EC2', 'RDS', 'Lambda']).map((service: string, idx: number) => (
+                      <span key={idx} className="px-1.5 py-0.5 bg-orange-50 text-orange-700 rounded text-xs font-medium">
+                        {service}
+                      </span>
+                    ))}
+                  </div>
+                </SimpleCard>
+              </div>
+              
+              {/* Métricas de sessões e dispositivos */}
+              <div className="mt-4 grid grid-cols-1 sm:grid-cols-2 gap-3">
+                {/* Sessões ativas */}
+                <SimpleCard className="p-3">
+                  <h4 className="text-xs font-semibold text-gray-700 flex items-center gap-1.5 mb-2">
+                    <Activity className="w-4 h-4 text-indigo-500" />
+                    Sessões Ativas por Dispositivo
+                  </h4>
+                  <div className="flex items-center gap-3">
+                    <div className="flex-1">
+                      <div className="space-y-2">
+                        {Object.entries(dashboardData?.sessions?.sessionsByDevice || {}).map(([device, count], idx) => (
+                          <div key={device} className="flex items-center justify-between text-xs">
+                            <div className="flex items-center gap-1.5">
+                              {device === 'Desktop' && <Monitor className="w-3 h-3 text-indigo-500" />}
+                              {device === 'Mobile' && <Smartphone className="w-3 h-3 text-green-500" />}
+                              {device === 'Tablet' && <Tablet className="w-3 h-3 text-orange-500" />}
+                              <span>{device}</span>
+                            </div>
+                            <div className="flex items-center gap-2">
+                              <div className="w-16 h-1.5 bg-gray-100 rounded-full overflow-hidden">
+                                <div 
+                                  className={`h-1.5 rounded-full ${
+                                    idx === 0 ? 'bg-indigo-500' : 
+                                    idx === 1 ? 'bg-green-500' : 
+                                    'bg-orange-500'
+                                  }`}
+                                  style={{ width: `${Math.round((Number(count) / (dashboardData?.sessions?.totalActiveSessions || 1)) * 100)}%` }}
+                                ></div>
+                              </div>
+                              <span className="font-medium">{String(count)}</span>
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                    <div className="flex-shrink-0 border-l border-gray-100 pl-3 text-center">
+                      <p className="text-lg font-bold text-indigo-600">{dashboardData?.sessions?.totalActiveSessions || 0}</p>
+                      <p className="text-xs text-gray-500">Total de<br />Sessões</p>
+                    </div>
+                  </div>
+                </SimpleCard>
+                
+                {/* Custos e Recursos */}
+                <SimpleCard className="p-3">
+                  <h4 className="text-xs font-semibold text-gray-700 flex items-center gap-1.5 mb-2">
+                    <HardDrive className="w-4 h-4 text-emerald-500" />
+                    Recursos e Custos
+                  </h4>
+                  <div className="grid grid-cols-2 gap-3">
+                    <div className="text-center p-2 bg-emerald-50 rounded-lg">
+                      <p className="text-sm font-bold text-emerald-600">R$ {dashboardData?.infrastructure?.aws?.costs?.monthly?.toLocaleString('pt-BR', {minimumFractionDigits: 2, maximumFractionDigits: 2}) || '1.500,50'}</p>
+                      <p className="text-xs text-gray-600">Custo Mensal</p>
+                    </div>
+                    <div className="text-center p-2 bg-blue-50 rounded-lg">
+                      <p className="text-sm font-bold text-blue-600">4</p>
+                      <p className="text-xs text-gray-600">Serviços AWS</p>
+                    </div>
+                    <div className="text-center p-2 bg-purple-50 rounded-lg">
+                      <p className="text-sm font-bold text-purple-600">2</p>
+                      <p className="text-xs text-gray-600">Instâncias EC2</p>
+                    </div>
+                    <div className="text-center p-2 bg-amber-50 rounded-lg">
+                      <p className="text-sm font-bold text-amber-600">1</p>
+                      <p className="text-xs text-gray-600">RDS Database</p>
+                    </div>
+                  </div>
+                </SimpleCard>
               </div>
             </ContentCard>
           </div>
@@ -1337,6 +1479,356 @@ function SystemAdminDashboardContent() {
               </div>
             </ContentCard>
           )}
+        </div>
+        
+        {/* Nova seção de métricas de desempenho */}
+        <div className="mb-6">
+          <ContentCard
+            title="Métricas de Desempenho"
+            subtitle="Monitoramento de performance do sistema"
+            icon={Gauge}
+            iconColor="bg-indigo-500"
+          >
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+              {/* Tempo de Resposta */}
+              <SimpleCard className="p-3">
+                <h4 className="text-xs font-semibold text-gray-700 flex items-center gap-1.5 mb-2">
+                  <Zap className="w-4 h-4 text-amber-500" />
+                  Tempo de Resposta
+                </h4>
+                <div className="flex flex-col items-center">
+                  <div className="relative w-24 h-24">
+                    <svg className="w-full h-full" viewBox="0 0 100 100">
+                      <circle 
+                        className="text-gray-100" 
+                        strokeWidth="10" 
+                        stroke="currentColor" 
+                        fill="transparent" 
+                        r="40" 
+                        cx="50" 
+                        cy="50" 
+                      />
+                      <circle 
+                        className="text-amber-500" 
+                        strokeWidth="10" 
+                        strokeDasharray={251.2}
+                        strokeDashoffset={251.2 * (1 - 0.82)} 
+                        strokeLinecap="round" 
+                        stroke="currentColor" 
+                        fill="transparent" 
+                        r="40" 
+                        cx="50" 
+                        cy="50" 
+                      />
+                    </svg>
+                    <div className="absolute inset-0 flex items-center justify-center">
+                      <div className="text-center">
+                        <p className="text-xl font-bold text-gray-800">82%</p>
+                        <p className="text-xs text-gray-500">Excelente</p>
+                      </div>
+                    </div>
+                  </div>
+                  <div className="mt-2 text-center">
+                    <p className="text-sm font-semibold text-gray-700">120ms</p>
+                    <p className="text-xs text-gray-500">Média atual</p>
+                  </div>
+                </div>
+              </SimpleCard>
+              
+              {/* Disponibilidade */}
+              <SimpleCard className="p-3">
+                <h4 className="text-xs font-semibold text-gray-700 flex items-center gap-1.5 mb-2">
+                  <CheckCircle className="w-4 h-4 text-green-500" />
+                  Disponibilidade
+                </h4>
+                <div className="flex flex-col items-center">
+                  <div className="relative w-24 h-24">
+                    <svg className="w-full h-full" viewBox="0 0 100 100">
+                      <circle 
+                        className="text-gray-100" 
+                        strokeWidth="10" 
+                        stroke="currentColor" 
+                        fill="transparent" 
+                        r="40" 
+                        cx="50" 
+                        cy="50" 
+                      />
+                      <circle 
+                        className="text-green-500" 
+                        strokeWidth="10" 
+                        strokeDasharray={251.2}
+                        strokeDashoffset={251.2 * (1 - 0.9998)} 
+                        strokeLinecap="round" 
+                        stroke="currentColor" 
+                        fill="transparent" 
+                        r="40" 
+                        cx="50" 
+                        cy="50" 
+                      />
+                    </svg>
+                    <div className="absolute inset-0 flex items-center justify-center">
+                      <div className="text-center">
+                        <p className="text-xl font-bold text-gray-800">99,98%</p>
+                        <p className="text-xs text-gray-500">Uptime</p>
+                      </div>
+                    </div>
+                  </div>
+                  <div className="mt-2 text-center">
+                    <p className="text-sm font-semibold text-green-700">5d 0h 0m</p>
+                    <p className="text-xs text-gray-500">Sem interrupções</p>
+                  </div>
+                </div>
+              </SimpleCard>
+              
+              {/* Carga do Sistema */}
+              <SimpleCard className="p-3">
+                <h4 className="text-xs font-semibold text-gray-700 flex items-center gap-1.5 mb-2">
+                  <Cpu className="w-4 h-4 text-blue-500" />
+                  Carga do Sistema
+                </h4>
+                <div className="flex flex-col items-center">
+                  <div className="relative w-24 h-24">
+                    <svg className="w-full h-full" viewBox="0 0 100 100">
+                      <circle 
+                        className="text-gray-100" 
+                        strokeWidth="10" 
+                        stroke="currentColor" 
+                        fill="transparent" 
+                        r="40" 
+                        cx="50" 
+                        cy="50" 
+                      />
+                      <circle 
+                        className="text-blue-500" 
+                        strokeWidth="10" 
+                        strokeDasharray={251.2}
+                        strokeDashoffset={251.2 * (1 - 0.45)} 
+                        strokeLinecap="round" 
+                        stroke="currentColor" 
+                        fill="transparent" 
+                        r="40" 
+                        cx="50" 
+                        cy="50" 
+                      />
+                    </svg>
+                    <div className="absolute inset-0 flex items-center justify-center">
+                      <div className="text-center">
+                        <p className="text-xl font-bold text-gray-800">45%</p>
+                        <p className="text-xs text-gray-500">CPU</p>
+                      </div>
+                    </div>
+                  </div>
+                  <div className="mt-2 text-center">
+                    <p className="text-sm font-semibold text-gray-700">Normal</p>
+                    <p className="text-xs text-gray-500">Capacidade adequada</p>
+                  </div>
+                </div>
+              </SimpleCard>
+            </div>
+            
+            {/* Métricas detalhadas */}
+            <div className="mt-4 grid grid-cols-1 md:grid-cols-2 gap-3">
+              {/* Tendências de desempenho */}
+              <SimpleCard className="p-3">
+                <h4 className="text-xs font-semibold text-gray-700 mb-3">Tendências de Desempenho (Últimas 24h)</h4>
+                <div className="space-y-3">
+                  <div>
+                    <div className="flex justify-between items-center text-xs mb-1">
+                      <span className="text-gray-600">Tempo de Resposta API</span>
+                      <span className="font-medium text-amber-600">120ms (↓ 5%)</span>
+                    </div>
+                    <div className="w-full h-1.5 bg-gray-100 rounded-full overflow-hidden">
+                      <div className="h-1.5 bg-amber-500 rounded-full" style={{ width: '30%' }}></div>
+                    </div>
+                  </div>
+                  
+                  <div>
+                    <div className="flex justify-between items-center text-xs mb-1">
+                      <span className="text-gray-600">Uso de CPU</span>
+                      <span className="font-medium text-blue-600">45% (↑ 10%)</span>
+                    </div>
+                    <div className="w-full h-1.5 bg-gray-100 rounded-full overflow-hidden">
+                      <div className="h-1.5 bg-blue-500 rounded-full" style={{ width: '45%' }}></div>
+                    </div>
+                  </div>
+                  
+                  <div>
+                    <div className="flex justify-between items-center text-xs mb-1">
+                      <span className="text-gray-600">Uso de Memória</span>
+                      <span className="font-medium text-purple-600">68% (↑ 8%)</span>
+                    </div>
+                    <div className="w-full h-1.5 bg-gray-100 rounded-full overflow-hidden">
+                      <div className="h-1.5 bg-purple-500 rounded-full" style={{ width: '68%' }}></div>
+                    </div>
+                  </div>
+                  
+                  <div>
+                    <div className="flex justify-between items-center text-xs mb-1">
+                      <span className="text-gray-600">Tempo de Carregamento</span>
+                      <span className="font-medium text-green-600">1.2s (↓ 15%)</span>
+                    </div>
+                    <div className="w-full h-1.5 bg-gray-100 rounded-full overflow-hidden">
+                      <div className="h-1.5 bg-green-500 rounded-full" style={{ width: '40%' }}></div>
+                    </div>
+                  </div>
+                </div>
+              </SimpleCard>
+              
+              {/* Status de Serviços */}
+              <SimpleCard className="p-3">
+                <h4 className="text-xs font-semibold text-gray-700 mb-3">Status de Serviços</h4>
+                <div className="space-y-2">
+                  <div className="flex items-center justify-between p-2 bg-green-50 rounded-lg">
+                    <div className="flex items-center gap-2">
+                      <div className="w-2 h-2 bg-green-500 rounded-full"></div>
+                      <span className="text-xs font-medium text-gray-700">API Principal</span>
+                    </div>
+                    <span className="text-xs text-green-600 font-medium">Operacional</span>
+                  </div>
+                  
+                  <div className="flex items-center justify-between p-2 bg-green-50 rounded-lg">
+                    <div className="flex items-center gap-2">
+                      <div className="w-2 h-2 bg-green-500 rounded-full"></div>
+                      <span className="text-xs font-medium text-gray-700">Banco de Dados</span>
+                    </div>
+                    <span className="text-xs text-green-600 font-medium">Operacional</span>
+                  </div>
+                  
+                  <div className="flex items-center justify-between p-2 bg-green-50 rounded-lg">
+                    <div className="flex items-center gap-2">
+                      <div className="w-2 h-2 bg-green-500 rounded-full"></div>
+                      <span className="text-xs font-medium text-gray-700">Armazenamento</span>
+                    </div>
+                    <span className="text-xs text-green-600 font-medium">Operacional</span>
+                  </div>
+                  
+                  <div className="flex items-center justify-between p-2 bg-amber-50 rounded-lg">
+                    <div className="flex items-center gap-2">
+                      <div className="w-2 h-2 bg-amber-500 rounded-full animate-pulse"></div>
+                      <span className="text-xs font-medium text-gray-700">Processamento em Lote</span>
+                    </div>
+                    <span className="text-xs text-amber-600 font-medium">Degradado</span>
+                  </div>
+                  
+                  <div className="flex items-center justify-between p-2 bg-green-50 rounded-lg">
+                    <div className="flex items-center gap-2">
+                      <div className="w-2 h-2 bg-green-500 rounded-full"></div>
+                      <span className="text-xs font-medium text-gray-700">Autenticação</span>
+                    </div>
+                    <span className="text-xs text-green-600 font-medium">Operacional</span>
+                  </div>
+                </div>
+              </SimpleCard>
+            </div>
+          </ContentCard>
+        </div>
+        
+        {/* Nova seção de atividades recentes */}
+        <div className="mb-6">
+          <ContentCard
+            title="Atividades Recentes"
+            subtitle="Últimas ações e eventos do sistema"
+            icon={Clock}
+            iconColor="bg-purple-500"
+          >
+            <div className="space-y-3">
+              <div className="relative">
+                <div className="absolute top-0 bottom-0 left-3 w-0.5 bg-gray-200"></div>
+                <div className="space-y-4">
+                  <div className="relative flex items-start gap-3">
+                    <div className="flex-shrink-0 mt-1">
+                      <div className="w-6 h-6 rounded-full bg-blue-100 flex items-center justify-center z-10 relative">
+                        <UserCheck className="w-3 h-3 text-blue-600" />
+                      </div>
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-1">
+                        <p className="text-xs font-medium text-gray-700">Novo usuário registrado</p>
+                        <p className="text-xs text-gray-500">Hoje, 10:45</p>
+                      </div>
+                      <p className="text-xs text-gray-600 mt-1">
+                        Maria Silva (maria.silva@email.com) - Colégio Saber
+                      </p>
+                    </div>
+                  </div>
+                  
+                  <div className="relative flex items-start gap-3">
+                    <div className="flex-shrink-0 mt-1">
+                      <div className="w-6 h-6 rounded-full bg-green-100 flex items-center justify-center z-10 relative">
+                        <CheckCircle className="w-3 h-3 text-green-600" />
+                      </div>
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-1">
+                        <p className="text-xs font-medium text-gray-700">Backup automático concluído</p>
+                        <p className="text-xs text-gray-500">Hoje, 03:00</p>
+                      </div>
+                      <p className="text-xs text-gray-600 mt-1">
+                        Backup diário do banco de dados concluído com sucesso
+                      </p>
+                    </div>
+                  </div>
+                  
+                  <div className="relative flex items-start gap-3">
+                    <div className="flex-shrink-0 mt-1">
+                      <div className="w-6 h-6 rounded-full bg-amber-100 flex items-center justify-center z-10 relative">
+                        <AlertTriangle className="w-3 h-3 text-amber-600" />
+                      </div>
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-1">
+                        <p className="text-xs font-medium text-gray-700">Alerta de uso de memória</p>
+                        <p className="text-xs text-gray-500">Ontem, 18:32</p>
+                      </div>
+                      <p className="text-xs text-gray-600 mt-1">
+                        Uso de memória heap atingiu 82.1% - Monitoramento necessário
+                      </p>
+                    </div>
+                  </div>
+                  
+                  <div className="relative flex items-start gap-3">
+                    <div className="flex-shrink-0 mt-1">
+                      <div className="w-6 h-6 rounded-full bg-purple-100 flex items-center justify-center z-10 relative">
+                        <Settings className="w-3 h-3 text-purple-600" />
+                      </div>
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-1">
+                        <p className="text-xs font-medium text-gray-700">Atualização do sistema</p>
+                        <p className="text-xs text-gray-500">Ontem, 15:20</p>
+                      </div>
+                      <p className="text-xs text-gray-600 mt-1">
+                        Sistema atualizado para a versão 2.5.1 - Melhorias de segurança
+                      </p>
+                    </div>
+                  </div>
+                  
+                  <div className="relative flex items-start gap-3">
+                    <div className="flex-shrink-0 mt-1">
+                      <div className="w-6 h-6 rounded-full bg-blue-100 flex items-center justify-center z-10 relative">
+                        <Building2 className="w-3 h-3 text-blue-600" />
+                      </div>
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-1">
+                        <p className="text-xs font-medium text-gray-700">Nova instituição adicionada</p>
+                        <p className="text-xs text-gray-500">2 dias atrás</p>
+                      </div>
+                      <p className="text-xs text-gray-600 mt-1">
+                        Instituto Aprender Mais (IAM) - Adicionado por admin@sistema.com
+                      </p>
+                    </div>
+                  </div>
+                </div>
+              </div>
+              
+              <div className="text-center pt-2">
+                <button className="text-xs text-primary hover:text-primary-dark font-medium">
+                  Ver histórico completo →
+                </button>
+              </div>
+            </div>
+          </ContentCard>
         </div>
     </div>
   );

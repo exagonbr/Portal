@@ -1243,10 +1243,12 @@ model role_permissions {
 }
 
 model roles {
-  id           BigInt  @id @default(autoincrement())
-  version      BigInt?
-  authority    String? @unique(map: "idx_roles_authority_unique") @db.VarChar(255)
-  display_name String? @db.VarChar(255)
+  id            BigInt    @id @default(autoincrement())
+  name          String?   @db.VarChar(255)
+  description   String?   @db.VarChar(255)
+  is_active     Boolean   @default(true)
+  created_at    DateTime  @default(now()) @db.Timestamptz(6)
+  updated_at    DateTime  @default(now()) @db.Timestamptz(6)
 }
 
 /// This table contains check constraints and requires additional setup for migrations. Visit https://pris.ly/d/check-constraints for more info.
