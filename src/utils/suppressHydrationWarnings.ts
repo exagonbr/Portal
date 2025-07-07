@@ -30,10 +30,33 @@ export function suppressHydrationWarnings() {
         'Warning: Prop `className` did not match', // Classes CSS diferentes
         'Warning: Expected server HTML to contain a matching', // HTML não correspondente
         'Token de autenticação não encontrado', // Erro de autenticação
+        'CLIENT_FETCH_ERROR', // Erros de fetch do NextAuth
+        'next-auth', // Erros gerais do NextAuth
+        'Nenhuma sessão ativa encontrada', // Erro de sessão customizada
+        '[next-auth][error]', // Prefixo de erro do NextAuth
+        'NEXTAUTH_SECRET', // Erro de configuração do NextAuth
+        'https://next-auth.js.org/errors', // Links de erro do NextAuth
+        'SIGNIN_OAUTH_ERROR', // Erro OAuth do NextAuth
+        'OAUTH_CALLBACK_ERROR', // Erro de callback OAuth
+        'SIGNIN_EMAIL_ERROR', // Erro de signin por email
+        'CALLBACK_CREDENTIALS_JWT_ERROR', // Erro de JWT
+        'CALLBACK_CREDENTIALS_HANDLER_ERROR', // Erro no handler de credenciais
+        'No session found', // Sessão não encontrada (inglês)
+        'Failed to fetch session', // Falha ao buscar sessão
       ];
 
       // Se é um aviso de hidratação conhecido, não mostrar
       if (hydrationWarnings.some(warning => message.includes(warning))) {
+        return;
+      }
+
+      // Suprimr erros específicos de NextAuth baseados no formato
+      if (message.startsWith('[next-auth]')) {
+        return;
+      }
+
+      // Suprimir avisos de fetch que são específicos de autenticação
+      if (message.includes('fetch') && message.includes('auth')) {
         return;
       }
     }

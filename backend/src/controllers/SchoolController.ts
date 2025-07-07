@@ -1,13 +1,13 @@
 import { Request, Response } from 'express';
 import { BaseController } from './BaseController';
-import { School } from '../entities/School';
-import { SchoolRepository } from '../repositories/SchoolRepository';
+import { Unit } from '../entities/Unit';
+import { UnitRepository } from '../repositories/UnitRepository';
 
-const schoolRepository = new SchoolRepository();
+const unitRepository = new UnitRepository();
 
-class SchoolController extends BaseController<School> {
+class SchoolController extends BaseController<Unit> {
   constructor() {
-    super(schoolRepository);
+    super(unitRepository);
   }
 
   public async getAll(req: Request, res: Response): Promise<Response> {
@@ -21,7 +21,7 @@ class SchoolController extends BaseController<School> {
         institutionId: institution_id ? parseInt(institution_id as string, 10) : undefined
       };
 
-      const result = await schoolRepository.findWithFilters(filters);
+      const result = await unitRepository.findWithFilters(filters);
       
       return res.json({
         success: true,
@@ -40,11 +40,11 @@ class SchoolController extends BaseController<School> {
   public async toggleStatus(req: Request, res: Response): Promise<Response> {
     try {
       const { id } = req.params;
-      const school = await schoolRepository.toggleStatus(id);
-      if (!school) {
+      const unit = await unitRepository.toggleStatus(id);
+      if (!unit) {
         return res.status(404).json({ success: false, message: 'School not found' });
       }
-      return res.status(200).json({ success: true, data: school });
+      return res.status(200).json({ success: true, data: unit });
     } catch (error) {
       console.error(`Error in toggleStatus: ${error}`);
       return res.status(500).json({ success: false, message: 'Internal Server Error' });

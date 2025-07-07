@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback } from 'react';
-import { useSession } from 'next-auth/react';
+import { useAuth } from '@/contexts/AuthContext';
 import {
   BookProgress,
   BookHighlight,
@@ -17,7 +17,7 @@ interface UseBookReadingProps {
 }
 
 export function useBookReading({ bookId, totalPages }: UseBookReadingProps) {
-  const { data: session } = useSession();
+  const { user } = useAuth();
   const [progress, setProgress] = useState<BookProgress | null>(null);
   const [highlights, setHighlights] = useState<BookHighlight[]>([]);
   const [bookmarks, setBookmarks] = useState<BookBookmark[]>([]);
@@ -28,10 +28,10 @@ export function useBookReading({ bookId, totalPages }: UseBookReadingProps) {
 
   // Fetch initial data
   useEffect(() => {
-    if (!session?.user?.id) return;
+    if (!user?.id) return;
     
     fetchBookData();
-  }, [bookId, session]);
+  }, [bookId, user]);
 
   const fetchBookData = async () => {
     try {
@@ -79,7 +79,7 @@ export function useBookReading({ bookId, totalPages }: UseBookReadingProps) {
 
   // Progress tracking
   const updateProgress = useCallback(async (currentPage: number) => {
-    if (!session?.user?.id) return;
+    if (!user?.id) return;
 
     const progressPercent = (currentPage / totalPages) * 100;
     const updateData: UpdateBookProgressDto = {
@@ -112,7 +112,7 @@ export function useBookReading({ bookId, totalPages }: UseBookReadingProps) {
     } catch (error) {
       console.error('Error updating progress:', error);
     }
-  }, [bookId, totalPages, session]);
+  }, [bookId, totalPages, user]);
 
   // Start reading session
   const startReadingSession = useCallback(() => {
@@ -121,7 +121,7 @@ export function useBookReading({ bookId, totalPages }: UseBookReadingProps) {
 
   // End reading session and update reading time
   const endReadingSession = useCallback(async () => {
-    if (!readingStartTime || !session?.user?.id) return;
+    if (!readingStartTime || !user?.id) return;
 
     const endTime = new Date();
     const duration = Math.floor((endTime.getTime() - readingStartTime.getTime()) / 1000);
@@ -137,11 +137,11 @@ export function useBookReading({ bookId, totalPages }: UseBookReadingProps) {
     }
 
     setReadingStartTime(null);
-  }, [bookId, readingStartTime, session]);
+  }, [bookId, readingStartTime, user]);
 
   // Highlights management
   const addHighlight = useCallback(async (highlightData: Omit<CreateBookHighlightDto, 'bookId' | 'userId'>) => {
-    if (!session?.user?.id) return;
+    if (!user?.id) return;
 
     try {
       const response = await fetch(`/api/books/${bookId}/highlights`, {
@@ -158,10 +158,10 @@ export function useBookReading({ bookId, totalPages }: UseBookReadingProps) {
     } catch (error) {
       console.error('Error adding highlight:', error);
     }
-  }, [bookId, session]);
+  }, [bookId, user]);
 
   const removeHighlight = useCallback(async (highlightId: string) => {
-    if (!session?.user?.id) return;
+    if (!user?.id) return;
 
     try {
       const response = await fetch(`/api/books/${bookId}/highlights`, {
@@ -176,11 +176,11 @@ export function useBookReading({ bookId, totalPages }: UseBookReadingProps) {
     } catch (error) {
       console.error('Error removing highlight:', error);
     }
-  }, [bookId, session]);
+  }, [bookId, user]);
 
   // Bookmarks management
   const addBookmark = useCallback(async (bookmarkData: Omit<CreateBookBookmarkDto, 'bookId' | 'userId'>) => {
-    if (!session?.user?.id) return;
+    if (!user?.id) return;
 
     try {
       const response = await fetch(`/api/books/${bookId}/bookmarks`, {
@@ -197,10 +197,10 @@ export function useBookReading({ bookId, totalPages }: UseBookReadingProps) {
     } catch (error) {
       console.error('Error adding bookmark:', error);
     }
-  }, [bookId, session]);
+  }, [bookId, user]);
 
   const removeBookmark = useCallback(async (bookmarkId: string) => {
-    if (!session?.user?.id) return;
+    if (!user?.id) return;
 
     try {
       const response = await fetch(`/api/books/${bookId}/bookmarks`, {
@@ -215,11 +215,11 @@ export function useBookReading({ bookId, totalPages }: UseBookReadingProps) {
     } catch (error) {
       console.error('Error removing bookmark:', error);
     }
-  }, [bookId, session]);
+  }, [bookId, user]);
 
   // Annotations management
   const addAnnotation = useCallback(async (annotationData: Omit<CreateBookAnnotationDto, 'bookId' | 'userId'>) => {
-    if (!session?.user?.id) return;
+    if (!user?.id) return;
 
     try {
       const response = await fetch(`/api/books/${bookId}/annotations`, {
@@ -236,10 +236,10 @@ export function useBookReading({ bookId, totalPages }: UseBookReadingProps) {
     } catch (error) {
       console.error('Error adding annotation:', error);
     }
-  }, [bookId, session]);
+  }, [bookId, user]);
 
   const updateAnnotation = useCallback(async (annotationId: string, content: string) => {
-    if (!session?.user?.id) return;
+    if (!user?.id) return;
 
     try {
       const response = await fetch(`/api/books/${bookId}/annotations/${annotationId}`, {
@@ -256,10 +256,10 @@ export function useBookReading({ bookId, totalPages }: UseBookReadingProps) {
     } catch (error) {
       console.error('Error updating annotation:', error);
     }
-  }, [bookId, session]);
+  }, [bookId, user]);
 
   const removeAnnotation = useCallback(async (annotationId: string) => {
-    if (!session?.user?.id) return;
+    if (!user?.id) return;
 
     try {
       const response = await fetch(`/api/books/${bookId}/annotations`, {
@@ -274,11 +274,11 @@ export function useBookReading({ bookId, totalPages }: UseBookReadingProps) {
     } catch (error) {
       console.error('Error removing annotation:', error);
     }
-  }, [bookId, session]);
+  }, [bookId, user]);
 
   // Favorite management
   const toggleFavorite = useCallback(async () => {
-    if (!session?.user?.id) return;
+    if (!user?.id) return;
 
     try {
       const response = await fetch(`/api/books/${bookId}/favorite`, {
@@ -294,7 +294,7 @@ export function useBookReading({ bookId, totalPages }: UseBookReadingProps) {
     } catch (error) {
       console.error('Error toggling favorite:', error);
     }
-  }, [bookId, session]);
+  }, [bookId, user]);
 
   return {
     // State

@@ -8,7 +8,6 @@ import { suppressHydrationWarnings } from '@/utils/suppressHydrationWarnings'
 import { ErrorBoundary } from 'react-error-boundary';
 import { AuthProvider } from '../contexts/AuthContext'
 import { ThemeProvider } from '@/contexts/ThemeContext'
-import { SessionProvider } from 'next-auth/react'
 import dynamic from 'next/dynamic'
 
 // Carregamento dinâmico dos providers menos críticos
@@ -158,34 +157,32 @@ export default function SimpleProviders({ children }: { children: ReactNode }) {
         }
       }}
     >
-      <SessionProvider>
-        <AuthProvider>
-          <ErrorBoundary
-            FallbackComponent={ErrorBoundaryFallback}
-            onError={(error, errorInfo) => {
-              if (isDevelopment()) {
-                console.log('❌ General ErrorBoundary:', error, errorInfo);
-              }
-            }}
-          >
-            <Suspense fallback={null}>
-              <CacheCleanerProvider>
-                <ThemeProvider>
-                  <GamificationProvider>
-                    <NavigationLoadingProvider>
-                      <UpdateProvider>
-                        <ToastManager>
-                          {children}
-                        </ToastManager>
-                      </UpdateProvider>
-                    </NavigationLoadingProvider>
-                  </GamificationProvider>
-                </ThemeProvider>
-              </CacheCleanerProvider>
-            </Suspense>
-          </ErrorBoundary>
-        </AuthProvider>
-      </SessionProvider>
+      <AuthProvider>
+        <ErrorBoundary
+          FallbackComponent={ErrorBoundaryFallback}
+          onError={(error, errorInfo) => {
+            if (isDevelopment()) {
+              console.log('❌ General ErrorBoundary:', error, errorInfo);
+            }
+          }}
+        >
+          <Suspense fallback={null}>
+            <CacheCleanerProvider>
+              <ThemeProvider>
+                <GamificationProvider>
+                  <NavigationLoadingProvider>
+                    <UpdateProvider>
+                      <ToastManager>
+                        {children}
+                      </ToastManager>
+                    </UpdateProvider>
+                  </NavigationLoadingProvider>
+                </GamificationProvider>
+              </ThemeProvider>
+            </CacheCleanerProvider>
+          </Suspense>
+        </ErrorBoundary>
+      </AuthProvider>
     </ErrorBoundary>
   );
 }

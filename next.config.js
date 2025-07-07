@@ -220,4 +220,16 @@ const nextConfig = {
   },
 };
 
-module.exports = nextConfig; 
+// Configuração para carregar variáveis de ambiente
+const withEnv = (nextConfig) => {
+  return {
+    ...nextConfig,
+    env: {
+      ...nextConfig.env,
+      NEXTAUTH_SECRET: process.env.NEXTAUTH_SECRET,
+      NEXTAUTH_URL: process.env.NEXTAUTH_URL,
+    }
+  };
+};
+
+module.exports = withEnv(nextConfig); 

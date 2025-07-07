@@ -1,3 +1,5 @@
+'use client';
+
 import type { Metadata, Viewport } from 'next';
 import { Inter } from 'next/font/google';
 import './globals.css';
@@ -6,6 +8,8 @@ import { isDevelopment } from '@/utils/env';
 import CacheManagerWrapper from '@/components/CacheManagerWrapper';
 import { ChunkErrorHandler } from '@/components/ChunkErrorHandler';
 import Script from 'next/script';
+import { useEffect } from 'react';
+import { suppressHydrationWarnings } from '@/utils/suppressHydrationWarnings';
 
 const inter = Inter({ subsets: ['latin'] });
 
@@ -40,6 +44,11 @@ export const viewport: Viewport = {
   userScalable: true, // Permitir zoom do usuário
   viewportFit: 'cover',
 };
+
+// Suprimir avisos de hidratação em desenvolvimento
+if (typeof window !== 'undefined' && process.env.NODE_ENV === 'development') {
+  suppressHydrationWarnings();
+}
 
 export default function RootLayout({
   children,
