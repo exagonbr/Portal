@@ -3,7 +3,7 @@
 import React, { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { EnhancedLoadingState } from './LoadingStates';
-import { CookieManager } from '@/utils/cookieManager';
+import { UnifiedAuthService } from '@/services/unifiedAuthService';
 
 interface LogoutHandlerProps {
   onLogout?: () => Promise<void>;
@@ -18,39 +18,15 @@ export function LogoutHandler({ onLogout, children }: LogoutHandlerProps) {
     try {
       setIsLoggingOut(true);
 
-      // 1. Limpar localStorage
-      if (typeof window !== 'undefined') {
-        const keysToRemove = [
-          'auth_token',
-          'refresh_token',
-          'user',
-          'user_data',
-        ];
+      // Usar o método completo do UnifiedAuthService
+      await UnifiedAuthService.performCompleteLogout(false);
 
-        keysToRemove.forEach(key => {
-          localStorage.removeItem(key);
-        });
-      }
-
-      // 2. Limpar cookies usando CookieManager
-      CookieManager.clearAuthCookies();
-
-      // 3. Chamar API de logout
-      try {
-        await fetch('/api/auth/logout', {
-          method: 'POST',
-          credentials: 'include',
-        });
-      } catch (error) {
-        console.error('Erro ao chamar API de logout:', error);
-      }
-
-      // 4. Callback de logout
+      // Chamar callback de logout se fornecido
       if (onLogout) {
-        onLogout();
+        await onLogout();
       }
 
-      // 5. Redirecionar para login
+      // Redirecionar para login
       router.push('/auth/login?logout=true');
     } catch (error) {
       console.error('Erro ao fazer logout:', error);

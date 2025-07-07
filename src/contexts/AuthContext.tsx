@@ -243,26 +243,14 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     setIsLoggingOut(true);
 
     try {
-      // Obter dados antes de limpar
-      const token = UnifiedAuthService.getAccessToken();
-      const sessionId = UnifiedAuthService.getSessionId();
-
-      // Chamar API de logout
-      if (token) {
-        apiClient.post('/auth/logout').catch(err => console.error("Logout API call failed:", err));
-      }
-
-      // Limpar dados de todos os locais (localStorage, cookies, Redis)
-      await UnifiedAuthService.clearAuthData(sessionId || undefined, token || undefined);
+      // Usar o método completo do UnifiedAuthService
+      await UnifiedAuthService.performCompleteLogout(false);
       
-      // Limpar outros dados não relacionados à autenticação
-      await clearAllDataForUnauthorized();
-      
-      console.log('✅ Logout concluído - dados limpos de todos os locais');
-      
+      // Atualizar estado do contexto
       setUser(null);
       apiClient.defaults.headers.common['Authorization'] = '';
       
+      // Redirecionar para página de login
       router.push(buildLoginUrl());
       toast.success('Até a próxima!');
       

@@ -2,6 +2,7 @@
  * Utilitário para limpeza completa de todos os dados do cliente
  * Usado quando há redirecionamento para login com erro de unauthorized
  */
+import { UnifiedAuthService } from '@/services/unifiedAuthService';
 
 /**
  * Limpa todos os dados do localStorage
@@ -193,77 +194,52 @@ export const clearAllDataForUnauthorized = async (): Promise<void> => {
   console.log('🧹 Iniciando limpeza completa de dados para redirecionamento unauthorized...');
   
   try {
-    // Executar limpezas em paralelo quando possível
+    // Primeiro limpar dados de autenticação usando o método unificado
+    // Passamos false para não redirecionar automaticamente
+    await UnifiedAuthService.performCompleteLogout(false);
+    
+    // Executar limpezas adicionais em paralelo quando possível
     await Promise.allSettled([
       clearIndexedDB(),
       clearServiceWorkerCache(),
       clearBrowserCache()
     ]);
     
-    // Executar limpezas síncronas
-    clearLocalStorage();
-    clearSessionStorage();
-    clearAllCookies();
-    
     console.log('✅ Limpeza completa de dados concluída');
   } catch (error) {
     console.log('❌ Erro durante limpeza completa de dados:', error);
-    // Mesmo com erro, continuar com o redirecionamento
+    
+    // Mesmo com erro, tentar limpar o básico
+    if (typeof window !== 'undefined') {
+      localStorage.clear();
+      sessionStorage.clear();
+    }
   }
 };
 
 /**
  * Função para limpeza rápida (apenas dados de autenticação)
  */
-export const clearAuthDataOnly = (): void => {
+export const clearAuthDataOnly = async (): Promise<void> => {
   if (typeof window === 'undefined') return;
   
   console.log('🧹 Limpando apenas dados de autenticação...');
   
   try {
-    // Limpar chaves específicas do localStorage
-    const authKeys = [
-      'auth_token',
-      'session_id',
-      'user',
-      'user_data',
-      'auth_expires_at',
-      'refresh_token'
-    ];
-    
-    authKeys.forEach(key => {
-      localStorage.removeItem(key);
-      sessionStorage.removeItem(key);
-    });
-    
-    // Limpar cookies de autenticação
-    const authCookies = [
-      'auth_token',
-      'session_id',
-      'user_data',
-      'refresh_token',
-      'next-auth.session-token',
-      'next-auth.csrf-token',
-      '__Secure-next-auth.session-token',
-      '__Host-next-auth.csrf-token'
-    ];
-    
-    authCookies.forEach(cookieName => {
-      const domains = ['', window.location.hostname, `.${window.location.hostname}`];
-      const paths = ['/', ''];
-      
-      domains.forEach(domain => {
-        paths.forEach(path => {
-          const domainPart = domain ? `;domain=${domain}` : '';
-          const pathPart = path ? `;path=${path}` : '';
-          document.cookie = `${cookieName}=;expires=Thu, 01 Jan 1970 00:00:00 GMT${pathPart}${domainPart}`;
-        });
-      });
-    });
-    
+    // Usar o método unificado para limpeza de autenticação
+    // Passamos false para não redirecionar automaticamente
+    await UnifiedAuthService.performCompleteLogout(false);
     console.log('✅ Dados de autenticação limpos');
   } catch (error) {
     console.log('❌ Erro ao limpar dados de autenticação:', error);
+    
+    // Fallback: limpar manualmente
+    try {
+      localStorage.clear();
+      sessionStorage.clear();
+    } catch (e) {
+      console.log('❌ Erro ao limpar storages:', e);
+    }
   }
 };
 

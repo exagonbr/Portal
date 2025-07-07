@@ -175,12 +175,43 @@ export class CookieManager {
    * Remove todos os cookies de autenticação
    */
   static clearAuthCookies(): void {
-    this.remove('auth_token');
-    this.remove('refresh_token');
-    this.remove('user_data');
-    this.remove('session_id');
-    this.remove('accessToken'); // Remover cookie legado
-    this.remove('is_authenticated'); // Remover cookie legado
+    // Lista completa de cookies de autenticação
+    const authCookies = [
+      'auth_token',
+      'refresh_token',
+      'user_data',
+      'session_id',
+      'accessToken',
+      'token',
+      'authToken',
+      'is_authenticated',
+      'next-auth.session-token',
+      'next-auth.csrf-token',
+      '__Secure-next-auth.session-token',
+      '__Host-next-auth.csrf-token',
+      'jid'
+    ];
+    
+    // Remover cada cookie com diferentes combinações de domínio e caminho
+    authCookies.forEach(cookieName => {
+      this.remove(cookieName);
+      
+      // Tentar remover com diferentes caminhos e domínios para garantir
+      if (typeof document !== 'undefined') {
+        const domains = ['', window.location.hostname, `.${window.location.hostname}`];
+        const paths = ['/', '', '/api', '/api/auth', '/auth'];
+        
+        domains.forEach(domain => {
+          paths.forEach(path => {
+            const domainPart = domain ? `;domain=${domain}` : '';
+            const pathPart = path ? `;path=${path}` : '';
+            document.cookie = `${cookieName}=;expires=Thu, 01 Jan 1970 00:00:00 GMT${pathPart}${domainPart}`;
+          });
+        });
+      }
+    });
+    
+    console.log('🧹 Cookies de autenticação limpos');
   }
 
   /**

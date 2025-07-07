@@ -117,35 +117,22 @@ export function useOptimizedAuth() {
     try {
       console.log('🔓 Iniciando logout otimizado...');
       
-      const token = UnifiedAuthService.getAccessToken();
-      const sessionId = UnifiedAuthService.getSessionId();
+      // Usar o método completo do UnifiedAuthService
+      const success = await UnifiedAuthService.performCompleteLogout(false);
       
-      const response = await fetch(`${getApiUrl()}/auth/logout`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': token ? `Bearer ${token}` : '',
-        },
-      });
-
-      const result: LogoutResponse = await response.json();
-
-      // Limpar dados de todos os locais (localStorage, cookies, Redis)
-      await UnifiedAuthService.clearAuthData(sessionId || undefined, token || undefined);
-      
-      console.log('✅ Logout otimizado realizado - dados limpos de todos os locais');
-      toast.success('Logout realizado com sucesso!');
-      
-      // Redirecionar para login
-      router.push(buildLoginUrl());
-
-      return result;
+      // Não precisamos redirecionar aqui, pois o router.push abaixo fará isso
+      if (success) {
+        // Redirecionar para login
+        router.push(buildLoginUrl());
+        
+        return {
+          success: true,
+          message: 'Logout realizado com sucesso'
+        };
+      } else {
+        throw new Error('Falha no logout');
+      }
     } catch (err: any) {
-      // Mesmo com erro, limpar dados locais
-      const token = UnifiedAuthService.getAccessToken();
-      const sessionId = UnifiedAuthService.getSessionId();
-      await UnifiedAuthService.clearAuthData(sessionId || undefined, token || undefined);
-      
       const errorMessage = err.message || 'Erro no logout';
       setError(errorMessage);
       console.log('❌ Erro no logout otimizado:', errorMessage);

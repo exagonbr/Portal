@@ -129,7 +129,8 @@ async function createActivityLog(data: Partial<UserActivity>): Promise<void> {
     
     const modifiedData = {
       ...data,
-      id: uuidv4(),
+      // Usar um número inteiro como ID em vez de UUID
+      id: Date.now(),
       created_at: new Date(),
       updated_at: new Date(),
       date_created: new Date(),

@@ -4,7 +4,7 @@
  */
 
 import { useCallback } from 'react';
-import { performUltraLogout } from '../services/ultraLogoutService';
+import { UnifiedAuthService } from '@/services/unifiedAuthService';
 import { CookieManager } from '@/utils/cookieManager';
 
 export function useUltraLogout() {
@@ -22,10 +22,8 @@ export function useUltraLogout() {
         return false;
       }
       
-      // Executar ultra logout
-      await performUltraLogout();
-      
-      return true;
+      // Executar logout completo usando o UnifiedAuthService
+      return await UnifiedAuthService.performCompleteLogout(true);
     } catch (error) {
       console.log('❌ useUltraLogout: Erro durante logout:', error);
       
@@ -41,8 +39,7 @@ export function useUltraLogout() {
   const logoutWithoutConfirmation = useCallback(async () => {
     try {
       console.log('🚨 useUltraLogout: Logout sem confirmação...');
-      await performUltraLogout();
-      return true;
+      return await UnifiedAuthService.performCompleteLogout(true);
     } catch (error) {
       console.log('❌ useUltraLogout: Erro durante logout sem confirmação:', error);
       

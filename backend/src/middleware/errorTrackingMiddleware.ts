@@ -2,7 +2,6 @@ import { Request, Response, NextFunction } from 'express';
 import { getClientInfo } from '../utils/clientInfo';
 import db from '../config/database';
 import { UserActivity } from '../types/activity';
-import { v4 as uuidv4 } from 'uuid';
 
 // Função para criar log de atividade
 async function createErrorActivityLog(data: Partial<UserActivity>): Promise<void> {
@@ -10,7 +9,7 @@ async function createErrorActivityLog(data: Partial<UserActivity>): Promise<void
     // Converte user_id para null quando for string vazia ou 'anonymous'
     const modifiedData = {
       ...data,
-      id: uuidv4(),
+      id: Date.now(),
       user_id: (!data.user_id || data.user_id === '' || data.user_id === 'anonymous') ? null : data.user_id,
       created_at: new Date(),
       updated_at: new Date(),

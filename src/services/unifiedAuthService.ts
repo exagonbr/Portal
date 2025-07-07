@@ -3,6 +3,7 @@ import { CookieManager } from '@/utils/cookieManager';
 import { SessionService, SessionData } from './sessionService';
 import { getDashboardPath } from '@/utils/roleRedirect';
 import { getApiUrl } from '@/config/urls';
+import { clearAllDataForUnauthorized } from '@/utils/clearAllData';
 
 export interface AuthData {
   accessToken: string;
@@ -137,6 +138,73 @@ export class UnifiedAuthService {
   }
 
   /**
+   * Realiza o logout completo do usuário
+   * Limpa todos os dados e redireciona para a página de login
+   */
+  static async performCompleteLogout(redirectToLogin: boolean = true): Promise<boolean> {
+    try {
+      console.log('🔓 Iniciando logout completo...');
+      
+      // 1. Obter dados antes de limpar
+      const token = this.getAccessToken();
+      const sessionId = this.getSessionId();
+      
+      // 2. Chamar API de logout
+      if (token) {
+        try {
+          await fetch(`${getApiUrl()}/auth/logout`, {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+              'Authorization': `Bearer ${token}`
+            },
+            credentials: 'include'
+          });
+          console.log('✅ API de logout chamada com sucesso');
+        } catch (err) {
+          console.error('⚠️ Erro ao chamar API de logout:', err);
+          // Continuar mesmo com erro na API
+        }
+      }
+      
+      // 3. Limpar dados de autenticação
+      await this.clearAuthData(sessionId, token);
+      
+      // 4. Limpar todos os outros dados
+      await clearAllDataForUnauthorized();
+      
+      console.log('✅ Logout completo realizado - todos os dados limpos');
+      
+      // 5. Redirecionar para login se solicitado
+      if (redirectToLogin && typeof window !== 'undefined') {
+        window.location.href = '/auth/login?logout=true';
+      }
+      
+      return true;
+    } catch (error) {
+      console.error('❌ Erro durante logout completo:', error);
+      
+      // Tentar limpeza de emergência
+      try {
+        if (typeof window !== 'undefined') {
+          localStorage.clear();
+          sessionStorage.clear();
+          CookieManager.clearAuthCookies();
+        }
+      } catch (e) {
+        console.error('❌ Erro na limpeza de emergência:', e);
+      }
+      
+      // Redirecionar mesmo com erro
+      if (redirectToLogin && typeof window !== 'undefined') {
+        window.location.href = '/auth/login?logout=error';
+      }
+      
+      return false;
+    }
+  }
+
+  /**
    * Atualiza token de acesso em todos os locais
    */
   static async updateAccessToken(newToken: string, sessionId?: string): Promise<void> {
@@ -165,17 +233,17 @@ export class UnifiedAuthService {
   }
 
   /**
-   * Verifica se o usuário está autenticado em qualquer local
+   * Verifica se o usuário está autenticado
    */
   static isAuthenticated(): boolean {
-    const data = this.loadAuthData();
-    return !!(data.merged?.accessToken && data.merged?.user);
+    const token = this.getAccessToken();
+    return !!token;
   }
 
   /**
-   * Obtém dados do usuário atual
+   * Obtém usuário atual
    */
-  static getCurrentUser(): AuthData['user'] | null {
+  static getCurrentUser(): any | null {
     const data = this.loadAuthData();
     return data.merged?.user || null;
   }
@@ -196,7 +264,31 @@ export class UnifiedAuthService {
     return data.merged?.sessionId || null;
   }
 
-  // Métodos privados para gerenciar localStorage
+  /**
+   * Sincroniza dados entre storages
+   */
+  static syncStorages(): void {
+    const data = this.loadAuthData();
+    
+    if (data.merged) {
+      // Salvar nos dois locais para garantir sincronização
+      this.saveToLocalStorage(data.merged);
+      this.saveToCookies(data.merged);
+    }
+  }
+
+  /**
+   * Atualiza atividade do usuário
+   */
+  static async updateActivity(): Promise<void> {
+    const sessionId = this.getSessionId();
+    const token = this.getAccessToken();
+    
+    if (sessionId && token) {
+      await SessionService.updateActivity(sessionId, token);
+    }
+  }
+
   private static saveToLocalStorage(authData: AuthData): void {
     try {
       localStorage.setItem('accessToken', authData.accessToken);
@@ -206,8 +298,11 @@ export class UnifiedAuthService {
       if (authData.sessionId) {
         localStorage.setItem('sessionId', authData.sessionId);
       }
-
-      console.log('💾 Dados salvos no localStorage');
+      
+      // Salvar também em chaves legadas para compatibilidade
+      localStorage.setItem('auth_token', authData.accessToken);
+      localStorage.setItem('token', authData.accessToken);
+      localStorage.setItem('authToken', authData.accessToken);
     } catch (error) {
       console.error('❌ Erro ao salvar no localStorage:', error);
     }
@@ -241,28 +336,31 @@ export class UnifiedAuthService {
 
   private static clearLocalStorage(): void {
     try {
+      // Limpar tokens principais
       localStorage.removeItem('accessToken');
       localStorage.removeItem('refreshToken');
       localStorage.removeItem('user');
       localStorage.removeItem('sessionId');
+      
+      // Limpar tokens legados
+      localStorage.removeItem('auth_token');
+      localStorage.removeItem('token');
+      localStorage.removeItem('authToken');
+      localStorage.removeItem('user_data');
+      
       console.log('🧹 localStorage limpo');
     } catch (error) {
       console.error('❌ Erro ao limpar localStorage:', error);
     }
   }
 
-  // Métodos privados para gerenciar cookies
   private static saveToCookies(authData: AuthData): void {
-    try {
-      CookieManager.setAuthCookies({
-        accessToken: authData.accessToken,
-        refreshToken: authData.refreshToken,
-        user: authData.user,
-        sessionId: authData.sessionId
-      });
-    } catch (error) {
-      console.error('Erro ao salvar nos cookies:', error);
-    }
+    CookieManager.setAuthCookies({
+      accessToken: authData.accessToken,
+      refreshToken: authData.refreshToken,
+      user: authData.user,
+      sessionId: authData.sessionId
+    });
   }
 
   private static loadFromCookies(): AuthData | null {
@@ -286,12 +384,11 @@ export class UnifiedAuthService {
     }
   }
 
-  // Métodos utilitários
   private static updateSessionId(sessionId: string): void {
     try {
       localStorage.setItem('sessionId', sessionId);
       CookieManager.set('session_id', sessionId, {
-        maxAge: 60 * 60 * 24 * 1, // 1 dia
+        maxAge: 60 * 60 * 24, // 1 dia
         secure: true,
         sameSite: 'lax'
       });
@@ -311,44 +408,8 @@ export class UnifiedAuthService {
   }
 
   private static getDeviceInfo(): string {
-    try {
-      const screen = window.screen;
-      return `${screen.width}x${screen.height}, ${navigator.platform}`;
-    } catch (error) {
-      return 'unknown';
-    }
-  }
-
-  /**
-   * Sincroniza dados entre localStorage e cookies
-   */
-  static syncStorages(): void {
-    console.log('🔄 Sincronizando dados entre storages...');
-    
-    const data = this.loadAuthData();
-    
-    if (data.localStorage && !data.cookies) {
-      console.log('📋 Sincronizando localStorage → cookies');
-      this.saveToCookies(data.localStorage);
-    } else if (data.cookies && !data.localStorage) {
-      console.log('📋 Sincronizando cookies → localStorage');
-      this.saveToLocalStorage(data.cookies);
-    }
-  }
-
-  /**
-   * Atualiza atividade da sessão (heartbeat)
-   */
-  static async updateActivity(): Promise<void> {
-    const sessionId = this.getSessionId();
-    const token = this.getAccessToken();
-
-    if (sessionId && token) {
-      try {
-        await SessionService.updateActivity(sessionId, token);
-      } catch (error) {
-        console.warn('⚠️ Erro ao atualizar atividade da sessão:', error);
-      }
-    }
+    const platform = navigator.platform;
+    const userAgent = navigator.userAgent;
+    return `${platform} - ${userAgent}`;
   }
 } 
