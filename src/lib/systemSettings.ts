@@ -8,7 +8,7 @@ export interface SystemSettings {
   maintenance_mode: boolean;
   logo_light: string;
   logo_dark: string;
-  background_type: 'video' | 'image' | 'color';
+  background_type: 'video' | 'video_url' | 'image' | 'color';
   main_background: string;
   background_video_url: string;
   primary_color: string;
@@ -40,7 +40,7 @@ export interface PublicSettings {
   maintenance_mode: boolean;
   logo_light: string;
   logo_dark: string;
-  background_type: 'video' | 'image' | 'color';
+  background_type: 'video' | 'video_url' | 'image' | 'color';
   main_background: string;
   background_video_url: string;
   primary_color: string;
@@ -152,7 +152,7 @@ export async function loadPublicSettings(): Promise<PublicSettings> {
     const publicKeys: (keyof PublicSettings)[] = [
       'site_name', 'site_title', 'site_url', 'site_description', 'maintenance_mode',
       'logo_light', 'logo_dark', 'background_type', 'main_background', 
-      'primary_color', 'secondary_color'
+      'background_video_url', 'primary_color', 'secondary_color'
     ];
     
     publicKeys.forEach(key => {
@@ -181,6 +181,7 @@ export async function loadPublicSettings(): Promise<PublicSettings> {
       logo_dark: defaultSettings.logo_dark,
       background_type: defaultSettings.background_type,
       main_background: defaultSettings.main_background,
+      background_video_url: defaultSettings.background_video_url,
       primary_color: defaultSettings.primary_color,
       secondary_color: defaultSettings.secondary_color,
     };
@@ -226,7 +227,7 @@ export async function saveSystemSettings(settings: Partial<SystemSettings>): Pro
           category: 'general',
           is_public: ['site_name', 'site_title', 'site_url', 'site_description', 
                      'logo_light', 'logo_dark', 'background_type', 'main_background',
-                     'primary_color', 'secondary_color'].includes(key),
+                     'background_video_url', 'primary_color', 'secondary_color'].includes(key),
           created_at: new Date(),
           updated_at: new Date()
         });

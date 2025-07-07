@@ -68,7 +68,7 @@ export default function DynamicBackground({
   }, [settings, loading])
 
   const renderVideoBackground = () => {
-    if (settings?.background_type !== 'video' || (!settings?.main_background && !settings?.background_video_url)) {
+    if ((!settings?.background_type || (settings?.background_type !== 'video' && settings?.background_type !== 'video_url')) || (!settings?.main_background && !settings?.background_video_url)) {
       return null
     }
 
@@ -89,7 +89,7 @@ export default function DynamicBackground({
           className="absolute inset-0 w-full h-full"
           style={{ 
             backgroundColor: settings.primary_color || '#1e3a8a' 
-          }}
+          }} 
         />
       </video>
     )

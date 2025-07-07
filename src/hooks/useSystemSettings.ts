@@ -41,7 +41,7 @@ export interface FullSystemSettings {
   maintenance_mode: boolean;
   logo_light: string;
   logo_dark: string;
-  background_type: 'video' | 'image' | 'color';
+  background_type: 'video' | 'video_url' | 'image' | 'color';
   main_background: string;
   background_video_url: string;
   primary_color: string;
@@ -62,7 +62,7 @@ export interface FullSystemSettings {
   notifications_email_enabled: boolean;
   notifications_sms_enabled: boolean;
   notifications_push_enabled: boolean;
-  notifications_digest_frequency: 'realtime' | 'hourly' | 'daily' | 'weekly';
+  notifications_digest_frequency: string;
 }
 
 const defaultFullSettings: FullSystemSettings = {

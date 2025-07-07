@@ -13,6 +13,8 @@ import { MotionDiv, MotionH1, MotionP } from '@/components/ui/MotionWrapper';
 import { getTheme } from '@/config/themes';
 import { useEffect, useState, useRef } from 'react';
 import { buildUrl } from '@/utils/urlBuilder';
+import { isChromeOrChromeMobile, forceReloadIfChrome } from '@/utils/chromeDetection';
+// import { ChromeDetectionIndicator } from '@/components/debug/ChromeDetectionIndicator';
 
 
 
@@ -74,6 +76,21 @@ export function LoginPage() {
   useEffect(() => {
     setMounted(true);
   }, []);
+
+  // Correção específica para Chrome (desktop e mobile) - força reload ignorando cache
+  useEffect(() => {
+    if (!mounted) return;
+    
+    // Verificar se é Chrome e se não há parâmetro _nocache (evita loop infinito)
+    const urlParams = new URLSearchParams(window.location.search);
+    if (!urlParams.has('_nocache')) {
+      const chromeReloadApplied = forceReloadIfChrome();
+      if (chromeReloadApplied) {
+        console.log('🔄 Aplicando correção de reload para Chrome no login...');
+        return; // Evita execução adicional já que a página será recarregada
+      }
+    }
+  }, [mounted]);
 
   // Aguardar o contexto estar disponível
   useEffect(() => {
@@ -250,6 +267,8 @@ export function LoginPage() {
 
     switch (background_type) {
       case 'video':
+      case 'video_url':
+        const videoSource = background_video_url || main_background;
         return (
           <video
             autoPlay
@@ -259,7 +278,7 @@ export function LoginPage() {
             className="absolute min-w-full min-h-full object-cover opacity-100"
             preload="auto"
           >
-            <source src={main_background || '/back_video4.mp4'} type="video/mp4" />
+            <source src={videoSource} type="video/mp4" />
             Seu navegador não suporta a tag de vídeo.
           </video>
         );
@@ -528,7 +547,8 @@ export function LoginPage() {
         </MotionDiv>
       </MotionDiv>
 
-      {/* Debug Component - só mostrar em desenvolvimento */}
+      {/* Debug Component - descomente para debug em desenvolvimento */}
+      {/* <ChromeDetectionIndicator show={process.env.NODE_ENV === 'development'} /> */}
       
     </div>
   );

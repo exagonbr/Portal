@@ -28,6 +28,7 @@ export default function AdminSettingsPage() {
   const [testingAws, setTestingAws] = useState(false)
   const [testingEmail, setTestingEmail] = useState(false)
   const [reconfiguringEmail, setReconfiguringEmail] = useState(false)
+  const [downloadingVideo, setDownloadingVideo] = useState(false)
   const [awsBuckets, setAwsBuckets] = useState<string[]>([])
   const [notification, setNotification] = useState<{
     type: 'success' | 'error' | 'info' | 'warning'
@@ -60,6 +61,7 @@ export default function AdminSettingsPage() {
   // Tipos de background disponíveis
   const backgroundTypes = [
     { value: 'video', label: 'Vídeo' },
+    { value: 'video_url', label: 'URL Personalizada' },
     { value: 'image', label: 'Imagem' },
     { value: 'color', label: 'Cor Sólida' }
   ]
@@ -252,6 +254,48 @@ export default function AdminSettingsPage() {
       }
     }
   }, [showFullscreenPreview, handleEscKey])
+
+  // Fazer download e conversão do vídeo
+  const handleDownloadVideo = async (videoUrl: string) => {
+    if (!videoUrl) {
+      showNotification('error', 'URL do vídeo é obrigatória')
+      return
+    }
+
+    setDownloadingVideo(true)
+    try {
+      showNotification('info', 'Iniciando download e conversão do vídeo...')
+      
+      const response = await fetch('/api/admin/system/download-video', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        credentials: 'include',
+        body: JSON.stringify({ videoUrl })
+      })
+
+      const data = await response.json()
+
+      if (!response.ok) {
+        throw new Error(data.error || 'Erro ao fazer download do vídeo')
+      }
+
+      if (data.success) {
+        // Atualizar a configuração para usar o vídeo baixado
+        updateLocalSetting('main_background', data.filename)
+        updateLocalSetting('background_type', 'video')
+        showNotification('success', `Vídeo baixado e salvo como: ${data.filename}`)
+      } else {
+        throw new Error(data.error || 'Erro ao processar vídeo')
+      }
+    } catch (err: any) {
+      console.error('Erro ao fazer download do vídeo:', err)
+      showNotification('error', err.message || 'Erro ao fazer download do vídeo')
+    } finally {
+      setDownloadingVideo(false)
+    }
+  }
 
   if (loading) {
     return (
@@ -516,6 +560,35 @@ export default function AdminSettingsPage() {
                       </div>
                     )}
 
+                    {localSettings.background_type === 'video_url' && (
+                      <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-2">
+                          URL do Vídeo de Background
+                        </label>
+                        <div className="flex gap-2">
+                          <input
+                            type="text"
+                            value={localSettings.background_video_url || ''}
+                            onChange={(e) => updateLocalSetting('background_video_url', e.target.value)}
+                            placeholder="https://exemplo.com/video.mp4"
+                            className="flex-1 px-4 py-2 rounded-lg border border-gray-300 focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent"
+                          />
+                          <button
+                            type="button"
+                            onClick={() => handleDownloadVideo(localSettings.background_video_url)}
+                            disabled={!localSettings.background_video_url || downloadingVideo}
+                            className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2 transition-colors"
+                          >
+                            <span className="material-symbols-outlined text-sm">download</span>
+                            {downloadingVideo ? 'Baixando...' : 'Baixar MP4'}
+                          </button>
+                        </div>
+                        <p className="text-xs text-gray-500 mt-1">
+                          O vídeo será baixado e convertido para MP4, salvo na pasta public.
+                        </p>
+                      </div>
+                    )}
+
                     {localSettings.background_type === 'image' && (
                       <div>
                         <label className="block text-sm font-medium text-gray-700 mb-2">
@@ -610,17 +683,14 @@ export default function AdminSettingsPage() {
                         backgroundPosition: 'center'
                       }}
                     >
-                      {localSettings.background_type === 'video' && (localSettings.background_video_url || localSettings.main_background) && (
+                      {(localSettings.background_type === 'video' || localSettings.background_type === 'video_url') && (localSettings.background_video_url || localSettings.main_background) && (
                         <video
-                          key={localSettings.background_video_url || localSettings.main_background} // Força re-render quando o vídeo muda
+                          key={localSettings.background_video_url || localSettings.main_background}
                           autoPlay
                           muted
                           loop
                           playsInline
                           className="absolute inset-0 w-full h-full object-cover"
-                          onError={(e) => {
-                            console.error('Erro ao carregar vídeo:', e);
-                          }}
                         >
                           <source src={localSettings.background_video_url || localSettings.main_background} type="video/mp4" />
                         </video>
@@ -1125,7 +1195,7 @@ export default function AdminSettingsPage() {
                 </button>
                 
                 <div className="absolute inset-0">
-                  {localSettings.background_type === 'video' && (localSettings.background_video_url || localSettings.main_background) && (
+                  {(localSettings.background_type === 'video' || localSettings.background_type === 'video_url') && (localSettings.background_video_url || localSettings.main_background) && (
                     <video
                       key={localSettings.background_video_url || localSettings.main_background}
                       autoPlay
@@ -1162,8 +1232,9 @@ export default function AdminSettingsPage() {
                 
                 <div className="absolute bottom-8 left-1/2 transform -translate-x-1/2 bg-black/70 text-white px-6 py-3 rounded-lg backdrop-blur-sm">
                   <p className="text-sm">
-                    {localSettings.background_type === 'video' && localSettings.background_video_url && `Vídeo (URL personalizada): ${localSettings.background_video_url}`}
                     {localSettings.background_type === 'video' && !localSettings.background_video_url && `Vídeo: ${localSettings.main_background}`}
+                    {localSettings.background_type === 'video' && localSettings.background_video_url && `Vídeo (URL personalizada): ${localSettings.background_video_url}`}
+                    {localSettings.background_type === 'video_url' && `URL Personalizada: ${localSettings.background_video_url}`}
                     {localSettings.background_type === 'image' && `Imagem: ${localSettings.main_background}`}
                     {localSettings.background_type === 'color' && `Cor: ${localSettings.main_background}`}
                   </p>

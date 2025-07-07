@@ -5,12 +5,25 @@ import { useRouter } from 'next/navigation';
 import { useAuth } from '@/contexts/AuthContext';
 import { LoginPage } from '@/components/auth/LoginPage';
 import { getDashboardPath } from '@/utils/roleRedirect';
+import { forceReloadIfChrome } from '@/utils/chromeDetection';
 
 export default function HomePage() {
   const { user, loading } = useAuth();
   const router = useRouter();
 
   useEffect(() => {
+    // Correção específica para Chrome (desktop e mobile) quando não há usuário autenticado
+    if (!loading && !user) {
+      const urlParams = new URLSearchParams(window.location.search);
+      if (!urlParams.has('_nocache')) {
+        const chromeReloadApplied = forceReloadIfChrome();
+        if (chromeReloadApplied) {
+          console.log('🔄 Aplicando correção de reload para Chrome na página inicial...');
+          return; // Evita execução adicional já que a página será recarregada
+        }
+      }
+    }
+
     // Se o usuário já está autenticado, redirecionar para o dashboard apropriado
     if (!loading && user) {
       const normalizedRole = user.role?.toLowerCase();

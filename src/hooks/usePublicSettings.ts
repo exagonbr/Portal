@@ -8,7 +8,7 @@ export interface PublicSettings {
   maintenance_mode: boolean;
   logo_light: string;
   logo_dark: string;
-  background_type: 'video' | 'image' | 'color';
+  background_type: 'video' | 'video_url' | 'image' | 'color';
   main_background: string;
   background_video_url: string;
   primary_color: string;
