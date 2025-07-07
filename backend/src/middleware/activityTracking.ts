@@ -266,51 +266,43 @@ async function updateActiveSession(
   additionalDuration: number
 ): Promise<void> {
   try {
-    const existingSession = await db('activity_sessions')
-      .where({ session_id: sessionId })
-      .first();
+    // Criar um objeto Request simulado com headers vazios
+    const mockRequest = {
+      headers: {},
+      ip: 'system',
+      socket: { remoteAddress: 'system' }
+    } as Request;
     
-    if (existingSession) {
-      // Atualizar sessão existente
-      await db('activity_sessions')
-        .where({ session_id: sessionId })
-        .update({
-          last_activity: new Date(),
-          duration_seconds: (existingSession.duration_seconds || 0) + additionalDuration,
-          actions_count: (existingSession.actions_count || 0) + 1,
-          updated_at: new Date()
-        });
-    } else {
-      // Criar nova sessão
-      // Criar um objeto Request simulado com headers vazios
-      const mockRequest = {
-        headers: {},
-        ip: 'system',
-        socket: { remoteAddress: 'system' }
-      } as Request;
-      
-      const clientInfo = getClientInfo(mockRequest);
-      
-      await db('activity_sessions').insert({
-        id: uuidv4(),
-        session_id: sessionId,
-        user_id: userId,
-        start_time: new Date(),
-        duration_seconds: additionalDuration,
-        actions_count: 1,
-        ip_address: clientInfo.ip,
-        user_agent: clientInfo.userAgent,
-        device_info: {
-          browser: clientInfo.browser,
-          os: clientInfo.os,
-          device: clientInfo.device
-        },
-        is_active: true,
-        last_activity: new Date(),
-        created_at: new Date(),
-        updated_at: new Date()
-      });
-    }
+    const clientInfo = getClientInfo(mockRequest);
+    
+    // Usar padrão upsert (INSERT ... ON CONFLICT DO UPDATE ...)
+    await db.raw(`
+      INSERT INTO activity_sessions (
+        id, session_id, user_id, start_time, duration_seconds, 
+        actions_count, ip_address, user_agent, device_info, 
+        is_active, last_activity, created_at, updated_at
+      ) 
+      VALUES (
+        ?, ?, ?, ?, ?,
+        ?, ?, ?, ?,
+        ?, ?, ?, ?
+      )
+      ON CONFLICT (session_id) 
+      DO UPDATE SET 
+        last_activity = EXCLUDED.last_activity,
+        duration_seconds = COALESCE(activity_sessions.duration_seconds, 0) + ?,
+        actions_count = COALESCE(activity_sessions.actions_count, 0) + 1,
+        updated_at = EXCLUDED.updated_at
+    `, [
+      uuidv4(), sessionId, userId, new Date(), additionalDuration,
+      1, clientInfo.ip, clientInfo.userAgent, JSON.stringify({
+        browser: clientInfo.browser,
+        os: clientInfo.os,
+        device: clientInfo.device
+      }),
+      true, new Date(), new Date(), new Date(),
+      additionalDuration
+    ]);
   } catch (error) {
     console.error('Erro ao atualizar sessão ativa:', error);
   }
