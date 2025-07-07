@@ -1,15 +1,7 @@
-'use client';
-
 import type { Metadata, Viewport } from 'next';
 import { Inter } from 'next/font/google';
 import './globals.css';
-import SimpleProviders from '@/providers/SimpleProviders';
-import { isDevelopment } from '@/utils/env';
-import CacheManagerWrapper from '@/components/CacheManagerWrapper';
-import { ChunkErrorHandler } from '@/components/ChunkErrorHandler';
-import Script from 'next/script';
-import { useEffect } from 'react';
-import { suppressHydrationWarnings } from '@/utils/suppressHydrationWarnings';
+import ClientLayout from '@/components/ClientLayout';
 
 const inter = Inter({ subsets: ['latin'] });
 
@@ -45,11 +37,6 @@ export const viewport: Viewport = {
   viewportFit: 'cover',
 };
 
-// Suprimir avisos de hidratação em desenvolvimento
-if (typeof window !== 'undefined' && process.env.NODE_ENV === 'development') {
-  suppressHydrationWarnings();
-}
-
 export default function RootLayout({
   children,
 }: {
@@ -80,14 +67,9 @@ export default function RootLayout({
         <script src="/register-sw.js" defer />
       </head>
       <body className={`${inter.className} m-0 p-0 h-full w-full`} suppressHydrationWarning>
-        <ChunkErrorHandler />
-        <SimpleProviders>
-          <div className="flex flex-col min-h-screen w-full">
-            {children}
-          </div>
-          <CacheManagerWrapper />
-        </SimpleProviders>
-        <Script src="/register-sw.js" strategy="lazyOnload" />
+        <ClientLayout>
+          {children}
+        </ClientLayout>
       </body>
     </html>
   );
