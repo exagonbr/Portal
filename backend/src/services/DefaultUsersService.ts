@@ -1,5 +1,5 @@
 import knex from 'knex';
-import knexConfig from '../../knexfile.js';
+import knexConfig from '../../knexfile';
 import bcrypt from 'bcrypt';
 import { v4 as uuidv4 } from 'uuid';
 
@@ -149,12 +149,12 @@ export class DefaultUsersService {
 
   private async setupRequirements(): Promise<void> {
     // 1. Obter instituição e escola padrão
-    const institution = await this.pg('institutions').where('code', 'MYSQL_MIGRATED').first();
+    const institution = await this.pg('institution').where('code', 'MYSQL_MIGRATED').first();
     if (institution) {
       this.defaultInstitutionId = institution.id;
     } else {
       // Criar instituição padrão se não existir
-      const [instId] = await this.pg('institutions').insert({
+      const [instId] = await this.pg('institution').insert({
         id: uuidv4(),
         name: 'Instituição Padrão',
         code: 'MYSQL_MIGRATED',
@@ -166,12 +166,12 @@ export class DefaultUsersService {
       this.defaultInstitutionId = instId;
     }
 
-    const school = await this.pg('schools').where('code', 'MYSQL_MIGRATED_SCHOOL').first();
+    const school = await this.pg('unit').where('code', 'MYSQL_MIGRATED_SCHOOL').first();
     if (school) {
       this.defaultSchoolId = school.id;
     } else {
       // Criar escola padrão se não existir
-      const [schoolId] = await this.pg('schools').insert({
+      const [schoolId] = await this.pg('unit').insert({
         id: uuidv4(),
         name: 'Escola Padrão',
         code: 'MYSQL_MIGRATED_SCHOOL',

@@ -909,7 +909,7 @@ model institution_user {
   @@ignore
 }
 
-model institutions {
+model institution {
   id                     BigInt    @id @default(autoincrement())
   version                BigInt?
   accountable_contact    String    @db.VarChar(255)

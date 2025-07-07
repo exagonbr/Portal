@@ -3,6 +3,7 @@ import { v4 as uuidv4 } from 'uuid';
 import db from '../config/database';
 import { getClientInfo } from '../utils/clientInfo';
 import { UserActivity, ActivityType } from '../types/activity';
+import { errorTrackingMiddleware } from './errorTrackingMiddleware';
 
 // Interface estendida para Request com informações de tracking
 declare global {
@@ -120,11 +121,15 @@ function extractEntityInfo(path: string): { entityType?: string; entityId?: stri
 // Função para criar log de atividade
 async function createActivityLog(data: Partial<UserActivity>): Promise<void> {
   try {
-    await db('user_activity').insert({
+    // Converte user_id para null quando for string vazia ou 'anonymous'
+    const modifiedData = {
       ...data,
+      user_id: (!data.user_id || data.user_id === '' || data.user_id === 'anonymous') ? null : data.user_id,
       created_at: new Date(),
       updated_at: new Date()
-    });
+    };
+    
+    await db('user_activity').insert(modifiedData);
   } catch (error) {
     console.error('Erro ao criar log de atividade:', error);
   }
@@ -151,7 +156,7 @@ export const activityTrackingMiddleware = async (
   
   // Preparar dados da atividade
   req.activityData = {
-    user_id: (req.user as any)?.id ? String((req.user as any)?.id) : 'anonymous',
+    user_id: (req.user as any)?.id ? String((req.user as any)?.id) : '',
     session_id: req.sessionId,
     activity_type: activityType,
     entity_type: entityType,
@@ -255,7 +260,7 @@ async function handleResponse(req: Request, res: Response, responseData: any): P
   await createActivityLog(activityData);
   
   // Atualizar sessão ativa
-  const userId = (req.user as any)?.id ? String((req.user as any)?.id) : 'anonymous';
+  const userId = (req.user as any)?.id ? String((req.user as any)?.id) : '';
   await updateActiveSession(req.sessionId!, userId, duration);
 }
 
@@ -266,6 +271,9 @@ async function updateActiveSession(
   additionalDuration: number
 ): Promise<void> {
   try {
+    // Converte userId para null quando for 'anonymous'
+    const userIdValue = userId === 'anonymous' ? null : userId;
+    
     // Criar um objeto Request simulado com headers vazios
     const mockRequest = {
       headers: {},
@@ -294,7 +302,7 @@ async function updateActiveSession(
         actions_count = COALESCE(activity_sessions.actions_count, 0) + 1,
         updated_at = EXCLUDED.updated_at
     `, [
-      uuidv4(), sessionId, userId, new Date(), additionalDuration,
+      uuidv4(), sessionId, userIdValue, new Date(), additionalDuration,
       1, clientInfo.ip, clientInfo.userAgent, JSON.stringify({
         browser: clientInfo.browser,
         os: clientInfo.os,
@@ -354,39 +362,5 @@ export const sessionCleanupMiddleware = async (): Promise<void> => {
 // Configurar limpeza periódica de sessões
 setInterval(sessionCleanupMiddleware, 5 * 60 * 1000); // A cada 5 minutos
 
-// Middleware para log de erros
-export const errorTrackingMiddleware = (
-  error: Error,
-  req: Request,
-  res: Response,
-  next: NextFunction
-): void => {
-  const clientInfo = getClientInfo(req);
-  
-  // Criar log de erro
-  createActivityLog({
-    user_id: (req.user as any)?.id || 'anonymous',
-    session_id: req.sessionId,
-    activity_type: 'error',
-    entity_type: 'system',
-    action: 'error',
-    details: {
-      error_name: error.name,
-      error_message: error.message,
-      error_stack: process.env.NODE_ENV === 'development' ? error.stack : undefined,
-      method: req.method,
-      path: req.path,
-      query: req.query,
-      status_code: res.statusCode || 500
-    },
-    ip_address: clientInfo.ip,
-    user_agent: clientInfo.userAgent,
-    browser: clientInfo.browser,
-    operating_system: clientInfo.os,
-    device_info: clientInfo.device
-  });
-  
-  next(error);
-};
-
+export { errorTrackingMiddleware };
 export default activityTrackingMiddleware; 

@@ -27,26 +27,72 @@ export default function AdminAnalyticsPage() {
     setError(null)
     
     try {
-      const [
-        analyticsData, 
-        s3Data, 
-        usageHistory, 
-        resourceDist
-      ] = await Promise.all([
+      // Usar Promise.allSettled para permitir que algumas chamadas falhem sem interromper todas
+      const results = await Promise.allSettled([
         awsService.getSystemAnalytics(),
         awsService.getS3StorageInfo(),
         awsService.getSystemUsageHistory(24), // Busca últimas 24 horas
         awsService.getResourceDistribution()
       ]);
 
-      setAnalytics(analyticsData);
-      setS3Info(s3Data);
-      setSystemUsageData(usageHistory);
-      setResourceDistribution(resourceDist as ResourceDistribution[]); // Cast para o tipo correto
-      setLastUpdate(new Date());
+      // Processar os resultados individualmente
+      if (results[0].status === 'fulfilled') {
+        setAnalytics(results[0].value);
+      } else {
+        console.error('Erro ao buscar analytics do sistema:', results[0].reason);
+        // Não definimos o erro global aqui para permitir carregamento parcial
+      }
+
+      if (results[1].status === 'fulfilled') {
+        setS3Info(results[1].value);
+      } else {
+        console.error('Erro ao buscar informações do S3:', results[1].reason);
+      }
+
+      if (results[2].status === 'fulfilled') {
+        setSystemUsageData(results[2].value);
+      } else {
+        console.error('Erro ao buscar histórico de uso do sistema:', results[2].reason);
+      }
+
+      if (results[3].status === 'fulfilled') {
+        setResourceDistribution(results[3].value as ResourceDistribution[]);
+      } else {
+        console.error('Erro ao buscar distribuição de recursos:', results[3].reason);
+      }
+
+      // Verificar se todas as chamadas falharam
+      const allFailed = results.every(result => result.status === 'rejected');
+      if (allFailed) {
+        const mainError = results[0].status === 'rejected' ? results[0].reason : null;
+        if (mainError && mainError instanceof Error) {
+          setError(mainError.message);
+        } else {
+          setError('Não foi possível carregar os dados de analytics. Verifique sua conexão ou tente novamente mais tarde.');
+        }
+      } else {
+        // Se pelo menos uma chamada foi bem-sucedida, atualizamos o timestamp
+        setLastUpdate(new Date());
+      }
 
     } catch (err) {
-      const errorMessage = err instanceof Error ? err.message : 'Ocorreu um erro desconhecido ao carregar os dados de analytics.';
+      let errorMessage = 'Ocorreu um erro desconhecido ao carregar os dados de analytics.';
+      
+      if (err instanceof Error) {
+        errorMessage = err.message;
+        // Se tivermos informações adicionais do erro
+        const anyError = err as any;
+        if (anyError.status) {
+          errorMessage += ` (Status: ${anyError.status})`;
+        }
+        if (anyError.info && typeof anyError.info === 'object') {
+          const infoMessage = anyError.info.message || anyError.info.error;
+          if (infoMessage) {
+            errorMessage += ` - ${infoMessage}`;
+          }
+        }
+      }
+      
       setError(errorMessage);
       console.error('Erro ao buscar analytics:', err);
     } finally {

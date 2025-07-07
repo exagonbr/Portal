@@ -66,7 +66,6 @@ export class User {
 
   @Column({ name: 'full_name', type: 'varchar', length: 255 })
   fullName!: string;
-  user: any;
 
   // Alias para compatibilidade
   get name(): string {
@@ -200,7 +199,8 @@ export class User {
     }
     return bcrypt.compare(password, this.password);
   }
-hasValidRole(): boolean {
+
+  hasValidRole(): boolean {
     return !!this.role;
   }
 
