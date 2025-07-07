@@ -9,11 +9,9 @@ import { ErrorBoundary } from 'react-error-boundary';
 import { AuthProvider } from '../contexts/AuthContext'
 import { ThemeProvider } from '@/contexts/ThemeContext'
 import dynamic from 'next/dynamic'
+import { GamificationProvider } from '@/contexts/GamificationContext'
 
 // Carregamento dinâmico dos providers menos críticos
-const GamificationProvider = dynamic(() => import('@/contexts/GamificationContext').then(mod => mod.GamificationProvider), {
-  ssr: false
-})
 const NavigationLoadingProvider = dynamic(() => import('@/contexts/NavigationLoadingContext').then(mod => mod.NavigationLoadingProvider), {
   ssr: false
 })
