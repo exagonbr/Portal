@@ -69,9 +69,22 @@ import { ChromeDetectionIndicator } from '@/components/debug/ChromeDetectionIndi
 import { useChromeDetection } from '@/components/debug/ChromeDetectionIndicator';
 
 function MyComponent() {
-  const { isChrome, hasNoCacheParam } = useChromeDetection();
+  const { 
+    isChrome,
+    isMobile,
+    isChromeMobile,
+    hasNoCacheParam,
+    hasMobileParam
+  } = useChromeDetection();
   
-  // Usar as informações conforme necessário
+  // Exemplo de uso
+  if (isChromeMobile) {
+    // Lógica específica para Chrome em dispositivos móveis
+  } else if (isChrome) {
+    // Lógica para Chrome desktop
+  } else if (isMobile) {
+    // Lógica para outros navegadores em dispositivos móveis
+  }
 }
 ```
 
@@ -94,13 +107,24 @@ function MyComponent() {
 - Google Chrome (Windows, macOS, Linux)
 - Exclui Edge, Opera, Firefox
 
-### Chrome Mobile
-- Chrome no Android
+### Chrome Mobile (Suporte Aprimorado)
+- Chrome no Android (detecção específica)
 - Chrome no iOS (CriOS)
+- Chrome em tablets Android
+- Detecção avançada por características do dispositivo:
+  - Tela sensível ao toque
+  - Tamanho da tela
+  - Orientação do dispositivo
 
 ### Outros Navegadores
 - **Não afetados**: Firefox, Safari, Edge, Opera funcionam normalmente
 - **Sem overhead**: Detecção não impacta performance em outros navegadores
+
+### Recursos Específicos para Mobile
+- Parâmetros específicos na URL (`_mobile=1`)
+- Limpeza de cookies específicos para mobile
+- Detecção adaptativa por características do dispositivo
+- Logs específicos para dispositivos móveis
 
 ## Logs de Console
 
@@ -108,9 +132,13 @@ A implementação gera logs informativos:
 
 ```
 🌐 Não é Chrome, reload não necessário
-🔄 Chrome detectado, forçando reload da página ignorando cache...
-🔧 Aplicando correção para Chrome no login...
+🔄 Chrome Desktop detectado, forçando reload da página ignorando cache...
+📱 Chrome Mobile detectado, forçando reload da página ignorando cache...
+🔧 Aplicando correção para Chrome Desktop no login...
+🔧 Aplicando correção para Chrome Mobile no login...
 ✅ Cache do navegador limpo
+✅ Cache do navegador mobile limpo
+🛑 Reload já foi aplicado anteriormente, evitando loop
 ```
 
 ## Configuração de Ambiente

@@ -98,16 +98,16 @@ export default function DynamicBackground({
   };
 
   const renderVideoBackground = () => {
-    if ((!settings?.background_type || (settings?.background_type !== 'video' && settings?.background_type !== 'video_url' && settings?.background_type !== 'video_random'))) {
+    if (!settings?.background_type || settings?.background_type !== 'video') {
       return null
     }
 
-    // Determinar a fonte do vídeo baseado no tipo
+    // Determinar a fonte do vídeo baseado no tipo e configurações
     let videoSource = settings.main_background;
-    if (settings.background_type === 'video_url') {
-      videoSource = settings.background_video_url;
-    } else if (settings.background_type === 'video_random') {
-      videoSource = randomVideo || '/back_video.mp4';
+    
+    // Se o modo aleatório estiver ativado, usar o vídeo aleatório
+    if (settings.random_video_enabled && randomVideo) {
+      videoSource = randomVideo;
     }
 
     if (!videoSource) return null;

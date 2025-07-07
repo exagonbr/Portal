@@ -155,7 +155,7 @@ export async function loadPublicSettings(): Promise<PublicSettings> {
     const publicKeys: (keyof PublicSettings)[] = [
       'site_name', 'site_title', 'site_url', 'site_description', 'maintenance_mode',
       'logo_light', 'logo_dark', 'background_type', 'main_background', 
-      'background_video_url', 'primary_color', 'secondary_color'
+      'background_video_url', 'primary_color', 'secondary_color', 'random_video_enabled'
     ];
     
     publicKeys.forEach(key => {
@@ -231,7 +231,8 @@ export async function saveSystemSettings(settings: Partial<SystemSettings>): Pro
           category: 'general',
           is_public: ['site_name', 'site_title', 'site_url', 'site_description', 
                      'logo_light', 'logo_dark', 'background_type', 'main_background',
-                     'background_video_url', 'primary_color', 'secondary_color'].includes(key),
+                     'background_video_url', 'primary_color', 'secondary_color', 
+                     'random_video_enabled'].includes(key),
           created_at: new Date(),
           updated_at: new Date()
         });

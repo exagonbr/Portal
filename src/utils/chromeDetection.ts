@@ -39,6 +39,51 @@ export function isChromeOrChromeMobile(): boolean {
 }
 
 /**
+ * Detecta se o dispositivo é móvel (qualquer navegador)
+ */
+export function isMobileDevice(): boolean {
+  if (typeof window === 'undefined') return false;
+  
+  const userAgent = navigator.userAgent.toLowerCase();
+  
+  // Detecção por user agent
+  const mobileByUserAgent = /iphone|ipod|ipad|android|blackberry|windows phone|opera mini|silk|mobile|tablet/i.test(userAgent);
+  
+  // Detecção por características do dispositivo
+  const mobileByFeatures = typeof window.orientation !== 'undefined' || 
+                          navigator.maxTouchPoints > 0 || 
+                          ('ontouchstart' in window);
+  
+  // Detecção por largura da tela
+  const mobileByScreenSize = window.innerWidth <= 768;
+  
+  return mobileByUserAgent || mobileByFeatures || mobileByScreenSize;
+}
+
+/**
+ * Detecta especificamente se é Chrome em dispositivo móvel
+ */
+export function isChromeMobile(): boolean {
+  if (!isMobileDevice()) return false;
+  
+  const userAgent = navigator.userAgent.toLowerCase();
+  
+  // Chrome em Android
+  const isAndroidChrome = userAgent.includes('chrome') && userAgent.includes('android');
+  
+  // Chrome em iOS (CriOS)
+  const isIOSChrome = userAgent.includes('crios');
+  
+  // Chrome genérico em mobile
+  const isGenericMobileChrome = userAgent.includes('chrome') && 
+                              (userAgent.includes('mobile') || 
+                               userAgent.includes('android') ||
+                               /mobile|android|iphone|ipod|ipad/i.test(userAgent));
+  
+  return isAndroidChrome || isIOSChrome || isGenericMobileChrome;
+}
+
+/**
  * Verifica se o reload já foi aplicado através de cookies, sessionStorage ou parâmetros
  * Função auxiliar para evitar loops de reload
  */
@@ -59,7 +104,8 @@ export function isReloadAlreadyApplied(): boolean {
   // Verificar sessionStorage
   try {
     if (sessionStorage.getItem('chrome_reload_applied') === 'true' ||
-        sessionStorage.getItem('chrome_reload_applied_main') === 'true') {
+        sessionStorage.getItem('chrome_reload_applied_main') === 'true' ||
+        sessionStorage.getItem('chrome_mobile_reload_applied') === 'true') {
       return true;
     }
   } catch (error) {
@@ -68,7 +114,8 @@ export function isReloadAlreadyApplied(): boolean {
   
   // Verificar localStorage como último recurso
   try {
-    if (localStorage.getItem('chrome_reload_applied') === 'true') {
+    if (localStorage.getItem('chrome_reload_applied') === 'true' ||
+        localStorage.getItem('chrome_mobile_reload_applied') === 'true') {
       return true;
     }
   } catch (error) {
@@ -81,27 +128,29 @@ export function isReloadAlreadyApplied(): boolean {
 /**
  * Marca que o reload foi aplicado em todos os mecanismos de armazenamento disponíveis
  */
-export function markReloadAsApplied(): void {
+export function markReloadAsApplied(isMobile: boolean = false): void {
   if (typeof window === 'undefined') return;
+  
+  const suffix = isMobile ? '_mobile' : '';
   
   // Definir cookie (válido por 1 minuto)
   try {
-    document.cookie = "chrome_reload_applied=true; path=/; max-age=60";
+    document.cookie = `chrome${suffix}_reload_applied=true; path=/; max-age=60`;
   } catch (error) {
     console.log('⚠️ Não foi possível definir cookie');
   }
   
   // Definir em sessionStorage
   try {
-    sessionStorage.setItem('chrome_reload_applied', 'true');
-    sessionStorage.setItem('chrome_reload_applied_main', 'true');
+    sessionStorage.setItem(`chrome${suffix}_reload_applied`, 'true');
+    sessionStorage.setItem(`chrome${suffix}_reload_applied_main`, 'true');
   } catch (error) {
     console.log('⚠️ Não foi possível salvar em sessionStorage');
   }
   
   // Definir em localStorage como backup
   try {
-    localStorage.setItem('chrome_reload_applied', 'true');
+    localStorage.setItem(`chrome${suffix}_reload_applied`, 'true');
   } catch (error) {
     console.log('⚠️ Não foi possível salvar em localStorage');
   }
@@ -120,13 +169,21 @@ export function forcePageReload(): void {
     return;
   }
   
+  // Verificar se é dispositivo móvel
+  const mobile = isMobileDevice();
+  
   // Marcar que o reload foi aplicado em todos os mecanismos
-  markReloadAsApplied();
+  markReloadAsApplied(mobile);
   
   try {
     // Método 1: Adicionar timestamp para forçar bypass do cache (método mais seguro)
     const url = new URL(window.location.href);
     url.searchParams.set('_nocache', Date.now().toString());
+    
+    // Para mobile, adicionar um parâmetro específico
+    if (mobile) {
+      url.searchParams.set('_mobile', '1');
+    }
     
     // Usar replace para não adicionar à história do navegador
     window.location.replace(url.toString());
@@ -165,10 +222,41 @@ export function forceReloadIfChrome(): boolean {
     return false;
   }
   
-  console.log('🔄 Chrome detectado, forçando reload da página ignorando cache...');
+  // Verificar se é mobile para log específico
+  const mobile = isMobileDevice();
+  console.log(`🔄 Chrome ${mobile ? 'Mobile' : 'Desktop'} detectado, forçando reload da página ignorando cache...`);
   
   // Adicionar um delay pequeno para garantir que a detecção seja processada
   setTimeout(() => {
+    forcePageReload();
+  }, 100);
+  
+  return true;
+}
+
+/**
+ * Força o reload da página apenas se for Chrome Mobile
+ * Versão específica para dispositivos móveis
+ */
+export function forceReloadIfChromeMobile(): boolean {
+  // Verificar se já foi aplicado reload para evitar loop
+  if (isReloadAlreadyApplied()) {
+    console.log('🛑 Reload já foi aplicado anteriormente, evitando loop');
+    return false;
+  }
+
+  // Verificar se é Chrome Mobile
+  if (!isChromeMobile()) {
+    console.log('🌐 Não é Chrome Mobile, reload não necessário');
+    return false;
+  }
+  
+  console.log('📱 Chrome Mobile detectado, forçando reload da página ignorando cache...');
+  
+  // Adicionar um delay pequeno para garantir que a detecção seja processada
+  setTimeout(() => {
+    // Marcar especificamente como mobile
+    markReloadAsApplied(true);
     forcePageReload();
   }, 100);
   
@@ -181,12 +269,18 @@ export function forceReloadIfChrome(): boolean {
  */
 export function useChromeReloadFix(): {
   isChrome: boolean;
+  isMobile: boolean;
+  isChromeMobile: boolean;
   forceReload: () => void;
 } {
   const isChrome = isChromeOrChromeMobile();
+  const mobile = isMobileDevice();
+  const chromeMobile = isChromeMobile();
   
   return {
     isChrome,
+    isMobile: mobile,
+    isChromeMobile: chromeMobile,
     forceReload: forcePageReload
   };
 }
@@ -230,6 +324,41 @@ export function clearBrowserCache(): void {
 }
 
 /**
+ * Limpa o cache específico para dispositivos móveis
+ * Implementa técnicas adicionais específicas para mobile
+ */
+export function clearMobileBrowserCache(): void {
+  if (typeof window === 'undefined') return;
+  
+  // Primeiro limpar cache padrão
+  clearBrowserCache();
+  
+  try {
+    // Técnicas específicas para mobile
+    
+    // 1. Limpar cookies específicos para mobile
+    const mobileCookies = ['_mobile_session', 'mobile_view', 'mobile_cache'];
+    mobileCookies.forEach(name => {
+      document.cookie = `${name}=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;`;
+    });
+    
+    // 2. Adicionar parâmetros específicos na URL para forçar reload em mobile
+    if (isMobileDevice()) {
+      const url = new URL(window.location.href);
+      url.searchParams.set('_mobile_nocache', Date.now().toString());
+      url.searchParams.set('_mobile', '1');
+      
+      // Não redirecionar aqui, apenas preparar a URL para uso posterior
+      console.log('📱 URL preparada para reload em mobile:', url.toString());
+    }
+    
+    console.log('✅ Cache do navegador mobile limpo');
+  } catch (error) {
+    console.log('⚠️ Não foi possível limpar todo o cache mobile:', error);
+  }
+}
+
+/**
  * Solução completa: detecta Chrome e aplica todas as correções necessárias
  */
 export function applyChromeLoginFix(): void {
@@ -241,13 +370,19 @@ export function applyChromeLoginFix(): void {
     return;
   }
   
-  console.log('🔧 Aplicando correção para Chrome no login...');
+  // Verificar se é mobile para log específico
+  const mobile = isMobileDevice();
+  console.log(`🔧 Aplicando correção para Chrome ${mobile ? 'Mobile' : 'Desktop'} no login...`);
   
-  // Limpar cache primeiro
-  clearBrowserCache();
+  // Limpar cache específico para o tipo de dispositivo
+  if (mobile) {
+    clearMobileBrowserCache();
+  } else {
+    clearBrowserCache();
+  }
   
   // Marcar que o reload foi aplicado
-  markReloadAsApplied();
+  markReloadAsApplied(mobile);
   
   // Forçar reload após limpeza
   setTimeout(() => {
