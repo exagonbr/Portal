@@ -27,26 +27,34 @@ const S3StorageAnalytics: React.FC<S3StorageAnalyticsProps> = ({ data, bucketNam
     );
   }
 
+  // Verificar se as propriedades existem e têm valores válidos
+  const totalSizeGB = data.totalSizeMb !== undefined ? (data.totalSizeMb / 1024).toFixed(2) : '0.00';
+  const fileCount = data.numberOfFiles !== undefined ? data.numberOfFiles.toLocaleString() : '0';
+
   return (
     <div className="space-y-4">
       <div>
         <h4 className="text-sm font-medium text-gray-600 dark:text-gray-300">Tamanho Total</h4>
         <p className="text-2xl font-bold text-gray-800 dark:text-white">
-          {(data.totalSizeMb / 1024).toFixed(2)} GB
+          {totalSizeGB} GB
         </p>
       </div>
       <div>
         <h4 className="text-sm font-medium text-gray-600 dark:text-gray-300">Total de Arquivos</h4>
         <p className="text-2xl font-bold text-gray-800 dark:text-white">
-          {data.numberOfFiles.toLocaleString()}
+          {fileCount}
         </p>
       </div>
       <div>
         <h4 className="text-sm font-medium text-gray-600 dark:text-gray-300">Buckets Monitorados</h4>
         <ul className="mt-2 space-y-1 text-xs text-gray-500 dark:text-gray-400">
-          {data.buckets.map((bucket: S3BucketInfo) => (
-            <li key={bucket.name}>- {bucket.name} ({bucket.region})</li>
-          ))}
+          {data.buckets && Array.isArray(data.buckets) ? (
+            data.buckets.map((bucket: S3BucketInfo) => (
+              <li key={bucket.name}>- {bucket.name} ({bucket.region})</li>
+            ))
+          ) : (
+            <li>Nenhum bucket disponível</li>
+          )}
         </ul>
       </div>
     </div>

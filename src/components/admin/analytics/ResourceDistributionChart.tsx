@@ -41,7 +41,8 @@ const ResourceDistributionChart: React.FC<ResourceDistributionChartProps> = ({ d
     );
   }
 
-  if (!data || data.length === 0) {
+  // Verifica se data é um array válido
+  if (!data || !Array.isArray(data) || data.length === 0) {
     return (
       <div className="flex items-center justify-center h-64 bg-gray-100 dark:bg-gray-800 rounded-lg">
         <p className="text-gray-500">Não há dados de distribuição para exibir.</p>

@@ -124,23 +124,15 @@ export class UnifiedAuthService {
    * Remove dados de autenticação de todos os locais
    */
   static async clearAuthData(sessionId?: string, token?: string): Promise<void> {
-    console.log('🧹 Removendo dados de autenticação de todos os locais...');
+    // 1. Remover do localStorage
+    this.clearLocalStorage();
 
-    try {
-      // 1. Remover do localStorage
-      this.clearLocalStorage();
+    // 2. Remover dos cookies
+    CookieManager.clearAuthCookies();
 
-      // 2. Remover dos cookies
-      CookieManager.clearAuthCookies();
-
-      // 3. Remover sessão do Redis
-      if (sessionId && token) {
-        await SessionService.deleteSession(sessionId, token);
-      }
-
-      console.log('✅ Dados removidos de todos os locais');
-    } catch (error) {
-      console.error('❌ Erro ao remover dados:', error);
+    // 3. Remover sessão do Redis
+    if (sessionId && token) {
+      await SessionService.deleteSession(sessionId, token);
     }
   }
 
@@ -177,15 +169,7 @@ export class UnifiedAuthService {
    */
   static isAuthenticated(): boolean {
     const data = this.loadAuthData();
-    const hasValidData = !!(data.merged?.accessToken && data.merged?.user);
-    
-    console.log('🔍 Verificação de autenticação:', {
-      hasValidData,
-      hasLocalStorage: !!data.localStorage,
-      hasCookies: !!data.cookies
-    });
-
-    return hasValidData;
+    return !!(data.merged?.accessToken && data.merged?.user);
   }
 
   /**
@@ -277,7 +261,7 @@ export class UnifiedAuthService {
         sessionId: authData.sessionId
       });
     } catch (error) {
-      console.error('❌ Erro ao salvar nos cookies:', error);
+      console.error('Erro ao salvar nos cookies:', error);
     }
   }
 

@@ -57,7 +57,6 @@ export class CookieManager {
     }
 
     document.cookie = cookieString;
-    console.log(`🍪 Cookie definido: ${name}`);
   }
 
   /**
@@ -90,7 +89,6 @@ export class CookieManager {
       expires: new Date(0),
       maxAge: -1 
     });
-    console.log(`🍪 Cookie removido: ${name}`);
   }
 
   /**
@@ -101,7 +99,7 @@ export class CookieManager {
   }
 
   /**
-   * Define múltiplos cookies de autenticação
+   * Define cookies de autenticação
    */
   static setAuthCookies(data: {
     accessToken: string;
@@ -109,23 +107,14 @@ export class CookieManager {
     user: any;
     sessionId?: string;
   }): void {
-    console.log('🍪 Definindo cookies de autenticação...');
-    
-    // Token de acesso (mais curto)
+    // Token de acesso (curta duração)
     this.set('auth_token', data.accessToken, {
       maxAge: 60 * 60 * 2, // 2 horas
       secure: true,
       sameSite: 'lax'
     });
 
-        // Token de acesso (mais curto)
-        this.set('accessToken', data.accessToken, {
-          maxAge: 60 * 60 * 2, // 2 horas
-          secure: true,
-          sameSite: 'lax'
-        });
-
-    // Refresh token (mais longo)
+    // Refresh token (longa duração)
     this.set('refresh_token', data.refreshToken, {
       maxAge: 60 * 60 * 24 * 30, // 30 dias
       secure: true,
@@ -147,15 +136,6 @@ export class CookieManager {
         sameSite: 'lax'
       });
     }
-
-    // Flag de autenticação
-    this.set('is_authenticated', 'true', {
-      maxAge: 60 * 60 * 24 * 7, // 7 dias
-      secure: true,
-      sameSite: 'lax'
-    });
-
-    console.log('✅ Cookies de autenticação definidos');
   }
 
   /**
@@ -168,10 +148,9 @@ export class CookieManager {
     sessionId: string | null;
     isAuthenticated: boolean;
   } {
-    const accessToken = this.get('auth_token') || this.get('accessToken');
+    const accessToken = this.get('auth_token');
     const refreshToken = this.get('refresh_token');
     const sessionId = this.get('session_id');
-    const isAuthenticated = this.get('is_authenticated') === 'true';
     
     let user = null;
     try {
@@ -188,7 +167,7 @@ export class CookieManager {
       refreshToken,
       user,
       sessionId,
-      isAuthenticated
+      isAuthenticated: !!accessToken
     };
   }
 
@@ -196,19 +175,16 @@ export class CookieManager {
    * Remove todos os cookies de autenticação
    */
   static clearAuthCookies(): void {
-    console.log('🍪 Removendo cookies de autenticação...');
-    
     this.remove('auth_token');
     this.remove('refresh_token');
     this.remove('user_data');
     this.remove('session_id');
-    this.remove('is_authenticated');
-    
-    console.log('✅ Cookies de autenticação removidos');
+    this.remove('accessToken'); // Remover cookie legado
+    this.remove('is_authenticated'); // Remover cookie legado
   }
 
   /**
-   * Atualiza o token de acesso mantendo outros dados
+   * Atualiza o token de acesso
    */
   static updateAccessToken(newToken: string): void {
     this.set('auth_token', newToken, {
@@ -216,6 +192,5 @@ export class CookieManager {
       secure: true,
       sameSite: 'lax'
     });
-    console.log('🍪 Token de acesso atualizado');
   }
 } 

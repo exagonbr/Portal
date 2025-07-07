@@ -3,6 +3,10 @@ import { z } from 'zod'
 import { getAuthentication, hasRequiredRole } from '@/lib/auth-utils'
 import { mockRoles, findRoleByName } from './mockDatabase'
 import { createCorsOptionsResponse, getCorsHeaders } from '@/config/cors'
+import { prepareAuthHeaders } from '../lib/auth-headers'
+import { getInternalApiUrl } from '@/config/env'
+import { prisma } from '@/lib/prisma'
+import { createStandardApiRoute } from '../lib/api-route-template'
 
 // Schema de validação para criação de role
 const createRoleSchema = z.object({
@@ -12,115 +16,67 @@ const createRoleSchema = z.object({
   is_active: z.boolean().default(true)
 })
 
-// GET - Listar roles
-
-// Handler para requisições OPTIONS (preflight)
-export async function OPTIONS(request: NextRequest) {
-  const origin = request.headers.get('origin') || undefined;
-  return createCorsOptionsResponse(origin);
-}
-
-export async function GET(request: NextRequest) {
-  try {
-    // Parâmetros de query
-    const { searchParams } = new URL(request.url)
-    const page = parseInt(searchParams.get('page') || '1')
-    const limit = parseInt(searchParams.get('limit') || '10')
-    const search = searchParams.get('search') || ''
-    const is_active = searchParams.get('is_active')
-    const public_access = searchParams.get('public') === 'true'
-
-    // Se for acesso público (para combos), não verificar autenticação
-    if (!public_access) {
-      const session = await getAuthentication(request)
+// Usar o template padronizado para a rota GET
+export const { GET, OPTIONS } = createStandardApiRoute({
+  endpoint: '/api/roles',
+  name: 'roles',
+  fallbackFunction: async (req: NextRequest) => {
+    console.log('🔄 [API-ROLES] Usando dados locais para roles');
+    
+    try {
+      // Tentar buscar do banco local primeiro
+      let roles = [];
+      try {
+        roles = await prisma.role.findMany({
+          orderBy: { name: 'asc' },
+        });
+      } catch (dbError) {
+        console.warn('⚠️ [API-ROLES] Erro ao buscar do banco local:', dbError);
+      }
       
-      if (!session) {
-        return NextResponse.json({ error: 'Não autorizado' }, { 
-      status: 401,
-      headers: getCorsHeaders(request.headers.get('origin') || undefined)
-    })
+      // Se não encontrou no banco, usar dados mock
+      if (!roles || roles.length === 0) {
+        console.log('🔄 [API-ROLES] Usando dados mock para roles');
+        roles = [
+          { id: '1', name: 'Administrador', description: 'Acesso total ao sistema' },
+          { id: '2', name: 'Professor', description: 'Acesso às funcionalidades de ensino' },
+          { id: '3', name: 'Aluno', description: 'Acesso às funcionalidades de aprendizado' },
+          { id: '4', name: 'Coordenador', description: 'Gerencia professores e turmas' },
+          { id: '5', name: 'Secretaria', description: 'Acesso administrativo limitado' }
+        ];
+      } else {
+        // Converter IDs para string se necessário
+        roles = roles.map(role => ({
+          ...role,
+          id: String(role.id)
+        }));
       }
 
-      // Verificar permissões
-      if (!hasRequiredRole(session.user?.role, ['SYSTEM_ADMIN', 'INSTITUTION_MANAGER'])) {
-        return NextResponse.json({ error: 'Sem permissão para listar roles' }, { 
-      status: 403,
-      headers: getCorsHeaders(request.headers.get('origin') || undefined)
-    })
-      }
-    }
+      console.log('✅ [API-ROLES] Dados locais obtidos com sucesso:', roles.length);
 
-    // Buscar roles
-    let roles = Array.from(mockRoles.values())
-
-    // Para acesso público, retornar apenas roles ativas básicas
-    if (public_access) {
-      roles = roles.filter(role => role.active && role.status === 'active')
-      // Retornar apenas campos essenciais para o combo
-      const publicRoles = roles.map(role => ({
-        id: role.id,
-        name: role.name,
-        description: role.description,
-        status: role.status,
-        created_at: role.created_at,
-        updated_at: role.updated_at
-      }))
-
-      console.log('🔓 Retornando roles públicas:', publicRoles.length, 'roles encontradas');
-      console.log('📋 Roles disponíveis:', publicRoles.map(r => ({ id: r.id, name: r.name })));
-
+      // Formatar resposta no padrão esperado pela API
       return NextResponse.json({
-        success: true,
-        data: publicRoles
+        items: roles,
+        total: roles.length,
+        page: 1,
+        limit: roles.length,
+        totalPages: 1,
       }, {
-      headers: getCorsHeaders(request.headers.get('origin') || undefined)
-    })
+        headers: getCorsHeaders(req.headers.get('origin') || undefined)
+      });
+    } catch (error) {
+      console.error('❌ [API-ROLES] Erro ao gerar dados fallback:', error);
+      return NextResponse.json(
+        { 
+          success: false, 
+          message: 'Erro ao buscar funções',
+          error: String(error)
+        },
+        { status: 500 }
+      );
     }
-
-    // Aplicar filtros de busca
-    if (search) {
-      const searchLower = search.toLowerCase()
-      roles = roles.filter(role => 
-        role.name.toLowerCase().includes(searchLower) ||
-        (role.description && role.description.toLowerCase().includes(searchLower))
-      )
-    }
-
-    if (is_active !== null) {
-      roles = roles.filter(role => role.active === (is_active === 'true'))
-    }
-
-    // Ordenar por nome
-    roles.sort((a, b) => a.name.localeCompare(b.name))
-
-    // Paginação
-    const startIndex = (page - 1) * limit
-    const endIndex = page * limit
-    const paginatedRoles = roles.slice(startIndex, endIndex)
-
-    return NextResponse.json({
-      success: true,
-      data: {
-        items: paginatedRoles,
-        pagination: {
-          page,
-          limit,
-          total: roles.length,
-          totalPages: Math.ceil(roles.length / limit)
-        }
-      }
-    }, {
-      headers: getCorsHeaders(request.headers.get('origin') || undefined)
-    })
-
-  } catch (error) {
-    console.log('Erro ao listar roles:', error)
-    return NextResponse.json({ error: 'Erro interno do servidor' }, { 
-      status: 500,
-      headers: getCorsHeaders(request.headers.get('origin') || undefined)
-    })
   }
-}
+});
 
 // POST - Criar role
 export async function POST(request: NextRequest) {

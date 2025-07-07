@@ -5,6 +5,7 @@
 
 import { useCallback } from 'react';
 import { performUltraLogout } from '../services/ultraLogoutService';
+import { CookieManager } from '@/utils/cookieManager';
 
 export function useUltraLogout() {
   const logout = useCallback(async () => {
@@ -56,18 +57,13 @@ export function useUltraLogout() {
 
   const emergencyLogout = useCallback(async () => {
     try {
-      console.log('🚨 useUltraLogout: LOGOUT DE EMERGÊNCIA...');
-      
       // Limpeza de emergência imediata
       if (typeof window !== 'undefined') {
         localStorage.clear();
         sessionStorage.clear();
         
-        // Limpar cookies principais
-        const mainCookies = ['auth_token', 'session_id', 'user_data', 'refresh_token'];
-        mainCookies.forEach(cookie => {
-          document.cookie = `${cookie}=;expires=Thu, 01 Jan 1970 00:00:00 GMT;path=/`;
-        });
+        // Limpar cookies
+        CookieManager.clearAuthCookies();
       }
       
       // Redirecionar imediatamente
@@ -75,7 +71,7 @@ export function useUltraLogout() {
       
       return true;
     } catch (error) {
-      console.log('❌ useUltraLogout: Erro no logout de emergência:', error);
+      console.error('Erro no logout de emergência:', error);
       return false;
     }
   }, []);

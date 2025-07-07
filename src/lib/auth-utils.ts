@@ -177,92 +177,30 @@ export async function validateJWTToken(token: string) {
 
 // FUNÇÃO MELHORADA getAuthentication
 export async function getAuthentication(request: NextRequest) {
-  console.log('🔐 Iniciando validação de autenticação...');
-  
   // 1. Tentar Authorization header primeiro
   const authHeader = request.headers.get('authorization') || request.headers.get('Authorization');
   
-  if (authHeader) {
-    if (authHeader.startsWith('Bearer ')) {
-      const token = authHeader.substring(7).trim();
-      
-      if (token && token !== 'null' && token !== 'undefined') {
-        console.log('🔑 Testando token do header Authorization:', { 
-          length: token.length, 
-          preview: token.substring(0, 20) + '...' 
-        });
-        const jwtSession = await validateJWTToken(token);
-        if (jwtSession) {
-          console.log('✅ Token do header Authorization válido');
-          return jwtSession;
-        } else {
-          console.log('❌ Token do header Authorization inválido');
-        }
+  if (authHeader && authHeader.startsWith('Bearer ')) {
+    const token = authHeader.substring(7).trim();
+    
+    if (token && token !== 'null' && token !== 'undefined') {
+      const jwtSession = await validateJWTToken(token);
+      if (jwtSession) {
+        return jwtSession;
       }
     }
   }
 
   // 2. Tentar cookies como fallback
-  const cookieTokens = [
-    request.cookies.get('accessToken')?.value,
-    request.cookies.get('auth_token')?.value,
-    request.cookies.get('token')?.value,
-    request.cookies.get('authToken')?.value
-  ];
+  const authToken = request.cookies.get('auth_token')?.value;
   
-  for (const tokenFromCookie of cookieTokens) {
-    if (tokenFromCookie && tokenFromCookie !== 'null' && tokenFromCookie !== 'undefined') {
-      console.log('🔑 Testando token do cookie:', { 
-        length: tokenFromCookie.length, 
-        preview: tokenFromCookie.substring(0, 20) + '...' 
-      });
-      const jwtSession = await validateJWTToken(tokenFromCookie);
-      if (jwtSession) {
-        console.log('✅ Token do cookie válido');
-        return jwtSession;
-      } else {
-        console.log('❌ Token do cookie inválido');
-      }
+  if (authToken && authToken !== 'null' && authToken !== 'undefined') {
+    const jwtSession = await validateJWTToken(authToken);
+    if (jwtSession) {
+      return jwtSession;
     }
   }
 
-  // 3. Tentar extrair do header Cookie manualmente
-  const cookieHeader = request.headers.get('cookie');
-  if (cookieHeader) {
-    console.log('🔐 Analisando header Cookie manualmente...');
-    const cookies = cookieHeader.split(';').reduce((acc: Record<string, string>, cookie) => {
-      const [name, value] = cookie.trim().split('=');
-      if (name && value) {
-        acc[name] = decodeURIComponent(value);
-      }
-      return acc;
-    }, {});
-    
-    const manualTokens = [
-      cookies.accessToken,
-      cookies.auth_token,
-      cookies.token,
-      cookies.authToken
-    ];
-    
-    for (const manualToken of manualTokens) {
-      if (manualToken && manualToken !== 'null' && manualToken !== 'undefined' && manualToken.length > 10) {
-        console.log('🔐 Testando token manual do cookie:', { 
-          length: manualToken.length, 
-          preview: manualToken.substring(0, 20) + '...' 
-        });
-        const jwtSession = await validateJWTToken(manualToken);
-        if (jwtSession) {
-          console.log('✅ Token manual do cookie válido');
-          return jwtSession;
-        } else {
-          console.log('❌ Token manual do cookie inválido');
-        }
-      }
-    }
-  }
-
-  console.log('❌ Nenhum token válido encontrado em nenhum método');
   return null;
 }
 

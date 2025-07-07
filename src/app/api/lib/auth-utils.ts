@@ -141,30 +141,20 @@ export async function getAuthentication(request: NextRequest) {
     token = authHeader.substring(7);
   }
 
-  // Try X-Auth-Token header as fallback
-  if (!token) {
-    token = request.headers.get('X-Auth-Token') || request.headers.get('x-auth-token') || '';
-  }
-
   // Try token from cookies as fallback
   if (!token) {
-    token = request.cookies.get('auth_token')?.value || 
-            request.cookies.get('token')?.value ||
-            request.cookies.get('authToken')?.value || '';
+    token = request.cookies.get('auth_token')?.value || '';
   }
 
   if (!token) {
-    console.warn('🚫 Token de autorização não fornecido');
     return null;
   }
 
   const jwtSession = await validateJWTToken(token);
   if (jwtSession) {
-    console.log('✅ Autenticação bem-sucedida para:', jwtSession.user.email);
     return jwtSession;
   }
 
-  console.warn('🚫 Token inválido fornecido');
   return null;
 }
 

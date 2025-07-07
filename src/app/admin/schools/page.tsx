@@ -2,7 +2,6 @@
 
 import React, { useState, useEffect, useCallback } from 'react'
 import { useToast } from '@/components/ToastManager'
-import AuthenticatedLayout from '@/components/AuthenticatedLayout'
 import { Badge } from '@/components/ui/Badge'
 import { Button } from '@/components/ui/Button'
 import { StatCard } from '@/components/ui/StandardCard'
@@ -23,12 +22,13 @@ import {
 import { unitService } from '@/services/unitService'
 import { institutionService } from '@/services/institutionService'
 import { useRouter } from 'next/navigation'
+import UnitFormModal from '@/components/admin/units/UnitFormModal'
 
 // Interface para unidades
 interface Unit {
   id: string
   name: string
-  institution_id: string // Alterado de number para string para compatibilidade com o serviço
+  institution_id: string
   institutionName?: string
   institution_name?: string
   deleted: boolean
@@ -61,6 +61,11 @@ export default function AdminSchoolsPage() {
   // Dados principais
   const [units, setUnits] = useState<Unit[]>([])
   const [institutions, setInstitutions] = useState<Institution[]>([])
+
+  // Modal de formulário
+  const [modalOpen, setModalOpen] = useState(false)
+  const [selectedUnit, setSelectedUnit] = useState<Unit | null>(null)
+  const [modalMode, setModalMode] = useState<'create' | 'edit' | 'view'>('create')
 
   // Paginação e Filtros
   const [totalItems, setTotalItems] = useState(0)
@@ -128,7 +133,7 @@ export default function AdminSchoolsPage() {
     }
   }
 
-  const fetchUnits = async (page = 1, search = '', currentFilters: typeof filters = {}, showLoadingIndicator = true) => {
+  const fetchPageData = async (page = 1, search = '', currentFilters: typeof filters = {}, showLoadingIndicator = true) => {
     if (showLoadingIndicator) setLoading(true)
     else setRefreshing(true)
 
@@ -202,13 +207,13 @@ export default function AdminSchoolsPage() {
   }
 
   useEffect(() => {
-    fetchUnits(currentPage, searchQuery, filters)
+    fetchPageData(currentPage, searchQuery, filters)
   }, [currentPage])
 
   const handleSearch = (e: React.FormEvent) => {
     e.preventDefault()
     setCurrentPage(1)
-    fetchUnits(1, searchQuery, filters)
+    fetchPageData(1, searchQuery, filters)
   }
 
   const handleFilterChange = (key: keyof typeof filters, value: any) => {
@@ -223,18 +228,18 @@ export default function AdminSchoolsPage() {
 
   const applyFilters = () => {
     setCurrentPage(1);
-    fetchUnits(1, searchQuery, filters);
+    fetchPageData(1, searchQuery, filters);
   };
 
   const clearFilters = () => {
     setSearchTerm('');
     setFilters({});
     setCurrentPage(1);
-    fetchUnits(1, '', {});
+    fetchPageData(1, '', {});
   };
 
   const handleRefresh = () => {
-    fetchUnits(currentPage, searchQuery, filters, false)
+    fetchPageData(currentPage, searchQuery, filters, false)
   }
 
   const handleDelete = async (unit: Unit) => {
@@ -245,12 +250,33 @@ export default function AdminSchoolsPage() {
       // Usar o serviço de unidades para excluir
       await unitService.deleteUnit(Number(unit.id))
       showSuccess("Unidade excluída com sucesso.")
-      await fetchUnits(currentPage, searchQuery, filters, false)
+      await fetchPageData(currentPage, searchQuery, filters, false)
     } catch (error) {
       showError("Erro ao excluir unidade.")
     } finally {
       setLoading(false)
     }
+  }
+
+  // Funções para o modal
+  const openModal = (mode: 'create' | 'edit' | 'view', unit?: Unit) => {
+    setModalMode(mode)
+    setSelectedUnit(unit || null)
+    setModalOpen(true)
+  }
+
+  const closeModal = () => {
+    setModalOpen(false)
+    setSelectedUnit(null)
+  }
+
+  const handleModalSave = async () => {
+    closeModal()
+    await fetchPageData(currentPage, searchQuery, filters, false)
+  }
+
+  const getInstitutionName = (instId?: string | null) => {
+    return institutions.find(i => String(i.id) === instId)?.name || 'N/A'
   }
 
   const totalPages = Math.ceil(totalItems / itemsPerPage)
@@ -270,7 +296,7 @@ export default function AdminSchoolsPage() {
                   <RefreshCw className={`w-4 h-4 ${refreshing ? 'animate-spin' : ''}`} />
                   Atualizar
                 </Button>
-                <Button onClick={() => alert("Funcionalidade de 'Nova Unidade' a ser implementada.")} className="flex items-center gap-2">
+                <Button onClick={() => openModal('create')} className="flex items-center gap-2">
                   <Plus className="w-4 h-4" />
                   Nova Unidade
                 </Button>
@@ -359,10 +385,17 @@ export default function AdminSchoolsPage() {
                       {units.map((unit) => (
                         <tr key={unit.id} className="hover:bg-gray-50">
                           <td className="px-6 py-4">
-                            <div className="text-sm font-semibold text-gray-900">{unit.name}</div>
+                            <div className="flex items-center">
+                              <div className="flex-shrink-0 w-10 h-10 bg-blue-100 rounded-full flex items-center justify-center">
+                                <span className="text-blue-600 font-semibold">{unit.name.charAt(0)}</span>
+                              </div>
+                              <div className="ml-4">
+                                <div className="text-sm font-medium text-gray-900">{unit.name}</div>
+                              </div>
+                            </div>
                           </td>
                           <td className="px-6 py-4 text-sm text-gray-600">
-                            {unit.institutionName || unit.institution_name || '-'}
+                            {getInstitutionName(unit.institution_id)}
                           </td>
                           <td className="px-6 py-4">
                             <Badge variant={unit.deleted ? "danger" : "success"}>
@@ -371,8 +404,8 @@ export default function AdminSchoolsPage() {
                           </td>
                           <td className="px-6 py-4 text-center">
                             <div className="flex items-center justify-center space-x-2">
-                              <Button variant="ghost" size="sm" onClick={() => alert(`Visualizar: ${unit.name}`)} className="text-blue-600 hover:text-blue-900"><Eye className="w-4 h-4" /></Button>
-                              <Button variant="ghost" size="sm" onClick={() => alert(`Editar: ${unit.name}`)} className="text-green-600 hover:text-green-900"><Edit className="w-4 h-4" /></Button>
+                              <Button variant="ghost" size="sm" onClick={() => openModal('view', unit)} className="text-blue-600 hover:text-blue-900"><Eye className="w-4 h-4" /></Button>
+                              <Button variant="ghost" size="sm" onClick={() => openModal('edit', unit)} className="text-green-600 hover:text-green-900"><Edit className="w-4 h-4" /></Button>
                               <Button variant="ghost" size="sm" onClick={() => handleDelete(unit)} className="text-red-600 hover:text-red-900"><Trash2 className="w-4 h-4" /></Button>
                             </div>
                           </td>
@@ -386,21 +419,23 @@ export default function AdminSchoolsPage() {
                 <div className="lg:hidden p-4 space-y-4">
                   {units.map(unit => (
                     <div key={unit.id} className="bg-white border border-gray-200 rounded-lg shadow-sm">
-                      <div className="p-4 border-b border-gray-100">
-                        <div className="flex justify-between items-start mb-2">
+                      <div className="p-4 border-b border-gray-100 flex justify-between items-start">
+                        <div>
                           <h3 className="font-semibold text-gray-800">{unit.name}</h3>
-                          <Badge variant={unit.deleted ? "danger" : "success"}>
-                             {unit.deleted ? "Inativa" : "Ativa"}
-                           </Badge>
                         </div>
-                        <p className="text-sm text-gray-500 flex items-center">
-                          <Building2 className="w-4 h-4 mr-2"/>
-                          {unit.institutionName || unit.institution_name || '-'}
-                        </p>
+                        <Badge variant={unit.deleted ? "danger" : "success"}>
+                          {unit.deleted ? "Inativa" : "Ativa"}
+                        </Badge>
+                      </div>
+                      <div className="p-4 space-y-2">
+                        <div className="flex items-center text-sm">
+                          <Building2 className="w-4 h-4 mr-2 text-gray-400"/>
+                          {getInstitutionName(unit.institution_id)}
+                        </div>
                       </div>
                       <div className="p-4 border-t border-gray-100 flex justify-end space-x-2">
-                        <Button variant="outline" size="sm" onClick={() => alert(`Visualizar: ${unit.name}`)}>Ver</Button>
-                        <Button variant="outline" size="sm" onClick={() => alert(`Editar: ${unit.name}`)}>Editar</Button>
+                        <Button variant="outline" size="sm" onClick={() => openModal('view', unit)}>Ver</Button>
+                        <Button variant="outline" size="sm" onClick={() => openModal('edit', unit)}>Editar</Button>
                         <Button variant="destructive" size="sm" onClick={() => handleDelete(unit)}>Excluir</Button>
                       </div>
                     </div>
@@ -423,6 +458,16 @@ export default function AdminSchoolsPage() {
             </div>
           )}
         </div>
+
+        {/* Modal de Unidade */}
+        <UnitFormModal
+          isOpen={modalOpen}
+          onClose={closeModal}
+          onSuccess={handleModalSave}
+          unit={selectedUnit}
+          institutions={institutions.map(inst => ({ id: String(inst.id), name: inst.name }))}
+          viewOnly={modalMode === 'view'}
+        />
       </div>
   )
 }
