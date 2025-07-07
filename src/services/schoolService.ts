@@ -37,14 +37,6 @@ export const getSchools = async (params: SchoolFilter): Promise<PaginatedRespons
   };
 };
 
-export const getSchoolsByInstitution = async (institutionId: number): Promise<SchoolDto[]> => {
-  const response = await apiGet<PaginatedResponse<ApiSchoolResponseDto>>('/schools', { 
-    institutionId, 
-    limit: 100 // Buscar um número grande para ter todas as escolas
-  });
-  return response.items.map(mapToSchoolDto);
-};
-
 export const getSchoolById = async (id: number): Promise<SchoolDto> => {
   const response = await apiGet<ApiSchoolResponseDto>(`/schools/${id}`);
   return mapToSchoolDto(response);
@@ -73,7 +65,6 @@ export const toggleSchoolStatus = async (id: number): Promise<SchoolDto> => {
 export const schoolService = {
   getSchools,
   getSchoolById,
-  getSchoolsByInstitution,
   createSchool,
   updateSchool,
   deleteSchool,

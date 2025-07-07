@@ -65,6 +65,36 @@ interface PaginatedResponse<T> {
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001/api'
 
+// Configuração do axios com withCredentials para enviar cookies
+const apiClient = axios.create({
+  baseURL: API_URL,
+  withCredentials: true,
+});
+
+// Interceptor para adicionar o token de autenticação
+apiClient.interceptors.request.use((config) => {
+  if (typeof window !== 'undefined') {
+    const accessToken = localStorage.getItem('accessToken');
+    if (accessToken) {
+      config.headers['Authorization'] = `Bearer ${accessToken}`;
+    }
+  }
+  return config;
+}, (error) => {
+  return Promise.reject(error);
+});
+
+// Interceptor para tratamento de erros
+apiClient.interceptors.response.use(
+  (response) => response,
+  (error) => {
+    if (error.response?.status === 401) {
+      console.error('Erro de autenticação 401:', error.response?.data);
+    }
+    return Promise.reject(error);
+  }
+);
+
 export default function AdminSchoolsPage() {
   const { showSuccess, showError } = useToast()
   const [loading, setLoading] = useState(true)
@@ -102,7 +132,7 @@ export default function AdminSchoolsPage() {
 
   const fetchInstitutions = async () => {
     try {
-      const response = await axios.get<ApiResponse<Institution[]>>(`${API_URL}/institutions`)
+      const response = await apiClient.get<ApiResponse<Institution[]>>('/institutions')
       if (response.data.success) {
         setInstitutions(response.data.data)
       }
@@ -128,7 +158,7 @@ export default function AdminSchoolsPage() {
       if (currentFilters.institutionId) params.institutionId = currentFilters.institutionId
 
       // Buscar unidades com paginação
-      const response = await axios.get<ApiResponse<Unit[]>>(`${API_URL}/unit`, { params })
+      const response = await apiClient.get<ApiResponse<Unit[]>>('/units', { params })
       
       if (response.data.success) {
         const unitsWithInstitutionNames = response.data.data.map(unit => {
@@ -144,7 +174,7 @@ export default function AdminSchoolsPage() {
         setCurrentPage(page)
         
         // Buscar todas as unidades para estatísticas
-        const allUnitsResponse = await axios.get<ApiResponse<Unit[]>>(`${API_URL}/unit/active`)
+        const allUnitsResponse = await apiClient.get<ApiResponse<Unit[]>>('/units/active')
         if (allUnitsResponse.data.success) {
           calculateStats(allUnitsResponse.data.data)
         }
@@ -203,7 +233,7 @@ export default function AdminSchoolsPage() {
 
     try {
       setLoading(true)
-      const response = await axios.delete(`${API_URL}/unit/${unit.id}`)
+      const response = await apiClient.delete(`/units/${unit.id}`)
       
       if (response.data.success) {
         showSuccess("Unidade excluída com sucesso.")
