@@ -323,43 +323,43 @@ export default function EmailComposer({
   return (
     <div className="max-w-6xl mx-auto">
       {/* Tabs */}
-      <div className="mb-6 border-b border-gray-200">
-        <nav className="-mb-px flex space-x-8">
+      <div className="mb-4 sm:mb-6 border-b border-gray-200 overflow-x-auto">
+        <nav className="-mb-px flex space-x-4 sm:space-x-8">
           <button
             onClick={() => setActiveTab('compose')}
-            className={`py-2 px-1 border-b-2 font-medium text-sm transition-colors ${
+            className={`py-2 px-1 border-b-2 font-medium text-xs sm:text-sm whitespace-nowrap transition-colors ${
               activeTab === 'compose'
                 ? 'border-blue-500 text-blue-600'
                 : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
             }`}
           >
-            <span className="flex items-center gap-2">
+            <span className="flex items-center gap-1 sm:gap-2">
               <span className="material-symbols-outlined text-sm">edit</span>
               Compor
             </span>
           </button>
           <button
             onClick={() => setActiveTab('preview')}
-            className={`py-2 px-1 border-b-2 font-medium text-sm transition-colors ${
+            className={`py-2 px-1 border-b-2 font-medium text-xs sm:text-sm whitespace-nowrap transition-colors ${
               activeTab === 'preview'
                 ? 'border-blue-500 text-blue-600'
                 : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
             }`}
           >
-            <span className="flex items-center gap-2">
+            <span className="flex items-center gap-1 sm:gap-2">
               <span className="material-symbols-outlined text-sm">preview</span>
               Visualizar
             </span>
           </button>
           <button
             onClick={() => setActiveTab('templates')}
-            className={`py-2 px-1 border-b-2 font-medium text-sm transition-colors ${
+            className={`py-2 px-1 border-b-2 font-medium text-xs sm:text-sm whitespace-nowrap transition-colors ${
               activeTab === 'templates'
                 ? 'border-blue-500 text-blue-600'
                 : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
             }`}
           >
-            <span className="flex items-center gap-2">
+            <span className="flex items-center gap-1 sm:gap-2">
               <span className="material-symbols-outlined text-sm">description</span>
               Templates
             </span>
@@ -368,17 +368,17 @@ export default function EmailComposer({
       </div>
 
       {activeTab === 'compose' ? (
-        <div className="space-y-6">
+        <div className="space-y-4 sm:space-y-6">
           {/* Indicador de edição de template */}
           {editingTemplate && (
-            <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-4 flex items-center justify-between">
-              <div className="flex items-center gap-3">
+            <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-3 sm:p-4 flex items-center justify-between">
+              <div className="flex items-center gap-2 sm:gap-3">
                 <span className="material-symbols-outlined text-yellow-600">edit_note</span>
                 <div>
-                  <p className="font-medium text-gray-800">
+                  <p className="font-medium text-sm sm:text-base text-gray-800">
                     Editando template: {editingTemplate.name}
                   </p>
-                  <p className="text-sm text-gray-600">
+                  <p className="text-xs sm:text-sm text-gray-600">
                     {emailTemplates.some(t => t.id === editingTemplate.id)
                       ? 'As alterações serão salvas como um novo template personalizado'
                       : 'As alterações serão aplicadas ao template existente'}
@@ -402,8 +402,8 @@ export default function EmailComposer({
 
           {/* Seleção de ícone */}
           <div className="card">
-            <div className="card-body">
-              <h3 className="text-lg font-semibold text-gray-800 mb-4">
+            <div className="card-body p-3 sm:p-4">
+              <h3 className="text-base sm:text-lg font-semibold text-gray-800 mb-3 sm:mb-4">
                 Selecione o tipo de mensagem
               </h3>
               <IconSelector selected={selectedIcon} onSelect={setSelectedIcon} />
@@ -412,24 +412,25 @@ export default function EmailComposer({
 
           {/* Templates */}
           <div className="card">
-            <div className="card-body">
-              <div className="flex items-center justify-between mb-4">
-                <h3 className="text-lg font-semibold text-gray-800">
+            <div className="card-body p-3 sm:p-4">
+              <div className="flex items-center justify-between mb-3 sm:mb-4">
+                <h3 className="text-base sm:text-lg font-semibold text-gray-800">
                   Templates disponíveis
                 </h3>
                 <button
                   onClick={() => setShowTemplateModal(true)}
-                  className="px-3 py-1.5 text-sm bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors flex items-center gap-2"
+                  className="px-2 sm:px-3 py-1 sm:py-1.5 text-xs sm:text-sm bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors flex items-center gap-1 sm:gap-2"
                 >
                   <span className="material-symbols-outlined text-sm">add</span>
-                  Criar Template
+                  <span className="hidden sm:inline">Criar Template</span>
+                  <span className="inline sm:hidden">Template</span>
                 </button>
               </div>
-              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-2 sm:gap-3">
                 {[...emailTemplates, ...savedTemplates].map((template) => (
                   <div
                     key={template.id}
-                    className={`relative p-4 border rounded-lg text-left transition-all ${
+                    className={`relative p-3 sm:p-4 border rounded-lg text-left transition-all ${
                       selectedTemplate === template.id
                         ? 'border-blue-500 bg-blue-50'
                         : editingTemplate?.id === template.id
@@ -438,7 +439,7 @@ export default function EmailComposer({
                     }`}
                   >
                     {editingTemplate?.id === template.id && (
-                      <span className="absolute top-2 right-2 text-xs bg-yellow-500 text-white px-2 py-1 rounded">
+                      <span className="absolute top-2 right-2 text-xs bg-yellow-500 text-white px-1.5 py-0.5 rounded">
                         Editando
                       </span>
                     )}
@@ -446,8 +447,8 @@ export default function EmailComposer({
                       onClick={() => handleTemplateSelect(template.id)}
                       className="w-full text-left"
                     >
-                      <h4 className="font-medium text-gray-800">{template.name}</h4>
-                      <p className="text-sm text-gray-500 mt-1 line-clamp-2">{template.subject}</p>
+                      <h4 className="font-medium text-sm sm:text-base text-gray-800">{template.name}</h4>
+                      <p className="text-xs sm:text-sm text-gray-500 mt-1 line-clamp-2">{template.subject}</p>
                     </button>
                   </div>
                 ))}
@@ -457,10 +458,10 @@ export default function EmailComposer({
 
           {/* Formulário */}
           <div className="card">
-            <div className="card-body space-y-6">
+            <div className="card-body p-3 sm:p-4 space-y-4 sm:space-y-6">
               {/* Destinatários */}
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
+                <label className="block text-xs sm:text-sm font-medium text-gray-700 mb-1.5 sm:mb-2">
                   Destinatários *
                 </label>
                 <RecipientSelector
@@ -469,30 +470,30 @@ export default function EmailComposer({
                   availableRecipients={mockRecipients}
                 />
                 {errors.recipients && (
-                  <p className="mt-1 text-sm text-red-600">{errors.recipients}</p>
+                  <p className="mt-1 text-xs sm:text-sm text-red-600">{errors.recipients}</p>
                 )}
               </div>
 
               {/* Assunto */}
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
+                <label className="block text-xs sm:text-sm font-medium text-gray-700 mb-1.5 sm:mb-2">
                   Assunto *
                 </label>
                 <input
                   type="text"
                   value={subject}
                   onChange={(e) => setSubject(e.target.value)}
-                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                  className="w-full px-3 sm:px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-sm"
                   placeholder="Digite o assunto do e-mail"
                 />
                 {errors.subject && (
-                  <p className="mt-1 text-sm text-red-600">{errors.subject}</p>
+                  <p className="mt-1 text-xs sm:text-sm text-red-600">{errors.subject}</p>
                 )}
               </div>
 
               {/* Seletor de modo de edição */}
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
+                <label className="block text-xs sm:text-sm font-medium text-gray-700 mb-1.5 sm:mb-2">
                   Modo de edição
                 </label>
                 <div className="flex gap-4">
@@ -523,7 +524,7 @@ export default function EmailComposer({
 
               {/* Mensagem */}
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
+                <label className="block text-xs sm:text-sm font-medium text-gray-700 mb-1.5 sm:mb-2">
                   Mensagem *
                 </label>
                 {editorMode === 'simple' ? (
@@ -531,7 +532,7 @@ export default function EmailComposer({
                     value={message}
                     onChange={(e) => setMessage(e.target.value)}
                     rows={10}
-                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                    className="w-full px-3 sm:px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-sm"
                     placeholder="Digite sua mensagem aqui..."
                   />
                 ) : (
@@ -546,7 +547,7 @@ export default function EmailComposer({
                   </div>
                 )}
                 {errors.message && (
-                  <p className="mt-1 text-sm text-red-600">{errors.message}</p>
+                  <p className="mt-1 text-xs sm:text-sm text-red-600">{errors.message}</p>
                 )}
               </div>
 
@@ -569,7 +570,7 @@ export default function EmailComposer({
                     Visualizar
                   </button>
                   {editingTemplate ? (
-                    <>
+                    <div className="flex items-center gap-2">
                       <button
                         onClick={() => {
                           setEditingTemplate(null)
@@ -586,7 +587,7 @@ export default function EmailComposer({
                         <span className="material-symbols-outlined text-sm">save</span>
                         {emailTemplates.some(t => t.id === editingTemplate.id) ? 'Salvar como Novo' : 'Atualizar Template'}
                       </button>
-                    </>
+                    </div>
                   ) : (
                     <button
                       onClick={handleSend}
@@ -621,11 +622,11 @@ export default function EmailComposer({
         />
       ) : (
         // Aba Templates
-        <div className="space-y-6">
+        <div className="space-y-4 sm:space-y-6">
           <div className="card">
-            <div className="card-body">
-              <div className="flex items-center justify-between mb-6">
-                <h3 className="text-xl font-semibold text-gray-800">
+            <div className="card-body p-3 sm:p-4">
+              <div className="flex flex-col sm:flex-row sm:items-center justify-between mb-4 sm:mb-6 gap-3 sm:gap-0">
+                <h3 className="text-lg sm:text-xl font-semibold text-gray-800">
                   Gerenciar Templates
                 </h3>
                 <button
@@ -636,7 +637,7 @@ export default function EmailComposer({
                     setHtmlContent('')
                     setEditingTemplate(null)
                   }}
-                  className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors flex items-center gap-2"
+                  className="px-3 sm:px-4 py-1.5 sm:py-2 text-xs sm:text-sm bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors flex items-center justify-center sm:justify-start gap-2"
                 >
                   <span className="material-symbols-outlined text-sm">add</span>
                   Criar Novo Template
@@ -644,23 +645,23 @@ export default function EmailComposer({
               </div>
 
               {/* Templates Padrão */}
-              <div className="mb-8">
-                <h4 className="text-lg font-medium text-gray-700 mb-4">Templates Padrão</h4>
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+              <div className="mb-6 sm:mb-8">
+                <h4 className="text-base sm:text-lg font-medium text-gray-700 mb-3 sm:mb-4">Templates Padrão</h4>
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-4">
                   {emailTemplates.map((template) => (
                     <div
                       key={template.id}
-                      className="border border-gray-200 rounded-lg p-4 hover:shadow-md transition-shadow"
+                      className="border border-gray-200 rounded-lg p-3 sm:p-4 hover:shadow-md transition-shadow"
                     >
-                      <div className="flex items-start justify-between mb-3">
-                        <div className="flex items-center gap-2">
-                          <span className="material-symbols-outlined text-gray-600">
+                      <div className="flex items-start justify-between mb-2 sm:mb-3">
+                        <div className="flex items-center gap-1.5 sm:gap-2">
+                          <span className="material-symbols-outlined text-sm sm:text-base text-gray-600">
                             {template.icon}
                           </span>
-                          <h5 className="font-medium text-gray-800">{template.name}</h5>
+                          <h5 className="font-medium text-sm sm:text-base text-gray-800">{template.name}</h5>
                         </div>
                         <div className="flex items-center gap-1">
-                          <span className="text-xs text-gray-500 bg-gray-100 px-2 py-1 rounded mr-2">
+                          <span className="text-xs bg-gray-100 px-1.5 sm:px-2 py-0.5 sm:py-1 rounded mr-1 sm:mr-2 text-gray-500">
                             Padrão
                           </span>
                           <button
@@ -672,14 +673,14 @@ export default function EmailComposer({
                           </button>
                         </div>
                       </div>
-                      <p className="text-sm text-gray-600 mb-2 font-medium">{template.subject}</p>
-                      <p className="text-sm text-gray-500 line-clamp-3 mb-4">
+                      <p className="text-xs sm:text-sm text-gray-600 mb-1.5 sm:mb-2 font-medium">{template.subject}</p>
+                      <p className="text-xs sm:text-sm text-gray-500 line-clamp-2 sm:line-clamp-3 mb-3 sm:mb-4">
                         {template.message.substring(0, 100)}...
                       </p>
                       <div className="flex gap-2">
                         <button
                           onClick={() => handleTemplateSelect(template.id)}
-                          className="flex-1 px-3 py-1.5 text-sm bg-blue-600 text-white rounded hover:bg-blue-700 transition-colors"
+                          className="flex-1 px-2 sm:px-3 py-1 sm:py-1.5 text-xs sm:text-sm bg-blue-600 text-white rounded hover:bg-blue-700 transition-colors"
                         >
                           Usar Template
                         </button>
@@ -691,30 +692,30 @@ export default function EmailComposer({
 
               {/* Templates Personalizados */}
               <div>
-                <h4 className="text-lg font-medium text-gray-700 mb-4">Templates Personalizados</h4>
+                <h4 className="text-base sm:text-lg font-medium text-gray-700 mb-3 sm:mb-4">Templates Personalizados</h4>
                 {savedTemplates.length === 0 ? (
-                  <div className="text-center py-8 bg-gray-50 rounded-lg">
-                    <span className="material-symbols-outlined text-4xl text-gray-400 mb-2">
+                  <div className="text-center py-6 sm:py-8 bg-gray-50 rounded-lg">
+                    <span className="material-symbols-outlined text-3xl sm:text-4xl text-gray-400 mb-1.5 sm:mb-2">
                       inbox
                     </span>
-                    <p className="text-gray-500">Nenhum template personalizado criado ainda.</p>
-                    <p className="text-sm text-gray-400 mt-1">
+                    <p className="text-sm sm:text-base text-gray-500">Nenhum template personalizado criado ainda.</p>
+                    <p className="text-xs sm:text-sm text-gray-400 mt-1">
                       Crie templates personalizados para reutilizar em suas comunicações.
                     </p>
                   </div>
                 ) : (
-                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                  <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-4">
                     {savedTemplates.map((template) => (
                       <div
                         key={template.id}
-                        className="border border-gray-200 rounded-lg p-4 hover:shadow-md transition-shadow"
+                        className="border border-gray-200 rounded-lg p-3 sm:p-4 hover:shadow-md transition-shadow"
                       >
-                        <div className="flex items-start justify-between mb-3">
-                          <div className="flex items-center gap-2">
-                            <span className="material-symbols-outlined text-gray-600">
+                        <div className="flex items-start justify-between mb-2 sm:mb-3">
+                          <div className="flex items-center gap-1.5 sm:gap-2">
+                            <span className="material-symbols-outlined text-sm sm:text-base text-gray-600">
                               {template.icon}
                             </span>
-                            <h5 className="font-medium text-gray-800">{template.name}</h5>
+                            <h5 className="font-medium text-sm sm:text-base text-gray-800">{template.name}</h5>
                           </div>
                           <div className="flex items-center gap-1">
                             <button
@@ -733,14 +734,14 @@ export default function EmailComposer({
                             </button>
                           </div>
                         </div>
-                        <p className="text-sm text-gray-600 mb-2 font-medium">{template.subject}</p>
-                        <p className="text-sm text-gray-500 line-clamp-3 mb-4">
+                        <p className="text-xs sm:text-sm text-gray-600 mb-1.5 sm:mb-2 font-medium">{template.subject}</p>
+                        <p className="text-xs sm:text-sm text-gray-500 line-clamp-2 sm:line-clamp-3 mb-3 sm:mb-4">
                           {template.message.substring(0, 100)}...
                         </p>
                         <div className="flex gap-2">
                           <button
                             onClick={() => handleTemplateSelect(template.id)}
-                            className="flex-1 px-3 py-1.5 text-sm bg-blue-600 text-white rounded hover:bg-blue-700 transition-colors"
+                            className="flex-1 px-2 sm:px-3 py-1 sm:py-1.5 text-xs sm:text-sm bg-blue-600 text-white rounded hover:bg-blue-700 transition-colors"
                           >
                             Usar Template
                           </button>
@@ -757,36 +758,36 @@ export default function EmailComposer({
 
       {/* Modal para criar template */}
       {showTemplateModal && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-          <div className="bg-white rounded-lg p-6 max-w-md w-full">
-            <h3 className="text-lg font-semibold text-gray-800 mb-4">
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+          <div className="bg-white rounded-lg p-4 sm:p-6 max-w-md w-full">
+            <h3 className="text-base sm:text-lg font-semibold text-gray-800 mb-3 sm:mb-4">
               Salvar como Template
             </h3>
             <div className="mb-4">
-              <label className="block text-sm font-medium text-gray-700 mb-2">
+              <label className="block text-xs sm:text-sm font-medium text-gray-700 mb-1.5 sm:mb-2">
                 Nome do Template
               </label>
               <input
                 type="text"
                 value={newTemplateName}
                 onChange={(e) => setNewTemplateName(e.target.value)}
-                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                className="w-full px-3 sm:px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-sm"
                 placeholder="Ex: Convite para Reunião"
               />
             </div>
-            <div className="flex justify-end gap-3">
+            <div className="flex justify-end gap-2 sm:gap-3">
               <button
                 onClick={() => {
                   setShowTemplateModal(false)
                   setNewTemplateName('')
                 }}
-                className="px-4 py-2 text-gray-700 bg-gray-100 rounded-lg hover:bg-gray-200 transition-colors"
+                className="px-3 sm:px-4 py-1.5 sm:py-2 text-xs sm:text-sm text-gray-700 bg-gray-100 rounded-lg hover:bg-gray-200 transition-colors"
               >
                 Cancelar
               </button>
               <button
                 onClick={handleSaveAsTemplate}
-                className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
+                className="px-3 sm:px-4 py-1.5 sm:py-2 text-xs sm:text-sm bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
               >
                 Salvar Template
               </button>

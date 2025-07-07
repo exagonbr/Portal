@@ -4,6 +4,7 @@
 declare global {
   interface Window {
     HT?: any;
+    ht?: any;
   }
 }
 
@@ -18,9 +19,17 @@ export class HT {
           try {
             // Verificar se o HT está disponível globalmente
             if (typeof window.HT === 'function') {
-              // @ts-ignore - O HT global é adicionado pelo script carregado
+              // Inicializar o plugin Handtalk
               window.ht = new window.HT(config);
               this.initialized = true;
+            } else {
+              // Tentar carregar novamente após um curto atraso
+              setTimeout(() => {
+                if (typeof window.HT === 'function') {
+                  window.ht = new window.HT(config);
+                  this.initialized = true;
+                }
+              }, 2000);
             }
           } catch (error) {
             // Continua sem acessibilidade LIBRAS
@@ -67,7 +76,21 @@ export class HT {
         script.onerror = (error) => {
           clearTimeout(timeout);
           script.remove();
-          resolve(); // Resolve mesmo com erro para não quebrar a aplicação
+          
+          // Tentar carregar de CDN alternativa
+          const fallbackScript = document.createElement('script');
+          fallbackScript.src = 'https://api.handtalk.me/plugin/latest/handtalk.min.js';
+          fallbackScript.async = true;
+          
+          fallbackScript.onload = () => {
+            resolve();
+          };
+          
+          fallbackScript.onerror = () => {
+            resolve(); // Resolve mesmo com erro para não quebrar a aplicação
+          };
+          
+          document.head.appendChild(fallbackScript);
         };
         
         document.head.appendChild(script);

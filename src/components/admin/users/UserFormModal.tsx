@@ -7,13 +7,9 @@ import { Badge } from '@/components/ui/Badge'
 import { UserResponseDto, RoleResponseDto, InstitutionResponseDto, CreateUserDto, UpdateUserDto } from '@/types/api'
 import { useToast } from '@/components/ToastManager';
 
-// Mock service
-const mockUserService = {
-  updateUser: async (id: string, data: any) => console.log('Mock update user', id, data),
-  createUser: async (data: any) => console.log('Mock create user', data),
-};
+// Importar o serviço real de usuários
+import { userService } from '@/services/userService'
 
-const userService = mockUserService;
 import { 
   Users, 
   Mail, 
@@ -93,7 +89,7 @@ export default function UserFormModal({
           institution_id: (formData as any).institution_id ? Number((formData as any).institution_id) : undefined,
           enabled: (formData as any).enabled
         }
-        await userService.updateUser(user.id.toString(), updateData as any)
+        await userService.updateUser(user.id, updateData as any)
         showSuccess('Usuário atualizado com sucesso!')
       } else {
         const createData = {

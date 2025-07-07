@@ -2,6 +2,7 @@ import type { Metadata, Viewport } from 'next';
 import { Inter } from 'next/font/google';
 import './globals.css';
 import ClientLayout from '@/components/ClientLayout';
+import Handtalk from '@/components/Handtalk';
 
 const inter = Inter({ subsets: ['latin'] });
 
@@ -67,6 +68,9 @@ export default function RootLayout({
         <script src="/register-sw.js" defer />
       </head>
       <body className={`${inter.className} m-0 p-0 h-full w-full`} suppressHydrationWarning>
+        {/* Componente Handtalk para acessibilidade em LIBRAS */}
+        <Handtalk token="fe964e92fd91396436b25c2ee95b3976" />
+        
         <ClientLayout>
           {children}
         </ClientLayout>

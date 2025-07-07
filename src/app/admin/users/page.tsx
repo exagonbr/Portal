@@ -2,9 +2,9 @@
 
 import React, { useState, useEffect, useCallback } from 'react'
 import { useToast } from '@/components/ToastManager'
-import { userService as usersService } from '@/services/userService.mock'
-import { roleService } from '@/services/roleService.mock' // Mock a ser criado
-import { institutionService } from '@/services/institutionService.mock' // Mock a ser criado
+import { userService } from '@/services/userService'
+import { roleService } from '@/services/roleService'
+import { institutionService } from '@/services/institutionService'
 import { UserResponseDto, UserFilterDto, RoleResponseDto, InstitutionResponseDto } from '@/types/api'
 import AuthenticatedLayout from '@/components/AuthenticatedLayout'
 import UserFormModal from '@/components/admin/users/UserFormModal'
@@ -87,8 +87,6 @@ export default function AdminUsersPage() {
     if (showLoadingIndicator) setLoading(true)
     else setRefreshing(true)
 
-    await new Promise(resolve => setTimeout(resolve, 500)) // Simular atraso
-
     try {
       // Carregar dados auxiliares (roles, institutions) uma vez
       if (roles.length === 0) {
@@ -109,13 +107,13 @@ export default function AdminUsersPage() {
         ...currentFilters,
       }
 
-      const response = await usersService.getUsers(params)
+      const response = await userService.getUsers(params)
       setUsers(response.items || [])
       setTotalItems(response.total || 0)
       setCurrentPage(page)
 
-      // Calcular stats com todos os usuários do mock para uma visão geral
-      const allUsersResponse = await usersService.getUsers({ limit: 1000 });
+      // Calcular stats com todos os usuários para uma visão geral
+      const allUsersResponse = await userService.getUsers({ limit: 1000 });
       const allRolesResponse = await roleService.getRoles({ limit: 1000 });
       calculateStats(allUsersResponse.items, allRolesResponse.items);
 
@@ -172,7 +170,7 @@ export default function AdminUsersPage() {
 
     try {
       setLoading(true)
-      await usersService.deleteUser(user.id)
+      await userService.deleteUser(user.id)
       showSuccess("Usuário excluído com sucesso.")
       await fetchPageData(currentPage, searchQuery, filters, false)
     } catch (error) {
