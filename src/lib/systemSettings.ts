@@ -8,9 +8,10 @@ export interface SystemSettings {
   maintenance_mode: boolean;
   logo_light: string;
   logo_dark: string;
-  background_type: 'video' | 'video_url' | 'image' | 'color';
+  background_type: 'video' | 'video_random' | 'video_url' | 'image' | 'color';
   main_background: string;
   background_video_url: string;
+  random_video_enabled: boolean;
   primary_color: string;
   secondary_color: string;
   aws_access_key: string;
@@ -40,9 +41,10 @@ export interface PublicSettings {
   maintenance_mode: boolean;
   logo_light: string;
   logo_dark: string;
-  background_type: 'video' | 'video_url' | 'image' | 'color';
+  background_type: 'video' | 'video_random' | 'video_url' | 'image' | 'color';
   main_background: string;
   background_video_url: string;
+  random_video_enabled: boolean;
   primary_color: string;
   secondary_color: string;
 }
@@ -59,6 +61,7 @@ const defaultSettings: SystemSettings = {
   background_type: 'video',
   main_background: '/back_video4.mp4',
   background_video_url: '',
+  random_video_enabled: false,
   primary_color: '#1e3a8a',
   secondary_color: '#3b82f6',
   aws_access_key: '',
@@ -182,6 +185,7 @@ export async function loadPublicSettings(): Promise<PublicSettings> {
       background_type: defaultSettings.background_type,
       main_background: defaultSettings.main_background,
       background_video_url: defaultSettings.background_video_url,
+      random_video_enabled: defaultSettings.random_video_enabled,
       primary_color: defaultSettings.primary_color,
       secondary_color: defaultSettings.secondary_color,
     };

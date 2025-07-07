@@ -79,10 +79,14 @@ function MyComponent() {
 
 1. **Usuário acessa página de login no Chrome**
 2. **Sistema detecta Chrome** através do UserAgent
-3. **Verifica ausência de `_nocache`** na URL
-4. **Limpa cache do navegador** (localStorage, sessionStorage, etc.)
-5. **Força reload da página** com timestamp para bypass de cache
-6. **Página recarrega com `_nocache`** evitando novo loop
+3. **Verifica se reload já foi aplicado** através de múltiplas camadas:
+   - Parâmetro `_nocache` na URL
+   - Cookie `chrome_reload_applied`
+   - Valores em sessionStorage e localStorage
+4. **Se não foi aplicado, marca em todos os mecanismos** para evitar loops
+5. **Limpa cache do navegador** (localStorage, sessionStorage, etc.)
+6. **Força reload da página** com timestamp para bypass de cache
+7. **Página recarrega com `_nocache`** evitando novo loop
 
 ## Navegadores Suportados
 
@@ -119,7 +123,11 @@ Nenhuma configuração adicional necessária. A correção:
 ## Prevenção de Problemas
 
 ### Loop Infinito
-- Parâmetro `_nocache` previne reloads repetidos
+- Sistema multi-camada para prevenir loops:
+  1. Verificação de parâmetro `_nocache` na URL
+  2. Cookie `chrome_reload_applied` com duração de 60 segundos
+  3. Armazenamento em sessionStorage e localStorage
+  4. Função centralizada `isReloadAlreadyApplied()` que verifica todas as camadas
 - Verificação de `mounted` garante execução apenas no cliente
 
 ### Performance

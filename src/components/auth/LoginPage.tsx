@@ -31,6 +31,7 @@ export function LoginPage() {
   const [contextLoading, setContextLoading] = useState(true);
   const [mounted, setMounted] = useState(false);
   const loginFormRef = useRef<{ setCredentials: (email: string, password: string) => void }>(null);
+  const [randomVideo, setRandomVideo] = useState<string | null>(null);
   
   // Função para lidar com a seleção de credenciais
   const handleCredentialSelect = (email: string, password: string) => {
@@ -81,16 +82,41 @@ export function LoginPage() {
   useEffect(() => {
     if (!mounted) return;
     
-    // Verificar se é Chrome e se não há parâmetro _nocache (evita loop infinito)
-    const urlParams = new URLSearchParams(window.location.search);
-    if (!urlParams.has('_nocache')) {
-      const chromeReloadApplied = forceReloadIfChrome();
-      if (chromeReloadApplied) {
-        console.log('🔄 Aplicando correção de reload para Chrome no login...');
-        return; // Evita execução adicional já que a página será recarregada
-      }
+    // Aplicar reload apenas se necessário
+    const chromeReloadApplied = forceReloadIfChrome();
+    if (chromeReloadApplied) {
+      console.log('🔄 Aplicando correção de reload para Chrome no login...');
     }
   }, [mounted]);
+
+  // Carregar vídeos disponíveis para vídeo aleatório
+  useEffect(() => {
+    if (settings?.background_type === 'video_random') {
+      fetchAvailableVideos();
+    }
+  }, [settings?.background_type]);
+
+  // Função para buscar vídeos disponíveis
+  const fetchAvailableVideos = async () => {
+    try {
+      const response = await fetch('/api/admin/system/available-videos');
+      if (!response.ok) {
+        throw new Error('Erro ao carregar vídeos');
+      }
+      
+      const data = await response.json();
+      
+      if (data.success && Array.isArray(data.videos) && data.videos.length > 0) {
+        // Selecionar um vídeo aleatório
+        const randomIndex = Math.floor(Math.random() * data.videos.length);
+        setRandomVideo(data.videos[randomIndex]);
+      }
+    } catch (error) {
+      console.error('Erro ao carregar vídeos aleatórios:', error);
+      // Fallback para um vídeo padrão
+      setRandomVideo('/back_video.mp4');
+    }
+  };
 
   // Aguardar o contexto estar disponível
   useEffect(() => {
@@ -249,7 +275,7 @@ export function LoginPage() {
     const { background_type, main_background, background_video_url } = settings;
 
     // Sempre usar o vídeo como padrão se não houver configuração
-    if (!background_type || (!main_background && !background_video_url)) {
+    if (!background_type || (!main_background && !background_video_url && !randomVideo)) {
       return (
         <video
           autoPlay
@@ -294,7 +320,20 @@ export function LoginPage() {
             Seu navegador não suporta a tag de vídeo.
           </video>
         );
-
+      case 'video_random':
+        return (
+          <video
+            autoPlay
+            loop
+            muted
+            playsInline
+            className="absolute min-w-full min-h-full object-cover opacity-100"
+            preload="auto"
+          >
+            <source src={randomVideo || '/back_video4.mp4'} type="video/mp4" />
+            Seu navegador não suporta a tag de vídeo.
+          </video>
+        );
       case 'image':
         const isVideo = main_background.match(/\.(mp4|webm|ogg)$/i);
         

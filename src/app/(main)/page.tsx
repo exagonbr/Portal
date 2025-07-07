@@ -14,13 +14,10 @@ export default function HomePage() {
   useEffect(() => {
     // Correção específica para Chrome (desktop e mobile) quando não há usuário autenticado
     if (!loading && !user) {
-      const urlParams = new URLSearchParams(window.location.search);
-      if (!urlParams.has('_nocache')) {
-        const chromeReloadApplied = forceReloadIfChrome();
-        if (chromeReloadApplied) {
-          console.log('🔄 Aplicando correção de reload para Chrome na página inicial...');
-          return; // Evita execução adicional já que a página será recarregada
-        }
+      // Aplicar reload apenas se necessário
+      const chromeReloadApplied = forceReloadIfChrome();
+      if (chromeReloadApplied) {
+        console.log('🔄 Aplicando correção de reload para Chrome na página inicial...');
       }
     }
 

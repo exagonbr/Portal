@@ -614,6 +614,25 @@ export default function AdminSettingsPage() {
                           <span className="material-symbols-outlined mr-1 text-xs">movie</span>
                           {availableVideos.length} vídeos encontrados
                         </p>
+                        
+                        <div className="mt-4 flex items-center bg-blue-50 p-3 rounded-lg border border-blue-100">
+                          <input
+                            type="checkbox"
+                            id="random_video_enabled"
+                            checked={localSettings.random_video_enabled || false}
+                            onChange={(e) => updateLocalSetting('random_video_enabled', e.target.checked)}
+                            className="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
+                          />
+                          <label htmlFor="random_video_enabled" className="ml-2 flex flex-col">
+                            <span className="text-sm font-medium text-blue-800 flex items-center">
+                              <span className="material-symbols-outlined mr-1 text-sm">shuffle</span>
+                              Vídeo Aleatório
+                            </span>
+                            <span className="text-xs text-blue-600">
+                              Um vídeo será escolhido aleatoriamente a cada carregamento da página
+                            </span>
+                          </label>
+                        </div>
                       </div>
                     )}
 
@@ -765,6 +784,28 @@ export default function AdminSettingsPage() {
                           <source src={localSettings.background_video_url} type="video/mp4" />
                         </video>
                       )}
+
+                      {localSettings.background_type === 'image' && (
+                        <div
+                          className="w-full h-full"
+                          style={{
+                            backgroundImage: `url(${localSettings.main_background})`,
+                            backgroundSize: 'cover',
+                            backgroundPosition: 'center',
+                            backgroundRepeat: 'no-repeat'
+                          }}
+                        />
+                      )}
+                      
+                      {localSettings.background_type === 'color' && (
+                        <div
+                          className="w-full h-full"
+                          style={{
+                            backgroundColor: localSettings.main_background
+                          }}
+                        />
+                      )}
+
                       <div className="absolute inset-0 bg-black/20 group-hover:bg-black/30 transition-colors" />
                       <div className="relative z-10 text-white font-medium text-sm bg-black/60 px-4 py-2 rounded-lg backdrop-blur-sm">
                         <div className="flex items-center">

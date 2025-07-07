@@ -25,6 +25,7 @@ export default function DynamicBackground({
   
   const { settings, loading } = usePublic ? publicHook : systemHook
   const [backgroundStyle, setBackgroundStyle] = useState<React.CSSProperties>({})
+  const [randomVideo, setRandomVideo] = useState<string | null>(null)
 
   useEffect(() => {
     if (loading || !settings) return
@@ -67,8 +68,37 @@ export default function DynamicBackground({
     setBackgroundStyle(style)
   }, [settings, loading])
 
+  // Carregar vídeos disponíveis para vídeo aleatório
+  useEffect(() => {
+    if (settings?.random_video_enabled && settings?.background_type === 'video') {
+      fetchAvailableVideos();
+    }
+  }, [settings?.random_video_enabled, settings?.background_type]);
+
+  // Função para buscar vídeos disponíveis
+  const fetchAvailableVideos = async () => {
+    try {
+      const response = await fetch('/api/admin/system/available-videos');
+      if (!response.ok) {
+        throw new Error('Erro ao carregar vídeos');
+      }
+      
+      const data = await response.json();
+      
+      if (data.success && Array.isArray(data.videos) && data.videos.length > 0) {
+        // Selecionar um vídeo aleatório
+        const randomIndex = Math.floor(Math.random() * data.videos.length);
+        setRandomVideo(data.videos[randomIndex]);
+      }
+    } catch (error) {
+      console.error('Erro ao carregar vídeos aleatórios:', error);
+      // Fallback para um vídeo padrão
+      setRandomVideo('/back_video.mp4');
+    }
+  };
+
   const renderVideoBackground = () => {
-    if ((!settings?.background_type || (settings?.background_type !== 'video' && settings?.background_type !== 'video_url'))) {
+    if ((!settings?.background_type || (settings?.background_type !== 'video' && settings?.background_type !== 'video_url' && settings?.background_type !== 'video_random'))) {
       return null
     }
 
@@ -76,6 +106,8 @@ export default function DynamicBackground({
     let videoSource = settings.main_background;
     if (settings.background_type === 'video_url') {
       videoSource = settings.background_video_url;
+    } else if (settings.background_type === 'video_random') {
+      videoSource = randomVideo || '/back_video.mp4';
     }
 
     if (!videoSource) return null;
