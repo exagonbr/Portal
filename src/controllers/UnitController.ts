@@ -1,148 +1,142 @@
 import { Request, Response } from 'express';
-import { Unit } from '../models/Unit';
+import { UnitRepository } from '../repositories/UnitRepository';
+
+const unitRepository = new UnitRepository();
 
 class UnitController {
-  async getAllUnits(req: Request, res: Response) {
-    try {
-      const units = await Unit.query().orderBy('name');
-      return res.json(units);
-    } catch (error) {
-      console.log('Erro ao listar unidades:', error);
-      return res.status(500).json({ error: 'Erro interno do servidor' });
+    async getAll(req: Request, res: Response) {
+        try {
+            const units = await unitRepository.findAll();
+            return res.status(200).json({ success: true, data: units });
+        } catch (error) {
+            console.error(`Erro ao listar unidades: ${error}`);
+            return res.status(500).json({ success: false, message: 'Erro interno do servidor' });
+        }
     }
-  }
 
-  async list(req: Request, res: Response) {
-    try {
-      const units = await Unit.query()
-        .withGraphFetched('institution')
-        .orderBy('name');
+    async getById(req: Request, res: Response) {
+        try {
+            const { id } = req.params;
+            const unit = await unitRepository.findById(id);
+            
+            if (!unit) {
+                return res.status(404).json({ success: false, message: 'Unidade não encontrada' });
+            }
 
-      return res.json(units);
-    } catch (error) {
-      console.log('Erro ao listar unidades:', error);
-      return res.status(500).json({ error: 'Erro interno do servidor' });
+            return res.status(200).json({ success: true, data: unit });
+        } catch (error) {
+            console.error(`Erro ao buscar unidade: ${error}`);
+            return res.status(500).json({ success: false, message: 'Erro interno do servidor' });
+        }
     }
-  }
 
-  async getById(req: Request, res: Response) {
-    try {
-      const { id } = req.params;
-      const unit = await Unit.query()
-        .findById(id)
-        .withGraphFetched('institution');
+    async create(req: Request, res: Response) {
+        try {
+            const { name, institutionId } = req.body;
+            
+            if (!name || !institutionId) {
+                return res.status(400).json({ success: false, message: 'Nome e ID da instituição são obrigatórios' });
+            }
 
-      if (!unit) {
-        return res.status(404).json({ error: 'Unidade não encontrada' });
-      }
-
-      return res.json(unit);
-    } catch (error) {
-      console.log('Erro ao buscar unidade:', error);
-      return res.status(500).json({ error: 'Erro interno do servidor' });
+            const unit = await unitRepository.create({ name, institutionId });
+            return res.status(201).json({ success: true, data: unit });
+        } catch (error) {
+            console.error(`Erro ao criar unidade: ${error}`);
+            return res.status(500).json({ success: false, message: 'Erro interno do servidor' });
+        }
     }
-  }
 
-  async create(req: Request, res: Response) {
-    try {
-      const { name, description, type, active, institution_id } = req.body;
+    async update(req: Request, res: Response) {
+        try {
+            const { id } = req.params;
+            const updateData = req.body;
+            
+            const unit = await unitRepository.update(id, updateData);
+            
+            if (!unit) {
+                return res.status(404).json({ success: false, message: 'Unidade não encontrada' });
+            }
 
-      const unit = await Unit.query().insert({
-        name,
-        description,
-        type,
-        active: active ?? true,
-        institution_id
-      });
-
-      return res.status(201).json(unit);
-    } catch (error) {
-      console.log('Erro ao criar unidade:', error);
-      return res.status(500).json({ error: 'Erro interno do servidor' });
+            return res.status(200).json({ success: true, data: unit });
+        } catch (error) {
+            console.error(`Erro ao atualizar unidade: ${error}`);
+            return res.status(500).json({ success: false, message: 'Erro interno do servidor' });
+        }
     }
-  }
 
-  async update(req: Request, res: Response) {
-    try {
-      const { id } = req.params;
-      const { name, description, type, active, institution_id } = req.body;
+    async delete(req: Request, res: Response) {
+        try {
+            const { id } = req.params;
+            const success = await unitRepository.delete(id);
+            
+            if (!success) {
+                return res.status(404).json({ success: false, message: 'Unidade não encontrada' });
+            }
 
-      const unit = await Unit.query()
-        .findById(id)
-        .patch({
-          name,
-          description,
-          type,
-          active,
-          institution_id
-        });
-
-      if (!unit) {
-        return res.status(404).json({ error: 'Unidade não encontrada' });
-      }
-
-      return res.json({ message: 'Unidade atualizada com sucesso' });
-    } catch (error) {
-      console.log('Erro ao atualizar unidade:', error);
-      return res.status(500).json({ error: 'Erro interno do servidor' });
+            return res.status(200).json({ success: true, message: 'Unidade excluída com sucesso' });
+        } catch (error) {
+            console.error(`Erro ao excluir unidade: ${error}`);
+            return res.status(500).json({ success: false, message: 'Erro interno do servidor' });
+        }
     }
-  }
 
-  async delete(req: Request, res: Response) {
-    try {
-      const { id } = req.params;
-      const deleted = await Unit.query().deleteById(id);
-
-      if (!deleted) {
-        return res.status(404).json({ error: 'Unidade não encontrada' });
-      }
-
-      return res.json({ message: 'Unidade excluída com sucesso' });
-    } catch (error) {
-      console.log('Erro ao excluir unidade:', error);
-      return res.status(500).json({ error: 'Erro interno do servidor' });
+    async search(req: Request, res: Response) {
+        try {
+            const { q } = req.query;
+            if (!q) {
+                return res.status(400).json({ success: false, message: 'Parâmetro de busca "q" é obrigatório' });
+            }
+            
+            const units = await unitRepository.findByName(q as string);
+            return res.status(200).json({ success: true, data: units });
+        } catch (error) {
+            console.error(`Erro na busca de unidades: ${error}`);
+            return res.status(500).json({ success: false, message: 'Erro interno do servidor' });
+        }
     }
-  }
 
-  async search(req: Request, res: Response) {
-    try {
-      const { query, type, institution_id, active } = req.query;
-      const page = Number(req.query.page) || 1;
-      const limit = Number(req.query.limit) || 10;
-      const offset = (page - 1) * limit;
-
-      let queryBuilder = Unit.query();
-
-      if (query) {
-        queryBuilder = queryBuilder.where('name', 'ilike', `%${query}%`);
-      }
-
-      if (type) {
-        queryBuilder = queryBuilder.where('type', type as string);
-      }
-
-      if (institution_id) {
-        queryBuilder = queryBuilder.where('institution_id', institution_id as string);
-      }
-
-      if (active !== undefined) {
-        queryBuilder = queryBuilder.where('active', active === 'true');
-      }
-
-      const units = await queryBuilder.page(page - 1, limit);
-
-      return res.json({
-        data: units.results,
-        total: units.total,
-        page,
-        limit,
-        totalPages: Math.ceil(units.total / limit)
-      });
-    } catch (error) {
-      console.log('Erro ao buscar unidades:', error);
-      return res.status(500).json({ error: 'Erro interno do servidor' });
+    async getActive(req: Request, res: Response) {
+        try {
+            const units = await unitRepository.findActive();
+            return res.status(200).json({ success: true, data: units });
+        } catch (error) {
+            console.error(`Erro ao buscar unidades ativas: ${error}`);
+            return res.status(500).json({ success: false, message: 'Erro interno do servidor' });
+        }
     }
-  }
+
+    async getByInstitution(req: Request, res: Response) {
+        try {
+            const { institutionId } = req.params;
+            const institutionIdNumber = parseInt(institutionId);
+            
+            if (isNaN(institutionIdNumber)) {
+                return res.status(400).json({ success: false, message: 'ID da instituição deve ser um número' });
+            }
+            
+            const units = await unitRepository.findByInstitution(institutionIdNumber);
+            return res.status(200).json({ success: true, data: units });
+        } catch (error) {
+            console.error(`Erro ao buscar unidades da instituição: ${error}`);
+            return res.status(500).json({ success: false, message: 'Erro interno do servidor' });
+        }
+    }
+
+    async softDelete(req: Request, res: Response) {
+        try {
+            const { id } = req.params;
+            const success = await unitRepository.softDelete(id);
+            
+            if (!success) {
+                return res.status(404).json({ success: false, message: 'Unidade não encontrada' });
+            }
+            
+            return res.status(200).json({ success: true, message: 'Unidade desativada com sucesso' });
+        } catch (error) {
+            console.error(`Erro ao desativar unidade: ${error}`);
+            return res.status(500).json({ success: false, message: 'Erro interno do servidor' });
+        }
+    }
 }
 
 export default new UnitController();

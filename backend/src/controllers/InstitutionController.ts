@@ -62,7 +62,7 @@ class InstitutionController extends BaseController<Institution> {
 
   public async getStats(req: Request, res: Response): Promise<Response> {
     try {
-      const { id } = req.params;
+    const { id } = req.params;
       const institution = await institutionRepository.findById(id);
       
       if (!institution) {
@@ -79,7 +79,7 @@ class InstitutionController extends BaseController<Institution> {
 
   public async getUsers(req: Request, res: Response): Promise<Response> {
     try {
-      const { id } = req.params;
+    const { id } = req.params;
       const { page = '1', limit = '10' } = req.query;
       
       const institution = await institutionRepository.findById(id);
@@ -110,7 +110,7 @@ class InstitutionController extends BaseController<Institution> {
 
   public async getClasses(req: Request, res: Response): Promise<Response> {
     try {
-      const { id } = req.params;
+    const { id } = req.params;
       const { page = '1', limit = '10' } = req.query;
       
       const institution = await institutionRepository.findById(id);
@@ -141,7 +141,7 @@ class InstitutionController extends BaseController<Institution> {
 
   public async getSchedules(req: Request, res: Response): Promise<Response> {
     try {
-      const { id } = req.params;
+    const { id } = req.params;
       const { page = '1', limit = '10' } = req.query;
       
       const institution = await institutionRepository.findById(id);
@@ -172,7 +172,7 @@ class InstitutionController extends BaseController<Institution> {
 
   public async getAnalytics(req: Request, res: Response): Promise<Response> {
     try {
-      const { id } = req.params;
+    const { id } = req.params;
       const institution = await institutionRepository.findById(id);
       
       if (!institution) {

@@ -121,12 +121,18 @@ function extractEntityInfo(path: string): { entityType?: string; entityId?: stri
 // Função para criar log de atividade
 async function createActivityLog(data: Partial<UserActivity>): Promise<void> {
   try {
-    // Converte user_id para null quando for string vazia ou 'anonymous'
+    // Não permitir user_id nulo - se for nulo ou vazio, não registra a atividade
+    if (!data.user_id || data.user_id === '' || data.user_id === 'anonymous') {
+      console.log('Ignorando log de atividade: user_id é nulo ou vazio');
+      return;
+    }
+    
     const modifiedData = {
       ...data,
-      user_id: (!data.user_id || data.user_id === '' || data.user_id === 'anonymous') ? null : data.user_id,
       created_at: new Date(),
-      updated_at: new Date()
+      updated_at: new Date(),
+      date_created: new Date(),
+      populated: true
     };
     
     await db('user_activity').insert(modifiedData);
@@ -271,8 +277,11 @@ async function updateActiveSession(
   additionalDuration: number
 ): Promise<void> {
   try {
-    // Converte userId para null quando for 'anonymous'
-    const userIdValue = userId === 'anonymous' ? null : userId;
+    // Não registrar sessão se o userId for vazio ou 'anonymous'
+    if (!userId || userId === '' || userId === 'anonymous') {
+      console.log('Ignorando atualização de sessão: user_id é nulo ou vazio');
+      return;
+    }
     
     // Criar um objeto Request simulado com headers vazios
     const mockRequest = {
@@ -302,7 +311,7 @@ async function updateActiveSession(
         actions_count = COALESCE(activity_sessions.actions_count, 0) + 1,
         updated_at = EXCLUDED.updated_at
     `, [
-      uuidv4(), sessionId, userIdValue, new Date(), additionalDuration,
+      uuidv4(), sessionId, userId, new Date(), additionalDuration,
       1, clientInfo.ip, clientInfo.userAgent, JSON.stringify({
         browser: clientInfo.browser,
         os: clientInfo.os,

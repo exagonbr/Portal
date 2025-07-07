@@ -1,84 +1,28 @@
-import knex from 'knex';
-import type { Knex } from 'knex';
+import { Knex } from 'knex';
+import dotenv from 'dotenv';
 
-const environment = process.env.NODE_ENV || 'development';
+dotenv.config();
 
-// Configuração do banco de dados
 const config: Knex.Config = {
-  client: 'postgresql',
+  client: 'pg',
   connection: {
     host: process.env.DB_HOST || 'localhost',
-    port: parseInt(process.env.DB_PORT || '5432'),
-    database: process.env.DB_NAME || 'portal_sabercon',
+    port: Number(process.env.DB_PORT) || 5432,
     user: process.env.DB_USER || 'postgres',
-    password: String(process.env.DB_PASSWORD || 'root'), // Garantir que seja string para evitar erro SASL
-    ssl: process.env.DB_SSL === 'true' ? { rejectUnauthorized: false } : false,
-  },
-  pool: {
-    min: 2,
-    max: environment === 'production' ? 20 : 10,
+    password: process.env.DB_PASSWORD || 'root',
+    database: process.env.DB_NAME || 'portal_sabercon',
   },
   migrations: {
-    tableName: 'knex_migrations',
     directory: '../database/migrations',
+    tableName: 'knex_migrations',
   },
   seeds: {
     directory: '../database/seeds',
   },
-  acquireConnectionTimeout: 60000,
-  // Configuração específica para evitar carregar drivers desnecessários
-  useNullAsDefault: false,
-  // Forçar apenas PostgreSQL
-  wrapIdentifier: (value: string, origImpl: (value: string) => string) => {
-    return origImpl(value);
+  pool: {
+    min: 2,
+    max: 10,
   },
 };
 
-// Instância do Knex
-export const connection: Knex = knex(config);
-
-// Função para testar a conexão com o banco
-export const testDatabaseConnection = async (): Promise<boolean> => {
-  try {
-    await connection.raw('SELECT 1 as result');
-    console.log('✅ Conexão com PostgreSQL estabelecida com sucesso');
-    return true;
-  } catch (error) {
-    console.log('❌ Erro ao conectar com PostgreSQL:', error);
-    return false;
-  }
-};
-
-// Função para fechar a conexão (útil para testes e shutdown)
-export const closeDatabaseConnection = async (): Promise<void> => {
-  try {
-    await connection.destroy();
-    console.log('🔌 Conexão com PostgreSQL fechada');
-  } catch (error) {
-    console.log('❌ Erro ao fechar conexão com PostgreSQL:', error);
-  }
-};
-
-// Função para executar migrations
-export const runMigrations = async (): Promise<void> => {
-  try {
-    await connection.migrate.latest();
-    console.log('✅ Migrations executadas com sucesso');
-  } catch (error) {
-    console.log('❌ Erro ao executar migrations:', error);
-    throw error;
-  }
-};
-
-// Função para executar seeds
-export const runSeeds = async (): Promise<void> => {
-  try {
-    await connection.seed.run();
-    console.log('✅ Seeds executados com sucesso');
-  } catch (error) {
-    console.log('❌ Erro ao executar seeds:', error);
-    throw error;
-  }
-};
-
-export default connection;
+export default config;

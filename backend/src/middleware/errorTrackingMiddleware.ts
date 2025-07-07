@@ -11,7 +11,9 @@ async function createErrorActivityLog(data: Partial<UserActivity>): Promise<void
       ...data,
       user_id: (!data.user_id || data.user_id === '' || data.user_id === 'anonymous') ? null : data.user_id,
       created_at: new Date(),
-      updated_at: new Date()
+      updated_at: new Date(),
+      date_created: new Date(),
+      populated: true
     };
     
     await db('user_activity').insert(modifiedData);

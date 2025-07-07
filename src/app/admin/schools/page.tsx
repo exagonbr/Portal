@@ -2,13 +2,11 @@
 
 import React, { useState, useEffect, useCallback } from 'react'
 import { useToast } from '@/components/ToastManager'
-import { schoolService } from '@/services/schoolService.mock'
-import { institutionService } from '@/services/institutionService.mock'
-import { SchoolResponseDto, InstitutionResponseDto, BaseFilterDto } from '@/types/api'
 import AuthenticatedLayout from '@/components/AuthenticatedLayout'
 import { Badge } from '@/components/ui/Badge'
 import { Button } from '@/components/ui/Button'
 import { StatCard } from '@/components/ui/StandardCard'
+import axios from 'axios'
 import {
   Plus,
   Search,
@@ -24,6 +22,23 @@ import {
   Building2
 } from 'lucide-react'
 
+// Interface para unidades
+interface Unit {
+  id: string
+  name: string
+  institution_id: number
+  institutionName?: string
+  deleted: boolean
+  created_at: string
+  updated_at: string
+}
+
+// Interface para instituições
+interface Institution {
+  id: number
+  name: string
+}
+
 // Interface para estatísticas de escolas
 interface SchoolStats {
   totalSchools: number
@@ -32,26 +47,40 @@ interface SchoolStats {
   totalClasses: number
 }
 
+// Interface para resposta da API
+interface ApiResponse<T> {
+  success: boolean
+  data: T
+  message?: string
+}
+
+// Interface para resposta paginada
+interface PaginatedResponse<T> {
+  data: T[]
+  total: number
+  page: number
+  limit: number
+  totalPages: number
+}
+
+const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001/api'
+
 export default function AdminSchoolsPage() {
   const { showSuccess, showError } = useToast()
   const [loading, setLoading] = useState(true)
   const [refreshing, setRefreshing] = useState(false)
   
   // Dados principais
-  const [schools, setSchools] = useState<SchoolResponseDto[]>([])
-  const [institutions, setInstitutions] = useState<InstitutionResponseDto[]>([])
+  const [units, setUnits] = useState<Unit[]>([])
+  const [institutions, setInstitutions] = useState<Institution[]>([])
 
   // Paginação e Filtros
   const [totalItems, setTotalItems] = useState(0)
   const [currentPage, setCurrentPage] = useState(1)
   const [itemsPerPage] = useState(10)
   const [searchQuery, setSearchTerm] = useState('')
-  const [filters, setFilters] = useState<BaseFilterDto & { institutionId?: number }>({})
+  const [filters, setFilters] = useState<{ institutionId?: number }>({})
   const [showFilterPanel, setShowFilterPanel] = useState(false)
-
-  // Modais (simplificado)
-  const [modalOpen, setModalOpen] = useState(false)
-  const [selectedSchool, setSelectedSchool] = useState<SchoolResponseDto | null>(null)
 
   // Estatísticas
   const [stats, setStats] = useState<SchoolStats>({
@@ -61,99 +90,130 @@ export default function AdminSchoolsPage() {
     totalClasses: 0,
   })
 
-  const calculateStats = useCallback((allSchools: SchoolResponseDto[]) => {
-    const totalSchools = allSchools.length
-    const totalStudents = allSchools.reduce((sum, s) => sum + (s.total_students || 0), 0)
-    const totalTeachers = allSchools.reduce((sum, s) => sum + (s.total_teachers || 0), 0)
-    const totalClasses = allSchools.reduce((sum, s) => sum + (s.total_classes || 0), 0)
+  const calculateStats = useCallback((allUnits: Unit[]) => {
+    const totalSchools = allUnits.length
+    // Nota: Esses campos podem precisar ser ajustados conforme a estrutura real dos dados
+    const totalStudents = 0 // Será necessário buscar esses dados de outra API
+    const totalTeachers = 0 // Será necessário buscar esses dados de outra API
+    const totalClasses = 0 // Será necessário buscar esses dados de outra API
 
     setStats({ totalSchools, totalStudents, totalTeachers, totalClasses })
   }, [])
 
-  const fetchPageData = useCallback(async (page = 1, search = '', currentFilters: typeof filters = {}, showLoadingIndicator = true) => {
+  const fetchInstitutions = async () => {
+    try {
+      const response = await axios.get<ApiResponse<Institution[]>>(`${API_URL}/institutions`)
+      if (response.data.success) {
+        setInstitutions(response.data.data)
+      }
+    } catch (error) {
+      console.error('Erro ao buscar instituições:', error)
+    }
+  }
+
+  const fetchUnits = async (page = 1, q = '', currentFilters: typeof filters = {}, showLoadingIndicator = true) => {
     if (showLoadingIndicator) setLoading(true)
     else setRefreshing(true)
 
-    await new Promise(resolve => setTimeout(resolve, 500))
-
     try {
+      // Buscar instituições se ainda não tiver
       if (institutions.length === 0) {
-        const instResponse = await institutionService.getInstitutions({ limit: 1000 });
-        setInstitutions(instResponse.items);
+        await fetchInstitutions()
       }
 
-      const params = {
-        page,
-        limit: itemsPerPage,
-        search,
-        ...currentFilters,
+      // Construir parâmetros de consulta
+      const params: Record<string, any> = { page, limit: itemsPerPage }
+      
+      if (q) params.q = q
+      if (currentFilters.institutionId) params.institutionId = currentFilters.institutionId
+
+      // Buscar unidades com paginação
+      const response = await axios.get<ApiResponse<Unit[]>>(`${API_URL}/unit`, { params })
+      
+      if (response.data.success) {
+        const unitsWithInstitutionNames = response.data.data.map(unit => {
+          const institution = institutions.find(i => i.id === unit.institution_id)
+          return {
+            ...unit,
+            institutionName: institution?.name || 'Instituição não encontrada'
+          }
+        })
+        
+        setUnits(unitsWithInstitutionNames)
+        setTotalItems(response.data.data.length) // Ajustar quando a API retornar o total
+        setCurrentPage(page)
+        
+        // Buscar todas as unidades para estatísticas
+        const allUnitsResponse = await axios.get<ApiResponse<Unit[]>>(`${API_URL}/unit/active`)
+        if (allUnitsResponse.data.success) {
+          calculateStats(allUnitsResponse.data.data)
+        }
       }
-
-      const response = await schoolService.getSchools(params)
-      setSchools(response.items || [])
-      setTotalItems(response.total || 0)
-      setCurrentPage(page)
-
-      const allSchoolsResponse = await schoolService.getSchools({ limit: 1000 })
-      calculateStats(allSchoolsResponse.items)
 
       if (!showLoadingIndicator) {
-        showSuccess("Lista de escolas atualizada!")
+        showSuccess("Lista de unidades atualizada!")
       }
     } catch (error) {
-      showError("Erro ao carregar escolas.")
+      console.error('Erro ao buscar unidades:', error)
+      showError("Erro ao carregar unidades.")
     } finally {
       setLoading(false)
       setRefreshing(false)
     }
-  }, [itemsPerPage, calculateStats, showError, showSuccess, institutions.length])
+  }
 
   useEffect(() => {
-    fetchPageData(currentPage, searchQuery, filters)
-  }, [currentPage, fetchPageData])
+    fetchUnits(currentPage, searchQuery, filters)
+  }, [currentPage])
 
   const handleSearch = (e: React.FormEvent) => {
     e.preventDefault()
     setCurrentPage(1)
-    fetchPageData(1, searchQuery, filters)
+    fetchUnits(1, searchQuery, filters)
   }
 
   const handleFilterChange = (key: keyof typeof filters, value: any) => {
     const newFilters = { ...filters };
     if (value === '' || value === undefined || value === null) {
-      delete (newFilters as any)[key];
+      delete newFilters[key];
     } else {
-      (newFilters as any)[key] = value;
+      newFilters[key] = value;
     }
     setFilters(newFilters);
   };
 
   const applyFilters = () => {
     setCurrentPage(1);
-    fetchPageData(1, searchQuery, filters);
+    fetchUnits(1, searchQuery, filters);
   };
 
   const clearFilters = () => {
     setSearchTerm('');
     setFilters({});
     setCurrentPage(1);
-    fetchPageData(1, '', {});
+    fetchUnits(1, '', {});
   };
 
   const handleRefresh = () => {
-    fetchPageData(currentPage, searchQuery, filters, false)
+    fetchUnits(currentPage, searchQuery, filters, false)
   }
 
-  const handleDelete = async (school: SchoolResponseDto) => {
-    if (!confirm(`Tem certeza que deseja excluir a escola "${school.name}"?`)) return
+  const handleDelete = async (unit: Unit) => {
+    if (!confirm(`Tem certeza que deseja excluir a unidade "${unit.name}"?`)) return
 
     try {
       setLoading(true)
-      await schoolService.deleteSchool(school.id)
-      showSuccess("Escola excluída com sucesso.")
-      await fetchPageData(currentPage, searchQuery, filters, false)
+      const response = await axios.delete(`${API_URL}/unit/${unit.id}`)
+      
+      if (response.data.success) {
+        showSuccess("Unidade excluída com sucesso.")
+        await fetchUnits(currentPage, searchQuery, filters, false)
+      } else {
+        showError(response.data.message || "Erro ao excluir unidade.")
+      }
     } catch (error) {
-      showError("Erro ao excluir escola.")
+      console.error('Erro ao excluir unidade:', error)
+      showError("Erro ao excluir unidade.")
     } finally {
       setLoading(false)
     }
@@ -168,24 +228,24 @@ export default function AdminSchoolsPage() {
           <div className="p-6 border-b border-gray-200">
             <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4 mb-6">
               <div>
-                <h1 className="text-2xl font-bold text-gray-900">Gerenciamento de Escolas</h1>
-                <p className="text-gray-600 mt-1">Consulte e gerencie as escolas (unidades) do sistema</p>
+                <h1 className="text-2xl font-bold text-gray-900">Gerenciamento de Unidades</h1>
+                <p className="text-gray-600 mt-1">Consulte e gerencie as unidades do sistema</p>
               </div>
               <div className="flex gap-3">
                 <Button onClick={handleRefresh} variant="outline" disabled={refreshing} className="flex items-center gap-2">
                   <RefreshCw className={`w-4 h-4 ${refreshing ? 'animate-spin' : ''}`} />
                   Atualizar
                 </Button>
-                <Button onClick={() => alert("Funcionalidade de 'Nova Escola' a ser implementada.")} className="flex items-center gap-2">
+                <Button onClick={() => alert("Funcionalidade de 'Nova Unidade' a ser implementada.")} className="flex items-center gap-2">
                   <Plus className="w-4 h-4" />
-                  Nova Escola
+                  Nova Unidade
                 </Button>
               </div>
             </div>
 
             {/* Stats */}
             <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
-              <StatCard icon={School} title="Total" value={stats.totalSchools} subtitle="Escolas" color="blue" />
+              <StatCard icon={School} title="Total" value={stats.totalSchools} subtitle="Unidades" color="blue" />
               <StatCard icon={Users} title="Alunos" value={stats.totalStudents} subtitle="Matriculados" color="green" />
               <StatCard icon={Users} title="Professores" value={stats.totalTeachers} subtitle="Atuando" color="amber" />
               <StatCard icon={BookOpen} title="Turmas" value={stats.totalClasses} subtitle="Ativas" color="purple" />
@@ -198,7 +258,7 @@ export default function AdminSchoolsPage() {
                   <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
                   <input
                     type="text"
-                    placeholder="Buscar por nome da escola ou instituição..."
+                    placeholder="Buscar por nome da unidade ou instituição..."
                     value={searchQuery}
                     onChange={(e) => setSearchTerm(e.target.value)}
                     className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
@@ -240,13 +300,13 @@ export default function AdminSchoolsPage() {
             {loading ? (
               <div className="flex items-center justify-center py-12">
                 <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
-                <span className="ml-2 text-gray-600">Carregando escolas...</span>
+                <span className="ml-2 text-gray-600">Carregando unidades...</span>
               </div>
-            ) : schools.length === 0 ? (
+            ) : units.length === 0 ? (
               <div className="text-center py-12">
                 <School className="w-16 h-16 text-gray-300 mx-auto mb-4" />
-                <p className="text-gray-500 text-lg mb-2">Nenhuma escola encontrada</p>
-                <p className="text-gray-400 text-sm">{searchQuery || Object.keys(filters).length > 0 ? "Tente ajustar sua busca ou filtros." : "Nenhuma escola cadastrada."}</p>
+                <p className="text-gray-500 text-lg mb-2">Nenhuma unidade encontrada</p>
+                <p className="text-gray-400 text-sm">{searchQuery || Object.keys(filters).length > 0 ? "Tente ajustar sua busca ou filtros." : "Nenhuma unidade cadastrada."}</p>
               </div>
             ) : (
               <>
@@ -255,27 +315,23 @@ export default function AdminSchoolsPage() {
                   <table className="w-full divide-y divide-gray-200">
                     <thead className="bg-gray-50">
                       <tr>
-                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Escola</th>
+                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Unidade</th>
                         <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Instituição</th>
-                        <th className="px-6 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">Alunos</th>
-                        <th className="px-6 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">Professores</th>
                         <th className="px-6 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">Ações</th>
                       </tr>
                     </thead>
                     <tbody className="bg-white divide-y divide-gray-200">
-                      {schools.map((school) => (
-                        <tr key={school.id} className="hover:bg-gray-50">
+                      {units.map((unit) => (
+                        <tr key={unit.id} className="hover:bg-gray-50">
                           <td className="px-6 py-4">
-                            <div className="text-sm font-semibold text-gray-900">{school.name}</div>
+                            <div className="text-sm font-semibold text-gray-900">{unit.name}</div>
                           </td>
-                          <td className="px-6 py-4 text-sm text-gray-600">{school.institutionName}</td>
-                          <td className="px-6 py-4 text-center text-sm text-gray-800">{school.total_students}</td>
-                          <td className="px-6 py-4 text-center text-sm text-gray-800">{school.total_teachers}</td>
+                          <td className="px-6 py-4 text-sm text-gray-600">{unit.institutionName}</td>
                           <td className="px-6 py-4 text-center">
                             <div className="flex items-center justify-center space-x-2">
-                              <Button variant="ghost" size="sm" onClick={() => alert(`Visualizar: ${school.name}`)} className="text-blue-600 hover:text-blue-900"><Eye className="w-4 h-4" /></Button>
-                              <Button variant="ghost" size="sm" onClick={() => alert(`Editar: ${school.name}`)} className="text-green-600 hover:text-green-900"><Edit className="w-4 h-4" /></Button>
-                              <Button variant="ghost" size="sm" onClick={() => handleDelete(school)} className="text-red-600 hover:text-red-900"><Trash2 className="w-4 h-4" /></Button>
+                              <Button variant="ghost" size="sm" onClick={() => alert(`Visualizar: ${unit.name}`)} className="text-blue-600 hover:text-blue-900"><Eye className="w-4 h-4" /></Button>
+                              <Button variant="ghost" size="sm" onClick={() => alert(`Editar: ${unit.name}`)} className="text-green-600 hover:text-green-900"><Edit className="w-4 h-4" /></Button>
+                              <Button variant="ghost" size="sm" onClick={() => handleDelete(unit)} className="text-red-600 hover:text-red-900"><Trash2 className="w-4 h-4" /></Button>
                             </div>
                           </td>
                         </tr>
@@ -286,30 +342,16 @@ export default function AdminSchoolsPage() {
 
                 {/* Mobile Cards */}
                 <div className="lg:hidden p-4 space-y-4">
-                  {schools.map(school => (
-                    <div key={school.id} className="bg-white border border-gray-200 rounded-lg shadow-sm">
+                  {units.map(unit => (
+                    <div key={unit.id} className="bg-white border border-gray-200 rounded-lg shadow-sm">
                       <div className="p-4 border-b border-gray-100">
-                        <h3 className="font-semibold text-gray-800">{school.name}</h3>
-                        <p className="text-sm text-gray-500 flex items-center mt-1"><Building2 className="w-4 h-4 mr-2"/>{school.institutionName}</p>
-                      </div>
-                      <div className="p-4 grid grid-cols-3 gap-2 text-center">
-                        <div>
-                          <p className="text-xs text-gray-500">Alunos</p>
-                          <p className="font-bold text-gray-800">{school.total_students}</p>
-                        </div>
-                        <div>
-                          <p className="text-xs text-gray-500">Professores</p>
-                          <p className="font-bold text-gray-800">{school.total_teachers}</p>
-                        </div>
-                        <div>
-                          <p className="text-xs text-gray-500">Turmas</p>
-                          <p className="font-bold text-gray-800">{school.total_classes}</p>
-                        </div>
+                        <h3 className="font-semibold text-gray-800">{unit.name}</h3>
+                        <p className="text-sm text-gray-500 flex items-center mt-1"><Building2 className="w-4 h-4 mr-2"/>{unit.institutionName}</p>
                       </div>
                       <div className="p-4 border-t border-gray-100 flex justify-end space-x-2">
-                        <Button variant="outline" size="sm" onClick={() => alert(`Visualizar: ${school.name}`)}>Ver</Button>
-                        <Button variant="outline" size="sm" onClick={() => alert(`Editar: ${school.name}`)}>Editar</Button>
-                        <Button variant="destructive" size="sm" onClick={() => handleDelete(school)}>Excluir</Button>
+                        <Button variant="outline" size="sm" onClick={() => alert(`Visualizar: ${unit.name}`)}>Ver</Button>
+                        <Button variant="outline" size="sm" onClick={() => alert(`Editar: ${unit.name}`)}>Editar</Button>
+                        <Button variant="destructive" size="sm" onClick={() => handleDelete(unit)}>Excluir</Button>
                       </div>
                     </div>
                   ))}
