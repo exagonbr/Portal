@@ -48,10 +48,13 @@ export const deleteUnit = async (id: number): Promise<void> => {
   return apiDelete(`/units/${id}`);
 };
 
-export const unitService = {
+const unitService = {
   getUnits,
   getUnitById,
   createUnit,
   updateUnit,
   deleteUnit,
 };
+
+export { unitService };
+export default unitService;

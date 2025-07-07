@@ -3,10 +3,13 @@ import {
   PrimaryGeneratedColumn,
   Column,
   BeforeInsert,
-  BeforeUpdate
+  BeforeUpdate,
+  ManyToOne,
+  JoinColumn
 } from 'typeorm';
 import * as bcrypt from 'bcryptjs';
 import { UserRole } from './UserRole.enum';
+import { Role } from './Role';
 
 @Entity('users')
 export class User {
@@ -135,6 +138,11 @@ export class User {
   // Adicionando a coluna role_id que está faltando
   @Column({ name: 'role_id', type: 'bigint', nullable: true })
   roleId?: number;
+
+  // Definindo a relação com a entidade Role
+  @ManyToOne(() => Role)
+  @JoinColumn({ name: 'role_id' })
+  role?: Role;
 
   // Métodos para hash de senha
   @BeforeInsert()

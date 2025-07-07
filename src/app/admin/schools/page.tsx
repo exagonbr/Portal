@@ -6,7 +6,6 @@ import AuthenticatedLayout from '@/components/AuthenticatedLayout'
 import { Badge } from '@/components/ui/Badge'
 import { Button } from '@/components/ui/Button'
 import { StatCard } from '@/components/ui/StandardCard'
-import axios from 'axios'
 import {
   Plus,
   Search,
@@ -21,12 +20,14 @@ import {
   X,
   Building2
 } from 'lucide-react'
+import { unitService } from '@/services/unitService'
+import { institutionService } from '@/services/institutionService'
 
 // Interface para unidades
 interface Unit {
   id: string
   name: string
-  institution_id: number
+  institution_id: string // Alterado de number para string para compatibilidade com o serviço
   institutionName?: string
   institution_name?: string
   deleted: boolean
@@ -49,60 +50,6 @@ interface SchoolStats {
   totalTeachers: number
   totalClasses: number
 }
-
-// Interface para resposta da API
-interface ApiResponse<T = any> {
-  success: boolean
-  data: T
-  message?: string
-}
-
-// Interface para resposta paginada da API de units
-interface UnitsApiResponse {
-  success: boolean
-  data: Unit[]
-  total?: number
-  page?: number
-  limit?: number
-  totalPages?: number
-}
-
-// Configuração do axios para usar nossa rota de API proxy
-const apiClient = axios.create({
-  baseURL: '/api',
-  withCredentials: true,
-});
-
-// Interceptor para adicionar o token de autorização
-apiClient.interceptors.request.use(
-  (config) => {
-    if (typeof window !== 'undefined') {
-      const accessToken = localStorage.getItem('accessToken');
-      if (accessToken) {
-        config.headers['Authorization'] = `Bearer ${accessToken}`;
-      }
-    }
-    return config;
-  },
-  (error) => {
-    return Promise.reject(error);
-  }
-);
-
-// Interceptor para tratamento de erros
-apiClient.interceptors.response.use(
-  (response) => response,
-  (error) => {
-    if (error.response?.status === 401) {
-      console.error('Erro de autenticação 401:', error.response?.data);
-      // Redirecionar para a página de login se necessário
-      if (typeof window !== 'undefined') {
-        window.location.href = '/login';
-      }
-    }
-    return Promise.reject(error);
-  }
-);
 
 export default function AdminSchoolsPage() {
   const { showSuccess, showError } = useToast()
@@ -141,20 +88,17 @@ export default function AdminSchoolsPage() {
 
   const fetchInstitutions = async () => {
     try {
-      // Chamada para nossa rota de API proxy
-      const response = await apiClient.get<{
-        success: boolean;
-        data: Institution[];
-        total?: number;
-      }>('/institutions', { 
-        params: { 
-          page: 1,
-          limit: 100 // Buscar todas as instituições disponíveis
-        } 
+      const response = await institutionService.getInstitutions({
+        page: 1,
+        limit: 100 // Buscar todas as instituições disponíveis
       });
-
-      if (response.data.success) {
-        const institutionsData = response.data.data || [];
+      
+      if (response && response.items) {
+        // Mapear para o formato simplificado usado nesta página
+        const institutionsData = response.items.map(inst => ({
+          id: Number(inst.id),
+          name: inst.name
+        }));
         setInstitutions(institutionsData);
       } else {
         throw new Error('Erro ao buscar instituições');
@@ -170,7 +114,7 @@ export default function AdminSchoolsPage() {
     }
   }
 
-    const fetchUnits = async (page = 1, search = '', currentFilters: typeof filters = {}, showLoadingIndicator = true) => {
+  const fetchUnits = async (page = 1, search = '', currentFilters: typeof filters = {}, showLoadingIndicator = true) => {
     if (showLoadingIndicator) setLoading(true)
     else setRefreshing(true)
 
@@ -180,40 +124,31 @@ export default function AdminSchoolsPage() {
         await fetchInstitutions()
       }
 
-      // Construir parâmetros de consulta para a API
-      const params: Record<string, any> = { 
-        page, 
-        limit: itemsPerPage 
+      // Preparar parâmetros para o serviço de unidades
+      const params: any = {
+        page,
+        limit: itemsPerPage
       }
       
       if (search) params.search = search
-      if (currentFilters.institutionId) params.institutionId = currentFilters.institutionId
+      if (currentFilters.institutionId) params.institution_id = currentFilters.institutionId
 
-      console.log('Fazendo requisição para API proxy /api/units com parâmetros:', params)
+      console.log('Buscando unidades com parâmetros:', params)
 
-      // Chamada para nossa rota de API proxy
-      const response = await apiClient.get<UnitsApiResponse>('/units', { params })
+      // Usar o serviço de unidades
+      const response = await unitService.getUnits(params)
+      
+      console.log('Units ::::', response);
 
-      if (response.data.success) {
-        const unitsData = response.data.data || []
-        
-        // Mapear dados da API para o formato esperado pelo frontend
-        const mappedUnits = unitsData.map(unit => ({
+      if (response && response.items) {
+        // Mapear dados para o formato esperado pelo frontend
+        const mappedUnits = response.items.map(unit => ({
           ...unit,
-          institutionName: unit.institution_name || unit.institutionName,
-          created_at: unit.date_created || unit.created_at,
-          updated_at: unit.last_updated || unit.updated_at
-        }))
+          institutionName: unit.institution_name
+        })) as Unit[] // Forçar o tipo para Unit[]
 
         setUnits(mappedUnits)
-        
-        // Se a API retornar informações de paginação, usar elas
-        if (response.data.total !== undefined) {
-          setTotalItems(response.data.total)
-        } else {
-          setTotalItems(mappedUnits.length)
-        }
-        
+        setTotalItems(response.total || mappedUnits.length)
         setCurrentPage(page)
         
         // Calcular estatísticas baseadas nos dados reais
@@ -223,11 +158,11 @@ export default function AdminSchoolsPage() {
           showSuccess("Lista de unidades atualizada!");
         }
       } else {
-        throw new Error('Erro desconhecido da API')
+        throw new Error('Resposta inválida do serviço de unidades')
       }
     } catch (error) {
       console.error('Erro ao buscar unidades:', error)
-      showError("Erro ao carregar unidades da API.")
+      showError("Erro ao carregar unidades.")
       
       // Em caso de erro, limpar os dados
       setUnits([])
@@ -285,15 +220,10 @@ export default function AdminSchoolsPage() {
 
     try {
       setLoading(true)
-      // Usando nossa rota de API proxy
-      const response = await apiClient.delete(`/units/${unit.id}`)
-      
-      if (response.data.success) {
-        showSuccess("Unidade excluída com sucesso.")
-        await fetchUnits(currentPage, searchQuery, filters, false)
-      } else {
-        showError(response.data.message || "Erro ao excluir unidade.")
-      }
+      // Usar o serviço de unidades para excluir
+      await unitService.deleteUnit(Number(unit.id))
+      showSuccess("Unidade excluída com sucesso.")
+      await fetchUnits(currentPage, searchQuery, filters, false)
     } catch (error) {
       console.error('Erro ao excluir unidade:', error)
       showError("Erro ao excluir unidade.")
@@ -438,7 +368,7 @@ export default function AdminSchoolsPage() {
                       <div className="p-4 border-b border-gray-100">
                         <div className="flex justify-between items-start mb-2">
                           <h3 className="font-semibold text-gray-800">{unit.name}</h3>
-                                                     <Badge variant={unit.deleted ? "danger" : "success"}>
+                          <Badge variant={unit.deleted ? "danger" : "success"}>
                              {unit.deleted ? "Inativa" : "Ativa"}
                            </Badge>
                         </div>

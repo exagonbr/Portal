@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { corsHeaders } from '../../route-config';
+import { getInternalApiUrl } from '@/config/env';
 
 // Configuração da rota como pública e dinâmica
 export const dynamic = 'force-dynamic';
@@ -36,20 +37,18 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // CORREÇÃO: Usar localhost para o backend real, não a URL do frontend
-    const backendUrl = process.env.BACKEND_URL || 'http://localhost:3001/api';
-    const loginUrl = `${backendUrl}/users/login`;
-
+    // Usar a função getInternalApiUrl para obter a URL correta do backend
+    const backendUrl = getInternalApiUrl('/api/users/login');
+    
     console.log('🔐 [USERS-LOGIN] Tentativa de login para:', email);
-    console.log('🔗 [USERS-LOGIN] URL do backend:', loginUrl);
-    console.log('🔍 [USERS-LOGIN] Evitando loop - usando backend real');
+    console.log('🔗 [USERS-LOGIN] URL do backend:', backendUrl);
 
-    // Fazer requisição para o backend REAL com timeout
+    // Fazer requisição para o backend com timeout
     const controller = new AbortController();
     const timeoutId = setTimeout(() => controller.abort(), 30000); // 30 segundos timeout
 
     try {
-      const response = await fetch(loginUrl, {
+      const response = await fetch(backendUrl, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -135,6 +134,26 @@ export async function POST(request: NextRequest) {
           },
           { 
             status: 504,
+            headers: corsHeaders
+          }
+        );
+      }
+      
+      // Verificar se é um erro de conexão recusada (ECONNREFUSED)
+      const errorMessage = String(fetchError);
+      if (errorMessage.includes('ECONNREFUSED')) {
+        console.log('❌ [USERS-LOGIN] Conexão recusada pelo backend:', errorMessage);
+        return NextResponse.json(
+          { 
+            success: false, 
+            message: 'Não foi possível conectar ao servidor de autenticação',
+            details: {
+              error: 'ECONNREFUSED',
+              message: errorMessage
+            }
+          },
+          { 
+            status: 503,
             headers: corsHeaders
           }
         );
