@@ -267,8 +267,6 @@ export function LoginPage() {
 
     switch (background_type) {
       case 'video':
-      case 'video_url':
-        const videoSource = background_video_url || main_background;
         return (
           <video
             autoPlay
@@ -278,7 +276,21 @@ export function LoginPage() {
             className="absolute min-w-full min-h-full object-cover opacity-100"
             preload="auto"
           >
-            <source src={videoSource} type="video/mp4" />
+            <source src={main_background || '/back_video4.mp4'} type="video/mp4" />
+            Seu navegador não suporta a tag de vídeo.
+          </video>
+        );
+      case 'video_url':
+        return (
+          <video
+            autoPlay
+            loop
+            muted
+            playsInline
+            className="absolute min-w-full min-h-full object-cover opacity-100"
+            preload="auto"
+          >
+            <source src={background_video_url || '/back_video4.mp4'} type="video/mp4" />
             Seu navegador não suporta a tag de vídeo.
           </video>
         );

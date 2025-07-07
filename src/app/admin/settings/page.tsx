@@ -29,6 +29,8 @@ export default function AdminSettingsPage() {
   const [testingEmail, setTestingEmail] = useState(false)
   const [reconfiguringEmail, setReconfiguringEmail] = useState(false)
   const [downloadingVideo, setDownloadingVideo] = useState(false)
+  const [availableVideos, setAvailableVideos] = useState<string[]>([])
+  const [loadingVideos, setLoadingVideos] = useState(false)
   const [awsBuckets, setAwsBuckets] = useState<string[]>([])
   const [notification, setNotification] = useState<{
     type: 'success' | 'error' | 'info' | 'warning'
@@ -36,27 +38,6 @@ export default function AdminSettingsPage() {
   } | null>(null)
   const [showResetConfirm, setShowResetConfirm] = useState(false)
   const [showFullscreenPreview, setShowFullscreenPreview] = useState(false)
-
-  // Lista de vídeos disponíveis
-  const availableVideos = [
-    '/back_video.mp4',
-    '/back_video1.mp4',
-    '/back_video2.mp4',
-    '/back_video3.mp4',
-    '/back_video4.mp4',
-    '/back_video5.mp4',
-    '/back_video6.mp4',
-    '/back_video7.mp4',
-    '/back_video8.mp4',
-    '/back_video9.mp4',
-    '/back_video10.mp4',
-    '/back_video11.mp4',
-    '/back_video12.mp4',
-    '/back_video13.mp4',
-    '/back_video14.mp4',
-    '/back_video15.mp4',
-    '/back_video16.mp4',
-  ]
 
   // Tipos de background disponíveis
   const backgroundTypes = [
@@ -96,6 +77,54 @@ export default function AdminSettingsPage() {
       showNotification('error', error)
     }
   }, [error])
+
+  // Carregar vídeos disponíveis
+  const loadAvailableVideos = useCallback(async () => {
+    setLoadingVideos(true);
+    try {
+      const response = await fetch('/api/admin/system/available-videos', {
+        method: 'GET',
+        headers: getAuthHeaders(),
+        credentials: 'include'
+      });
+
+      if (!response.ok) {
+        throw new Error('Erro ao carregar lista de vídeos');
+      }
+
+      const data = await response.json();
+      
+      if (data.success && Array.isArray(data.videos)) {
+        setAvailableVideos(data.videos);
+      } else {
+        // Fallback para vídeos padrão em caso de erro
+        setAvailableVideos([
+          '/back_video.mp4',
+          '/back_video1.mp4',
+          '/back_video2.mp4',
+          '/back_video3.mp4',
+          '/back_video4.mp4'
+        ]);
+      }
+    } catch (err) {
+      console.error('Erro ao carregar vídeos disponíveis:', err);
+      // Fallback para vídeos padrão em caso de erro
+      setAvailableVideos([
+        '/back_video.mp4',
+        '/back_video1.mp4',
+        '/back_video2.mp4',
+        '/back_video3.mp4',
+        '/back_video4.mp4'
+      ]);
+    } finally {
+      setLoadingVideos(false);
+    }
+  }, []);
+
+  // Carregar vídeos ao iniciar
+  useEffect(() => {
+    loadAvailableVideos();
+  }, [loadAvailableVideos]);
 
   // Atualizar configuração local
   const updateLocalSetting = (key: string, value: any) => {
@@ -255,6 +284,31 @@ export default function AdminSettingsPage() {
     }
   }, [showFullscreenPreview, handleEscKey])
 
+  // Helper para obter o token do localStorage
+  const getStoredToken = (): string | null => {
+    if (typeof window === 'undefined') return null;
+    try {
+      return localStorage.getItem('accessToken');
+    } catch (error) {
+      console.error('Error accessing localStorage:', error);
+      return null;
+    }
+  };
+
+  // Helper para criar headers com autenticação
+  const getAuthHeaders = () => {
+    const token = getStoredToken();
+    const headers: Record<string, string> = {
+      'Content-Type': 'application/json',
+    };
+    
+    if (token) {
+      headers['Authorization'] = `Bearer ${token}`;
+    }
+    
+    return headers;
+  };
+
   // Fazer download e conversão do vídeo
   const handleDownloadVideo = async (videoUrl: string) => {
     if (!videoUrl) {
@@ -268,9 +322,7 @@ export default function AdminSettingsPage() {
       
       const response = await fetch('/api/admin/system/download-video', {
         method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
+        headers: getAuthHeaders(),
         credentials: 'include',
         body: JSON.stringify({ videoUrl })
       })
@@ -286,6 +338,9 @@ export default function AdminSettingsPage() {
         updateLocalSetting('main_background', data.filename)
         updateLocalSetting('background_type', 'video')
         showNotification('success', `Vídeo baixado e salvo como: ${data.filename}`)
+        
+        // Recarregar a lista de vídeos disponíveis
+        loadAvailableVideos()
       } else {
         throw new Error(data.error || 'Erro ao processar vídeo')
       }
@@ -530,33 +585,35 @@ export default function AdminSettingsPage() {
                         <label className="block text-sm font-medium text-gray-700 mb-2">
                           Vídeo de Background
                         </label>
-                        <select
-                          value={localSettings.main_background || ''}
-                          onChange={(e) => updateLocalSetting('main_background', e.target.value)}
-                          className="w-full px-4 py-2 rounded-lg border border-gray-300 focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent"
-                        >
-                          {availableVideos.map(video => (
-                            <option key={video} value={video}>
-                              {video}
-                            </option>
-                          ))}
-                        </select>
-                        
-                        <div className="mt-4">
-                          <label className="block text-sm font-medium text-gray-700 mb-2">
-                            URL Personalizada para Vídeo de Background
-                          </label>
-                          <input
-                            type="text"
-                            value={localSettings.background_video_url || ''}
-                            onChange={(e) => updateLocalSetting('background_video_url', e.target.value)}
-                            placeholder="https://exemplo.com/video.mp4"
-                            className="w-full px-4 py-2 rounded-lg border border-gray-300 focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent"
-                          />
-                          <p className="text-xs text-gray-500 mt-1">
-                            Se preenchido, este URL terá prioridade sobre o vídeo selecionado acima.
-                          </p>
+                        <div className="flex gap-2">
+                          <select
+                            value={localSettings.main_background || ''}
+                            onChange={(e) => updateLocalSetting('main_background', e.target.value)}
+                            className="flex-1 px-4 py-2 rounded-lg border border-gray-300 focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent"
+                          >
+                            {availableVideos.map(video => (
+                              <option key={video} value={video}>
+                                {video}
+                              </option>
+                            ))}
+                          </select>
+                          <button
+                            type="button"
+                            onClick={loadAvailableVideos}
+                            disabled={loadingVideos}
+                            className="px-3 py-2 bg-gray-200 text-gray-700 rounded-lg hover:bg-gray-300 transition-colors flex items-center disabled:opacity-50 disabled:cursor-not-allowed"
+                            title="Recarregar lista de vídeos"
+                          >
+                            <span className={`material-symbols-outlined text-sm ${loadingVideos ? 'animate-spin' : ''}`}>
+                              {loadingVideos ? 'sync' : 'refresh'}
+                            </span>
+                          </button>
                         </div>
+                        
+                        <p className="text-xs text-gray-500 mt-1 flex items-center">
+                          <span className="material-symbols-outlined mr-1 text-xs">movie</span>
+                          {availableVideos.length} vídeos encontrados
+                        </p>
                       </div>
                     )}
 
@@ -683,16 +740,29 @@ export default function AdminSettingsPage() {
                         backgroundPosition: 'center'
                       }}
                     >
-                      {(localSettings.background_type === 'video' || localSettings.background_type === 'video_url') && (localSettings.background_video_url || localSettings.main_background) && (
+                      {(localSettings.background_type === 'video') && localSettings.main_background && (
                         <video
-                          key={localSettings.background_video_url || localSettings.main_background}
+                          key={localSettings.main_background}
                           autoPlay
                           muted
                           loop
                           playsInline
                           className="absolute inset-0 w-full h-full object-cover"
                         >
-                          <source src={localSettings.background_video_url || localSettings.main_background} type="video/mp4" />
+                          <source src={localSettings.main_background} type="video/mp4" />
+                        </video>
+                      )}
+
+                      {(localSettings.background_type === 'video_url') && localSettings.background_video_url && (
+                        <video
+                          key={localSettings.background_video_url}
+                          autoPlay
+                          muted
+                          loop
+                          playsInline
+                          className="absolute inset-0 w-full h-full object-cover"
+                        >
+                          <source src={localSettings.background_video_url} type="video/mp4" />
                         </video>
                       )}
                       <div className="absolute inset-0 bg-black/20 group-hover:bg-black/30 transition-colors" />
@@ -1195,16 +1265,29 @@ export default function AdminSettingsPage() {
                 </button>
                 
                 <div className="absolute inset-0">
-                  {(localSettings.background_type === 'video' || localSettings.background_type === 'video_url') && (localSettings.background_video_url || localSettings.main_background) && (
+                  {(localSettings.background_type === 'video') && localSettings.main_background && (
                     <video
-                      key={localSettings.background_video_url || localSettings.main_background}
+                      key={localSettings.main_background}
                       autoPlay
                       muted
                       loop
                       playsInline
                       className="w-full h-full object-cover"
                     >
-                      <source src={localSettings.background_video_url || localSettings.main_background} type="video/mp4" />
+                      <source src={localSettings.main_background} type="video/mp4" />
+                    </video>
+                  )}
+
+                  {(localSettings.background_type === 'video_url') && localSettings.background_video_url && (
+                    <video
+                      key={localSettings.background_video_url}
+                      autoPlay
+                      muted
+                      loop
+                      playsInline
+                      className="w-full h-full object-cover"
+                    >
+                      <source src={localSettings.background_video_url} type="video/mp4" />
                     </video>
                   )}
                   
@@ -1232,8 +1315,7 @@ export default function AdminSettingsPage() {
                 
                 <div className="absolute bottom-8 left-1/2 transform -translate-x-1/2 bg-black/70 text-white px-6 py-3 rounded-lg backdrop-blur-sm">
                   <p className="text-sm">
-                    {localSettings.background_type === 'video' && !localSettings.background_video_url && `Vídeo: ${localSettings.main_background}`}
-                    {localSettings.background_type === 'video' && localSettings.background_video_url && `Vídeo (URL personalizada): ${localSettings.background_video_url}`}
+                    {localSettings.background_type === 'video' && `Vídeo: ${localSettings.main_background}`}
                     {localSettings.background_type === 'video_url' && `URL Personalizada: ${localSettings.background_video_url}`}
                     {localSettings.background_type === 'image' && `Imagem: ${localSettings.main_background}`}
                     {localSettings.background_type === 'color' && `Cor: ${localSettings.main_background}`}

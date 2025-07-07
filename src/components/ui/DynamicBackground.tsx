@@ -68,11 +68,17 @@ export default function DynamicBackground({
   }, [settings, loading])
 
   const renderVideoBackground = () => {
-    if ((!settings?.background_type || (settings?.background_type !== 'video' && settings?.background_type !== 'video_url')) || (!settings?.main_background && !settings?.background_video_url)) {
+    if ((!settings?.background_type || (settings?.background_type !== 'video' && settings?.background_type !== 'video_url'))) {
       return null
     }
 
-    const videoSource = settings.background_video_url || settings.main_background;
+    // Determinar a fonte do vídeo baseado no tipo
+    let videoSource = settings.main_background;
+    if (settings.background_type === 'video_url') {
+      videoSource = settings.background_video_url;
+    }
+
+    if (!videoSource) return null;
 
     return (
       <video
