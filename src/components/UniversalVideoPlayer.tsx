@@ -416,6 +416,16 @@ export default function UniversalVideoPlayer({
   };
 
   const renderVideoPlayer = () => {
+    // Mostrar spinner de carregamento
+    if (isLoading) {
+      return (
+        <div className="flex items-center justify-center w-full h-full">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-white"></div>
+        </div>
+      );
+    }
+
+    // Renderizar player do YouTube ou Vimeo
     if (currentVideo.type === 'youtube' || currentVideo.type === 'vimeo') {
       return (
         <iframe
@@ -425,7 +435,20 @@ export default function UniversalVideoPlayer({
           allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
           allowFullScreen
           className="w-full h-full object-contain"
-          onLoad={() => setIsLoading(false)}
+          ref={(iframe) => {
+            if (iframe) {
+              // Usar um MutationObserver para detectar quando o iframe termina de carregar
+              const observer = new MutationObserver(() => {
+                setIsLoading(false);
+                observer.disconnect();
+              });
+              
+              observer.observe(iframe, { attributes: true, childList: true });
+              
+              // Fallback para garantir que o loading termine
+              setTimeout(() => setIsLoading(false), 2000);
+            }
+          }}
         />
       );
     }

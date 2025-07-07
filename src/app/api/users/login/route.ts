@@ -39,16 +39,15 @@ export async function POST(request: NextRequest) {
 
     // Usar a função getInternalApiUrl para obter a URL correta do backend
     const backendUrl = getInternalApiUrl('/api/users/login');
-    
-    console.log('🔐 [USERS-LOGIN] Tentativa de login para:', email);
-    console.log('🔗 [USERS-LOGIN] URL do backend:', backendUrl);
+    console.log('🔒 [LOGIN] Tentando autenticar usuário:', email);
+    console.log('🔗 [LOGIN] URL do backend:', backendUrl);
 
     // Fazer requisição para o backend com timeout
     const controller = new AbortController();
     const timeoutId = setTimeout(() => controller.abort(), 30000); // 30 segundos timeout
 
     try {
-      const response = await fetch(backendUrl, {
+      const backendResponse = await fetch(backendUrl, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -61,9 +60,12 @@ export async function POST(request: NextRequest) {
       clearTimeout(timeoutId);
 
       // Verificar se a resposta é HTML (indicando erro de roteamento)
-      const contentType = response.headers.get('content-type');
+      const contentType = backendResponse.headers.get('content-type');
       if (contentType && contentType.includes('text/html')) {
-        console.log('❌ [USERS-LOGIN] Recebido HTML em vez de JSON - possível erro de roteamento');
+        console.error('❌ [LOGIN] Backend retornou HTML em vez de JSON:', {
+          contentType,
+          status: backendResponse.status
+        });
         return NextResponse.json(
           { 
             success: false, 
@@ -71,7 +73,7 @@ export async function POST(request: NextRequest) {
             details: {
               error: 'Backend retornou HTML em vez de JSON',
               contentType,
-              status: response.status
+              status: backendResponse.status
             }
           },
           { 
@@ -81,15 +83,16 @@ export async function POST(request: NextRequest) {
         );
       }
 
-      const data = await response.json();
-
-      console.log('📡 [USERS-LOGIN] Resposta do backend:', {
-        status: response.status,
+      const data = await backendResponse.json();
+      console.log('📡 [LOGIN] Resposta do backend:', {
+        status: backendResponse.status,
         success: data.success,
-        hasToken: !!data.data?.token || !!data.token
+        hasToken: !!data.data?.accessToken || !!data.accessToken,
+        tokenLength: (data.data?.accessToken || data.accessToken || '').length
       });
 
-      if (!response.ok) {
+      if (!backendResponse.ok) {
+        console.error('❌ [LOGIN] Erro na resposta do backend:', data.message || 'Erro desconhecido');
         return NextResponse.json(
           { 
             success: false, 
@@ -97,32 +100,59 @@ export async function POST(request: NextRequest) {
             details: data
           },
           { 
-            status: response.status,
+            status: backendResponse.status,
+            headers: corsHeaders
+          }
+        );
+      }
+
+      // Verificar se o token está presente
+      const accessToken = data.data?.accessToken || data.accessToken;
+      const refreshToken = data.data?.refreshToken || data.refreshToken;
+      
+      if (!accessToken) {
+        console.error('❌ [LOGIN] Token não encontrado na resposta do backend');
+        return NextResponse.json(
+          { 
+            success: false, 
+            message: 'Erro no servidor de autenticação: token não fornecido',
+            details: { error: 'TOKEN_MISSING' }
+          },
+          { 
+            status: 500,
             headers: corsHeaders
           }
         );
       }
 
       // Login bem-sucedido
-      return NextResponse.json({
+      console.log('✅ [LOGIN] Login realizado com sucesso para:', email);
+      
+      // Definir cookies de autenticação para aumentar a compatibilidade
+      const clientResponse = NextResponse.json({
         success: true,
         message: 'Login realizado com sucesso',
         data: {
-          accessToken: data.data?.accessToken || data.accessToken,
-          refreshToken: data.data?.refreshToken || data.refreshToken,
+          accessToken,
+          refreshToken,
           user: data.data?.user || data.user,
           expiresIn: data.data?.expiresIn || data.expiresIn
         }
       }, {
-        headers: corsHeaders
+        headers: {
+          ...corsHeaders,
+          'Set-Cookie': `accessToken=${accessToken}; Path=/; HttpOnly; SameSite=Lax; Max-Age=86400`
+        }
       });
+
+      return clientResponse;
 
     } catch (fetchError: any) {
       clearTimeout(timeoutId);
       
       // Verificar se é um erro de timeout
       if (fetchError.name === 'AbortError') {
-        console.log('❌ [USERS-LOGIN] Timeout na requisição para o backend');
+        console.error('⏱️ [LOGIN] Timeout na comunicação com o servidor de autenticação');
         return NextResponse.json(
           { 
             success: false, 
@@ -142,7 +172,7 @@ export async function POST(request: NextRequest) {
       // Verificar se é um erro de conexão recusada (ECONNREFUSED)
       const errorMessage = String(fetchError);
       if (errorMessage.includes('ECONNREFUSED')) {
-        console.log('❌ [USERS-LOGIN] Conexão recusada pelo backend:', errorMessage);
+        console.error('🔌 [LOGIN] Conexão recusada pelo servidor de autenticação:', errorMessage);
         return NextResponse.json(
           { 
             success: false, 
@@ -163,8 +193,7 @@ export async function POST(request: NextRequest) {
     }
 
   } catch (error: any) {
-    console.log('❌ [USERS-LOGIN] Erro no login:', error);
-    
+    console.error('❌ [LOGIN] Erro interno:', error.message, error.stack);
     return NextResponse.json(
       { 
         success: false, 

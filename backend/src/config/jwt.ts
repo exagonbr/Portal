@@ -18,7 +18,7 @@ export const JWT_CONFIG: {
   AUDIENCE: string;
 } = {
   // Secret único para toda a aplicação
-  SECRET: process.env.JWT_SECRET,
+  SECRET: 'super_secret_nextauth_key_for_production_portal_sabercon_2025',
 
   // Algoritmo de assinatura
   ALGORITHM: 'HS256',

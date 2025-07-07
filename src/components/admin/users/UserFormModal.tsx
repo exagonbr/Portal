@@ -1,11 +1,13 @@
 'use client'
 
-import React, { useState, useEffect } from 'react'
+import React, { useState, useEffect, useCallback } from 'react'
 import Modal from '@/components/ui/Modal'
 import { Button } from '@/components/ui/Button'
 import { Badge } from '@/components/ui/Badge'
-import { UserResponseDto, RoleResponseDto, InstitutionResponseDto, CreateUserDto, UpdateUserDto } from '@/types/api'
+import { UserResponseDto, RoleResponseDto, InstitutionResponseDto } from '@/types/api'
 import { useToast } from '@/components/ToastManager';
+import { useRouter } from 'next/navigation'
+import { CreateUserDto, UpdateUserDto } from '@/types/user'
 
 // Importar o serviço real de usuários
 import { userService } from '@/services/userService'
@@ -43,34 +45,55 @@ export default function UserFormModal({
   viewOnly = false
 }: UserFormModalProps) {
   const { showSuccess, showError } = useToast()
-  const [formData, setFormData] = useState<CreateUserDto | UpdateUserDto>({
-    full_name: '',
+  const router = useRouter()
+  const [formData, setFormData] = useState({
+    name: '',
     email: '',
     password: '',
     role_id: '',
     institution_id: '',
-    enabled: true
+    is_active: true
   })
   const [loading, setLoading] = useState(false)
+
+  // Função para lidar com erros de autenticação
+  const handleAuthError = useCallback(() => {
+    showError("Sessão expirada. Por favor, faça login novamente.")
+    
+    // Limpar tokens inválidos
+    if (typeof window !== 'undefined') {
+      localStorage.removeItem('accessToken')
+      localStorage.removeItem('authToken')
+      localStorage.removeItem('token')
+      localStorage.removeItem('refreshToken')
+      localStorage.removeItem('user')
+    }
+    
+    // Redirecionar para a página de login
+    setTimeout(() => {
+      router.push('/auth/login?auth_error=expired')
+    }, 1000)
+  }, [showError, router])
 
   // Populate form when editing
   useEffect(() => {
     if (user) {
       setFormData({
-        full_name: user.full_name,
+        name: user.full_name,
         email: user.email,
-        role_id: user.role_id,
+        password: '',
+        role_id: user.role_id || '',
         institution_id: user.institution_id || '',
-        enabled: user.enabled
+        is_active: user.enabled || false
       })
     } else {
       setFormData({
-        full_name: '',
+        name: '',
         email: '',
         password: '',
         role_id: '',
         institution_id: '',
-        enabled: true
+        is_active: true
       })
     }
   }, [user])
@@ -82,29 +105,36 @@ export default function UserFormModal({
     setLoading(true)
     try {
       if (user) {
-        const updateData = {
-          full_name: formData.full_name,
+        const updateData: UpdateUserDto = {
+          name: formData.name,
           email: formData.email,
-          role_id: (formData as any).role_id,
-          institution_id: (formData as any).institution_id ? Number((formData as any).institution_id) : undefined,
-          enabled: (formData as any).enabled
+          role_id: formData.role_id,
+          institution_id: formData.institution_id,
+          is_active: formData.is_active
         }
-        await userService.updateUser(user.id, updateData as any)
+        await userService.updateUser(user.id, updateData)
         showSuccess('Usuário atualizado com sucesso!')
       } else {
-        const createData = {
-          full_name: formData.full_name!,
-          email: formData.email!,
-          password: formData.password!,
-          role_id: (formData as any).role_id!,
-          institution_id: Number((formData as any).institution_id!),
-          enabled: (formData as any).enabled
+        // Criar um objeto que corresponda à definição de CreateUserDto do frontend
+        const createData: CreateUserDto = {
+          name: formData.name,
+          email: formData.email,
+          password: formData.password,
+          role_id: formData.role_id,
+          institution_id: formData.institution_id,
+          is_active: formData.is_active
         }
         await userService.createUser(createData)
         showSuccess('Usuário criado com sucesso!')
       }
       onSuccess?.()
     } catch (error: any) {
+      console.error('❌ Erro ao salvar usuário:', error)
+      // Verificar se é um erro de autenticação
+      if (error.message?.includes('Sessão expirada') || error.message?.includes('não autenticado')) {
+        handleAuthError()
+        return
+      }
       showError(error.message || 'Erro ao salvar usuário')
     } finally {
       setLoading(false)
@@ -237,8 +267,8 @@ export default function UserFormModal({
               <input
                 type="text"
                 required
-                value={formData.full_name}
-                onChange={(e) => handleInputChange('full_name', e.target.value)}
+                value={formData.name}
+                onChange={(e) => handleInputChange('name', e.target.value)}
                 className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
                 placeholder="Digite o nome completo"
               />
@@ -254,20 +284,12 @@ export default function UserFormModal({
                 value={formData.email}
                 onChange={(e) => handleInputChange('email', e.target.value)}
                 className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                placeholder="usuario@exemplo.com"
+                placeholder="email@exemplo.com"
               />
             </div>
           </div>
-        </div>
 
-        {/* Password (only for new users) */}
-        {!user && (
-          <div className="space-y-4">
-            <h3 className="text-lg font-semibold text-slate-800 flex items-center gap-2">
-              <Key className="h-5 w-5 text-green-500" />
-              Senha
-            </h3>
-            
+          {!user && (
             <div>
               <label className="block text-sm font-medium text-slate-700 mb-1">
                 Senha *
@@ -275,20 +297,20 @@ export default function UserFormModal({
               <input
                 type="password"
                 required={!user}
-                value={formData.password || ''}
+                value={formData.password}
                 onChange={(e) => handleInputChange('password', e.target.value)}
                 className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                placeholder="Digite a senha"
+                placeholder={user ? "Deixe em branco para manter a senha atual" : "Digite uma senha segura"}
               />
             </div>
-          </div>
-        )}
+          )}
+        </div>
 
-        {/* Role and Institution */}
+        {/* System Information */}
         <div className="space-y-4">
           <h3 className="text-lg font-semibold text-slate-800 flex items-center gap-2">
             <Shield className="h-5 w-5 text-purple-500" />
-            Função e Instituição
+            Informações do Sistema
           </h3>
           
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -298,15 +320,13 @@ export default function UserFormModal({
               </label>
               <select
                 required
-                value={(formData as any).role_id}
+                value={formData.role_id}
                 onChange={(e) => handleInputChange('role_id', e.target.value)}
                 className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
               >
                 <option value="">Selecione uma função</option>
-                {roles.map((role) => (
-                  <option key={role.id} value={role.id}>
-                    {role.name}
-                  </option>
+                {roles.map(role => (
+                  <option key={role.id} value={role.id}>{role.name}</option>
                 ))}
               </select>
             </div>
@@ -316,58 +336,46 @@ export default function UserFormModal({
                 Instituição
               </label>
               <select
-                value={(formData as any).institution_id}
+                value={formData.institution_id || ''}
                 onChange={(e) => handleInputChange('institution_id', e.target.value)}
                 className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
               >
-                <option value="">Selecione uma instituição (opcional)</option>
-                {institutions.map((institution) => (
-                  <option key={institution.id} value={institution.id}>
-                    {institution.name}
-                  </option>
+                <option value="">Selecione uma instituição</option>
+                {institutions.map(institution => (
+                  <option key={institution.id} value={institution.id}>{institution.name}</option>
                 ))}
               </select>
             </div>
           </div>
-        </div>
 
-        {/* Status */}
-        <div className="space-y-4">
-          <h3 className="text-lg font-semibold text-slate-800 flex items-center gap-2">
-            <Activity className="h-5 w-5 text-green-500" />
-            Status do Usuário
-          </h3>
-          
-          <div className="flex items-center gap-3">
-            <input
-              type="checkbox"
-              id="is_active"
-              checked={(formData as any).enabled}
-              onChange={(e) => handleInputChange('enabled', e.target.checked)}
-              className="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
-            />
-            <label htmlFor="is_active" className="text-sm font-medium text-slate-700">
-              Usuário ativo no sistema
+          <div>
+            <label className="flex items-center space-x-2 cursor-pointer">
+              <input
+                type="checkbox"
+                checked={formData.is_active}
+                onChange={(e) => handleInputChange('is_active', e.target.checked)}
+                className="rounded border-gray-300 text-blue-600 focus:ring-blue-500 h-4 w-4"
+              />
+              <span className="text-sm text-gray-700">Usuário ativo</span>
             </label>
           </div>
         </div>
 
         {/* Actions */}
-        <div className="flex justify-end gap-3 pt-4 border-t border-slate-200">
-          <Button
-            type="button"
-            variant="secondary"
-            onClick={onClose}
-            disabled={loading}
-          >
-            Cancelar
-          </Button>
-          <Button
-            type="submit"
-            disabled={loading}
-          >
-            {user ? 'Atualizar Usuário' : 'Criar Usuário'}
-          </Button>
+        <div className="pt-4 border-t border-slate-200">
+          <div className="flex justify-end gap-3">
+            <Button type="button" variant="outline" onClick={onClose} disabled={loading}>
+              Cancelar
+            </Button>
+            <Button type="submit" disabled={loading}>
+              {loading ? (
+                <>
+                  <span className="animate-spin mr-2">&#8635;</span>
+                  Salvando...
+                </>
+              ) : user ? 'Atualizar' : 'Criar'}
+            </Button>
+          </div>
         </div>
       </form>
     </Modal>

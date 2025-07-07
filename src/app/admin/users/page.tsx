@@ -6,11 +6,13 @@ import { userService } from '@/services/userService'
 import { roleService } from '@/services/roleService'
 import { institutionService } from '@/services/institutionService'
 import { UserResponseDto, UserFilterDto, RoleResponseDto, InstitutionResponseDto } from '@/types/api'
+import { UserDto, RoleDto, InstitutionDto, UserFilter } from '@/types/user'
 import AuthenticatedLayout from '@/components/AuthenticatedLayout'
 import UserFormModal from '@/components/admin/users/UserFormModal'
 import { Badge } from '@/components/ui/Badge'
 import { Button } from '@/components/ui/Button'
 import { StatCard } from '@/components/ui/StandardCard'
+import { useRouter } from 'next/navigation'
 import {
   Plus,
   Search,
@@ -41,24 +43,25 @@ export default function AdminUsersPage() {
   const { showSuccess, showError } = useToast()
   const [loading, setLoading] = useState(true)
   const [refreshing, setRefreshing] = useState(false)
+  const router = useRouter()
   
   // Dados principais
-  const [users, setUsers] = useState<UserResponseDto[]>([])
-  const [roles, setRoles] = useState<RoleResponseDto[]>([])
-  const [institutions, setInstitutions] = useState<InstitutionResponseDto[]>([])
+  const [users, setUsers] = useState<UserDto[]>([])
+  const [roles, setRoles] = useState<RoleDto[]>([])
+  const [institutions, setInstitutions] = useState<InstitutionDto[]>([])
 
   // Paginação e Filtros
   const [totalItems, setTotalItems] = useState(0)
   const [currentPage, setCurrentPage] = useState(1)
   const [itemsPerPage] = useState(10)
   const [searchQuery, setSearchQuery] = useState('')
-  const [filters, setFilters] = useState<UserFilterDto>({})
+  const [filters, setFilters] = useState<UserFilter>({})
   const [showFilterPanel, setShowFilterPanel] = useState(false)
 
   // Modais
   const [modalOpen, setModalOpen] = useState(false)
   const [modalMode, setModalMode] = useState<'create' | 'edit'>('create')
-  const [selectedUser, setSelectedUser] = useState<UserResponseDto | null>(null)
+  const [selectedUser, setSelectedUser] = useState<UserDto | null>(null)
 
   // Estatísticas
   const [stats, setStats] = useState<UserStats>({
@@ -68,13 +71,32 @@ export default function AdminUsersPage() {
     usersByRole: {},
   })
 
-  const calculateStats = useCallback((allUsers: UserResponseDto[], allRoles: RoleResponseDto[]) => {
+  // Função para lidar com erros de autenticação
+  const handleAuthError = useCallback(() => {
+    showError("Sessão expirada. Por favor, faça login novamente.")
+    
+    // Limpar tokens inválidos
+    if (typeof window !== 'undefined') {
+      localStorage.removeItem('accessToken')
+      localStorage.removeItem('authToken')
+      localStorage.removeItem('token')
+      localStorage.removeItem('refreshToken')
+      localStorage.removeItem('user')
+    }
+    
+    // Redirecionar para a página de login
+    setTimeout(() => {
+      router.push('/auth/login?auth_error=expired')
+    }, 1000)
+  }, [showError, router])
+
+  const calculateStats = useCallback((allUsers: UserDto[], allRoles: RoleDto[]) => {
     const totalUsers = allUsers.length
-    const activeUsers = allUsers.filter(u => u.enabled).length
+    const activeUsers = allUsers.filter(u => u.is_active).length
     const inactiveUsers = totalUsers - activeUsers
     
     const usersByRole = allUsers.reduce((acc, user) => {
-      const role = allRoles.find(r => r.id.toString() === user.role_id)
+      const role = allRoles.find(r => r.id === user.role_id)
       const roleName = role?.name || 'Sem Função'
       acc[roleName] = (acc[roleName] || 0) + 1
       return acc
@@ -83,51 +105,69 @@ export default function AdminUsersPage() {
     setStats({ totalUsers, activeUsers, inactiveUsers, usersByRole })
   }, [])
 
-  const fetchPageData = useCallback(async (page = 1, search = '', currentFilters: UserFilterDto = {}, showLoadingIndicator = true) => {
+  const fetchPageData = useCallback(async (page = 1, search = '', currentFilters: UserFilter = {}, showLoadingIndicator = true) => {
     if (showLoadingIndicator) setLoading(true)
     else setRefreshing(true)
 
     try {
       // Carregar dados auxiliares (roles, institutions) uma vez
       if (roles.length === 0) {
-        const [rolesResponse, institutionsResponse] = await Promise.all([
-          roleService.getRoles({ limit: 1000 }),
-          institutionService.getInstitutions({ limit: 1000 })
-        ]);
-        setRoles(rolesResponse.items);
-        setInstitutions(institutionsResponse.items);
+        try {
+          const [rolesResponse, institutionsResponse] = await Promise.all([
+            roleService.getRoles({ limit: 1000 }),
+            institutionService.getInstitutions({ limit: 1000 })
+          ]);
+          setRoles(rolesResponse.items);
+          setInstitutions(institutionsResponse.items);
+        } catch (error: any) {
+          console.error('❌ Erro ao carregar roles/instituições:', error)
+          // Verificar se é um erro de autenticação
+          if (error.message?.includes('Sessão expirada') || error.message?.includes('não autenticado')) {
+            return handleAuthError()
+          }
+          throw error
+        }
       }
 
-      const params: UserFilterDto = {
+      const params: UserFilter = {
         page,
         limit: itemsPerPage,
-        sortBy: 'full_name',
+        sortBy: 'name',
         sortOrder: 'asc',
         search: search,
         ...currentFilters,
       }
 
-      const response = await userService.getUsers(params)
-      setUsers(response.items || [])
-      setTotalItems(response.total || 0)
-      setCurrentPage(page)
+      try {
+        const response = await userService.getUsers(params)
+        setUsers(response.items || [])
+        setTotalItems(response.total || 0)
+        setCurrentPage(page)
 
-      // Calcular stats com todos os usuários para uma visão geral
-      const allUsersResponse = await userService.getUsers({ limit: 1000 });
-      const allRolesResponse = await roleService.getRoles({ limit: 1000 });
-      calculateStats(allUsersResponse.items, allRolesResponse.items);
+        // Calcular stats com todos os usuários para uma visão geral
+        const allUsersResponse = await userService.getUsers({ limit: 1000 });
+        const allRolesResponse = await roleService.getRoles({ limit: 1000 });
+        calculateStats(allUsersResponse.items, allRolesResponse.items);
 
-      if (!showLoadingIndicator) {
-        showSuccess("Lista de usuários atualizada!")
+        if (!showLoadingIndicator) {
+          showSuccess("Lista de usuários atualizada!")
+        }
+      } catch (error: any) {
+        console.error('❌ Erro ao carregar usuários:', error)
+        // Verificar se é um erro de autenticação
+        if (error.message?.includes('Sessão expirada') || error.message?.includes('não autenticado')) {
+          return handleAuthError()
+        }
+        throw error
       }
     } catch (error) {
-      console.error('❌ Erro ao carregar usuários:', error)
+      console.error('❌ Erro ao carregar dados:', error)
       showError("Erro ao carregar usuários.")
     } finally {
       setLoading(false)
       setRefreshing(false)
     }
-  }, [itemsPerPage, calculateStats, roles.length])
+  }, [itemsPerPage, calculateStats, roles.length, showSuccess, showError, handleAuthError])
 
   useEffect(() => {
     fetchPageData(currentPage, searchQuery, filters)
@@ -139,7 +179,7 @@ export default function AdminUsersPage() {
     fetchPageData(1, searchQuery, filters)
   }
 
-  const handleFilterChange = (key: keyof UserFilterDto, value: any) => {
+  const handleFilterChange = (key: keyof UserFilter, value: any) => {
     const newFilters = { ...filters };
     if (value === '' || value === undefined || value === null) {
       delete (newFilters as any)[key];
@@ -165,22 +205,28 @@ export default function AdminUsersPage() {
     fetchPageData(currentPage, searchQuery, filters, false)
   }
 
-  const handleDeleteUser = async (user: UserResponseDto) => {
-    if (!confirm(`Tem certeza que deseja excluir o usuário "${user.full_name}"?`)) return
+  const handleDeleteUser = async (user: UserDto) => {
+    if (!confirm(`Tem certeza que deseja excluir o usuário "${user.name}"?`)) return
 
     try {
       setLoading(true)
-      await userService.deleteUser(user.id)
+      await userService.deleteUser(Number(user.id))
       showSuccess("Usuário excluído com sucesso.")
       await fetchPageData(currentPage, searchQuery, filters, false)
-    } catch (error) {
+    } catch (error: any) {
+      console.error('❌ Erro ao excluir usuário:', error)
+      // Verificar se é um erro de autenticação
+      if (error.message?.includes('Sessão expirada') || error.message?.includes('não autenticado')) {
+        handleAuthError()
+        return
+      }
       showError("Erro ao excluir usuário.")
     } finally {
       setLoading(false)
     }
   }
 
-  const openModal = (mode: 'create' | 'edit', user?: UserResponseDto) => {
+  const openModal = (mode: 'create' | 'edit', user?: UserDto) => {
     setModalMode(mode)
     setSelectedUser(user || null)
     setModalOpen(true)
@@ -196,10 +242,26 @@ export default function AdminUsersPage() {
     await fetchPageData(currentPage, searchQuery, filters, false)
   }
 
-  const getRoleName = (roleId?: string) => roles.find(r => r.id.toString() === roleId)?.name || 'N/A'
-  const getInstitutionName = (instId?: string | null) => institutions.find(i => i.id.toString() === instId)?.name || 'N/A'
+  const getRoleName = (roleId?: string) => roles.find(r => r.id === roleId)?.name || 'N/A'
+  const getInstitutionName = (instId?: string | null) => institutions.find(i => i.id === instId)?.name || 'N/A'
 
   const totalPages = Math.ceil(totalItems / itemsPerPage)
+
+  // Converter UserDto para UserResponseDto para compatibilidade com o UserFormModal
+  const mapToUserResponseDto = (user: UserDto): UserResponseDto => ({
+    id: Number(user.id),
+    full_name: user.name,
+    email: user.email,
+    enabled: user.is_active,
+    role_id: user.role_id,
+    institution_id: user.institution_id,
+    is_admin: false,
+    is_manager: false,
+    is_student: false,
+    is_teacher: false,
+    phone: user.phone,
+    address: user.address,
+  })
 
   return (
       <div className="container mx-auto px-4 py-6 max-w-7xl">
@@ -319,10 +381,10 @@ export default function AdminUsersPage() {
                           <td className="px-6 py-4">
                             <div className="flex items-center">
                               <div className="flex-shrink-0 w-10 h-10 bg-blue-100 rounded-full flex items-center justify-center">
-                                <span className="text-blue-600 font-semibold">{user.full_name.charAt(0)}</span>
+                                <span className="text-blue-600 font-semibold">{user.name.charAt(0)}</span>
                               </div>
                               <div className="ml-4">
-                                <div className="text-sm font-medium text-gray-900">{user.full_name}</div>
+                                <div className="text-sm font-medium text-gray-900">{user.name}</div>
                                 <div className="text-xs text-gray-500">{user.email}</div>
                               </div>
                             </div>
@@ -330,8 +392,8 @@ export default function AdminUsersPage() {
                           <td className="px-6 py-4 text-sm text-gray-900">{getRoleName(user.role_id)}</td>
                           <td className="px-6 py-4 text-sm text-gray-900">{getInstitutionName(user.institution_id)}</td>
                           <td className="px-6 py-4 text-center">
-                            <Badge variant={user.enabled ? 'success' : 'danger'}>
-                              {user.enabled ? 'Ativo' : 'Inativo'}
+                            <Badge variant={user.is_active ? 'success' : 'danger'}>
+                              {user.is_active ? 'Ativo' : 'Inativo'}
                             </Badge>
                           </td>
                           <td className="px-6 py-4 text-center">
@@ -352,10 +414,10 @@ export default function AdminUsersPage() {
                     <div key={user.id} className="bg-white border border-gray-200 rounded-lg shadow-sm">
                       <div className="p-4 border-b border-gray-100 flex justify-between items-start">
                         <div>
-                          <h3 className="font-semibold text-gray-800">{user.full_name}</h3>
+                          <h3 className="font-semibold text-gray-800">{user.name}</h3>
                           <p className="text-sm text-gray-500">{user.email}</p>
                         </div>
-                        <Badge variant={user.enabled ? 'success' : 'danger'}>{user.enabled ? 'Ativo' : 'Inativo'}</Badge>
+                        <Badge variant={user.is_active ? 'success' : 'danger'}>{user.is_active ? 'Ativo' : 'Inativo'}</Badge>
                       </div>
                       <div className="p-4 space-y-2">
                         <div className="flex items-center text-sm"><Shield className="w-4 h-4 mr-2 text-gray-400"/>{getRoleName(user.role_id)}</div>
@@ -390,9 +452,9 @@ export default function AdminUsersPage() {
           isOpen={modalOpen}
           onClose={closeModal}
           onSuccess={handleModalSave}
-          user={selectedUser}
-          roles={roles}
-          institutions={institutions}
+          user={selectedUser ? mapToUserResponseDto(selectedUser) : null}
+          roles={roles as unknown as RoleResponseDto[]}
+          institutions={institutions as unknown as InstitutionResponseDto[]}
         />
       </div>
   )

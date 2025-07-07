@@ -6,6 +6,7 @@ import { setupRoutes } from './config/routes';
 import { setupErrorHandling } from './config/errorHandling';
 import { db } from './database/connection';
 import { AppDataSource } from './config/typeorm.config';
+import { JWT_CONFIG } from './config/jwt';
 
 // Carrega variáveis de ambiente
 dotenv.config();
@@ -49,6 +50,9 @@ async function startServer(): Promise<void> {
     await db.raw('SELECT 1');
     logger.info('✅ Conexão com banco de dados OK');
     
+    logger.info('✅ JWT_SECRET:', JWT_CONFIG.SECRET);
+    logger.info('✅ JWT_REFRESH_SECRET:', JWT_CONFIG.REFRESH_TOKEN_EXPIRES_IN);
+
     const app = createApp();
     const PORT = parseInt(process.env.PORT || '3001', 10);
     const HOST = '127.0.0.1';

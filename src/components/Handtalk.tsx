@@ -1,41 +1,54 @@
 'use client'
 
-import { useEffect, useState } from 'react';
-import { HT } from '@/lib/handtalk';
+import { useEffect } from 'react';
+import Script from 'next/script';
 
 interface HandtalkProps {
   token: string;
 }
 
-export function Handtalk({ token }: HandtalkProps): null {
-  const [initialized, setInitialized] = useState(false);
-
+export default function Handtalk({ token }: HandtalkProps) {
   useEffect(() => {
-    if (!initialized && typeof window !== 'undefined') {
-      try {
-        // Inicializar o Handtalk com o token fornecido
-        const htInstance = HT.getInstance({ token });
-        
-        // Verificar se o script foi carregado corretamente
-        const checkScript = setInterval(() => {
-          if (window.HT) {
-            clearInterval(checkScript);
-            console.log('✅ Handtalk: Script carregado com sucesso');
-          }
-        }, 1000);
-        
-        // Limpar o intervalo após 10 segundos para evitar loops infinitos
-        setTimeout(() => clearInterval(checkScript), 10000);
-        
-        setInitialized(true);
-      } catch (error) {
-        console.error('❌ Erro ao inicializar Handtalk:', error);
+    // Inicializar o Handtalk quando o script estiver carregado
+    const initHandtalk = () => {
+      if (typeof window !== 'undefined' && window.HT) {
+        window.ht = new window.HT({
+          token: token,
+          align: 'right',
+          mobileBehavior: 'draggable',
+          ytEmbedReplace: true,
+        });
       }
+    };
+
+    // Verificar se o script já foi carregado
+    if (typeof window !== 'undefined' && window.HT) {
+      initHandtalk();
+    } else {
+      // Adicionar um listener para quando o script for carregado
+      window.addEventListener('handtalk-ready', initHandtalk);
+      
+      // Limpar o listener quando o componente for desmontado
+      return () => {
+        window.removeEventListener('handtalk-ready', initHandtalk);
+      };
     }
-  }, [token, initialized]);
+  }, [token]);
 
-  // Este componente não renderiza nada
-  return null;
-}
-
-export default Handtalk; 
+  return (
+    <>
+      <Script
+        id="handtalk-script"
+        src="https://plugin.handtalk.me/web/latest/handtalk.min.js"
+        strategy="afterInteractive"
+        onLoad={() => {
+          // Disparar evento quando o script estiver carregado
+          if (typeof window !== 'undefined') {
+            const event = new Event('handtalk-ready');
+            window.dispatchEvent(event);
+          }
+        }}
+      />
+    </>
+  );
+} 
