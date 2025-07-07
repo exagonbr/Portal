@@ -124,7 +124,7 @@ export class UnifiedAuthService {
   /**
    * Remove dados de autenticação de todos os locais
    */
-  static async clearAuthData(sessionId?: string, token?: string): Promise<void> {
+  static async clearAuthData(sessionId?: string | null, token?: string | null): Promise<void> {
     // 1. Remover do localStorage
     this.clearLocalStorage();
 
