@@ -74,6 +74,17 @@ class GroupController extends BaseController<UserGroup> {
       return res.status(500).json({ success: false, message: 'Internal Server Error' });
     }
   }
+
+  // Método para obter estatísticas de grupos
+  public async getStats(req: Request, res: Response): Promise<Response> {
+    try {
+      const stats = await groupRepository.getStats();
+      return res.status(200).json({ success: true, data: stats });
+    } catch (error) {
+      console.error(`Error in getStats: ${error}`);
+      return res.status(500).json({ success: false, message: 'Internal Server Error' });
+    }
+  }
 }
 
 export default new GroupController();

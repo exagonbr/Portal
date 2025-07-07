@@ -26,6 +26,14 @@ export interface GroupPermission {
     allowed: boolean;
 }
 
+export interface GroupStats {
+  total_groups: number;
+  active_groups: number;
+  total_members: number;
+  permissions_count: number;
+  by_institution: Record<string, number>;
+  by_school: Record<string, number>;
+}
 
 export interface CreateUserGroupData extends Omit<UserGroup, 'id' | 'member_count'> {}
 export interface UpdateUserGroupData extends Partial<CreateUserGroupData> {}
@@ -91,5 +99,54 @@ export class GroupRepository extends BaseRepository<UserGroup> {
     } else {
       await this.db('group_permissions').insert({ group_id: groupId, permission_key: permissionKey, allowed });
     }
+  }
+
+  async getStats(): Promise<GroupStats> {
+    // Obter total de grupos
+    const totalGroups = await this.db(this.tableName).count('id as count').first();
+    
+    // Obter total de grupos ativos
+    const activeGroups = await this.db(this.tableName).where({ is_active: true }).count('id as count').first();
+    
+    // Obter total de membros (soma de member_count)
+    const totalMembers = await this.db(this.tableName).sum('member_count as sum').first();
+    
+    // Obter total de permissões
+    const permissionsCount = await this.db('group_permissions').count('id as count').first();
+    
+    // Obter contagem por instituição
+    const byInstitution = await this.db(this.tableName)
+      .select('institution_id')
+      .count('id as count')
+      .whereNotNull('institution_id')
+      .groupBy('institution_id');
+    
+    // Obter contagem por escola
+    const bySchool = await this.db(this.tableName)
+      .select('school_id')
+      .count('id as count')
+      .whereNotNull('school_id')
+      .groupBy('school_id');
+    
+    // Formatar contagem por instituição
+    const byInstitutionMap: Record<string, number> = {};
+    byInstitution.forEach((item: any) => {
+      byInstitutionMap[item.institution_id] = Number(item.count);
+    });
+    
+    // Formatar contagem por escola
+    const bySchoolMap: Record<string, number> = {};
+    bySchool.forEach((item: any) => {
+      bySchoolMap[item.school_id] = Number(item.count);
+    });
+    
+    return {
+      total_groups: Number(totalGroups?.count || 0),
+      active_groups: Number(activeGroups?.count || 0),
+      total_members: Number(totalMembers?.sum || 0),
+      permissions_count: Number(permissionsCount?.count || 0),
+      by_institution: byInstitutionMap,
+      by_school: bySchoolMap
+    };
   }
 }

@@ -6,6 +6,9 @@ const router = Router();
 
 router.use(requireAuth);
 
+// Rota para estatísticas (deve vir antes das rotas com parâmetros)
+router.get('/stats', GroupController.getStats);
+
 // Rotas CRUD básicas
 router.get('/', GroupController.getAll);
 router.get('/:id', GroupController.getById);
