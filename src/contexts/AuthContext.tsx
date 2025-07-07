@@ -149,18 +149,40 @@ const getStoredToken = (): string | null => {
 const setStoredToken = (token: string): void => {
   if (typeof window === 'undefined') return;
   try {
+    // Armazenar o token em todas as chaves possíveis para compatibilidade
     localStorage.setItem('accessToken', token);
+    localStorage.setItem('auth_token', token);
+    localStorage.setItem('token', token);
+    localStorage.setItem('authToken', token);
+    
+    // Definir também em cookies para requisições do servidor
+    document.cookie = `accessToken=${token}; path=/; max-age=86400; SameSite=Lax`;
+    document.cookie = `auth_token=${token}; path=/; max-age=86400; SameSite=Lax`;
   } catch (error) {
-    console.error('Error setting localStorage:', error);
+    console.error('Error setting token storage:', error);
   }
 };
 
 const removeStoredToken = (): void => {
   if (typeof window === 'undefined') return;
   try {
+    // Remover de todas as chaves possíveis
     localStorage.removeItem('accessToken');
+    localStorage.removeItem('auth_token');
+    localStorage.removeItem('token');
+    localStorage.removeItem('authToken');
+    
+    // Remover também de sessionStorage
+    sessionStorage.removeItem('accessToken');
+    sessionStorage.removeItem('auth_token');
+    sessionStorage.removeItem('token');
+    sessionStorage.removeItem('authToken');
+    
+    // Limpar cookies
+    document.cookie = 'accessToken=; path=/; max-age=0';
+    document.cookie = 'auth_token=; path=/; max-age=0';
   } catch (error) {
-    console.error('Error removing from localStorage:', error);
+    console.error('Error removing from storage:', error);
   }
 };
 

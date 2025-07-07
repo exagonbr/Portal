@@ -76,5 +76,10 @@ export default function ClientLayoutWrapper({ children, fallback }: ClientLayout
   }
 
   // Renderizar apenas o wrapper simples
-  return <SimpleWrapper>{children}</SimpleWrapper>;
+  return (
+    <SimpleWrapper>
+      <Handtalk token="fe964e92fd91396436b25c2ee95b3976" />
+      {children}
+    </SimpleWrapper>
+  );
 } 

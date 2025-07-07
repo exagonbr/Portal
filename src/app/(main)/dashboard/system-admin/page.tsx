@@ -32,7 +32,9 @@ import {
   Gauge,
   Monitor,
   Smartphone,
-  Tablet
+  Tablet,
+  Tv,
+  BookOpen
 } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
 import { UserRole } from '@/types/roles';
@@ -672,25 +674,21 @@ function SystemAdminDashboardContent() {
       {/* Métricas Principais do Sistema */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4 mb-4 sm:mb-6">
         <StatCard
-          icon={Server}
-          title="Uptime do Sistema"
-          value={dashboardData?.system ? formatUptime(dashboardData.system.uptime) : 'N/A'}
-          subtitle={`v${dashboardData?.system?.version || 'N/A'} • ${dashboardData?.system?.environment || 'N/A'}`}
+          icon={Building2}
+          title="Instituições"
+          value={institutions?.length.toString() || 'N/A'}
+          subtitle={`${institutions?.filter(i => i.active !== false).length || 0} ativas`}
           color="emerald"
         />
         <StatCard
-          icon={Cpu}
-          title="Memória Heap"
-          value={dashboardData?.system ? formatBytes(dashboardData.system.memoryUsage.heapUsed) : 'N/A'}
-          subtitle={dashboardData?.system ? `${((dashboardData.system.memoryUsage.heapUsed / dashboardData.system.memoryUsage.heapTotal) * 100).toFixed(1)}% de ${formatBytes(dashboardData.system.memoryUsage.heapTotal)}` : 'N/A'}
+          icon={Users}
+          title="Usuários"
+          value={realUserStats?.total_users?.toLocaleString('pt-BR') || 'N/A'}
+          subtitle={`${realUserStats?.active_users?.toLocaleString('pt-BR') || '0'} ativos (${realUserStats?.active_users && realUserStats?.total_users ? ((realUserStats.active_users / realUserStats.total_users) * 100).toFixed(1) : '0'}%)`}
           color="blue"
-          trend={dashboardData?.system ? 
-            ((dashboardData.system.memoryUsage.heapUsed / dashboardData.system.memoryUsage.heapTotal) * 100) > 85 ? 'Crítico' :
-            ((dashboardData.system.memoryUsage.heapUsed / dashboardData.system.memoryUsage.heapTotal) * 100) > 75 ? 'Atenção' : 'Normal'
-            : 'Normal'
-          }
+          trend={realUserStats?.recent_registrations ? `+${realUserStats.recent_registrations} novos` : 'Normal'}
         />
-        <StatCard
+                  <StatCard
           icon={Users}
           title="Usuários Online"
           value={dashboardData?.sessions?.activeUsers?.toLocaleString('pt-BR') || realUserStats?.active_users?.toLocaleString('pt-BR') || '0'}
@@ -698,148 +696,127 @@ function SystemAdminDashboardContent() {
           color="violet"
           trend={dashboardData?.sessions?.activeUsers && dashboardData.sessions.activeUsers > 5000 ? 'Alta carga' : 'Tempo real'}
         />
+          
+          <StatCard
+          icon={FileText}
+          title="Certificados"
+          value="2.450"
+          subtitle="1.875 emitidos este mês"
+          color="amber"
+          trend="↑ 12% em relação ao mês anterior"
+        />
 
       </div>
-
-      {/* Estatísticas Gerais */}
-      <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-8 gap-3 mb-6">
-        <SimpleCard className="p-3">
-          <div className="flex items-center gap-2">
-            <div className="p-1.5 bg-slate-100 rounded-lg">
-              <Building2 className="w-4 h-4 text-slate-600" />
-            </div>
-            <div>
-              <p className="text-lg font-bold text-gray-800">
-                {institutionStats?.totalInstitutions || institutions.length}
-              </p>
-              <p className="text-xs text-gray-600">Instituições</p>
-              <p className="text-xs text-gray-500">
-                {institutionStats?.activeInstitutions || institutions.filter(i => i.active !== false).length} ativas
-                {institutionStats?.recentInstitutions && institutionStats.recentInstitutions > 0 && (
-                  <span className="ml-1 text-blue-600">• {institutionStats.recentInstitutions} novas</span>
-                )}
-              </p>
-            </div>
+      
+      {/* Seção de Cards de Entretenimento */}
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-5 mt-6 mb-8">
+        {/* Card de TV Shows */}
+        <div className="bg-white dark:bg-gray-100 rounded-lg shadow-md p-3 sm:p-4 h-full">
+          <div className="flex items-center justify-between mb-3 sm:mb-4">
+            <h3 className="text-sm sm:text-base font-semibold flex items-center gap-2">
+              <Tv className="w-4 h-4 sm:w-5 sm:h-5 text-purple-600" />
+              <span>TV Shows Populares</span>
+            </h3>
+            <button className="text-xs text-primary hover:text-primary-dark">
+              Ver todos
+            </button>
           </div>
-        </SimpleCard>
-
-        <SimpleCard className="p-3">
-          <div className="flex items-center gap-2">
-            <div className="p-1.5 bg-indigo-100 rounded-lg">
-              <School className="w-4 h-4 text-indigo-600" />
-            </div>
-            <div>
-              <p className="text-lg font-bold text-gray-800">
-                {institutionStats?.totalSchools || institutions.reduce((total, inst) => total + (inst.schools_count || 0), 0)}
-              </p>
-              <p className="text-xs text-gray-600">Escolas</p>
-              <p className="text-xs text-gray-500">
-                {Math.floor((institutionStats?.totalSchools || institutions.reduce((total, inst) => total + (inst.schools_count || 0), 0)) * 0.91)} ativas
-                {institutionStats?.totalInstitutions && institutionStats.totalInstitutions > 0 && (
-                  <span className="ml-1 text-indigo-600">
-                    • {Math.round((institutionStats.totalSchools || 0) / institutionStats.totalInstitutions)} por inst.
-                  </span>
-                )}
-              </p>
-            </div>
+        
+          <div className="space-y-2 sm:space-y-3">
+            <SimpleCard className="p-2 sm:p-3 hover:shadow-sm transition-shadow border-l-4 border-purple-500">
+              <div className="flex justify-between">
+                <div className="flex-1 min-w-0 mr-2">
+                  <h4 className="font-medium text-xs sm:text-sm truncate">Stranger Things</h4>
+                  <p className="text-xs text-gray-600 truncate">Netflix • Drama, Sci-Fi</p>
+                </div>
+                <div className="text-right flex-shrink-0">
+                  <span className="text-xs font-bold text-purple-600">9.2/10</span>
+                  <p className="text-xs text-gray-500">4 temporadas</p>
+                </div>
+              </div>
+            </SimpleCard>
+            
+            <SimpleCard className="p-2 sm:p-3 hover:shadow-sm transition-shadow border-l-4 border-purple-500">
+              <div className="flex justify-between">
+                <div className="flex-1 min-w-0 mr-2">
+                  <h4 className="font-medium text-xs sm:text-sm truncate">The Mandalorian</h4>
+                  <p className="text-xs text-gray-600 truncate">Disney+ • Sci-Fi, Aventura</p>
+                </div>
+                <div className="text-right flex-shrink-0">
+                  <span className="text-xs font-bold text-purple-600">8.8/10</span>
+                  <p className="text-xs text-gray-500">3 temporadas</p>
+                </div>
+              </div>
+            </SimpleCard>
+            
+            <SimpleCard className="p-2 sm:p-3 hover:shadow-sm transition-shadow border-l-4 border-purple-500">
+              <div className="flex justify-between">
+                <div className="flex-1 min-w-0 mr-2">
+                  <h4 className="font-medium text-xs sm:text-sm truncate">Breaking Bad</h4>
+                  <p className="text-xs text-gray-600 truncate">AMC • Drama, Crime</p>
+                </div>
+                <div className="text-right flex-shrink-0">
+                  <span className="text-xs font-bold text-purple-600">9.5/10</span>
+                  <p className="text-xs text-gray-500">5 temporadas</p>
+                </div>
+              </div>
+            </SimpleCard>
           </div>
-        </SimpleCard>
-
-        <SimpleCard className="p-3">
-          <div className="flex items-center gap-2">
-            <div className="p-1.5 bg-blue-100 rounded-lg">
-              <Users className="w-4 h-4 text-blue-600" />
-            </div>
-            <div>
-              <p className="text-lg font-bold text-gray-800">
-                {(realUsersByRole.STUDENT || realUserStats?.users_by_role?.STUDENT || 0).toLocaleString('pt-BR')}
-              </p>
-              <p className="text-xs text-gray-600">Alunos</p>
-              <p className="text-xs text-gray-500">
-                {((realUsersByRole.STUDENT || realUserStats?.users_by_role?.STUDENT || 0) / 
-                  (realUserStats?.total_users || Object.values(realUsersByRole).reduce((a, b) => a + b, 0) || 1) * 100).toFixed(1)}% do total
-              </p>
-            </div>
+        </div>
+      
+        {/* Card de Livros */}
+        <div className="bg-white dark:bg-gray-100 rounded-lg shadow-md p-3 sm:p-4 h-full">
+          <div className="flex items-center justify-between mb-3 sm:mb-4">
+            <h3 className="text-sm sm:text-base font-semibold flex items-center gap-2">
+              <BookOpen className="w-4 h-4 sm:w-5 sm:h-5 text-amber-600" />
+              <span>Livros Recomendados</span>
+            </h3>
+            <button className="text-xs text-primary hover:text-primary-dark">
+              Ver todos
+            </button>
           </div>
-        </SimpleCard>
-
-        <SimpleCard className="p-3">
-          <div className="flex items-center gap-2">
-            <div className="p-1.5 bg-green-100 rounded-lg">
-              <UserCheck className="w-4 h-4 text-green-600" />
-            </div>
-            <div>
-              <p className="text-lg font-bold text-gray-800">
-                {(realUsersByRole.TEACHER || realUserStats?.users_by_role?.TEACHER || 0).toLocaleString('pt-BR')}
-              </p>
-              <p className="text-xs text-gray-600">Professores</p>
-              <p className="text-xs text-gray-500">Educadores ativos</p>
-            </div>
+        
+          <div className="space-y-2 sm:space-y-3">
+            <SimpleCard className="p-2 sm:p-3 hover:shadow-sm transition-shadow border-l-4 border-amber-500">
+              <div className="flex justify-between">
+                <div className="flex-1 min-w-0 mr-2">
+                  <h4 className="font-medium text-xs sm:text-sm truncate">Duna</h4>
+                  <p className="text-xs text-gray-600 truncate">Frank Herbert • Ficção Científica</p>
+                </div>
+                <div className="text-right flex-shrink-0">
+                  <span className="text-xs font-bold text-amber-600">4.7/5</span>
+                  <p className="text-xs text-gray-500">412 páginas</p>
+                </div>
+              </div>
+            </SimpleCard>
+          
+            <SimpleCard className="p-2 sm:p-3 hover:shadow-sm transition-shadow border-l-4 border-amber-500">
+              <div className="flex justify-between">
+                <div className="flex-1 min-w-0 mr-2">
+                  <h4 className="font-medium text-xs sm:text-sm truncate">1984</h4>
+                  <p className="text-xs text-gray-600 truncate">George Orwell • Distopia</p>
+                </div>
+                <div className="text-right flex-shrink-0">
+                  <span className="text-xs font-bold text-amber-600">4.6/5</span>
+                  <p className="text-xs text-gray-500">328 páginas</p>
+                </div>
+              </div>
+            </SimpleCard>
+          
+            <SimpleCard className="p-2 sm:p-3 hover:shadow-sm transition-shadow border-l-4 border-amber-500">
+              <div className="flex justify-between">
+                <div className="flex-1 min-w-0 mr-2">
+                  <h4 className="font-medium text-xs sm:text-sm truncate">O Senhor dos Anéis</h4>
+                  <p className="text-xs text-gray-600 truncate">J.R.R. Tolkien • Fantasia</p>
+                </div>
+                <div className="text-right flex-shrink-0">
+                  <span className="text-xs font-bold text-amber-600">4.9/5</span>
+                  <p className="text-xs text-gray-500">1178 páginas</p>
+                </div>
+              </div>
+            </SimpleCard>
           </div>
-        </SimpleCard>
-
-        <SimpleCard className="p-3">
-          <div className="flex items-center gap-2">
-            <div className="p-1.5 bg-orange-100 rounded-lg">
-              <Users className="w-4 h-4 text-orange-600" />
-            </div>
-            <div>
-              <p className="text-lg font-bold text-gray-800">
-                {(realUsersByRole.COORDINATOR || realUserStats?.users_by_role?.COORDINATOR || 0).toLocaleString('pt-BR')}
-              </p>
-              <p className="text-xs text-gray-600">Coordenadores</p>
-              <p className="text-xs text-gray-500">Gestão pedagógica</p>
-            </div>
-          </div>
-        </SimpleCard>
-
-        <SimpleCard className="p-3">
-          <div className="flex items-center gap-2">
-            <div className="p-1.5 bg-purple-100 rounded-lg">
-              <Users className="w-4 h-4 text-purple-600" />
-            </div>
-            <div>
-              <p className="text-lg font-bold text-gray-800">
-                {(realUsersByRole.PARENT || realUserStats?.users_by_role?.PARENT || 0).toLocaleString('pt-BR')}
-              </p>
-              <p className="text-xs text-gray-600">Responsáveis</p>
-              <p className="text-xs text-gray-500">Pais e tutores</p>
-            </div>
-          </div>
-        </SimpleCard>
-
-        <SimpleCard className="p-3">
-          <div className="flex items-center gap-2">
-            <div className="p-1.5 bg-pink-100 rounded-lg">
-              <Activity className="w-4 h-4 text-pink-600" />
-            </div>
-            <div>
-              <p className="text-lg font-bold text-gray-800">
-                {dashboardData?.sessions?.totalActiveSessions?.toLocaleString('pt-BR') || '0'}
-              </p>
-              <p className="text-xs text-gray-600">Sessões Ativas</p>
-              <p className="text-xs text-gray-500 flex items-center gap-1">
-                <span className="w-1.5 h-1.5 inline-block bg-green-500 rounded-full animate-pulse"></span>
-                {dashboardData?.sessions?.activeUsers?.toLocaleString('pt-BR') || '0'} usuários online
-              </p>
-            </div>
-          </div>
-        </SimpleCard>
-
-        <SimpleCard className="p-3">
-          <div className="flex items-center gap-2">
-            <div className="p-1.5 bg-teal-100 rounded-lg">
-              <Clock className="w-4 h-4 text-teal-600" />
-            </div>
-            <div>
-              <p className="text-lg font-bold text-gray-800">
-                {dashboardData?.sessions?.averageSessionDuration ? `${dashboardData.sessions.averageSessionDuration.toFixed(0)}min` : 'N/A'}
-              </p>
-              <p className="text-xs text-gray-600">Tempo Médio</p>
-              <p className="text-xs text-gray-500">Por sessão</p>
-            </div>
-          </div>
-        </SimpleCard>
+        </div>
       </div>
 
       {/* Layout Principal com 3 Colunas */}
@@ -1360,43 +1337,6 @@ function SystemAdminDashboardContent() {
               </div>
             </ContentCard>
           )}
-
-
-
-          {/* Links Rápidos */}
-          <div className="bg-white dark:bg-gray-100 rounded-lg shadow-md p-3 sm:p-4">
-            <h3 className="text-sm sm:text-base font-semibold mb-2 sm:mb-3">Acesso Rápido</h3>
-            <div className="space-y-1">
-              <button 
-                onClick={() => router.push('/admin/analytics')}
-                className="w-full px-2 sm:px-3 py-2 text-left text-xs sm:text-sm hover:bg-gray-50 rounded flex items-center gap-2 transition-colors"
-              >
-                <BarChart3 className="w-3 h-3 sm:w-4 sm:h-4 text-primary flex-shrink-0" />
-                <span className="truncate">Analytics do Sistema</span>
-              </button>
-              <button 
-                onClick={() => router.push('/admin/logs')}
-                className="w-full px-2 sm:px-3 py-2 text-left text-xs sm:text-sm hover:bg-gray-50 rounded flex items-center gap-2 transition-colors"
-              >
-                <Terminal className="w-3 h-3 sm:w-4 sm:h-4 text-primary flex-shrink-0" />
-                <span className="truncate">Logs do Sistema</span>
-              </button>
-              <button 
-                onClick={() => router.push('/admin/sessions')}
-                className="w-full px-2 sm:px-3 py-2 text-left text-xs sm:text-sm hover:bg-gray-50 rounded flex items-center gap-2 transition-colors"
-              >
-                <Eye className="w-3 h-3 sm:w-4 sm:h-4 text-primary flex-shrink-0" />
-                <span className="truncate">Sessões Ativas</span>
-              </button>
-              <button 
-                onClick={() => router.push('/portal/reports')}
-                className="w-full px-2 sm:px-3 py-2 text-left text-xs sm:text-sm hover:bg-gray-50 rounded flex items-center gap-2 transition-colors"
-              >
-                <FileText className="w-3 h-3 sm:w-4 sm:h-4 text-primary flex-shrink-0" />
-                <span className="truncate">Portal de Relatórios</span>
-              </button>
-            </div>
-          </div>
         </div>
     </div>
   );

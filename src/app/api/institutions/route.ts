@@ -14,8 +14,6 @@ export async function GET(request: NextRequest) {
     const url = new URL(request.url);
     const searchParams = url.searchParams;
     
-    console.log('🔗 BACKEND_URL:', getInternalApiUrl());
-    
     // Preparar headers de autenticação
     const headers = await prepareAuthHeaders(request);
     
@@ -34,10 +32,6 @@ export async function GET(request: NextRequest) {
       backendUrl.searchParams.append(key, value);
     });
 
-    console.log('🔗 Proxying to:', backendUrl.toString());
-    console.log('📋 Auth Header:', authHeader ? 'Present' : 'Missing');
-    console.log('🔐 Using route:', hasValidAuthToken ? 'AUTHENTICATED (/api/institutions)' : 'PUBLIC (/api/institutions-public)');
-
     // Preparar headers para a requisição
     const requestHeaders: Record<string, string> = {
       'Content-Type': 'application/json',
@@ -54,16 +48,12 @@ export async function GET(request: NextRequest) {
         method: 'GET',
         headers: requestHeaders,
       });
-
-      console.log('📡 Backend response status:', response.status);
       
       if (!response.ok) {
         const errorText = await response.text();
-        console.log('❌ Backend error:', errorText);
         
         // Se for erro 401 na rota autenticada, tentar rota pública como fallback
         if (response.status === 401 && hasValidAuthToken) {
-          console.log('🔄 Tentando fallback para rota pública...');
           const publicUrl = new URL('/api/institutions-public', getInternalApiUrl());
           searchParams.forEach((value, key) => {
             publicUrl.searchParams.append(key, value);
@@ -76,7 +66,6 @@ export async function GET(request: NextRequest) {
           
           if (fallbackResponse.ok) {
             const fallbackData = await fallbackResponse.json();
-            console.log('✅ Fallback para rota pública funcionou');
             return NextResponse.json(fallbackData, { status: fallbackResponse.status });
           }
         }
@@ -89,11 +78,9 @@ export async function GET(request: NextRequest) {
       
       // Verificar se a resposta é JSON
       const contentType = response.headers.get('content-type');
-      console.log('📄 Content-Type:', contentType);
       
       if (!contentType || !contentType.includes('application/json')) {
         const textResponse = await response.text();
-        console.log('❌ Resposta não é JSON:', textResponse);
         return NextResponse.json(
           { success: false, message: 'Resposta do backend não é JSON válido' },
           { status: 500 }
@@ -101,12 +88,9 @@ export async function GET(request: NextRequest) {
       }
       
       const data = await response.json();
-      console.log('📄 Backend response data keys:', Object.keys(data));
 
       return NextResponse.json(data, { status: response.status });
     } catch (fetchError) {
-      console.log('❌ Erro de conexão com o backend:', fetchError);
-      
       // Verificar se é um erro de conexão recusada (ECONNREFUSED)
       const errorMessage = String(fetchError);
       if (errorMessage.includes('ECONNREFUSED')) {
@@ -127,9 +111,6 @@ export async function GET(request: NextRequest) {
       );
     }
   } catch (error) {
-    console.log('❌ Erro ao buscar instituições:', error);
-    console.log('❌ Error details:', error instanceof Error ? error.message : String(error));
-    
     return NextResponse.json(
       { success: false, message: 'Erro interno do servidor' },
       { status: 500 }
@@ -154,7 +135,6 @@ export async function POST(request: NextRequest) {
 
     return NextResponse.json(data, { status: response.status });
   } catch (error) {
-    console.log('Erro ao criar instituição:', error);
     return NextResponse.json(
       { success: false, message: 'Erro interno do servidor' },
       { status: 500 }

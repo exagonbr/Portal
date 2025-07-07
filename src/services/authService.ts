@@ -103,7 +103,20 @@ class AuthServiceClass {
   }
 
   getToken(): string | null {
-    return localStorage.getItem('authToken') || localStorage.getItem('accessToken');
+    if (typeof window === 'undefined') return null;
+    
+    // Buscar token em todas as possíveis chaves
+    return (
+      localStorage.getItem('accessToken') ||
+      localStorage.getItem('auth_token') ||
+      localStorage.getItem('token') ||
+      localStorage.getItem('authToken') ||
+      sessionStorage.getItem('accessToken') ||
+      sessionStorage.getItem('auth_token') ||
+      sessionStorage.getItem('token') ||
+      sessionStorage.getItem('authToken') ||
+      null
+    );
   }
 }
 

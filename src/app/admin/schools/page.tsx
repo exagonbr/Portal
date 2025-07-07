@@ -22,6 +22,7 @@ import {
 } from 'lucide-react'
 import { unitService } from '@/services/unitService'
 import { institutionService } from '@/services/institutionService'
+import { useRouter } from 'next/navigation'
 
 // Interface para unidades
 interface Unit {
@@ -55,6 +56,7 @@ export default function AdminSchoolsPage() {
   const { showSuccess, showError } = useToast()
   const [loading, setLoading] = useState(true)
   const [refreshing, setRefreshing] = useState(false)
+  const router = useRouter()
   
   // Dados principais
   const [units, setUnits] = useState<Unit[]>([])
@@ -75,6 +77,19 @@ export default function AdminSchoolsPage() {
     totalTeachers: 0,
     totalClasses: 0,
   })
+
+  // Verificar autenticação
+  useEffect(() => {
+    const checkAuth = () => {
+      const token = localStorage.getItem('accessToken') || localStorage.getItem('authToken')
+      if (!token) {
+        showError("Sessão expirada ou usuário não autenticado")
+        router.push('/auth/login')
+      }
+    }
+    
+    checkAuth()
+  }, [router, showError])
 
   const calculateStats = useCallback((allUnits: Unit[]) => {
     const totalSchools = allUnits.length
@@ -104,7 +119,6 @@ export default function AdminSchoolsPage() {
         throw new Error('Erro ao buscar instituições');
       }
     } catch (error) {
-      console.error('Erro ao buscar instituições:', error);
       showError("Erro ao carregar instituições.");
       
       // Em caso de erro, definir algumas instituições padrão para não quebrar a interface
@@ -119,6 +133,12 @@ export default function AdminSchoolsPage() {
     else setRefreshing(true)
 
     try {
+      // Verificar autenticação antes de fazer a requisição
+      const token = localStorage.getItem('accessToken') || localStorage.getItem('authToken')
+      if (!token) {
+        throw new Error('Usuário não autenticado')
+      }
+
       // Buscar instituições se ainda não tiver
       if (institutions.length === 0) {
         await fetchInstitutions()
@@ -133,12 +153,8 @@ export default function AdminSchoolsPage() {
       if (search) params.search = search
       if (currentFilters.institutionId) params.institution_id = currentFilters.institutionId
 
-      console.log('Buscando unidades com parâmetros:', params)
-
       // Usar o serviço de unidades
       const response = await unitService.getUnits(params)
-      
-      console.log('Units ::::', response);
 
       if (response && response.items) {
         // Mapear dados para o formato esperado pelo frontend
@@ -161,7 +177,13 @@ export default function AdminSchoolsPage() {
         throw new Error('Resposta inválida do serviço de unidades')
       }
     } catch (error) {
-      console.error('Erro ao buscar unidades:', error)
+      // Verificar se é erro de autenticação
+      if (error instanceof Error && error.message === 'Usuário não autenticado') {
+        showError("Sessão expirada. Por favor, faça login novamente.")
+        router.push('/auth/login')
+        return
+      }
+      
       showError("Erro ao carregar unidades.")
       
       // Em caso de erro, limpar os dados
@@ -225,7 +247,6 @@ export default function AdminSchoolsPage() {
       showSuccess("Unidade excluída com sucesso.")
       await fetchUnits(currentPage, searchQuery, filters, false)
     } catch (error) {
-      console.error('Erro ao excluir unidade:', error)
       showError("Erro ao excluir unidade.")
     } finally {
       setLoading(false)

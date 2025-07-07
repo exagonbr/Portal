@@ -118,8 +118,6 @@ function convertToString(value: any): string {
 // Carregar configurações do sistema
 export async function loadSystemSettings(): Promise<SystemSettings> {
   try {
-    console.log('🔄 Carregando configurações do sistema do banco...');
-    
     const connection = await getSafeConnection();
     const settings = await connection('system_settings').select('key', 'value', 'type');
     
@@ -131,10 +129,8 @@ export async function loadSystemSettings(): Promise<SystemSettings> {
       }
     });
     
-    console.log('✅ Configurações do sistema carregadas:', Object.keys(result).length, 'configurações');
     return result as SystemSettings;
   } catch (error) {
-    console.error('❌ Erro ao carregar configurações do sistema:', error);
     return defaultSettings;
   }
 }
@@ -142,8 +138,6 @@ export async function loadSystemSettings(): Promise<SystemSettings> {
 // Carregar apenas configurações públicas
 export async function loadPublicSettings(): Promise<PublicSettings> {
   try {
-    console.log('🔄 Carregando configurações públicas do banco...');
-    
     const connection = await getSafeConnection();
     const settings = await connection('system_settings')
       .select('key', 'value', 'type')
@@ -169,10 +163,8 @@ export async function loadPublicSettings(): Promise<PublicSettings> {
       }
     });
     
-    console.log('✅ Configurações públicas carregadas:', Object.keys(result).length, 'configurações');
     return result as PublicSettings;
   } catch (error) {
-    console.error('❌ Erro ao carregar configurações públicas:', error);
     // Retornar configurações padrão públicas
     const publicDefaults: PublicSettings = {
       site_name: defaultSettings.site_name,
@@ -196,11 +188,8 @@ export async function loadPublicSettings(): Promise<PublicSettings> {
 // Salvar configurações do sistema
 export async function saveSystemSettings(settings: Partial<SystemSettings>): Promise<boolean> {
   try {
-    console.log('💾 Salvando configurações do sistema...');
-    
     const connection = await getSafeConnection();
     const settingsToSave = Object.entries(settings);
-    console.log('📝 Configurações a salvar:', settingsToSave.length);
     
     for (const [key, value] of settingsToSave) {
       const stringValue = convertToString(value);
@@ -218,7 +207,6 @@ export async function saveSystemSettings(settings: Partial<SystemSettings>): Pro
             value: stringValue,
             updated_at: new Date()
           });
-        console.log(`✅ Configuração atualizada: ${key}`);
       } else {
         // Inserir nova configuração
         const type = typeof value === 'boolean' ? 'boolean' : 
@@ -236,14 +224,11 @@ export async function saveSystemSettings(settings: Partial<SystemSettings>): Pro
           created_at: new Date(),
           updated_at: new Date()
         });
-        console.log(`✅ Nova configuração criada: ${key}`);
       }
     }
     
-    console.log('✅ Configurações do sistema salvas com sucesso!');
     return true;
   } catch (error) {
-    console.error('❌ Erro ao salvar configurações do sistema:', error);
     return false;
   }
 }
@@ -251,8 +236,6 @@ export async function saveSystemSettings(settings: Partial<SystemSettings>): Pro
 // Resetar configurações para o padrão
 export async function resetSystemSettings(): Promise<boolean> {
   try {
-    console.log('🔄 Resetando configurações do sistema...');
-    
     const connection = await getSafeConnection();
     for (const [key, value] of Object.entries(defaultSettings)) {
       const stringValue = convertToString(value);
@@ -265,10 +248,8 @@ export async function resetSystemSettings(): Promise<boolean> {
         });
     }
     
-    console.log('✅ Configurações do sistema resetadas para o padrão!');
     return true;
   } catch (error) {
-    console.error('❌ Erro ao resetar configurações do sistema:', error);
     return false;
   }
 } 

@@ -21,16 +21,13 @@ export class HT {
               // @ts-ignore - O HT global é adicionado pelo script carregado
               window.ht = new window.HT(config);
               this.initialized = true;
-              console.log('✅ Handtalk: Inicializado com sucesso');
-            } else {
-              console.warn('⚠️ Handtalk: Classe HT não disponível, continuando sem acessibilidade LIBRAS');
             }
           } catch (error) {
-            console.warn('⚠️ Handtalk: Erro ao inicializar, continuando sem acessibilidade LIBRAS:', error);
+            // Continua sem acessibilidade LIBRAS
           }
         })
         .catch(error => {
-          console.warn('⚠️ Handtalk: Erro ao carregar script, continuando sem acessibilidade LIBRAS:', error);
+          // Continua sem acessibilidade LIBRAS
         });
     }
   }
@@ -49,7 +46,6 @@ export class HT {
         // Tentar carregar primeiro do local (se disponível)
         const localScript = document.querySelector('script[src*="/handtalk/handtalk.min.js"]');
         if (localScript) {
-          console.log('📍 Handtalk: Usando script local');
           return resolve();
         }
 
@@ -59,20 +55,17 @@ export class HT {
         script.crossOrigin = 'anonymous'; // Adicionar crossOrigin
         
         const timeout = setTimeout(() => {
-          console.warn('⚠️ Handtalk: Timeout ao carregar script, continuando sem acessibilidade LIBRAS');
           script.remove();
           resolve(); // Resolve mesmo com timeout para não quebrar a aplicação
         }, 10000); // 10 segundos de timeout
 
         script.onload = () => {
           clearTimeout(timeout);
-          console.log('✅ Handtalk: Script carregado com sucesso');
           resolve();
         };
         
         script.onerror = (error) => {
           clearTimeout(timeout);
-          console.warn('⚠️ Handtalk: Erro ao carregar script, continuando sem acessibilidade LIBRAS:', error);
           script.remove();
           resolve(); // Resolve mesmo com erro para não quebrar a aplicação
         };

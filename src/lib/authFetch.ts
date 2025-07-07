@@ -12,7 +12,17 @@ const apiClient = axios.create({
 apiClient.interceptors.request.use(
   (config) => {
     if (typeof window !== 'undefined') {
-      const accessToken = localStorage.getItem('accessToken');
+      // Buscar token em múltiplas chaves possíveis
+      const accessToken = 
+        localStorage.getItem('accessToken') || 
+        localStorage.getItem('auth_token') || 
+        localStorage.getItem('token') || 
+        localStorage.getItem('authToken') ||
+        sessionStorage.getItem('accessToken') ||
+        sessionStorage.getItem('auth_token') ||
+        sessionStorage.getItem('token') ||
+        sessionStorage.getItem('authToken');
+        
       if (accessToken) {
         config.headers['Authorization'] = `Bearer ${accessToken}`;
       }
@@ -82,6 +92,13 @@ apiClient.interceptors.response.use(
         // Se o refresh falhar, limpa tudo e notifica o usuário
         if (typeof window !== 'undefined') {
           localStorage.removeItem('accessToken');
+          localStorage.removeItem('auth_token');
+          localStorage.removeItem('token');
+          localStorage.removeItem('authToken');
+          sessionStorage.removeItem('accessToken');
+          sessionStorage.removeItem('auth_token');
+          sessionStorage.removeItem('token');
+          sessionStorage.removeItem('authToken');
           // O AuthContext será responsável pelo redirecionamento
           window.dispatchEvent(new Event('auth-error'));
         }

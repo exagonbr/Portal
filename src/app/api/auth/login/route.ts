@@ -124,18 +124,32 @@ export async function POST(request: NextRequest) {
       }
 
       // Login bem-sucedido
-      return NextResponse.json({
+      const token = data.data?.accessToken || data.accessToken || data.token || data.data?.token;
+      const refreshToken = data.data?.refreshToken || data.refreshToken;
+
+      // Criar resposta
+      const loginResponse = NextResponse.json({
         success: true,
         message: 'Login realizado com sucesso',
         data: {
-          accessToken: data.data?.accessToken || data.accessToken || data.token || data.data?.token,
-          refreshToken: data.data?.refreshToken || data.refreshToken,
+          accessToken: token,
+          refreshToken: refreshToken,
           user: data.data?.user || data.user,
           expiresIn: data.data?.expiresIn || data.expiresIn
         }
-      }, {
-        headers: corsHeaders
       });
+
+      // Adicionar headers CORS
+      Object.entries(corsHeaders).forEach(([key, value]) => {
+        loginResponse.headers.set(key, value);
+      });
+
+      // Definir cookies usando headers diretamente
+      const secure = process.env.NODE_ENV === 'production' ? '; Secure' : '';
+      loginResponse.headers.append('Set-Cookie', `accessToken=${token}; Path=/; HttpOnly; Max-Age=86400; SameSite=Lax${secure}`);
+      loginResponse.headers.append('Set-Cookie', `auth_token=${token}; Path=/; HttpOnly; Max-Age=86400; SameSite=Lax${secure}`);
+
+      return loginResponse;
     } catch (fetchError: any) {
       clearTimeout(timeoutId);
       

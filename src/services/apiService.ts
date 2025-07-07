@@ -27,6 +27,25 @@ const getHeaders = (): Headers => {
  */
 async function handleResponse<T>(response: Response): Promise<T> {
   if (!response.ok) {
+    // Tratamento especial para erro 401 (Não autorizado)
+    if (response.status === 401) {
+      console.error('Erro de autenticação: Token inválido ou expirado');
+      
+      // Se estiver no navegador, podemos redirecionar para a página de login
+      if (typeof window !== 'undefined') {
+        // Limpar tokens inválidos
+        localStorage.removeItem('accessToken');
+        localStorage.removeItem('authToken');
+        
+        // Redirecionar para login após um pequeno delay
+        setTimeout(() => {
+          window.location.href = '/auth/login';
+        }, 100);
+      }
+      
+      throw new Error('Sessão expirada ou usuário não autenticado');
+    }
+    
     try {
       const error = await response.json();
       throw new Error(error.message || `Erro na API: ${response.statusText}`);
@@ -61,6 +80,13 @@ export const apiGet = async <T>(endpoint: string, params?: Record<string, any>):
   }
   
   const url = query ? `${API_BASE_URL}${endpoint}?${query}` : `${API_BASE_URL}${endpoint}`;
+  
+  // Verificar token antes de fazer a requisição
+  const token = getAuthToken();
+  if (!token && typeof window !== 'undefined') {
+    console.warn('Tentativa de requisição sem token de autenticação:', endpoint);
+  }
+  
   const response = await fetch(url, {
     headers: getHeaders(),
     credentials: 'include',
@@ -132,6 +158,17 @@ export const apiDelete = async (endpoint: string): Promise<void> => {
 };
 
 function getAuthToken() {
+  // Se não estiver no navegador, não temos acesso ao localStorage
+  if (typeof window === 'undefined') {
+    return null;
+  }
+  
   const accessToken = localStorage.getItem('accessToken') || localStorage.getItem('authToken');
+  
+  // Log para depuração
+  if (!accessToken) {
+    console.warn('Token de autenticação não encontrado no localStorage');
+  }
+  
   return accessToken;
 }

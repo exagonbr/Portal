@@ -2,18 +2,19 @@
  * Utilitário para limpar tokens inválidos do localStorage
  */
 
+// Lista padronizada de chaves de token
+export const TOKEN_KEYS = [
+  'accessToken',
+  'auth_token',
+  'token',
+  'authToken',
+  'jwt_token'
+];
+
 export const cleanupInvalidTokens = (): void => {
   if (typeof window === 'undefined') return;
 
-  const tokenKeys = [
-    'accessToken',
-    'auth_token',
-    'token',
-    'authToken',
-    'jwt_token'
-  ];
-
-  tokenKeys.forEach(key => {
+  TOKEN_KEYS.forEach(key => {
     try {
       const token = localStorage.getItem(key);
       if (token && isInvalidToken(token)) {
@@ -26,60 +27,61 @@ export const cleanupInvalidTokens = (): void => {
   });
 };
 
-const isInvalidToken = (token: string): boolean => {
-  // Verificar se é null/undefined como string
-  if (token === 'null' || token === 'undefined' || token === 'false' || token === 'true') {
+// Função para verificar se um token é inválido
+function isInvalidToken(token: string): boolean {
+  if (!token || token === 'null' || token === 'undefined' || token === 'false' || token === 'true') {
     return true;
   }
 
-  // Verificar se é muito curto
   if (token.length < 10) {
     return true;
   }
 
-  // Verificar se contém caracteres inválidos
-  if (token.includes('\0') || token.includes('\x00') || token.includes('�')) {
-    return true;
-  }
-
-  // Verificar se é um JWT válido (3 partes) ou token base64 válido
+  // Verificar se é um JWT válido (3 partes)
   const parts = token.split('.');
   if (parts.length === 3) {
-    // É um JWT, verificar se as partes são válidas
     try {
-      atob(parts[0]); // header
-      atob(parts[1]); // payload
-      // signature não precisa ser decodificada
-      return false; // JWT válido
+      // Verificar se a segunda parte é um JSON válido em base64
+      const payload = JSON.parse(atob(parts[1]));
+      
+      // Verificar expiração
+      if (payload.exp && payload.exp < Math.floor(Date.now() / 1000)) {
+        return true; // Token expirado
+      }
+      
+      return false; // Token parece válido
     } catch {
-      return true; // JWT inválido
-    }
-  } else {
-    // Verificar se é base64 válido
-    try {
-      const decoded = atob(token);
-      JSON.parse(decoded);
-      return false; // Base64 válido
-    } catch {
-      return true; // Base64 inválido
+      return true; // Não foi possível decodificar
     }
   }
-};
+
+  // Verificar se é um token base64 válido
+  try {
+    const decoded = atob(token);
+    const obj = JSON.parse(decoded);
+    
+    // Verificar campos mínimos
+    if (!obj.userId || !obj.email || !obj.role) {
+      return true;
+    }
+    
+    // Verificar expiração
+    if (obj.exp && obj.exp < Math.floor(Date.now() / 1000)) {
+      return true;
+    }
+    
+    return false; // Token parece válido
+  } catch {
+    return true; // Não é um token base64 válido
+  }
+}
 
 export const logTokenInfo = (): void => {
   if (typeof window === 'undefined') return;
 
-  const tokenKeys = [
-    'accessToken',
-    'auth_token',
-    'token',
-    'authToken',
-    'jwt_token'
-  ];
-
   console.log('🔍 Informações dos tokens armazenados:');
   
-  tokenKeys.forEach(key => {
+  TOKEN_KEYS.forEach(key => {
     try {
       const token = localStorage.getItem(key);
       if (token) {
@@ -98,4 +100,67 @@ export const logTokenInfo = (): void => {
       console.error(`Erro ao verificar ${key}:`, error);
     }
   });
+};
+
+/**
+ * Função para padronizar tokens em todas as chaves de armazenamento
+ * Copia um token válido para todas as chaves de armazenamento
+ */
+export const standardizeTokens = (): boolean => {
+  if (typeof window === 'undefined') return false;
+  
+  // Primeiro limpar tokens inválidos
+  cleanupInvalidTokens();
+  
+  // Buscar o primeiro token válido
+  let validToken: string | null = null;
+  
+  // Verificar localStorage
+  for (const key of TOKEN_KEYS) {
+    const token = localStorage.getItem(key);
+    if (token && !isInvalidToken(token)) {
+      validToken = token;
+      break;
+    }
+  }
+  
+  // Se não encontrou no localStorage, verificar sessionStorage
+  if (!validToken) {
+    for (const key of TOKEN_KEYS) {
+      const token = sessionStorage.getItem(key);
+      if (token && !isInvalidToken(token)) {
+        validToken = token;
+        break;
+      }
+    }
+  }
+  
+  // Se encontrou um token válido, padronizar em todas as chaves
+  if (validToken) {
+    console.log('✅ Token válido encontrado, padronizando em todas as chaves');
+    
+    // Armazenar em localStorage
+    TOKEN_KEYS.forEach(key => {
+      try {
+        localStorage.setItem(key, validToken!);
+      } catch (error) {
+        console.error(`Erro ao definir ${key} no localStorage:`, error);
+      }
+    });
+    
+    // Definir cookies para requisições do servidor
+    document.cookie = `accessToken=${validToken}; path=/; max-age=86400; SameSite=Lax`;
+    document.cookie = `auth_token=${validToken}; path=/; max-age=86400; SameSite=Lax`;
+    
+    return true;
+  }
+  
+  console.log('❌ Nenhum token válido encontrado para padronização');
+  return false;
+};
+
+export default {
+  cleanupInvalidTokens,
+  logTokenInfo,
+  standardizeTokens
 }; 

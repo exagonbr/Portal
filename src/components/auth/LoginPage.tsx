@@ -389,7 +389,7 @@ export function LoginPage() {
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.5 }}
-        className="relative z-10 max-w-lg w-full space-y-8 p-8 rounded-2xl shadow-2xl backdrop-blur-xl"
+        className="relative z-10 max-w-lg w-full mx-4 space-y-8 p-6 sm:p-8 rounded-2xl shadow-2xl backdrop-blur-xl"
         style={{ 
           backgroundColor: theme.type === 'modern' 
             ? 'rgba(26, 26, 26, 0.95)' 
@@ -404,18 +404,18 @@ export function LoginPage() {
           animate={{ scale: 1 }}
           transition={{ duration: 0.5, delay: 0.2 }}
         >
-          <div className="relative w-48 h-16 mx-auto mb-4">
+          <div className="relative w-36 sm:w-48 h-12 sm:h-16 mx-auto mb-3 sm:mb-4">
             <Image
               src="/sabercon-logo.png"
               alt="Sabercon Logo"
               fill
               className="object-contain"
               priority
-              sizes="(max-width: 768px) 192px, 192px"
+              sizes="(max-width: 640px) 144px, 192px"
             />
           </div>
           <MotionH1 
-            className="text-2xl font-bold"
+            className="text-xl sm:text-2xl font-bold"
             style={{ color: theme.colors.text.primary }}
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
@@ -424,7 +424,7 @@ export function LoginPage() {
             Portal Educacional
           </MotionH1>
           <MotionP 
-            className="text-sm mt-2"
+            className="text-xs sm:text-sm mt-1 sm:mt-2"
             style={{ color: theme.colors.text.secondary }}
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}

@@ -25,7 +25,8 @@ export function LoginForm() {
       const userAgent = navigator.userAgent.toLowerCase();
       const isMobileDevice = /mobile|android|iphone|ipad|ipod|blackberry|windows phone/i.test(userAgent);
       const isTouchDevice = 'ontouchstart' in window || navigator.maxTouchPoints > 0;
-      setIsMobile(isMobileDevice || isTouchDevice);
+      const isSmallScreen = window.innerWidth < 640;
+      setIsMobile(isMobileDevice || isTouchDevice || isSmallScreen);
     };
     
     // Escutar evento de seleção de credenciais demo
@@ -76,12 +77,12 @@ export function LoginForm() {
 
   return (
     <>
-      <form onSubmit={handleLogin} className="space-y-6 mt-8" role="form" aria-label="Formulário de login">
+      <form onSubmit={handleLogin} className="space-y-5 sm:space-y-6 mt-6 sm:mt-8" role="form" aria-label="Formulário de login">
         {submitError && (
           <MotionDiv
             initial={{ opacity: 0, scale: 0.95 }}
             animate={{ opacity: 1, scale: 1 }}
-            className="rounded-lg p-4 flex items-start gap-3"
+            className="rounded-lg p-3 sm:p-4 flex items-start gap-2 sm:gap-3"
             style={{
               backgroundColor: `${theme.colors.status.error}20`,
               border: `1px solid ${theme.colors.status.error}40`
@@ -89,14 +90,14 @@ export function LoginForm() {
             role="alert"
           >
             <span
-              className="material-symbols-outlined text-xl mt-0.5"
+              className="material-symbols-outlined text-lg sm:text-xl mt-0.5"
               style={{ color: theme.colors.status.error }}
               aria-hidden="true"
             >
               error
             </span>
             <div className="flex-1">
-              <h3 className="text-sm font-medium" style={{ color: theme.colors.status.error }}>
+              <h3 className="text-xs sm:text-sm font-medium" style={{ color: theme.colors.status.error }}>
                 {submitError}
               </h3>
             </div>
@@ -109,7 +110,7 @@ export function LoginForm() {
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.2 }}
         >
-          <label htmlFor="email" className="block text-sm font-medium mb-2" style={{ color: theme.colors.text.primary }}>
+          <label htmlFor="email" className="block text-xs sm:text-sm font-medium mb-1.5 sm:mb-2" style={{ color: theme.colors.text.primary }}>
             Email
           </label>
           <div className="relative">
@@ -121,13 +122,13 @@ export function LoginForm() {
               placeholder="seu@email.com"
               required
               disabled={isSubmitting}
-              className={`w-full px-4 ${isMobile ? 'py-3' : 'py-2'} pl-10 rounded-lg border transition-all duration-200 focus:outline-none focus:ring-2`}
+              className={`w-full px-4 py-3 pl-10 rounded-lg border transition-all duration-200 focus:outline-none focus:ring-2`}
               style={{
                 backgroundColor: theme.colors.background.primary,
                 borderColor: theme.colors.border.DEFAULT,
                 color: theme.colors.text.primary,
                 fontSize: isMobile ? '16px' : '14px',
-                minHeight: isMobile ? '48px' : 'auto'
+                minHeight: '48px'
               }}
             />
             <span
@@ -145,7 +146,7 @@ export function LoginForm() {
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.3 }}
         >
-          <label htmlFor="password" className="block text-sm font-medium mb-2" style={{ color: theme.colors.text.primary }}>
+          <label htmlFor="password" className="block text-xs sm:text-sm font-medium mb-1.5 sm:mb-2" style={{ color: theme.colors.text.primary }}>
             Senha
           </label>
           <div className="relative">
@@ -157,13 +158,13 @@ export function LoginForm() {
               placeholder="••••••••"
               required
               disabled={isSubmitting}
-              className={`w-full px-4 ${isMobile ? 'py-3' : 'py-2'} pl-10 pr-10 rounded-lg border transition-all duration-200 focus:outline-none focus:ring-2`}
+              className={`w-full px-4 py-3 pl-10 pr-10 rounded-lg border transition-all duration-200 focus:outline-none focus:ring-2`}
               style={{
                 backgroundColor: theme.colors.background.primary,
                 borderColor: theme.colors.border.DEFAULT,
                 color: theme.colors.text.primary,
                 fontSize: isMobile ? '16px' : '14px',
-                minHeight: isMobile ? '48px' : 'auto'
+                minHeight: '48px'
               }}
             />
             <span
@@ -194,14 +195,12 @@ export function LoginForm() {
           <button
             type="submit"
             disabled={isSubmitting}
-            className={`w-full flex justify-center items-center gap-2 rounded-lg shadow-lg text-sm font-medium transition-all duration-200 transform hover:scale-105 active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed disabled:transform-none ${
-              isMobile ? 'py-4 px-4' : 'py-3 px-4'
-            }`}
+            className="w-full flex justify-center items-center gap-2 rounded-lg shadow-lg text-sm font-medium transition-all duration-200 transform hover:scale-105 active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed disabled:transform-none py-3 sm:py-4 px-4"
             style={{
               backgroundColor: theme.colors.primary.DEFAULT,
               color: theme.colors.primary.contrast,
               boxShadow: theme.shadows.md,
-              minHeight: isMobile ? '48px' : 'auto',
+              minHeight: '48px',
               fontSize: isMobile ? '16px' : '14px'
             }}
           >
@@ -230,6 +229,7 @@ export function LoginForm() {
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.5 }}
+          className="mt-2 sm:mt-0"
         >
           <button
             type="button"
@@ -238,7 +238,8 @@ export function LoginForm() {
             style={{
               backgroundColor: theme.colors.secondary.DEFAULT,
               color: theme.colors.secondary.contrast,
-              boxShadow: theme.shadows.md
+              boxShadow: theme.shadows.md,
+              minHeight: '48px'
             }}
           >
             <span className="material-symbols-outlined" aria-hidden="true">verified</span>
