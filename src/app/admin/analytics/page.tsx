@@ -10,6 +10,7 @@ import SystemUsageChart from '../../../components/admin/analytics/SystemUsageCha
 import ResourceDistributionChart from '../../../components/admin/analytics/ResourceDistributionChart'
 import S3StorageAnalytics from '../../../components/admin/analytics/S3StorageAnalytics'
 import ActiveSessionsTable from '../../../components/admin/analytics/ActiveSessionsTable'
+import SystemSettingsAnalytics from '../../../components/admin/analytics/SystemSettingsAnalytics'
 import DashboardLayout from '../../../components/dashboard/DashboardLayout'
 import DashboardPageLayout from '../../../components/dashboard/DashboardPageLayout'
 import ProtectedRoute from '../../../components/auth/ProtectedRoute'
@@ -141,6 +142,11 @@ export default function AdminAnalyticsPage() {
                 <h3 className="text-lg font-semibold text-gray-800 dark:text-white mb-4">Análise de Armazenamento S3</h3>
                 <S3StorageAnalytics data={s3Info} bucketName={settings.region} />
               </div>
+            </div>
+
+            {/* Novo componente para exibir as configurações do sistema */}
+            <div className="mt-6">
+              <SystemSettingsAnalytics />
             </div>
 
           </div>
