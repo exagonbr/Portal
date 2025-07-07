@@ -3,10 +3,12 @@ import {
   CreateCertificateDto,
   UpdateCertificateDto,
   CertificateFilter,
+  CertificateStats,
 } from '@/types/certificate';
 import {
   PaginatedResponse,
   CertificateResponseDto as ApiCertificateResponseDto,
+  ApiResponse,
 } from '@/types/api';
 import { apiGet, apiPost, apiPut, apiDelete } from './apiService';
 
@@ -25,44 +27,64 @@ const mapToCertificateDto = (data: ApiCertificateResponseDto): CertificateDto =>
   updated_at: data.last_updated || new Date().toISOString(),
 });
 
-export const getCertificates = async (params: CertificateFilter): Promise<PaginatedResponse<CertificateDto>> => {
-  const response = await apiGet<PaginatedResponse<ApiCertificateResponseDto>>('/certificates', params);
+export const getCertificates = async (params: CertificateFilter): Promise<ApiResponse<PaginatedResponse<CertificateDto>>> => {
+  const response = await apiGet<ApiResponse<PaginatedResponse<ApiCertificateResponseDto>>>('/certificates', params);
   
   // Verificar se a resposta tem o formato esperado
-  if (!response || !response.items || !Array.isArray(response.items)) {
+  if (!response || !response.data || !response.data.items || !Array.isArray(response.data.items)) {
     console.warn('Resposta da API de certificados não tem o formato esperado:', response);
     return {
-      items: [],
-      total: 0,
-      page: 1,
-      limit: 10,
-      totalPages: 0,
+      success: false,
+      data: {
+        items: [],
+        total: 0,
+        page: 1,
+        limit: 10,
+        totalPages: 0,
+      },
+      message: 'Formato de resposta inválido'
     };
   }
   
   return {
     ...response,
-    items: response.items.map(mapToCertificateDto),
+    data: {
+      ...response.data,
+      items: response.data.items.map(mapToCertificateDto),
+    }
   };
 };
 
 export const getCertificateById = async (id: number): Promise<CertificateDto> => {
-  const response = await apiGet<ApiCertificateResponseDto>(`/certificates/${id}`);
-  return mapToCertificateDto(response);
+  const response = await apiGet<ApiResponse<ApiCertificateResponseDto>>(`/certificates/${id}`);
+  if (!response.data) {
+    throw new Error('Certificado não encontrado');
+  }
+  return mapToCertificateDto(response.data);
 };
 
 export const createCertificate = async (data: CreateCertificateDto): Promise<CertificateDto> => {
-  const response = await apiPost<ApiCertificateResponseDto>('/certificates', data);
-  return mapToCertificateDto(response);
+  const response = await apiPost<ApiResponse<ApiCertificateResponseDto>>('/certificates', data);
+  if (!response.data) {
+    throw new Error('Erro ao criar certificado');
+  }
+  return mapToCertificateDto(response.data);
 };
 
 export const updateCertificate = async (id: number, data: UpdateCertificateDto): Promise<CertificateDto> => {
-  const response = await apiPut<ApiCertificateResponseDto>(`/certificates/${id}`, data);
-  return mapToCertificateDto(response);
+  const response = await apiPut<ApiResponse<ApiCertificateResponseDto>>(`/certificates/${id}`, data);
+  if (!response.data) {
+    throw new Error('Erro ao atualizar certificado');
+  }
+  return mapToCertificateDto(response.data);
 };
 
 export const deleteCertificate = async (id: number): Promise<void> => {
   return apiDelete(`/certificates/${id}`);
+};
+
+export const getStats = async (): Promise<ApiResponse<CertificateStats>> => {
+  return apiGet<ApiResponse<CertificateStats>>('/certificates/stats');
 };
 
 export const certificateService = {
@@ -71,4 +93,5 @@ export const certificateService = {
   createCertificate,
   updateCertificate,
   deleteCertificate,
+  getStats,
 };

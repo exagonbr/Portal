@@ -398,6 +398,7 @@ export interface PaginatedResponse<T> {
   page: number;
   limit: number;
   totalPages: number;
+  pagination?: PaginationResult;
 }
 
 export interface ListResponse<T> {

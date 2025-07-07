@@ -41,3 +41,11 @@ export interface CertificateFilter extends BaseFilter {
   user_id?: UUID;
   tv_show_id?: UUID;
 }
+
+// Interface para estatísticas de certificados
+export interface CertificateStats {
+  totalCertificates: number;
+  recreatable: number;
+  programs: number;
+  usersWithCerts: number;
+}

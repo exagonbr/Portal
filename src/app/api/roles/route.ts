@@ -7,6 +7,7 @@ import { prepareAuthHeaders } from '../lib/auth-headers'
 import { getInternalApiUrl } from '@/config/env'
 import { prisma } from '@/lib/prisma'
 import { createStandardApiRoute } from '../lib/api-route-template'
+import { Prisma } from '@prisma/client'
 
 // Schema de validação para criação de role
 const createRoleSchema = z.object({
@@ -15,6 +16,19 @@ const createRoleSchema = z.object({
   permissions: z.array(z.string()).default([]),
   is_active: z.boolean().default(true)
 })
+
+// Definindo o tipo para os roles do banco de dados
+interface RoleResponseDto {
+  id: string | number;
+  name: string;
+  description: string;
+  active: boolean;
+  users_count: number;
+  created_at: string;
+  updated_at: string;
+  status: string;
+  permissions?: string[];
+}
 
 // Usar o template padronizado para a rota GET
 export const { GET, OPTIONS } = createStandardApiRoute({
@@ -25,11 +39,22 @@ export const { GET, OPTIONS } = createStandardApiRoute({
     
     try {
       // Tentar buscar do banco local primeiro
-      let roles = [];
+      let roles: RoleResponseDto[] = [];
       try {
-        roles = await prisma.roles.findMany({
-          orderBy: { name: 'asc' },
-        });
+        // Buscar do banco de dados
+        const dbRoles = await prisma.roles.findMany();
+        
+        // Converter para o formato esperado
+        roles = dbRoles.map(role => ({
+          id: String(role.id),
+          name: role.name || '',
+          description: role.description || '',
+          active: role.is_active,
+          users_count: 0,
+          created_at: role.created_at.toISOString(),
+          updated_at: role.updated_at.toISOString(),
+          status: role.is_active ? 'active' : 'inactive'
+        }));
       } catch (dbError) {
         console.warn('⚠️ [API-ROLES] Erro ao buscar do banco local:', dbError);
       }
@@ -38,18 +63,12 @@ export const { GET, OPTIONS } = createStandardApiRoute({
       if (!roles || roles.length === 0) {
         console.log('🔄 [API-ROLES] Usando dados mock para roles');
         roles = [
-          { id: '1', name: 'Administrador', description: 'Acesso total ao sistema' },
-          { id: '2', name: 'Professor', description: 'Acesso às funcionalidades de ensino' },
-          { id: '3', name: 'Aluno', description: 'Acesso às funcionalidades de aprendizado' },
-          { id: '4', name: 'Coordenador', description: 'Gerencia professores e turmas' },
-          { id: '5', name: 'Secretaria', description: 'Acesso administrativo limitado' }
+          { id: '1', name: 'Administrador', description: 'Acesso total ao sistema', active: true, users_count: 0, created_at: new Date().toISOString(), updated_at: new Date().toISOString(), status: 'active' },
+          { id: '2', name: 'Professor', description: 'Acesso às funcionalidades de ensino', active: true, users_count: 0, created_at: new Date().toISOString(), updated_at: new Date().toISOString(), status: 'active' },
+          { id: '3', name: 'Aluno', description: 'Acesso às funcionalidades de aprendizado', active: true, users_count: 0, created_at: new Date().toISOString(), updated_at: new Date().toISOString(), status: 'active' },
+          { id: '4', name: 'Coordenador', description: 'Gerencia professores e turmas', active: true, users_count: 0, created_at: new Date().toISOString(), updated_at: new Date().toISOString(), status: 'active' },
+          { id: '5', name: 'Secretaria', description: 'Acesso administrativo limitado', active: true, users_count: 0, created_at: new Date().toISOString(), updated_at: new Date().toISOString(), status: 'active' }
         ];
-      } else {
-        // Converter IDs para string se necessário
-        roles = roles.map(role => ({
-          ...role,
-          id: String(role.id)
-        }));
       }
 
       console.log('✅ [API-ROLES] Dados locais obtidos com sucesso:', roles.length);
@@ -126,25 +145,28 @@ export async function POST(request: NextRequest) {
     }
 
     // Criar role
-    const newRole = {
+    const newRole: RoleResponseDto = {
+      id: Date.now().toString(), // Gerando um ID único
       name: roleData.name,
-      description: roleData.description,
+      description: roleData.description || '',
       permissions: roleData.permissions,
       status: 'active',
       active: roleData.is_active,
       users_count: 0,
       created_at: new Date().toISOString(),
-      updated_at: new Date().toISOString(),
-      created_by: session.user?.id
+      updated_at: new Date().toISOString()
     }
 
-    mockRoles.set(newRole.id, newRole)
+    mockRoles.set(newRole.id.toString(), newRole)
 
     return NextResponse.json({
       success: true,
       data: newRole,
       message: 'Role criada com sucesso'
-    }, { status: 201 })
+    }, { 
+      status: 201,
+      headers: getCorsHeaders(request.headers.get('origin') || undefined)
+    })
 
   } catch (error) {
     console.log('Erro ao criar role:', error)

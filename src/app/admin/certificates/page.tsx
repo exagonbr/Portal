@@ -4,8 +4,10 @@ import React, { useState, useEffect, useCallback } from 'react'
 import { useToast } from '@/components/ToastManager'
 import { certificateService } from '@/services/certificateService'
 import { userService } from '@/services/userService'
-import { CertificateResponseDto, BaseFilterDto } from '@/types/api'
-import { CertificateDto } from '@/types/certificate'
+import { tvShowService } from '@/services/tvShowService'
+import { CertificateResponseDto, BaseFilterDto, ApiResponse } from '@/types/api'
+import { CertificateDto, CertificateStats } from '@/types/certificate'
+import { TvShowDto } from '@/types/tvShow'
 import AuthenticatedLayout from '@/components/AuthenticatedLayout'
 import { Badge } from '@/components/ui/Badge'
 import { Button } from '@/components/ui/Button'
@@ -28,14 +30,6 @@ import {
   AlertTriangle
 } from 'lucide-react'
 
-// Interface para estatísticas de certificados
-interface CertificateStats {
-  totalCertificates: number
-  recreatable: number
-  programs: number
-  usersWithCerts: number
-}
-
 export default function AdminCertificatesPage() {
   const { showSuccess, showError } = useToast()
   const [loading, setLoading] = useState(true)
@@ -44,10 +38,12 @@ export default function AdminCertificatesPage() {
   // Dados principais
   const [certificates, setCertificates] = useState<CertificateDto[]>([])
   const [users, setUsers] = useState<any[]>([])
+  const [tvShows, setTvShows] = useState<TvShowDto[]>([])
 
   // Paginação e Filtros
   const [totalItems, setTotalItems] = useState(0)
   const [currentPage, setCurrentPage] = useState(1)
+  const [totalPages, setTotalPages] = useState(1)
   const [itemsPerPage] = useState(10)
   const [searchQuery, setSearchTerm] = useState('')
   const [filters, setFilters] = useState<BaseFilterDto & { recreate?: boolean, tv_show_name?: string }>({})
@@ -65,20 +61,21 @@ export default function AdminCertificatesPage() {
     usersWithCerts: 0,
   })
 
-  const calculateStats = useCallback((allCertificates: CertificateDto[]) => {
-    const totalCertificates = allCertificates.length
-    const recreatable = allCertificates.filter(c => c.recreate).length
-    const programs = new Set(allCertificates.map(c => c.tv_show_name)).size
-    const usersWithCerts = new Set(allCertificates.map(c => c.user_id)).size
-
-    setStats({ totalCertificates, recreatable, programs, usersWithCerts })
-  }, [])
+  const fetchStats = useCallback(async () => {
+    try {
+      const statsResponse = await certificateService.getStats();
+      if (statsResponse && statsResponse.data) {
+        setStats(statsResponse.data);
+      }
+    } catch (error) {
+      console.error('Erro ao carregar estatísticas:', error);
+      // Não exibir erro para o usuário, pois é uma funcionalidade secundária
+    }
+  }, []);
 
   const fetchPageData = useCallback(async (page = 1, search = '', currentFilters: typeof filters = {}, showLoadingIndicator = true) => {
     if (showLoadingIndicator) setLoading(true)
     else setRefreshing(true)
-
-    await new Promise(resolve => setTimeout(resolve, 500))
 
     try {
       // Converter filtros para o formato esperado pelo serviço real
@@ -89,30 +86,55 @@ export default function AdminCertificatesPage() {
         ...currentFilters,
       }
 
-      const [certResponse, usersResponse] = await Promise.all([
-        certificateService.getCertificates(params),
-        userService.getUsers({ limit: 1000 })
+      // Buscar dados dos certificados
+      const certResponse = await certificateService.getCertificates(params);
+      
+      // Buscar usuários e programas de TV em paralelo
+      const [usersResponse, tvShowsResponse] = await Promise.all([
+        userService.getUsers({ limit: 1000 }),
+        tvShowService.getTvShows({ limit: 100 })
       ]);
 
-      setCertificates(certResponse.items || [])
-      setTotalItems(certResponse.total || 0)
-      setCurrentPage(page)
-      setUsers(usersResponse.items || [])
+      // Processar resposta de certificados
+      if (certResponse && certResponse.data) {
+        setCertificates(certResponse.data.items || []);
+        
+        if (certResponse.data.pagination) {
+          setTotalItems(certResponse.data.pagination.total || 0);
+          setCurrentPage(certResponse.data.pagination.page || 1);
+          setTotalPages(certResponse.data.pagination.totalPages || 1);
+        } else {
+          setTotalItems(certResponse.data.total || 0);
+          setCurrentPage(certResponse.data.page || 1);
+          setTotalPages(certResponse.data.totalPages || 1);
+        }
+      } else {
+        setCertificates([]);
+        setTotalItems(0);
+        setCurrentPage(1);
+        setTotalPages(1);
+      }
 
-      const allCertsResponse = await certificateService.getCertificates({ limit: 1000 })
-      calculateStats(allCertsResponse.items)
+      // Processar resposta de usuários
+      setUsers(usersResponse.items || []);
+
+      // Processar resposta de programas de TV
+      setTvShows(tvShowsResponse.items || []);
+
+      // Buscar estatísticas
+      await fetchStats();
 
       if (!showLoadingIndicator) {
-        showSuccess("Lista de certificados atualizada!")
+        showSuccess("Lista de certificados atualizada!");
       }
     } catch (error) {
-      console.error('Erro ao carregar certificados:', error)
-      showError("Erro ao carregar certificados.")
+      console.error('Erro ao carregar certificados:', error);
+      showError("Erro ao carregar certificados.");
     } finally {
-      setLoading(false)
-      setRefreshing(false)
+      setLoading(false);
+      setRefreshing(false);
     }
-  }, [itemsPerPage, calculateStats, showError, showSuccess])
+  }, [itemsPerPage, showError, showSuccess, fetchStats]);
 
   useEffect(() => {
     fetchPageData(currentPage, searchQuery, filters)
@@ -165,12 +187,10 @@ export default function AdminCertificatesPage() {
     }
   }
 
-  const totalPages = Math.ceil(totalItems / itemsPerPage)
-
   const getUserName = (userId: string | null | undefined) => {
     if (!userId) return 'N/A';
-    const user = users.find(u => u.id.toString() === userId);
-    return user?.name || 'Usuário não encontrado';
+    const user = users.find(u => u.id && u.id.toString() === userId.toString());
+    return user?.name || user?.full_name || 'Usuário não encontrado';
   }
 
   return (
@@ -241,16 +261,16 @@ export default function AdminCertificatesPage() {
                   </select>
                 </div>
                 <div>
-                  <label className="block text-sm font-medium mb-1 text-gray-700">Programa</label>
+                  <label className="block text-sm font-medium mb-1 text-gray-700">Coleção</label>
                   <select
                     value={filters.tv_show_name || ''}
                     onChange={(e) => handleFilterChange('tv_show_name', e.target.value)}
                     className="w-full px-3 py-2 border border-gray-300 rounded-lg"
                   >
                     <option value="">Todos os Programas</option>
-                    <option value="Programa Educativo 1">Programa Educativo 1</option>
-                    <option value="Programa Educativo 2">Programa Educativo 2</option>
-                    <option value="Programa Educativo 3">Programa Educativo 3</option>
+                    {tvShows.map(show => (
+                      <option key={show.id} value={show.name}>{show.name}</option>
+                    ))}
                   </select>
                 </div>
               </div>
@@ -304,7 +324,7 @@ export default function AdminCertificatesPage() {
                           </td>
                           <td className="px-6 py-4 text-center">
                             <div className="flex items-center justify-center space-x-2">
-                              <Button variant="ghost" size="sm" onClick={() => alert(`Visualizar: ${cert.document}`)} className="text-blue-600 hover:text-blue-900"><Eye className="w-4 h-4" /></Button>
+                              <Button variant="ghost" size="sm" onClick={() => window.open(cert.path, '_blank')} className="text-blue-600 hover:text-blue-900"><Eye className="w-4 h-4" /></Button>
                               <Button variant="ghost" size="sm" onClick={() => alert(`Editar: ${cert.document}`)} className="text-green-600 hover:text-green-900"><Edit className="w-4 h-4" /></Button>
                               <Button variant="ghost" size="sm" onClick={() => handleDelete(cert)} className="text-red-600 hover:text-red-900"><Trash2 className="w-4 h-4" /></Button>
                             </div>
@@ -331,7 +351,7 @@ export default function AdminCertificatesPage() {
                         <div className="flex items-center text-sm"><BookOpen className="w-4 h-4 mr-2 text-gray-400"/>{cert.tv_show_name}</div>
                       </div>
                       <div className="p-4 border-t border-gray-100 flex justify-end space-x-2">
-                        <Button variant="outline" size="sm" onClick={() => alert(`Visualizar: ${cert.document}`)}>Ver</Button>
+                        <Button variant="outline" size="sm" onClick={() => window.open(cert.path, '_blank')}>Ver</Button>
                         <Button variant="outline" size="sm" onClick={() => alert(`Editar: ${cert.document}`)}>Editar</Button>
                         <Button variant="destructive" size="sm" onClick={() => handleDelete(cert)}>Excluir</Button>
                       </div>
