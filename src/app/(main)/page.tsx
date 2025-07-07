@@ -5,7 +5,7 @@ import { useRouter } from 'next/navigation';
 import { useAuth } from '@/contexts/AuthContext';
 import { LoginPage } from '@/components/auth/LoginPage';
 import { getDashboardPath } from '@/utils/roleRedirect';
-import { forceReloadIfChrome } from '@/utils/chromeDetection';
+import { forceReloadIfChrome, forceReloadIfChromeMobile, isMobileDevice } from '@/utils/chromeDetection';
 
 export default function HomePage() {
   const { user, loading } = useAuth();
@@ -14,10 +14,21 @@ export default function HomePage() {
   useEffect(() => {
     // Correção específica para Chrome (desktop e mobile) quando não há usuário autenticado
     if (!loading && !user) {
-      // Aplicar reload apenas se necessário
-      const chromeReloadApplied = forceReloadIfChrome();
-      if (chromeReloadApplied) {
-        console.log('🔄 Aplicando correção de reload para Chrome na página inicial...');
+      // Verificar se é dispositivo móvel
+      const mobile = isMobileDevice();
+      
+      if (mobile) {
+        // Usar função específica para Chrome Mobile
+        const chromeReloadApplied = forceReloadIfChromeMobile();
+        if (chromeReloadApplied) {
+          console.log('📱 Aplicando correção de reload para Chrome Mobile na página inicial...');
+        }
+      } else {
+        // Usar função genérica para Chrome Desktop
+        const chromeReloadApplied = forceReloadIfChrome();
+        if (chromeReloadApplied) {
+          console.log('🔄 Aplicando correção de reload para Chrome Desktop na página inicial...');
+        }
       }
     }
 

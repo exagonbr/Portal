@@ -31,7 +31,6 @@ export function LoginPage() {
   const [contextLoading, setContextLoading] = useState(true);
   const [mounted, setMounted] = useState(false);
   const loginFormRef = useRef<{ setCredentials: (email: string, password: string) => void }>(null);
-  const [randomVideo, setRandomVideo] = useState<string | null>(null);
   
   // Função para lidar com a seleção de credenciais
   const handleCredentialSelect = (email: string, password: string) => {
@@ -88,35 +87,6 @@ export function LoginPage() {
       console.log('🔄 Aplicando correção de reload para Chrome no login...');
     }
   }, [mounted]);
-
-  // Carregar vídeos disponíveis para vídeo aleatório
-  useEffect(() => {
-    if (settings?.background_type === 'video_random') {
-      fetchAvailableVideos();
-    }
-  }, [settings?.background_type]);
-
-  // Função para buscar vídeos disponíveis
-  const fetchAvailableVideos = async () => {
-    try {
-      const response = await fetch('/api/admin/system/available-videos');
-      if (!response.ok) {
-        throw new Error('Erro ao carregar vídeos');
-      }
-      
-      const data = await response.json();
-      
-      if (data.success && Array.isArray(data.videos) && data.videos.length > 0) {
-        // Selecionar um vídeo aleatório
-        const randomIndex = Math.floor(Math.random() * data.videos.length);
-        setRandomVideo(data.videos[randomIndex]);
-      }
-    } catch (error) {
-      console.error('Erro ao carregar vídeos aleatórios:', error);
-      // Fallback para um vídeo padrão
-      setRandomVideo('/back_video.mp4');
-    }
-  };
 
   // Aguardar o contexto estar disponível
   useEffect(() => {
@@ -275,7 +245,7 @@ export function LoginPage() {
     const { background_type, main_background, background_video_url } = settings;
 
     // Sempre usar o vídeo como padrão se não houver configuração
-    if (!background_type || (!main_background && !background_video_url && !randomVideo)) {
+    if (!background_type || (!main_background && !background_video_url)) {
       return (
         <video
           autoPlay
@@ -317,20 +287,6 @@ export function LoginPage() {
             preload="auto"
           >
             <source src={background_video_url || '/back_video4.mp4'} type="video/mp4" />
-            Seu navegador não suporta a tag de vídeo.
-          </video>
-        );
-      case 'video_random':
-        return (
-          <video
-            autoPlay
-            loop
-            muted
-            playsInline
-            className="absolute min-w-full min-h-full object-cover opacity-100"
-            preload="auto"
-          >
-            <source src={randomVideo || '/back_video4.mp4'} type="video/mp4" />
             Seu navegador não suporta a tag de vídeo.
           </video>
         );
@@ -599,7 +555,7 @@ export function LoginPage() {
       </MotionDiv>
 
       {/* Debug Component - descomente para debug em desenvolvimento */}
-      {/* <ChromeDetectionIndicator show={process.env.NODE_ENV === 'development'} /> */}
+      {/* <ChromeDetectionIndicator show={process.env.NODE_ENV === 'development' || window.location.search.includes('debug=true')} /> */}
       
     </div>
   );
