@@ -7,6 +7,8 @@ import { SystemUsageData, ResourceDistribution } from '../../../types/analytics'
 import SystemUsageChart from '../../../components/admin/analytics/SystemUsageChart'
 import ResourceDistributionChart from '../../../components/admin/analytics/ResourceDistributionChart'
 import S3StorageAnalytics from '../../../components/admin/analytics/S3StorageAnalytics'
+import NetworkTrafficChart from '../../../components/admin/analytics/NetworkTrafficChart'
+import MetricsCards from '../../../components/admin/analytics/MetricsCards'
 import ProtectedRoute from '../../../components/auth/ProtectedRoute'
 import { UserRole } from '../../../types/roles'
 
@@ -131,25 +133,12 @@ export default function AdminAnalyticsPage() {
             </div>
           )}
 
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-            {/* Cards de Métricas Rápidas */}
-            <div className="bg-white dark:bg-gray-800 p-6 rounded-lg shadow">
-              <h4 className="text-sm font-medium text-gray-500 dark:text-gray-400">Uso de CPU</h4>
-              <p className="text-3xl font-bold text-gray-900 dark:text-white">{isLoading || !analytics ? '...' : `${analytics.cpuUsage.toFixed(1)}%`}</p>
-            </div>
-            <div className="bg-white dark:bg-gray-800 p-6 rounded-lg shadow">
-              <h4 className="text-sm font-medium text-gray-500 dark:text-gray-400">Uso de Memória</h4>
-              <p className="text-3xl font-bold text-gray-900 dark:text-white">{isLoading || !analytics ? '...' : `${analytics.memoryUsage.toFixed(1)}%`}</p>
-            </div>
-            <div className="bg-white dark:bg-gray-800 p-6 rounded-lg shadow">
-              <h4 className="text-sm font-medium text-gray-500 dark:text-gray-400">Armazenamento S3</h4>
-              <p className="text-3xl font-bold text-gray-900 dark:text-white">{isLoading || !s3Info ? '...' : `${(s3Info.totalSizeMb / 1024).toFixed(2)} GB`}</p>
-            </div>
-            <div className="bg-white dark:bg-gray-800 p-6 rounded-lg shadow">
-              <h4 className="text-sm font-medium text-gray-500 dark:text-gray-400">Uso de Disco</h4>
-              <p className="text-3xl font-bold text-gray-900 dark:text-white">{isLoading || !analytics ? '...' : `${analytics.diskUsage.toFixed(1)}%`}</p>
-            </div>
-          </div>
+          {/* Cards de Métricas com Gráficos */}
+          <MetricsCards 
+            analytics={analytics} 
+            s3Info={s3Info} 
+            loading={isLoading} 
+          />
 
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
             <div className="lg:col-span-2 bg-white dark:bg-gray-800 p-6 rounded-lg shadow">
@@ -162,21 +151,7 @@ export default function AdminAnalyticsPage() {
 
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
             <div className="lg:col-span-2 bg-white dark:bg-gray-800 p-6 rounded-lg shadow">
-              <h3 className="text-lg font-semibold text-gray-800 dark:text-white mb-4">Tráfego de Rede</h3>
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
-                <div>
-                  <h4 className="text-sm font-medium text-gray-500 dark:text-gray-400">Entrada de Rede</h4>
-                  <p className="text-2xl font-bold text-gray-900 dark:text-white">
-                    {isLoading || !analytics ? '...' : `${(analytics.networkIn / 1024 / 1024).toFixed(2)} MB/s`}
-                  </p>
-                </div>
-                <div>
-                  <h4 className="text-sm font-medium text-gray-500 dark:text-gray-400">Saída de Rede</h4>
-                  <p className="text-2xl font-bold text-gray-900 dark:text-white">
-                    {isLoading || !analytics ? '...' : `${(analytics.networkOut / 1024 / 1024).toFixed(2)} MB/s`}
-                  </p>
-                </div>
-              </div>
+              <NetworkTrafficChart data={analytics} loading={isLoading} />
             </div>
             <div className="bg-white dark:bg-gray-800 p-6 rounded-lg shadow">
               <h3 className="text-lg font-semibold text-gray-800 dark:text-white mb-4">Análise de Armazenamento S3</h3>

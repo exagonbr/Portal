@@ -10,10 +10,13 @@ export const api = axios.create({
 
 // Interceptor para adicionar o token de autenticação
 api.interceptors.request.use((config) => {
-  const token = localStorage.getItem('token');
-  
-  if (token) {
-    config.headers.Authorization = `Bearer ${token}`;
+  // Verifica se estamos no browser
+  if (typeof window !== 'undefined') {
+    const accessToken = localStorage.getItem('accessToken');
+    
+    if (accessToken) {
+      config.headers.Authorization = `Bearer ${accessToken}`;
+    }
   }
   
   return config;
@@ -25,11 +28,11 @@ api.interceptors.response.use(
   (error) => {
     // Tratar erros de autenticação (401)
     if (error.response?.status === 401) {
-      localStorage.removeItem('token');
-      localStorage.removeItem('user');
-      
-      // Redirecionar para a página de login se necessário
       if (typeof window !== 'undefined') {
+        localStorage.removeItem('accessToken');
+        localStorage.removeItem('user');
+        
+        // Redirecionar para a página de login se necessário
         window.location.href = '/login';
       }
     }

@@ -146,38 +146,45 @@ export default function ManageInstitutions() {
 
   const fetchDashboardStats = async () => {
     try {
-      const dashboardData = await dashboardService.getSystemDashboardData();
+      const response = await dashboardService.getSystemDashboardData();
       
-      // Calcular estatísticas com base nos dados do dashboard
-      const totalInstitutions = dashboardData.institutions?.total || 0;
+      console.log('📊 Resposta completa da API:', response);
+      
+      // A API retorna a estrutura: { success: true, data: { institutions: { total: 3 }, ... } }
+      // Precisamos acessar response.data para obter os dados reais
+      const dashboardData = response.data || response;
+      
+      // IMPORTANTE: O total correto de instituições vem da paginação (totalItems)
+      // que é setado em fetchInstitutions, não da API do dashboard
+      const totalInstitutions = totalItems || dashboardData.institutions?.total || 0;
       const totalSchools = dashboardData.schools?.total || 0;
       const totalUsers = dashboardData.users?.total || 0;
 
-      // Calcular instituições ativas com base nos dados atuais
+      // Calcular instituições ativas com base nos dados atuais carregados
       const activeInstitutions = institutions.filter(inst => inst.is_active).length;
       
-      // Calcular distribuição de usuários por role (usando proporções típicas)
-      const usersByRole = {
-        STUDENT: Math.floor(totalUsers * 0.7), // 70% estudantes
-        TEACHER: Math.floor(totalUsers * 0.15), // 15% professores
-        COORDINATOR: Math.floor(totalUsers * 0.05), // 5% coordenadores
-        ADMIN: Math.floor(totalUsers * 0.03), // 3% administradores
-        PARENT: Math.floor(totalUsers * 0.07) // 7% responsáveis
-      };
-
       setStats({
         totalInstitutions,
         activeInstitutions,
         totalSchools,
         totalUsers,
-        usersByRole
+        usersByRole: {
+          STUDENT: dashboardData.users_by_role?.STUDENT || 0,
+          TEACHER: dashboardData.users_by_role?.TEACHER || 0,
+          COORDINATOR: dashboardData.users_by_role?.COORDINATOR || 0,
+          ADMIN: dashboardData.users_by_role?.ADMIN || 0,
+          PARENT: dashboardData.users_by_role?.PARENT || 0
+        }
       });
       
       console.log('📊 Estatísticas do dashboard carregadas:', {
-        totalInstitutions,
+        totalInstitutions: `${totalInstitutions} (fonte: ${totalItems ? 'paginação' : 'dashboard'})`,
         activeInstitutions,
         totalSchools,
-        totalUsers
+        totalUsers,
+        totalItemsFromPagination: totalItems,
+        dashboardTotal: dashboardData.institutions?.total,
+        rawData: dashboardData
       });
     } catch (error) {
       console.warn('⚠️ Erro ao carregar estatísticas do dashboard:', error);
@@ -187,7 +194,8 @@ export default function ManageInstitutions() {
   };
 
   const calculateStatsFromInstitutions = () => {
-    const totalInstitutions = institutions.length;
+    // Use totalItems (total real da paginação) se disponível, senão institutions.length (dados da página atual)
+    const totalInstitutions = totalItems || institutions.length;
     const activeInstitutions = institutions.filter(inst => inst.is_active).length;
     
     // Somar escolas das instituições
@@ -198,21 +206,25 @@ export default function ManageInstitutions() {
     // Somar usuários das instituições
     const totalUsers = institutions.reduce((total, inst) => total + (inst.users_count || 0), 0);
     
-    // Calcular distribuição de usuários por role (usando proporções típicas)
-    const usersByRole = {
-      STUDENT: Math.floor(totalUsers * 0.7), // 70% estudantes
-      TEACHER: Math.floor(totalUsers * 0.15), // 15% professores
-      COORDINATOR: Math.floor(totalUsers * 0.05), // 5% coordenadores
-      ADMIN: Math.floor(totalUsers * 0.03), // 3% administradores
-      PARENT: Math.floor(totalUsers * 0.07) // 7% responsáveis
-    };
-
     setStats({
       totalInstitutions,
       activeInstitutions,
       totalSchools,
       totalUsers,
-      usersByRole
+      usersByRole: {
+        STUDENT: 0,
+        TEACHER: 0,
+        COORDINATOR: 0,
+        ADMIN: 0,
+        PARENT: 0
+      }
+    });
+    
+    console.log('📊 Stats calculados localmente:', {
+      totalInstitutions: `${totalInstitutions} (fonte: ${totalItems ? 'totalItems' : 'institutions.length'})`,
+      totalItemsAvailable: totalItems,
+      institutionsLength: institutions.length,
+      activeInstitutions
     });
   };
 

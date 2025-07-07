@@ -1,5 +1,6 @@
 // src/services/awsService.ts
 import { SystemUsageData } from '../types/analytics';
+import { apiGet } from './apiService';
 
 // --- Interfaces ---
 
@@ -124,9 +125,10 @@ export interface AwsServiceHealth {
  * Uma função helper para fazer requisições fetch e tratar erros.
  */
 const fetcher = async <T>(url: string, options?: RequestInit): Promise<T> => {
-  const token = localStorage.getItem('authToken');
   const headers = new Headers(options?.headers);
   headers.set('Content-Type', 'application/json');
+
+  const token = getAuthToken();
 
   if (token) {
     headers.set('Authorization', `Bearer ${token}`);
@@ -202,49 +204,58 @@ const fetcher = async <T>(url: string, options?: RequestInit): Promise<T> => {
 const awsService = {
   // --- Análise e Monitoramento ---
   getSystemAnalytics: async (): Promise<SystemAnalytics> => {
-    return fetcher<SystemAnalytics>('/api/aws/system-analytics');
+    const data = await apiGet<SystemAnalytics>('/aws/system-analytics');
+    
+    // Garantir que todos os campos tenham valores padrão em caso de dados incompletos
+    return {
+      cpuUsage: data?.cpuUsage ?? 0,
+      memoryUsage: data?.memoryUsage ?? 0,
+      networkIn: data?.networkIn ?? 0,
+      networkOut: data?.networkOut ?? 0,
+      diskUsage: data?.diskUsage ?? 0
+    };
   },
   getServiceHealth: async (region: string): Promise<AwsServiceHealth[]> => {
-    return fetcher<AwsServiceHealth[]>(`/api/aws/health?region=${region}`);
+    return apiGet<AwsServiceHealth[]>(`/aws/health?region=${region}`);
   },
 
   // --- Armazenamento e Conteúdo ---
   getS3StorageInfo: async (): Promise<S3StorageInfo> => {
-    return fetcher<S3StorageInfo>('/api/aws/s3-storage');
+    return apiGet<S3StorageInfo>('/aws/s3-storage');
   },
 
   // --- Computação ---
   getEc2Instances: async (): Promise<Ec2Instance[]> => {
-    return fetcher<Ec2Instance[]>('/api/aws/ec2-instances');
+    return apiGet<Ec2Instance[]>('/aws/ec2-instances');
   },
   getLambdaFunctions: async (): Promise<any[]> => { // A interface para Lambda pode ser adicionada se necessário
-    return fetcher<any[]>('/api/aws/lambda-functions');
+    return apiGet<any[]>('/aws/lambda-functions');
   },
 
   // --- Banco de Dados ---
   getRdsInstances: async (): Promise<RdsInstance[]> => {
-    return fetcher<RdsInstance[]>('/api/aws/rds-instances');
+    return apiGet<RdsInstance[]>('/aws/rds-instances');
   },
 
   // --- Rede ---
   getLoadBalancers: async (): Promise<LoadBalancer[]> => {
-    return fetcher<LoadBalancer[]>('/api/aws/load-balancers');
+    return apiGet<LoadBalancer[]>('/aws/load-balancers');
   },
   getRoute53HostedZones: async (): Promise<Route53HostedZone[]> => {
-    return fetcher<Route53HostedZone[]>('/api/aws/route53-zones');
+    return apiGet<Route53HostedZone[]>('/aws/route53-zones');
   },
 
   // --- Backup e Recuperação ---
   getAwsBackups: async (): Promise<AwsBackupJob[]> => {
-    return fetcher<AwsBackupJob[]>('/api/aws/backups');
+    return apiGet<AwsBackupJob[]>('/aws/backups');
   },
   getEc2Snapshots: async (): Promise<Ec2Snapshot[]> => {
-    return fetcher<Ec2Snapshot[]>('/api/aws/ec2-snapshots');
+    return apiGet<Ec2Snapshot[]>('/aws/ec2-snapshots');
   },
 
   // --- Custos ---
   getBillingInfo: async (): Promise<AwsCostData> => {
-    return fetcher<AwsCostData>('/api/aws/billing');
+    return apiGet<AwsCostData>('/aws/billing');
   },
 
   /**
@@ -252,15 +263,20 @@ const awsService = {
    * @param hours - O número de horas passadas para buscar.
    */
   getSystemUsageHistory: async (hours: number): Promise<SystemUsageData> => {
-    return fetcher<SystemUsageData>(`/api/aws/system-usage-history?hours=${hours}`);
+    return apiGet<SystemUsageData>(`/aws/system-usage-history?hours=${hours}`);
   },
 
   /**
    * Busca dados sobre a distribuição de uso de recursos da AWS.
    */
   getResourceDistribution: async (): Promise<any[]> => { // O tipo pode ser mais específico
-    return fetcher<any[]>('/api/aws/resource-distribution');
+    return apiGet<any[]>('/aws/resource-distribution');
   },
 };
 
 export { awsService };
+
+function getAuthToken() {
+  const accessToken = localStorage.getItem('accessToken') || localStorage.getItem('authToken');
+  return accessToken;
+}

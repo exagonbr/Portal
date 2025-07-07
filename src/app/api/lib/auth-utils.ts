@@ -176,4 +176,22 @@ export function hasRequiredRole(userRole: string, requiredRoles: string[]): bool
 // Helper function to check if user has required permission
 export function hasRequiredPermission(userPermissions: string[], requiredPermission: string): boolean {
   return userPermissions.includes(requiredPermission);
+}
+
+/**
+ * Prepara os headers de autenticação para requisições proxy ao backend
+ * Obtém o token de autorização do header da requisição
+ */
+export async function prepareAuthHeaders(request: NextRequest): Promise<Record<string, string>> {
+  const headers: Record<string, string> = {
+    'Content-Type': 'application/json',
+  };
+
+  // Obter header de autorização
+  const authHeader = request.headers.get('Authorization') || request.headers.get('authorization');
+  if (authHeader) {
+    headers['Authorization'] = authHeader;
+  }
+
+  return headers;
 } 

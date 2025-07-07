@@ -71,7 +71,7 @@ export default function TvShowManagePage() {
 
       const response = await fetch(`/api/tv-shows?${params}`, {
         headers: {
-          'Authorization': `Bearer ${localStorage.getItem('token')}`,
+          'Authorization': `Bearer ${localStorage.getItem('accessToken')}`,
           'Cache-Control': 'no-cache',
         },
         // Adicionar timeout para evitar travamentos
@@ -118,7 +118,7 @@ export default function TvShowManagePage() {
     try {
       const response = await fetch(`/api/tv-shows/${tvShowId}/modules`, {
         headers: {
-          'Authorization': `Bearer ${localStorage.getItem('token')}`,
+          'Authorization': `Bearer ${localStorage.getItem('accessToken')}`,
           'Cache-Control': 'no-cache',
         },
         signal: AbortSignal.timeout(30000) // 30 segundos

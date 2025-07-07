@@ -29,7 +29,7 @@ export interface SystemSettingsStats {
  * Uma função helper para fazer requisições fetch e tratar erros.
  */
 const fetcher = async <T>(url: string, options?: RequestInit): Promise<T> => {
-  const token = localStorage.getItem('authToken');
+  const token = localStorage.getItem('accessToken');
   const headers = new Headers(options?.headers);
   headers.set('Content-Type', 'application/json');
 
@@ -125,7 +125,7 @@ export const systemSettingsService = {
     const response = await fetch('/api/admin/system/settings/export', {
       method: 'GET',
       headers: {
-        'Authorization': `Bearer ${localStorage.getItem('authToken')}`,
+        'Authorization': `Bearer ${localStorage.getItem('accessToken')}`,
       },
     });
 
@@ -146,7 +146,7 @@ export const systemSettingsService = {
     const response = await fetch('/api/admin/system/settings/import', {
       method: 'POST',
       headers: {
-        'Authorization': `Bearer ${localStorage.getItem('authToken')}`,
+        'Authorization': `Bearer ${localStorage.getItem('accessToken')}`,
       },
       body: formData,
     });

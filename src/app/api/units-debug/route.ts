@@ -5,23 +5,7 @@ import { authOptionsDebug } from '@/lib/auth-debug'
 import { z } from 'zod'
 import { getInternalApiUrl } from '@/config/env';
 import { createCorsOptionsResponse, getCorsHeaders } from '@/config/cors'
-
-// Funções CORS
-function getCorsHeaders(origin?: string) {
-  return {
-    'Access-Control-Allow-Origin': origin || '*',
-    'Access-Control-Allow-Methods': 'GET, POST, PUT, DELETE, OPTIONS',
-    'Access-Control-Allow-Headers': 'Content-Type, Authorization',
-    'Access-Control-Allow-Credentials': 'true',
-  }
-}
-
-function createCorsOptionsResponse(origin?: string) {
-  return new NextResponse(null, {
-    status: 200,
-    headers: getCorsHeaders(origin)
-  })
-}
+import { prepareAuthHeaders } from '../lib/auth-utils'
 
 // Schema de validação para criação de unidade
 const createUnitSchema = z.object({
@@ -88,8 +72,12 @@ export async function GET(request: NextRequest) {
     // Usar qualquer sessão disponível ou continuar sem autenticação para debug
     const session = originalSession || debugSession;
     
-    if (!session?.user) {
-      console.warn('⚠️ [UNITS-DEBUG] Nenhuma sessão válida encontrada, continuando sem autenticação para debug');
+    // Obter token de autorização do header da requisição
+    const authHeader = request.headers.get('authorization');
+    const hasAuthHeader = !!authHeader && authHeader.startsWith('Bearer ') && authHeader.length > 'Bearer '.length;
+    
+    if (!session?.user && !hasAuthHeader) {
+      console.warn('⚠️ [UNITS-DEBUG] Nenhuma sessão válida ou token de autorização encontrado, continuando sem autenticação para debug');
       
       // Para debug, retornar dados simulados
       const mockUnits = [
@@ -140,7 +128,7 @@ export async function GET(request: NextRequest) {
         },
         message: 'Dados simulados retornados (sem autenticação)',
         debug: {
-          authenticationStatus: 'NO_SESSION',
+          authenticationStatus: 'NO_SESSION_NO_TOKEN',
           originalSession: !!originalSession,
           debugSession: !!debugSession,
           timestamp: new Date().toISOString()
@@ -150,7 +138,11 @@ export async function GET(request: NextRequest) {
       });
     }
 
-    console.log('✅ [UNITS-DEBUG] Sessão válida encontrada, prosseguindo com requisição real');
+    if (hasAuthHeader) {
+      console.log('✅ [UNITS-DEBUG] Token de autorização encontrado no header');
+    } else {
+      console.log('✅ [UNITS-DEBUG] Sessão válida encontrada, prosseguindo com requisição real');
+    }
 
     // Extrair parâmetros de busca
     const { searchParams } = new URL(request.url)
@@ -161,11 +153,12 @@ export async function GET(request: NextRequest) {
       queryString
     });
 
+    // Preparar headers com autenticação
+    const headers = prepareAuthHeaders(request);
+
     const response = await fetch(getInternalApiUrl(`/api/units${queryString ? `?${queryString}` : ''}`), {
       method: 'GET',
-      headers: {
-        'Content-Type': 'application/json',
-      },
+      headers,
     })
 
     console.log('🔍 [UNITS-DEBUG] Resposta do backend:', {
@@ -204,9 +197,9 @@ export async function GET(request: NextRequest) {
     return NextResponse.json({
       ...data,
       debug: {
-        authenticationStatus: 'AUTHENTICATED',
-        userEmail: session.user.email,
-        userRole: (session.user as any)?.role,
+        authenticationStatus: hasAuthHeader ? 'TOKEN_HEADER' : 'SESSION',
+        userEmail: session?.user?.email,
+        userRole: (session?.user as any)?.role,
         timestamp: new Date().toISOString()
       }
     }, {
@@ -237,12 +230,16 @@ export async function POST(request: NextRequest) {
     
     const session = await getServerSession(authOptions) || await getServerSession(authOptionsDebug);
     
-    if (!session?.user) {
+    // Obter token de autorização do header da requisição
+    const authHeader = request.headers.get('authorization');
+    const hasAuthHeader = !!authHeader && authHeader.startsWith('Bearer ') && authHeader.length > 'Bearer '.length;
+    
+    if (!session?.user && !hasAuthHeader) {
       console.warn('⚠️ [UNITS-DEBUG] Tentativa de criação sem autenticação');
       return NextResponse.json({
         error: 'Unauthorized - Authentication required for creating units',
         debug: {
-          authenticationStatus: 'NO_SESSION',
+          authenticationStatus: 'NO_SESSION_NO_TOKEN',
           timestamp: new Date().toISOString()
         }
       }, {
@@ -258,11 +255,12 @@ export async function POST(request: NextRequest) {
       bodyKeys: Object.keys(body)
     });
 
+    // Preparar headers com autenticação
+    const headers = prepareAuthHeaders(request);
+
     const response = await fetch(getInternalApiUrl('/units'), {
       method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
+      headers,
       body: JSON.stringify(body),
     })
 
@@ -287,8 +285,8 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({
       ...data,
       debug: {
-        authenticationStatus: 'AUTHENTICATED',
-        userEmail: session.user.email,
+        authenticationStatus: hasAuthHeader ? 'TOKEN_HEADER' : 'SESSION',
+        userEmail: session?.user?.email,
         timestamp: new Date().toISOString()
       }
     }, {

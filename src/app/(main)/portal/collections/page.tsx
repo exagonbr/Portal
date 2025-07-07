@@ -192,7 +192,8 @@ export default function TVShowsManagePage() {
     
     console.log('🔍 Buscando token de autenticação...')
     
-    let token = localStorage.getItem('auth_token') || 
+    let token = localStorage.getItem('accessToken') ||
+                localStorage.getItem('auth_token') || 
                 localStorage.getItem('token') ||
                 localStorage.getItem('authToken') ||
                 sessionStorage.getItem('token') ||
@@ -207,7 +208,7 @@ export default function TVShowsManagePage() {
     const cookies = document.cookie.split(';');
     for (const cookie of cookies) {
       const [name, value] = cookie.trim().split('=');
-      if (name === 'auth_token' || name === 'token' || name === 'authToken') {
+      if (name === 'accessToken' || name === 'auth_token' || name === 'token' || name === 'authToken') {
         token = decodeURIComponent(value);
         console.log('✅ Token encontrado nos cookies:', token.substring(0, 20) + '...')
         return token;

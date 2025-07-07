@@ -43,6 +43,34 @@ import { debugAuth } from '@/utils/auth-debug';
 import { StatCard, ContentCard, SimpleCard } from '@/components/ui/StandardCard';
 import { initializeGlobalErrorHandler } from '@/utils/global-error-handler';
 import { runAllChunkErrorTests } from '@/utils/chunk-error-test';
+import { Line, Bar, Pie, Doughnut } from 'react-chartjs-2';
+import {
+  Chart as ChartJS,
+  CategoryScale,
+  LinearScale,
+  PointElement,
+  LineElement,
+  BarElement,
+  ArcElement,
+  Title,
+  Tooltip,
+  Legend,
+  Filler
+} from 'chart.js';
+
+// Registrando os componentes necessários do Chart.js
+ChartJS.register(
+  CategoryScale,
+  LinearScale,
+  PointElement,
+  LineElement,
+  BarElement,
+  ArcElement,
+  Title,
+  Tooltip,
+  Legend,
+  Filler
+);
 
 type SystemDashboardData = any;
 
@@ -670,16 +698,7 @@ function SystemAdminDashboardContent() {
           color="violet"
           trend={dashboardData?.sessions?.activeUsers && dashboardData.sessions.activeUsers > 5000 ? 'Alta carga' : 'Tempo real'}
         />
-        <StatCard
-          icon={Cloud}
-          title="Infraestrutura AWS"
-          value={dashboardData?.infrastructure?.aws ? `${dashboardData.infrastructure.aws.performance.uptime}%` : (awsStats && typeof awsStats.success_rate === 'number' ? `${awsStats.success_rate.toFixed(1)}%` : 'N/A')}
-          subtitle={dashboardData?.infrastructure?.aws ? 
-            `${dashboardData.infrastructure.aws.services.length} serviços • ${dashboardData.infrastructure.aws.performance.responseTime}ms` :
-            (awsStats && typeof awsStats.total_connections === 'number' && typeof awsStats.average_response_time === 'number' ? `${awsStats.total_connections} conexões • ${awsStats.average_response_time.toFixed(0)}ms` : 'Conectado via .env')
-          }
-          color="amber"
-        />
+
       </div>
 
       {/* Estatísticas Gerais */}
@@ -839,12 +858,81 @@ function SystemAdminDashboardContent() {
                   </h3>
                   <div className="text-xs text-gray-500 flex-shrink-0">Últimos 6 meses</div>
                 </div>
-                <div className="h-48 flex items-center justify-center bg-gray-50 rounded-lg border-2 border-dashed border-gray-300">
-                  <div className="text-center">
-                    <TrendingUp className="w-12 h-12 text-gray-400 mx-auto mb-2" />
-                    <p className="text-sm text-gray-500">Gráfico de Crescimento</p>
-                    <p className="text-xs text-gray-400">Em manutenção</p>
-                  </div>
+                <div className="h-48">
+                  <Line
+                    data={userGrowthData}
+                    options={{
+                      responsive: true,
+                      maintainAspectRatio: false,
+                      interaction: {
+                        mode: 'index',
+                        intersect: false,
+                      },
+                      scales: {
+                        x: {
+                          grid: {
+                            display: false,
+                          },
+                        },
+                        y: {
+                          type: 'linear',
+                          display: true,
+                          position: 'left',
+                          grid: {
+                            color: 'rgba(0, 0, 0, 0.05)',
+                          },
+                          ticks: {
+                            callback: function(value) {
+                              return value.toLocaleString('pt-BR');
+                            }
+                          }
+                        },
+                        y1: {
+                          type: 'linear',
+                          display: true,
+                          position: 'right',
+                          grid: {
+                            drawOnChartArea: false,
+                          },
+                          ticks: {
+                            callback: function(value) {
+                              return value + '%';
+                            }
+                          }
+                        },
+                      },
+                      plugins: {
+                        tooltip: {
+                          callbacks: {
+                            label: function(context) {
+                              let label = context.dataset.label || '';
+                              if (label) {
+                                label += ': ';
+                              }
+                              if (context.dataset.yAxisID === 'y1') {
+                                label += context.parsed.y + '%';
+                              } else {
+                                label += context.parsed.y.toLocaleString('pt-BR');
+                              }
+                              return label;
+                            }
+                          }
+                        },
+                        legend: {
+                          position: 'top',
+                          labels: {
+                            usePointStyle: true,
+                            boxWidth: 8,
+                            boxHeight: 8,
+                            padding: 15,
+                            font: {
+                              size: 10
+                            }
+                          }
+                        }
+                      }
+                    }}
+                  />
                 </div>
               </div>
             )}
@@ -859,12 +947,44 @@ function SystemAdminDashboardContent() {
                   </h3>
                   <div className="text-xs text-gray-500">Hoje</div>
                 </div>
-                <div className="h-48 flex items-center justify-center bg-gray-50 rounded-lg border-2 border-dashed border-gray-300">
-                  <div className="text-center">
-                    <Activity className="w-12 h-12 text-gray-400 mx-auto mb-2" />
-                    <p className="text-sm text-gray-500">Atividade por Hora</p>
-                    <p className="text-xs text-gray-400">Em manutenção</p>
-                  </div>
+                <div className="h-48">
+                  <Bar
+                    data={sessionTrendsData}
+                    options={{
+                      responsive: true,
+                      maintainAspectRatio: false,
+                      plugins: {
+                        legend: {
+                          display: false
+                        },
+                        tooltip: {
+                          callbacks: {
+                            label: function(context) {
+                              return context.parsed.y.toLocaleString('pt-BR') + ' sessões';
+                            }
+                          }
+                        }
+                      },
+                      scales: {
+                        x: {
+                          grid: {
+                            display: false
+                          }
+                        },
+                        y: {
+                          beginAtZero: true,
+                          grid: {
+                            color: 'rgba(0, 0, 0, 0.05)'
+                          },
+                          ticks: {
+                            callback: function(value) {
+                              return value.toLocaleString('pt-BR');
+                            }
+                          }
+                        }
+                      }
+                    }}
+                  />
                 </div>
               </div>
             )}
@@ -884,12 +1004,39 @@ function SystemAdminDashboardContent() {
                     Ver todas
                   </button>
                 </div>
-                <div className="h-48 flex items-center justify-center bg-gray-50 rounded-lg border-2 border-dashed border-gray-300">
-                  <div className="text-center">
-                    <Building2 className="w-12 h-12 text-gray-400 mx-auto mb-2" />
-                    <p className="text-sm text-gray-500">Distribuição por Instituições</p>
-                    <p className="text-xs text-gray-400">Em manutenção</p>
-                  </div>
+                <div className="h-48">
+                  <Doughnut
+                    data={institutionDistributionData}
+                    options={{
+                      responsive: true,
+                      maintainAspectRatio: false,
+                      cutout: '65%',
+                      plugins: {
+                        legend: {
+                          position: 'right',
+                          labels: {
+                            boxWidth: 12,
+                            boxHeight: 12,
+                            padding: 15,
+                            font: {
+                              size: 10
+                            }
+                          }
+                        },
+                        tooltip: {
+                          callbacks: {
+                            label: function(context) {
+                              const label = context.label || '';
+                              const value = context.parsed || 0;
+                              const total = context.dataset.data.reduce((a: number, b: number) => a + b, 0);
+                              const percentage = Math.round((value / total) * 100);
+                              return `${label}: ${value.toLocaleString('pt-BR')} (${percentage}%)`;
+                            }
+                          }
+                        }
+                      }
+                    }}
+                  />
                 </div>
               </div>
             )}
@@ -911,12 +1058,39 @@ function SystemAdminDashboardContent() {
                     Total: {Object.values(realUsersByRole).reduce((a, b) => a + b, 0).toLocaleString('pt-BR')}
                   </div>
                 </div>
-                <div className="h-40 sm:h-48 flex items-center justify-center bg-gray-50 rounded-lg border-2 border-dashed border-gray-300">
-                  <div className="text-center px-2">
-                    <PieChart className="w-8 h-8 sm:w-12 sm:h-12 text-gray-400 mx-auto mb-2" />
-                    <p className="text-xs sm:text-sm text-gray-500">Gráfico de Usuários por Função</p>
-                    <p className="text-xs text-gray-400">Dados carregados - Visualização em desenvolvimento</p>
-                  </div>
+                <div className="h-40 sm:h-48">
+                  <Pie
+                    data={usersByRoleData}
+                    options={{
+                      responsive: true,
+                      maintainAspectRatio: false,
+                      plugins: {
+                        legend: {
+                          position: 'right',
+                          labels: {
+                            usePointStyle: true,
+                            boxWidth: 8,
+                            boxHeight: 8,
+                            padding: 10,
+                            font: {
+                              size: 10
+                            }
+                          }
+                        },
+                        tooltip: {
+                          callbacks: {
+                            label: function(context) {
+                              const label = context.label || '';
+                              const value = context.parsed || 0;
+                              const total = context.dataset.data.reduce((a: number, b: number) => a + b, 0);
+                              const percentage = Math.round((value / total) * 100);
+                              return `${label}: ${value.toLocaleString('pt-BR')} (${percentage}%)`;
+                            }
+                          }
+                        }
+                      }
+                    }}
+                  />
                 </div>
                 <div className="mt-2 sm:mt-3 grid grid-cols-1 sm:grid-cols-2 gap-2">
                   {Object.entries(Object.keys(realUsersByRole).length > 0 ? realUsersByRole : realUserStats?.users_by_role || {}).map(([role, count], index) => {
@@ -1187,66 +1361,7 @@ function SystemAdminDashboardContent() {
             </ContentCard>
           )}
 
-          {/* Status AWS Resumido */}
-          {(dashboardData?.infrastructure?.aws || awsStats) && (
-            <div className="bg-white dark:bg-gray-100 rounded-lg shadow-md p-3 sm:p-4">
-              <h3 className="text-sm sm:text-base font-semibold mb-2 sm:mb-3 flex items-center gap-2">
-                <Cloud className="w-3 h-3 sm:w-4 sm:h-4 text-orange-500 flex-shrink-0" />
-                <span className="truncate">Infraestrutura AWS</span>
-              </h3>
-              <div className="space-y-2">
-                {dashboardData?.infrastructure?.aws ? (
-                  <>
-                    <div className="flex justify-between items-center">
-                      <span className="text-xs text-gray-600">Uptime:</span>
-                      <span className={`font-semibold text-xs sm:text-sm ${
-                        dashboardData.infrastructure.aws.performance.uptime >= 99.9 ? 'text-accent-green' : 
-                        dashboardData.infrastructure.aws.performance.uptime >= 99.5 ? 'text-accent-yellow' : 'text-red-600'
-                      }`}>
-                        {dashboardData.infrastructure.aws.performance.uptime}%
-                      </span>
-                    </div>
-                    <div className="flex justify-between">
-                      <span className="text-xs text-gray-600">Serviços Ativos:</span>
-                      <span className="font-semibold text-sm">{dashboardData.infrastructure.aws.services.length}</span>
-                    </div>
-                    <div className="flex justify-between">
-                      <span className="text-xs text-gray-600">Tempo Resposta:</span>
-                      <span className="font-semibold text-sm">{dashboardData.infrastructure.aws.performance.responseTime}ms</span>
-                    </div>
-                    <div className="mt-3 p-2 bg-gray-50 rounded-lg">
-                      <p className="text-xs text-gray-600 mb-1">Custo Mensal:</p>
-                      <p className="text-base font-bold text-gray-800">
-                        ${dashboardData.infrastructure.aws.costs.monthly.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
-                      </p>
-                    </div>
-                  </>
-                ) : awsStats && (
-                  <>
-                    <div className="flex justify-between items-center">
-                      <span className="text-xs text-gray-600">Taxa de Sucesso:</span>
-                      <span className={`font-semibold text-xs sm:text-sm ${
-                        (typeof awsStats.success_rate === 'number' && awsStats.success_rate >= 95) ? 'text-accent-green' : 
-                        (typeof awsStats.success_rate === 'number' && awsStats.success_rate >= 80) ? 'text-accent-yellow' : 'text-red-600'
-                      }`}>
-                        {typeof awsStats.success_rate === 'number' ? awsStats.success_rate.toFixed(1) : '0.0'}%
-                      </span>
-                    </div>
-                    <div className="flex justify-between items-center">
-                      <span className="text-xs text-gray-600">Conexões:</span>
-                      <span className="font-semibold text-xs sm:text-sm">{typeof awsStats.total_connections === 'number' ? awsStats.total_connections : 0}</span>
-                    </div>
-                  </>
-                )}
-              </div>
-              <button 
-                onClick={() => router.push('/admin/aws')}
-                className="w-full mt-2 sm:mt-3 text-center text-xs sm:text-sm text-primary hover:text-primary-dark transition-colors px-2 py-1 rounded"
-              >
-                Configurar AWS
-              </button>
-            </div>
-          )}
+
 
           {/* Links Rápidos */}
           <div className="bg-white dark:bg-gray-100 rounded-lg shadow-md p-3 sm:p-4">

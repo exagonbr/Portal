@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { cookies } from 'next/headers';
 import { getInternalApiUrl } from '../../../../config/env';
 import { createCorsOptionsResponse, getCorsHeaders } from '@/config/cors'
+import { getAuthentication } from '@/lib/auth-utils'
 
 
 // Handler para requisições OPTIONS (preflight)
@@ -49,7 +50,9 @@ export async function POST(request: NextRequest) {
       });
     });
 
-    const authToken = cookieStore.get('auth_token')?.value;
+    // Obter o token do header da requisição
+    const authHeader = request.headers.get('authorization') || request.headers.get('Authorization');
+    const authToken = authHeader?.startsWith('Bearer ') ? authHeader.substring(7) : null;
     const sessionId = cookieStore.get('session_id')?.value;
 
     // 1. Se houver token, notificar o backend sobre o logout

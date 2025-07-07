@@ -118,6 +118,13 @@ export class CookieManager {
       sameSite: 'lax'
     });
 
+        // Token de acesso (mais curto)
+        this.set('accessToken', data.accessToken, {
+          maxAge: 60 * 60 * 2, // 2 horas
+          secure: true,
+          sameSite: 'lax'
+        });
+
     // Refresh token (mais longo)
     this.set('refresh_token', data.refreshToken, {
       maxAge: 60 * 60 * 24 * 30, // 30 dias
@@ -161,7 +168,7 @@ export class CookieManager {
     sessionId: string | null;
     isAuthenticated: boolean;
   } {
-    const accessToken = this.get('auth_token');
+    const accessToken = this.get('auth_token') || this.get('accessToken');
     const refreshToken = this.get('refresh_token');
     const sessionId = this.get('session_id');
     const isAuthenticated = this.get('is_authenticated') === 'true';

@@ -2,24 +2,11 @@ import {
   Entity,
   PrimaryGeneratedColumn,
   Column,
-  ManyToOne,
-  OneToMany,
-  JoinColumn,
   BeforeInsert,
   BeforeUpdate
 } from 'typeorm';
 import * as bcrypt from 'bcryptjs';
 import { UserRole } from './UserRole.enum';
-import { Institution } from './Institution';
-import { TeacherSubject } from './TeacherSubject';
-import { Role } from './Role';
-import { UserClass } from './UserClass';
-import { SchoolManager } from './SchoolManager';
-import { Course } from './Course';
-import { ChatMessage } from './ChatMessage';
-import { ForumThread } from './ForumThread';
-import { ForumReply } from './ForumReply';
-import { Notification } from './Notification';
 
 @Entity('users')
 export class User {
@@ -139,49 +126,15 @@ export class User {
     this.institutionId = value ?? undefined;
   }
 
-  @ManyToOne(() => Institution, institution => institution.users, { nullable: true })
-  @JoinColumn({ name: 'institution_id' })
-  institution?: Institution;
-
   // @Column({ type: 'varchar', length: 255, nullable: true })
   // subject?: string;
 
-  // @Column({ name: 'subject_data_id', type: 'bigint', nullable: true })
-  // subjectDataId?: number;
-
-  @ManyToOne(() => TeacherSubject, { nullable: true })
-  @JoinColumn({ name: 'subject_data_id' })
-  subjectData?: TeacherSubject;
+  @Column({ name: 'subject_data_id', type: 'bigint', nullable: true })
+  subjectDataId?: number;
 
   // Adicionando a coluna role_id que está faltando
   @Column({ name: 'role_id', type: 'bigint', nullable: true })
   roleId?: number;
-
-  // Relacionamentos para compatibilidade com o código existente
-  @ManyToOne(() => Role, role => role.users, { nullable: true })
-  @JoinColumn({ name: 'role_id' })
-  role?: Role;
-
-  @OneToMany(() => UserClass, userClass => userClass.user)
-  userClasses!: UserClass[];
-
-  @OneToMany(() => SchoolManager, schoolManager => schoolManager.user)
-  schoolManagers!: SchoolManager[];
-
-  @OneToMany(() => Course, course => course.teacher)
-  teachingCourses!: Course[];
-
-  @OneToMany(() => ChatMessage, message => message.sender)
-  sentMessages!: ChatMessage[];
-
-  @OneToMany(() => ForumThread, thread => thread.author)
-  forumThreads!: ForumThread[];
-
-  @OneToMany(() => ForumReply, reply => reply.author)
-  forumReplies!: ForumReply[];
-
-  @OneToMany(() => Notification, notification => notification.sentBy)
-  sentNotifications!: Notification[];
 
   // Métodos para hash de senha
   @BeforeInsert()
@@ -201,7 +154,7 @@ export class User {
   }
 
   hasValidRole(): boolean {
-    return !!this.role;
+    return !!this.roleId;
   }
 
   determineRoleFromFlags(): UserRole {

@@ -1,8 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { activityTracker } from '@/services/activityTrackingService'
-import { CreateActivityData, ActivityType } from '@/types/activity'
+import { ActivityType } from '@/types/activity'
 import { z } from 'zod'
-import { createCorsOptionsResponse, getCorsHeaders } from '@/config/cors'
 import { validateJWTToken } from '@/lib/auth-utils'
 
 // Função para criar headers CORS
@@ -25,7 +24,7 @@ function createCorsOptionsResponse(origin?: string) {
 
 // Schema de validação para rastreamento de atividade
 const trackActivitySchema = z.object({
-  user_id: z.string(),
+  user_id: z.string().min(1, { message: "user_id não pode ser vazio" }),
   activity_type: z.enum([
     'login', 'logout', 'login_failed', 'page_view', 'video_start', 'video_play', 
     'video_pause', 'video_stop', 'video_complete', 'video_seek', 'content_access',
@@ -74,6 +73,16 @@ export async function POST(request: NextRequest) {
 
     // Parsear e validar dados
     const body = await request.json()
+    
+    // Verificar se user_id existe e não é vazio
+    if (!body.user_id || body.user_id === '') {
+      console.log('❌ Ignorando log de atividade: user_id é nulo ou vazio')
+      return NextResponse.json(
+        { success: false, error: 'user_id é obrigatório e não pode ser vazio' },
+        { status: 400 }
+      )
+    }
+    
     const validatedData = trackActivitySchema.parse(body)
 
     // Obter informações da requisição
@@ -83,21 +92,35 @@ export async function POST(request: NextRequest) {
     
     const userAgent = request.headers.get('user-agent') || 'unknown'
 
-    // Preparar dados de atividade
-    const activityData: CreateActivityData = {
-      user_id: validatedData.user_id,
-      activity_type: validatedData.activity_type as ActivityType,
-      entity_type: validatedData.entity_type,
-      entity_id: validatedData.entity_id,
-      action: validatedData.action,
-      details: {
-        ...validatedData.details,
-        ip_address: ip,
-        user_agent: userAgent,
-        timestamp: new Date().toISOString()
-      },
-      duration_seconds: validatedData.duration_seconds,
-      session_id: validatedData.session_id
+    // Mapear ação para um tipo compatível
+    let action: 'view' | 'complete' | 'pause' | 'resume' = 'view';
+    if (validatedData.action === 'complete' || validatedData.activity_type.includes('complete')) {
+      action = 'complete';
+    } else if (validatedData.action === 'pause' || validatedData.activity_type.includes('pause')) {
+      action = 'pause';
+    } else if (validatedData.action === 'resume' || validatedData.activity_type.includes('resume')) {
+      action = 'resume';
+    }
+
+    // Mapear tipo de conteúdo
+    let contentType: 'video' | 'book' | 'course' | 'tvshow' = 'video';
+    if (validatedData.entity_type === 'book' || validatedData.activity_type.includes('book')) {
+      contentType = 'book';
+    } else if (validatedData.entity_type === 'course' || validatedData.activity_type.includes('course')) {
+      contentType = 'course';
+    } else if (validatedData.entity_type === 'tvshow' || validatedData.activity_type.includes('tv')) {
+      contentType = 'tvshow';
+    }
+
+    // Preparar dados de atividade no formato esperado pelo serviço
+    const activityData = {
+      userId: validatedData.user_id,
+      contentId: validatedData.entity_id || 'unknown',
+      contentType,
+      action,
+      progress: validatedData.details?.progress,
+      duration: validatedData.duration_seconds,
+      timestamp: new Date()
     }
 
     // Rastrear atividade
@@ -149,12 +172,6 @@ export async function GET(request: NextRequest) {
     // Obter parâmetros da query
     const { searchParams } = new URL(request.url)
     const userId = searchParams.get('user_id') || session.user.id
-    const activityType = searchParams.get('activity_type')
-    const entityType = searchParams.get('entity_type')
-    const entityId = searchParams.get('entity_id')
-    const dateFrom = searchParams.get('date_from')
-    const dateTo = searchParams.get('date_to')
-    const page = parseInt(searchParams.get('page') || '1')
     const limit = parseInt(searchParams.get('limit') || '50')
 
     // Verificar se o usuário pode acessar as atividades
@@ -166,20 +183,8 @@ export async function GET(request: NextRequest) {
       )
     }
 
-    // Construir filtros
-    const filter = {
-      user_id: userId,
-      activity_type: activityType as ActivityType,
-      entity_type: entityType || undefined,
-      entity_id: entityId || undefined,
-      date_from: dateFrom ? new Date(dateFrom) : undefined,
-      date_to: dateTo ? new Date(dateTo) : undefined,
-      page,
-      limit
-    }
-
     // Obter atividades
-    const result = await activityTracker.getUserActivities(filter)
+    const result = await activityTracker.getUserActivity(userId, limit)
 
     return NextResponse.json({
       success: true,

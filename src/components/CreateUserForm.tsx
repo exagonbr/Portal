@@ -237,7 +237,7 @@ export default function CreateUserForm({ onClose, onSuccess, roles, institutions
     
     try {
       // Debug: Verificar autenticação
-      const token = localStorage.getItem('auth_token')
+      const token = localStorage.getItem('accessToken')
       const user = localStorage.getItem('user')
       
       console.log('🔐 Debug de autenticação:', {

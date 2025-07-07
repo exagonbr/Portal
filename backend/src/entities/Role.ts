@@ -1,10 +1,8 @@
 import {
   Entity,
   PrimaryGeneratedColumn,
-  Column,
-  OneToMany
+  Column
 } from 'typeorm';
-import { User } from './User';
 
 @Entity('roles')
 export class Role {
@@ -29,8 +27,4 @@ export class Role {
   get displayName(): string {
     return this.description || this.name;
   }
-
-  // Relacionamentos
-  @OneToMany(() => User, user => user.role)
-  users!: User[];
 }

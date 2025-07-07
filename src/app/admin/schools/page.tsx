@@ -28,9 +28,12 @@ interface Unit {
   name: string
   institution_id: number
   institutionName?: string
+  institution_name?: string
   deleted: boolean
   created_at: string
   updated_at: string
+  date_created?: string
+  last_updated?: string
 }
 
 // Interface para instituições
@@ -48,41 +51,43 @@ interface SchoolStats {
 }
 
 // Interface para resposta da API
-interface ApiResponse<T> {
+interface ApiResponse<T = any> {
   success: boolean
   data: T
   message?: string
 }
 
-// Interface para resposta paginada
-interface PaginatedResponse<T> {
-  data: T[]
-  total: number
-  page: number
-  limit: number
-  totalPages: number
+// Interface para resposta paginada da API de units
+interface UnitsApiResponse {
+  success: boolean
+  data: Unit[]
+  total?: number
+  page?: number
+  limit?: number
+  totalPages?: number
 }
 
-const API_URL = 'https://portal.sabercon.com.br/api'
-
-// Configuração do axios com withCredentials para enviar cookies
+// Configuração do axios para usar nossa rota de API proxy
 const apiClient = axios.create({
-  baseURL: API_URL,
+  baseURL: '/api',
   withCredentials: true,
 });
 
-// Interceptor para adicionar o token de autenticação
-apiClient.interceptors.request.use((config) => {
-  if (typeof window !== 'undefined') {
-    const accessToken = localStorage.getItem('accessToken');
-    if (accessToken) {
-      config.headers['Authorization'] = `Bearer ${accessToken}`;
+// Interceptor para adicionar o token de autorização
+apiClient.interceptors.request.use(
+  (config) => {
+    if (typeof window !== 'undefined') {
+      const accessToken = localStorage.getItem('accessToken');
+      if (accessToken) {
+        config.headers['Authorization'] = `Bearer ${accessToken}`;
+      }
     }
+    return config;
+  },
+  (error) => {
+    return Promise.reject(error);
   }
-  return config;
-}, (error) => {
-  return Promise.reject(error);
-});
+);
 
 // Interceptor para tratamento de erros
 apiClient.interceptors.response.use(
@@ -136,21 +141,36 @@ export default function AdminSchoolsPage() {
 
   const fetchInstitutions = async () => {
     try {
-      // Dados mockados para instituições
-      const mockInstitutions: Institution[] = [
-        { id: 1, name: 'Sabercon Educação' },
-        { id: 2, name: 'Instituto Educacional' },
-        { id: 3, name: 'Faculdade Tecnológica' },
-        { id: 4, name: 'Escola de Idiomas' },
-      ];
-      
-      setInstitutions(mockInstitutions);
+      // Chamada para nossa rota de API proxy
+      const response = await apiClient.get<{
+        success: boolean;
+        data: Institution[];
+        total?: number;
+      }>('/institutions', { 
+        params: { 
+          page: 1,
+          limit: 100 // Buscar todas as instituições disponíveis
+        } 
+      });
+
+      if (response.data.success) {
+        const institutionsData = response.data.data || [];
+        setInstitutions(institutionsData);
+      } else {
+        throw new Error('Erro ao buscar instituições');
+      }
     } catch (error) {
-      console.error('Erro ao buscar instituições:', error)
+      console.error('Erro ao buscar instituições:', error);
+      showError("Erro ao carregar instituições.");
+      
+      // Em caso de erro, definir algumas instituições padrão para não quebrar a interface
+      setInstitutions([
+        { id: 1, name: 'Sabercon Educação' },
+      ]);
     }
   }
 
-  const fetchUnits = async (page = 1, q = '', currentFilters: typeof filters = {}, showLoadingIndicator = true) => {
+    const fetchUnits = async (page = 1, search = '', currentFilters: typeof filters = {}, showLoadingIndicator = true) => {
     if (showLoadingIndicator) setLoading(true)
     else setRefreshing(true)
 
@@ -160,66 +180,64 @@ export default function AdminSchoolsPage() {
         await fetchInstitutions()
       }
 
-      // Construir parâmetros de consulta
-      const params: Record<string, any> = { page, limit: itemsPerPage }
+      // Construir parâmetros de consulta para a API
+      const params: Record<string, any> = { 
+        page, 
+        limit: itemsPerPage 
+      }
       
-      if (q) params.q = q
+      if (search) params.search = search
       if (currentFilters.institutionId) params.institutionId = currentFilters.institutionId
 
-      console.log('Fazendo requisição para /units com parâmetros:', params)
-      console.log('Token de autenticação:', localStorage.getItem('accessToken'))
+      console.log('Fazendo requisição para API proxy /api/units com parâmetros:', params)
 
-      // DADOS MOCKADOS - Temporário até resolver problema de autenticação
-      const mockUnits: Unit[] = [
-        { id: '1', name: 'Unidade São Paulo', institution_id: 1, institutionName: 'Sabercon Educação', deleted: false, created_at: '2025-01-01', updated_at: '2025-01-01' },
-        { id: '2', name: 'Unidade Rio de Janeiro', institution_id: 1, institutionName: 'Sabercon Educação', deleted: false, created_at: '2025-01-01', updated_at: '2025-01-01' },
-        { id: '3', name: 'Unidade Belo Horizonte', institution_id: 1, institutionName: 'Sabercon Educação', deleted: false, created_at: '2025-01-01', updated_at: '2025-01-01' },
-        { id: '4', name: 'Unidade Porto Alegre', institution_id: 2, institutionName: 'Instituto Educacional', deleted: false, created_at: '2025-01-01', updated_at: '2025-01-01' },
-        { id: '5', name: 'Unidade Curitiba', institution_id: 2, institutionName: 'Instituto Educacional', deleted: false, created_at: '2025-01-01', updated_at: '2025-01-01' },
-      ];
+      // Chamada para nossa rota de API proxy
+      const response = await apiClient.get<UnitsApiResponse>('/units', { params })
 
-      const mockInstitutions: Institution[] = [
-        { id: 1, name: 'Sabercon Educação' },
-        { id: 2, name: 'Instituto Educacional' },
-      ];
+      if (response.data.success) {
+        const unitsData = response.data.data || []
+        
+        // Mapear dados da API para o formato esperado pelo frontend
+        const mappedUnits = unitsData.map(unit => ({
+          ...unit,
+          institutionName: unit.institution_name || unit.institutionName,
+          created_at: unit.date_created || unit.created_at,
+          updated_at: unit.last_updated || unit.updated_at
+        }))
 
-      // Filtrar unidades baseado nos filtros
-      let filteredUnits = [...mockUnits];
-      
-      if (q) {
-        const searchLower = q.toLowerCase();
-        filteredUnits = filteredUnits.filter(unit => 
-          unit.name.toLowerCase().includes(searchLower) || 
-          unit.institutionName?.toLowerCase().includes(searchLower)
-        );
-      }
-      
-      if (currentFilters.institutionId) {
-        filteredUnits = filteredUnits.filter(unit => 
-          unit.institution_id === currentFilters.institutionId
-        );
-      }
+        setUnits(mappedUnits)
+        
+        // Se a API retornar informações de paginação, usar elas
+        if (response.data.total !== undefined) {
+          setTotalItems(response.data.total)
+        } else {
+          setTotalItems(mappedUnits.length)
+        }
+        
+        setCurrentPage(page)
+        
+        // Calcular estatísticas baseadas nos dados reais
+        calculateStats(mappedUnits)
 
-      // Atualizar dados
-      setUnits(filteredUnits);
-      setInstitutions(mockInstitutions);
-      setTotalItems(filteredUnits.length);
-      setCurrentPage(page);
-      
-      // Estatísticas mockadas
-      setStats({
-        totalSchools: mockUnits.length,
-        totalStudents: 1250,
-        totalTeachers: 87,
-        totalClasses: 45,
-      });
-
-      if (!showLoadingIndicator) {
-        showSuccess("Lista de unidades atualizada!");
+        if (!showLoadingIndicator) {
+          showSuccess("Lista de unidades atualizada!");
+        }
+      } else {
+        throw new Error('Erro desconhecido da API')
       }
     } catch (error) {
       console.error('Erro ao buscar unidades:', error)
-      showError("Erro ao carregar unidades.")
+      showError("Erro ao carregar unidades da API.")
+      
+      // Em caso de erro, limpar os dados
+      setUnits([])
+      setTotalItems(0)
+      setStats({
+        totalSchools: 0,
+        totalStudents: 0,
+        totalTeachers: 0,
+        totalClasses: 0,
+      })
     } finally {
       setLoading(false)
       setRefreshing(false)
@@ -267,6 +285,7 @@ export default function AdminSchoolsPage() {
 
     try {
       setLoading(true)
+      // Usando nossa rota de API proxy
       const response = await apiClient.delete(`/units/${unit.id}`)
       
       if (response.data.success) {
@@ -381,6 +400,7 @@ export default function AdminSchoolsPage() {
                       <tr>
                         <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Unidade</th>
                         <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Instituição</th>
+                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Status</th>
                         <th className="px-6 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">Ações</th>
                       </tr>
                     </thead>
@@ -390,7 +410,14 @@ export default function AdminSchoolsPage() {
                           <td className="px-6 py-4">
                             <div className="text-sm font-semibold text-gray-900">{unit.name}</div>
                           </td>
-                          <td className="px-6 py-4 text-sm text-gray-600">{unit.institutionName}</td>
+                          <td className="px-6 py-4 text-sm text-gray-600">
+                            {unit.institutionName || unit.institution_name || '-'}
+                          </td>
+                          <td className="px-6 py-4">
+                            <Badge variant={unit.deleted ? "danger" : "success"}>
+                              {unit.deleted ? "Inativa" : "Ativa"}
+                            </Badge>
+                          </td>
                           <td className="px-6 py-4 text-center">
                             <div className="flex items-center justify-center space-x-2">
                               <Button variant="ghost" size="sm" onClick={() => alert(`Visualizar: ${unit.name}`)} className="text-blue-600 hover:text-blue-900"><Eye className="w-4 h-4" /></Button>
@@ -409,8 +436,16 @@ export default function AdminSchoolsPage() {
                   {units.map(unit => (
                     <div key={unit.id} className="bg-white border border-gray-200 rounded-lg shadow-sm">
                       <div className="p-4 border-b border-gray-100">
-                        <h3 className="font-semibold text-gray-800">{unit.name}</h3>
-                        <p className="text-sm text-gray-500 flex items-center mt-1"><Building2 className="w-4 h-4 mr-2"/>{unit.institutionName}</p>
+                        <div className="flex justify-between items-start mb-2">
+                          <h3 className="font-semibold text-gray-800">{unit.name}</h3>
+                                                     <Badge variant={unit.deleted ? "danger" : "success"}>
+                             {unit.deleted ? "Inativa" : "Ativa"}
+                           </Badge>
+                        </div>
+                        <p className="text-sm text-gray-500 flex items-center">
+                          <Building2 className="w-4 h-4 mr-2"/>
+                          {unit.institutionName || unit.institution_name || '-'}
+                        </p>
                       </div>
                       <div className="p-4 border-t border-gray-100 flex justify-end space-x-2">
                         <Button variant="outline" size="sm" onClick={() => alert(`Visualizar: ${unit.name}`)}>Ver</Button>
@@ -428,7 +463,7 @@ export default function AdminSchoolsPage() {
           {totalPages > 1 && (
             <div className="px-6 py-4 border-t border-gray-200 flex items-center justify-between">
               <div className="text-sm text-gray-700">
-                Página {currentPage} de {totalPages}
+                Página {currentPage} de {totalPages} • {totalItems} unidades no total
               </div>
               <div className="flex items-center space-x-2">
                 <Button variant="outline" size="sm" onClick={() => setCurrentPage(p => Math.max(p - 1, 1))} disabled={currentPage === 1}>Anterior</Button>

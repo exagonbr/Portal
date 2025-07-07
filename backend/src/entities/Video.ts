@@ -1,13 +1,8 @@
 import {
   Entity,
   PrimaryGeneratedColumn,
-  Column,
-  ManyToOne,
-  JoinColumn
+  Column
 } from 'typeorm';
-import { File } from './File';
-import { TvShow } from './TVShow';
-import { Module } from './Module';
 
 @Entity('video')
 export class Video {
@@ -68,10 +63,6 @@ export class Video {
   @Column({ name: 'poster_image_id', type: 'bigint', nullable: true })
   posterImageId?: number;
 
-  @ManyToOne(() => File, { nullable: true })
-  @JoinColumn({ name: 'poster_image_id' })
-  posterImage?: File;
-
   @Column({ name: 'poster_path', type: 'varchar', length: 255, nullable: true })
   posterPath?: string;
 
@@ -86,10 +77,6 @@ export class Video {
 
   @Column({ name: 'backdrop_image_id', type: 'bigint', nullable: true })
   backdropImageId?: number;
-
-  @ManyToOne(() => File, { nullable: true })
-  @JoinColumn({ name: 'backdrop_image_id' })
-  backdropImage?: File;
 
   @Column({ name: 'air_date', type: 'varchar', length: 255, nullable: true })
   airDate?: string;
@@ -112,16 +99,8 @@ export class Video {
   @Column({ name: 'show_id', type: 'bigint', nullable: true })
   showId?: number;
 
-  @ManyToOne(() => TvShow, { nullable: true })
-  @JoinColumn({ name: 'show_id' })
-  show?: TvShow;
-
   @Column({ name: 'still_image_id', type: 'bigint', nullable: true })
   stillImageId?: number;
-
-  @ManyToOne(() => File, { nullable: true })
-  @JoinColumn({ name: 'still_image_id' })
-  stillImage?: File;
 
   @Column({ name: 'still_path', type: 'varchar', length: 255, nullable: true })
   stillPath?: string;
@@ -131,8 +110,4 @@ export class Video {
 
   @Column({ nullable: true })
   module_id?: number;
-
-  @ManyToOne(() => Module, module => module.videos, { nullable: true })
-  @JoinColumn({ name: 'module_id' })
-  module?: Module;
 }

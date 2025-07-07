@@ -1,13 +1,8 @@
 import {
   Entity,
   PrimaryGeneratedColumn,
-  Column,
-  ManyToOne,
-  JoinColumn,
-  ManyToMany,
-  JoinTable
+  Column
 } from 'typeorm';
-import { File } from './File';
 
 @Entity('tv_show')
 export class TvShow {
@@ -23,10 +18,6 @@ export class TvShow {
 
   @Column({ name: 'backdrop_image_id', type: 'bigint', nullable: true })
   backdropImageId?: number;
-
-  @ManyToOne(() => File, { nullable: true })
-  @JoinColumn({ name: 'backdrop_image_id' })
-  backdropImage?: File;
 
   @Column({ name: 'backdrop_path', type: 'varchar', length: 255, nullable: true })
   backdropPath?: string;
@@ -55,10 +46,6 @@ export class TvShow {
   @Column({ name: 'manual_support_id', type: 'bigint', nullable: true })
   manualSupportId?: number;
 
-  @ManyToOne(() => File, { nullable: true })
-  @JoinColumn({ name: 'manual_support_id' })
-  manualSupport?: File;
-
   @Column({ name: 'manual_support_path', type: 'varchar', length: 255, nullable: true })
   manualSupportPath?: string;
 
@@ -76,10 +63,6 @@ export class TvShow {
 
   @Column({ name: 'poster_image_id', type: 'bigint', nullable: true })
   posterImageId?: number;
-
-  @ManyToOne(() => File, { nullable: true })
-  @JoinColumn({ name: 'poster_image_id' })
-  posterImage?: File;
 
   @Column({ name: 'poster_path', type: 'varchar', length: 255, nullable: true })
   posterPath?: string;

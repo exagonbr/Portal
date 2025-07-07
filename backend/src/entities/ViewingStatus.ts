@@ -2,18 +2,11 @@ import {
   Entity,
   PrimaryGeneratedColumn,
   Column,
-  ManyToOne,
-  JoinColumn,
   CreateDateColumn,
   UpdateDateColumn,
   Index,
   Unique
 } from 'typeorm';
-import { User } from './User';
-import { Video } from './Video';
-import { TvShow } from './TVShow';
-import { Class } from './Class';
-import { Institution } from './Institution';
 
 @Entity('viewing_status')
 @Unique('idx_user_video_unique', ['userId', 'videoId'])
@@ -38,23 +31,11 @@ export class ViewingStatus {
   @Column({ name: 'user_id', type: 'bigint' })
   userId!: number;
 
-  @ManyToOne(() => User)
-  @JoinColumn({ name: 'user_id' })
-  user!: User;
-
   @Column({ name: 'video_id', type: 'bigint', nullable: true })
   videoId?: number;
 
-  @ManyToOne(() => Video, { nullable: true })
-  @JoinColumn({ name: 'video_id' })
-  video?: Video;
-
   @Column({ name: 'tv_show_id', type: 'bigint', nullable: true })
   tvShowId?: number;
-
-  @ManyToOne(() => TvShow, { nullable: true })
-  @JoinColumn({ name: 'tv_show_id' })
-  tvShow?: TvShow;
 
   @Column({ name: 'content_id', type: 'bigint', nullable: true })
   contentId?: number;
@@ -152,16 +133,8 @@ export class ViewingStatus {
   @Column({ name: 'class_id', type: 'bigint', nullable: true })
   classId?: number;
 
-  @ManyToOne(() => Class, { nullable: true })
-  @JoinColumn({ name: 'class_id' })
-  class?: Class;
-
   @Column({ name: 'institution_id', type: 'bigint', nullable: true })
   institutionId?: number;
-
-  @ManyToOne(() => Institution, { nullable: true })
-  @JoinColumn({ name: 'institution_id' })
-  institution?: Institution;
 
   // Controle e versionamento
   @Column({ type: 'bigint', default: 1 })

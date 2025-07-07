@@ -69,7 +69,7 @@ const CreateDefaultUsersButton: React.FC = () => {
     try {
       const response = await axios.post(`${API_URL}/admin/create-default-users`, {}, {
         headers: {
-          Authorization: `Bearer ${localStorage.getItem('token')}`
+          Authorization: `Bearer ${localStorage.getItem('accessToken')}`
         }
       });
       

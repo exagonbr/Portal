@@ -1,10 +1,8 @@
 import {
   Entity,
   PrimaryGeneratedColumn,
-  Column,
-  OneToMany
+  Column
 } from 'typeorm';
-import { User } from './User';
 
 @Entity('institution')
 export class Institution {
@@ -82,8 +80,4 @@ export class Institution {
 
   @Column({ name: 'has_student_platform', type: 'boolean', default: false })
   hasStudentPlatform!: boolean;
-
-  // Relacionamentos
-  @OneToMany(() => User, user => user.institution)
-  users!: User[];
 }

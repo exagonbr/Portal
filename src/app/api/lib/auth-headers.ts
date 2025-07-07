@@ -1,9 +1,10 @@
 import { NextRequest } from 'next/server';
+import { getAuthentication } from '@/lib/auth-utils';
 
 /**
  * Prepara os headers de autenticação para requisições proxy ao backend
  */
-export function prepareAuthHeaders(request: NextRequest): Record<string, string> {
+export async function prepareAuthHeaders(request: NextRequest): Promise<Record<string, string>> {
   const headers: Record<string, string> = {
     'Content-Type': 'application/json',
   };
@@ -50,19 +51,19 @@ export function prepareAuthHeaders(request: NextRequest): Record<string, string>
           
           console.log('🍪 [AUTH-HEADERS] Cookies encontrados:', Object.keys(cookies));
           
-          const token = cookies.auth_token || cookies.token || cookies.authToken;
-          if (token && token.length > 10 && token !== 'null' && token !== 'undefined') {
-            headers['Authorization'] = `Bearer ${token}`;
-            console.log('🔐 [AUTH-HEADERS] Token extraído dos cookies e adicionado ao Authorization header:', {
-              length: token.length,
-              preview: token.substring(0, 20) + '...'
-            });
+          // Usar getAuthentication para obter o token de forma segura no servidor
+          const session = await getAuthentication(request);
+          
+          if (session) {
+            // Se não temos Authorization header mas temos sessão válida, usar o token da requisição
+            const authHeader = request.headers.get('authorization') || request.headers.get('Authorization');
+            if (authHeader && authHeader.startsWith('Bearer ')) {
+              const token = authHeader.substring(7);
+              headers['Authorization'] = `Bearer ${token}`;
+              console.log('🔐 [AUTH-HEADERS] Token extraído da sessão e adicionado ao Authorization header');
+            }
           } else {
-            console.warn('⚠️ [AUTH-HEADERS] Token nos cookies inválido ou não encontrado:', {
-              found: !!token,
-              length: token ? token.length : 0,
-              value: token
-            });
+            console.warn('⚠️ [AUTH-HEADERS] Sessão não encontrada ou inválida');
           }
         } catch (cookieError) {
           console.error('❌ [AUTH-HEADERS] Erro ao processar cookies:', cookieError);

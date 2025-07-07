@@ -37,7 +37,7 @@ export class ApiClientError extends Error {
 
 const getMockedAuthToken = (): string | null => {
   if (typeof window === 'undefined') return null;
-  return localStorage.getItem('auth_token');
+  return localStorage.getItem('accessToken');
 };
 
 const createAuthHeaders = (skipAuth: boolean = false): Record<string, string> => {

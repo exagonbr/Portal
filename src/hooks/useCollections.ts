@@ -22,7 +22,7 @@ export const useCollections = (): UseCollectionsReturn => {
   const [error, setError] = useState<string | null>(null);
 
   const getAuthHeaders = () => ({
-    'Authorization': `Bearer ${localStorage.getItem('token')}`,
+    'Authorization': `Bearer ${localStorage.getItem('accessToken')}`,
     'Content-Type': 'application/json',
   });
 

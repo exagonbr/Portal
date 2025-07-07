@@ -1,43 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { getServerSession } from 'next-auth'
-import { authOptions } from '@/lib/auth'
-import { z } from 'zod'
-import { getInternalApiUrl } from '@/config/env'
-import { createCorsOptionsResponse, getCorsHeaders } from '@/config/cors'
-
-// Schema de validação para criação de unidade
-const createUnitSchema = z.object({
-  name: z.string().min(3, 'Nome deve ter pelo menos 3 caracteres'),
-  description: z.string().optional(),
-  course_id: z.string().uuid('ID de curso inválido'),
-  order: z.number().int().min(1, 'Ordem deve ser maior que 0'),
-  duration_hours: z.number().int().positive('Duração deve ser positiva').optional(),
-  objectives: z.array(z.string()).optional(),
-  prerequisites: z.array(z.string()).optional(),
-  is_active: z.boolean().default(true),
-  is_published: z.boolean().default(false),
-  content: z.object({
-    introduction: z.string().optional(),
-    topics: z.array(z.object({
-      title: z.string(),
-      description: z.string(),
-      order: z.number().int().positive()
-    })).optional(),
-    resources: z.array(z.object({
-      type: z.enum(['VIDEO', 'PDF', 'LINK', 'DOCUMENT', 'PRESENTATION']),
-      title: z.string(),
-      url: z.string().url(),
-      duration_minutes: z.number().int().positive().optional()
-    })).optional()
-  }).optional(),
-  assessment: z.object({
-    type: z.enum(['QUIZ', 'ASSIGNMENT', 'PROJECT', 'EXAM']),
-    passing_score: z.number().min(0).max(100),
-    max_attempts: z.number().int().positive().optional()
-  }).optional()
-})
-
-// GET - Listar unidades
+import { getAuthentication } from '@/lib/auth-utils'
+import { getCorsHeaders, createCorsOptionsResponse } from '@/config/cors'
 
 // Handler para requisições OPTIONS (preflight)
 export async function OPTIONS(request: NextRequest) {
@@ -45,88 +8,131 @@ export async function OPTIONS(request: NextRequest) {
   return createCorsOptionsResponse(origin);
 }
 
+/**
+ * Proxy para API de units do backend
+ */
 export async function GET(request: NextRequest) {
   try {
-    const session = await getServerSession(authOptions)
+    // Obter parâmetros da URL
+    const { searchParams } = new URL(request.url);
+    const page = searchParams.get('page') || '1';
+    const limit = searchParams.get('limit') || '10';
+    const search = searchParams.get('search') || '';
+    const institutionId = searchParams.get('institutionId') || '';
+
+    // Construir URL para o backend
+    const backendUrl = 'http://localhost:3001';
+    let url = `${backendUrl}/api/units?page=${page}&limit=${limit}`;
     
-    if (!session?.user) {
-      return NextResponse.json({ error: 'Unauthorized' }, { 
-      status: 401,
-      headers: getCorsHeaders(request.headers.get('origin') || undefined)
-    })
+    if (search) url += `&search=${encodeURIComponent(search)}`;
+    if (institutionId) url += `&institutionId=${institutionId}`;
+
+    console.log(`🔄 Proxy para units: ${url}`);
+
+    // Obter autenticação usando a função apropriada para o servidor
+    const session = await getAuthentication(request);
+    if (!session) {
+      console.error('Token de autorização não fornecido');
+      return NextResponse.json(
+        { success: false, message: 'Token de autorização não fornecido' },
+        { 
+          status: 401,
+          headers: getCorsHeaders(request.headers.get('origin') || undefined)
+        }
+      );
     }
 
-    // Extrair parâmetros de busca
-    const { searchParams } = new URL(request.url)
-    const queryString = searchParams.toString()
-
-    const response = await fetch(getInternalApiUrl(`/api/units${queryString ? `?${queryString}` : ''}`), {
-      method: 'GET',
+    // Obter o token do header da requisição
+    const authHeader = request.headers.get('authorization') || request.headers.get('Authorization');
+    
+    // Fazer requisição para o backend
+    const response = await fetch(url, {
       headers: {
         'Content-Type': 'application/json',
+        'Authorization': authHeader || ''
       },
-    })
+      cache: 'no-store'
+    });
 
-    if (!response.ok) {
-      const errorData = await response.json().catch(() => ({}))
-      return NextResponse.json(
-        { error: errorData.message || 'Failed to fetch units' },
-        { status: response.status }
-      )
-    }
+    // Obter dados da resposta
+    const data = await response.json();
 
-    const data = await response.json()
+    // Retornar resposta para o cliente
     return NextResponse.json(data, {
       headers: getCorsHeaders(request.headers.get('origin') || undefined)
-    })
-  } catch (error) {
-    console.log('Error fetching units:', error)
-    return NextResponse.json({ error: 'Internal server error' }, { 
-      status: 500,
-      headers: getCorsHeaders(request.headers.get('origin') || undefined)
-    })
+    });
+  } catch (error: any) {
+    console.error('Erro ao buscar unidades:', error.message);
+    return NextResponse.json(
+      { 
+        success: false, 
+        message: 'Erro ao buscar unidades',
+        error: error.message
+      },
+      { 
+        status: 500,
+        headers: getCorsHeaders(request.headers.get('origin') || undefined)
+      }
+    );
   }
 }
 
 // POST - Criar unidade
 export async function POST(request: NextRequest) {
   try {
-    const session = await getServerSession(authOptions)
-    
-    if (!session?.user) {
-      return NextResponse.json({ error: 'Unauthorized' }, { 
-      status: 401,
-      headers: getCorsHeaders(request.headers.get('origin') || undefined)
-    })
+    const body = await request.json();
+
+    // Construir URL para o backend
+    const backendUrl = 'http://localhost:3001';
+    const url = `${backendUrl}/api/units`;
+
+    console.log(`🔄 Proxy para criar unit: ${url}`);
+
+    // Obter autenticação usando a função apropriada para o servidor
+    const session = await getAuthentication(request);
+    if (!session) {
+      console.error('Token de autorização não fornecido');
+      return NextResponse.json(
+        { success: false, message: 'Token de autorização não fornecido' },
+        { 
+          status: 401,
+          headers: getCorsHeaders(request.headers.get('origin') || undefined)
+        }
+      );
     }
 
-    const body = await request.json()
+    // Obter o token do header da requisição
+    const authHeader = request.headers.get('authorization') || request.headers.get('Authorization');
 
-    const response = await fetch(getInternalApiUrl('/units'), {
+    // Fazer requisição para o backend
+    const response = await fetch(url, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
+        'Authorization': authHeader || ''
       },
       body: JSON.stringify(body),
-    })
+    });
 
-    if (!response.ok) {
-      const errorData = await response.json().catch(() => ({}))
-      return NextResponse.json(
-        { error: errorData.message || 'Failed to create unit' },
-        { status: response.status }
-      )
-    }
+    // Obter dados da resposta
+    const data = await response.json();
 
-    const data = await response.json()
+    // Retornar resposta para o cliente
     return NextResponse.json(data, {
       headers: getCorsHeaders(request.headers.get('origin') || undefined)
-    })
-  } catch (error) {
-    console.log('Error creating unit:', error)
-    return NextResponse.json({ error: 'Internal server error' }, { 
-      status: 500,
-      headers: getCorsHeaders(request.headers.get('origin') || undefined)
-    })
+    });
+  } catch (error: any) {
+    console.error('Erro ao criar unidade:', error.message);
+    return NextResponse.json(
+      { 
+        success: false, 
+        message: 'Erro ao criar unidade',
+        error: error.message
+      },
+      { 
+        status: 500,
+        headers: getCorsHeaders(request.headers.get('origin') || undefined)
+      }
+    );
   }
 } 

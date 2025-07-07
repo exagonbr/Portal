@@ -6,8 +6,25 @@ const unitRepository = new UnitRepository();
 class UnitController {
     async getAll(req: Request, res: Response) {
         try {
-            const units = await unitRepository.findAll();
-            return res.status(200).json({ success: true, data: units });
+            const { page = '1', limit = '10', search, institutionId } = req.query;
+            
+            const filters = {
+                page: parseInt(page as string, 10),
+                limit: parseInt(limit as string, 10),
+                search: search as string,
+                institutionId: institutionId ? parseInt(institutionId as string, 10) : undefined
+            };
+
+            const result = await unitRepository.findWithFilters(filters);
+            
+            return res.status(200).json({
+                success: true,
+                data: result.data,
+                total: result.total,
+                page: filters.page,
+                limit: filters.limit,
+                totalPages: Math.ceil(result.total / filters.limit)
+            });
         } catch (error) {
             console.error(`Erro ao listar unidades: ${error}`);
             return res.status(500).json({ success: false, message: 'Erro interno do servidor' });

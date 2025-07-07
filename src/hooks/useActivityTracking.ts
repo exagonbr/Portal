@@ -116,9 +116,37 @@ export function useActivityTracking(options: UseActivityTrackingOptions = {}): A
     }
   }, [trackErrors, user])
 
+  // Função para obter ID do usuário do localStorage se não estiver disponível no contexto
+  const getUserId = useCallback((): string | null => {
+    // Primeiro tenta obter do contexto de autenticação
+    if (user?.id) {
+      return user.id.toString()
+    }
+    
+    // Se não estiver disponível, tenta obter do localStorage
+    try {
+      const userStr = localStorage.getItem('user')
+      if (userStr) {
+        const userData = JSON.parse(userStr)
+        if (userData && userData.id) {
+          return userData.id.toString()
+        }
+      }
+    } catch (error) {
+      console.log('❌ Erro ao obter user_id do localStorage:', error)
+    }
+    
+    return null
+  }, [user])
+
   // Função principal para rastrear atividades
   const trackActivity = useCallback(async (type: ActivityType, details: Record<string, any> = {}) => {
-    if (!user) return
+    const userId = getUserId()
+    
+    if (!userId) {
+      console.log('❌ Ignorando log de atividade: user_id é nulo ou vazio')
+      return
+    }
 
     try {
       await fetch('/api/activity/track', {
@@ -127,7 +155,7 @@ export function useActivityTracking(options: UseActivityTrackingOptions = {}): A
           'Content-Type': 'application/json'
         },
         body: JSON.stringify({
-          user_id: user.id,
+          user_id: userId,
           activity_type: type,
           action: type,
           session_id: sessionIdRef.current,
@@ -142,10 +170,10 @@ export function useActivityTracking(options: UseActivityTrackingOptions = {}): A
     } catch (error) {
       console.log('❌ Erro ao rastrear atividade:', error)
     }
-  }, [user])
+  }, [getUserId])
 
   const trackPageView = useCallback(async (page: string, details: Record<string, any> = {}) => {
-    if (!trackPageViews || !user) return
+    if (!trackPageViews) return
 
     const timeOnPreviousPage = pageStartTimeRef.current 
       ? (new Date().getTime() - pageStartTimeRef.current.getTime()) / 1000
@@ -156,10 +184,10 @@ export function useActivityTracking(options: UseActivityTrackingOptions = {}): A
       time_on_previous_page: timeOnPreviousPage,
       ...details
     })
-  }, [trackActivity, trackPageViews, user])
+  }, [trackActivity, trackPageViews])
 
   const trackVideoStart = useCallback(async (videoId: number, tvShowId?: number) => {
-    if (!trackVideoEvents || !user) return
+    if (!trackVideoEvents) return
 
     videoStartTimeRef.current[videoId] = new Date()
     
@@ -169,10 +197,16 @@ export function useActivityTracking(options: UseActivityTrackingOptions = {}): A
       entity_type: 'video',
       entity_id: videoId.toString()
     })
-  }, [trackActivity, trackVideoEvents, user])
+  }, [trackActivity, trackVideoEvents])
 
   const trackVideoProgress = useCallback(async (videoId: number, watchData: Partial<VideoWatchingActivity>) => {
-    if (!trackVideoEvents || !user) return
+    if (!trackVideoEvents) return
+
+    const userId = getUserId()
+    if (!userId) {
+      console.log('❌ Ignorando log de progresso de vídeo: user_id é nulo ou vazio')
+      return
+    }
 
     try {
       // Atualizar viewing_status
@@ -182,7 +216,7 @@ export function useActivityTracking(options: UseActivityTrackingOptions = {}): A
           'Content-Type': 'application/json'
         },
         body: JSON.stringify({
-          user_id: user.id,
+          user_id: userId,
           video_id: videoId,
           ...watchData
         })
@@ -201,10 +235,10 @@ export function useActivityTracking(options: UseActivityTrackingOptions = {}): A
     } catch (error) {
       console.log('❌ Erro ao rastrear progresso do vídeo:', error)
     }
-  }, [trackActivity, trackVideoEvents, user])
+  }, [trackActivity, trackVideoEvents, getUserId])
 
   const trackVideoComplete = useCallback(async (videoId: number, totalWatchTime: number) => {
-    if (!trackVideoEvents || !user) return
+    if (!trackVideoEvents) return
 
     const startTime = videoStartTimeRef.current[videoId]
     const sessionDuration = startTime 
@@ -221,11 +255,9 @@ export function useActivityTracking(options: UseActivityTrackingOptions = {}): A
 
     // Limpar tempo de início
     delete videoStartTimeRef.current[videoId]
-  }, [trackActivity, trackVideoEvents, user])
+  }, [trackActivity, trackVideoEvents])
 
   const trackQuizAttempt = useCallback(async (quizId: string, score?: number, details: Record<string, any> = {}) => {
-    if (!user) return
-
     await trackActivity('quiz_attempt', {
       quiz_id: quizId,
       score,
@@ -233,21 +265,19 @@ export function useActivityTracking(options: UseActivityTrackingOptions = {}): A
       entity_id: quizId,
       ...details
     })
-  }, [trackActivity, user])
+  }, [trackActivity])
 
   const trackAssignmentSubmit = useCallback(async (assignmentId: string, details: Record<string, any> = {}) => {
-    if (!user) return
-
     await trackActivity('assignment_submit', {
       assignment_id: assignmentId,
       entity_type: 'assignment',
       entity_id: assignmentId,
       ...details
     })
-  }, [trackActivity, user])
+  }, [trackActivity])
 
   const trackError = useCallback(async (error: Error, context: Record<string, any> = {}) => {
-    if (!trackErrors || !user) return
+    if (!trackErrors) return
 
     await trackActivity('error', {
       error_message: error.message,
@@ -255,10 +285,14 @@ export function useActivityTracking(options: UseActivityTrackingOptions = {}): A
       context,
       page: window.location.pathname
     })
-  }, [trackActivity, trackErrors, user])
+  }, [trackActivity, trackErrors])
 
   const addToWatchlist = useCallback(async (videoId?: number, tvShowId?: number, notes?: string) => {
-    if (!user) return
+    const userId = getUserId()
+    if (!userId) {
+      console.log('❌ Ignorando adição à watchlist: user_id é nulo ou vazio')
+      return
+    }
 
     try {
       await fetch('/api/activity/watchlist', {
@@ -267,7 +301,7 @@ export function useActivityTracking(options: UseActivityTrackingOptions = {}): A
           'Content-Type': 'application/json'
         },
         body: JSON.stringify({
-          user_id: user.id,
+          user_id: userId,
           video_id: videoId,
           tv_show_id: tvShowId,
           notes
@@ -283,10 +317,14 @@ export function useActivityTracking(options: UseActivityTrackingOptions = {}): A
     } catch (error) {
       console.log('❌ Erro ao adicionar à watchlist:', error)
     }
-  }, [trackActivity, user])
+  }, [trackActivity, getUserId])
 
   const removeFromWatchlist = useCallback(async (videoId?: number, tvShowId?: number) => {
-    if (!user) return
+    const userId = getUserId()
+    if (!userId) {
+      console.log('❌ Ignorando remoção da watchlist: user_id é nulo ou vazio')
+      return
+    }
 
     try {
       await fetch('/api/activity/watchlist', {
@@ -295,7 +333,7 @@ export function useActivityTracking(options: UseActivityTrackingOptions = {}): A
           'Content-Type': 'application/json'
         },
         body: JSON.stringify({
-          user_id: user.id,
+          user_id: userId,
           video_id: videoId,
           tv_show_id: tvShowId
         })
@@ -309,7 +347,7 @@ export function useActivityTracking(options: UseActivityTrackingOptions = {}): A
     } catch (error) {
       console.log('❌ Erro ao remover da watchlist:', error)
     }
-  }, [trackActivity, user])
+  }, [trackActivity, getUserId])
 
   return {
     trackActivity,

@@ -1,3 +1,4 @@
+import { getAuthentication } from '@/lib/auth-utils';
 import { PaginatedResponse } from '@/types/api';
 
 const API_BASE_URL = '/api';
@@ -11,7 +12,7 @@ const getHeaders = (): Headers => {
   headers.set('Content-Type', 'application/json');
 
   // Busca o accessToken no localStorage
-  const accessToken = localStorage.getItem('accessToken') || localStorage.getItem('authToken');
+  const accessToken = getAuthToken();
   if (accessToken) {
     headers.set('Authorization', `Bearer ${accessToken}`);
   }
@@ -129,3 +130,8 @@ export const apiDelete = async (endpoint: string): Promise<void> => {
   });
   await handleResponse<void>(response);
 };
+
+function getAuthToken() {
+  const accessToken = localStorage.getItem('accessToken') || localStorage.getItem('authToken');
+  return accessToken;
+}

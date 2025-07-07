@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { cookies } from 'next/headers';
 import * as jwt from 'jsonwebtoken';
 import { createCorsOptionsResponse, getCorsHeaders } from '@/config/cors'
+import { getAuthentication } from '@/lib/auth-utils'
 
 // Tipos para logs de autenticação
 interface AuthLogEntry {
@@ -184,10 +185,9 @@ export async function OPTIONS(request: NextRequest) {
 export async function GET(request: NextRequest) {
   try {
     // Verificar autenticação
-    const cookieStore = await cookies();
-    const authToken = cookieStore.get('auth_token')?.value;
+    const session = await getAuthentication(request);
     
-    if (!authToken) {
+    if (!session) {
       return NextResponse.json(
         { success: false, message: 'Token de autenticação necessário' },
         { 
@@ -197,6 +197,19 @@ export async function GET(request: NextRequest) {
       );
     }
 
+    // Obter o token do header da requisição
+    const authHeader = request.headers.get('authorization') || request.headers.get('Authorization');
+    if (!authHeader || !authHeader.startsWith('Bearer ')) {
+      return NextResponse.json(
+        { success: false, message: 'Token de autenticação necessário' },
+        { 
+          status: 401,
+          headers: getCorsHeaders(request.headers.get('origin') || undefined)
+        }
+      );
+    }
+
+    const authToken = authHeader.substring(7);
     const tokenValidation = validateJWT(authToken);
     if (!tokenValidation.valid || !tokenValidation.payload) {
       return NextResponse.json(

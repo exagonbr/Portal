@@ -80,7 +80,8 @@ export default function TVShowAdminPage() {
   // Função para obter token de autenticação
   const getAuthToken = (): string | null => {
     if (typeof window === 'undefined') return null
-    return localStorage.getItem('auth_token') || 
+    return localStorage.getItem('accessToken') ||
+           localStorage.getItem('auth_token') || 
            localStorage.getItem('token') ||
            sessionStorage.getItem('token')
   }
