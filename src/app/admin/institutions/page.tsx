@@ -7,7 +7,7 @@ import { dashboardService } from '@/services/dashboardService'
 import schoolService from '@/services/schoolService'
 import { InstitutionDto, InstitutionType } from '@/types/institution'
 import { useToast } from '@/components/ToastManager'
-import { InstitutionModalNew } from '@/components/modals/InstitutionModalNew'
+import { InstitutionModalWithSchools } from '@/components/modals/InstitutionModalWithSchools'
 import { Badge } from '@/components/ui/Badge'
 import { Button } from '@/components/ui/Button'
 import AuthenticatedLayout from '@/components/AuthenticatedLayout'
@@ -295,9 +295,29 @@ export default function ManageInstitutions() {
       setLoading(true)
       
       if (modalMode === 'create') {
-        const newInstitution = await institutionService.createInstitution(data)
+        // Extrair escolas atribuídas dos dados
+        const { assignedSchools, ...institutionData } = data
+        
+        const newInstitution = await institutionService.createInstitution(institutionData)
         showSuccess("Sucesso", "Instituição criada com sucesso!")
         console.log('✅ Nova instituição criada:', newInstitution)
+        
+        // Se há escolas atribuídas, atualizar cada uma para vincular à nova instituição
+        if (assignedSchools && assignedSchools.length > 0) {
+          try {
+            const schoolService = await import('@/services/schoolService')
+            for (const school of assignedSchools) {
+              await schoolService.default.updateSchool(Number(school.id), {
+                ...school,
+                institution_id: newInstitution.id
+              })
+            }
+            console.log('✅ Escolas atribuídas à nova instituição:', assignedSchools.length)
+          } catch (schoolError) {
+            console.error('⚠️ Erro ao atribuir escolas:', schoolError)
+            showWarning("Atenção", "Instituição criada, mas algumas escolas não puderam ser atribuídas.")
+          }
+        }
         
         // Adicionar a nova instituição à lista local se estivermos na primeira página
         if (currentPage === 1) {
@@ -743,7 +763,7 @@ export default function ManageInstitutions() {
         </div>
 
         {/* Modal Unificado */}
-        <InstitutionModalNew
+        <InstitutionModalWithSchools
           isOpen={modalOpen}
           onClose={closeModal}
           onSave={handleModalSave}

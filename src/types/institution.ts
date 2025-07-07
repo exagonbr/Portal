@@ -85,6 +85,27 @@ export interface InstitutionDto extends BaseEntityDto {
   users_count?: number;
   active_courses?: number;
   courses_count?: number; // Alias para active_courses
+  
+  // Campos adicionais da tabela institution
+  version?: number;
+  company_name?: string;
+  document?: string;
+  accountable_contact?: string;
+  accountable_name?: string;
+  street?: string;
+  complement?: string;
+  district?: string;
+  postal_code?: string;
+  contract_disabled?: boolean;
+  contract_invoice_num?: string;
+  contract_num?: number;
+  contract_term_start?: string | Date;
+  contract_term_end?: string | Date;
+  invoice_date?: string | Date;
+  score?: number;
+  has_library_platform?: boolean;
+  has_principal_platform?: boolean;
+  has_student_platform?: boolean;
 }
 
 // DTO para criação de Instituição
@@ -104,6 +125,25 @@ export interface CreateInstitutionDto {
   zip_code?: string;
   logo_url?: string;
   is_active?: boolean;
+  
+  // Campos adicionais da tabela institution
+  company_name?: string;
+  document?: string;
+  accountable_contact?: string;
+  accountable_name?: string;
+  street?: string;
+  complement?: string;
+  district?: string;
+  postal_code?: string;
+  contract_disabled?: boolean;
+  contract_invoice_num?: string;
+  contract_num?: number;
+  contract_term_start?: string | Date;
+  contract_term_end?: string | Date;
+  score?: number;
+  has_library_platform?: boolean;
+  has_principal_platform?: boolean;
+  has_student_platform?: boolean;
 }
 
 // DTO para atualização de Instituição

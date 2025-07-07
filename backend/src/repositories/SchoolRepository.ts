@@ -16,7 +16,7 @@ export interface SchoolFilters {
 
 export class SchoolRepository extends BaseRepository<School> {
   constructor() {
-    super('school');
+    super('schools');
   }
 
   async createSchool(data: CreateSchoolData): Promise<School> {

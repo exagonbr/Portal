@@ -1,8 +1,10 @@
 'use client'
 
 import { useState, useEffect } from 'react'
-import { X, Building2, Mail, Phone, MapPin, Calendar, Users, School, CheckCircle, XCircle, Save, Eye, Edit3, AlertCircle } from 'lucide-react'
+import { X, Building2, Mail, Phone, MapPin, Calendar, Users, School, CheckCircle, XCircle, Save, Eye, Edit3, AlertCircle, Plus, Trash2, Search } from 'lucide-react'
 import { InstitutionDto } from '@/types/institution'
+import { SchoolDto } from '@/types/school'
+import { schoolService } from '@/services/schoolService'
 
 interface InstitutionModalProps {
   isOpen: boolean
@@ -13,6 +15,7 @@ interface InstitutionModalProps {
 }
 
 export function InstitutionModalNew({ isOpen, onClose, onSave, institution, mode }: InstitutionModalProps) {
+  const [activeTab, setActiveTab] = useState('basic')
   const [formData, setFormData] = useState({
     name: '',
     code: '',
@@ -30,6 +33,12 @@ export function InstitutionModalNew({ isOpen, onClose, onSave, institution, mode
   })
   const [loading, setLoading] = useState(false)
   const [errors, setErrors] = useState<Record<string, string>>({})
+  
+  // Estados para a aba de escolas
+  const [assignedSchools, setAssignedSchools] = useState<SchoolDto[]>([])
+  const [availableSchools, setAvailableSchools] = useState<SchoolDto[]>([])
+  const [schoolSearchTerm, setSchoolSearchTerm] = useState('')
+  const [loadingSchools, setLoadingSchools] = useState(false)
 
   useEffect(() => {
     if (institution && (mode === 'edit' || mode === 'view')) {
@@ -48,6 +57,11 @@ export function InstitutionModalNew({ isOpen, onClose, onSave, institution, mode
         type: institution.type || 'SCHOOL',
         is_active: institution.is_active ?? true
       })
+      
+      // Carregar escolas da instituição
+      if (mode === 'edit' || mode === 'view') {
+        loadInstitutionSchools()
+      }
     } else if (mode === 'create') {
       setFormData({
         name: '',
@@ -64,9 +78,107 @@ export function InstitutionModalNew({ isOpen, onClose, onSave, institution, mode
         type: 'SCHOOL',
         is_active: true
       })
+      setAssignedSchools([])
     }
     setErrors({}) // Limpar erros ao abrir modal
+    
+    // Carregar escolas disponíveis para atribuição
+    loadAvailableSchools()
   }, [institution, mode, isOpen])
+
+  const loadInstitutionSchools = async () => {
+    if (!institution?.id) return
+    
+    setLoadingSchools(true)
+    try {
+      const response = await schoolService.getSchools({
+        institution_id: institution.id,
+        page: 1,
+        limit: 1000
+      })
+      setAssignedSchools(response.items)
+    } catch (error) {
+      console.error('Erro ao carregar escolas da instituição:', error)
+    } finally {
+      setLoadingSchools(false)
+    }
+  }
+
+  const loadAvailableSchools = async () => {
+    try {
+      const response = await schoolService.getSchools({
+        page: 1,
+        limit: 1000
+      })
+      
+      // Se estivermos editando, filtrar escolas já atribuídas a outras instituições
+      if (mode === 'edit' && institution?.id) {
+        const unassignedSchools = response.items.filter(school => 
+          !school.institution_id || school.institution_id === institution.id
+        )
+        setAvailableSchools(unassignedSchools)
+      } else {
+        // Para criação, mostrar apenas escolas sem instituição
+        const unassignedSchools = response.items.filter(school => !school.institution_id)
+        setAvailableSchools(unassignedSchools)
+      }
+    } catch (error) {
+      console.error('Erro ao carregar escolas disponíveis:', error)
+    }
+  }
+
+  const handleAssignSchool = async (school: SchoolDto) => {
+    if (mode === 'view') return
+    
+    // Se estivermos no modo de criação, apenas adicionar à lista local
+    if (mode === 'create') {
+      setAssignedSchools(prev => [...prev, school])
+      setAvailableSchools(prev => prev.filter(s => s.id !== school.id))
+      return
+    }
+
+    // Se estivermos editando, fazer a atribuição via API
+    try {
+      await schoolService.updateSchool(Number(school.id), {
+        ...school,
+        institution_id: institution?.id || ''
+      })
+      
+      setAssignedSchools(prev => [...prev, { ...school, institution_id: institution?.id || '' }])
+      setAvailableSchools(prev => prev.filter(s => s.id !== school.id))
+    } catch (error) {
+      console.error('Erro ao atribuir escola:', error)
+    }
+  }
+
+  const handleUnassignSchool = async (school: SchoolDto) => {
+    if (mode === 'view') return
+    
+    // Se estivermos no modo de criação, apenas remover da lista local
+    if (mode === 'create') {
+      setAssignedSchools(prev => prev.filter(s => s.id !== school.id))
+      setAvailableSchools(prev => [...prev, { ...school, institution_id: '' }])
+      return
+    }
+
+    // Se estivermos editando, remover a atribuição via API
+    try {
+      await schoolService.updateSchool(Number(school.id), {
+        ...school,
+        institution_id: ''
+      })
+      
+      setAssignedSchools(prev => prev.filter(s => s.id !== school.id))
+      setAvailableSchools(prev => [...prev, { ...school, institution_id: '' }])
+    } catch (error) {
+      console.error('Erro ao desatribuir escola:', error)
+    }
+  }
+
+  const filteredAvailableSchools = availableSchools.filter(school =>
+    school.name.toLowerCase().includes(schoolSearchTerm.toLowerCase()) &&
+    !assignedSchools.some(assigned => assigned.id === school.id)
+  )
 
   const validateForm = (): boolean => {
     const newErrors: Record<string, string> = {}
@@ -122,7 +234,18 @@ export function InstitutionModalNew({ isOpen, onClose, onSave, institution, mode
     setLoading(true)
     try {
       if (onSave) {
-        await onSave(formData)
+        // Incluir escolas atribuídas nos dados para criação
+        const dataToSave = {
+          ...formData,
+          assignedSchools: mode === 'create' ? assignedSchools : undefined
+        }
+        await onSave(dataToSave)
+        
+        // Se for criação e temos escolas para atribuir, fazer isso após a criação
+        if (mode === 'create' && assignedSchools.length > 0) {
+          // Note: Isso seria feito no componente pai após a criação da instituição
+          console.log('Escolas a serem atribuídas após criação:', assignedSchools)
+        }
       }
       onClose()
     } catch (error) {
@@ -259,15 +382,49 @@ export function InstitutionModalNew({ isOpen, onClose, onSave, institution, mode
 
         {/* Content */}
         <div className="flex-1 overflow-y-auto min-h-0">
+          {/* Tabs */}
+          {(mode === 'create' || mode === 'edit') && (
+            <div className="border-b border-gray-200 bg-gray-50">
+              <nav className="flex space-x-4 px-3 sm:px-4 md:px-6" aria-label="Tabs">
+                <button
+                  type="button"
+                  onClick={() => setActiveTab('basic')}
+                  className={`py-2 px-1 border-b-2 font-medium text-sm transition-colors ${
+                    activeTab === 'basic'
+                      ? 'border-blue-500 text-blue-600'
+                      : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
+                  }`}
+                >
+                  <Building2 className="w-4 h-4 mr-2 inline" />
+                  Informações Básicas
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setActiveTab('schools')}
+                  className={`py-2 px-1 border-b-2 font-medium text-sm transition-colors ${
+                    activeTab === 'schools'
+                      ? 'border-blue-500 text-blue-600'
+                      : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
+                  }`}
+                >
+                  <School className="w-4 h-4 mr-2 inline" />
+                  Escolas ({assignedSchools.length})
+                </button>
+              </nav>
+            </div>
+          )}
+
           <form onSubmit={handleSubmit} className="p-3 sm:p-4 md:p-6">
-            <div className="grid grid-cols-1 xl:grid-cols-2 gap-3 sm:gap-4 md:gap-6">
-              {/* Informações Básicas */}
-              <div className="space-y-3 sm:space-y-4 md:space-y-6">
-                <div className="bg-blue-50 p-2.5 sm:p-3 md:p-4 rounded-lg sm:rounded-xl border border-blue-200">
-                  <h3 className="text-sm sm:text-base md:text-lg font-semibold text-blue-900 mb-2.5 sm:mb-3 md:mb-4 flex items-center">
-                    <Building2 className="w-4 h-4 sm:w-5 sm:h-5 mr-2 flex-shrink-0" />
-                    <span className="truncate">Informações Básicas</span>
-                  </h3>
+            {/* Aba Informações Básicas */}
+            {(activeTab === 'basic' || mode === 'view') && (
+              <div className="grid grid-cols-1 xl:grid-cols-2 gap-3 sm:gap-4 md:gap-6">
+                {/* Informações Básicas */}
+                <div className="space-y-3 sm:space-y-4 md:space-y-6">
+                  <div className="bg-blue-50 p-2.5 sm:p-3 md:p-4 rounded-lg sm:rounded-xl border border-blue-200">
+                    <h3 className="text-sm sm:text-base md:text-lg font-semibold text-blue-900 mb-2.5 sm:mb-3 md:mb-4 flex items-center">
+                      <Building2 className="w-4 h-4 sm:w-5 sm:h-5 mr-2 flex-shrink-0" />
+                      <span className="truncate">Informações Básicas</span>
+                    </h3>
                   
                   <div className="space-y-2.5 sm:space-y-3 md:space-y-4">
                     {/* Nome */}
@@ -413,10 +570,9 @@ export function InstitutionModalNew({ isOpen, onClose, onSave, institution, mode
                     </div>
                   </div>
                 </div>
-              </div>
 
-              {/* Contato e Localização */}
-              <div className="space-y-3 sm:space-y-4 md:space-y-6">
+                {/* Contato e Localização */}
+                <div className="space-y-3 sm:space-y-4 md:space-y-6">
                 <div className="bg-green-50 p-2.5 sm:p-3 md:p-4 rounded-lg sm:rounded-xl border border-green-200">
                   <h3 className="text-sm sm:text-base md:text-lg font-semibold text-green-900 mb-2.5 sm:mb-3 md:mb-4 flex items-center">
                     <Phone className="w-4 h-4 sm:w-5 sm:h-5 mr-2 flex-shrink-0" />
@@ -634,6 +790,129 @@ export function InstitutionModalNew({ isOpen, onClose, onSave, institution, mode
                 </div>
               </div>
             </div>
+            )}
+
+            {/* Aba Escolas */}
+            {activeTab === 'schools' && (mode === 'create' || mode === 'edit') && (
+              <div className="space-y-6">
+                {/* Escolas Atribuídas */}
+                <div className="bg-green-50 p-4 rounded-xl border border-green-200">
+                  <h3 className="text-lg font-semibold text-green-900 mb-4 flex items-center">
+                    <School className="w-5 h-5 mr-2" />
+                    Escolas Atribuídas ({assignedSchools.length})
+                  </h3>
+                  
+                  {loadingSchools ? (
+                    <div className="flex items-center justify-center py-8">
+                      <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-green-600"></div>
+                    </div>
+                  ) : assignedSchools.length > 0 ? (
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                      {assignedSchools.map((school) => (
+                        <div
+                          key={school.id}
+                          className="bg-white rounded-lg p-4 border border-green-200 shadow-sm"
+                        >
+                          <div className="flex items-center justify-between">
+                            <div className="flex-1">
+                              <h4 className="font-medium text-gray-900">{school.name}</h4>
+                              <p className="text-sm text-gray-500">ID: {school.id}</p>
+                              {school.students_count !== undefined && (
+                                <p className="text-xs text-gray-400">
+                                  {school.students_count} estudantes • {school.teachers_count} professores
+                                </p>
+                              )}
+                            </div>
+                            <button
+                              type="button"
+                              onClick={() => handleUnassignSchool(school)}
+                              className="ml-3 p-2 text-red-600 hover:text-red-800 hover:bg-red-50 rounded-lg transition-colors"
+                              title="Remover escola"
+                            >
+                              <Trash2 className="w-4 h-4" />
+                            </button>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  ) : (
+                    <div className="text-center py-8">
+                      <School className="mx-auto h-12 w-12 text-gray-400" />
+                      <h4 className="mt-2 text-sm font-medium text-gray-900">Nenhuma escola atribuída</h4>
+                      <p className="mt-1 text-sm text-gray-500">
+                        Selecione escolas da lista abaixo para atribuir a esta instituição.
+                      </p>
+                    </div>
+                  )}
+                </div>
+
+                {/* Escolas Disponíveis */}
+                <div className="bg-blue-50 p-4 rounded-xl border border-blue-200">
+                  <h3 className="text-lg font-semibold text-blue-900 mb-4 flex items-center">
+                    <Plus className="w-5 h-5 mr-2" />
+                    Escolas Disponíveis
+                  </h3>
+                  
+                  {/* Busca */}
+                  <div className="mb-4">
+                    <div className="relative">
+                      <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
+                      <input
+                        type="text"
+                        placeholder="Buscar escolas..."
+                        value={schoolSearchTerm}
+                        onChange={(e) => setSchoolSearchTerm(e.target.value)}
+                        className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                      />
+                    </div>
+                  </div>
+
+                  {/* Lista de Escolas Disponíveis */}
+                  {filteredAvailableSchools.length > 0 ? (
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4 max-h-96 overflow-y-auto">
+                      {filteredAvailableSchools.map((school) => (
+                        <div
+                          key={school.id}
+                          className="bg-white rounded-lg p-4 border border-blue-200 shadow-sm hover:shadow-md transition-shadow"
+                        >
+                          <div className="flex items-center justify-between">
+                            <div className="flex-1">
+                              <h4 className="font-medium text-gray-900">{school.name}</h4>
+                              <p className="text-sm text-gray-500">ID: {school.id}</p>
+                              {school.students_count !== undefined && (
+                                <p className="text-xs text-gray-400">
+                                  {school.students_count} estudantes • {school.teachers_count} professores
+                                </p>
+                              )}
+                            </div>
+                            <button
+                              type="button"
+                              onClick={() => handleAssignSchool(school)}
+                              className="ml-3 p-2 text-blue-600 hover:text-blue-800 hover:bg-blue-50 rounded-lg transition-colors"
+                              title="Atribuir escola"
+                            >
+                              <Plus className="w-4 h-4" />
+                            </button>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  ) : (
+                    <div className="text-center py-8">
+                      <Search className="mx-auto h-12 w-12 text-gray-400" />
+                      <h4 className="mt-2 text-sm font-medium text-gray-900">
+                        {schoolSearchTerm ? 'Nenhuma escola encontrada' : 'Nenhuma escola disponível'}
+                      </h4>
+                      <p className="mt-1 text-sm text-gray-500">
+                        {schoolSearchTerm 
+                          ? 'Tente ajustar os termos de busca.' 
+                          : 'Todas as escolas já estão atribuídas a instituições.'}
+                      </p>
+                    </div>
+                  )}
+                </div>
+              </div>
+            )}
           </form>
         </div>
 
