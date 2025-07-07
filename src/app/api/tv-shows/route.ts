@@ -17,6 +17,13 @@ export async function GET(request: NextRequest) {
     const url = new URL(request.url);
     const searchParams = url.searchParams;
     
+    // Verificar se há um parâmetro para desativar mock
+    const noMock = searchParams.get('no_mock') === 'true';
+    if (noMock) {
+      console.log('⚠️ [TV-SHOWS-API] Parâmetro no_mock=true detectado - forçando conexão com backend real');
+      searchParams.delete('no_mock'); // Remover parâmetro antes de enviar para o backend
+    }
+    
     // Construir URL do backend com parâmetros
     const backendUrl = new URL(getInternalApiUrl('/tv-shows'));
     searchParams.forEach((value, key) => {
@@ -25,8 +32,8 @@ export async function GET(request: NextRequest) {
 
     console.log('🔗 [TV-SHOWS-API] URL do backend:', backendUrl.toString());
 
-    // Preparar headers de autenticação
-    const headers = prepareAuthHeaders(request);
+    // Preparar headers de autenticação - função assíncrona
+    const headers = await prepareAuthHeaders(request);
 
     // Fazer requisição para o backend com timeout
     const controller = new AbortController();
@@ -45,8 +52,8 @@ export async function GET(request: NextRequest) {
     if (!response.ok) {
       console.error('❌ [TV-SHOWS-API] Erro na resposta do backend:', response.status);
       
-      // Se for erro de autenticação, retornar dados mock como fallback
-      if (response.status === 401 || response.status === 403) {
+      // Se for erro de autenticação e não estiver forçando conexão real, retornar dados mock
+      if ((response.status === 401 || response.status === 403) && !noMock) {
         console.log('🔄 [TV-SHOWS-API] Erro de autenticação, retornando dados mock como fallback');
         return getMockDataResponse();
       }
@@ -68,9 +75,25 @@ export async function GET(request: NextRequest) {
   } catch (error) {
     console.error('❌ [TV-SHOWS-API] Erro ao buscar TV Shows:', error);
     
-    // Em caso de erro, retornar dados mock como fallback
-    console.log('🔄 [TV-SHOWS-API] Retornando dados mock como fallback devido ao erro');
-    return getMockDataResponse();
+    // Verificar se a URL tem parâmetro para desativar mock
+    const url = new URL(request.url);
+    const noMock = url.searchParams.get('no_mock') === 'true';
+    
+    // Em caso de erro e não estiver forçando conexão real, retornar dados mock
+    if (!noMock) {
+      console.log('🔄 [TV-SHOWS-API] Retornando dados mock como fallback devido ao erro');
+      return getMockDataResponse();
+    }
+    
+    // Se estiver forçando conexão real, retornar o erro
+    return NextResponse.json({
+      success: false,
+      message: "Erro ao conectar com o backend. Tentativa de conexão real forçada falhou.",
+      error: error instanceof Error ? error.message : 'Erro desconhecido'
+    }, {
+      status: 500,
+      headers: CORS_HEADERS,
+    });
   }
 }
 

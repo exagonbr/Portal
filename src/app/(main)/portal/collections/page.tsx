@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect } from 'react'
 import { TVShowCollection, TVShowVideo, TVShowModuleStructure } from '@/types/collections'
-import { Search, Filter, Clock, Play, Folder, Calendar, Star, Eye, BookOpen, FileText, ChevronDown } from 'lucide-react'
+import { Search, Filter, Clock, Play, Folder, Calendar, Star, Eye, BookOpen, FileText, ChevronDown, AlertTriangle } from 'lucide-react'
 import { formatDate, formatYear } from '@/utils/date'
 // Importar o UniversalVideoPlayer em vez dos players customizados
 import UniversalVideoPlayer from '@/components/UniversalVideoPlayer'
@@ -66,6 +66,8 @@ export default function TVShowsManagePage() {
     totalDuration: '0h 0m',
     avgRating: 0
   })
+  // Estado para mensagem de mock
+  const [mockMessage, setMockMessage] = useState<string | null>(null)
 
   // Estados para filtros
   const [filters, setFilters] = useState({
@@ -348,6 +350,13 @@ export default function TVShowsManagePage() {
           setTotalPages(data.data?.totalPages || 1)
           setCurrentPage(data.data?.page || 1)
           
+          // Verificar se são dados mock e salvar a mensagem
+          if (data.message && data.message.includes('mock')) {
+            setMockMessage(data.message)
+          } else {
+            setMockMessage(null)
+          }
+          
           // Recalcular estatísticas após carregar os dados
           if (page === 1) {
             setTimeout(() => calculateStats(), 100)
@@ -371,6 +380,7 @@ export default function TVShowsManagePage() {
           setTvShows(mockData.data.tvShows);
           setTotalPages(mockData.data.totalPages);
           setCurrentPage(mockData.data.page);
+          setMockMessage("Dados simulados devido a erro de autenticação");
         }
       }
     } catch (error) {
@@ -379,6 +389,7 @@ export default function TVShowsManagePage() {
       // Em caso de erro, usar dados simulados
       console.warn('⚠️ Usando dados simulados devido ao erro');
       setTvShows([]);
+      setMockMessage("Dados simulados devido a erro de conexão");
     } finally {
       setIsLoading(false)
     }
@@ -1446,6 +1457,86 @@ export default function TVShowsManagePage() {
         </p>
       </div>
     </div>
+
+    {/* Alerta de dados mock */}
+    {mockMessage && (
+      <div className="bg-amber-50 border-l-4 border-amber-500 p-4 rounded-md animate-fade-in">
+        <div className="flex items-center justify-between">
+          <div className="flex items-center">
+            <div className="flex-shrink-0">
+              <AlertTriangle className="h-5 w-5 text-amber-400" />
+            </div>
+            <div className="ml-3">
+              <p className="text-sm text-amber-700">
+                <span className="font-medium">Atenção:</span> {mockMessage}
+              </p>
+            </div>
+          </div>
+          <button 
+            onClick={() => {
+              setMockMessage(null);
+              // Tentar carregar dados reais forçando conexão com backend
+              const loadRealData = async () => {
+                try {
+                  setIsLoading(true);
+                  const params = new URLSearchParams({
+                    page: currentPage.toString(),
+                    limit: '12',
+                    no_mock: 'true', // Forçar conexão real
+                    ...(searchTerm && { search: searchTerm })
+                  });
+                  
+                  const token = getAuthToken();
+                  const headers: Record<string, string> = {
+                    'Content-Type': 'application/json',
+                  };
+                  
+                  if (token) {
+                    headers['Authorization'] = `Bearer ${token}`;
+                  }
+                  
+                  const url = `/api/tv-shows?${params}`;
+                  console.log('🔗 Tentando conexão real com:', url);
+                  
+                  const response = await fetchWithRetry(url, { headers }, 3);
+                  
+                  if (response.ok) {
+                    const data = await response.json();
+                    if (data.success) {
+                      setTvShows(data.data?.tvShows || []);
+                      setTotalPages(data.data?.totalPages || 1);
+                      setCurrentPage(data.data?.page || 1);
+                      
+                      // Se conseguiu carregar dados reais, recalcular estatísticas
+                      setTimeout(() => calculateStats(), 100);
+                    } else {
+                      // Se a API retornou erro, mostrar mensagem
+                      setMockMessage(data.message || "Erro ao carregar dados reais");
+                    }
+                  } else {
+                    // Se houve erro na requisição, mostrar mensagem
+                    setMockMessage(`Erro na conexão real: ${response.status} ${response.statusText}`);
+                  }
+                } catch (error) {
+                  // Em caso de erro, mostrar mensagem
+                  setMockMessage(`Falha na conexão: ${error instanceof Error ? error.message : 'Erro desconhecido'}`);
+                } finally {
+                  setIsLoading(false);
+                }
+              };
+              
+              loadRealData();
+            }}
+            className="px-3 py-1 bg-amber-100 hover:bg-amber-200 text-amber-800 text-xs font-medium rounded-md transition-colors flex items-center gap-1"
+          >
+            <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+            </svg>
+            Tentar conexão real
+          </button>
+        </div>
+      </div>
+    )}
 
         {/* Cards de Estatísticas - Layout Melhorado */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-6">
