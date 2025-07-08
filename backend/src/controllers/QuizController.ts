@@ -7,6 +7,9 @@ const quizRepository = new QuizRepository();
 
 class QuizController extends BaseController<Quiz> {
     constructor() {
+    const repository = new QuizRepository();
+    super(repository);
+    this.quizRepository = repository;
         super(quizRepository);
     }
 

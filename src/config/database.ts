@@ -1,4 +1,4 @@
-import { Knex } from 'knex';
+import { Knex, knex } from 'knex';
 import dotenv from 'dotenv';
 
 dotenv.config();
@@ -25,4 +25,5 @@ const config: Knex.Config = {
   },
 };
 
+export const connection = knex(config);
 export default config;

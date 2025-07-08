@@ -1,5 +1,6 @@
 import { Request, Response } from 'express';
-import { NotificationRepository } from '../repositories/NotificationRepository';
+import { NotificationRepository } from '../repositories/NotificationRepository'
+import { Notification } from '../entities/Notification';;
 import { Notification, NotificationCategory, NotificationStatus, NotificationType } from '../entities/Notification';
 
 const notificationRepository = new NotificationRepository();

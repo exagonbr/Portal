@@ -2,7 +2,7 @@ import { Request, Response } from 'express';
 import { BaseRepository } from '../repositories/BaseRepository';
 
 export class BaseController<T extends { id: string | number }> {
-  private repository: BaseRepository<T>;
+  protected repository: BaseRepository<T>;
 
   constructor(repository: BaseRepository<T>) {
     this.repository = repository;
@@ -68,5 +68,19 @@ export class BaseController<T extends { id: string | number }> {
       console.error(`Error in delete: ${error}`);
       return res.status(500).json({ success: false, message: 'Internal Server Error' });
     }
+  }
+
+  // Métodos auxiliares para as classes filhas
+  protected success(res: Response, data: any, status: number = 200): void {
+    res.status(status).json({ success: true, data });
+  }
+
+  protected error(res: Response, error: any, status: number = 500): void {
+    console.error(error);
+    res.status(status).json({ success: false, message: 'Erro interno do servidor' });
+  }
+
+  protected notFound(res: Response, message: string = 'Recurso não encontrado'): void {
+    res.status(404).json({ success: false, message });
   }
 }

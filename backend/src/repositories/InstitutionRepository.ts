@@ -1,5 +1,5 @@
 import { Institution } from '../entities';
-import { BaseRepository } from './BaseRepository';
+import { ExtendedRepository, PaginatedResult } from './ExtendedRepository';
 import { PaginationOptions } from '../types/pagination';
 
 // Interface para desacoplar
@@ -23,9 +23,72 @@ export interface InstitutionFilters {
   has_library_platform?: boolean;
 }
 
-export class InstitutionRepository extends BaseRepository<Institution> {
+export class InstitutionRepository extends ExtendedRepository<Institution> {
   constructor() {
     super('institution');
+  }
+  // Implementação do método abstrato findAllPaginated
+  async findAllPaginated(options: {
+    page?: number;
+    limit?: number;
+    search?: string;
+  } = {}): Promise<PaginatedResult<Institution>> {
+    const { page = 1, limit = 10, search } = options;
+    
+    try {
+      if (this.repository) {
+        let queryBuilder = this.repository.createQueryBuilder('institution');
+        
+        // Adicione condições de pesquisa específicas para esta entidade
+        if (search) {
+          queryBuilder = queryBuilder
+            .where('institution.name ILIKE :search', { search: `%${search}%` });
+        }
+        
+        const [data, total] = await queryBuilder
+          .skip((page - 1) * limit)
+          .take(limit)
+          .orderBy('institution.id', 'DESC')
+          .getManyAndCount();
+          
+        return {
+          data,
+          total,
+          page,
+          limit
+        };
+      } else {
+        // Fallback para query raw
+        const query = `
+          SELECT * FROM institution
+          ${search ? `WHERE name ILIKE '%${search}%'` : ''}
+          ORDER BY id DESC
+          LIMIT ${limit} OFFSET ${(page - 1) * limit}
+        `;
+        
+        const countQuery = `
+          SELECT COUNT(*) as total FROM institution
+          ${search ? `WHERE name ILIKE '%${search}%'` : ''}
+        `;
+
+        const [data, countResult] = await Promise.all([
+          AppDataSource.query(query),
+          AppDataSource.query(countQuery)
+        ]);
+
+        const total = parseInt(countResult[0].total);
+
+        return {
+          data,
+          total,
+          page,
+          limit
+        };
+      }
+    } catch (error) {
+      console.error(`Erro ao buscar registros de institution:`, error);
+      throw error;
+    }
   }
 
   async findWithFilters(

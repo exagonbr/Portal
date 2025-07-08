@@ -1,0 +1,65 @@
+export class CreateSecurityPoliciesDto {
+  passwordMinLength?: string;
+  passwordRequireUppercase?: string;
+  passwordRequireLowercase?: string;
+  passwordRequireNumbers?: string;
+  passwordRequireSpecialChars?: string;
+  passwordExpiryDays?: string;
+  passwordPreventReuse?: string;
+  accountMaxLoginAttempts?: string;
+  accountLockoutDurationMinutes?: string;
+  accountSessionTimeoutMinutes?: string;
+  accountRequireMfa?: string;
+  accountInactivityLockoutDays?: string;
+  dataRetentionMonths?: string;
+  dataEncryptSensitiveData?: string;
+  dataAnonymizeDeletedUsers?: string;
+  dataEnableAuditLogging?: string;
+  createdBy?: string;
+  updatedBy?: string;
+}
+
+export class UpdateSecurityPoliciesDto {
+  passwordMinLength?: string;
+  passwordRequireUppercase?: string;
+  passwordRequireLowercase?: string;
+  passwordRequireNumbers?: string;
+  passwordRequireSpecialChars?: string;
+  passwordExpiryDays?: string;
+  passwordPreventReuse?: string;
+  accountMaxLoginAttempts?: string;
+  accountLockoutDurationMinutes?: string;
+  accountSessionTimeoutMinutes?: string;
+  accountRequireMfa?: string;
+  accountInactivityLockoutDays?: string;
+  dataRetentionMonths?: string;
+  dataEncryptSensitiveData?: string;
+  dataAnonymizeDeletedUsers?: string;
+  dataEnableAuditLogging?: string;
+  createdBy?: string;
+  updatedBy?: string;
+}
+
+export class SecurityPoliciesResponseDto {
+  id: string;
+  passwordMinLength: string;
+  passwordRequireUppercase: string;
+  passwordRequireLowercase: string;
+  passwordRequireNumbers: string;
+  passwordRequireSpecialChars: string;
+  passwordExpiryDays: string;
+  passwordPreventReuse: string;
+  accountMaxLoginAttempts: string;
+  accountLockoutDurationMinutes: string;
+  accountSessionTimeoutMinutes: string;
+  accountRequireMfa: string;
+  accountInactivityLockoutDays: string;
+  dataRetentionMonths: string;
+  dataEncryptSensitiveData: string;
+  dataAnonymizeDeletedUsers: string;
+  dataEnableAuditLogging: string;
+  createdBy: string;
+  updatedBy: string;
+  createdAt: string;
+  updatedAt: string;
+}

@@ -7,6 +7,9 @@ const languageRepository = new LanguageRepository();
 
 class LanguageController extends BaseController<Language> {
     constructor() {
+    const repository = new LanguageRepository();
+    super(repository);
+    this.languageRepository = repository;
         super(languageRepository);
     }
 

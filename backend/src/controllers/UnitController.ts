@@ -6,8 +6,12 @@ import { CreateUnitDto, UpdateUnitDto, UnitResponseDto } from '../dto/UnitDto';
 
 const unitRepository = new UnitRepository();
 
-class UnitController extends BaseController<Unit> {
+export class UnitController extends BaseController<Unit> {
+  private unitRepository: UnitRepository;
     constructor() {
+    const repository = new UnitRepository();
+    super(repository);
+    this.unitRepository = repository;
         super(unitRepository);
     }
 

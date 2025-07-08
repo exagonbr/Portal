@@ -6,8 +6,12 @@ import { BaseController } from './BaseController';
 const authorRepository = new AuthorRepository();
 
 class AuthorController extends BaseController<Author> {
+  private authorRepository: AuthorRepository;
+
   constructor() {
-    super(authorRepository);
+    const repository = new AuthorRepository();
+    super(repository);
+    this.authorRepository = repository;
   }
 
   async toggleStatus(req: Request, res: Response) {

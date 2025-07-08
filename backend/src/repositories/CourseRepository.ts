@@ -1,9 +1,72 @@
-import { BaseRepository } from './BaseRepository';
+import { ExtendedRepository, PaginatedResult } from './ExtendedRepository';
 import { Course } from '../entities/Course';
 
-export class CourseRepository extends BaseRepository<Course> {
+export class CourseRepository extends ExtendedRepository<Course> {
   constructor() {
     super('courses');
+  }
+  // Implementação do método abstrato findAllPaginated
+  async findAllPaginated(options: {
+    page?: number;
+    limit?: number;
+    search?: string;
+  } = {}): Promise<PaginatedResult<Course>> {
+    const { page = 1, limit = 10, search } = options;
+    
+    try {
+      if (this.repository) {
+        let queryBuilder = this.repository.createQueryBuilder('course');
+        
+        // Adicione condições de pesquisa específicas para esta entidade
+        if (search) {
+          queryBuilder = queryBuilder
+            .where('course.name ILIKE :search', { search: `%${search}%` });
+        }
+        
+        const [data, total] = await queryBuilder
+          .skip((page - 1) * limit)
+          .take(limit)
+          .orderBy('course.id', 'DESC')
+          .getManyAndCount();
+          
+        return {
+          data,
+          total,
+          page,
+          limit
+        };
+      } else {
+        // Fallback para query raw
+        const query = `
+          SELECT * FROM course
+          ${search ? `WHERE name ILIKE '%${search}%'` : ''}
+          ORDER BY id DESC
+          LIMIT ${limit} OFFSET ${(page - 1) * limit}
+        `;
+        
+        const countQuery = `
+          SELECT COUNT(*) as total FROM course
+          ${search ? `WHERE name ILIKE '%${search}%'` : ''}
+        `;
+
+        const [data, countResult] = await Promise.all([
+          AppDataSource.query(query),
+          AppDataSource.query(countQuery)
+        ]);
+
+        const total = parseInt(countResult[0].total);
+
+        return {
+          data,
+          total,
+          page,
+          limit
+        };
+      }
+    } catch (error) {
+      console.error(`Erro ao buscar registros de course:`, error);
+      throw error;
+    }
   }
 
   async toggleStatus(id: string | number): Promise<Course | null> {

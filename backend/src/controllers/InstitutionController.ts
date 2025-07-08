@@ -8,6 +8,9 @@ const institutionRepository = new InstitutionRepository();
 
 class InstitutionController extends BaseController<Institution> {
   constructor() {
+    const repository = new InstitutionRepository();
+    super(repository);
+    this.institutionRepository = repository;
     super(institutionRepository);
   }
 

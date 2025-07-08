@@ -5,7 +5,7 @@ import Modal from '@/components/ui/Modal';
 import { Button } from '@/components/ui/Button';
 import Input from '@/components/ui/Input';
 import { Select } from '@/components/ui/Select';
-import { Textarea } from '@/components/ui/Textarea';
+import Textarea from '@/components/ui/textarea'
 import { Switch } from '@/components/ui/Switch';
 import { CourseCreateDto } from '@/types/api';
 import { institutionService } from '@/services/institutionService';

@@ -7,6 +7,9 @@ const mediaEntryRepository = new MediaEntryRepository();
 
 class MediaEntryController extends BaseController<MediaEntry> {
     constructor() {
+    const repository = new MediaEntryRepository();
+    super(repository);
+    this.mediaEntryRepository = repository;
         super(mediaEntryRepository);
     }
 

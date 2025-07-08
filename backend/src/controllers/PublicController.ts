@@ -7,6 +7,9 @@ const publicRepository = new PublicRepository();
 
 class PublicController extends BaseController<Public> {
     constructor() {
+    const repository = new PublicRepository();
+    super(repository);
+    this.publicRepository = repository;
         super(publicRepository);
     }
 

@@ -1,4 +1,4 @@
-import { BaseRepository } from './BaseRepository';
+import { ExtendedRepository, PaginatedResult } from './ExtendedRepository';
 // Supondo que as entidades UserGroup, GroupMember, GroupPermission existam
 // import { UserGroup, GroupMember, GroupPermission } from '../entities/UserGroup';
 
@@ -43,6 +43,69 @@ export interface CreateGroupMemberData extends Omit<GroupMember, 'id' | 'joined_
 export class GroupRepository extends BaseRepository<UserGroup> {
   constructor() {
     super('user_groups');
+  }
+  // Implementação do método abstrato findAllPaginated
+  async findAllPaginated(options: {
+    page?: number;
+    limit?: number;
+    search?: string;
+  } = {}): Promise<PaginatedResult<Group>> {
+    const { page = 1, limit = 10, search } = options;
+    
+    try {
+      if (this.repository) {
+        let queryBuilder = this.repository.createQueryBuilder('group');
+        
+        // Adicione condições de pesquisa específicas para esta entidade
+        if (search) {
+          queryBuilder = queryBuilder
+            .where('group.name ILIKE :search', { search: `%${search}%` });
+        }
+        
+        const [data, total] = await queryBuilder
+          .skip((page - 1) * limit)
+          .take(limit)
+          .orderBy('group.id', 'DESC')
+          .getManyAndCount();
+          
+        return {
+          data,
+          total,
+          page,
+          limit
+        };
+      } else {
+        // Fallback para query raw
+        const query = `
+          SELECT * FROM group
+          ${search ? `WHERE name ILIKE '%${search}%'` : ''}
+          ORDER BY id DESC
+          LIMIT ${limit} OFFSET ${(page - 1) * limit}
+        `;
+        
+        const countQuery = `
+          SELECT COUNT(*) as total FROM group
+          ${search ? `WHERE name ILIKE '%${search}%'` : ''}
+        `;
+
+        const [data, countResult] = await Promise.all([
+          AppDataSource.query(query),
+          AppDataSource.query(countQuery)
+        ]);
+
+        const total = parseInt(countResult[0].total);
+
+        return {
+          data,
+          total,
+          page,
+          limit
+        };
+      }
+    } catch (error) {
+      console.error(`Erro ao buscar registros de group:`, error);
+      throw error;
+    }
   }
 
   async findByName(name: string, institutionId?: string): Promise<UserGroup | null> {

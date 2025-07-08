@@ -1,12 +1,75 @@
-import { BaseRepository } from './BaseRepository';
+import { ExtendedRepository, PaginatedResult } from './ExtendedRepository';
 import { Video } from '../entities/Video';
 
 export interface CreateVideoData extends Omit<Video, 'id'> {}
 export interface UpdateVideoData extends Partial<CreateVideoData> {}
 
-export class VideoRepository extends BaseRepository<Video> {
+export class VideoRepository extends ExtendedRepository<Video> {
   constructor() {
     super('video');
+  }
+  // Implementação do método abstrato findAllPaginated
+  async findAllPaginated(options: {
+    page?: number;
+    limit?: number;
+    search?: string;
+  } = {}): Promise<PaginatedResult<Video>> {
+    const { page = 1, limit = 10, search } = options;
+    
+    try {
+      if (this.repository) {
+        let queryBuilder = this.repository.createQueryBuilder('video');
+        
+        // Adicione condições de pesquisa específicas para esta entidade
+        if (search) {
+          queryBuilder = queryBuilder
+            .where('video.name ILIKE :search', { search: `%${search}%` });
+        }
+        
+        const [data, total] = await queryBuilder
+          .skip((page - 1) * limit)
+          .take(limit)
+          .orderBy('video.id', 'DESC')
+          .getManyAndCount();
+          
+        return {
+          data,
+          total,
+          page,
+          limit
+        };
+      } else {
+        // Fallback para query raw
+        const query = `
+          SELECT * FROM video
+          ${search ? `WHERE name ILIKE '%${search}%'` : ''}
+          ORDER BY id DESC
+          LIMIT ${limit} OFFSET ${(page - 1) * limit}
+        `;
+        
+        const countQuery = `
+          SELECT COUNT(*) as total FROM video
+          ${search ? `WHERE name ILIKE '%${search}%'` : ''}
+        `;
+
+        const [data, countResult] = await Promise.all([
+          AppDataSource.query(query),
+          AppDataSource.query(countQuery)
+        ]);
+
+        const total = parseInt(countResult[0].total);
+
+        return {
+          data,
+          total,
+          page,
+          limit
+        };
+      }
+    } catch (error) {
+      console.error(`Erro ao buscar registros de video:`, error);
+      throw error;
+    }
   }
 
   async createVideo(data: CreateVideoData): Promise<Video> {

@@ -1,9 +1,11 @@
 import { Repository, DataSource } from 'typeorm';
+import { Knex } from 'knex';
 import { ViewingStatus } from '../entities/ViewingStatus';
 import { AppDataSource } from '../config/typeorm';
 import { User } from '../entities/User';
 import { Video } from '../entities/Video';
 import { TvShow } from '../entities/TVShow';
+import db from '../config/database';
 
 export interface UpdateViewingStatusDTO {
   userId: number;
@@ -37,9 +39,11 @@ export interface ViewingInteractionDTO {
 
 export class ViewingStatusService {
   private repository: Repository<ViewingStatus>;
+  private knexDb: Knex;
 
-  constructor(dataSource: DataSource = AppDataSource) {
+  constructor(dataSource: DataSource = AppDataSource, knexDb: Knex = db) {
     this.repository = dataSource.getRepository(ViewingStatus);
+    this.knexDb = knexDb;
   }
 
   /**

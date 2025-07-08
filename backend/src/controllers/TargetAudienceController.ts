@@ -7,6 +7,9 @@ const targetAudienceRepository = new TargetAudienceRepository();
 
 class TargetAudienceController extends BaseController<TargetAudience> {
   constructor() {
+    const repository = new TargetAudienceRepository();
+    super(repository);
+    this.targetAudienceRepository = repository;
     super(targetAudienceRepository);
   }
 

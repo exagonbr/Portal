@@ -4,14 +4,15 @@ import { useState, useEffect } from 'react'
 import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { z } from 'zod'
-import { Button } from '@/components/ui/Button';
-import { Select } from '@/components/ui/Select';
-import { Textarea } from '@/components/ui/Textarea';
+import { Button } from '@/components/ui/Button'
+import { Select } from '@/components/ui/Select'
+import Textarea from '@/components/ui/textarea'
 import { Switch } from '@/components/ui/Switch'
 import { useTheme } from '@/contexts/ThemeContext'
-import { apiClient, BaseApiService } from '@/lib/api-client'
+import { apiClient } from '@/lib/api-client'
+import { BaseApiService } from '@/services/base-api-service'
 import { useToast } from '@/components/ToastManager'
-import Input from '../ui/Input'
+import Input from '@/components/ui/Input'
 
 const moduleSchema = z.object({
   name: z.string().min(3, 'Nome deve ter pelo menos 3 caracteres'),

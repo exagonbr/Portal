@@ -5,8 +5,12 @@ import { TvShow } from '../entities/TVShow';
 
 const tvShowRepository = new TvShowRepository();
 
-class TvShowController extends BaseController<TvShow> {
+export class TvShowController extends BaseController<TvShow> {
+  private tvShowRepository: TvShowRepository;
     constructor() {
+    const repository = new TvShowRepository();
+    super(repository);
+    this.tvShowRepository = repository;
         super(tvShowRepository);
     }
     

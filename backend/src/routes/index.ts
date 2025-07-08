@@ -1,7 +1,7 @@
 import express from 'express';
 import { requireAuth } from '../middleware/requireAuth';
 
-// Importação das rotas
+// Importação das rotas existentes
 import activityTrackingRouter from './activity-tracking';
 import announcementsRouter from './announcements';
 import authorsRouter from './authors';
@@ -47,6 +47,20 @@ import authRouter from './auth';
 import healthRouter from './health';
 import viewingStatusRouter from './viewingStatusRoutes';
 
+// Importação das novas rotas geradas
+import activitysessionsRouter from './activity-sessions';
+import activitysummariesRouter from './activity-summaries';
+import educationperiodRouter from './education-period';
+import educationalstageRouter from './educational-stage';
+import notificationqueueRouter from './notification-queue';
+import rolepermissionsRouter from './role-permissions';
+import securitypoliciesRouter from './security-policies';
+import systemsettingsRouter from './system-settings';
+import targetaudienceRouter from './target-audience';
+import teachersubjectRouter from './teacher-subject';
+import tvshowRouter from './tv-show';
+import viewingstatusRouter from './viewing-status';
+import watchlistentryRouter from './watchlist-entry';
 
 const router = express.Router();
 
@@ -56,10 +70,23 @@ router.use('/health', healthRouter);
 // Rotas Públicas
 router.use('/auth', authRouter);
 router.use('/public', publicRouter);
-router.use('/users', usersRouter);
 
+// Rotas Protegidas - Novas rotas geradas
+router.use('/activity-sessions', requireAuth, activitysessionsRouter);
+router.use('/activity-summaries', requireAuth, activitysummariesRouter);
+router.use('/education-period', requireAuth, educationperiodRouter);
+router.use('/educational-stage', requireAuth, educationalstageRouter);
+router.use('/notification-queue', requireAuth, notificationqueueRouter);
+router.use('/role-permissions', requireAuth, rolepermissionsRouter);
+router.use('/security-policies', requireAuth, securitypoliciesRouter);
+router.use('/system-settings', requireAuth, systemsettingsRouter);
+router.use('/target-audience', requireAuth, targetaudienceRouter);
+router.use('/teacher-subject', requireAuth, teachersubjectRouter);
+router.use('/tv-show', requireAuth, tvshowRouter);
+router.use('/viewing-status', requireAuth, viewingstatusRouter);
+router.use('/watchlist-entry', requireAuth, watchlistentryRouter);
 
-// Rotas Protegidas
+// Rotas Protegidas - Rotas existentes
 router.use('/activity-tracking', requireAuth, activityTrackingRouter);
 router.use('/announcements', requireAuth, announcementsRouter);
 router.use('/authors', requireAuth, authorsRouter);
@@ -96,63 +123,13 @@ router.use('/themes', requireAuth, themesRouter);
 router.use('/tv-shows', requireAuth, tvShowsRouter);
 router.use('/units', requireAuth, unitsRouter);
 router.use('/user-classes', requireAuth, userClassesRouter);
+router.use('/users', requireAuth, usersRouter);
 router.use('/video-collections', requireAuth, videoCollectionsRouter);
 router.use('/video-modules', requireAuth, videoModulesRouter);
 router.use('/videos', requireAuth, videosRouter);
 router.use('/viewing-status', requireAuth, viewingStatusRouter);
 
-// Rotas de Sessões
-router.use('/sessions', requireAuth, sessionsRouter);
-
 // Rotas de Admin
 router.use('/admin/sessions', requireAuth, sessionsRouter);
-
-// Rota para buscar dados de arquivo de vídeo
-router.get('/video-file/:videoId', requireAuth, async (req, res) => {
-  try {
-    const { videoId } = req.params;
-    console.log(`🔍 Buscando dados do arquivo para vídeo ID: ${videoId}`);
-    
-    // Buscar dados do arquivo associado ao vídeo
-    const fileData = await req.app.locals.db('video as v')
-      .join('video_file as vf', 'v.id', 'vf.video_files_id')
-      .join('file as f', 'vf.file_id', 'f.id')
-      .select(
-        'f.sha256hex',
-        'f.extension',
-        'f.name as filename',
-        'f.content_type as mimetype',
-        'f.size'
-      )
-      .where('v.id', videoId)
-      .first();
-    
-    if (!fileData) {
-      console.warn(`⚠️ Arquivo não encontrado para vídeo ID: ${videoId}`);
-      return res.status(404).json({
-        success: false,
-        message: 'Arquivo não encontrado para este vídeo'
-      });
-    }
-    
-    console.log(`✅ Dados do arquivo encontrados:`, {
-      sha256hex: fileData.sha256hex,
-      extension: fileData.extension
-    });
-    
-    return res.status(200).json({
-      success: true,
-      data: fileData,
-      message: 'Dados do arquivo carregados com sucesso'
-    });
-    
-  } catch (error) {
-    console.error('❌ Erro ao buscar dados do arquivo:', error);
-    return res.status(500).json({
-      success: false,
-      message: 'Erro interno do servidor'
-    });
-  }
-});
 
 export default router;

@@ -1,6 +1,3 @@
-// Este arquivo foi neutralizado para o desacoplamento do frontend.
-// Todas as chamadas de API foram mockadas para não depender do backend.
-
 import { getApiUrl, getInternalApiUrl, ENV_CONFIG } from '@/config/env';
 
 // --- Tipos ---
@@ -35,7 +32,7 @@ export class ApiClientError extends Error {
 
 // --- Helpers ---
 
-const getMockedAuthToken = (): string | null => {
+const getAuthToken = (): string | null => {
   if (typeof window === 'undefined' || typeof localStorage === 'undefined') return null;
   try {
     return localStorage.getItem('accessToken');
@@ -51,7 +48,7 @@ const createAuthHeaders = (skipAuth: boolean = false): Record<string, string> =>
     'Accept': 'application/json',
   };
   if (!skipAuth) {
-    const token = getMockedAuthToken();
+    const token = getAuthToken();
     if (token) {
       headers.Authorization = `Bearer ${token}`;
     }
@@ -59,42 +56,66 @@ const createAuthHeaders = (skipAuth: boolean = false): Record<string, string> =>
   return headers;
 };
 
-// --- Funções de Requisição Mockadas ---
+// --- Funções de Requisição ---
 
 export const fetchWithAuth = async (
   url: string, 
   options: ApiRequestOptions = {}
 ): Promise<Response> => {
-  console.warn(`API call to "${url}" was intercepted in decoupled mode.`, { options });
-
-  // Simula uma resposta de erro para qualquer chamada de API.
-  const errorResponse = {
-    success: false,
-    message: `API Desacoplada: A chamada para ${url} foi bloqueada.`,
-    error: 'Modo desacoplado ativado.',
+  const { skipAuth = false, isInternal = false, timeout = 30000, ...restOptions } = options;
+  
+  const baseUrl = isInternal ? getInternalApiUrl() : getApiUrl();
+  const fullUrl = url.startsWith('http') ? url : `${baseUrl}${url}`;
+  
+  const headers = createAuthHeaders(skipAuth);
+  
+  // Adiciona os headers personalizados
+  const mergedHeaders = {
+    ...headers,
+    ...restOptions.headers,
   };
 
-  return new Response(JSON.stringify(errorResponse), {
-    status: 418, // "I'm a teapot" para indicar que é uma resposta mockada
-    headers: { 'Content-Type': 'application/json' },
-  });
+  // Configura o timeout
+  const controller = new AbortController();
+  const timeoutId = setTimeout(() => controller.abort(), timeout);
+
+  try {
+    const response = await fetch(fullUrl, {
+      ...restOptions,
+      headers: mergedHeaders,
+      signal: controller.signal,
+      credentials: 'include',
+    });
+    
+    return response;
+  } catch (error: any) {
+    if (error?.name === 'AbortError') {
+      throw new Error(`Requisição para ${url} excedeu o tempo limite de ${timeout}ms`);
+    }
+    throw error;
+  } finally {
+    clearTimeout(timeoutId);
+  }
 };
 
 export const parseJsonResponse = async <T = any>(response: Response): Promise<T> => {
-  if (response.status === 418) { // Resposta mockada
-    return response.json();
-  }
   if (!response.ok) {
     let errorMessage = `Erro ${response.status}: ${response.statusText}`;
+    let errors: string[] | undefined;
+    
     try {
       const errorData = await response.json();
       errorMessage = errorData.message || errorData.error || errorMessage;
+      errors = errorData.errors;
     } catch { /* Ignora erro de parse */ }
-    throw new Error(errorMessage);
+    
+    throw new ApiClientError(errorMessage, response.status, errors);
   }
+  
   if (response.status === 204) {
     return null as T;
   }
+  
   return response.json();
 };
 
@@ -132,6 +153,10 @@ export const apiUpload = (url: string, formData: FormData, options?: Omit<ApiReq
     ...options,
     method: 'POST',
     body: formData,
+    headers: {
+      ...options?.headers,
+      // Não definimos Content-Type aqui para que o navegador defina automaticamente com o boundary correto
+    },
   });
 
 // --- Função para tratar erros ---
@@ -154,10 +179,32 @@ export const handleApiError = (error: any): string => {
 class ApiClient {
   private async handleRequest<T>(method: 'get' | 'post' | 'put' | 'patch' | 'delete', url: string, body?: any): Promise<ApiResponse<T>> {
     try {
-      const response = await fetchWithAuth(url, { method: method.toUpperCase(), body: body ? JSON.stringify(body) : undefined });
-      const data = await parseJsonResponse<any>(response);
-      return data as ApiResponse<T>;
+      let response;
+      
+      switch (method) {
+        case 'get':
+          response = await apiGet(url);
+          break;
+        case 'post':
+          response = await apiPost(url, body);
+          break;
+        case 'put':
+          response = await apiPut(url, body);
+          break;
+        case 'patch':
+          response = await apiPatch(url, body);
+          break;
+        case 'delete':
+          response = await apiDelete(url);
+          break;
+      }
+      
+      const data = await parseJsonResponse<ApiResponse<T>>(response);
+      return data;
     } catch (error) {
+      if (error instanceof ApiClientError) {
+        throw error;
+      }
       if (error instanceof Error) {
         throw new ApiClientError(error.message, 500);
       }

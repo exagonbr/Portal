@@ -159,8 +159,10 @@ export const standardizeTokens = (): boolean => {
   return false;
 };
 
-export default {
+const tokenCleanup = {
   cleanupInvalidTokens,
   logTokenInfo,
   standardizeTokens
-}; 
+};
+
+export default tokenCleanup; 

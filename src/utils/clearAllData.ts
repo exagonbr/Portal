@@ -275,7 +275,9 @@ export const clearAuthDataOnly = async (): Promise<void> => {
   }
 };
 
-export default {
+const clearAllData = {
   clearAllDataForUnauthorized,
   clearAuthDataOnly
-}; 
+};
+
+export default clearAllData; 

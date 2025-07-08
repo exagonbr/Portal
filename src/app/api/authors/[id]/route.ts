@@ -13,11 +13,11 @@ export async function OPTIONS(request: NextRequest) {
 // Função para lidar com requisições GET para um autor específico
 export async function GET(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
     // Obter ID do autor dos parâmetros da rota
-    const { id } = params;
+    const { id } = await params;
     
     // Construir URL para o backend
     const backendUrl = getInternalApiUrl(`/authors/${id}`);
@@ -51,7 +51,7 @@ export async function GET(
 // Função para lidar com requisições PUT para atualizar um autor
 export async function PUT(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
     // Verificar autenticação
@@ -64,7 +64,7 @@ export async function PUT(
     }
 
     // Obter ID do autor dos parâmetros da rota
-    const { id } = params;
+    const { id } = await params;
     
     // Obter dados do corpo da requisição
     const body = await request.json();
@@ -100,7 +100,7 @@ export async function PUT(
 // Função para lidar com requisições DELETE para remover um autor
 export async function DELETE(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
     // Verificar autenticação
@@ -113,7 +113,7 @@ export async function DELETE(
     }
 
     // Obter ID do autor dos parâmetros da rota
-    const { id } = params;
+    const { id } = await params;
     
     // Fazer requisição para o backend
     const backendUrl = getInternalApiUrl(`/authors/${id}`);

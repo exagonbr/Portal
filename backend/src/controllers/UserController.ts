@@ -6,8 +6,12 @@ import authService from '../services/AuthService';
 
 const userRepository = new UserRepository();
 
-class UserController extends BaseController<User> {
+export class UserController extends BaseController<User> {
+  private userRepository: UserRepository;
   constructor() {
+    const repository = new UserRepository();
+    super(repository);
+    this.userRepository = repository;
     super(userRepository);
   }
 

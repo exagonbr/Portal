@@ -7,6 +7,9 @@ const educationalStageRepository = new EducationalStageRepository();
 
 class EducationalStageController extends BaseController<EducationalStage> {
   constructor() {
+    const repository = new EducationalStageRepository();
+    super(repository);
+    this.educationalStageRepository = repository;
     super(educationalStageRepository);
   }
 

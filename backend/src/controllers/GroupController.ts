@@ -1,12 +1,16 @@
 import { Request, Response } from 'express';
 import { BaseController } from './BaseController';
-import { UserGroup, GroupMember, GroupPermission } from '../repositories/GroupRepository'; // Usando as interfaces do repositório
+import { UserGroup, GroupMember, GroupPermission } from '../repositories/GroupRepository'
+import { Group } from '../entities/Group';; // Usando as interfaces do repositório
 import { GroupRepository } from '../repositories/GroupRepository';
 
 const groupRepository = new GroupRepository();
 
 class GroupController extends BaseController<UserGroup> {
   constructor() {
+    const repository = new GroupRepository();
+    super(repository);
+    this.groupRepository = repository;
     super(groupRepository);
   }
 

@@ -6,8 +6,12 @@ import { BaseController } from './BaseController';
 const announcementRepository = new AnnouncementRepository();
 
 class AnnouncementController extends BaseController<Announcement> {
+  private announcementRepository: AnnouncementRepository;
+
   constructor() {
-    super(announcementRepository);
+    const repository = new AnnouncementRepository();
+    super(repository);
+    this.announcementRepository = repository;
   }
 
   async toggleStatus(req: Request, res: Response) {

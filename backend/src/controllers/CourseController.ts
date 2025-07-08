@@ -7,6 +7,9 @@ const courseRepository = new CourseRepository();
 
 class CourseController extends BaseController<Course> {
   constructor() {
+    const repository = new CourseRepository();
+    super(repository);
+    this.courseRepository = repository;
     super(courseRepository);
   }
 

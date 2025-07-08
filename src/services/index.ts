@@ -37,3 +37,12 @@ export * from './unitService';
 export * from './publicService';
 export * from './videoService';
 export * from './videoModuleService';
+
+// Novos serviços criados na refatoração
+export * from './activitySessionsService';
+export * from './activitySummariesService';
+export * from './rolePermissionsService';
+export * from './securityPoliciesService';
+export * from './notificationqueueService';
+export * from './teachersubjectService';
+export * from './watchlistentryService';

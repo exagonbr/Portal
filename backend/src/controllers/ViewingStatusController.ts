@@ -2,12 +2,214 @@ import { Request, Response } from 'express';
 import { ViewingStatusService, UpdateViewingStatusDTO, ViewingInteractionDTO } from '../services/ViewingStatusService';
 import { AppDataSource } from '../config/typeorm';
 import { getUserFromRequest } from '../utils/auth';
+import { BaseController } from './BaseController';
+import { ViewingStatus } from '../entities/ViewingStatus';
+import { BaseRepository } from '../repositories/BaseRepository';
+import { ViewingStatusRepository } from '../repositories/ViewingStatusRepository';
+import db from '../config/database';
 
-export class ViewingStatusController {
+// Criar uma implementação concreta de BaseRepository para ViewingStatus
+class EmptyViewingStatusRepository extends BaseRepository<ViewingStatus> {
+  constructor() {
+    const repository = new ViewingStatusRepository();
+    super(repository);
+    super('viewing_status');
+    this.db = db;
+  }
+
+  // Sobrescrever métodos para retornar valores vazios
+  async findAll(): Promise<ViewingStatus[]> {
+    return [];
+  }
+
+  async findById(): Promise<ViewingStatus | null> {
+    return null;
+  }
+
+  async findOne(): Promise<ViewingStatus | null> {
+    return null;
+  }
+
+  async create(): Promise<ViewingStatus> {
+    return { id: 0 } as ViewingStatus;
+  }
+
+  async update(): Promise<ViewingStatus | null> {
+    return null;
+  }
+
+  async delete(): Promise<boolean> {
+    return false;
+  }
+
+  async count(): Promise<number> {
+    return 0;
+  }
+
+  async exists(): Promise<boolean> {
+    return false;
+  }
+
+  async findAllWithSearch(options: any = {}): Promise<{ data: ViewingStatus[]; total: number; page: number; limit: number }> {
+    return {
+      data: [],
+      total: 0,
+      page: options.page || 1,
+      limit: options.limit || 10
+    };
+  }
+
+  async executeTransaction<R>(callback: (trx: any) => Promise<R>): Promise<R> {
+    throw new Error('Not implemented');
+  }
+}
+
+export class ViewingStatusController extends BaseController<ViewingStatus> {
+  private viewingStatusRepository: ViewingStatusRepository;
   private service: ViewingStatusService;
 
   constructor() {
-    this.service = new ViewingStatusService(AppDataSource);
+    // Usar a implementação concreta
+    super(new EmptyViewingStatusRepository());
+    this.service = new ViewingStatusService(AppDataSource, db);
+    this.viewingStatusRepository = new ViewingStatusRepository();
+  }
+
+  // Métodos de resposta HTTP
+  protected unauthorized(res: Response, message: string = 'Usuário não autenticado'): Response {
+    return res.status(401).json({ error: message });
+  }
+
+  protected notFound(res: Response, message: string = 'Recurso não encontrado'): Response {
+    return res.status(404).json({ error: message });
+  }
+
+  protected success(res: Response, data: any, status: number = 200): Response {
+    return res.status(status).json(data);
+  }
+
+  protected error(res: Response, error: any, status: number = 500): Response {
+    console.error('Erro:', error);
+    return res.status(status).json({ error: error.message || 'Erro interno do servidor' });
+  }
+
+  // Sobrescrevendo os métodos da classe base
+  public async getAll(req: Request, res: Response): Promise<Response> {
+    try {
+      const user = await getUserFromRequest(req);
+      
+      if (!user) {
+        return this.unauthorized(res, 'Usuário não autenticado');
+      }
+
+      const page = parseInt(req.query.page as string) || 1;
+      const limit = parseInt(req.query.limit as string) || 10;
+
+      const result = await this.service.getUserWatchHistory(
+        Number(user.id),
+        {
+          limit,
+          offset: (page - 1) * limit
+        }
+      );
+
+      return this.success(res, {
+        data: result.items,
+        total: result.total,
+        page,
+        limit
+      });
+    } catch (error) {
+      console.error(error);
+      return res.status(500).json({ success: false, message: 'Internal Server Error' });
+    }
+  }
+
+  public async getById(req: Request, res: Response): Promise<Response> {
+    try {
+      const { id } = req.params;
+      const user = await getUserFromRequest(req);
+      
+      if (!user) {
+        return this.unauthorized(res, 'Usuário não autenticado');
+      }
+
+      const result = await this.service.getViewingStatus(
+        Number(user.id),
+        parseInt(id)
+      );
+
+      if (!result) {
+        return res.status(404).json({ success: false, message: 'Status de visualização não encontrado' });
+      }
+
+      return res.status(200).json({ success: true, data: result });
+    } catch (error) {
+      console.error(error);
+      return res.status(500).json({ success: false, message: 'Internal Server Error' });
+    }
+  }
+
+  public async create(req: Request, res: Response): Promise<Response> {
+    try {
+      const user = await getUserFromRequest(req);
+      
+      if (!user) {
+        return this.unauthorized(res, 'Usuário não autenticado');
+      }
+
+      const data: UpdateViewingStatusDTO = {
+        userId: Number(user.id),
+        ...req.body
+      };
+
+      const result = await this.service.updateViewingStatus(data);
+      return res.status(201).json({ success: true, data: result });
+    } catch (error) {
+      console.error(error);
+      return res.status(500).json({ success: false, message: 'Internal Server Error' });
+    }
+  }
+
+  public async update(req: Request, res: Response): Promise<Response> {
+    try {
+      const { id } = req.params;
+      const user = await getUserFromRequest(req);
+      
+      if (!user) {
+        return this.unauthorized(res, 'Usuário não autenticado');
+      }
+
+      const data: UpdateViewingStatusDTO = {
+        userId: Number(user.id),
+        videoId: parseInt(id),
+        ...req.body
+      };
+
+      const result = await this.service.updateViewingStatus(data);
+      return res.status(200).json({ success: true, data: result });
+    } catch (error) {
+      console.error(error);
+      return res.status(500).json({ success: false, message: 'Internal Server Error' });
+    }
+  }
+
+  public async delete(req: Request, res: Response): Promise<Response> {
+    try {
+      const { id } = req.params;
+      const user = await getUserFromRequest(req);
+      
+      if (!user) {
+        return this.unauthorized(res, 'Usuário não autenticado');
+      }
+
+      // Implementar lógica de remoção se necessário
+      await this.service.removeViewingStatus(Number(user.id), parseInt(id));
+      return res.status(200).json({ success: true, data: { message: 'Status de visualização removido com sucesso' } });
+    } catch (error) {
+      console.error(error);
+      return res.status(500).json({ success: false, message: 'Internal Server Error' });
+    }
   }
 
   /**
@@ -199,16 +401,14 @@ export class ViewingStatusController {
 
       const limit = req.query.limit ? parseInt(req.query.limit as string) : 10;
       const offset = req.query.offset ? parseInt(req.query.offset as string) : 0;
-      const completed = req.query.completed === 'true' ? true : 
-                       req.query.completed === 'false' ? false : undefined;
-      const contentType = req.query.contentType as string | undefined;
 
-      const result = await this.service.getUserWatchHistory(Number(user.id), {
-        limit,
-        offset,
-        completed,
-        contentType
-      });
+      const result = await this.service.getUserWatchHistory(
+        Number(user.id),
+        {
+          limit,
+          offset
+        }
+      );
       
       return res.status(200).json(result);
     } catch (error) {
@@ -238,7 +438,7 @@ export class ViewingStatusController {
   }
 
   /**
-   * Remove um registro de visualização
+   * Remove o status de visualização de um vídeo
    */
   async removeStatus(req: Request, res: Response): Promise<Response> {
     try {
@@ -251,8 +451,8 @@ export class ViewingStatusController {
       const videoId = parseInt(req.params.videoId);
       const tvShowId = req.query.tvShowId ? parseInt(req.query.tvShowId as string) : undefined;
 
-      if (!videoId && !tvShowId) {
-        return res.status(400).json({ error: 'É necessário informar videoId ou tvShowId' });
+      if (!videoId) {
+        return res.status(400).json({ error: 'É necessário informar videoId' });
       }
 
       await this.service.removeViewingStatus(Number(user.id), videoId, tvShowId);

@@ -100,10 +100,10 @@ const nextConfig = {
               priority: -10,
               reuseExistingChunk: true,
               name(module) {
-                const packageName = module.context.match(
+                const match = module.context.match(
                   /[\\/]node_modules[\\/](.*?)([\\/]|$)/
-                )[1];
-                return `vendor.${packageName.replace('@', '')}`;
+                );
+                return match ? `vendor.${match[1].replace('@', '')}` : 'vendor';
               },
             },
             default: {

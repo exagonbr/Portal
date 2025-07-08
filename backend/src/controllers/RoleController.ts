@@ -7,6 +7,9 @@ const roleRepository = new RoleRepository();
 
 class RoleController extends BaseController<Role> {
     constructor() {
+    const repository = new RoleRepository();
+    super(repository);
+    this.roleRepository = repository;
         super(roleRepository);
     }
 

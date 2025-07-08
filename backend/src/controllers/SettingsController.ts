@@ -1,5 +1,6 @@
 import { Request, Response } from 'express';
-import { SettingsRepository } from '../repositories/SettingsRepository';
+import { SettingsRepository } from '../repositories/SettingsRepository'
+import { Settings } from '../entities/Settings';;
 
 const settingsRepository = new SettingsRepository();
 

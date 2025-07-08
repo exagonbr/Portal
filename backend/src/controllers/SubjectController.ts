@@ -7,6 +7,9 @@ const subjectRepository = new SubjectRepository();
 
 class SubjectController extends BaseController<Subject> {
     constructor() {
+    const repository = new SubjectRepository();
+    super(repository);
+    this.subjectRepository = repository;
         super(subjectRepository);
     }
 

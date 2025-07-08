@@ -16,7 +16,7 @@ import {
 import { Button } from '@/components/ui/Button';
 import Input from '@/components/ui/Input';
 import { Label } from '@/components/ui/label';
-import { Textarea } from '@/components/ui/textarea';
+import Textarea from '@/components/ui/textarea';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Switch } from '@/components/ui/Switch';
 import { Pencil, Trash2, Plus } from 'lucide-react';

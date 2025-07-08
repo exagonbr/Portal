@@ -7,6 +7,9 @@ const certificateRepository = new CertificateRepository();
 
 class CertificateController extends BaseController<Certificate> {
   constructor() {
+    const repository = new CertificateRepository();
+    super(repository);
+    this.certificateRepository = repository;
     super(certificateRepository);
   }
 

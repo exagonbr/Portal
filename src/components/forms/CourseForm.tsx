@@ -4,7 +4,7 @@ import { useState, useEffect } from 'react'
 import { useTheme } from '@/contexts/ThemeContext'
 import Input from '@/components/ui/Input';
 import { Select } from '@/components/ui/Select';
-import { Textarea } from '@/components/ui/Textarea';
+import Textarea from '@/components/ui/textarea'
 import { Button, ButtonGroup } from '@/components/ui/Button';
 
 interface Course {

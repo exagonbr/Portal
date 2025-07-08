@@ -1,4 +1,4 @@
-import { BaseRepository } from './BaseRepository';
+import { ExtendedRepository, PaginatedResult } from './ExtendedRepository';
 import { School } from '../entities/School';
 
 export interface CreateSchoolData extends Omit<School, 'id' | 'dateCreated' | 'lastUpdated' | 'institution' | 'total_students' | 'total_teachers' | 'total_classes' | 'total_managers' | 'active_classes'> {}
@@ -14,9 +14,72 @@ export interface SchoolFilters {
   sortOrder?: 'asc' | 'desc';
 }
 
-export class SchoolRepository extends BaseRepository<School> {
+export class SchoolRepository extends ExtendedRepository<School> {
   constructor() {
     super('schools');
+  }
+  // Implementação do método abstrato findAllPaginated
+  async findAllPaginated(options: {
+    page?: number;
+    limit?: number;
+    search?: string;
+  } = {}): Promise<PaginatedResult<School>> {
+    const { page = 1, limit = 10, search } = options;
+    
+    try {
+      if (this.repository) {
+        let queryBuilder = this.repository.createQueryBuilder('school');
+        
+        // Adicione condições de pesquisa específicas para esta entidade
+        if (search) {
+          queryBuilder = queryBuilder
+            .where('school.name ILIKE :search', { search: `%${search}%` });
+        }
+        
+        const [data, total] = await queryBuilder
+          .skip((page - 1) * limit)
+          .take(limit)
+          .orderBy('school.id', 'DESC')
+          .getManyAndCount();
+          
+        return {
+          data,
+          total,
+          page,
+          limit
+        };
+      } else {
+        // Fallback para query raw
+        const query = `
+          SELECT * FROM school
+          ${search ? `WHERE name ILIKE '%${search}%'` : ''}
+          ORDER BY id DESC
+          LIMIT ${limit} OFFSET ${(page - 1) * limit}
+        `;
+        
+        const countQuery = `
+          SELECT COUNT(*) as total FROM school
+          ${search ? `WHERE name ILIKE '%${search}%'` : ''}
+        `;
+
+        const [data, countResult] = await Promise.all([
+          AppDataSource.query(query),
+          AppDataSource.query(countQuery)
+        ]);
+
+        const total = parseInt(countResult[0].total);
+
+        return {
+          data,
+          total,
+          page,
+          limit
+        };
+      }
+    } catch (error) {
+      console.error(`Erro ao buscar registros de school:`, error);
+      throw error;
+    }
   }
 
   async createSchool(data: CreateSchoolData): Promise<School> {

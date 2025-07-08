@@ -7,6 +7,9 @@ const genreRepository = new GenreRepository();
 
 class GenreController extends BaseController<Genre> {
     constructor() {
+    const repository = new GenreRepository();
+    super(repository);
+    this.genreRepository = repository;
         super(genreRepository);
     }
 

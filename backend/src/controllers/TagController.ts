@@ -7,6 +7,9 @@ const tagRepository = new TagRepository();
 
 class TagController extends BaseController<Tag> {
     constructor() {
+    const repository = new TagRepository();
+    super(repository);
+    this.tagRepository = repository;
         super(tagRepository);
     }
 

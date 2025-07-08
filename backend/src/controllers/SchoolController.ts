@@ -1,12 +1,16 @@
 import { Request, Response } from 'express';
 import { BaseController } from './BaseController';
 import { Unit } from '../entities/Unit';
-import { UnitRepository } from '../repositories/UnitRepository';
+import { UnitRepository } from '../repositories/UnitRepository'
+import { School } from '../entities/School';;
 
 const unitRepository = new UnitRepository();
 
 class SchoolController extends BaseController<Unit> {
   constructor() {
+    const repository = new SchoolRepository();
+    super(repository);
+    this.schoolRepository = repository;
     super(unitRepository);
   }
 

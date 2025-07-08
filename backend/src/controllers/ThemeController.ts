@@ -5,8 +5,12 @@ import { Theme } from '../entities/Theme';
 
 const themeRepository = new ThemeRepository();
 
-class ThemeController extends BaseController<Theme> {
+export class ThemeController extends BaseController<Theme> {
+  private themeRepository: ThemeRepository;
     constructor() {
+    const repository = new ThemeRepository();
+    super(repository);
+    this.themeRepository = repository;
         super(themeRepository);
     }
 

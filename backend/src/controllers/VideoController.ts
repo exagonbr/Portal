@@ -5,8 +5,12 @@ import { VideoRepository } from '../repositories/VideoRepository';
 
 const videoRepository = new VideoRepository();
 
-class VideoController extends BaseController<Video> {
+export class VideoController extends BaseController<Video> {
+  private videoRepository: VideoRepository;
     constructor() {
+    const repository = new VideoRepository();
+    super(repository);
+    this.videoRepository = repository;
         super(videoRepository);
     }
 

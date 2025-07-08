@@ -7,6 +7,9 @@ const educationPeriodRepository = new EducationPeriodRepository();
 
 class EducationPeriodController extends BaseController<EducationPeriod> {
     constructor() {
+    const repository = new EducationPeriodRepository();
+    super(repository);
+    this.educationPeriodRepository = repository;
         super(educationPeriodRepository);
     }
 

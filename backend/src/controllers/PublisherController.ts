@@ -7,6 +7,9 @@ const publisherRepository = new PublisherRepository();
 
 class PublisherController extends BaseController<Publisher> {
     constructor() {
+    const repository = new PublisherRepository();
+    super(repository);
+    this.publisherRepository = repository;
         super(publisherRepository);
     }
 

@@ -1,7 +1,16 @@
 import { Knex } from 'knex';
 import db from '../config/database';
 
-export abstract class BaseRepository<T extends { id: string | number }> {
+// Interface para os métodos comuns entre repositórios
+export interface IRepository<T> {
+  findAll(options?: any): Promise<any>;
+  findById(id: string | number): Promise<T | null>;
+  create(data: Partial<T>): Promise<T>;
+  update(id: string | number, data: Partial<T>): Promise<T | null>;
+  delete(id: string | number): Promise<boolean>;
+}
+
+export abstract class BaseRepository<T extends { id: string | number }> implements IRepository<T> {
   protected db: Knex;
   protected tableName: string;
 
@@ -10,6 +19,7 @@ export abstract class BaseRepository<T extends { id: string | number }> {
     this.tableName = tableName;
   }
 
+  // Método findAll padrão
   async findAll(filters?: Partial<T>, pagination?: { page: number; limit: number }): Promise<T[]> {
     let query = this.db(this.tableName).select('*');
 
@@ -23,6 +33,25 @@ export abstract class BaseRepository<T extends { id: string | number }> {
     }
 
     return query;
+  }
+
+  // Método findAllWithSearch para uso em repositórios específicos
+  async findAllWithSearch(options: {
+    page?: number;
+    limit?: number;
+    search?: string;
+  } = {}): Promise<{ data: T[]; total: number; page: number; limit: number }> {
+    const { page = 1, limit = 10 } = options;
+    
+    const data = await this.findAll({} as Partial<T>, { page, limit });
+    const total = await this.count({} as Partial<T>);
+    
+    return {
+      data,
+      total,
+      page,
+      limit
+    };
   }
 
   async findById(id: string | number): Promise<T | null> {

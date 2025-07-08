@@ -4,7 +4,7 @@ import React, { useState, useEffect } from 'react';
 import Modal from '@/components/ui/Modal';
 import { Button } from '@/components/ui/Button';
 import Input from '@/components/ui/Input';
-import { Textarea } from '@/components/ui/Textarea';
+import Textarea from '@/components/ui/textarea'
 import { Switch } from '@/components/ui/Switch';
 import { useToast } from '@/components/ToastManager';
 import { UnitDto, UnitCreateDto, UnitUpdateDto } from '@/services/unitService';

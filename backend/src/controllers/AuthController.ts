@@ -177,13 +177,14 @@ class AuthController {
     }
   }
 
-  public async googleCallback(req: Request, res: Response): Promise<void> {
+  public async googleCallback(req: Request, res: Response): Promise<Response> {
     try {
       // O req.user pode ser AuthenticatedUser (do Passport) ou User (do requireAuth)
       const payload = req.user as AuthenticatedUser;
       
       if (!payload || !payload.id) {
-        return res.status(401).redirect(`${process.env.FRONTEND_URL || 'https://portal.sabercon.com.br'}/auth/login?error=auth_failed`);
+        res.status(401).redirect(`${process.env.FRONTEND_URL || 'https://portal.sabercon.com.br'}/auth/login?error=auth_failed`);
+        return res.end();
       }
 
       // Buscar usuário no banco de dados
@@ -194,13 +195,15 @@ class AuthController {
       });
 
       if (!user) {
-        return res.status(404).redirect(`${process.env.FRONTEND_URL || 'https://portal.sabercon.com.br'}/auth/login?error=user_not_found`);
+        res.status(404).redirect(`${process.env.FRONTEND_URL || 'https://portal.sabercon.com.br'}/auth/login?error=user_not_found`);
+        return res.end();
       }
 
       // Gerar token JWT para o usuário autenticado via Google OAuth
       const token = this.generateTokenForUser(user);
       if (!token) {
-        return res.status(500).redirect(`${process.env.FRONTEND_URL || 'https://portal.sabercon.com.br'}/auth/login?error=token_generation_failed`);
+        res.status(500).redirect(`${process.env.FRONTEND_URL || 'https://portal.sabercon.com.br'}/auth/login?error=token_generation_failed`);
+        return res.end();
       }
       
       // Usar URL de produção ou fallback para desenvolvimento
@@ -211,12 +214,14 @@ class AuthController {
       console.log('🌐 Frontend URL:', frontendUrl);
       
       res.redirect(`${frontendUrl}/auth/callback?token=${token}`);
+      return res.end();
     } catch (error) {
       console.log('❌ Erro durante autenticação Google:', error);
       
       // Redirecionar para página de erro em caso de falha
       const frontendUrl = 'https://portal.sabercon.com.br';
       res.redirect(`${frontendUrl}/auth/login?error=google_auth_failed`);
+      return res.end();
     }
   }
 

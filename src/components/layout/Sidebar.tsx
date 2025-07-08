@@ -719,6 +719,23 @@ function Sidebar() {
               },
             ],
           },
+          {
+            section: 'Administração',
+            items: [
+              {
+                href: '/admin/activity-sessions',
+                icon: 'monitoring',
+                label: 'Sessões de Atividade',
+                permission: 'canViewInstitutionAnalytics',
+              },
+              {
+                href: '/admin/role-permissions',
+                icon: 'admin_panel_settings',
+                label: 'Permissões',
+                permission: 'canManageInstitutionUsers',
+              },
+            ],
+          },
         ]
         break
 
