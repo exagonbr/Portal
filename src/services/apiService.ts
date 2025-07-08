@@ -81,9 +81,9 @@ async function handleResponse<T>(response: Response): Promise<T> {
     
     try {
       const error = await response.json();
-      throw new Error(error.message || `Erro na API: ${response.statusText}`);
+      throw new Error(error.message || `Erro na API: ${response.status} - ${response.statusText || 'Sem descrição'}`);
     } catch (e) {
-      throw new Error(`Erro na API: ${response.statusText}`);
+      throw new Error(`Erro na API: ${response.status} - ${response.statusText || 'Sem descrição'}`);
     }
   }
   // Retorna um objeto vazio se o status for 204 No Content
