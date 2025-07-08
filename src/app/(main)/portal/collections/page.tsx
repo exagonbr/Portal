@@ -55,7 +55,7 @@ export default function TVShowsManagePage() {
   const [tvShows, setTvShows] = useState<TVShowListItem[]>([])
   const [selectedTvShow, setSelectedTvShow] = useState<TVShowCollection | null>(null)
   const [modules, setModules] = useState<TVShowModuleStructure>({})
-  const [currentView, setCurrentView] = useState<'list' | 'videos'>('list')
+  const [currentView, setCurrentView] = useState<string>('list')
   const [isLoading, setIsLoading] = useState(false)
   const [searchTerm, setSearchTerm] = useState('')
   const [currentPage, setCurrentPage] = useState(1)
@@ -68,6 +68,8 @@ export default function TVShowsManagePage() {
   })
   // Estado para mensagem de mock
   const [mockMessage, setMockMessage] = useState<string | null>(null)
+  // Estado para mensagem de erro
+  const [errorMessage, setErrorMessage] = useState<string | null>(null)
 
   // Estados para filtros
   const [filters, setFilters] = useState({
@@ -169,6 +171,9 @@ export default function TVShowsManagePage() {
   }
 
   useEffect(() => {
+    // Limpar mensagem de erro ao montar o componente
+    setErrorMessage(null)
+    
     loadTvShows().then(() => {
       calculateStats()
     })
@@ -521,7 +526,7 @@ export default function TVShowsManagePage() {
     }
   }
 
-  const loadTvShowDetails = async (id: number) => {
+  const loadTvShowDetails = async (id: number): Promise<boolean> => {
     try {
       setIsLoading(true)
       
@@ -529,39 +534,71 @@ export default function TVShowsManagePage() {
       closeAllPlayers()
       
       const token = getAuthToken()
+      
+      // Verificar se o token existe antes de continuar
+      if (!token) {
+        console.error('❌ Token de autenticação não encontrado - usuário não está logado');
+        setMockMessage("Erro de autenticação: Por favor, faça login novamente.");
+        setErrorMessage("Erro de autenticação: Por favor, faça login novamente.");
+        setIsLoading(false);
+        return false; // Retornar false indicando falha
+      }
+
       const headers: Record<string, string> = {
         'Content-Type': 'application/json',
-      }
-      
-      if (token) {
-        headers['Authorization'] = `Bearer ${token}`
+        'Authorization': `Bearer ${token}`
       }
 
       const url = `/api/tv-shows/${id}`;
       console.log('🔍 Carregando detalhes da coleção:', url);
 
-      const response = await fetchWithRetry(url, { headers }, 3);
-      
-      if (response.ok) {
-        const data = await response.json()
-        if (data.success) {
-          const tvShowData = data.data
-          console.log('✅ Detalhes da coleção carregados:', tvShowData.name);
-          setSelectedTvShow(tvShowData)
-          // Os módulos já vêm incluídos na resposta
-          if (tvShowData.modules) {
-            setModules(tvShowData.modules)
-            console.log('📁 Módulos carregados:', Object.keys(tvShowData.modules).length);
+      try {
+        const response = await fetchWithRetry(url, { headers }, 3);
+        
+        if (response.ok) {
+          const data = await response.json()
+          if (data.success) {
+            const tvShowData = data.data
+            console.log('✅ Detalhes da coleção carregados:', tvShowData.name);
+            setSelectedTvShow(tvShowData)
+            // Os módulos já vêm incluídos na resposta
+            if (tvShowData.modules) {
+              setModules(tvShowData.modules)
+              console.log('📁 Módulos carregados:', Object.keys(tvShowData.modules).length);
+            }
+            return true; // Retornar true indicando sucesso
+          } else {
+            console.error('❌ Resposta da API não contém dados de sucesso:', data);
+            throw new Error('Dados inválidos recebidos da API');
           }
+        } else {
+          if (response.status === 401) {
+            console.error('❌ Erro de autenticação (401) ao carregar detalhes');
+            setMockMessage("Erro de autenticação: Por favor, faça login novamente.");
+            setErrorMessage("Erro de autenticação: Por favor, faça login novamente.");
+          } else if (response.status === 404) {
+            console.error('❌ Coleção não encontrada (404)');
+            setMockMessage("Coleção não encontrada.");
+            setErrorMessage("Coleção não encontrada.");
+          } else {
+            console.error('❌ Erro na resposta da API de detalhes:', response.status, response.statusText);
+            setMockMessage(`Erro ${response.status}: ${response.statusText}`);
+            setErrorMessage(`Erro ${response.status}: ${response.statusText}`);
+          }
+          throw new Error(`HTTP ${response.status}: ${response.statusText}`);
         }
-      } else {
-        console.error('❌ Erro na resposta da API de detalhes:', response.status, response.statusText);
-        throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+      } catch (fetchError) {
+        console.error('❌ Erro na requisição HTTP:', fetchError);
+        setMockMessage("Erro de conexão. Por favor, tente novamente mais tarde.");
+        setErrorMessage("Erro de conexão. Por favor, tente novamente mais tarde.");
+        throw fetchError;
       }
     } catch (error) {
       console.error('❌ Erro ao carregar detalhes do TV Show:', error)
       setSelectedTvShow(null)
       setModules({})
+      setErrorMessage("Erro ao carregar detalhes. Por favor, tente novamente mais tarde.");
+      return false; // Retornar false indicando falha
     } finally {
       setIsLoading(false)
     }
@@ -1538,6 +1575,26 @@ export default function TVShowsManagePage() {
       </div>
     )}
 
+    {/* Alerta de erro */}
+    {errorMessage && (
+      <div className="bg-red-50 border-l-4 border-red-500 p-4 rounded-md animate-fade-in">
+        <div className="flex items-start">
+          <div className="flex-shrink-0">
+            <AlertTriangle className="h-5 w-5 text-red-500" />
+          </div>
+          <div className="ml-3">
+            <p className="text-sm text-red-700">{errorMessage}</p>
+            <button 
+              onClick={() => setErrorMessage(null)} 
+              className="mt-2 text-xs text-red-600 hover:text-red-800 font-medium"
+            >
+              Fechar
+            </button>
+          </div>
+        </div>
+      </div>
+    )}
+
         {/* Cards de Estatísticas - Layout Melhorado */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-6">
           {/* Card Total de Coleções */}
@@ -1802,8 +1859,18 @@ export default function TVShowsManagePage() {
                 key={tvShow.id}
                 className="bg-white rounded-2xl shadow-lg hover:shadow-2xl transition-all duration-500 overflow-hidden cursor-pointer group border border-gray-100 hover:border-blue-200 transform hover:-translate-y-2"
                 onClick={() => {
-                  loadTvShowDetails(tvShow.id)
-                  setCurrentView('videos')
+                  // Limpar mensagem de erro anterior
+                  setErrorMessage(null)
+                  
+                  loadTvShowDetails(tvShow.id).then((success) => {
+                    // Só muda a visualização se a operação foi bem-sucedida
+                    if (success) {
+                      setCurrentView('videos')
+                    }
+                  }).catch((error) => {
+                    console.error('❌ Erro ao carregar detalhes:', error)
+                    // Não muda a visualização em caso de erro
+                  })
                 }}
               >
                 {/* Imagem da coleção - responsiva mas completa */}

@@ -15,19 +15,15 @@ export function ToastManager({ children }: { children: ReactNode }) {
   // Verificar se o componente foi montado no cliente
   useEffect(() => {
     setMounted(true);
-    // Pequeno delay para garantir que tudo esteja inicializado
-    const timer = setTimeout(() => {
-      setIsReady(true);
-    }, 100);
-    
-    return () => clearTimeout(timer);
+    // Inicializar imediatamente para evitar o aviso
+    setIsReady(true);
   }, []);
 
   // Sempre fornecer o contexto, mesmo durante o carregamento
   return (
-    <ToastContext.Provider value={isReady ? toastMethods : undefined}>
+    <ToastContext.Provider value={toastMethods}>
       {children}
-      {mounted && isReady && (
+      {mounted && (
         <ToastContainer 
           toasts={toastMethods.toasts} 
           onRemove={toastMethods.removeToast} 

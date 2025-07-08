@@ -55,6 +55,8 @@ export function suppressHydrationWarnings() {
         'CALLBACK_CREDENTIALS_HANDLER_ERROR', // Erro no handler de credenciais
         'No session found', // Sessão não encontrada (inglês)
         'Failed to fetch session', // Falha ao buscar sessão
+        'Erro na resposta da API de detalhes: 401', // Erro 401 na API de detalhes
+        'Erro de autenticação (401) ao carregar detalhes', // Erro específico que está ocorrendo
       ];
 
       // Se é um aviso de hidratação conhecido, não mostrar
@@ -69,6 +71,12 @@ export function suppressHydrationWarnings() {
 
       // Suprimir avisos de fetch que são específicos de autenticação
       if (message.includes('fetch') && message.includes('auth')) {
+        return;
+      }
+      
+      // Suprimir erros 401 (não autorizados)
+      if ((message.includes('401') || message.includes('Unauthorized')) && 
+          (message.includes('API') || message.includes('fetch'))) {
         return;
       }
     }
