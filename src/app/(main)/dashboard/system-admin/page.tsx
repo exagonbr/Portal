@@ -857,7 +857,7 @@ function SystemAdminDashboardContent() {
           <div className="flex items-center justify-between mb-3 sm:mb-4">
             <h3 className="text-sm sm:text-base font-semibold flex items-center gap-2">
               <Tv className="w-4 h-4 sm:w-5 sm:h-5 text-purple-600" />
-              <span>TV Shows Populares</span>
+              <span>Coleções Populares</span>
             </h3>
             <button className="text-xs text-primary hover:text-primary-dark">
               Ver todos

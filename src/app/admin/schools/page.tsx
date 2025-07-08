@@ -18,7 +18,8 @@ import {
   Filter,
   X,
   Building2,
-  MapPin
+  MapPin,
+  ShieldAlert
 } from 'lucide-react'
 import { unitService } from '@/services/unitService'
 import { institutionService } from '@/services/institutionService'
@@ -27,6 +28,9 @@ import UnitFormModal from '@/components/admin/units/UnitFormModal'
 import { UnitDto, UnitFilter } from '@/types/unit'
 import { InstitutionDto, InstitutionType } from '@/types/institution'
 import { useAuth } from '@/contexts/AuthContext'
+import { UnifiedAuthService } from '@/services/unifiedAuthService'
+import { UserRole } from '@/types/roles'
+import ProtectedRoute from '@/components/auth/ProtectedRoute'
 
 // Interface para estatísticas de unidades
 interface UnitStats {
@@ -40,8 +44,9 @@ export default function AdminUnitsPage() {
   const { showSuccess, showError } = useToast()
   const [loading, setLoading] = useState(true)
   const [refreshing, setRefreshing] = useState(false)
+  const [authError, setAuthError] = useState<string | null>(null)
   const router = useRouter()
-  const { user, isAuthenticated, isLoading } = useAuth()
+  const { user, isAuthenticated, isLoading, refreshUser } = useAuth()
   
   // Dados principais
   const [units, setUnits] = useState<UnitDto[]>([])
@@ -68,17 +73,59 @@ export default function AdminUnitsPage() {
     totalInstitutions: 0,
   })
 
-  // Verificar autenticação
+  // Verificar autenticação e permissões - com tentativa de recuperação
   useEffect(() => {
-    // Aguardar carregamento do contexto de autenticação
-    if (isLoading) return
-    
-    // Verificar se o usuário está autenticado
-    if (!isAuthenticated || !user) {
-      showError("Sessão expirada ou usuário não autenticado")
-      router.push('/auth/login')
+    const checkAuth = async () => {
+      // Aguardar carregamento do contexto de autenticação
+      if (isLoading) return
+      
+      // Verificar se o usuário está autenticado
+      if (!isAuthenticated || !user) {
+        console.log('Usuário não autenticado, tentando recuperar sessão...')
+        
+        // Verificar se temos token armazenado
+        const token = UnifiedAuthService.getAccessToken()
+        
+        if (token) {
+          try {
+            // Tentar atualizar dados do usuário
+            await refreshUser()
+            
+            // Se chegou aqui, conseguiu recuperar a sessão
+            console.log('Sessão recuperada com sucesso')
+          } catch (error) {
+            console.error('Falha ao recuperar sessão:', error)
+            setAuthError('Sua sessão expirou. Redirecionando para login...')
+            
+            // Redirecionar para login após um pequeno delay
+            setTimeout(() => {
+              router.push('/auth/login?redirect=/admin/schools')
+            }, 1500)
+          }
+        } else {
+          setAuthError('Usuário não autenticado. Redirecionando para login...')
+          
+          // Redirecionar para login após um pequeno delay
+          setTimeout(() => {
+            router.push('/auth/login?redirect=/admin/schools')
+          }, 1500)
+        }
+      } else {
+        // Verificar se o usuário tem a role SYSTEM_ADMIN
+        if (user.role !== UserRole.SYSTEM_ADMIN) {
+          console.log('Usuário não tem permissão para acessar esta página')
+          setAuthError('Você não tem permissão para acessar esta página. Apenas administradores do sistema podem gerenciar unidades de ensino.')
+          
+          // Redirecionar para o dashboard após um pequeno delay
+          setTimeout(() => {
+            router.push('/dashboard')
+          }, 3000)
+        }
+      }
     }
-  }, [isAuthenticated, user, isLoading, router, showError])
+    
+    checkAuth()
+  }, [isAuthenticated, user, isLoading, router, refreshUser])
 
   const calculateStats = useCallback((allUnits: UnitDto[], allInstitutions: InstitutionDto[]) => {
     const totalUnits = allUnits.length
@@ -91,6 +138,11 @@ export default function AdminUnitsPage() {
 
   const fetchInstitutions = async () => {
     try {
+      // Verificar autenticação antes de fazer a requisição
+      if (!UnifiedAuthService.isAuthenticated()) {
+        throw new Error('Usuário não autenticado')
+      }
+      
       const response = await institutionService.getInstitutions({
         page: 1,
         limit: 100 // Buscar todas as instituições disponíveis
@@ -103,6 +155,19 @@ export default function AdminUnitsPage() {
         throw new Error('Erro ao buscar instituições');
       }
     } catch (error) {
+      console.error('Erro ao carregar instituições:', error)
+      
+      // Verificar se é erro de autenticação
+      if (error instanceof Error && 
+          (error.message.includes('não autenticado') || 
+           error.message.includes('expirada'))) {
+        setAuthError('Sua sessão expirou. Redirecionando para login...')
+        setTimeout(() => {
+          router.push('/auth/login?redirect=/admin/schools')
+        }, 1500)
+        return []
+      }
+      
       showError("Erro ao carregar instituições.");
       
       // Em caso de erro, definir algumas instituições padrão
@@ -132,8 +197,8 @@ export default function AdminUnitsPage() {
     else setRefreshing(true)
 
     try {
-      // Verificar se o usuário está autenticado antes de fazer a requisição
-      if (!isAuthenticated || !user) {
+      // Verificar autenticação antes de fazer a requisição
+      if (!UnifiedAuthService.isAuthenticated()) {
         throw new Error('Usuário não autenticado')
       }
 
@@ -166,19 +231,28 @@ export default function AdminUnitsPage() {
         if (!showLoadingIndicator) {
           showSuccess("Lista de unidades atualizada!");
         }
+        
+        // Se havia erro de autenticação, limpar
+        if (authError) {
+          setAuthError(null)
+        }
       } else {
         throw new Error('Resposta inválida do serviço de unidades')
       }
     } catch (error) {
-      // Verificar se é erro de autenticação
-      if (error instanceof Error && error.message === 'Usuário não autenticado') {
-        showError("Sessão expirada. Por favor, faça login novamente.")
-        router.push('/auth/login')
-        return
-      }
-      
-      showError("Erro ao carregar unidades.")
       console.error('Erro ao carregar unidades:', error)
+      
+      // Verificar se é erro de autenticação
+      if (error instanceof Error && 
+          (error.message.includes('não autenticado') || 
+           error.message.includes('expirada'))) {
+        setAuthError('Sua sessão expirou. Redirecionando para login...')
+        setTimeout(() => {
+          router.push('/auth/login?redirect=/admin/schools')
+        }, 1500)
+      } else {
+        showError("Erro ao carregar unidades.")
+      }
       
       // Em caso de erro, limpar os dados
       setUnits([])
@@ -196,11 +270,11 @@ export default function AdminUnitsPage() {
   }
 
   useEffect(() => {
-    // Só carrega os dados quando a autenticação estiver verificada
-    if (!isLoading) {
+    // Só carrega os dados quando a autenticação estiver verificada e não houver erro de autenticação
+    if (!isLoading && isAuthenticated && !authError && user?.role === UserRole.SYSTEM_ADMIN) {
       fetchPageData(currentPage, searchQuery, filters)
     }
-  }, [currentPage, isLoading, isAuthenticated])
+  }, [currentPage, isLoading, isAuthenticated, authError, user])
 
   const handleSearch = (e: React.FormEvent) => {
     e.preventDefault()
@@ -243,8 +317,19 @@ export default function AdminUnitsPage() {
       showSuccess("Unidade excluída com sucesso.")
       await fetchPageData(currentPage, searchQuery, filters, false)
     } catch (error) {
-      showError("Erro ao excluir unidade.")
       console.error('Erro ao excluir unidade:', error)
+      
+      // Verificar se é erro de autenticação
+      if (error instanceof Error && 
+          (error.message.includes('não autenticado') || 
+           error.message.includes('expirada'))) {
+        setAuthError('Sua sessão expirou. Redirecionando para login...')
+        setTimeout(() => {
+          router.push('/auth/login?redirect=/admin/schools')
+        }, 1500)
+      } else {
+        showError("Erro ao excluir unidade.")
+      }
     } finally {
       setLoading(false)
     }
@@ -274,7 +359,25 @@ export default function AdminUnitsPage() {
 
   const totalPages = Math.ceil(totalItems / itemsPerPage)
 
+  // Se houver erro de autenticação, mostrar mensagem de erro
+  if (authError) {
+    return (
+      <div className="container mx-auto px-4 py-12 max-w-md">
+        <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-8 text-center">
+          <ShieldAlert className="w-16 h-16 text-red-500 mx-auto mb-4" />
+          <h1 className="text-2xl font-bold text-gray-900 mb-2">Acesso Negado</h1>
+          <p className="text-gray-600 mb-6">{authError}</p>
+          <div className="animate-pulse flex justify-center">
+            <div className="h-2 w-24 bg-blue-200 rounded"></div>
+          </div>
+        </div>
+      </div>
+    )
+  }
+
+  // Usar o componente ProtectedRoute para garantir que apenas SYSTEM_ADMIN pode acessar
   return (
+    <ProtectedRoute requiredRole={UserRole.SYSTEM_ADMIN}>
       <div className="container mx-auto px-4 py-6 max-w-7xl">
         <div className="bg-white rounded-xl shadow-sm border border-gray-200">
           {/* Header */}
@@ -573,5 +676,6 @@ export default function AdminUnitsPage() {
           viewOnly={modalMode === 'view'}
         />
       </div>
+    </ProtectedRoute>
   )
 }

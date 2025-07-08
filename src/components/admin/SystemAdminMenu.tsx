@@ -166,12 +166,6 @@ export const getSystemAdminMenuItems = (): AdminMenuSection[] => {
           permission: 'canManageSystem'
         },
         {
-          href: '/admin/performance',
-          icon: 'speed',
-          label: 'Performance',
-          permission: 'canManageSystem'
-        },
-        {
           href: '/admin/audit',
           icon: 'history',
           label: 'Logs de Auditoria',
@@ -199,29 +193,6 @@ export const getSystemAdminMenuItems = (): AdminMenuSection[] => {
           icon: 'insights',
           label: 'Relatórios de Uso',
           permission: 'canViewSystemAnalytics'
-        }
-      ]
-    },
-    {
-      section: 'Manutenção',
-      items: [
-        {
-          href: '/admin/backup',
-          icon: 'backup',
-          label: 'Backup do Sistema',
-          permission: 'canManageSystem'
-        },
-        {
-          href: '/admin/maintenance',
-          icon: 'build',
-          label: 'Manutenção',
-          permission: 'canManageSystem'
-        },
-        {
-          href: '/admin/updates',
-          icon: 'system_update',
-          label: 'Atualizações',
-          permission: 'canManageSystem'
         }
       ]
     }

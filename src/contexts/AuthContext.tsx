@@ -666,9 +666,75 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     logout,
     handleGoogleLogin,
     refreshUser: async () => {
-      const token = getStoredToken();
-      if (token) {
-        setupUserFromToken(token);
+      console.log('🔄 Tentando atualizar dados do usuário...');
+      try {
+        setIsLoading(true);
+        
+        // Obter token atual
+        const token = getStoredToken();
+        if (!token) {
+          console.warn('❌ Não foi possível atualizar usuário: Token não encontrado');
+          throw new Error('Token não encontrado');
+        }
+        
+        // Verificar se o token é válido
+        const decodedToken = decodeToken(token);
+        if (!decodedToken || !isValidDecodedToken(decodedToken)) {
+          console.warn('❌ Token inválido durante refresh');
+          throw new Error('Token inválido');
+        }
+        
+        // Verificar se o token está expirado
+        const isExpired = decodedToken.exp && decodedToken.exp * 1000 <= Date.now();
+        if (isExpired) {
+          console.warn('❌ Token expirado durante refresh');
+          throw new Error('Token expirado');
+        }
+        
+        // Tentar obter dados do usuário atualizados da API
+        try {
+          const response = await apiClient.get('/auth/me', {
+            headers: {
+              'Authorization': `Bearer ${token}`
+            },
+            timeout: 5000 // Timeout de 5 segundos
+          });
+          
+          if (response.data && response.data.success) {
+            const userData = response.data.data;
+            
+            // Atualizar o usuário com os dados mais recentes
+            const updatedUser: User = {
+              id: userData.id || decodedToken.id,
+              name: userData.name || decodedToken.name,
+              email: userData.email || decodedToken.email,
+              role: userData.role || decodedToken.role,
+              permissions: userData.permissions || decodedToken.permissions || [],
+              institution_name: userData.institution_name || decodedToken.institution_name
+            };
+            
+            setUser(updatedUser);
+            console.log('✅ Dados do usuário atualizados com sucesso da API');
+            return;
+          }
+        } catch (apiError) {
+          console.warn('⚠️ Erro ao buscar dados atualizados do usuário da API:', apiError);
+          // Continuar e tentar usar o token existente
+        }
+        
+        // Se não conseguiu da API, usar o token existente
+        const success = setupUserFromToken(token);
+        if (success) {
+          console.log('✅ Dados do usuário atualizados com sucesso do token');
+        } else {
+          console.warn('❌ Falha ao atualizar dados do usuário do token');
+          throw new Error('Falha ao atualizar dados do usuário');
+        }
+      } catch (error) {
+        console.error('❌ Erro ao atualizar dados do usuário:', error);
+        throw error;
+      } finally {
+        setIsLoading(false);
       }
     },
   };
