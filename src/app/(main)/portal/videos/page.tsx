@@ -408,6 +408,66 @@ export default function VideoPortalPage() {
   const [currentVideo, setCurrentVideo] = useState<any>(null);
   const [currentVideoCollection, setCurrentVideoCollection] = useState<string>('');
 
+  // Função para obter token de autenticação - MOVIDA PARA O INÍCIO
+  const getAuthToken = (): string | null => {
+    if (typeof window === 'undefined') {
+      return null;
+    }
+    
+    // Verificar todas as possíveis fontes de token
+    const possibleKeys = [
+      'accessToken',
+      'authToken',
+      'auth_token',
+      'token',
+      'jwt',
+      'bearerToken'
+    ];
+    
+    // Verificar em localStorage
+    for (const key of possibleKeys) {
+      const value = localStorage.getItem(key);
+      if (value && value.length > 10) {
+        return value;
+      }
+    }
+    
+    // Verificar em sessionStorage
+    for (const key of possibleKeys) {
+      const value = sessionStorage.getItem(key);
+      if (value && value.length > 10) {
+        return value;
+      }
+    }
+    
+    // Verificar cookies
+    const cookies = document.cookie.split(';');
+    for (const cookie of cookies) {
+      const [name, value] = cookie.trim().split('=');
+      if (possibleKeys.includes(name)) {
+        const decodedValue = decodeURIComponent(value);
+        if (decodedValue && decodedValue.length > 10) {
+          return decodedValue;
+        }
+      }
+    }
+    
+    // Último recurso: verificar se existe objeto de usuário com token
+    try {
+      const userStr = localStorage.getItem('user') || sessionStorage.getItem('user');
+      if (userStr) {
+        const userData = JSON.parse(userStr);
+        if (userData && userData.token && userData.token.length > 10) {
+          return userData.token;
+        }
+      }
+    } catch (error) {
+      console.error('Erro ao analisar dados do usuário:', error);
+    }
+    
+    return null;
+  };
+
   // Carregar dados das coleções
   const loadTvShows = async () => {
     try {
@@ -690,6 +750,326 @@ export default function VideoPortalPage() {
     setShowPlayer(true);
   };
 
+  // Nova função para reproduzir toda a coleção TV Show - SIMILAR À TELA DE COLEÇÕES
+  const handlePlayTvShow = async (tvShow: any) => {
+    console.log('🎬 Iniciando reprodução da coleção completa:', {
+      id: tvShow.id,
+      title: tvShow.title || tvShow.name,
+      tv_show: tvShow.tv_show
+    });
+
+    try {
+      // Verificar autenticação
+      const token = getAuthToken();
+      if (!token) {
+        console.error('❌ Token de autenticação não encontrado');
+        alert('❌ Erro de Autenticação\n\nVocê precisa estar logado para assistir aos vídeos.\n\nPor favor, faça login novamente e tente novamente.');
+        return;
+      }
+
+      // Obter ID da coleção
+      const tvShowId = tvShow.tv_show?.id || tvShow.id;
+      if (!tvShowId) {
+        console.error('❌ ID da coleção não encontrado');
+        alert('Erro: ID da coleção não encontrado.');
+        return;
+      }
+
+      console.log(`🔍 Carregando detalhes completos da coleção ID: ${tvShowId}`);
+
+      // Buscar detalhes completos da coleção com todos os vídeos
+      const headers: Record<string, string> = {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${token}`
+      };
+
+      const url = `/api/tv-shows/${tvShowId}`;
+      console.log(`🔗 Fazendo requisição para: ${url}`);
+
+      const response = await fetch(url, { headers });
+
+      if (!response.ok) {
+        console.error(`❌ Erro ${response.status} ao carregar coleção:`, response.statusText);
+        alert(`Erro ${response.status}: Não foi possível carregar a coleção. Tente novamente mais tarde.`);
+        return;
+      }
+
+      const data = await response.json();
+      if (!data.success || !data.data) {
+        console.error('❌ Resposta da API não contém dados válidos:', data);
+        alert('Erro: Dados inválidos recebidos da API.');
+        return;
+      }
+
+      const tvShowData = data.data;
+      const modules = tvShowData.modules || {};
+
+      console.log('✅ Detalhes da coleção carregados:', {
+        name: tvShowData.name,
+        modules: Object.keys(modules).length,
+        totalVideos: Object.values(modules).reduce((sum: number, videos: any) => sum + videos.length, 0)
+      });
+
+      // Verificar se há vídeos
+      if (Object.keys(modules).length === 0) {
+        console.warn('⚠️ Nenhuma sessão encontrada na coleção');
+        alert('Esta coleção ainda não possui vídeos disponíveis.');
+        return;
+      }
+
+      // Obter todos os vídeos de todas as sessões
+      const allVideos: any[] = [];
+      Object.entries(modules)
+        .sort(([a], [b]) => {
+          // Ordenar por número da sessão
+          const numA = parseInt(a.split('_')[1]) || 0;
+          const numB = parseInt(b.split('_')[1]) || 0;
+          return numA - numB;
+        })
+        .forEach(([moduleKey, moduleVideos]: [string, any]) => {
+          if (Array.isArray(moduleVideos)) {
+            allVideos.push(...moduleVideos);
+          }
+        });
+
+      console.log(`📊 Total de vídeos encontrados: ${allVideos.length}`);
+
+      if (allVideos.length === 0) {
+        console.warn('⚠️ Nenhum vídeo encontrado na coleção');
+        alert('Esta coleção não possui vídeos disponíveis para reprodução.');
+        return;
+      }
+
+      // Processar URLs dos vídeos
+      const videosWithUrls = await Promise.all(allVideos.map(async (video, index) => {
+        console.log(`🔍 Processando vídeo ${video.id}: ${video.title}`);
+        
+        // Primeiro: verificar se já tem video_url válida (vinda do backend)
+        if (video.video_url && video.video_url.trim()) {
+          console.log(`✅ Vídeo ${video.id} já tem URL do backend: ${video.video_url}`);
+          return video;
+        }
+        
+        // Segundo: tentar usar dados diretos do arquivo se disponíveis
+        if (video.file_sha256hex && video.file_extension) {
+          const cloudFrontUrl = buildVideoUrl(video.file_sha256hex, video.file_extension);
+          if (cloudFrontUrl) {
+            console.log(`🔗 URL construída com dados diretos para vídeo ${video.id}: ${cloudFrontUrl}`);
+            return { ...video, video_url: cloudFrontUrl };
+          }
+        }
+        
+        // Terceiro: fallback - buscar dados do arquivo usando a API
+        if (video.id) {
+          console.log(`🔍 Fallback: Buscando dados do arquivo via API para vídeo ID: ${video.id}`);
+          const fileData = await fetchVideoFileData(video.id.toString());
+          
+          if (fileData) {
+            const cloudFrontUrl = buildVideoUrl(fileData.sha256hex, fileData.extension);
+            if (cloudFrontUrl) {
+              console.log(`🔗 URL construída via API para vídeo ${video.id}: ${cloudFrontUrl}`);
+              return { ...video, video_url: cloudFrontUrl };
+            }
+          }
+        }
+        
+        console.warn(`⚠️ Não foi possível obter URL para vídeo ${video.id}: ${video.title}`);
+        return video;
+      }));
+
+      const videosWithValidUrls = videosWithUrls.filter(v => v.video_url && v.video_url.trim());
+      
+      console.log('📊 Vídeos processados:', {
+        total: videosWithUrls.length,
+        withUrls: videosWithValidUrls.length,
+        withoutUrls: videosWithUrls.length - videosWithValidUrls.length
+      });
+      
+      if (videosWithValidUrls.length === 0) {
+        console.error('❌ Erro: Nenhum vídeo com URL válida encontrado');
+        alert('Erro: Nenhum vídeo disponível para reprodução. Verifique se os arquivos foram carregados corretamente.');
+        return;
+      }
+
+      // Transformar vídeos para formato do UniversalVideoPlayer
+      const transformedVideos = videosWithValidUrls.map((video, index) => {
+        console.log(`🔄 Transformando vídeo ${video.id}:`, {
+          title: video.title,
+          video_url: video.video_url,
+          hasUrl: !!video.video_url
+        });
+        
+        return {
+          id: video.id.toString(),
+          title: video.title,
+          url: video.video_url || '',
+          type: detectVideoType(video.video_url || '') as 'mp4' | 'youtube' | 'vimeo' | 'direct',
+          thumbnail: video.thumbnail_url,
+          duration: video.duration,
+          description: video.description,
+          episode_number: video.episode_number || index + 1
+        };
+      });
+
+      console.log('🎯 Vídeos transformados:', transformedVideos.map(v => ({
+        id: v.id,
+        title: v.title,
+        url: v.url,
+        type: v.type,
+        hasUrl: !!v.url
+      })));
+
+      console.log('🎬 Configurando player para coleção completa:', {
+        collectionName: tvShowData.name,
+        videosCount: transformedVideos.length,
+        initialIndex: 0
+      });
+
+      // Abrir player com todos os vídeos da coleção
+      const playerVideos = transformedVideos;
+      const collectionName = tvShowData.name;
+      
+      // Usar o UniversalVideoPlayer diretamente
+      const playerElement = document.createElement('div');
+      playerElement.id = 'universal-video-player-modal';
+      playerElement.style.cssText = `
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100vw;
+        height: 100vh;
+        background: black;
+        z-index: 9999;
+      `;
+      
+      document.body.appendChild(playerElement);
+      
+      // Importar e renderizar o UniversalVideoPlayer
+      const { createRoot } = await import('react-dom/client');
+      const React = await import('react');
+      const { default: UniversalVideoPlayer } = await import('@/components/UniversalVideoPlayer');
+      
+      const root = createRoot(playerElement);
+      
+      root.render(
+        React.createElement(UniversalVideoPlayer, {
+          videos: playerVideos,
+          initialVideoIndex: 0,
+          collectionName: collectionName,
+          onClose: () => {
+            root.unmount();
+            document.body.removeChild(playerElement);
+          },
+          autoplay: true
+        })
+      );
+
+      console.log('🎬 Player da coleção completa aberto com sucesso');
+
+    } catch (error) {
+      console.error('❌ Erro ao reproduzir coleção completa:', error);
+      alert('Erro: Não foi possível carregar a coleção. Tente novamente mais tarde.');
+    }
+  };
+
+  // Função auxiliar para construir URL do CloudFront
+  const buildVideoUrl = (sha256hex: string | null, extension: string | null): string | null => {
+    if (!sha256hex || !extension) {
+      console.log('⚠️ buildVideoUrl: sha256hex ou extension ausentes:', { sha256hex, extension });
+      return null;
+    }
+    
+    const cleanExtension = extension.toLowerCase().startsWith('.') ? extension.toLowerCase() : `.${extension.toLowerCase()}`;
+    const url = `https://d26a2wm7tuz2gu.cloudfront.net/upload/${sha256hex}${cleanExtension}`;
+    
+    console.log('🔗 URL construída:', url);
+    return url;
+  };
+
+  // Função auxiliar para buscar dados do arquivo do vídeo
+  const fetchVideoFileData = async (videoId: string): Promise<{sha256hex: string, extension: string} | null> => {
+    try {
+      console.log(`🔍 Iniciando busca de dados para vídeo ID: ${videoId}`);
+      
+      const token = getAuthToken();
+      if (!token) {
+        console.error('❌ Token de autenticação não encontrado');
+        return null;
+      }
+
+      const url = `/api/video-file/${videoId}`;
+      console.log(`🔗 Fazendo requisição para: ${url}`);
+      
+      const response = await fetch(url, {
+        method: 'GET',
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json',
+        },
+      });
+
+      console.log(`📡 Resposta da API:`, {
+        status: response.status,
+        statusText: response.statusText,
+        ok: response.ok
+      });
+
+      if (!response.ok) {
+        console.error(`❌ Erro ${response.status} ao buscar dados do arquivo do vídeo ${videoId}:`, response.statusText);
+        return null;
+      }
+
+      const data = await response.json();
+      console.log(`✅ Dados do arquivo do vídeo ${videoId}:`, data);
+
+      if (data.success && data.data && data.data.sha256hex && data.data.extension) {
+        console.log(`✅ Dados válidos encontrados:`, {
+          sha256hex: data.data.sha256hex,
+          extension: data.data.extension
+        });
+        return {
+          sha256hex: data.data.sha256hex,
+          extension: data.data.extension
+        };
+      } else {
+        console.warn(`⚠️ Dados incompletos recebidos para vídeo ${videoId}:`, data);
+      }
+
+      return null;
+    } catch (error) {
+      console.error(`❌ Erro na requisição para vídeo ${videoId}:`, error);
+      return null;
+    }
+  };
+
+  // Função auxiliar para detectar tipo de vídeo
+  const detectVideoType = (url: string): 'mp4' | 'youtube' | 'vimeo' | 'direct' => {
+    if (!url) {
+      console.log('🔍 URL vazia, usando tipo "direct"');
+      return 'direct';
+    }
+    
+    console.log('🔍 Detectando tipo de vídeo para URL:', url);
+    
+    if (url.includes('youtube.com') || url.includes('youtu.be')) {
+      console.log('✅ Tipo detectado: youtube');
+      return 'youtube';
+    }
+    
+    if (url.includes('vimeo.com')) {
+      console.log('✅ Tipo detectado: vimeo');
+      return 'vimeo';
+    }
+    
+    if (url.endsWith('.mp4') || url.includes('.mp4') || url.includes('cloudfront.net')) {
+      console.log('✅ Tipo detectado: mp4');
+      return 'mp4';
+    }
+    
+    console.log('✅ Tipo detectado: direct (fallback)');
+    return 'direct';
+  };
+
   // Função para fechar o player
   const handleClosePlayer = () => {
     setShowPlayer(false);
@@ -700,7 +1080,7 @@ export default function VideoPortalPage() {
   const groupByCategory = (collections: TVShowCollection[]) => {
     const categories: Record<string, TVShowCollection[]> = {};
     
-    collections.forEach(show => {
+    collections.forEach((show: TVShowCollection) => {
       // Usar o produtor como categoria, ou "Geral" se não houver
       const category = show.producer || 'Geral';
       
@@ -712,65 +1092,6 @@ export default function VideoPortalPage() {
     });
     
     return Object.entries(categories);
-  };
-
-  const getAuthToken = (): string | null => {
-    if (typeof window === 'undefined') {
-      return null;
-    }
-    
-    // Verificar todas as possíveis fontes de token
-    const possibleKeys = [
-      'accessToken',
-      'authToken',
-      'auth_token',
-      'token',
-      'jwt',
-      'bearerToken'
-    ];
-    
-    // Verificar em localStorage
-    for (const key of possibleKeys) {
-      const value = localStorage.getItem(key);
-      if (value && value.length > 10) {
-        return value;
-      }
-    }
-    
-    // Verificar em sessionStorage
-    for (const key of possibleKeys) {
-      const value = sessionStorage.getItem(key);
-      if (value && value.length > 10) {
-        return value;
-      }
-    }
-    
-    // Verificar cookies
-    const cookies = document.cookie.split(';');
-    for (const cookie of cookies) {
-      const [name, value] = cookie.trim().split('=');
-      if (possibleKeys.includes(name)) {
-        const decodedValue = decodeURIComponent(value);
-        if (decodedValue && decodedValue.length > 10) {
-          return decodedValue;
-        }
-      }
-    }
-    
-    // Último recurso: verificar se existe objeto de usuário com token
-    try {
-      const userStr = localStorage.getItem('user') || sessionStorage.getItem('user');
-      if (userStr) {
-        const userData = JSON.parse(userStr);
-        if (userData && userData.token && userData.token.length > 10) {
-          return userData.token;
-        }
-      }
-    } catch (error) {
-      console.error('Erro ao analisar dados do usuário:', error);
-    }
-    
-    return null;
   };
 
   if (loading || isLoading) {
@@ -828,12 +1149,12 @@ export default function VideoPortalPage() {
                   backdrop_image_url: show.backdrop_image_url
                 }
               }))}
-              onPlayVideo={handlePlayVideo}
+              onPlayVideo={handlePlayTvShow}
             />
           )}
 
           {/* Categorized Collections */}
-          {categorizedShows && categorizedShows.length > 0 && categorizedShows.map(([category, shows]) => (
+          {categorizedShows && categorizedShows.length > 0 && categorizedShows.map(([category, shows]: [string, TVShowCollection[]]) => (
             <CarouselRow
               key={category}
               title={category}
@@ -851,7 +1172,7 @@ export default function VideoPortalPage() {
                   backdrop_image_url: show.backdrop_image_url
                 }
               }))}
-              onPlayVideo={handlePlayVideo}
+              onPlayVideo={handlePlayTvShow}
             />
           ))}
 
@@ -873,7 +1194,7 @@ export default function VideoPortalPage() {
                   backdrop_image_url: show.backdrop_image_url
                 }
               }))}
-              onPlayVideo={handlePlayVideo}
+              onPlayVideo={handlePlayTvShow}
             />
           )}
           
