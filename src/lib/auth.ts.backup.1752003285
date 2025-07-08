@@ -19,19 +19,16 @@ function shouldUseSecureCookies(): boolean {
   const nextAuthUrl = process.env.NEXTAUTH_URL || '';
   const isHttps = nextAuthUrl.startsWith('https://');
   
-  // Em produção com HTTPS, sempre usar cookies seguros
-  const shouldUseSecure = isProduction && isHttps;
-  
   // Debug logging
   console.log('🍪 Cookie Security Check:', {
     NODE_ENV: process.env.NODE_ENV,
     NEXTAUTH_URL: nextAuthUrl,
     isProduction,
     isHttps,
-    shouldUseSecure
+    shouldUseSecure: isProduction && isHttps
   });
   
-  return shouldUseSecure;
+  return isProduction && isHttps;
 }
 
 export const authOptions: NextAuthOptions = {
@@ -178,8 +175,7 @@ export const authOptions: NextAuthOptions = {
   // Configuração de cookies adaptativa - usa prefixos seguros apenas quando apropriado
   cookies: (() => {
     const useSecure = shouldUseSecureCookies();
-    // Para produção HTTPS, não definir domínio para cookies __Host- funcionarem corretamente
-    const domain = undefined; // Removido domínio específico para evitar problemas
+    const domain = useSecure ? '.portal.sabercon.com.br' : undefined;
     
     console.log('🍪 Configurando cookies com:', { useSecure, domain });
     
@@ -191,7 +187,7 @@ export const authOptions: NextAuthOptions = {
           sameSite: 'lax',
           path: '/',
           secure: useSecure,
-          domain: domain
+          domain: useSecure ? domain : undefined
         }
       },
       callbackUrl: {
@@ -201,7 +197,7 @@ export const authOptions: NextAuthOptions = {
           sameSite: 'lax',
           path: '/',
           secure: useSecure,
-          domain: domain
+          domain: useSecure ? domain : undefined
         }
       },
       csrfToken: {
@@ -212,7 +208,7 @@ export const authOptions: NextAuthOptions = {
           path: '/',
           secure: useSecure,
           // __Host- prefix requires domain to be undefined
-          domain: undefined
+          domain: useSecure ? undefined : undefined
         }
       },
       state: {
@@ -223,7 +219,7 @@ export const authOptions: NextAuthOptions = {
           path: '/',
           secure: useSecure,
           maxAge: 900, // 15 minutes
-          domain: domain
+          domain: useSecure ? domain : undefined
         }
       },
       nonce: {
@@ -233,7 +229,7 @@ export const authOptions: NextAuthOptions = {
           sameSite: 'lax',
           path: '/',
           secure: useSecure,
-          domain: domain
+          domain: useSecure ? domain : undefined
         }
       }
     };

@@ -31,17 +31,28 @@ const safeKnexConfig = {
 // Função para obter conexão segura
 export async function getSafeConnection(): Promise<Knex> {
   if (knexInstance) {
-    return knexInstance;
+    try {
+      // Testar se a conexão ainda está válida
+      await knexInstance.raw('SELECT 1 as result');
+      return knexInstance;
+    } catch (error) {
+      console.log('Conexão existente falhou, criando nova:', error);
+      knexInstance = null;
+    }
   }
 
   try {
     // Importar knex dinamicamente apenas quando necessário
     const knex = await import('knex');
     knexInstance = knex.default(safeKnexConfig);
+    
+    // Testar a conexão
+    await knexInstance.raw('SELECT 1 as result');
+    
     return knexInstance;
   } catch (error) {
     console.error('Erro ao criar conexão segura:', error);
-    throw new Error('Falha ao conectar com o banco de dados');
+    throw new Error('Falha ao conectar com o banco de dados: ' + (error instanceof Error ? error.message : 'Erro desconhecido'));
   }
 }
 

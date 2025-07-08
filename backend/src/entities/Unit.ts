@@ -38,4 +38,21 @@ export class Unit {
 
   @Column({ name: 'institution_name', type: 'varchar', length: 255, nullable: true })
   institutionName?: string;
+
+  @Column({ type: 'varchar', length: 20, nullable: true })
+  code?: string;
+
+  @Column({ type: 'varchar', length: 255, nullable: true })
+  description?: string;
+
+  @Column({ type: 'varchar', length: 50, default: 'active' })
+  status!: string;
+
+  @Column({ type: 'varchar', length: 50, nullable: true })
+  type?: string;
+
+  // Getter computed para o campo 'active' baseado no status
+  get active(): boolean {
+    return this.status === 'active' && !this.deleted;
+  }
 }

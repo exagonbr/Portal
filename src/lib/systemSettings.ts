@@ -229,7 +229,10 @@ export async function saveSystemSettings(settings: Partial<SystemSettings>): Pro
     
     return true;
   } catch (error) {
-    return false;
+    console.error('❌ Erro em saveSystemSettings:', error);
+    console.error('Stack trace:', error instanceof Error ? error.stack : 'N/A');
+    // Propagar o erro em vez de retornar false silenciosamente
+    throw error;
   }
 }
 

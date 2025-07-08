@@ -5,6 +5,9 @@ export interface CreateUnitData {
   name: string;
   institutionId: number;
   institutionName?: string;
+  type?: string;
+  description?: string;
+  status?: string;
   deleted?: boolean;
   dateCreated?: Date;
   lastUpdated?: Date;
@@ -15,6 +18,8 @@ export interface UpdateUnitData extends Partial<CreateUnitData> {}
 export interface UnitFilters {
   search?: string;
   institution_id?: number;
+  type?: string;
+  active?: boolean;
   deleted?: boolean;
   page?: number;
   limit?: number;
@@ -34,6 +39,7 @@ export class UnitRepository extends BaseRepository<Unit> {
     return this.db(this.tableName)
       .where('name', 'ilike', `%${name}%`)
       .andWhere('deleted', false)
+      .andWhere('status', 'active')
       .orderBy('name', 'asc')
       .limit(limit);
   }
@@ -58,7 +64,8 @@ export class UnitRepository extends BaseRepository<Unit> {
       .where('institution_id', institutionId);
 
     if (!includeInactive) {
-      query.andWhere('deleted', false);
+      query.andWhere('deleted', false)
+           .andWhere('status', 'active');
     }
 
     return query.orderBy('name', 'asc');
@@ -70,6 +77,7 @@ export class UnitRepository extends BaseRepository<Unit> {
   async findActive(limit: number = 100): Promise<Unit[]> {
     return this.db(this.tableName)
       .where('deleted', false)
+      .andWhere('status', 'active')
       .orderBy('name', 'asc')
       .limit(limit);
   }
@@ -96,6 +104,8 @@ export class UnitRepository extends BaseRepository<Unit> {
       sortOrder = 'asc',
       search,
       institution_id,
+      type,
+      active,
       deleted
     } = filters;
 
@@ -111,7 +121,8 @@ export class UnitRepository extends BaseRepository<Unit> {
       if (search) {
         q.where(function(this: any) {
           this.where('name', 'ilike', `%${search}%`)
-              .orWhere('institution_name', 'ilike', `%${search}%`);
+              .orWhere('institution_name', 'ilike', `%${search}%`)
+              .orWhere('description', 'ilike', `%${search}%`);
         });
       }
 
@@ -120,7 +131,23 @@ export class UnitRepository extends BaseRepository<Unit> {
         q.where('institution_id', institution_id);
       }
 
-      // Filtro por status (deleted)
+      // Filtro por tipo
+      if (type) {
+        q.where('type', 'ilike', type);
+      }
+
+      // Filtro por status ativo
+      if (active !== undefined) {
+        if (active) {
+          q.where('status', 'active').andWhere('deleted', false);
+        } else {
+          q.where(function(this: any) {
+            this.where('status', '!=', 'active').orWhere('deleted', true);
+          });
+        }
+      }
+
+      // Filtro por status excluído
       if (deleted !== undefined) {
         q.where('deleted', deleted);
       }
@@ -132,7 +159,7 @@ export class UnitRepository extends BaseRepository<Unit> {
     applyFilters(countQuery);
     
     // Aplicar ordenação e paginação na query principal
-    const validSortColumns = ['id', 'name', 'institution_name', 'date_created', 'last_updated'];
+    const validSortColumns = ['id', 'name', 'institution_name', 'type', 'status', 'date_created', 'last_updated'];
     const safeSortBy = validSortColumns.includes(sortBy as string) ? sortBy : 'name';
     
     query
@@ -158,9 +185,9 @@ export class UnitRepository extends BaseRepository<Unit> {
         return null;
       }
 
-      const newDeletedStatus = !unit.deleted;
+      const newStatus = unit.status === 'active' ? 'inactive' : 'active';
       const updatedUnit = await this.update(id, { 
-        deleted: newDeletedStatus,
+        status: newStatus,
         lastUpdated: new Date()
       } as UpdateUnitData);
       
@@ -180,7 +207,8 @@ export class UnitRepository extends BaseRepository<Unit> {
       ...data,
       date_created: data.dateCreated || now,
       last_updated: data.lastUpdated || now,
-      deleted: data.deleted || false
+      deleted: data.deleted || false,
+      status: data.status || 'active'
     };
 
     const [result] = await this.db(this.tableName)
@@ -214,23 +242,36 @@ export class UnitRepository extends BaseRepository<Unit> {
     total: number;
     active: number;
     inactive: number;
+    byType: { type: string; count: number }[];
     byInstitution: { institution_id: number; institution_name: string; count: number }[];
   }> {
-    const [totalResult, activeResult, inactiveResult, byInstitutionResult] = await Promise.all([
+    const [totalResult, activeResult, inactiveResult, byTypeResult, byInstitutionResult] = await Promise.all([
       this.db(this.tableName).count('* as count').first(),
-      this.db(this.tableName).where('deleted', false).count('* as count').first(),
-      this.db(this.tableName).where('deleted', true).count('* as count').first(),
+      this.db(this.tableName).where('deleted', false).andWhere('status', 'active').count('* as count').first(),
+      this.db(this.tableName).where(function(this: any) {
+        this.where('deleted', true).orWhere('status', '!=', 'active');
+      }).count('* as count').first(),
+      this.db(this.tableName)
+        .select('type')
+        .count('* as count')
+        .whereNotNull('type')
+        .groupBy('type')
+        .orderBy('count', 'desc'),
       this.db(this.tableName)
         .select('institution_id', 'institution_name')
         .count('* as count')
         .groupBy('institution_id', 'institution_name')
         .orderBy('count', 'desc')
-    ]) as [any, any, any, any[]];
+    ]) as [any, any, any, any[], any[]];
 
     return {
       total: parseInt(totalResult?.count as string, 10) || 0,
       active: parseInt(activeResult?.count as string, 10) || 0,
       inactive: parseInt(inactiveResult?.count as string, 10) || 0,
+      byType: byTypeResult.map(item => ({
+        type: String(item.type || 'N/A'),
+        count: parseInt(item.count as string, 10)
+      })),
       byInstitution: byInstitutionResult.map(item => ({
         institution_id: parseInt(item.institution_id as string, 10),
         institution_name: String(item.institution_name || 'N/A'),

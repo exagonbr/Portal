@@ -4,27 +4,14 @@ import React, { useState, useEffect } from 'react';
 import Modal from '@/components/ui/Modal';
 import { Button } from '@/components/ui/Button';
 import Input from '@/components/ui/Input';
-import { Select } from '@/components/ui/Select';
 import { Textarea } from '@/components/ui/Textarea';
 import { Switch } from '@/components/ui/Switch';
 import { useToast } from '@/components/ToastManager';
-import { UnitResponseDto, UnitCreateDto, UnitUpdateDto } from '@/types/api';
-// Mock do institutionService para remover a dependência externa
-const mockInstitutionService = {
-  getAll: async (): Promise<any[]> => {
-    console.log('Mock Institution: Buscando todas as instituições...');
-    await new Promise(resolve => setTimeout(resolve, 100)); // Simula demora da rede
-    return [
-      { id: 'inst-1', name: 'Escola SaberCon Digital' },
-      { id: 'inst-2', name: 'Colégio Exagon Inovação' },
-      { id: 'inst-3', name: 'Centro Educacional DevStrade' },
-    ];
-  }
-};
-const institutionService = mockInstitutionService;
+import { UnitDto, UnitCreateDto, UnitUpdateDto } from '@/services/unitService';
+import { institutionService } from '@/services/institutionService';
 
 interface UnitEditModalProps {
-  unit?: UnitResponseDto;
+  unit?: UnitDto;
   onSave: (data: UnitCreateDto | UnitUpdateDto) => Promise<void>;
   onClose: () => void;
 }
@@ -45,8 +32,8 @@ export function UnitEditModal({ unit, onSave, onClose }: UnitEditModalProps) {
     if (unit) {
       setFormData({
         name: unit.name,
-        description: unit.description,
-        type: unit.type,
+        description: unit.description || '',
+        type: unit.type || '',
         institution_id: unit.institution_id,
         active: unit.active
       });
@@ -106,16 +93,16 @@ export function UnitEditModal({ unit, onSave, onClose }: UnitEditModalProps) {
         <div>
           <label className="block text-sm font-medium text-gray-700">Descrição</label>
           <Textarea
-            value={formData.description}
+            value={formData.description || ''}
             onChange={(e) => setFormData({ ...formData, description: e.target.value })}
-            required
+            placeholder="Descrição opcional da unidade..."
           />
         </div>
 
         <div>
           <label className="block text-sm font-medium text-gray-700">Tipo</label>
           <select
-            value={formData.type}
+            value={formData.type || ''}
             onChange={(e) => setFormData({ ...formData, type: e.target.value })}
             required
             className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
@@ -147,7 +134,7 @@ export function UnitEditModal({ unit, onSave, onClose }: UnitEditModalProps) {
 
         <div className="flex items-center">
           <Switch
-            checked={formData.active}
+            checked={formData.active || false}
             onChange={(checked) => setFormData({ ...formData, active: checked })}
           />
           <span className="ml-2 text-sm text-gray-700">Ativo</span>

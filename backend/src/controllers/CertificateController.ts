@@ -72,7 +72,7 @@ class CertificateController extends BaseController<Certificate> {
   }
 
   /**
-   * Busca pública de certificados por CPF (últimos 3 dígitos) ou código de licença
+   * Busca pública de certificados por CPF (últimos 4 dígitos) ou código de licença
    */
   async searchPublic(req: Request, res: Response) {
     try {
@@ -82,15 +82,15 @@ class CertificateController extends BaseController<Certificate> {
       if (!cpf_last_digits && !license_code) {
         return res.status(400).json({
           success: false,
-          message: 'É necessário informar o código da licença ou os últimos 3 dígitos do CPF'
+          message: 'É necessário informar o código da licença ou os últimos 4 dígitos do CPF'
         });
       }
 
       // Validar formato dos últimos dígitos do CPF
-      if (cpf_last_digits && !/^\d{3}$/.test(cpf_last_digits as string)) {
+      if (cpf_last_digits && !/^\d{4}$/.test(cpf_last_digits as string)) {
         return res.status(400).json({
           success: false,
-          message: 'Os últimos dígitos do CPF devem conter exatamente 3 números'
+          message: 'Os últimos dígitos do CPF devem conter exatamente 4 números'
         });
       }
 
@@ -101,8 +101,17 @@ class CertificateController extends BaseController<Certificate> {
         whereClause = 'license_code = ?';
         params = [license_code];
       } else if (cpf_last_digits) {
-        whereClause = 'RIGHT(document, 3) = ?';
-        params = [cpf_last_digits];
+        // Buscar pelos últimos 4 dígitos do CPF, considerando diferentes formatos
+        // 1. Busca removendo formatação (pontos, hífens, espaços)
+        // 2. Busca também com formatação (ex: -90 para 6890)
+        const digits = cpf_last_digits as string;
+        const lastTwoDigits = digits.slice(-2); // Últimos 2 dígitos (ex: 90)
+        
+        whereClause = `(
+          RIGHT(REPLACE(REPLACE(REPLACE(document, '.', ''), '-', ''), ' ', ''), 4) = ? 
+          OR document LIKE ?
+        )`;
+        params = [digits, `%-${lastTwoDigits}`];
       }
 
       const certificates = await certificateRepository.findByCondition(whereClause, params);

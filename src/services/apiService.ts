@@ -4,6 +4,119 @@ import { UnifiedAuthService } from '@/services/unifiedAuthService';
 
 const API_BASE_URL = '/api';
 
+// Configurações de timeout e retry
+const API_CONFIG = {
+  DEFAULT_TIMEOUT: 30000, // 30 segundos
+  RETRY_ATTEMPTS: 3,
+  RETRY_DELAY: 1000, // 1 segundo
+  RETRY_STATUS_CODES: [408, 429, 500, 502, 503, 504], // Códigos que devem ser retentados
+};
+
+/**
+ * Cria um fetch com timeout configurável
+ */
+const fetchWithTimeout = async (
+  url: string,
+  options: RequestInit = {},
+  timeout: number = API_CONFIG.DEFAULT_TIMEOUT
+): Promise<Response> => {
+  const controller = new AbortController();
+  const timeoutId = setTimeout(() => controller.abort(), timeout);
+
+  try {
+    const response = await fetch(url, {
+      ...options,
+      signal: controller.signal,
+    });
+    clearTimeout(timeoutId);
+    return response;
+  } catch (error) {
+    clearTimeout(timeoutId);
+    if (error instanceof Error && error.name === 'AbortError') {
+      throw new Error(`Timeout após ${timeout}ms - Servidor demorou muito para responder`);
+    }
+    throw error;
+  }
+};
+
+/**
+ * Implementa retry automático para requisições
+ */
+const fetchWithRetry = async (
+  url: string,
+  options: RequestInit = {},
+  timeout: number = API_CONFIG.DEFAULT_TIMEOUT,
+  maxRetries: number = API_CONFIG.RETRY_ATTEMPTS
+): Promise<Response> => {
+  let lastError: Error | null = null;
+  
+  for (let attempt = 1; attempt <= maxRetries; attempt++) {
+    try {
+      console.log(`🔄 [API] Tentativa ${attempt}/${maxRetries} para ${url}`);
+      
+      const response = await fetchWithTimeout(url, options, timeout);
+      
+      // Se a resposta foi bem-sucedida, retornar
+      if (response.ok) {
+        if (attempt > 1) {
+          console.log(`✅ [API] Sucesso na tentativa ${attempt} para ${url}`);
+        }
+        return response;
+      }
+      
+      // Se é um erro que deve ser retentado e ainda há tentativas
+      if (API_CONFIG.RETRY_STATUS_CODES.includes(response.status) && attempt < maxRetries) {
+        console.warn(`⚠️ [API] Erro ${response.status} na tentativa ${attempt}, tentando novamente...`);
+        await new Promise(resolve => setTimeout(resolve, API_CONFIG.RETRY_DELAY * attempt));
+        continue;
+      }
+      
+      // Se não deve ser retentado ou é a última tentativa, retornar a resposta
+      return response;
+      
+    } catch (error) {
+      lastError = error instanceof Error ? error : new Error(String(error));
+      
+      // Se é a última tentativa, re-throw o erro
+      if (attempt >= maxRetries) {
+        console.error(`❌ [API] Todas as ${maxRetries} tentativas falharam para ${url}:`, lastError);
+        throw lastError;
+      }
+      
+      // Se é erro de timeout ou conexão, tentar novamente
+      if (lastError.message.includes('Timeout') || lastError.message.includes('fetch')) {
+        console.warn(`⚠️ [API] ${lastError.message} na tentativa ${attempt}, tentando novamente em ${API_CONFIG.RETRY_DELAY * attempt}ms...`);
+        await new Promise(resolve => setTimeout(resolve, API_CONFIG.RETRY_DELAY * attempt));
+        continue;
+      }
+      
+      // Para outros tipos de erro, não tentar novamente
+      throw lastError;
+    }
+  }
+  
+  throw lastError || new Error('Falha desconhecida após todas as tentativas');
+};
+
+/**
+ * Retorna uma mensagem de erro amigável baseada no status HTTP
+ */
+const getErrorMessage = (status: number, statusText?: string): string => {
+  const messages: Record<number, string> = {
+    400: 'Dados inválidos enviados para o servidor',
+    403: 'Acesso negado - você não tem permissão para essa operação',
+    404: 'Recurso não encontrado',
+    408: 'Tempo limite esgotado - tente novamente',
+    429: 'Muitas requisições - aguarde um pouco antes de tentar novamente',
+    500: 'Erro interno do servidor',
+    502: 'Servidor temporariamente indisponível',
+    503: 'Serviço temporariamente indisponível',
+    504: 'Servidor demorou muito para responder - tente novamente',
+  };
+  
+  return messages[status] || `Erro na API: ${status} - ${statusText || 'Sem descrição'}`;
+};
+
 /**
  * Retorna os headers padrões para as requisições à API.
  * Inclui o token de autenticação se estiver disponível.
@@ -87,11 +200,25 @@ async function handleResponse<T>(response: Response): Promise<T> {
       throw new Error('Sessão expirada ou usuário não autenticado');
     }
     
+    // Tratamento especial para erro 504 (Gateway Timeout)
+    if (response.status === 504) {
+      console.error('❌ [API] Erro 504: Gateway Timeout - Servidor demorou muito para responder');
+      throw new Error('Servidor demorou muito para responder. Tente novamente em alguns momentos.');
+    }
+    
+    // Tratamento para outros erros 5xx (Erros do servidor)
+    if (response.status >= 500) {
+      console.error(`❌ [API] Erro ${response.status}: Erro interno do servidor`);
+      throw new Error(`Erro interno do servidor (${response.status}). Tente novamente mais tarde.`);
+    }
+    
     try {
       const error = await response.json();
-      throw new Error(error.message || `Erro na API: ${response.status} - ${response.statusText || 'Sem descrição'}`);
+      throw new Error(error.message || getErrorMessage(response.status, response.statusText));
     } catch (e) {
-      throw new Error(`Erro na API: ${response.status} - ${response.statusText || 'Sem descrição'}`);
+      // Se não conseguir fazer parse do JSON, usar mensagem amigável
+      const errorMessage = getErrorMessage(response.status, response.statusText);
+      throw new Error(errorMessage);
     }
   }
   // Retorna um objeto vazio se o status for 204 No Content
@@ -129,13 +256,13 @@ export const apiGet = async <T>(endpoint: string, params?: Record<string, any>):
   }
   
   try {
-    const response = await fetch(url, {
+    const response = await fetchWithRetry(url, {
       headers: getHeaders(),
       credentials: 'include',
     });
     return handleResponse<T>(response);
   } catch (error) {
-    console.error(`Erro ao fazer requisição GET para ${endpoint}:`, error);
+    console.error(`❌ [API] Erro ao fazer requisição GET para ${endpoint}:`, error);
     throw error;
   }
 };
@@ -148,7 +275,7 @@ export const apiGet = async <T>(endpoint: string, params?: Record<string, any>):
  */
 export const apiPost = async <T>(endpoint: string, data: any): Promise<T> => {
   try {
-    const response = await fetch(`${API_BASE_URL}${endpoint}`, {
+    const response = await fetchWithRetry(`${API_BASE_URL}${endpoint}`, {
       method: 'POST',
       headers: getHeaders(),
       credentials: 'include',
@@ -156,7 +283,7 @@ export const apiPost = async <T>(endpoint: string, data: any): Promise<T> => {
     });
     return handleResponse<T>(response);
   } catch (error) {
-    console.error(`Erro ao fazer requisição POST para ${endpoint}:`, error);
+    console.error(`❌ [API] Erro ao fazer requisição POST para ${endpoint}:`, error);
     throw error;
   }
 };
@@ -169,7 +296,7 @@ export const apiPost = async <T>(endpoint: string, data: any): Promise<T> => {
  */
 export const apiPut = async <T>(endpoint: string, data: any): Promise<T> => {
   try {
-    const response = await fetch(`${API_BASE_URL}${endpoint}`, {
+    const response = await fetchWithRetry(`${API_BASE_URL}${endpoint}`, {
       method: 'PUT',
       headers: getHeaders(),
       credentials: 'include',
@@ -177,7 +304,7 @@ export const apiPut = async <T>(endpoint: string, data: any): Promise<T> => {
     });
     return handleResponse<T>(response);
   } catch (error) {
-    console.error(`Erro ao fazer requisição PUT para ${endpoint}:`, error);
+    console.error(`❌ [API] Erro ao fazer requisição PUT para ${endpoint}:`, error);
     throw error;
   }
 };
@@ -190,7 +317,7 @@ export const apiPut = async <T>(endpoint: string, data: any): Promise<T> => {
  */
 export const apiPatch = async <T>(endpoint: string, data: any): Promise<T> => {
   try {
-    const response = await fetch(`${API_BASE_URL}${endpoint}`, {
+    const response = await fetchWithRetry(`${API_BASE_URL}${endpoint}`, {
       method: 'PATCH',
       headers: getHeaders(),
       credentials: 'include',
@@ -198,7 +325,7 @@ export const apiPatch = async <T>(endpoint: string, data: any): Promise<T> => {
     });
     return handleResponse<T>(response);
   } catch (error) {
-    console.error(`Erro ao fazer requisição PATCH para ${endpoint}:`, error);
+    console.error(`❌ [API] Erro ao fazer requisição PATCH para ${endpoint}:`, error);
     throw error;
   }
 };
@@ -211,14 +338,14 @@ export const apiPatch = async <T>(endpoint: string, data: any): Promise<T> => {
  */
 export const apiDelete = async (endpoint: string): Promise<void> => {
   try {
-    const response = await fetch(`${API_BASE_URL}${endpoint}`, {
+    const response = await fetchWithRetry(`${API_BASE_URL}${endpoint}`, {
       method: 'DELETE',
       headers: getHeaders(),
       credentials: 'include',
     });
     await handleResponse<void>(response);
   } catch (error) {
-    console.error(`Erro ao fazer requisição DELETE para ${endpoint}:`, error);
+    console.error(`❌ [API] Erro ao fazer requisição DELETE para ${endpoint}:`, error);
     throw error;
   }
 };

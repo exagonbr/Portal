@@ -129,7 +129,21 @@ export default function AdminCertificatesPage() {
       }
     } catch (error) {
       console.error('Erro ao carregar certificados:', error);
-      showError("Erro ao carregar certificados.");
+      
+      // Tratamento específico para diferentes tipos de erro
+      if (error instanceof Error) {
+        if (error.message.includes('Timeout') || error.message.includes('504')) {
+          showError("O servidor está demorando para responder. Tente novamente em alguns momentos.");
+        } else if (error.message.includes('Servidor demorou muito')) {
+          showError("Servidor demorou muito para responder. Tente novamente.");
+        } else if (error.message.includes('Network') || error.message.includes('fetch')) {
+          showError("Problema de conexão. Verifique sua internet e tente novamente.");
+        } else {
+          showError(`Erro ao carregar certificados: ${error.message}`);
+        }
+      } else {
+        showError("Erro ao carregar certificados.");
+      }
     } finally {
       setLoading(false);
       setRefreshing(false);

@@ -21,6 +21,8 @@ class UnitController extends BaseController<Unit> {
                 limit = 10,
                 search,
                 institution_id,
+                type,
+                active,
                 deleted,
                 sortBy = 'name',
                 sortOrder = 'asc'
@@ -30,6 +32,7 @@ class UnitController extends BaseController<Unit> {
             const pageNum = parseInt(page as string, 10);
             const limitNum = parseInt(limit as string, 10);
             const institutionIdNum = institution_id ? parseInt(institution_id as string, 10) : undefined;
+            const activeBool = active === 'true' ? true : active === 'false' ? false : undefined;
             const deletedBool = deleted === 'true' ? true : deleted === 'false' ? false : undefined;
 
             const filters = {
@@ -37,6 +40,8 @@ class UnitController extends BaseController<Unit> {
                 limit: limitNum,
                 search: search as string,
                 institution_id: institutionIdNum,
+                type: type as string,
+                active: activeBool,
                 deleted: deletedBool,
                 sortBy: sortBy as keyof Unit,
                 sortOrder: sortOrder as 'asc' | 'desc'
@@ -127,6 +132,9 @@ class UnitController extends BaseController<Unit> {
                 name: createDto.name,
                 institutionId: parseInt(createDto.institution_id),
                 institutionName: createDto.institution_name,
+                type: createDto.type,
+                description: createDto.description,
+                status: createDto.active !== false ? 'active' : 'inactive',
                 deleted: createDto.deleted || false,
                 dateCreated: new Date(),
                 lastUpdated: new Date()
@@ -193,6 +201,9 @@ class UnitController extends BaseController<Unit> {
             if (updateDto.name) updateData.name = updateDto.name;
             if (updateDto.institution_id) updateData.institutionId = parseInt(updateDto.institution_id);
             if (updateDto.institution_name) updateData.institutionName = updateDto.institution_name;
+            if (updateDto.type) updateData.type = updateDto.type;
+            if (updateDto.description !== undefined) updateData.description = updateDto.description;
+            if (updateDto.active !== undefined) updateData.status = updateDto.active ? 'active' : 'inactive';
             if (updateDto.deleted !== undefined) updateData.deleted = updateDto.deleted;
 
             const updatedUnit = await unitRepository.update(id, updateData);
@@ -391,7 +402,7 @@ class UnitController extends BaseController<Unit> {
             return res.status(200).json({
                 success: true,
                 data: mappedUnit,
-                message: `Unidade ${updatedUnit.deleted ? 'desativada' : 'ativada'} com sucesso`
+                message: `Unidade ${updatedUnit.active ? 'ativada' : 'desativada'} com sucesso`
             });
         } catch (error) {
             console.error(`Error in toggleStatus unit: ${error}`);
@@ -416,6 +427,9 @@ class UnitController extends BaseController<Unit> {
             last_updated: unit.lastUpdated?.toISOString(),
             name: unit.name,
             institution_name: unit.institutionName,
+            type: unit.type,
+            description: unit.description,
+            active: unit.active,
             created_at: unit.dateCreated?.toISOString(),
             updated_at: unit.lastUpdated?.toISOString()
         };

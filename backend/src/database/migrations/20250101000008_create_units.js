@@ -14,6 +14,7 @@ exports.up = async function(knex) {
     table.string('name', 255).notNullable();
     table.string('institution_name', 255).nullable();
     table.string('code', 20).nullable();
+    table.string('type', 50).nullable();
     table.string('description', 255).nullable();
     table.string('status', 50).defaultTo('active');
     table.timestamps(true, true);
@@ -22,6 +23,7 @@ exports.up = async function(knex) {
     table.index('institution_id');
     table.index('name');
     table.index('code');
+    table.index('type');
     table.index('status');
     table.index('deleted');
   });

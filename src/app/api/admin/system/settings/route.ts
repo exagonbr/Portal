@@ -217,11 +217,16 @@ export async function PUT(request: NextRequest) {
     const updates = await request.json();
 
     // Salvar configurações no banco de dados
-    const success = await saveSystemSettings(updates);
-    
-    if (!success) {
+    try {
+      await saveSystemSettings(updates);
+    } catch (dbError) {
+      console.error('Erro específico do banco de dados:', dbError);
       return NextResponse.json(
-        { error: 'Erro ao salvar configurações no banco de dados' },
+        { 
+          error: 'Erro ao salvar configurações no banco de dados',
+          details: dbError instanceof Error ? dbError.message : 'Erro desconhecido no banco',
+          timestamp: new Date().toISOString()
+        },
         { status: 500 }
       );
     }
@@ -264,8 +269,13 @@ export async function PUT(request: NextRequest) {
 
   } catch (error) {
     console.error('Erro ao salvar configurações:', error);
+    
     return NextResponse.json(
-      { error: 'Erro ao salvar configurações do sistema' },
+      { 
+        error: 'Erro ao salvar configurações do sistema',
+        details: error instanceof Error ? error.message : 'Erro desconhecido',
+        timestamp: new Date().toISOString()
+      },
       { status: 500 }
     );
   }

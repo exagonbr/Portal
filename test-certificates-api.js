@@ -4,7 +4,7 @@ async function testCertificatesAPI() {
   console.log('🧪 Testando API de Certificados...');
   console.log('==================================================');
 
-  const testUrl = 'https://portal.sabercon.com.br/api/certificates/search?cpf_last_digits=890';
+  const testUrl = 'https://portal.sabercon.com.br/api/certificates/search?cpf_last_digits=6890';
   
   try {
     console.log(`🔍 Testando: GET ${testUrl}`);

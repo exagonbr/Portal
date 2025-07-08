@@ -1,214 +1,560 @@
 'use client'
 
-import React, { useState, useEffect } from 'react';
-import { useAuth } from '@/contexts/AuthContext';
-import GenericCRUD from '@/components/crud/GenericCRUD';
-import { Button } from '@/components/ui/Button';
-import Input from '@/components/ui/Input';
-import { Select } from '@/components/ui/Select';
-import { UnitEditModal } from '@/components/UnitEditModal';
-import { useToast } from '@/components/ToastManager';
-import { unitService, UnitFilters } from '@/services/unitService';
-import { UnitResponseDto, UnitCreateDto, UnitUpdateDto } from '@/types/api';
-import { institutionService } from '@/services/institutionService';
+import { useState, useEffect } from 'react'
+import { useRouter } from 'next/navigation'
+import { unitService, UnitDto, UnitFilters } from '@/services/unitService'
+import { institutionService } from '@/services/institutionService'
+import { useToast } from '@/components/ToastManager'
+import { UnitEditModal } from '@/components/UnitEditModal'
+import { Badge } from '@/components/ui/Badge'
+import { Button } from '@/components/ui/Button'
+import { Plus, Search, Edit, Trash2, Eye, Building2, School, Users, CheckCircle, XCircle, MapPin, Phone, Mail, RefreshCw } from 'lucide-react'
+import { StatCard } from '@/components/ui/StandardCard'
 
-export default function AdminUnitsPage() {
-  const { user } = useAuth();
-  const { showSuccess, showError } = useToast();
+// Interface para estatísticas das unidades
+interface UnitStats {
+  totalUnits: number
+  activeUnits: number
+  totalByType: {
+    [key: string]: number
+  }
+}
+
+export default function ManageUnits() {
+  const router = useRouter()
+  const { showSuccess, showError, showWarning } = useToast()
+  const [loading, setLoading] = useState(true)
+  const [refreshing, setRefreshing] = useState(false)
+  const [units, setUnits] = useState<UnitDto[]>([])
+  const [institutions, setInstitutions] = useState<{ id: string; name: string }[]>([])
+  const [totalItems, setTotalItems] = useState(0)
+  const [currentPage, setCurrentPage] = useState(1)
+  const [itemsPerPage] = useState(10)
+  const [searchQuery, setSearchQuery] = useState('')
+  const [typeFilter, setTypeFilter] = useState('')
+  const [institutionFilter, setInstitutionFilter] = useState('')
+  const [statusFilter, setStatusFilter] = useState('')
   
-  // State
-  const [isEditModalOpen, setIsEditModalOpen] = useState(false);
-  const [isAddModalOpen, setIsAddModalOpen] = useState(false);
-  const [selectedUnit, setSelectedUnit] = useState<UnitResponseDto | null>(null);
-  const [currentPage, setCurrentPage] = useState(1);
-  const [filters, setFilters] = useState<UnitFilters>({
-    search: '',
-    type: '',
-    active: undefined,
-    institution_id: ''
-  });
-  const [units, setUnits] = useState<UnitResponseDto[]>([]);
-  const [totalItems, setTotalItems] = useState(0);
-  const [isLoading, setIsLoading] = useState(false);
-  const [institutions, setInstitutions] = useState<{ id: string; name: string }[]>([]);
+  // Estados para o modal
+  const [modalOpen, setModalOpen] = useState(false)
+  const [modalMode, setModalMode] = useState<'view' | 'create' | 'edit'>('view')
+  const [modalUnit, setModalUnit] = useState<UnitDto | null>(null)
+  const [stats, setStats] = useState<UnitStats>({
+    totalUnits: 0,
+    activeUnits: 0,
+    totalByType: {}
+  })
 
-  // Load institutions for filter
-  useEffect(() => {
-    const loadInstitutions = async () => {
-      try {
-        const response = await institutionService.getAll();
-        setInstitutions(response.map(inst => ({
-          id: inst.id,
-          name: inst.name
-        })));
-      } catch (error) {
-        showError('Erro ao carregar instituições');
-      }
-    };
-    loadInstitutions();
-  }, []);
+  const fetchUnits = async (page = 1, search = '', showLoadingIndicator = true) => {
+    if (showLoadingIndicator) {
+      setLoading(true);
+    } else {
+      setRefreshing(true);
+    }
 
-  // Load units
-  const loadUnits = async () => {
-    setIsLoading(true);
     try {
-      const response = await unitService.list(filters);
-      setUnits(response.items as unknown as UnitResponseDto[]);
-      setTotalItems(response.pagination.total);
+      const filters: UnitFilters = {
+        page,
+        limit: itemsPerPage
+      };
+      
+      if (search && search.trim()) {
+        filters.search = search.trim();
+      }
+      
+      if (typeFilter) {
+        filters.type = typeFilter;
+      }
+      
+      if (institutionFilter) {
+        filters.institution_id = institutionFilter;
+      }
+      
+      if (statusFilter) {
+        filters.active = statusFilter === 'true' ? true : statusFilter === 'false' ? false : undefined;
+      }
+      
+      const response = await unitService.getAll(filters);
+      
+      console.log('📊 API response:', response);
+      
+      setUnits(response.items || []);
+      setTotalItems(response.pagination.total || 0);
+      setCurrentPage(page);
+
+      // Calcular estatísticas
+      calculateStats(response.items || []);
+      
+      if (!showLoadingIndicator) {
+        showSuccess("Atualizado", "Lista de unidades atualizada com sucesso!");
+      }
     } catch (error) {
-      showError('Erro ao carregar unidades');
+      console.error('❌ Erro ao carregar unidades:', error);
+      showError("Erro ao carregar unidades", "Não foi possível carregar a lista de unidades.");
     } finally {
-      setIsLoading(false);
+      setLoading(false);
+      setRefreshing(false);
     }
+  };
+
+  const fetchInstitutions = async () => {
+    try {
+      const response = await institutionService.getAll();
+      setInstitutions(response.map(inst => ({
+        id: inst.id,
+        name: inst.name
+      })));
+    } catch (error) {
+      console.warn('⚠️ Erro ao carregar instituições:', error);
+    }
+  };
+
+  const calculateStats = (unitList: UnitDto[]) => {
+    const totalUnits = totalItems || unitList.length;
+    const activeUnits = unitList.filter(unit => unit.active).length;
+    
+    const totalByType: { [key: string]: number } = {};
+    unitList.forEach(unit => {
+      if (unit.type) {
+        totalByType[unit.type] = (totalByType[unit.type] || 0) + 1;
+      }
+    });
+    
+    setStats({
+      totalUnits,
+      activeUnits,
+      totalByType
+    });
   };
 
   useEffect(() => {
-    loadUnits();
-  }, [currentPage, filters]);
+    fetchInstitutions();
+    fetchUnits(currentPage, searchQuery);
+  }, [currentPage, typeFilter, institutionFilter, statusFilter])
 
-  const handleAdd = () => {
-    setSelectedUnit(null);
-    setIsAddModalOpen(true);
-  };
-
-  const handleEdit = (item: { id: string | number }) => {
-    const unit = units.find(u => u.id === item.id);
-    if (unit) {
-      setSelectedUnit(unit);
-      setIsEditModalOpen(true);
+  useEffect(() => {
+    if (units.length > 0) {
+      calculateStats(units);
     }
-  };
+  }, [units, totalItems])
 
-  const handleDelete = async (item: { id: string | number }) => {
-    const id = String(item.id);
-    if (!confirm('Tem certeza que deseja excluir esta unidade?')) return;
+  const handleSearch = (e: React.FormEvent) => {
+    e.preventDefault()
+    setCurrentPage(1)
+    fetchUnits(1, searchQuery)
+  }
+
+  const handleRefresh = () => {
+    fetchUnits(currentPage, searchQuery, false)
+  }
+
+  const handleDeleteUnit = async (unit: UnitDto) => {
+    const confirmMessage = `Tem certeza que deseja excluir a unidade "${unit.name}"?\n\nEsta ação não pode ser desfeita.`
     
-    try {
-      await unitService.delete(id);
-      showSuccess('Unidade excluída com sucesso!');
-      loadUnits();
-    } catch (error) {
-      showError('Erro ao excluir unidade');
+    if (!confirm(confirmMessage)) {
+      return
     }
-  };
 
-  const handleSave = async (data: UnitCreateDto | UnitUpdateDto) => {
     try {
-      if (selectedUnit) {
-        await unitService.update(selectedUnit.id, data as UnitUpdateDto);
-        showSuccess('Unidade atualizada com sucesso!');
-      } else {
-        await unitService.create(data as UnitCreateDto);
-        showSuccess('Unidade criada com sucesso!');
+      setLoading(true)
+      await unitService.delete(unit.id)
+      showSuccess("Unidade excluída", "A unidade foi excluída com sucesso.")
+      
+      await fetchUnits(currentPage, searchQuery, false)
+    } catch (error) {
+      console.error('❌ Erro ao excluir unidade:', error)
+      showError("Erro ao excluir unidade", "Não foi possível excluir a unidade.")
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  // Funções para o modal
+  const openModal = (mode: 'view' | 'create' | 'edit', unit?: UnitDto) => {
+    setModalMode(mode)
+    setModalUnit(unit || null)
+    setModalOpen(true)
+  }
+
+  const closeModal = () => {
+    setModalOpen(false)
+    setModalUnit(null)
+  }
+
+  const handleModalSave = async (data: any) => {
+    try {
+      setLoading(true)
+      
+      if (modalMode === 'create') {
+        await unitService.create(data)
+        showSuccess("Sucesso", "Unidade criada com sucesso!")
+        
+      } else if (modalMode === 'edit' && modalUnit) {
+        await unitService.update(modalUnit.id, data)
+        showSuccess("Sucesso", "Unidade atualizada com sucesso!")
       }
-      loadUnits();
+      
+      closeModal()
+      await fetchUnits(currentPage, searchQuery, false)
     } catch (error) {
-      showError('Erro ao salvar unidade');
-      throw error;
+      console.error('❌ Erro ao salvar unidade:', error)
+      showError("Erro ao salvar unidade", "Não foi possível salvar a unidade.")
+    } finally {
+      setLoading(false)
     }
-  };
+  }
 
-  const columns = [
-    { 
-      key: 'name',
-      label: 'Nome',
-      render: (item: any) => item.name
-    },
-    { 
-      key: 'type',
-      label: 'Tipo',
-      render: (item: any) => item.type
-    },
-    { 
-      key: 'institution',
-      label: 'Instituição',
-      render: (item: any) => item.institution?.name || '-'
-    },
-    { 
-      key: 'active',
-      label: 'Status',
-      render: (item: any) => (
-        <span className={`px-2 py-1 rounded-full text-xs ${
-          item.active ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'
-        }`}>
-          {item.active ? 'Ativo' : 'Inativo'}
-        </span>
-      )
+  const getUnitTypeLabel = (type: string) => {
+    switch (type) {
+      case 'ESCOLA': return 'Escola'
+      case 'FACULDADE': return 'Faculdade'
+      case 'UNIVERSIDADE': return 'Universidade'
+      case 'CENTRO_EDUCACIONAL': return 'Centro Educacional'
+      default: return type || 'Não definido'
     }
-  ];
+  }
+
+  const totalPages = Math.ceil(totalItems / itemsPerPage)
 
   return (
-    <div className="container mx-auto px-4 py-8">
-      <div className="flex justify-between items-center mb-6">
-        <h1 className="text-2xl font-bold text-gray-900">Unidades</h1>
-        <Button onClick={handleAdd}>Nova Unidade</Button>
-      </div>
+    <div className="container mx-auto px-4 py-6 max-w-7xl">
+      <div className="bg-white rounded-xl shadow-sm border border-gray-200">
+        {/* Header */}
+        <div className="p-6 border-b border-gray-200">
+          <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4 mb-6">
+            <div>
+              <h1 className="text-2xl font-bold text-gray-900">Unidades</h1>
+              <p className="text-gray-600 mt-1">Gerencie as unidades do sistema</p>
+            </div>
+            <div className="flex gap-3">
+              <Button 
+                onClick={handleRefresh} 
+                variant="outline" 
+                disabled={refreshing}
+                className="flex items-center gap-2"
+              >
+                <RefreshCw className={`w-4 h-4 ${refreshing ? 'animate-spin' : ''}`} />
+                Atualizar
+              </Button>
+              <Button onClick={() => openModal('create')} className="flex items-center gap-2">
+                <Plus className="w-4 h-4" />
+                Nova Unidade
+              </Button>
+            </div>
+          </div>
 
-      <div className="bg-white rounded-lg shadow p-6 mb-6">
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-4">
-          <Input
-            placeholder="Buscar unidades..."
-            value={filters.search}
-            onChange={(e) => setFilters({ ...filters, search: e.target.value })}
-          />
-          <Select
-            value={filters.type}
-            onChange={(value) => setFilters({ ...filters, type: value as string })}
-            options={[
-              { value: '', label: 'Todos os tipos' },
-              { value: 'ESCOLA', label: 'Escola' },
-              { value: 'FACULDADE', label: 'Faculdade' },
-              { value: 'UNIVERSIDADE', label: 'Universidade' },
-              { value: 'CENTRO_EDUCACIONAL', label: 'Centro Educacional' }
-            ]}
-          />
-          <Select
-            value={filters.institution_id}
-            onChange={(value) => setFilters({ ...filters, institution_id: value as string })}
-            options={[
-              { value: '', label: 'Todas as instituições' },
-              ...institutions.map((inst) => ({
-                value: inst.id,
-                label: inst.name
-              }))
-            ]}
-          />
-          <Select
-            value={filters.active?.toString()}
-            onChange={(value) => setFilters({ ...filters, active: value === 'true' ? true : value === 'false' ? false : undefined })}
-            options={[
-              { value: '', label: 'Todos os status' },
-              { value: 'true', label: 'Ativos' },
-              { value: 'false', label: 'Inativos' }
-            ]}
-          />
+          {/* Stats Cards */}
+          <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
+            <StatCard
+              icon={Building2}
+              title="Total"
+              value={stats.totalUnits}
+              subtitle="Unidades"
+              color="blue"
+            />
+            <StatCard
+              icon={CheckCircle}
+              title="Ativas"
+              value={stats.activeUnits}
+              subtitle="Funcionando"
+              color="green"
+            />
+            <StatCard
+              icon={School}
+              title="Escolas"
+              value={stats.totalByType['ESCOLA'] || 0}
+              subtitle="Básicas"
+              color="purple"
+            />
+            <StatCard
+              icon={Users}
+              title="Superiores"
+              value={(stats.totalByType['UNIVERSIDADE'] || 0) + (stats.totalByType['FACULDADE'] || 0)}
+              subtitle="Ensino Superior"
+              color="amber"
+            />
+          </div>
+
+          {/* Filtros */}
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4 mb-4">
+            <form onSubmit={handleSearch} className="lg:col-span-2">
+              <div className="relative">
+                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
+                <input
+                  type="text"
+                  placeholder="Buscar unidade..."
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                  className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                />
+              </div>
+            </form>
+            
+            <select
+              value={typeFilter}
+              onChange={(e) => setTypeFilter(e.target.value)}
+              className="px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+            >
+              <option value="">Todos os tipos</option>
+              <option value="ESCOLA">Escola</option>
+              <option value="FACULDADE">Faculdade</option>
+              <option value="UNIVERSIDADE">Universidade</option>
+              <option value="CENTRO_EDUCACIONAL">Centro Educacional</option>
+            </select>
+
+            <select
+              value={institutionFilter}
+              onChange={(e) => setInstitutionFilter(e.target.value)}
+              className="px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+            >
+              <option value="">Todas as instituições</option>
+              {institutions.map((inst) => (
+                <option key={inst.id} value={inst.id}>
+                  {inst.name}
+                </option>
+              ))}
+            </select>
+
+            <select
+              value={statusFilter}
+              onChange={(e) => setStatusFilter(e.target.value)}
+              className="px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+            >
+              <option value="">Todos os status</option>
+              <option value="true">Ativas</option>
+              <option value="false">Inativas</option>
+            </select>
+          </div>
+
+          <Button type="submit" onClick={handleSearch} variant="outline">
+            Buscar
+          </Button>
         </div>
 
-        <GenericCRUD
-          title="Unidades"
-          entityName="Unidade"
-          data={units}
-          columns={columns}
-          onEdit={handleEdit}
-          onDelete={handleDelete}
-          loading={isLoading}
-          totalItems={totalItems}
-          currentPage={currentPage}
-          onPageChange={setCurrentPage}
-        />
+        {/* Content */}
+        <div>
+          {loading ? (
+            <div className="flex items-center justify-center py-12">
+              <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
+              <span className="ml-2 text-gray-600">Carregando...</span>
+            </div>
+          ) : units.length === 0 ? (
+            <div className="text-center py-12">
+              <School className="w-16 h-16 text-gray-300 mx-auto mb-4" />
+              <p className="text-gray-500 text-lg mb-2">Nenhuma unidade encontrada</p>
+              <p className="text-gray-400 text-sm">Clique em "Nova Unidade" para adicionar a primeira</p>
+            </div>
+          ) : (
+            <>
+              {/* Desktop Table */}
+              <div className="hidden lg:block overflow-x-auto">
+                <table className="w-full divide-y divide-gray-200">
+                  <thead className="bg-gray-50">
+                    <tr>
+                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                        Unidade
+                      </th>
+                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                        Tipo
+                      </th>
+                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                        Instituição
+                      </th>
+                      <th className="px-6 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">
+                        Status
+                      </th>
+                      <th className="px-6 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">
+                        Ações
+                      </th>
+                    </tr>
+                  </thead>
+                  <tbody className="bg-white divide-y divide-gray-200">
+                    {units.map((unit) => (
+                      <tr key={unit.id} className="hover:bg-gray-50">
+                        <td className="px-6 py-4">
+                          <div className="flex items-center">
+                            <div className="flex-shrink-0 w-10 h-10 bg-blue-100 rounded-lg flex items-center justify-center">
+                              <School className="w-5 h-5 text-blue-600" />
+                            </div>
+                            <div className="ml-4">
+                              <div className="text-sm font-medium text-gray-900">{unit.name}</div>
+                              {unit.description && (
+                                <div className="text-xs text-gray-500">{unit.description}</div>
+                              )}
+                            </div>
+                          </div>
+                        </td>
+                        <td className="px-6 py-4 text-sm text-gray-900">
+                          {getUnitTypeLabel(unit.type || '')}
+                        </td>
+                        <td className="px-6 py-4 text-sm text-gray-900">
+                          {unit.institution_name || 'N/A'}
+                        </td>
+                        <td className="px-6 py-4 text-center">
+                          <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
+                            unit.active 
+                              ? 'bg-green-100 text-green-800' 
+                              : 'bg-red-100 text-red-800'
+                          }`}>
+                            {unit.active ? 'Ativa' : 'Inativa'}
+                          </span>
+                        </td>
+                        <td className="px-6 py-4 text-center">
+                          <div className="flex items-center justify-center space-x-2">
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              onClick={() => openModal('view', unit)}
+                              className="text-blue-600 hover:text-blue-900"
+                            >
+                              <Eye className="w-4 h-4" />
+                            </Button>
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              onClick={() => openModal('edit', unit)}
+                              className="text-green-600 hover:text-green-900"
+                            >
+                              <Edit className="w-4 h-4" />
+                            </Button>
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              onClick={() => handleDeleteUnit(unit)}
+                              className="text-red-600 hover:text-red-900"
+                            >
+                              <Trash2 className="w-4 h-4" />
+                            </Button>
+                          </div>
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+
+              {/* Cards para Mobile/Tablet */}
+              <div className="lg:hidden">
+                <div className="space-y-4 p-4">
+                  {units.map((unit) => (
+                    <div key={unit.id} className="bg-white border border-gray-200 rounded-lg shadow-sm hover:shadow-md transition-shadow">
+                      <div className="p-4 border-b border-gray-100">
+                        <div className="flex items-start justify-between">
+                          <div className="flex items-center flex-1">
+                            <div className="flex-shrink-0 w-12 h-12 bg-blue-100 rounded-lg flex items-center justify-center">
+                              <School className="w-6 h-6 text-blue-600" />
+                            </div>
+                            <div className="ml-3 flex-1 min-w-0">
+                              <h3 className="text-sm font-medium text-gray-900 truncate">{unit.name}</h3>
+                              <div className="flex items-center gap-2 mt-1">
+                                <span className="text-xs text-gray-500">{getUnitTypeLabel(unit.type || '')}</span>
+                              </div>
+                            </div>
+                          </div>
+                          <span className={`ml-2 inline-flex items-center px-2 py-1 rounded-full text-xs font-medium ${
+                            unit.active 
+                              ? 'bg-green-100 text-green-800' 
+                              : 'bg-red-100 text-red-800'
+                          }`}>
+                            {unit.active ? 'Ativa' : 'Inativa'}
+                          </span>
+                        </div>
+                      </div>
+
+                      <div className="p-4">
+                        {unit.description && (
+                          <div className="mb-4">
+                            <p className="text-sm text-gray-600">{unit.description}</p>
+                          </div>
+                        )}
+                        
+                        {unit.institution_name && (
+                          <div className="flex items-center mb-4">
+                            <Building2 className="w-4 h-4 text-gray-400 mr-2" />
+                            <span className="text-sm text-gray-600">{unit.institution_name}</span>
+                          </div>
+                        )}
+
+                        <div className="flex justify-end space-x-2">
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={() => openModal('view', unit)}
+                            className="flex items-center gap-1"
+                          >
+                            <Eye className="w-4 h-4" />
+                            Ver
+                          </Button>
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={() => openModal('edit', unit)}
+                            className="flex items-center gap-1"
+                          >
+                            <Edit className="w-4 h-4" />
+                            Editar
+                          </Button>
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={() => handleDeleteUnit(unit)}
+                            className="flex items-center gap-1 text-red-600 hover:text-red-700 hover:border-red-300"
+                          >
+                            <Trash2 className="w-4 h-4" />
+                            Excluir
+                          </Button>
+                        </div>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            </>
+          )}
+        </div>
+
+        {/* Pagination */}
+        {totalPages > 1 && (
+          <div className="px-6 py-4 border-t border-gray-200">
+            <div className="flex items-center justify-between">
+              <div className="text-sm text-gray-700">
+                Mostrando {((currentPage - 1) * itemsPerPage) + 1} a {Math.min(currentPage * itemsPerPage, totalItems)} de {totalItems} resultados
+              </div>
+              <div className="flex items-center space-x-2">
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => setCurrentPage(prev => Math.max(prev - 1, 1))}
+                  disabled={currentPage === 1}
+                >
+                  Anterior
+                </Button>
+                <span className="text-sm text-gray-700">
+                  {currentPage} de {totalPages}
+                </span>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => setCurrentPage(prev => Math.min(prev + 1, totalPages))}
+                  disabled={currentPage === totalPages}
+                >
+                  Próxima
+                </Button>
+              </div>
+            </div>
+          </div>
+        )}
       </div>
 
-      {(isEditModalOpen || isAddModalOpen) && (
+      {/* Modal */}
+      {modalOpen && (
         <UnitEditModal
-          unit={selectedUnit || undefined}
-          onSave={handleSave}
-          onClose={() => {
-            setIsEditModalOpen(false);
-            setIsAddModalOpen(false);
-          }}
+          unit={modalUnit || undefined}
+          onSave={handleModalSave}
+          onClose={closeModal}
         />
       )}
     </div>
-  );
+  )
 }
 

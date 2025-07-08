@@ -1,54 +1,27 @@
-import {
-  UnitDto,
-  CreateUnitDto,
-  UpdateUnitDto,
-  UnitFilter,
-} from '@/types/unit';
-import {
-  PaginatedResponse,
-  UnitResponseDto as ApiUnitResponseDto,
-} from '@/types/api';
 import { apiGet, apiPost, apiPut, apiDelete } from './apiService';
 
-// Função para mapear a resposta da API para o DTO do frontend
-const mapToUnitDto = (data: ApiUnitResponseDto): UnitDto => ({
-  id: String(data.id),
-  name: data.name,
-  institution_id: String(data.institution_id),
-  institution_name: data.institution_name,
-  deleted: data.deleted,
-  created_at: data.date_created || new Date().toISOString(),
-  updated_at: data.last_updated || new Date().toISOString(),
-});
+export interface UnitDto {
+  id: string;
+  name: string;
+  type?: string;
+  description?: string;
+  institution_id: string;
+  institution_name?: string;
+  active: boolean;
+  created_at?: string;
+  updated_at?: string;
+}
 
-export const getUnits = async (params: UnitFilter): Promise<PaginatedResponse<UnitDto>> => {
-  const response = await apiGet<PaginatedResponse<ApiUnitResponseDto>>('/units', params);
-  return {
-    ...response,
-    items: response.items.map(mapToUnitDto),
-  };
-};
+export interface UnitCreateDto {
+  name: string;
+  type?: string;
+  description?: string;
+  institution_id: string;
+  active?: boolean;
+}
 
-export const getUnitById = async (id: number): Promise<UnitDto> => {
-  const response = await apiGet<ApiUnitResponseDto>(`/units/${id}`);
-  return mapToUnitDto(response);
-};
+export interface UnitUpdateDto extends Partial<UnitCreateDto> {}
 
-export const createUnit = async (data: CreateUnitDto): Promise<UnitDto> => {
-  const response = await apiPost<ApiUnitResponseDto>('/units', data);
-  return mapToUnitDto(response);
-};
-
-export const updateUnit = async (id: number, data: UpdateUnitDto): Promise<UnitDto> => {
-  const response = await apiPut<ApiUnitResponseDto>(`/units/${id}`, data);
-  return mapToUnitDto(response);
-};
-
-export const deleteUnit = async (id: number): Promise<void> => {
-  return apiDelete(`/units/${id}`);
-};
-
-// Interface para filters usado na página
 export interface UnitFilters {
   search?: string;
   type?: string;
@@ -58,40 +31,71 @@ export interface UnitFilters {
   limit?: number;
 }
 
-// Método list para compatibilidade com a página
-export const listUnits = async (filters: UnitFilters): Promise<{ items: UnitDto[], pagination: { total: number } }> => {
-  const response = await apiGet<PaginatedResponse<ApiUnitResponseDto>>('/units', filters);
+export interface PaginatedUnits {
+  items: UnitDto[];
+  pagination: {
+    total: number;
+    page: number;
+    limit: number;
+    totalPages: number;
+  };
+}
+
+const getUnits = async (filters: UnitFilters = {}): Promise<PaginatedUnits> => {
+  const params = new URLSearchParams();
+  
+  Object.entries(filters).forEach(([key, value]) => {
+    if (value !== undefined && value !== '') {
+      params.append(key, String(value));
+    }
+  });
+
+  const response = await apiGet<any>(`/units?${params.toString()}`);
+  
   return {
-    items: response.items.map(mapToUnitDto),
-    pagination: { total: response.pagination?.total || response.items.length }
+    items: response.items || response.data || [],
+    pagination: {
+      total: response.total || 0,
+      page: response.page || 1,
+      limit: response.limit || 10,
+      totalPages: response.totalPages || Math.ceil((response.total || 0) / (response.limit || 10))
+    }
   };
 };
 
-// Método create para compatibilidade
-export const create = async (data: CreateUnitDto): Promise<UnitDto> => {
-  return createUnit(data);
+const getUnitById = async (id: string): Promise<UnitDto> => {
+  const response = await apiGet<any>(`/units/${id}`);
+  return response.data || response;
 };
 
-// Método update para compatibilidade
-export const update = async (id: string | number, data: UpdateUnitDto): Promise<UnitDto> => {
-  return updateUnit(Number(id), data);
+const createUnit = async (data: UnitCreateDto): Promise<UnitDto> => {
+  const response = await apiPost<any>('/units', data);
+  return response.data || response;
 };
 
-// Método delete para compatibilidade
-export const deleteUnitById = async (id: string | number): Promise<void> => {
-  return deleteUnit(Number(id));
+const updateUnit = async (id: string, data: UnitUpdateDto): Promise<UnitDto> => {
+  const response = await apiPut<any>(`/units/${id}`, data);
+  return response.data || response;
+};
+
+const deleteUnit = async (id: string): Promise<void> => {
+  await apiDelete(`/units/${id}`);
 };
 
 const unitService = {
+  // Métodos principais
+  getAll: getUnits,
+  getById: getUnitById,
+  create: createUnit,
+  update: updateUnit,
+  delete: deleteUnit,
+  
+  // Aliases para compatibilidade
+  list: getUnits,
   getUnits,
-  getUnitById,
   createUnit,
   updateUnit,
-  deleteUnit,
-  list: listUnits,
-  create,
-  update,
-  delete: deleteUnitById,
+  deleteUnit
 };
 
 export { unitService };
