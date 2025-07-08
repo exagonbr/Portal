@@ -415,135 +415,196 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     if (!isClient) return;
 
     setIsLoading(true);
+    let retryCount = 0;
+    const maxRetries = 2;
 
-    try {
-      console.log('🔐 Fazendo login via API...');
-      
-      // CORREÇÃO: Aumentar o timeout para 30 segundos para evitar timeout prematuro
-      const loginPromise = apiClient.post('/users/login', { email, password });
-      const timeoutPromise = new Promise((_, reject) => 
-        setTimeout(() => reject(new Error('Tempo limite excedido')), 30000)
-      );
-      
-      const response = await Promise.race([loginPromise, timeoutPromise]) as any;
-      
-      // CORREÇÃO: Verificar se a resposta é válida antes de prosseguir
-      if (!response || !response.data) {
-        throw new Error('Resposta inválida do servidor');
-      }
-      
-      if (response.data.success && response.data.data) {
-        const { accessToken, refreshToken, user: userData } = response.data.data;
-        
-        console.log('🔍 [AuthContext] Dados recebidos da API:', {
-          hasAccessToken: !!accessToken,
-          hasRefreshToken: !!refreshToken,
-          hasUser: !!userData,
-          tokenPreview: accessToken ? accessToken.substring(0, 50) + '...' : 'N/A'
-        });
-        
-        // Verificar se o token existe antes de prosseguir
-        if (!accessToken) {
-          throw new Error('Token não foi retornado pelo servidor');
-        }
-        
-        // Configurar o header de autorização
-        apiClient.defaults.headers.common['Authorization'] = `Bearer ${accessToken}`;
-        
-        // Decodificar o token para obter informações do usuário
-        const decodedToken = decodeToken(accessToken);
-        
-        if (!decodedToken || !isValidDecodedToken(decodedToken)) {
-          console.error('❌ Erro: Token não pôde ser decodificado ou é inválido');
-          throw new Error('Token inválido recebido do servidor');
-        }
-        
-        // Configurar o usuário no estado com valores padrão seguros
-        const user: User = {
-          id: userData.id || decodedToken.id || 0,
-          name: userData.name || decodedToken.name || 'Usuário',
-          email: userData.email || decodedToken.email || '',
-          role: userData.role || decodedToken.role || UserRole.STUDENT,
-          permissions: userData.permissions || decodedToken.permissions || [],
-          telefone: userData.telefone || undefined,
-          endereco: userData.endereco || undefined,
-          unidadeEnsino: userData.unidadeEnsino || undefined,
-          institution_name: userData.institution_name || decodedToken.institution_name || undefined
-        };
-        
-        // CORREÇÃO: Salvar dados sem aguardar o UnifiedAuthService para evitar travamento
+    const attemptLogin = async (): Promise<any> => {
+      try {
+        // CORREÇÃO: Verificar conectividade com o servidor antes de tentar login
         try {
-          const authData = {
-            accessToken,
-            refreshToken: refreshToken || accessToken,
-            user: {
-              id: user.id.toString(),
-              email: user.email,
-              name: user.name,
-              role: user.role,
-              permissions: user.permissions,
-              institution_name: user.institution_name
-            },
-            expiresIn: decodedToken.exp ? decodedToken.exp - Math.floor(Date.now() / 1000) : 60 * 60 * 24
-          };
-
-          // Salvar de forma assíncrona sem bloquear
-          UnifiedAuthService.saveAuthData(authData).then((saveResult) => {
-            if (saveResult.success) {
-              console.log('✅ Dados salvos em todos os locais com sessão:', saveResult.sessionId);
-            } else {
-              console.warn('⚠️ Erro ao salvar dados:', saveResult.message);
-            }
-          }).catch((error) => {
-            console.warn('⚠️ Erro ao salvar dados UnifiedAuth:', error);
-          });
-        } catch (saveError) {
-          console.warn('⚠️ Erro no UnifiedAuthService, continuando com login:', saveError);
+          const pingResponse = await apiClient.get('/health', { timeout: 5000 });
+          if (!pingResponse.data || pingResponse.status !== 200) {
+            console.warn('⚠️ Servidor não respondeu ao health check corretamente:', pingResponse);
+          } else {
+            console.log('✅ Servidor respondeu ao health check:', pingResponse.data);
+          }
+        } catch (pingError) {
+          console.warn('⚠️ Erro ao verificar conectividade com o servidor:', pingError);
+          // Não interrompe o fluxo, apenas loga o erro
         }
         
-        // CORREÇÃO: Definir o usuário antes de qualquer redirecionamento
-        setUser(user);
-        setIsLoading(false); // Garantir que isLoading seja atualizado imediatamente
+        // CORREÇÃO: Aumentar o timeout para 60 segundos para evitar timeout prematuro
+        const loginPromise = apiClient.post('/users/login', { email, password }, { 
+          timeout: 60000 // Garantir que o timeout seja respeitado também pelo axios
+        });
+        const timeoutPromise = new Promise((_, reject) => 
+          setTimeout(() => reject(new Error('Tempo limite excedido')), 60000)
+        );
         
-        console.log('✅ Login realizado com sucesso!', user);
-        toast.success('Login realizado com sucesso!');
+        const response = await Promise.race([loginPromise, timeoutPromise]) as any;
         
-        // CORREÇÃO: Simplificar redirecionamento para evitar travamento
-        const targetPath = getDashboardPath(user.role);
-        console.log('🎯 Redirecionando para dashboard:', targetPath);
+        // CORREÇÃO: Verificar se a resposta é válida antes de prosseguir
+        if (!response || !response.data) {
+          throw new Error('Resposta inválida do servidor');
+        }
         
-        if (targetPath) {
-          console.log('🔄 [AuthContext] Chamando router.push para:', targetPath);
+        if (response.data.success && response.data.data) {
+          const { accessToken, refreshToken, user: userData } = response.data.data;
           
-          // CORREÇÃO: Usar timeout para garantir que o estado seja atualizado antes do redirect
-          setTimeout(() => {
-            router.push(targetPath);
-          }, 100);
+          console.log('🔍 [AuthContext] Dados recebidos da API:', {
+            hasAccessToken: !!accessToken,
+            hasRefreshToken: !!refreshToken,
+            hasUser: !!userData,
+            tokenPreview: accessToken ? accessToken.substring(0, 50) + '...' : 'N/A'
+          });
+          
+          // Verificar se o token existe antes de prosseguir
+          if (!accessToken) {
+            throw new Error('Token não foi retornado pelo servidor');
+          }
+          
+          // Configurar o header de autorização
+          apiClient.defaults.headers.common['Authorization'] = `Bearer ${accessToken}`;
+          
+          // Decodificar o token para obter informações do usuário
+          const decodedToken = decodeToken(accessToken);
+          
+          if (!decodedToken || !isValidDecodedToken(decodedToken)) {
+            console.error('❌ Erro: Token não pôde ser decodificado ou é inválido');
+            throw new Error('Token inválido recebido do servidor');
+          }
+          
+          // Configurar o usuário no estado com valores padrão seguros
+          const user: User = {
+            id: userData.id || decodedToken.id || 0,
+            name: userData.name || decodedToken.name || 'Usuário',
+            email: userData.email || decodedToken.email || '',
+            role: userData.role || decodedToken.role || UserRole.STUDENT,
+            permissions: userData.permissions || decodedToken.permissions || [],
+            telefone: userData.telefone || undefined,
+            endereco: userData.endereco || undefined,
+            unidadeEnsino: userData.unidadeEnsino || undefined,
+            institution_name: userData.institution_name || decodedToken.institution_name || undefined
+          };
+          
+          // CORREÇÃO: Salvar dados sem aguardar o UnifiedAuthService para evitar travamento
+          try {
+            const authData = {
+              accessToken,
+              refreshToken: refreshToken || accessToken,
+              user: {
+                id: user.id.toString(),
+                email: user.email,
+                name: user.name,
+                role: user.role,
+                permissions: user.permissions,
+                institution_name: user.institution_name
+              },
+              expiresIn: decodedToken.exp ? decodedToken.exp - Math.floor(Date.now() / 1000) : 60 * 60 * 24
+            };
+
+            // Salvar de forma assíncrona sem bloquear
+            UnifiedAuthService.saveAuthData(authData).then((saveResult) => {
+              if (saveResult.success) {
+                console.log('✅ Dados salvos em todos os locais com sessão:', saveResult.sessionId);
+              } else {
+                console.warn('⚠️ Erro ao salvar dados:', saveResult.message);
+              }
+            }).catch((error) => {
+              console.warn('⚠️ Erro ao salvar dados UnifiedAuth:', error);
+            });
+          } catch (saveError) {
+            console.warn('⚠️ Erro no UnifiedAuthService, continuando com login:', saveError);
+          }
+          
+          // CORREÇÃO: Definir o usuário antes de qualquer redirecionamento
+          setUser(user);
+          setIsLoading(false); // Garantir que isLoading seja atualizado imediatamente
+          
+          console.log('✅ Login realizado com sucesso!', user);
+          toast.success('Login realizado com sucesso!');
+          
+          // CORREÇÃO: Simplificar redirecionamento para evitar travamento
+          const targetPath = getDashboardPath(user.role);
+          console.log('🎯 Redirecionando para dashboard:', targetPath);
+          
+          if (targetPath) {
+            console.log('🔄 [AuthContext] Chamando router.push para:', targetPath);
+            
+            // CORREÇÃO: Usar timeout para garantir que o estado seja atualizado antes do redirect
+            setTimeout(() => {
+              router.push(targetPath);
+            }, 100);
+          } else {
+            console.warn('⚠️ Caminho do dashboard não encontrado, usando fallback');
+            setTimeout(() => {
+              router.push('/dashboard');
+            }, 100);
+          }
+          
+          return response;
         } else {
-          console.warn('⚠️ Caminho do dashboard não encontrado, usando fallback');
-          setTimeout(() => {
-            router.push('/dashboard');
-          }, 100);
+          throw new Error(response.data.message || 'Falha no login');
         }
-      } else {
-        throw new Error(response.data.message || 'Falha no login');
+      } catch (error: any) {
+        console.error('❌ Erro no login:', error);
+        
+        let errorMessage = 'Falha no login. Verifique suas credenciais.';
+        
+        // CORREÇÃO: Melhor tratamento de mensagens de erro
+        if (error.message === 'Tempo limite excedido') {
+          errorMessage = 'O servidor está demorando para responder. Tentaremos novamente automaticamente.';
+          toast.error(errorMessage);
+          throw error; // Propagar erro de timeout para permitir retry
+        } else if (error.response?.data?.message) {
+          errorMessage = error.response.data.message;
+          toast.error(errorMessage);
+        } else if (error.message) {
+          errorMessage = error.message;
+          toast.error(errorMessage);
+        } else {
+          toast.error(errorMessage);
+        }
+        
+        setIsLoading(false); // CORREÇÃO: Garantir que isLoading seja resetado no caso de erro
+        throw error;
       }
-    } catch (error: any) {
-      console.error('❌ Erro no login:', error);
-      
-      let errorMessage = 'Falha no login. Verifique suas credenciais.';
-      
-      // CORREÇÃO: Melhor tratamento de mensagens de erro
-      if (error.message === 'Tempo limite excedido') {
-        errorMessage = 'Tempo limite excedido. Tente novamente.';
-      } else if (error.response?.data?.message) {
-        errorMessage = error.response.data.message;
-      } else if (error.message) {
-        errorMessage = error.message;
+    };
+    
+    try {
+      // Tentar login com retry em caso de timeout
+      for (let i = 0; i <= maxRetries; i++) {
+        try {
+          if (i > 0) {
+            console.log(`🔄 Tentativa de login ${i+1}/${maxRetries+1}`);
+            toast.loading(`Tentando reconectar ao servidor... (${i}/${maxRetries})`, { id: 'login-retry' });
+          }
+          
+          await attemptLogin();
+          if (i > 0) {
+            toast.success('Reconectado com sucesso!', { id: 'login-retry' });
+          }
+          break; // Se o login for bem-sucedido, sair do loop
+        } catch (error: any) {
+          // Se for o último retry ou não for um erro de timeout, não tentar novamente
+          const isTimeout = error.message && error.message.includes('Tempo limite excedido');
+          if (i === maxRetries || !isTimeout) {
+            throw error; // Propagar o erro para o catch externo
+          }
+          
+          // Esperar antes de tentar novamente
+          await new Promise(resolve => setTimeout(resolve, 2000));
+        }
       }
+    } catch (finalError: any) {
+      // O erro já foi tratado no attemptLogin
+      console.error('❌ Todas as tentativas de login falharam:', finalError);
       
-      toast.error(errorMessage);
-      setIsLoading(false); // CORREÇÃO: Garantir que isLoading seja resetado no caso de erro
+      // Mostrar mensagem final de erro
+      const isTimeout = finalError.message && finalError.message.includes('Tempo limite excedido');
+      if (isTimeout) {
+        toast.error('Não foi possível conectar ao servidor após várias tentativas. Por favor, verifique sua conexão e tente novamente mais tarde.', { id: 'login-retry' });
+      }
     } finally {
       // CORREÇÃO: Garantir que isLoading sempre seja resetado, mesmo que ocorra um erro no toast
       setTimeout(() => {

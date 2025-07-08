@@ -5,7 +5,7 @@ import { toast } from 'react-hot-toast';
 const apiClient = axios.create({
   baseURL: 'https://portal.sabercon.com.br/api',
   withCredentials: true,
-  timeout: 30000, // 30 segundos
+  timeout: 60000, // 60 segundos
 });
 
 

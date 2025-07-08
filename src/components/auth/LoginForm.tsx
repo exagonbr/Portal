@@ -73,13 +73,8 @@ export function LoginForm() {
       await clearAllDataForUnauthorized();
       console.log('✅ Dados limpos com sucesso');
       
-      // CORREÇÃO: Aumentar timeout específico para o login para 30 segundos
-      const loginPromise = login(email, password);
-      const timeoutPromise = new Promise((_, reject) => 
-        setTimeout(() => reject(new Error('Tempo limite excedido. Tente novamente.')), 30000)
-      );
-      
-      await Promise.race([loginPromise, timeoutPromise]);
+      // Chamar login sem timeout adicional, pois o AuthContext já gerencia isso
+      await login(email, password);
     } catch (error: any) {
       console.error('❌ Erro no handleLogin:', error);
       // CORREÇÃO: Melhor tratamento de mensagens de erro

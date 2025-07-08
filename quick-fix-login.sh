@@ -48,12 +48,17 @@ server {
     
     # Backend API → portal.sabercon.com.br/api/ (SEM RATE LIMITING)
     location /api/ {
-        proxy_pass https://portal.sabercon.com.br/api/;
+        proxy_pass http://127.0.0.1:3001/;
         proxy_http_version 1.1;
         proxy_set_header Host $host;
         proxy_set_header X-Real-IP $remote_addr;
         proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
         proxy_set_header X-Forwarded-Proto $forwarded_scheme;
+        
+        # Aumentar timeouts
+        proxy_connect_timeout 60s;
+        proxy_send_timeout 60s;
+        proxy_read_timeout 60s;
         
         # CORS
         add_header Access-Control-Allow-Origin "https://portal.sabercon.com.br" always;
@@ -131,7 +136,10 @@ http {
     gzip_comp_level 6;
     gzip_types text/plain text/css application/json application/javascript text/xml application/xml application/xml+rss text/javascript;
     
-    # SEM RATE LIMITING - REMOVIDO COMPLETAMENTE
+    # Configuração de timeouts
+    proxy_connect_timeout 60s;
+    proxy_send_timeout 60s;
+    proxy_read_timeout 60s;
     
     include /etc/nginx/conf.d/*.conf;
     include /etc/nginx/sites-enabled/*;
