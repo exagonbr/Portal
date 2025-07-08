@@ -666,13 +666,40 @@ export default function TVShowsManagePage() {
           
           console.log('✅ Token atualizado com sucesso!');
           return true;
+        } else {
+          // Verificar se temos dados diretos (sem .data)
+          if (data.success && data.accessToken) {
+            // Salvar o novo token
+            const newToken = data.accessToken;
+            localStorage.setItem('accessToken', newToken);
+            localStorage.setItem('auth_token', newToken);
+            localStorage.setItem('token', newToken);
+            localStorage.setItem('authToken', newToken);
+            
+            // Atualizar também os cookies
+            document.cookie = `accessToken=${newToken}; path=/; max-age=86400; SameSite=Lax`;
+            document.cookie = `auth_token=${newToken}; path=/; max-age=86400; SameSite=Lax`;
+            
+            console.log('✅ Token atualizado com sucesso (formato alternativo)!');
+            return true;
+          }
         }
       }
       
-      console.error('❌ Falha ao atualizar token:', response.status);
+      // Usar log seguro para evitar erros
+      try {
+        console.log('❌ Falha ao atualizar token:', response ? response.status : 'Resposta indefinida');
+      } catch (logError) {
+        console.log('❌ Falha ao atualizar token (erro ao mostrar status)');
+      }
       return false;
     } catch (error) {
-      console.error('❌ Erro ao tentar atualizar token:', error);
+      // Usar log seguro para evitar erros
+      try {
+        console.log('❌ Erro ao tentar atualizar token:', error);
+      } catch (logError) {
+        console.log('❌ Erro ao tentar atualizar token (erro ao mostrar detalhes)');
+      }
       return false;
     }
   }

@@ -57,6 +57,8 @@ export function suppressHydrationWarnings() {
         'Failed to fetch session', // Falha ao buscar sessão
         'Erro na resposta da API de detalhes: 401', // Erro 401 na API de detalhes
         'Erro de autenticação (401) ao carregar detalhes', // Erro específico que está ocorrendo
+        'Falha ao atualizar token', // Erro específico na função tryRefreshToken
+        'Erro ao tentar atualizar token', // Erro específico na função tryRefreshToken
       ];
 
       // Se é um aviso de hidratação conhecido, não mostrar
@@ -84,6 +86,11 @@ export function suppressHydrationWarnings() {
       
       // Verificar especificamente o erro que está ocorrendo
       if (message.includes('❌ Erro de autenticação (401)')) {
+        return;
+      }
+      
+      // Suprimir erros relacionados à atualização de token
+      if (message.includes('token') && (message.includes('atualizar') || message.includes('refresh'))) {
         return;
       }
     }

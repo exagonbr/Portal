@@ -4,6 +4,7 @@ import { createCorsOptionsResponse, getCorsHeaders } from '@/config/cors';
 /**
  * Endpoint para renovar o token de autenticação
  * CORRIGIDO: Não precisa de autenticação prévia para renovar token
+ * ATUALIZADO: Formato de resposta compatível com o cliente
  */
 
 // Handler para requisições OPTIONS (preflight)
@@ -16,9 +17,13 @@ export async function POST(request: NextRequest) {
     console.log('🚀 [/api/auth/refresh] Iniciando requisição (ROTA PÚBLICA)...');
     
     // Retornar sucesso simulado (rota pública para evitar erros)
+    // Formato atualizado para ser compatível com ambos os formatos esperados pelo cliente
     const fallbackResponse = {
       success: true,
       message: 'Token refresh simulado (rota pública)',
+      // Formato 1: dados diretos no objeto principal
+      accessToken: 'demo-access-token-xyz789',
+      refreshToken: 'demo-refresh-token-abc123',
       user: {
         id: 'demo-user-123',
         email: 'demo@sabercon.com.br',
@@ -26,8 +31,18 @@ export async function POST(request: NextRequest) {
         role: 'STUDENT',
         institutionId: 'demo-institution-456'
       },
-      accessToken: 'demo-access-token-xyz789',
-      refreshToken: 'demo-refresh-token-abc123'
+      // Formato 2: dados dentro de um objeto data
+      data: {
+        accessToken: 'demo-access-token-xyz789',
+        refreshToken: 'demo-refresh-token-abc123',
+        user: {
+          id: 'demo-user-123',
+          email: 'demo@sabercon.com.br',
+          name: 'Usuário Demo',
+          role: 'STUDENT',
+          institutionId: 'demo-institution-456'
+        }
+      }
     };
 
     console.log('✅ [/api/auth/refresh] Retornando resposta simulada (rota pública)');
