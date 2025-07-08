@@ -197,17 +197,21 @@ export class CookieManager {
       this.remove(cookieName);
       
       // Tentar remover com diferentes caminhos e domínios para garantir
-      if (typeof document !== 'undefined') {
-        const domains = ['', window.location.hostname, `.${window.location.hostname}`];
-        const paths = ['/', '', '/api', '/api/auth', '/auth'];
-        
-        domains.forEach(domain => {
-          paths.forEach(path => {
-            const domainPart = domain ? `;domain=${domain}` : '';
-            const pathPart = path ? `;path=${path}` : '';
-            document.cookie = `${cookieName}=;expires=Thu, 01 Jan 1970 00:00:00 GMT${pathPart}${domainPart}`;
+      if (typeof document !== 'undefined' && typeof window !== 'undefined') {
+        try {
+          const domains = ['', window.location.hostname, `.${window.location.hostname}`];
+          const paths = ['/', '', '/api', '/api/auth', '/auth'];
+          
+          domains.forEach(domain => {
+            paths.forEach(path => {
+              const domainPart = domain ? `;domain=${domain}` : '';
+              const pathPart = path ? `;path=${path}` : '';
+              document.cookie = `${cookieName}=;expires=Thu, 01 Jan 1970 00:00:00 GMT${pathPart}${domainPart}`;
+            });
           });
-        });
+        } catch (error) {
+          console.error('❌ Erro ao limpar cookies com domínios/caminhos específicos:', error);
+        }
       }
     });
     

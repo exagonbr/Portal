@@ -55,6 +55,12 @@ export const getSystemAdminMenuItems = (): AdminMenuSection[] => {
           permission: 'canManageSystem'
         },
         {
+          href: '/admin/units',
+          icon: 'apartment',
+          label: 'Unidades',
+          permission: 'canManageSystem'
+        },
+        {
           href: '/admin/certificates',
           icon: 'ward',
           label: 'Certificados',

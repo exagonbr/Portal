@@ -13,19 +13,33 @@ const apiClient = axios.create({
 apiClient.interceptors.request.use(
   (config) => {
     if (typeof window !== 'undefined') {
-      // Buscar token em múltiplas chaves possíveis
-      const accessToken = 
-        localStorage.getItem('accessToken') || 
-        localStorage.getItem('auth_token') || 
-        localStorage.getItem('token') || 
-        localStorage.getItem('authToken') ||
-        sessionStorage.getItem('accessToken') ||
-        sessionStorage.getItem('auth_token') ||
-        sessionStorage.getItem('token') ||
-        sessionStorage.getItem('authToken');
+      try {
+        // Buscar token em múltiplas chaves possíveis
+        let accessToken = null;
         
-      if (accessToken) {
-        config.headers['Authorization'] = `Bearer ${accessToken}`;
+        // Verificar localStorage
+        if (typeof localStorage !== 'undefined') {
+          accessToken = 
+            localStorage.getItem('accessToken') || 
+            localStorage.getItem('auth_token') || 
+            localStorage.getItem('token') || 
+            localStorage.getItem('authToken');
+        }
+        
+        // Se não encontrou no localStorage, verificar sessionStorage
+        if (!accessToken && typeof sessionStorage !== 'undefined') {
+          accessToken = 
+            sessionStorage.getItem('accessToken') ||
+            sessionStorage.getItem('auth_token') ||
+            sessionStorage.getItem('token') ||
+            sessionStorage.getItem('authToken');
+        }
+        
+        if (accessToken) {
+          config.headers['Authorization'] = `Bearer ${accessToken}`;
+        }
+      } catch (error) {
+        console.error('Erro ao acessar storage no interceptor:', error);
       }
     }
     return config;
@@ -76,8 +90,12 @@ apiClient.interceptors.response.use(
         const { data } = await apiClient.post('/auth/refresh_token');
         const newAccessToken = data.data.accessToken;
 
-        if (typeof window !== 'undefined') {
-          localStorage.setItem('accessToken', newAccessToken);
+        if (typeof window !== 'undefined' && typeof localStorage !== 'undefined') {
+          try {
+            localStorage.setItem('accessToken', newAccessToken);
+          } catch (error) {
+            console.error('Erro ao salvar token no localStorage:', error);
+          }
         }
         
         apiClient.defaults.headers.common['Authorization'] = `Bearer ${newAccessToken}`;
@@ -92,16 +110,26 @@ apiClient.interceptors.response.use(
         
         // Se o refresh falhar, limpa tudo e notifica o usuário
         if (typeof window !== 'undefined') {
-          localStorage.removeItem('accessToken');
-          localStorage.removeItem('auth_token');
-          localStorage.removeItem('token');
-          localStorage.removeItem('authToken');
-          sessionStorage.removeItem('accessToken');
-          sessionStorage.removeItem('auth_token');
-          sessionStorage.removeItem('token');
-          sessionStorage.removeItem('authToken');
-          // O AuthContext será responsável pelo redirecionamento
-          window.dispatchEvent(new Event('auth-error'));
+          try {
+            if (typeof localStorage !== 'undefined') {
+              localStorage.removeItem('accessToken');
+              localStorage.removeItem('auth_token');
+              localStorage.removeItem('token');
+              localStorage.removeItem('authToken');
+            }
+            
+            if (typeof sessionStorage !== 'undefined') {
+              sessionStorage.removeItem('accessToken');
+              sessionStorage.removeItem('auth_token');
+              sessionStorage.removeItem('token');
+              sessionStorage.removeItem('authToken');
+            }
+            
+            // O AuthContext será responsável pelo redirecionamento
+            window.dispatchEvent(new Event('auth-error'));
+          } catch (error) {
+            console.error('Erro ao limpar tokens nos storages:', error);
+          }
         }
         toast.error('Sua sessão expirou. Por favor, faça login novamente.');
         return Promise.reject(refreshError);

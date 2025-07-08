@@ -48,12 +48,50 @@ export const deleteUnit = async (id: number): Promise<void> => {
   return apiDelete(`/units/${id}`);
 };
 
+// Interface para filters usado na página
+export interface UnitFilters {
+  search?: string;
+  type?: string;
+  active?: boolean;
+  institution_id?: string;
+  page?: number;
+  limit?: number;
+}
+
+// Método list para compatibilidade com a página
+export const listUnits = async (filters: UnitFilters): Promise<{ items: UnitDto[], pagination: { total: number } }> => {
+  const response = await apiGet<PaginatedResponse<ApiUnitResponseDto>>('/units', filters);
+  return {
+    items: response.items.map(mapToUnitDto),
+    pagination: { total: response.pagination?.total || response.items.length }
+  };
+};
+
+// Método create para compatibilidade
+export const create = async (data: CreateUnitDto): Promise<UnitDto> => {
+  return createUnit(data);
+};
+
+// Método update para compatibilidade
+export const update = async (id: string | number, data: UpdateUnitDto): Promise<UnitDto> => {
+  return updateUnit(Number(id), data);
+};
+
+// Método delete para compatibilidade
+export const deleteUnitById = async (id: string | number): Promise<void> => {
+  return deleteUnit(Number(id));
+};
+
 const unitService = {
   getUnits,
   getUnitById,
   createUnit,
   updateUnit,
   deleteUnit,
+  list: listUnits,
+  create,
+  update,
+  delete: deleteUnitById,
 };
 
 export { unitService };

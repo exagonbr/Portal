@@ -36,8 +36,13 @@ export class ApiClientError extends Error {
 // --- Helpers ---
 
 const getMockedAuthToken = (): string | null => {
-  if (typeof window === 'undefined') return null;
-  return localStorage.getItem('accessToken');
+  if (typeof window === 'undefined' || typeof localStorage === 'undefined') return null;
+  try {
+    return localStorage.getItem('accessToken');
+  } catch (error) {
+    console.error('Erro ao acessar localStorage:', error);
+    return null;
+  }
 };
 
 const createAuthHeaders = (skipAuth: boolean = false): Record<string, string> => {

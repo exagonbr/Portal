@@ -42,13 +42,15 @@ export class UnifiedAuthService {
       console.log('💾 Salvando dados de autenticação...');
 
       // 1. Salvar no localStorage - SIMPLES E DIRETO
-      localStorage.setItem('accessToken', authData.accessToken);
-      localStorage.setItem('refreshToken', authData.refreshToken);
-      localStorage.setItem('user', JSON.stringify(authData.user));
-      
-      // Compatibilidade com chaves legadas
-      localStorage.setItem('auth_token', authData.accessToken);
-      localStorage.setItem('token', authData.accessToken);
+      if (typeof window !== 'undefined' && typeof localStorage !== 'undefined') {
+        localStorage.setItem('accessToken', authData.accessToken);
+        localStorage.setItem('refreshToken', authData.refreshToken);
+        localStorage.setItem('user', JSON.stringify(authData.user));
+        
+        // Compatibilidade com chaves legadas
+        localStorage.setItem('auth_token', authData.accessToken);
+        localStorage.setItem('token', authData.accessToken);
+      }
 
       // 2. Salvar nos cookies - SIMPLES
       CookieManager.setAuthCookies({
@@ -81,7 +83,9 @@ export class UnifiedAuthService {
 
         if (sessionResult.success && sessionResult.data?.sessionId) {
           sessionId = sessionResult.data.sessionId;
-          localStorage.setItem('sessionId', sessionId);
+          if (typeof window !== 'undefined' && typeof localStorage !== 'undefined') {
+            localStorage.setItem('sessionId', sessionId);
+          }
           console.log('✅ Sessão Redis criada:', sessionId);
         }
       } catch (error) {
@@ -109,10 +113,15 @@ export class UnifiedAuthService {
    */
   static getAccessToken(): string | null {
     try {
-      return localStorage.getItem('accessToken') || 
-             localStorage.getItem('auth_token') || 
-             localStorage.getItem('token') ||
-             CookieManager.get('access_token');
+      if (typeof window !== 'undefined' && typeof localStorage !== 'undefined') {
+        return localStorage.getItem('accessToken') || 
+               localStorage.getItem('auth_token') || 
+               localStorage.getItem('token') ||
+               CookieManager.get('access_token');
+      } else {
+        // Em ambiente de servidor, tenta apenas o CookieManager
+        return CookieManager.get('access_token');
+      }
     } catch {
       return null;
     }
@@ -123,9 +132,11 @@ export class UnifiedAuthService {
    */
   static getCurrentUser(): any | null {
     try {
-      const userStr = localStorage.getItem('user');
-      if (userStr) {
-        return JSON.parse(userStr);
+      if (typeof window !== 'undefined' && typeof localStorage !== 'undefined') {
+        const userStr = localStorage.getItem('user');
+        if (userStr) {
+          return JSON.parse(userStr);
+        }
       }
       return CookieManager.getAuthData().user || null;
     } catch {
@@ -138,8 +149,12 @@ export class UnifiedAuthService {
    */
   static getSessionId(): string | null {
     try {
-      return localStorage.getItem('sessionId') || 
-             CookieManager.get('session_id');
+      if (typeof window !== 'undefined' && typeof localStorage !== 'undefined') {
+        return localStorage.getItem('sessionId') || 
+               CookieManager.get('session_id');
+      } else {
+        return CookieManager.get('session_id');
+      }
     } catch {
       return null;
     }
@@ -162,18 +177,20 @@ export class UnifiedAuthService {
       console.log('🧹 Limpando dados de autenticação...');
 
       // 1. Limpar localStorage
-      const keysToRemove = [
-        'accessToken', 'refreshToken', 'user', 'sessionId',
-        'auth_token', 'token', 'authToken', 'user_data'
-      ];
-      
-      keysToRemove.forEach(key => {
-        try {
-          localStorage.removeItem(key);
-        } catch (e) {
-          // Ignorar erros individuais
-        }
-      });
+      if (typeof window !== 'undefined' && typeof localStorage !== 'undefined') {
+        const keysToRemove = [
+          'accessToken', 'refreshToken', 'user', 'sessionId',
+          'auth_token', 'token', 'authToken', 'user_data'
+        ];
+        
+        keysToRemove.forEach(key => {
+          try {
+            localStorage.removeItem(key);
+          } catch (e) {
+            // Ignorar erros individuais
+          }
+        });
+      }
 
       // 2. Limpar cookies
       CookieManager.clearAuthCookies();
@@ -202,9 +219,11 @@ export class UnifiedAuthService {
       console.log('🔄 Atualizando token...');
 
       // Atualizar localStorage
-      localStorage.setItem('accessToken', newToken);
-      localStorage.setItem('auth_token', newToken);
-      localStorage.setItem('token', newToken);
+      if (typeof window !== 'undefined' && typeof localStorage !== 'undefined') {
+        localStorage.setItem('accessToken', newToken);
+        localStorage.setItem('auth_token', newToken);
+        localStorage.setItem('token', newToken);
+      }
 
       // Atualizar cookies
       CookieManager.updateAccessToken(newToken);
@@ -276,13 +295,19 @@ export class UnifiedAuthService {
       if (typeof window !== 'undefined') {
         try {
           // Limpar todos os storages
-          localStorage.clear();
-          sessionStorage.clear();
+          if (typeof localStorage !== 'undefined') {
+            localStorage.clear();
+          }
+          if (typeof sessionStorage !== 'undefined') {
+            sessionStorage.clear();
+          }
           
           // Limpar todos os cookies
-          document.cookie.split(";").forEach(function(c) { 
-            document.cookie = c.replace(/^ +/, "").replace(/=.*/, "=;expires=" + new Date().toUTCString() + ";path=/"); 
-          });
+          if (typeof document !== 'undefined' && document.cookie) {
+            document.cookie.split(";").forEach(function(c) { 
+              document.cookie = c.replace(/^ +/, "").replace(/=.*/, "=;expires=" + new Date().toUTCString() + ";path=/"); 
+            });
+          }
           
           console.log('🧹 Limpeza completa de dados realizada');
         } catch (error) {
@@ -305,14 +330,20 @@ export class UnifiedAuthService {
       try {
         if (typeof window !== 'undefined') {
           console.log('🚨 Executando limpeza de emergência...');
-          localStorage.clear();
-          sessionStorage.clear();
+          if (typeof localStorage !== 'undefined') {
+            localStorage.clear();
+          }
+          if (typeof sessionStorage !== 'undefined') {
+            sessionStorage.clear();
+          }
           CookieManager.clearAuthCookies();
           
           // Limpar cookies manualmente também
-          document.cookie.split(";").forEach(function(c) { 
-            document.cookie = c.replace(/^ +/, "").replace(/=.*/, "=;expires=" + new Date().toUTCString() + ";path=/"); 
-          });
+          if (typeof document !== 'undefined' && document.cookie) {
+            document.cookie.split(";").forEach(function(c) { 
+              document.cookie = c.replace(/^ +/, "").replace(/=.*/, "=;expires=" + new Date().toUTCString() + ";path=/"); 
+            });
+          }
         }
       } catch (emergencyError) {
         console.error('❌ Erro na limpeza de emergência:', emergencyError);

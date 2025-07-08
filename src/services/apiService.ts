@@ -28,21 +28,25 @@ const getHeaders = (): Headers => {
     console.warn("⚠️ [API] Token de autenticação não encontrado ou inválido. As requisições à API podem falhar.");
     console.log("🔍 [API] Token encontrado:", accessToken);
     
-    // Tentar recuperar token de outras fontes
-    if (typeof window !== 'undefined') {
-      const alternativeTokens = [
-        localStorage.getItem('accessToken'),
-        localStorage.getItem('token'),
-        localStorage.getItem('authToken'),
-        document.cookie.split(';').find(c => c.trim().startsWith('accessToken='))?.split('=')[1]
-      ].filter(Boolean);
-      
-      if (alternativeTokens.length > 0) {
-        console.log("🔄 [API] Tentando usar token alternativo");
-        const token = alternativeTokens[0];
-        if (token) {
-          headers.set('Authorization', `Bearer ${token}`);
+    // Tentar recuperar token de outras fontes - verificando se estamos no navegador
+    if (typeof window !== 'undefined' && typeof localStorage !== 'undefined' && typeof document !== 'undefined') {
+      try {
+        const alternativeTokens = [
+          localStorage.getItem('accessToken'),
+          localStorage.getItem('token'),
+          localStorage.getItem('authToken'),
+          document.cookie.split(';').find(c => c.trim().startsWith('accessToken='))?.split('=')[1]
+        ].filter(Boolean);
+        
+        if (alternativeTokens.length > 0) {
+          console.log("🔄 [API] Tentando usar token alternativo");
+          const token = alternativeTokens[0];
+          if (token) {
+            headers.set('Authorization', `Bearer ${token}`);
+          }
         }
+      } catch (error) {
+        console.error("❌ [API] Erro ao tentar acessar tokens alternativos:", error);
       }
     }
   }
@@ -62,18 +66,22 @@ async function handleResponse<T>(response: Response): Promise<T> {
       console.error('❌ [API] Erro de autenticação: Token inválido ou expirado');
       
       // Se estiver no navegador, podemos redirecionar para a página de login
-      if (typeof window !== 'undefined') {
-        // Limpar tokens inválidos
-        localStorage.removeItem('accessToken');
-        localStorage.removeItem('authToken');
-        localStorage.removeItem('token');
-        localStorage.removeItem('refreshToken');
-        localStorage.removeItem('user');
-        
-        // Redirecionar para login após um pequeno delay
-        setTimeout(() => {
-          window.location.href = '/auth/login?auth_error=expired';
-        }, 100);
+      if (typeof window !== 'undefined' && typeof localStorage !== 'undefined') {
+        try {
+          // Limpar tokens inválidos
+          localStorage.removeItem('accessToken');
+          localStorage.removeItem('authToken');
+          localStorage.removeItem('token');
+          localStorage.removeItem('refreshToken');
+          localStorage.removeItem('user');
+          
+          // Redirecionar para login após um pequeno delay
+          setTimeout(() => {
+            window.location.href = '/auth/login?auth_error=expired';
+          }, 100);
+        } catch (error) {
+          console.error('❌ [API] Erro ao limpar tokens:', error);
+        }
       }
       
       throw new Error('Sessão expirada ou usuário não autenticado');
