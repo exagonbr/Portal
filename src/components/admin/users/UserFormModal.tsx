@@ -50,11 +50,13 @@ export default function UserFormModal({
     name: '',
     email: '',
     password: '',
+    confirmPassword: '',
     role_id: '',
     institution_id: '',
     is_active: true
   })
   const [loading, setLoading] = useState(false)
+  const [changePassword, setChangePassword] = useState(false)
 
   // Função para lidar com erros de autenticação
   const handleAuthError = useCallback(() => {
@@ -82,25 +84,45 @@ export default function UserFormModal({
         name: user.full_name,
         email: user.email,
         password: '',
+        confirmPassword: '',
         role_id: user.role_id || '',
         institution_id: user.institution_id || '',
         is_active: user.enabled || false
       })
+      setChangePassword(false)
     } else {
       setFormData({
         name: '',
         email: '',
         password: '',
+        confirmPassword: '',
         role_id: '',
         institution_id: '',
         is_active: true
       })
+      setChangePassword(false)
     }
-  }, [user])
+  }, [user, isOpen])
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
     if (viewOnly) return
+
+    // Validação de senha
+    if (!user && !formData.password) {
+      showError('Senha é obrigatória para novos usuários')
+      return
+    }
+    
+    if ((formData.password || changePassword) && formData.password !== formData.confirmPassword) {
+      showError('As senhas não coincidem')
+      return
+    }
+
+    if ((formData.password || changePassword) && formData.password && formData.password.length < 6) {
+      showError('A senha deve ter pelo menos 6 caracteres')
+      return
+    }
 
     setLoading(true)
     try {
@@ -109,9 +131,15 @@ export default function UserFormModal({
           name: formData.name,
           email: formData.email,
           role_id: formData.role_id,
-          institution_id: formData.institution_id,
+          institution_id: formData.institution_id || undefined,
           is_active: formData.is_active
         }
+        
+        // Incluir senha apenas se foi preenchida
+        if (formData.password && changePassword) {
+          updateData.password = formData.password
+        }
+        
         await userService.updateUser(user.id, updateData)
         showSuccess('Usuário atualizado com sucesso!')
       } else {
@@ -121,7 +149,7 @@ export default function UserFormModal({
           email: formData.email,
           password: formData.password,
           role_id: formData.role_id,
-          institution_id: formData.institution_id,
+          institution_id: formData.institution_id || undefined,
           is_active: formData.is_active
         }
         await userService.createUser(createData)
@@ -304,6 +332,70 @@ export default function UserFormModal({
               />
             </div>
           )}
+
+          {!user && (
+            <div>
+              <label className="block text-sm font-medium text-slate-700 mb-1">
+                Confirmar Senha *
+              </label>
+              <input
+                type="password"
+                required={!user}
+                value={formData.confirmPassword}
+                onChange={(e) => handleInputChange('confirmPassword', e.target.value)}
+                className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                placeholder="Confirme a senha"
+              />
+            </div>
+          )}
+
+          {user && (
+            <div className="space-y-4">
+              <div>
+                <label className="flex items-center space-x-2 cursor-pointer">
+                  <input
+                    type="checkbox"
+                    checked={changePassword}
+                    onChange={(e) => setChangePassword(e.target.checked)}
+                    className="rounded border-gray-300 text-blue-600 focus:ring-blue-500 h-4 w-4"
+                  />
+                  <span className="text-sm text-gray-700">Alterar senha</span>
+                </label>
+              </div>
+
+              {changePassword && (
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div>
+                    <label className="block text-sm font-medium text-slate-700 mb-1">
+                      Nova Senha *
+                    </label>
+                    <input
+                      type="password"
+                      required={changePassword}
+                      value={formData.password}
+                      onChange={(e) => handleInputChange('password', e.target.value)}
+                      className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                      placeholder="Digite a nova senha"
+                    />
+                  </div>
+
+                  <div>
+                    <label className="block text-sm font-medium text-slate-700 mb-1">
+                      Confirmar Nova Senha *
+                    </label>
+                    <input
+                      type="password"
+                      required={changePassword}
+                      value={formData.confirmPassword}
+                      onChange={(e) => handleInputChange('confirmPassword', e.target.value)}
+                      className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                      placeholder="Confirme a nova senha"
+                    />
+                  </div>
+                </div>
+              )}
+            </div>
+          )}
         </div>
 
         {/* System Information */}
@@ -381,3 +473,4 @@ export default function UserFormModal({
     </Modal>
   )
 }
+ 

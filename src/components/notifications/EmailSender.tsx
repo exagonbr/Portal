@@ -3,12 +3,12 @@
 import { useState, useEffect } from 'react'
 import { Button } from '@/components/ui/Button'
 import { Label } from '@/components/ui/label'
-import { Input } from '@/components/ui/Input'
+import Input from '@/components/ui/Input'
 import { Textarea } from '@/components/ui/Textarea'
 import { Select } from '@/components/ui/Select'
 import { Checkbox } from '@/components/ui/checkbox'
 import { Badge } from '@/components/ui/Badge'
-import { Card, CardHeader, CardBody } from '@/components/ui/Card'
+import Card, { CardHeader, CardBody } from '@/components/ui/Card'
 import { Mail, Send, X, Users, UserCheck, Shield } from 'lucide-react'
 import { useToast } from '@/components/ToastManager'
 
@@ -346,7 +346,7 @@ export default function EmailSender({
               id="htmlOption"
               checked={emailData.html}
               onChange={(e) => {
-                const useHtml = e.target.checked
+                const useHtml = (e.target as HTMLInputElement).checked
                 setEmailData(prev => ({ 
                   ...prev, 
                   html: useHtml,

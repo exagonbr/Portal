@@ -5,7 +5,6 @@ export interface CreateUnitDto {
   institution_id: string;
   institution_name?: string;
   deleted?: boolean;
-  date_created?: Date;
 }
 
 export interface UpdateUnitDto {
@@ -13,16 +12,27 @@ export interface UpdateUnitDto {
   institution_id?: string;
   institution_name?: string;
   deleted?: boolean;
-  last_updated?: Date;
 }
 
-export interface UnitResponseDto extends BaseEntity {
+export interface UnitResponseDto {
   id: string;
   version?: number;
   date_created?: string;
-  deleted?: boolean;
+  deleted: boolean;
   institution_id: string;
   last_updated?: string;
   name: string;
   institution_name?: string;
+  created_at?: string;
+  updated_at?: string;
+}
+
+export interface UnitFilterDto {
+  page?: number;
+  limit?: number;
+  search?: string;
+  institution_id?: string;
+  deleted?: boolean;
+  sortBy?: string;
+  sortOrder?: 'asc' | 'desc';
 }

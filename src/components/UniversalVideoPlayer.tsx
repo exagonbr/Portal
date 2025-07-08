@@ -5,7 +5,7 @@ import { createPortal } from 'react-dom';
 import { Play, Pause, Volume2, VolumeX, Maximize, SkipBack, SkipForward, Settings, Clock, ChevronLeft, ChevronRight, Subtitles } from 'lucide-react';
 import { formatVideoTime, formatVideoDuration } from '@/utils/date';
 import { useAuth } from '@/hooks/useAuth';
-import { trackVideoProgress, getVideoStatus, startVideoSession } from '@/services/viewingStatusService';
+import { trackVideoProgress, getVideoStatus, startVideoSession, getViewingStatus } from '@/services/viewingStatusService';
 
 interface VideoSource {
   id: string;
@@ -69,6 +69,8 @@ export default function UniversalVideoPlayer({
   const [selectedQuality, setSelectedQuality] = useState<string>('auto');
   const [playbackSpeed, setPlaybackSpeed] = useState<number>(1.0);
   const [subtitlesEnabled, setSubtitlesEnabled] = useState<boolean>(false);
+  const [showFullscreen, setShowFullscreen] = useState(false);
+  const [isLoadingProgress, setIsLoadingProgress] = useState(false);
 
   const videoRef = useRef<HTMLVideoElement>(null);
   const containerRef = useRef<HTMLDivElement>(null);
@@ -732,58 +734,73 @@ export default function UniversalVideoPlayer({
     }
   };
 
-  // Carregar o progresso anterior do vídeo
-  useEffect(() => {
-    const loadVideoProgress = async () => {
-      if (!user || !videos[currentVideoIndex]) return;
+  // Função para carregar progresso do vídeo
+  const loadVideoProgress = async (videoId: number) => {
+    if (!videoId || isLoadingProgress) return;
+    
+    setIsLoadingProgress(true);
+    
+    try {
+      console.log('📊 Carregando progresso para vídeo:', videoId);
       
-      const videoId = parseInt(videos[currentVideoIndex].id);
-      if (isNaN(videoId)) return;
+             // Usar o novo sistema com fallbacks
+       const [progressResult, sessionResult] = await Promise.allSettled([
+         getViewingStatus(videoId),
+         startVideoSession(videoId)
+       ]);
       
-      try {
-        // Iniciar uma nova sessão de visualização
-        await startVideoSession(
-          videoId, 
-          sessionNumber ? parseInt(sessionNumber.toString()) : undefined
-        );
+      // Processar resultado do progresso
+      if (progressResult.status === 'fulfilled' && progressResult.value) {
+        const progressData = progressResult.value;
+        console.log('✅ Progresso carregado:', progressData);
         
-        // Carregar o progresso anterior
-        const status = await getVideoStatus(
-          videoId, 
-          sessionNumber ? parseInt(sessionNumber.toString()) : undefined
-        );
-        
-        if (status && status.currentPlayTime > 0 && videoRef.current) {
-          // Se o vídeo já foi assistido mais de 95%, começar do início
-          if (status.completionPercentage >= 95) {
-            videoRef.current.currentTime = 0;
-          } 
-          // Caso contrário, continuar de onde parou
-          else {
-            videoRef.current.currentTime = status.currentPlayTime;
-            setCurrentTime(status.currentPlayTime);
-          }
-          
-          // Mostrar mensagem de continuação
-          if (status.currentPlayTime > 0 && status.completionPercentage < 95) {
-            setShowMessage(true);
-            setMessage(`Continuando de ${formatVideoTime(status.currentPlayTime)}`);
+        // Aplicar progresso se existir
+        if (progressData.progress && progressData.progress > 0) {
+          const targetTime = (progressData.progress / 100) * (duration || 0);
+          if (targetTime > 5) { // Só aplicar se for mais de 5 segundos
+            console.log(`⏯️ Aplicando progresso: ${progressData.progress}% (${targetTime}s)`);
+            setCurrentTime(targetTime);
             
-            // Esconder a mensagem após 3 segundos
-            setTimeout(() => {
-              setShowMessage(false);
-            }, 3000);
+            // Aplicar ao player se disponível
+            if (videoRef.current) {
+              try {
+                videoRef.current.currentTime = targetTime;
+              } catch (error) {
+                console.warn('⚠️ Erro ao aplicar progresso no player:', error);
+              }
+            }
           }
         }
-      } catch (error) {
-        console.error('Erro ao carregar progresso do vídeo:', error);
+      } else {
+        console.log('📊 Sem progresso salvo ou erro ao carregar, iniciando do zero');
       }
-    };
-    
-    loadVideoProgress();
-  }, [currentVideoIndex, user]);
+      
+      // Processar resultado da sessão
+      if (sessionResult.status === 'fulfilled' && sessionResult.value) {
+        console.log('🎬 Sessão iniciada:', sessionResult.value);
+      } else {
+        console.log('⚠️ Aviso: Sessão não pôde ser iniciada, mas continuando reprodução');
+      }
+      
+    } catch (error) {
+      console.warn('⚠️ Erro ao carregar progresso (continuando reprodução):', error);
+      // Não impedir a reprodução em caso de erro
+         } finally {
+       setIsLoadingProgress(false);
+     }
+   };
 
-  if (!mounted) {
+   // Carregar progresso quando o vídeo muda
+   useEffect(() => {
+     if (user && videos[currentVideoIndex]) {
+       const videoId = parseInt(videos[currentVideoIndex].id);
+       if (!isNaN(videoId)) {
+         loadVideoProgress(videoId);
+       }
+     }
+   }, [currentVideoIndex, user]);
+
+   if (!mounted) {
     return null;
   }
   

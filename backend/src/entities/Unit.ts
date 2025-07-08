@@ -3,7 +3,9 @@ import {
   PrimaryGeneratedColumn,
   Column,
   ManyToOne,
-  JoinColumn
+  JoinColumn,
+  CreateDateColumn,
+  UpdateDateColumn
 } from 'typeorm';
 import { Institution } from './Institution';
 
@@ -15,11 +17,11 @@ export class Unit {
   @Column({ type: 'bigint', nullable: true })
   version?: number;
 
-  @Column({ name: 'date_created', type: 'timestamp', nullable: true })
-  dateCreated?: Date;
+  @CreateDateColumn({ name: 'date_created', type: 'timestamp' })
+  dateCreated!: Date;
 
-  @Column({ type: 'boolean', nullable: true })
-  deleted?: boolean;
+  @Column({ type: 'boolean', default: false })
+  deleted!: boolean;
 
   @Column({ name: 'institution_id', type: 'bigint' })
   institutionId!: number;
@@ -28,8 +30,8 @@ export class Unit {
   @JoinColumn({ name: 'institution_id' })
   institution!: Institution;
 
-  @Column({ name: 'last_updated', type: 'timestamp', nullable: true })
-  lastUpdated?: Date;
+  @UpdateDateColumn({ name: 'last_updated', type: 'timestamp' })
+  lastUpdated!: Date;
 
   @Column({ type: 'varchar', length: 255 })
   name!: string;
