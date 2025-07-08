@@ -115,38 +115,36 @@ export function useOptimizedAuth() {
     setError(null);
 
     try {
-      console.log('🔓 Iniciando logout otimizado...');
+      console.log('🔓 useOptimizedAuth: Iniciando logout otimizado...');
       
-      // Usar o método completo do UnifiedAuthService
-      const success = await UnifiedAuthService.performCompleteLogout(false);
+      // Usar o método completo do UnifiedAuthService com redirecionamento automático
+      const success = await UnifiedAuthService.performCompleteLogout(true);
       
-      // Não precisamos redirecionar aqui, pois o router.push abaixo fará isso
-      if (success) {
-        // Redirecionar para login
-        router.push(buildLoginUrl());
-        
-        return {
-          success: true,
-          message: 'Logout realizado com sucesso'
-        };
-      } else {
-        throw new Error('Falha no logout');
-      }
+      // O UnifiedAuthService já vai redirecionar com window.location.href
+      // Então apenas retornamos o resultado
+      return {
+        success: true,
+        message: 'Logout realizado com sucesso'
+      };
+      
     } catch (err: any) {
       const errorMessage = err.message || 'Erro no logout';
       setError(errorMessage);
       console.log('❌ Erro no logout otimizado:', errorMessage);
       
-      // Ainda assim redirecionar para login
-      router.push(buildLoginUrl());
+      // Em caso de erro, forçar redirecionamento manual
+      if (typeof window !== 'undefined') {
+        window.location.href = buildLoginUrl({ logout: 'error' });
+      } else {
+        router.push(buildLoginUrl({ logout: 'error' }));
+      }
       
       return {
         success: false,
         message: errorMessage
       };
-    } finally {
-      setIsLoading(false);
     }
+    // Nota: Não resetamos isLoading porque vamos redirecionar
   }, [router]);
 
   const validateToken = useCallback(async (): Promise<boolean> => {

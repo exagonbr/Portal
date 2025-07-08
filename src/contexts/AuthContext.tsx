@@ -239,31 +239,81 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
 
   // Função de logout centralizada
   const logout = useCallback(async () => {
-    console.log('Starting logout process...');
+    console.log('🔓 Iniciando processo de logout completo...');
     setIsLoggingOut(true);
 
     try {
-      // Usar limpeza completa de dados em vez de performCompleteLogout para evitar loop
+      // 1. Primeiro notificar o backend sobre o logout
+      const token = getStoredToken();
+      if (token) {
+        try {
+          await apiClient.post('/auth/logout', {}, {
+            headers: {
+              'Authorization': `Bearer ${token}`
+            },
+            timeout: 5000 // Timeout de 5 segundos para não travar
+          });
+          console.log('✅ Backend notificado sobre logout');
+        } catch (error) {
+          console.warn('⚠️ Erro ao notificar backend sobre logout (ignorando):', error);
+        }
+      }
+
+      // 2. Limpar dados de autenticação completos
       await clearAllDataForUnauthorized();
       
-      // Atualizar estado do contexto
+      // 3. Limpar estado do contexto
       setUser(null);
       apiClient.defaults.headers.common['Authorization'] = '';
       
-      // Redirecionar para página de login
-      router.push(buildLoginUrl());
+      // 4. Mostrar mensagem de sucesso
       toast.success('Até a próxima!');
+      
+      // 5. Redirecionar para login usando window.location para garantir limpeza completa
+      const loginUrl = buildLoginUrl({ logout: 'true' });
+      console.log('🔄 Redirecionando para:', loginUrl);
+      
+      // Usar window.location.href para garantir que todos os dados sejam limpos
+      if (typeof window !== 'undefined') {
+        window.location.href = loginUrl;
+      } else {
+        router.push(loginUrl);
+      }
       
     } catch (error) {
       console.error('❌ Erro durante logout:', error);
-      // Forçar limpeza mesmo com erro
-      setUser(null);
-      apiClient.defaults.headers.common['Authorization'] = '';
-      router.push(buildLoginUrl());
-    } finally {
-      // Reseta o estado após a conclusão
-      setIsLoggingOut(false);
+      
+      // Limpeza de emergência se algo deu errado
+      try {
+        if (typeof window !== 'undefined') {
+          localStorage.clear();
+          sessionStorage.clear();
+          
+          // Limpar cookies manualmente
+          document.cookie.split(";").forEach(function(c) { 
+            document.cookie = c.replace(/^ +/, "").replace(/=.*/, "=;expires=" + new Date().toUTCString() + ";path=/"); 
+          });
+        }
+        
+        setUser(null);
+        apiClient.defaults.headers.common['Authorization'] = '';
+        
+        // Redirecionar mesmo com erro
+        const loginUrl = buildLoginUrl({ logout: 'error' });
+        if (typeof window !== 'undefined') {
+          window.location.href = loginUrl;
+        } else {
+          router.push(loginUrl);
+        }
+      } catch (emergencyError) {
+        console.error('❌ Erro na limpeza de emergência:', emergencyError);
+        // Como último recurso, simplesmente recarregar a página
+        if (typeof window !== 'undefined') {
+          window.location.href = '/auth/login?logout=emergency';
+        }
+      }
     }
+    // Nota: Não resetamos isLoggingOut aqui porque vamos redirecionar
   }, [router]);
 
   // Função para validar e configurar usuário a partir do token

@@ -154,6 +154,18 @@ export const authOptions: NextAuthOptions = {
     maxAge: 24 * 60 * 60, // 24 horas
     updateAge: 24 * 60 * 60, // Atualizar a cada 24 horas
   },
+  // Configuração de cookies para corrigir o problema do prefixo __Secure-
+  cookies: {
+    sessionToken: {
+      name: process.env.NODE_ENV === 'production' ? `__Secure-next-auth.session-token` : `next-auth.session-token`,
+      options: {
+        httpOnly: true,
+        sameSite: 'lax',
+        path: '/',
+        secure: process.env.NODE_ENV === 'production'
+      }
+    }
+  },
   secret: process.env.NEXTAUTH_SECRET,
   debug: process.env.NODE_ENV === 'development',
 };

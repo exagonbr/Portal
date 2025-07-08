@@ -23,12 +23,35 @@ export function useUltraLogout() {
       }
       
       // Executar logout completo usando o UnifiedAuthService
-      return await UnifiedAuthService.performCompleteLogout(true);
+      const success = await UnifiedAuthService.performCompleteLogout(true);
+      
+      if (!success) {
+        // Se o UnifiedAuthService falhou, fazer limpeza manual e redirecionar
+        if (typeof window !== 'undefined') {
+          localStorage.clear();
+          sessionStorage.clear();
+          document.cookie.split(";").forEach(function(c) { 
+            document.cookie = c.replace(/^ +/, "").replace(/=.*/, "=;expires=" + new Date().toUTCString() + ";path=/"); 
+          });
+          window.location.href = '/auth/login?logout=fallback';
+        }
+      }
+      
+      return success;
     } catch (error) {
       console.log('❌ useUltraLogout: Erro durante logout:', error);
       
-      // Fallback: redirecionamento manual
+      // Fallback: limpeza manual e redirecionamento
       if (typeof window !== 'undefined') {
+        try {
+          localStorage.clear();
+          sessionStorage.clear();
+          document.cookie.split(";").forEach(function(c) { 
+            document.cookie = c.replace(/^ +/, "").replace(/=.*/, "=;expires=" + new Date().toUTCString() + ";path=/"); 
+          });
+        } catch (cleanupError) {
+          console.error('❌ Erro na limpeza de fallback:', cleanupError);
+        }
         window.location.href = '/auth/login?logout=error';
       }
       
@@ -39,12 +62,35 @@ export function useUltraLogout() {
   const logoutWithoutConfirmation = useCallback(async () => {
     try {
       console.log('🚨 useUltraLogout: Logout sem confirmação...');
-      return await UnifiedAuthService.performCompleteLogout(true);
+      const success = await UnifiedAuthService.performCompleteLogout(true);
+      
+      if (!success) {
+        // Se o UnifiedAuthService falhou, fazer limpeza manual e redirecionar
+        if (typeof window !== 'undefined') {
+          localStorage.clear();
+          sessionStorage.clear();
+          document.cookie.split(";").forEach(function(c) { 
+            document.cookie = c.replace(/^ +/, "").replace(/=.*/, "=;expires=" + new Date().toUTCString() + ";path=/"); 
+          });
+          window.location.href = '/auth/login?logout=fallback';
+        }
+      }
+      
+      return success;
     } catch (error) {
       console.log('❌ useUltraLogout: Erro durante logout sem confirmação:', error);
       
-      // Fallback: redirecionamento manual
+      // Fallback: limpeza manual e redirecionamento
       if (typeof window !== 'undefined') {
+        try {
+          localStorage.clear();
+          sessionStorage.clear();
+          document.cookie.split(";").forEach(function(c) { 
+            document.cookie = c.replace(/^ +/, "").replace(/=.*/, "=;expires=" + new Date().toUTCString() + ";path=/"); 
+          });
+        } catch (cleanupError) {
+          console.error('❌ Erro na limpeza de fallback:', cleanupError);
+        }
         window.location.href = '/auth/login?logout=error';
       }
       

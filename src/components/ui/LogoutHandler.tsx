@@ -18,20 +18,46 @@ export function LogoutHandler({ onLogout, children }: LogoutHandlerProps) {
     try {
       setIsLoggingOut(true);
 
-      // Usar limpeza completa de dados em vez de performCompleteLogout para evitar loop
-      await clearAllDataForUnauthorized();
-
-      // Chamar callback de logout se fornecido
+      // Chamar callback de logout se fornecido ANTES da limpeza
       if (onLogout) {
-        await onLogout();
+        try {
+          await onLogout();
+        } catch (error) {
+          console.warn('⚠️ Erro no callback de logout (ignorando):', error);
+        }
       }
 
-      // Redirecionar para login
-      router.push('/auth/login?logout=true');
+      // Usar limpeza completa de dados
+      await clearAllDataForUnauthorized();
+
+      // Redirecionar para login usando window.location para garantir limpeza completa
+      if (typeof window !== 'undefined') {
+        window.location.href = '/auth/login?logout=true';
+      } else {
+        router.push('/auth/login?logout=true');
+      }
     } catch (error) {
-      console.error('Erro ao fazer logout:', error);
-      setIsLoggingOut(false);
+      console.error('❌ LogoutHandler: Erro ao fazer logout:', error);
+      
+      // Limpeza de emergência
+      try {
+        if (typeof window !== 'undefined') {
+          localStorage.clear();
+          sessionStorage.clear();
+          document.cookie.split(";").forEach(function(c) { 
+            document.cookie = c.replace(/^ +/, "").replace(/=.*/, "=;expires=" + new Date().toUTCString() + ";path=/"); 
+          });
+          window.location.href = '/auth/login?logout=error';
+        }
+      } catch (emergencyError) {
+        console.error('❌ Erro na limpeza de emergência:', emergencyError);
+        // Como último recurso
+        if (typeof window !== 'undefined') {
+          window.location.href = '/auth/login?logout=emergency';
+        }
+      }
     }
+    // Nota: Não resetamos isLoggingOut porque vamos redirecionar
   };
 
   const handleLogout = () => {

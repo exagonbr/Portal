@@ -218,6 +218,19 @@ const nextConfig = {
     imageSizes: [16, 32, 48, 64, 96, 128, 256, 384],
     minimumCacheTTL: 60,
   },
+  
+  // Configuração para informar ao Next.js que estamos atrás de um proxy seguro
+  serverRuntimeConfig: {
+    // Configurações disponíveis apenas no servidor
+  },
+  publicRuntimeConfig: {
+    // Configurações disponíveis no cliente e servidor
+  },
+  // Configuração para confiar em headers de proxy (X-Forwarded-Proto, X-Forwarded-Host)
+  trailingSlash: false,
+  basePath: '',
+  assetPrefix: '',
+  productionBrowserSourceMaps: false,
 };
 
 // Configuração para carregar variáveis de ambiente

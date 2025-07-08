@@ -5,6 +5,7 @@ import Image from 'next/image';
 import { useAuth } from '../../contexts/AuthContext';
 import { useTheme } from '@/contexts/ThemeContext';
 import { LicenseValidationModal } from './LicenseValidationModal';
+import { GoogleLoginButton } from './GoogleLoginButton';
 import { MotionDiv, MotionSpan } from '@/components/ui/MotionWrapper';
 import { FRONTEND_URL } from '@/config/urls';
 import { clearAllDataForUnauthorized } from '@/utils/clearAllData';
@@ -239,11 +240,37 @@ export function LoginForm() {
           </button>
         </MotionDiv>
 
-        {/* Botão de Validação de Licença */}
+        {/* Divisor "ou" */}
         <MotionDiv
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.5 }}
+          className="relative"
+        >
+          <div className="absolute inset-0 flex items-center">
+            <div className="w-full border-t" style={{ borderColor: theme.colors.border.DEFAULT }}></div>
+          </div>
+          <div className="relative flex justify-center text-sm">
+            <span className="px-2" style={{ 
+              backgroundColor: theme.colors.background.primary,
+              color: theme.colors.text.secondary 
+            }}>
+              ou
+            </span>
+          </div>
+        </MotionDiv>
+
+        {/* Botão Entrar com Google */}
+        <GoogleLoginButton 
+          disabled={isSubmitting}
+          onLoginStart={() => setIsSubmitting(true)}
+        />
+
+        {/* Botão de Validação de Licença */}
+        <MotionDiv
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.7 }}
           className="mt-2 sm:mt-0"
         >
           <button

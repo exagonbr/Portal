@@ -245,46 +245,77 @@ export class UnifiedAuthService {
    */
   static async performCompleteLogout(redirectToLogin: boolean = true): Promise<boolean> {
     try {
-      console.log('🔓 Logout...');
+      console.log('🔓 UnifiedAuthService: Iniciando logout completo...');
       
       const token = this.getAccessToken();
       const sessionId = this.getSessionId();
       
-      // Chamar API de logout (opcional)
+      // 1. Chamar API de logout (opcional, com timeout)
       if (token) {
         try {
+          console.log('📡 Notificando backend sobre logout...');
           await fetch(`${getApiUrl()}/auth/logout`, {
             method: 'POST',
             headers: {
               'Content-Type': 'application/json',
               'Authorization': `Bearer ${token}`
             },
-            credentials: 'include'
+            credentials: 'include',
+            signal: typeof AbortSignal !== 'undefined' && AbortSignal.timeout ? AbortSignal.timeout(5000) : undefined // Timeout de 5 segundos se disponível
           });
-        } catch {
-          // Ignorar erro na API
+          console.log('✅ Backend notificado sobre logout');
+        } catch (error) {
+          console.warn('⚠️ Erro ao notificar backend (ignorando):', error);
         }
       }
       
-      // Limpar dados
+      // 2. Limpar todos os dados de autenticação
       await this.clearAuthData(sessionId, token);
       
-      // Redirecionar se solicitado
+      // 3. Limpeza adicional para garantir que tudo seja removido
+      if (typeof window !== 'undefined') {
+        try {
+          // Limpar todos os storages
+          localStorage.clear();
+          sessionStorage.clear();
+          
+          // Limpar todos os cookies
+          document.cookie.split(";").forEach(function(c) { 
+            document.cookie = c.replace(/^ +/, "").replace(/=.*/, "=;expires=" + new Date().toUTCString() + ";path=/"); 
+          });
+          
+          console.log('🧹 Limpeza completa de dados realizada');
+        } catch (error) {
+          console.warn('⚠️ Erro na limpeza adicional:', error);
+        }
+      }
+      
+      // 4. Redirecionar se solicitado usando window.location para garantir nova sessão
       if (redirectToLogin && typeof window !== 'undefined') {
+        console.log('🔄 Redirecionando para login...');
         window.location.href = '/auth/login?logout=true';
       }
       
-      console.log('✅ Logout concluído');
+      console.log('✅ Logout completo realizado com sucesso');
       return true;
     } catch (error) {
       console.error('❌ Erro no logout:', error);
       
       // Limpeza de emergência
       try {
-        localStorage.clear();
-        CookieManager.clearAuthCookies();
-      } catch {
-        // Ignorar
+        if (typeof window !== 'undefined') {
+          console.log('🚨 Executando limpeza de emergência...');
+          localStorage.clear();
+          sessionStorage.clear();
+          CookieManager.clearAuthCookies();
+          
+          // Limpar cookies manualmente também
+          document.cookie.split(";").forEach(function(c) { 
+            document.cookie = c.replace(/^ +/, "").replace(/=.*/, "=;expires=" + new Date().toUTCString() + ";path=/"); 
+          });
+        }
+      } catch (emergencyError) {
+        console.error('❌ Erro na limpeza de emergência:', emergencyError);
       }
       
       if (redirectToLogin && typeof window !== 'undefined') {

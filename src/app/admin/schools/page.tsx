@@ -26,6 +26,7 @@ import { useRouter } from 'next/navigation'
 import UnitFormModal from '@/components/admin/units/UnitFormModal'
 import { UnitDto, UnitFilter } from '@/types/unit'
 import { InstitutionDto, InstitutionType } from '@/types/institution'
+import { useAuth } from '@/contexts/AuthContext'
 
 // Interface para estatísticas de unidades
 interface UnitStats {
@@ -40,6 +41,7 @@ export default function AdminUnitsPage() {
   const [loading, setLoading] = useState(true)
   const [refreshing, setRefreshing] = useState(false)
   const router = useRouter()
+  const { user, isAuthenticated, isLoading } = useAuth()
   
   // Dados principais
   const [units, setUnits] = useState<UnitDto[]>([])
@@ -68,16 +70,15 @@ export default function AdminUnitsPage() {
 
   // Verificar autenticação
   useEffect(() => {
-    const checkAuth = () => {
-      const token = localStorage.getItem('accessToken') || localStorage.getItem('authToken')
-      if (!token) {
-        showError("Sessão expirada ou usuário não autenticado")
-        router.push('/auth/login')
-      }
-    }
+    // Aguardar carregamento do contexto de autenticação
+    if (isLoading) return
     
-    checkAuth()
-  }, [router, showError])
+    // Verificar se o usuário está autenticado
+    if (!isAuthenticated || !user) {
+      showError("Sessão expirada ou usuário não autenticado")
+      router.push('/auth/login')
+    }
+  }, [isAuthenticated, user, isLoading, router, showError])
 
   const calculateStats = useCallback((allUnits: UnitDto[], allInstitutions: InstitutionDto[]) => {
     const totalUnits = allUnits.length
@@ -131,9 +132,8 @@ export default function AdminUnitsPage() {
     else setRefreshing(true)
 
     try {
-      // Verificar autenticação antes de fazer a requisição
-      const token = localStorage.getItem('accessToken') || localStorage.getItem('authToken')
-      if (!token) {
+      // Verificar se o usuário está autenticado antes de fazer a requisição
+      if (!isAuthenticated || !user) {
         throw new Error('Usuário não autenticado')
       }
 
@@ -196,8 +196,11 @@ export default function AdminUnitsPage() {
   }
 
   useEffect(() => {
-    fetchPageData(currentPage, searchQuery, filters)
-  }, [currentPage])
+    // Só carrega os dados quando a autenticação estiver verificada
+    if (!isLoading) {
+      fetchPageData(currentPage, searchQuery, filters)
+    }
+  }, [currentPage, isLoading, isAuthenticated])
 
   const handleSearch = (e: React.FormEvent) => {
     e.preventDefault()
