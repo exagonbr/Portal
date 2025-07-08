@@ -1,21 +1,11 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { getServerSession } from 'next-auth'
 import { authOptions } from '@/lib/auth'
-
-function getCorsHeaders(origin?: string) {
-  return {
-    'Access-Control-Allow-Origin': origin || '*',
-    'Access-Control-Allow-Methods': 'GET, POST, PUT, DELETE, OPTIONS',
-    'Access-Control-Allow-Headers': 'Content-Type, Authorization',
-    'Access-Control-Allow-Credentials': 'true'
-  }
-}
+import { createCorsOptionsResponse, getCorsHeaders } from '@/config/cors'
 
 export async function OPTIONS(request: NextRequest) {
-  return new Response(null, {
-    status: 200,
-    headers: getCorsHeaders(request.headers.get('origin') || undefined)
-  })
+  const origin = request.headers.get('origin') || undefined;
+  return createCorsOptionsResponse(origin);
 }
 
 export async function POST(request: NextRequest) {
@@ -32,25 +22,57 @@ export async function POST(request: NextRequest) {
       })
     }
 
-
     const body = await request.json()
     console.log('📧 [Email Send API] Dados recebidos:', body)
 
     // Validar dados obrigatórios
-    if (!body.title || !body.message) {
+    if (!body.subject && !body.title) {
       return NextResponse.json({
         success: false,
-        message: 'Título e mensagem são obrigatórios'
+        message: 'Assunto é obrigatório'
       }, {
         status: 400,
         headers: getCorsHeaders(request.headers.get('origin') || undefined)
       })
     }
 
-    if (!body.recipients?.emails || !Array.isArray(body.recipients.emails) || body.recipients.emails.length === 0) {
+    if (!body.message) {
       return NextResponse.json({
         success: false,
-        message: 'Lista de destinatários é obrigatória'
+        message: 'Mensagem é obrigatória'
+      }, {
+        status: 400,
+        headers: getCorsHeaders(request.headers.get('origin') || undefined)
+      })
+    }
+
+    // Extrair todos os emails dos diferentes tipos de destinatários
+    const allEmails: string[] = []
+    
+    // Emails diretos
+    if (body.recipients?.emails && Array.isArray(body.recipients.emails)) {
+      allEmails.push(...body.recipients.emails)
+    }
+    
+    // IDs de usuários (aqui você buscaria os emails desses usuários no banco de dados)
+    if (body.recipients?.users && Array.isArray(body.recipients.users)) {
+      // Simulação: converter IDs de usuários para emails
+      const userEmails = body.recipients.users.map((userId: string) => `user_${userId}@example.com`)
+      allEmails.push(...userEmails)
+    }
+    
+    // Papéis/funções (aqui você buscaria todos os emails dos usuários com esses papéis)
+    if (body.recipients?.roles && Array.isArray(body.recipients.roles)) {
+      // Simulação: converter papéis para emails
+      const roleEmails = body.recipients.roles.map((role: string) => `${role}_group@example.com`)
+      allEmails.push(...roleEmails)
+    }
+
+    // Se não houver emails, retornar erro
+    if (allEmails.length === 0) {
+      return NextResponse.json({
+        success: false,
+        message: 'Nenhum destinatário válido encontrado'
       }, {
         status: 400,
         headers: getCorsHeaders(request.headers.get('origin') || undefined)
@@ -59,7 +81,7 @@ export async function POST(request: NextRequest) {
 
     // Validar emails
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
-    const invalidEmails = body.recipients.emails.filter((email: string) => !emailRegex.test(email))
+    const invalidEmails = allEmails.filter((email: string) => !emailRegex.test(email))
     
     if (invalidEmails.length > 0) {
       return NextResponse.json({
@@ -73,23 +95,23 @@ export async function POST(request: NextRequest) {
 
     // Simular envio de email (aqui você integraria com um serviço real de email)
     console.log('📧 [Email Send API] Simulando envio de email...')
-    console.log('📧 [Email Send API] Destinatários:', body.recipients.emails)
-    console.log('📧 [Email Send API] Assunto:', body.title)
+    console.log('📧 [Email Send API] Destinatários:', allEmails)
+    console.log('📧 [Email Send API] Assunto:', body.subject || body.title)
     console.log('📧 [Email Send API] Mensagem:', body.message)
+    console.log('📧 [Email Send API] HTML:', body.html ? 'Sim' : 'Não')
 
     // Criar registro da notificação enviada
     const notification = {
       id: `email_${Date.now()}`,
-      title: body.title,
+      title: body.subject || body.title,
       message: body.message,
       type: body.type || 'info',
       category: body.category || 'email',
       priority: body.priority || 'medium',
-      iconType: body.iconType || 'email',
       sender_id: session.user?.email,
       sender_name: session.user?.name,
-      recipients: body.recipients.emails,
-      recipient_count: body.recipients.emails.length,
+      recipients: allEmails,
+      recipient_count: allEmails.length,
       channels: ['EMAIL'],
       status: 'sent',
       created_at: new Date().toISOString(),
@@ -104,7 +126,7 @@ export async function POST(request: NextRequest) {
 
     return NextResponse.json({
       success: true,
-      message: `Email enviado com sucesso para ${body.recipients.emails.length} destinatário(s)`,
+      message: `Email enviado com sucesso para ${allEmails.length} destinatário(s)`,
       data: notification
     }, {
       status: 200,
@@ -112,7 +134,7 @@ export async function POST(request: NextRequest) {
     })
 
   } catch (error) {
-    console.log('❌ [Email Send API] Erro ao enviar email:', error)
+    console.error('❌ [Email Send API] Erro ao enviar email:', error)
     return NextResponse.json({ 
       success: false,
       message: 'Erro interno do servidor' 

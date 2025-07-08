@@ -1,14 +1,14 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getServerSession } from 'next-auth';
 import { authOptions } from '@/lib/auth';
-import { createCorsOptionsResponse, getCorsHeaders } from '@/config/cors'
+import { createCorsOptionsResponse, getCorsHeaders as corsHeaders } from '@/config/cors'
 
 // Interface para templates de email
 interface EmailTemplateDTO {
   id?: number;
   name: string;
   subject: string;
-  html: string;
+  html?: string;
   text?: string;
   category?: string;
   is_active?: boolean;
@@ -74,15 +74,35 @@ let mockTemplates: EmailTemplateDTO[] = [
     text: '{{title}} - Olá {{name}}, {{message}}',
     created_at: new Date(),
     updated_at: new Date()
+  },
+  {
+    id: 3,
+    name: 'reminder',
+    subject: 'Lembrete: {{title}}',
+    category: 'reminder',
+    is_active: true,
+    html: `<div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px;">
+        <div style="background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%); padding: 30px; border-radius: 10px 10px 0 0; text-align: center;">
+          <h1 style="color: white; margin: 0; font-size: 28px;">⏰ Lembrete</h1>
+        </div>
+        <div style="background: white; padding: 30px; border-radius: 0 0 10px 10px; border: 1px solid #e5e7eb;">
+          <p style="font-size: 16px; color: #374151;">Olá <strong>{{name}}</strong>,</p>
+          <div style="font-size: 16px; color: #374151; line-height: 1.6; margin: 20px 0;">
+            <p>Este é um lembrete para:</p>
+            <h2 style="color: #f59e0b; margin: 10px 0;">{{title}}</h2>
+            <p>{{message}}</p>
+          </div>
+        </div>
+      </div>`,
+    text: 'Lembrete: {{title}} - Olá {{name}}, {{message}}',
+    created_at: new Date(),
+    updated_at: new Date()
   }
 ];
 
 export async function OPTIONS(request: NextRequest) {
   const origin = request.headers.get('origin') || undefined;
-  return new NextResponse(null, {
-    status: 200,
-    headers: getCorsHeaders(origin)
-  });
+  return createCorsOptionsResponse(origin || '');
 }
 
 export async function GET(request: NextRequest) {
@@ -90,10 +110,15 @@ export async function GET(request: NextRequest) {
     console.log('🔍 [API] Buscando templates de email...');
     
     const session = await getServerSession(authOptions);
+    const origin = request.headers.get('origin') || '';
+    
     if (!session) {
-      return NextResponse.json({ error: 'Não autorizado' }, { 
+      return NextResponse.json({ 
+        success: false,
+        message: 'Não autorizado' 
+      }, { 
         status: 401,
-        headers: getCorsHeaders(request.headers.get('origin') || undefined)
+        headers: corsHeaders(origin)
       });
     }
 
@@ -104,7 +129,7 @@ export async function GET(request: NextRequest) {
     if (!canManageTemplates) {
       return NextResponse.json({ error: 'Sem permissão para gerenciar templates' }, { 
         status: 403,
-        headers: getCorsHeaders(request.headers.get('origin') || undefined)
+        headers: corsHeaders(origin)
       });
     }
     
@@ -140,7 +165,8 @@ export async function GET(request: NextRequest) {
       data: filteredTemplates,
       count: filteredTemplates.length
     }, {
-      headers: getCorsHeaders(request.headers.get('origin') || undefined)
+      status: 200,
+      headers: corsHeaders(origin)
     });
   } catch (error: any) {
     console.log('❌ [API] Erro ao buscar templates:', error);
@@ -151,7 +177,7 @@ export async function GET(request: NextRequest) {
       },
       { 
         status: 500,
-        headers: getCorsHeaders(request.headers.get('origin') || undefined)
+        headers: corsHeaders(request.headers.get('origin') || '')
       }
     );
   }
@@ -162,10 +188,15 @@ export async function POST(request: NextRequest) {
     console.log('🔍 [API] Criando novo template de email...');
     
     const session = await getServerSession(authOptions);
+    const origin = request.headers.get('origin') || '';
+    
     if (!session) {
-      return NextResponse.json({ error: 'Não autorizado' }, { 
+      return NextResponse.json({ 
+        success: false,
+        message: 'Não autorizado' 
+      }, { 
         status: 401,
-        headers: getCorsHeaders(request.headers.get('origin') || undefined)
+        headers: corsHeaders(origin)
       });
     }
 
@@ -176,22 +207,22 @@ export async function POST(request: NextRequest) {
     if (!canManageTemplates) {
       return NextResponse.json({ error: 'Sem permissão para gerenciar templates' }, { 
         status: 403,
-        headers: getCorsHeaders(request.headers.get('origin') || undefined)
+        headers: corsHeaders(origin)
       });
     }
     
     const body: EmailTemplateDTO = await request.json();
     
     // Validações básicas
-    if (!body.name || !body.subject || !body.html) {
+    if (!body.name || !body.subject) {
       return NextResponse.json(
         {
           success: false,
-          message: 'Nome, assunto e HTML são obrigatórios'
+          message: 'Nome e assunto são obrigatórios'
         },
         { 
           status: 400,
-          headers: getCorsHeaders(request.headers.get('origin') || undefined)
+          headers: corsHeaders(origin)
         }
       );
     }
@@ -206,7 +237,7 @@ export async function POST(request: NextRequest) {
         },
         { 
           status: 409,
-          headers: getCorsHeaders(request.headers.get('origin') || undefined)
+          headers: corsHeaders(origin)
         }
       );
     }
@@ -216,7 +247,7 @@ export async function POST(request: NextRequest) {
       id: Math.max(...mockTemplates.map(t => t.id || 0)) + 1,
       name: body.name,
       subject: body.subject,
-      html: body.html,
+      html: body.html || undefined,
       text: body.text || '',
       category: body.category || 'general',
       is_active: body.is_active !== undefined ? body.is_active : true,
@@ -235,7 +266,7 @@ export async function POST(request: NextRequest) {
       },
       { 
         status: 201,
-        headers: getCorsHeaders(request.headers.get('origin') || undefined)
+        headers: corsHeaders(origin)
       }
     );
   } catch (error: any) {
@@ -247,7 +278,7 @@ export async function POST(request: NextRequest) {
       },
       { 
         status: 500,
-        headers: getCorsHeaders(request.headers.get('origin') || undefined)
+        headers: corsHeaders(request.headers.get('origin') || '')
       }
     );
   }

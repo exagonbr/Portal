@@ -52,4 +52,15 @@ export const notificationService = {
   getNotifications,
   getNotificationById,
   createNotification,
+  sendEmail
 };
+
+async function sendEmail(data: any): Promise<any> {
+  try {
+    const response = await apiPost('/notifications/send', data);
+    return response;
+  } catch (error) {
+    console.error('Erro no serviço de envio de email:', error);
+    throw error;
+  }
+}
