@@ -14,18 +14,18 @@ export async function GET(request: NextRequest) {
       return NextResponse.json(
         {
           success: false,
-          message: 'É necessário informar o número da licença ou os últimos 3 dígitos do CPF'
+          message: 'É necessário informar o número da licença ou os últimos dígitos do CPF'
         },
         { status: 400 }
       );
     }
 
     // Validar formato dos últimos dígitos do CPF
-    if (cpfLastDigits && !/^\d{3}$/.test(cpfLastDigits)) {
+    if (cpfLastDigits && !/^\d{4}$/.test(cpfLastDigits)) {
       return NextResponse.json(
         {
           success: false,
-          message: 'Os últimos dígitos do CPF devem conter exatamente 3 números'
+          message: 'Os últimos dígitos do CPF devem conter exatamente 4 números'
         },
         { status: 400 }
       );

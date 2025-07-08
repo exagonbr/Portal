@@ -1,116 +1,76 @@
-import { NextRequest, NextResponse } from 'next/server';
-import { getServerSession } from 'next-auth';
-import { authOptions } from '@/lib/auth';
-import { createCorsOptionsResponse, getCorsHeaders as corsHeaders } from '@/config/cors'
+import { NextRequest, NextResponse } from 'next/server'
+import { getServerSession } from 'next-auth'
+import { authOptions } from '@/lib/auth'
+import { createCorsOptionsResponse, getCorsHeaders } from '@/config/cors'
 
-// Interface para templates de email
-interface EmailTemplateDTO {
-  id?: number;
-  name: string;
-  subject: string;
-  html?: string;
-  text?: string;
-  category?: string;
-  is_active?: boolean;
-  created_at?: Date;
-  updated_at?: Date;
-}
-
-// Funções CORS (copiadas do arquivo principal)
-function getCorsHeaders(origin?: string) {
-  return {
-    'Access-Control-Allow-Origin': origin || '*',
-    'Access-Control-Allow-Methods': 'GET, POST, PUT, DELETE, OPTIONS',
-    'Access-Control-Allow-Headers': 'Content-Type, Authorization',
-    'Access-Control-Allow-Credentials': 'true',
-  }
-}
-
-// Mock data temporário para desenvolvimento
-let mockTemplates: EmailTemplateDTO[] = [
-  {
-    id: 1,
-    name: 'welcome',
-    subject: 'Bem-vindo ao Portal Sabercon!',
-    category: 'system',
-    is_active: true,
-    html: `<div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px;">
-        <div style="background: linear-gradient(135deg, #2563eb 0%, #1d4ed8 100%); padding: 30px; border-radius: 10px 10px 0 0; text-align: center;">
-          <h1 style="color: white; margin: 0; font-size: 28px;">Bem-vindo ao Portal Sabercon!</h1>
-        </div>
-        <div style="background: white; padding: 30px; border-radius: 0 0 10px 10px; border: 1px solid #e5e7eb;">
-          <p style="font-size: 16px; color: #374151;">Olá <strong>{{name}}</strong>,</p>
-          <p style="font-size: 16px; color: #374151; line-height: 1.6;">
-            Seja bem-vindo ao Portal Sabercon! Sua conta foi criada com sucesso.
-          </p>
-          <div style="text-align: center; margin: 30px 0;">
-            <a href="{{loginUrl}}" style="background-color: #2563eb; color: white; padding: 15px 30px; text-decoration: none; border-radius: 8px; font-weight: bold; display: inline-block;">
-              Acessar Portal
-            </a>
-          </div>
-        </div>
-      </div>`,
-    text: 'Bem-vindo ao Portal Sabercon! Olá {{name}}, sua conta foi criada com sucesso.',
-    created_at: new Date(),
-    updated_at: new Date()
+// Simulação de banco de dados para templates
+const templatesDB = {
+  'welcome': {
+    id: 'welcome',
+    name: 'Boas-vindas',
+    content: 'Olá {{name}}, bem-vindo ao nosso sistema!',
+    description: 'Template para mensagem de boas-vindas',
+    isHtml: false,
+    channel: 'EMAIL',
+    variables: ['name'],
+    created_at: '2023-01-01T00:00:00.000Z',
+    updated_at: '2023-01-01T00:00:00.000Z'
   },
-  {
-    id: 2,
-    name: 'notification',
-    subject: '{{subject}}',
-    category: 'notification',
-    is_active: true,
-    html: `<div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px;">
-        <div style="background: linear-gradient(135deg, #7c3aed 0%, #6d28d9 100%); padding: 30px; border-radius: 10px 10px 0 0; text-align: center;">
-          <h1 style="color: white; margin: 0; font-size: 28px;">📢 {{title}}</h1>
-        </div>
-        <div style="background: white; padding: 30px; border-radius: 0 0 10px 10px; border: 1px solid #e5e7eb;">
-          <p style="font-size: 16px; color: #374151;">Olá <strong>{{name}}</strong>,</p>
-          <div style="font-size: 16px; color: #374151; line-height: 1.6; margin: 20px 0;">
-            {{message}}
-          </div>
-        </div>
-      </div>`,
-    text: '{{title}} - Olá {{name}}, {{message}}',
-    created_at: new Date(),
-    updated_at: new Date()
+  'password_reset': {
+    id: 'password_reset',
+    name: 'Redefinição de Senha',
+    content: '<h1>Redefinição de Senha</h1><p>Olá {{name}},</p><p>Clique <a href="{{resetLink}}">aqui</a> para redefinir sua senha.</p>',
+    description: 'Template para redefinição de senha',
+    isHtml: true,
+    channel: 'EMAIL',
+    variables: ['name', 'resetLink'],
+    created_at: '2023-01-02T00:00:00.000Z',
+    updated_at: '2023-01-02T00:00:00.000Z'
   },
-  {
-    id: 3,
-    name: 'reminder',
-    subject: 'Lembrete: {{title}}',
-    category: 'reminder',
-    is_active: true,
-    html: `<div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px;">
-        <div style="background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%); padding: 30px; border-radius: 10px 10px 0 0; text-align: center;">
-          <h1 style="color: white; margin: 0; font-size: 28px;">⏰ Lembrete</h1>
-        </div>
-        <div style="background: white; padding: 30px; border-radius: 0 0 10px 10px; border: 1px solid #e5e7eb;">
-          <p style="font-size: 16px; color: #374151;">Olá <strong>{{name}}</strong>,</p>
-          <div style="font-size: 16px; color: #374151; line-height: 1.6; margin: 20px 0;">
-            <p>Este é um lembrete para:</p>
-            <h2 style="color: #f59e0b; margin: 10px 0;">{{title}}</h2>
-            <p>{{message}}</p>
-          </div>
-        </div>
-      </div>`,
-    text: 'Lembrete: {{title}} - Olá {{name}}, {{message}}',
-    created_at: new Date(),
-    updated_at: new Date()
+  'notification': {
+    id: 'notification',
+    name: 'Notificação Geral',
+    content: '{{message}}',
+    description: 'Template genérico para notificações',
+    isHtml: false,
+    channel: 'ALL',
+    variables: ['message'],
+    created_at: '2023-01-03T00:00:00.000Z',
+    updated_at: '2023-01-03T00:00:00.000Z'
+  },
+  'appointment_reminder': {
+    id: 'appointment_reminder',
+    name: 'Lembrete de Compromisso',
+    content: 'Olá {{name}}, você tem um compromisso marcado para {{date}} às {{time}}.',
+    description: 'Template para lembrete de compromissos',
+    isHtml: false,
+    channel: 'SMS',
+    variables: ['name', 'date', 'time'],
+    created_at: '2023-01-04T00:00:00.000Z',
+    updated_at: '2023-01-04T00:00:00.000Z'
+  },
+  'new_message': {
+    id: 'new_message',
+    name: 'Nova Mensagem',
+    content: '{"title": "Nova mensagem", "body": "Você recebeu uma nova mensagem de {{sender}}", "data": {"messageId": "{{messageId}}"}}',
+    description: 'Template para notificação de nova mensagem',
+    isHtml: false,
+    channel: 'PUSH',
+    variables: ['sender', 'messageId'],
+    created_at: '2023-01-05T00:00:00.000Z',
+    updated_at: '2023-01-05T00:00:00.000Z'
   }
-];
+};
 
 export async function OPTIONS(request: NextRequest) {
   const origin = request.headers.get('origin') || undefined;
-  return createCorsOptionsResponse(origin || '');
+  return createCorsOptionsResponse(origin);
 }
 
+// Listar todos os templates ou filtrar por canal
 export async function GET(request: NextRequest) {
   try {
-    console.log('🔍 [API] Buscando templates de email...');
-    
     const session = await getServerSession(authOptions);
-    const origin = request.headers.get('origin') || '';
     
     if (!session) {
       return NextResponse.json({ 
@@ -118,77 +78,43 @@ export async function GET(request: NextRequest) {
         message: 'Não autorizado' 
       }, { 
         status: 401,
-        headers: corsHeaders(origin)
+        headers: getCorsHeaders(request.headers.get('origin') || undefined)
       });
     }
 
-    // Verificar permissões - apenas usuários que podem enviar notificações
-    const userRole = session.user?.role;
-    const canManageTemplates = ['SYSTEM_ADMIN', 'INSTITUTION_MANAGER', 'COORDINATOR', 'TEACHER'].includes(userRole);
+    // Obter parâmetros de consulta
+    const url = new URL(request.url);
+    const channel = url.searchParams.get('channel')?.toUpperCase();
     
-    if (!canManageTemplates) {
-      return NextResponse.json({ error: 'Sem permissão para gerenciar templates' }, { 
-        status: 403,
-        headers: corsHeaders(origin)
-      });
-    }
-    
-    // Extrair parâmetros de query
-    const { searchParams } = new URL(request.url);
-    const category = searchParams.get('category');
-    const search = searchParams.get('search');
-    const is_active = searchParams.get('is_active');
-    
-    let filteredTemplates = [...mockTemplates];
-    
-    // Aplicar filtros
-    if (category) {
-      filteredTemplates = filteredTemplates.filter(t => t.category === category);
-    }
-    
-    if (is_active !== null) {
-      const activeFilter = is_active === 'true';
-      filteredTemplates = filteredTemplates.filter(t => t.is_active === activeFilter);
-    }
-    
-    if (search) {
-      const searchLower = search.toLowerCase();
-      filteredTemplates = filteredTemplates.filter(t => 
-        t.name.toLowerCase().includes(searchLower) ||
-        t.subject.toLowerCase().includes(searchLower)
-      );
-    }
-    
-    console.log(`✅ [API] Retornando ${filteredTemplates.length} templates`);
+    // Filtrar templates pelo canal, se especificado
+    const templates = Object.values(templatesDB).filter(template => 
+      !channel || template.channel === channel || template.channel === 'ALL'
+    );
+
     return NextResponse.json({
       success: true,
-      data: filteredTemplates,
-      count: filteredTemplates.length
+      data: templates
     }, {
       status: 200,
-      headers: corsHeaders(origin)
+      headers: getCorsHeaders(request.headers.get('origin') || undefined)
     });
-  } catch (error: any) {
-    console.log('❌ [API] Erro ao buscar templates:', error);
-    return NextResponse.json(
-      {
-        success: false,
-        message: error.message || 'Erro interno do servidor'
-      },
-      { 
-        status: 500,
-        headers: corsHeaders(request.headers.get('origin') || '')
-      }
-    );
+    
+  } catch (error) {
+    console.error('❌ [Templates API] Erro ao listar templates:', error);
+    return NextResponse.json({ 
+      success: false,
+      message: 'Erro interno do servidor' 
+    }, { 
+      status: 500,
+      headers: getCorsHeaders(request.headers.get('origin') || undefined)
+    });
   }
 }
 
+// Obter um template específico por ID
 export async function POST(request: NextRequest) {
   try {
-    console.log('🔍 [API] Criando novo template de email...');
-    
     const session = await getServerSession(authOptions);
-    const origin = request.headers.get('origin') || '';
     
     if (!session) {
       return NextResponse.json({ 
@@ -196,90 +122,291 @@ export async function POST(request: NextRequest) {
         message: 'Não autorizado' 
       }, { 
         status: 401,
-        headers: corsHeaders(origin)
+        headers: getCorsHeaders(request.headers.get('origin') || undefined)
       });
     }
 
-    // Verificar permissões
-    const userRole = session.user?.role;
-    const canManageTemplates = ['SYSTEM_ADMIN', 'INSTITUTION_MANAGER', 'COORDINATOR', 'TEACHER'].includes(userRole);
+    const body = await request.json();
+    console.log('📑 [Templates API] Buscando template por ID:', body.id);
     
-    if (!canManageTemplates) {
-      return NextResponse.json({ error: 'Sem permissão para gerenciar templates' }, { 
-        status: 403,
-        headers: corsHeaders(origin)
+    if (!body.id) {
+      return NextResponse.json({
+        success: false,
+        message: 'ID do template é obrigatório'
+      }, {
+        status: 400,
+        headers: getCorsHeaders(request.headers.get('origin') || undefined)
       });
     }
+
+    // @ts-ignore - Simulação
+    const template = templatesDB[body.id];
     
-    const body: EmailTemplateDTO = await request.json();
-    
-    // Validações básicas
-    if (!body.name || !body.subject) {
-      return NextResponse.json(
-        {
-          success: false,
-          message: 'Nome e assunto são obrigatórios'
-        },
-        { 
-          status: 400,
-          headers: corsHeaders(origin)
-        }
-      );
+    if (!template) {
+      return NextResponse.json({
+        success: false,
+        message: `Template com ID ${body.id} não encontrado`
+      }, {
+        status: 404,
+        headers: getCorsHeaders(request.headers.get('origin') || undefined)
+      });
     }
 
-    // Verificar se já existe template com mesmo nome
-    const existing = mockTemplates.find(t => t.name === body.name);
-    if (existing) {
-      return NextResponse.json(
-        {
-          success: false,
-          message: `Já existe um template com o nome '${body.name}'`
-        },
-        { 
-          status: 409,
-          headers: corsHeaders(origin)
-        }
-      );
+    return NextResponse.json({
+      success: true,
+      data: template
+    }, {
+      status: 200,
+      headers: getCorsHeaders(request.headers.get('origin') || undefined)
+    });
+    
+  } catch (error) {
+    console.error('❌ [Templates API] Erro ao buscar template:', error);
+    return NextResponse.json({ 
+      success: false,
+      message: 'Erro interno do servidor' 
+    }, { 
+      status: 500,
+      headers: getCorsHeaders(request.headers.get('origin') || undefined)
+    });
+  }
+}
+
+// Criar um novo template
+export async function PUT(request: NextRequest) {
+  try {
+    const session = await getServerSession(authOptions);
+    
+    if (!session) {
+      return NextResponse.json({ 
+        success: false,
+        message: 'Não autorizado' 
+      }, { 
+        status: 401,
+        headers: getCorsHeaders(request.headers.get('origin') || undefined)
+      });
     }
+
+    const body = await request.json();
+    console.log('📑 [Templates API] Criando novo template:', body);
+    
+    // Validar dados obrigatórios
+    if (!body.id || !body.name || !body.content) {
+      return NextResponse.json({
+        success: false,
+        message: 'ID, nome e conteúdo são obrigatórios'
+      }, {
+        status: 400,
+        headers: getCorsHeaders(request.headers.get('origin') || undefined)
+      });
+    }
+
+    // Verificar se o ID já existe
+    // @ts-ignore - Simulação
+    if (templatesDB[body.id]) {
+      return NextResponse.json({
+        success: false,
+        message: `Template com ID ${body.id} já existe`
+      }, {
+        status: 409,
+        headers: getCorsHeaders(request.headers.get('origin') || undefined)
+      });
+    }
+
+    // Extrair variáveis do template
+    const variables = extractVariables(body.content);
 
     // Criar novo template
-    const newTemplate: EmailTemplateDTO = {
-      id: Math.max(...mockTemplates.map(t => t.id || 0)) + 1,
+    const newTemplate = {
+      id: body.id,
       name: body.name,
-      subject: body.subject,
-      html: body.html || undefined,
-      text: body.text || '',
-      category: body.category || 'general',
-      is_active: body.is_active !== undefined ? body.is_active : true,
-      created_at: new Date(),
-      updated_at: new Date()
+      content: body.content,
+      description: body.description || '',
+      isHtml: body.isHtml || false,
+      channel: body.channel?.toUpperCase() || 'ALL',
+      variables,
+      created_at: new Date().toISOString(),
+      updated_at: new Date().toISOString()
     };
 
-    mockTemplates.push(newTemplate);
+    // Aqui você salvaria no banco de dados
+    // @ts-ignore - Simulação
+    templatesDB[body.id] = newTemplate;
+
+    return NextResponse.json({
+      success: true,
+      message: 'Template criado com sucesso',
+      data: newTemplate
+    }, {
+      status: 201,
+      headers: getCorsHeaders(request.headers.get('origin') || undefined)
+    });
     
-    console.log(`✅ [API] Template criado: ${newTemplate.name}`);
-    return NextResponse.json(
-      {
-        success: true,
-        data: newTemplate,
-        message: 'Template criado com sucesso'
-      },
-      { 
-        status: 201,
-        headers: corsHeaders(origin)
-      }
-    );
-  } catch (error: any) {
-    console.log('❌ [API] Erro ao criar template:', error);
-    return NextResponse.json(
-      {
-        success: false,
-        message: error.message || 'Erro interno do servidor'
-      },
-      { 
-        status: 500,
-        headers: corsHeaders(request.headers.get('origin') || '')
-      }
-    );
+  } catch (error) {
+    console.error('❌ [Templates API] Erro ao criar template:', error);
+    return NextResponse.json({ 
+      success: false,
+      message: 'Erro interno do servidor' 
+    }, { 
+      status: 500,
+      headers: getCorsHeaders(request.headers.get('origin') || undefined)
+    });
   }
+}
+
+// Atualizar um template existente
+export async function PATCH(request: NextRequest) {
+  try {
+    const session = await getServerSession(authOptions);
+    
+    if (!session) {
+      return NextResponse.json({ 
+        success: false,
+        message: 'Não autorizado' 
+      }, { 
+        status: 401,
+        headers: getCorsHeaders(request.headers.get('origin') || undefined)
+      });
+    }
+
+    const body = await request.json();
+    console.log('📑 [Templates API] Atualizando template:', body);
+    
+    if (!body.id) {
+      return NextResponse.json({
+        success: false,
+        message: 'ID do template é obrigatório'
+      }, {
+        status: 400,
+        headers: getCorsHeaders(request.headers.get('origin') || undefined)
+      });
+    }
+
+    // @ts-ignore - Simulação
+    const existingTemplate = templatesDB[body.id];
+    
+    if (!existingTemplate) {
+      return NextResponse.json({
+        success: false,
+        message: `Template com ID ${body.id} não encontrado`
+      }, {
+        status: 404,
+        headers: getCorsHeaders(request.headers.get('origin') || undefined)
+      });
+    }
+
+    // Extrair variáveis se o conteúdo foi atualizado
+    const variables = body.content 
+      ? extractVariables(body.content) 
+      : existingTemplate.variables;
+
+    // Atualizar template
+    const updatedTemplate = {
+      ...existingTemplate,
+      name: body.name || existingTemplate.name,
+      content: body.content || existingTemplate.content,
+      description: body.description !== undefined ? body.description : existingTemplate.description,
+      isHtml: body.isHtml !== undefined ? body.isHtml : existingTemplate.isHtml,
+      channel: body.channel ? body.channel.toUpperCase() : existingTemplate.channel,
+      variables,
+      updated_at: new Date().toISOString()
+    };
+
+    // Aqui você atualizaria no banco de dados
+    // @ts-ignore - Simulação
+    templatesDB[body.id] = updatedTemplate;
+
+    return NextResponse.json({
+      success: true,
+      message: 'Template atualizado com sucesso',
+      data: updatedTemplate
+    }, {
+      status: 200,
+      headers: getCorsHeaders(request.headers.get('origin') || undefined)
+    });
+    
+  } catch (error) {
+    console.error('❌ [Templates API] Erro ao atualizar template:', error);
+    return NextResponse.json({ 
+      success: false,
+      message: 'Erro interno do servidor' 
+    }, { 
+      status: 500,
+      headers: getCorsHeaders(request.headers.get('origin') || undefined)
+    });
+  }
+}
+
+// Excluir um template
+export async function DELETE(request: NextRequest) {
+  try {
+    const session = await getServerSession(authOptions);
+    
+    if (!session) {
+      return NextResponse.json({ 
+        success: false,
+        message: 'Não autorizado' 
+      }, { 
+        status: 401,
+        headers: getCorsHeaders(request.headers.get('origin') || undefined)
+      });
+    }
+
+    // Obter ID do template da URL
+    const url = new URL(request.url);
+    const id = url.searchParams.get('id');
+    
+    if (!id) {
+      return NextResponse.json({
+        success: false,
+        message: 'ID do template é obrigatório'
+      }, {
+        status: 400,
+        headers: getCorsHeaders(request.headers.get('origin') || undefined)
+      });
+    }
+
+    // @ts-ignore - Simulação
+    const template = templatesDB[id];
+    
+    if (!template) {
+      return NextResponse.json({
+        success: false,
+        message: `Template com ID ${id} não encontrado`
+      }, {
+        status: 404,
+        headers: getCorsHeaders(request.headers.get('origin') || undefined)
+      });
+    }
+
+    // Aqui você excluiria do banco de dados
+    // @ts-ignore - Simulação
+    delete templatesDB[id];
+
+    return NextResponse.json({
+      success: true,
+      message: 'Template excluído com sucesso'
+    }, {
+      status: 200,
+      headers: getCorsHeaders(request.headers.get('origin') || undefined)
+    });
+    
+  } catch (error) {
+    console.error('❌ [Templates API] Erro ao excluir template:', error);
+    return NextResponse.json({ 
+      success: false,
+      message: 'Erro interno do servidor' 
+    }, { 
+      status: 500,
+      headers: getCorsHeaders(request.headers.get('origin') || undefined)
+    });
+  }
+}
+
+// Função auxiliar para extrair variáveis de um template
+function extractVariables(content: string): string[] {
+  const matches = content.match(/\{\{([^}]+)\}\}/g) || [];
+  return Array.from(new Set(
+    matches.map(match => match.replace(/\{\{|\}\}/g, '').trim())
+  ));
 }

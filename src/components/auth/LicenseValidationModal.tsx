@@ -68,9 +68,12 @@ const LicenseValidationModal: React.FC<LicenseValidationModalProps> = ({
       return;
     }
 
-    if (searchType === 'cpf' && !/^\d{3}$/.test(searchValue)) {
-      setError('Digite exatamente 3 números');
-      return;
+    if (searchType === 'cpf') {
+      // Validar formato 00-00 (4 últimos dígitos do CPF)
+      if (!/^\d{2}-\d{2}$/.test(searchValue)) {
+        setError('Digite no formato 00-00 (ex: 12-34)');
+        return;
+      }
     }
 
     setIsLoading(true);
@@ -82,7 +85,9 @@ const LicenseValidationModal: React.FC<LicenseValidationModalProps> = ({
       if (searchType === 'license') {
         params.set('license_code', searchValue);
       } else if (searchType === 'cpf') {
-        params.set('cpf_last_digits', searchValue);
+        // Remover o hífen para enviar apenas os dígitos
+        const cpfDigits = searchValue.replace(/-/g, '');
+        params.set('cpf_last_digits', cpfDigits);
       }
 
       const response = await fetch(`/api/certificates/search?${params.toString()}`);
@@ -681,8 +686,8 @@ const LicenseValidationModal: React.FC<LicenseValidationModalProps> = ({
                     <User className="w-5 h-5 xs:w-6 xs:h-6 text-green-600" />
                   </div>
                   <div className="text-left min-w-0 flex-1">
-                    <h3 className="font-semibold text-gray-900 text-sm xs:text-base leading-tight">Últimos 3 Dígitos do CPF</h3>
-                    <p className="text-xs xs:text-sm text-gray-600 leading-tight">Digite apenas os 3 últimos números</p>
+                    <h3 className="font-semibold text-gray-900 text-sm xs:text-base leading-tight">4 Últimos Dígitos do CPF</h3>
+                    <p className="text-xs xs:text-sm text-gray-600 leading-tight">Digite no formato 00-00 (ex: 12-34)</p>
                   </div>
                 </button>
               </div>
@@ -704,19 +709,36 @@ const LicenseValidationModal: React.FC<LicenseValidationModalProps> = ({
               {/* Campo de busca */}
               <div>
                 <label className="block text-xs xs:text-sm font-medium text-gray-700 mb-2">
-                  {searchType === 'license' ? 'Número da Licença' : 'Últimos 3 Dígitos do CPF'}
+                  {searchType === 'license' ? 'Número da Licença' : '4 Últimos Dígitos do CPF'}
                 </label>
                 <div className="flex flex-col xs:flex-row gap-2">
                   <input
                     type="text"
                     value={searchValue}
-                    onChange={(e) => setSearchValue(e.target.value)}
+                    onChange={(e) => {
+                      if (searchType === 'cpf') {
+                        // Formatar automaticamente para o padrão 00-00
+                        const value = e.target.value.replace(/[^0-9-]/g, '');
+                        if (value.length <= 2) {
+                          setSearchValue(value);
+                        } else if (value.length <= 5) {
+                          // Garantir que tenha o hífen na posição correta
+                          const digits = value.replace(/-/g, '');
+                          if (digits.length <= 2) {
+                            setSearchValue(digits);
+                          } else {
+                            setSearchValue(`${digits.substring(0, 2)}-${digits.substring(2, 4)}`);
+                          }
+                        }
+                      } else {
+                        setSearchValue(e.target.value);
+                      }
+                    }}
                     placeholder={
                       searchType === 'license'
                         ? 'Digite o número da licença'
-                        : 'Digite os 3 últimos dígitos'
+                        : 'Digite no formato 00-00'
                     }
-                    maxLength={searchType === 'cpf' ? 3 : undefined}
                     className="flex-1 px-3 py-2 xs:py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent text-sm xs:text-base"
                     onKeyPress={(e) => e.key === 'Enter' && handleSearch()}
                   />

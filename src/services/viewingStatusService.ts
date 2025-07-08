@@ -1,4 +1,4 @@
-import { api } from '@/lib/api';
+import { apiGet, apiPost, apiPatch, apiDelete } from '@/services/apiService';
 
 interface TrackVideoProgressParams {
   videoId: number;
@@ -27,7 +27,7 @@ let viewingStatusCache: Record<string, any> = {};
 const checkApiConnectivity = async (): Promise<boolean> => {
   try {
     // Tentar um endpoint simples primeiro
-    await api.get('/health', { timeout: 3000 });
+    await apiGet('/health', { timeout: 3000 });
     return true;
   } catch (error) {
     console.warn('API não disponível, usando modo offline:', error);
@@ -83,8 +83,8 @@ const loadFromCache = (key: string, maxAge: number = 300000): any | null => {
  */
 export async function trackVideoProgress(params: TrackVideoProgressParams): Promise<any> {
   try {
-    const response = await api.post('/api/activity/viewing-status', params);
-    return response.data;
+    const response = await apiPost('/activity/viewing-status', params);
+    return response;
   } catch (error) {
     console.error('Erro ao registrar progresso de vídeo:', error);
     throw error;
@@ -96,8 +96,8 @@ export async function trackVideoProgress(params: TrackVideoProgressParams): Prom
  */
 export async function trackVideoInteraction(params: VideoInteractionParams): Promise<any> {
   try {
-    const response = await api.post('/viewing-status/interaction', params);
-    return response.data;
+    const response = await apiPost('/viewing-status/interaction', params);
+    return response;
   } catch (error) {
     console.error('Erro ao registrar interação com vídeo:', error);
     throw error;
@@ -126,17 +126,15 @@ export async function startVideoSession(videoId: number, tvShowId?: number): Pro
       return localSession;
     }
 
-    const response = await api.post('/viewing-status/start', { 
+    const response = await apiPost('/viewing-status/start', { 
       videoId, 
       tvShowId 
-    }, {
-      timeout: 5000
     });
     
     // Salvar no cache
-    saveToCache(cacheKey, response.data);
+    saveToCache(cacheKey, response);
     
-    return response.data;
+    return response;
   } catch (error) {
     console.warn('⚠️ Erro ao iniciar sessão de vídeo, criando sessão local:', error);
     
@@ -160,13 +158,13 @@ export async function startVideoSession(videoId: number, tvShowId?: number): Pro
  */
 export async function getVideoStatus(videoId: number, tvShowId?: number): Promise<any> {
   try {
-    const params = new URLSearchParams();
+    const params: Record<string, any> = {};
     if (tvShowId) {
-      params.append('tvShowId', tvShowId.toString());
+      params.tvShowId = tvShowId.toString();
     }
     
-    const response = await api.get(`/viewing-status/status/${videoId}?${params.toString()}`);
-    return response.data;
+    const response = await apiGet(`/viewing-status/status/${videoId}`, params);
+    return response;
   } catch (error) {
     console.error('Erro ao obter status do vídeo:', error);
     throw error;
@@ -183,36 +181,23 @@ export async function getWatchHistory(
   contentType?: string
 ): Promise<any> {
   try {
-    const params = new URLSearchParams();
-    params.append('limit', limit.toString());
-    params.append('offset', offset.toString());
+    const params: Record<string, any> = {
+      limit,
+      offset
+    };
     
     if (completed !== undefined) {
-      params.append('completed', completed.toString());
+      params.completed = completed.toString();
     }
     
     if (contentType) {
-      params.append('contentType', contentType);
+      params.contentType = contentType;
     }
     
-    // Adicionar timeout para evitar que a requisição fique pendente por muito tempo
-    const controller = new AbortController();
-    const timeoutId = setTimeout(() => controller.abort(), 5000); // 5 segundos
-    
     try {
-      const response = await api.get(`/viewing-status/history?${params.toString()}`, {
-        signal: controller.signal
-      });
-      clearTimeout(timeoutId);
-      return response.data;
+      const response = await apiGet('/viewing-status/history', params);
+      return response;
     } catch (error) {
-      clearTimeout(timeoutId);
-      
-      // Verificar se é um erro de timeout
-      if (error instanceof Error && error.name === 'AbortError') {
-        console.error('Timeout ao buscar histórico de visualização');
-      }
-      
       // Verificar se é um erro relacionado a tabela não existente
       if (error instanceof Error && 
           (error.message.includes('does not exist') || 
@@ -245,8 +230,8 @@ export async function getWatchHistory(
  */
 export async function getViewingStats(): Promise<any> {
   try {
-    const response = await api.get('/viewing-status/stats');
-    return response.data;
+    const response = await apiGet('/viewing-status/stats');
+    return response;
   } catch (error) {
     console.error('Erro ao obter estatísticas de visualização:', error);
     throw error;
@@ -258,13 +243,13 @@ export async function getViewingStats(): Promise<any> {
  */
 export async function removeVideoStatus(videoId: number, tvShowId?: number): Promise<any> {
   try {
-    const params = new URLSearchParams();
+    const params: Record<string, any> = {};
     if (tvShowId) {
-      params.append('tvShowId', tvShowId.toString());
+      params.tvShowId = tvShowId.toString();
     }
     
-    const response = await api.delete(`/viewing-status/status/${videoId}?${params.toString()}`);
-    return response.data;
+    const response = await apiDelete(`/viewing-status/status/${videoId}?${new URLSearchParams(params).toString()}`);
+    return response;
   } catch (error) {
     console.error('Erro ao remover status do vídeo:', error);
     throw error;
@@ -288,14 +273,12 @@ export async function getViewingStatus(videoId: number): Promise<any> {
       return { progress: 0, completed: false, source: 'offline' };
     }
 
-    const response = await api.get(`/viewing-status/${videoId}`, {
-      timeout: 5000
-    });
+    const response = await apiGet(`/viewing-status/${videoId}`);
     
     // Salvar no cache
-    saveToCache(cacheKey, response.data);
+    saveToCache(cacheKey, response);
     
-    return response.data;
+    return response;
   } catch (error) {
     console.warn('⚠️ Erro ao buscar status de visualização:', error);
     
@@ -331,13 +314,9 @@ export async function updateVideoProgress(videoId: number, progress: number): Pr
     }
 
     // Tentar enviar para API
-    const response = await api.patch(`/viewing-status/${videoId}`, { 
-      progress 
-    }, {
-      timeout: 3000
-    });
+    const response = await apiPatch(`/viewing-status/${videoId}`, { progress });
     
-    return response.data;
+    return response;
   } catch (error) {
     console.warn('⚠️ Erro ao atualizar progresso, mantendo dados locais:', error);
     
@@ -373,11 +352,9 @@ export async function completeVideo(videoId: number): Promise<any> {
       return completionData;
     }
 
-    const response = await api.patch(`/viewing-status/${videoId}/complete`, {}, {
-      timeout: 3000
-    });
+    const response = await apiPatch(`/viewing-status/${videoId}/complete`, {});
     
-    return response.data;
+    return response;
   } catch (error) {
     console.warn('⚠️ Erro ao marcar vídeo como completo, mantendo dados locais:', error);
     
