@@ -4,13 +4,14 @@ import { useState } from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
 import { useForm } from '@/hooks/useForm';
+import { LoginBackground } from '@/components/ui/DynamicBackground';
 
 interface ForgotPasswordFormData {
   email: string;
 }
 
 const initialValues: ForgotPasswordFormData = {
-  email: ''
+  email: '',
 };
 
 const validationRules = {
@@ -48,23 +49,7 @@ export default function ForgotPasswordPage() {
 
   if (isSuccess) {
     return (
-      <div className="relative min-h-screen flex items-center justify-center" role="main">
-        {/* Video Background */}
-        <div className="absolute inset-0 w-full h-full overflow-hidden" aria-hidden="true">
-          <video
-            autoPlay
-            loop
-            muted
-            playsInline
-            className="absolute min-w-full min-h-full object-cover opacity-100"
-            preload="auto"
-          >
-            <source src="/back_video4.mp4" type="video/mp4" />
-            Seu navegador não suporta a tag de vídeo.
-          </video>
-        </div>
-
-        {/* Content */}
+      <LoginBackground>
         <div className="opacity-100 relative z-10 max-w-md w-full space-y-8 p-8 bg-white/90 backdrop-blur-sm rounded-lg shadow-xl">
           <div className="text-center">
             <div className="relative w-48 h-16 mx-auto mb-6">
@@ -115,28 +100,12 @@ export default function ForgotPasswordPage() {
             </div>
           </div>
         </div>
-      </div>
+      </LoginBackground>
     );
   }
 
   return (
-    <div className="relative min-h-screen flex items-center justify-center" role="main">
-      {/* Video Background */}
-      <div className="absolute inset-0 w-full h-full overflow-hidden" aria-hidden="true">
-        <video
-          autoPlay
-          loop
-          muted
-          playsInline
-          className="absolute min-w-full min-h-full object-cover opacity-100"
-          preload="auto"
-        >
-          <source src="/back_video4.mp4" type="video/mp4" />
-          Seu navegador não suporta a tag de vídeo.
-        </video>
-      </div>
-
-      {/* Content */}
+    <LoginBackground>
       <div className="opacity-100 relative z-10 max-w-md w-full space-y-8 p-8 bg-white/90 backdrop-blur-sm rounded-lg shadow-xl">
         <div className="text-center">
           <div className="relative w-48 h-16 mx-auto">
@@ -212,6 +181,6 @@ export default function ForgotPasswordPage() {
           </Link>
         </div>
       </div>
-    </div>
+    </LoginBackground>
   );
 } 

@@ -6,6 +6,7 @@ import { motion } from 'framer-motion';
 import Link from 'next/link';
 import { useTheme } from '@/contexts/ThemeContext';
 import { clearAllDataForUnauthorized } from '@/utils/clearAllData';
+import { LoginBackground } from '@/components/ui/DynamicBackground';
 
 const ERROR_MESSAGES = {
   unauthorized: {
@@ -70,19 +71,12 @@ export default function AuthErrorPage() {
   };
 
   return (
-    <div 
-      className="min-h-screen flex items-center justify-center p-4"
-      style={{ backgroundColor: theme.colors.background.primary }}
-    >
+    <LoginBackground className="p-4">
       <motion.div
         initial={{ opacity: 0, scale: 0.9 }}
         animate={{ opacity: 1, scale: 1 }}
         transition={{ duration: 0.5 }}
-        className="max-w-md w-full p-8 rounded-xl text-center"
-        style={{ 
-          backgroundColor: theme.colors.background.card,
-          boxShadow: theme.shadows.lg
-        }}
+        className="max-w-md w-full p-8 rounded-xl text-center bg-white/90 backdrop-blur-sm shadow-2xl"
       >
         {/* Ícone de erro */}
         <motion.div
@@ -219,6 +213,6 @@ export default function AuthErrorPage() {
           </p>
         </motion.div>
       </motion.div>
-    </div>
+    </LoginBackground>
   );
 } 

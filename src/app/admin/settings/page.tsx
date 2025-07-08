@@ -629,7 +629,7 @@ export default function AdminSettingsPage() {
                               Vídeo Aleatório
                             </span>
                             <span className="text-xs text-blue-600">
-                              Um vídeo será escolhido aleatoriamente a cada carregamento da página
+                              Um vídeo será escolhido aleatoriamente a cada acesso às páginas públicas (login, recuperação de senha, etc.)
                             </span>
                           </label>
                         </div>
@@ -761,14 +761,16 @@ export default function AdminSettingsPage() {
                     >
                       {(localSettings.background_type === 'video') && localSettings.main_background && (
                         <video
-                          key={localSettings.main_background}
+                          key={localSettings.random_video_enabled ? `random-${Date.now()}` : localSettings.main_background}
                           autoPlay
                           muted
                           loop
                           playsInline
                           className="absolute inset-0 w-full h-full object-cover"
                         >
-                          <source src={localSettings.main_background} type="video/mp4" />
+                          <source src={localSettings.random_video_enabled && availableVideos.length > 0 
+                            ? availableVideos[Math.floor(Math.random() * availableVideos.length)]
+                            : localSettings.main_background} type="video/mp4" />
                         </video>
                       )}
 
@@ -1308,14 +1310,16 @@ export default function AdminSettingsPage() {
                 <div className="absolute inset-0">
                   {(localSettings.background_type === 'video') && localSettings.main_background && (
                     <video
-                      key={localSettings.main_background}
+                      key={localSettings.random_video_enabled ? `fullscreen-random-${Date.now()}` : localSettings.main_background}
                       autoPlay
                       muted
                       loop
                       playsInline
                       className="w-full h-full object-cover"
                     >
-                      <source src={localSettings.main_background} type="video/mp4" />
+                      <source src={localSettings.random_video_enabled && availableVideos.length > 0 
+                        ? availableVideos[Math.floor(Math.random() * availableVideos.length)]
+                        : localSettings.main_background} type="video/mp4" />
                     </video>
                   )}
 

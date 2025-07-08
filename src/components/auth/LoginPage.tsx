@@ -6,7 +6,7 @@ import Image from 'next/image';
 import { useSearchParams, useRouter } from 'next/navigation';
 
 import { useAuthSafe as useAuth } from '@/contexts/AuthContext';
-import { usePublicSettings } from '@/hooks/usePublicSettings';
+import { LoginBackground } from '@/components/ui/DynamicBackground';
 import { clearAllDataForUnauthorized } from '@/utils/clearAllData';
 import { getDashboardPath } from '@/utils/roleRedirect';
 import { MotionDiv, MotionH1, MotionP } from '@/components/ui/MotionWrapper';
@@ -15,9 +15,6 @@ import { useEffect, useState, useRef } from 'react';
 import { buildUrl } from '@/utils/urlBuilder';
 import { isChromeOrChromeMobile, forceReloadIfChrome } from '@/utils/chromeDetection';
 // import { ChromeDetectionIndicator } from '@/components/debug/ChromeDetectionIndicator';
-
-
-
 
 export function LoginPage() {
   // Hook para limpeza automática de cache
@@ -70,8 +67,6 @@ export function LoginPage() {
     }
   }, [mounted]);
   
-  const { settings, loading: isLoading } = usePublicSettings();
-
   // Aguardar montagem no cliente
   useEffect(() => {
     setMounted(true);
@@ -199,153 +194,19 @@ export function LoginPage() {
     }
   }, [authContext, router, mounted]);
 
-  // Se não estiver montado ou contexto não disponível, mostrar loading
-  if (!mounted || !authContext || contextLoading) {
+  // Aguardar contexto estar pronto
+  if (!mounted || contextLoading) {
     return (
-      <div className="min-h-screen flex items-center justify-center" style={{ backgroundColor: theme.colors.background.primary }}>
-        <div className="max-w-md w-full space-y-8">
-          <div className="text-center">
-            <MotionDiv
-              animate={{ rotate: 360 }}
-              transition={{ duration: 1, repeat: Infinity, ease: "linear" }}
-              className="w-8 h-8 border-2 border-t-transparent rounded-full mx-auto"
-              style={{ borderColor: theme.colors.primary.DEFAULT }}
-            />
-            <p className="mt-2" style={{ color: theme.colors.text.secondary }}>
-              {!mounted ? 'Carregando...' : !authContext ? 'Inicializando autenticação...' : 'Carregando...'}
-            </p>
-          </div>
+      <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-blue-900 to-indigo-900">
+        <div className="text-white text-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-white mx-auto mb-4"></div>
+          <p>Carregando...</p>
         </div>
       </div>
     );
   }
 
   const { user } = authContext;
-
-  const renderBackground = () => {
-    if (isLoading) return null;
-
-    // Se settings for null, usar padrão
-    if (!settings) {
-      return (
-        <video
-          autoPlay
-          loop
-          muted
-          playsInline
-          className="absolute min-w-full min-h-full object-cover opacity-100"
-          preload="auto"
-        >
-          <source src="/back_video4.mp4" type="video/mp4" />
-          Seu navegador não suporta a tag de vídeo.
-        </video>
-      );
-    }
-
-    const { background_type, main_background, background_video_url } = settings;
-
-    // Sempre usar o vídeo como padrão se não houver configuração
-    if (!background_type || (!main_background && !background_video_url)) {
-      return (
-        <video
-          autoPlay
-          loop
-          muted
-          playsInline
-          className="absolute min-w-full min-h-full object-cover opacity-100"
-          preload="auto"
-        >
-          <source src="/back_video4.mp4" type="video/mp4" />
-          Seu navegador não suporta a tag de vídeo.
-        </video>
-      );
-    }
-
-    switch (background_type) {
-      case 'video':
-        return (
-          <video
-            autoPlay
-            loop
-            muted
-            playsInline
-            className="absolute min-w-full min-h-full object-cover opacity-100"
-            preload="auto"
-          >
-            <source src={main_background || '/back_video4.mp4'} type="video/mp4" />
-            Seu navegador não suporta a tag de vídeo.
-          </video>
-        );
-      case 'video_url':
-        return (
-          <video
-            autoPlay
-            loop
-            muted
-            playsInline
-            className="absolute min-w-full min-h-full object-cover opacity-100"
-            preload="auto"
-          >
-            <source src={background_video_url || '/back_video4.mp4'} type="video/mp4" />
-            Seu navegador não suporta a tag de vídeo.
-          </video>
-        );
-      case 'image':
-        const isVideo = main_background.match(/\.(mp4|webm|ogg)$/i);
-        
-        if (isVideo) {
-          return (
-            <video
-              autoPlay
-              loop
-              muted
-              playsInline
-              className="absolute min-w-full min-h-full object-cover opacity-100"
-              preload="auto"
-            >
-              <source src={main_background} type="video/mp4" />
-              Seu navegador não suporta a tag de vídeo.
-            </video>
-          );
-        } else {
-          return (
-            <div
-              className="absolute inset-0 bg-cover bg-center bg-no-repeat"
-              style={{
-                backgroundImage: `url(${main_background})`,
-                opacity: 1
-              }}
-            />
-          );
-        }
-
-      case 'color':
-        return (
-          <div
-            className="absolute inset-0"
-            style={{
-              backgroundColor: main_background,
-              opacity: 1
-            }}
-          />
-        );
-
-      default:
-        return (
-          <video
-            autoPlay
-            loop
-            muted
-            playsInline
-            className="absolute min-w-full min-h-full object-cover opacity-100"
-            preload="auto"
-          >
-            <source src="/back_video4.mp4" type="video/mp4" />
-            Seu navegador não suporta a tag de vídeo.
-          </video>
-        );
-    }
-  };
 
   if (user) {
     return (
@@ -366,21 +227,7 @@ export function LoginPage() {
   }
 
   return (
-    <div 
-      className="relative min-h-screen flex items-center justify-center overflow-hidden" 
-      role="main"
-    >
-      {/* Video Background */}
-      <div className="absolute inset-0 w-full h-full overflow-hidden" aria-hidden="true">
-        {renderBackground()}
-        {/* Overlay opcional para melhor legibilidade */}
-        {settings?.background_type === 'video' && (
-          <div className="absolute inset-0 bg-black/20" />
-        )}
-      </div>
-
-
-
+    <LoginBackground className="overflow-hidden">
       {/* Demo Credentials - Flutuante na lateral esquerda */}
       <DemoCredentials onCredentialSelect={handleCredentialSelect} />
 
@@ -419,144 +266,63 @@ export function LoginPage() {
             style={{ color: theme.colors.text.primary }}
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
-            transition={{ delay: 0.3 }}
+            transition={{ duration: 0.5, delay: 0.4 }}
           >
             Portal Educacional
           </MotionH1>
           <MotionP 
-            className="text-xs sm:text-sm mt-1 sm:mt-2"
+            className="text-sm sm:text-base"
             style={{ color: theme.colors.text.secondary }}
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
-            transition={{ delay: 0.4 }}
+            transition={{ duration: 0.5, delay: 0.6 }}
           >
-            Transformando a educação com tecnologia
+            Acesse sua conta para continuar
           </MotionP>
         </MotionDiv>
 
-        {/* Unauthorized Message */}
+        {/* Mensagens de feedback */}
         {showUnauthorizedMessage && (
-          <MotionDiv
-            initial={{ opacity: 0, x: -20 }}
-            animate={{ opacity: 1, x: 0 }}
-            className="rounded-lg p-4 border"
-            style={{
-              backgroundColor: `${theme.colors.status.warning}20`,
-              borderColor: theme.colors.status.warning,
-              color: theme.colors.text.primary
-            }}
-            role="alert"
-          >
+          <div className="rounded-md bg-red-50 p-4 border border-red-200" role="alert">
             <div className="flex">
               <div className="flex-shrink-0">
-                <span
-                  className="material-symbols-outlined"
-                  style={{ color: theme.colors.status.warning }}
-                  aria-hidden="true"
-                >
-                  warning
-                </span>
+                <span className="material-symbols-outlined text-red-400" aria-hidden="true">error</span>
               </div>
               <div className="ml-3">
-                <h3 className="text-sm font-medium">Não autorizado</h3>
-                <p className="text-sm mt-1 opacity-90">
-                  Você precisa fazer login para acessar esta página.
+                <h3 className="text-sm font-medium text-red-800">Acesso não autorizado</h3>
+                <p className="text-sm text-red-700 mt-1">
+                  Você precisa fazer login para acessar esta área.
                 </p>
               </div>
             </div>
-          </MotionDiv>
-        )}
-
-        {/* Expired Login Message */}
-        {showExpiredMessage && (
-          <MotionDiv
-            initial={{ opacity: 0, x: -20 }}
-            animate={{ opacity: 1, x: 0 }}
-            className="rounded-lg p-4 border"
-            style={{
-              backgroundColor: `${theme.colors.status.error}20`,
-              borderColor: theme.colors.status.error,
-              color: theme.colors.text.primary
-            }}
-            role="alert"
-          >
-            <div className="flex">
-              <div className="flex-shrink-0">
-                <span
-                  className="material-symbols-outlined"
-                  style={{ color: theme.colors.status.error }}
-                  aria-hidden="true"
-                >
-                  schedule
-                </span>
-              </div>
-              <div className="ml-3">
-                <h3 className="text-sm font-medium">Login Expirado</h3>
-                <p className="text-sm mt-1 opacity-90">
-                  Sua sessão expirou. Por favor, faça login novamente para continuar.
-                </p>
-              </div>
-            </div>
-          </MotionDiv>
-        )}
-
-        {/* Login Form */}
-        <MotionDiv
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          transition={{ delay: 0.5 }}
-        >
-          <LoginForm />
-        </MotionDiv>
-
-        {/* Footer Links */}
-        <MotionDiv 
-          className="text-center space-y-3"
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          transition={{ delay: 0.6 }}
-        >
-          <div className="flex items-center justify-center gap-4 mt-4">
-            <MotionDiv
-              whileHover={{ scale: 1.05 }}
-              whileTap={{ scale: 0.95 }}
-              className="w-10 h-10 rounded-full flex items-center justify-center cursor-pointer transition-all duration-300"
-              style={{ 
-                backgroundColor: theme.colors.primary.light + '20',
-                color: theme.colors.primary.DEFAULT
-              }}
-            >
-              <span className="material-symbols-outlined">school</span>
-            </MotionDiv>
-            <MotionDiv
-              whileHover={{ scale: 1.05 }}
-              whileTap={{ scale: 0.95 }}
-              className="w-10 h-10 rounded-full flex items-center justify-center cursor-pointer transition-all duration-300"
-              style={{ 
-                backgroundColor: theme.colors.secondary.light + '20',
-                color: theme.colors.secondary.DEFAULT
-              }}
-            >
-              <span className="material-symbols-outlined">groups</span>
-            </MotionDiv>
-            <MotionDiv
-              whileHover={{ scale: 1.05 }}
-              whileTap={{ scale: 0.95 }}
-              className="w-10 h-10 rounded-full flex items-center justify-center cursor-pointer transition-all duration-300"
-              style={{ 
-                backgroundColor: theme.colors.accent.light + '20',
-                color: theme.colors.accent.DEFAULT
-              }}
-            >
-              <span className="material-symbols-outlined">auto_stories</span>
-            </MotionDiv>
           </div>
+        )}
+
+        {showExpiredMessage && (
+          <div className="rounded-md bg-amber-50 p-4 border border-amber-200" role="alert">
+            <div className="flex">
+              <div className="flex-shrink-0">
+                <span className="material-symbols-outlined text-amber-400" aria-hidden="true">schedule</span>
+              </div>
+              <div className="ml-3">
+                <h3 className="text-sm font-medium text-amber-800">Sessão expirada</h3>
+                <p className="text-sm text-amber-700 mt-1">
+                  Sua sessão expirou. Por favor, faça login novamente.
+                </p>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* Form Section */}
+        <MotionDiv
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.5, delay: 0.8 }}
+        >
+          <LoginForm ref={loginFormRef} />
         </MotionDiv>
       </MotionDiv>
-
-      {/* Debug Component - descomente para debug em desenvolvimento */}
-      {/* <ChromeDetectionIndicator show={process.env.NODE_ENV === 'development' || window.location.search.includes('debug=true')} /> */}
-      
-    </div>
+    </LoginBackground>
   );
 }

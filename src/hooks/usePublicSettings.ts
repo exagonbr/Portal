@@ -11,6 +11,7 @@ export interface PublicSettings {
   background_type: 'video' | 'video_url' | 'image' | 'color';
   main_background: string;
   background_video_url: string;
+  random_video_enabled: boolean;
   primary_color: string;
   secondary_color: string;
 }
@@ -26,6 +27,7 @@ const defaultPublicSettings: PublicSettings = {
   background_type: 'video',
   main_background: '/back_video4.mp4',
   background_video_url: '',
+  random_video_enabled: false,
   primary_color: '#1e3a8a',
   secondary_color: '#3b82f6',
 };

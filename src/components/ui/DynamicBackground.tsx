@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect, useState } from 'react'
+import React, { useState, useEffect } from 'react'
 import { useSystemSettings } from '@/hooks/useSystemSettings'
 import { usePublicSettings } from '@/hooks/usePublicSettings'
 
@@ -26,6 +26,7 @@ export default function DynamicBackground({
   const { settings, loading } = usePublic ? publicHook : systemHook
   const [backgroundStyle, setBackgroundStyle] = useState<React.CSSProperties>({})
   const [randomVideo, setRandomVideo] = useState<string | null>(null)
+  const [availableVideos, setAvailableVideos] = useState<string[]>([])
 
   useEffect(() => {
     if (loading || !settings) return
@@ -68,13 +69,6 @@ export default function DynamicBackground({
     setBackgroundStyle(style)
   }, [settings, loading])
 
-  // Carregar vídeos disponíveis para vídeo aleatório
-  useEffect(() => {
-    if (settings?.random_video_enabled && settings?.background_type === 'video') {
-      fetchAvailableVideos();
-    }
-  }, [settings?.random_video_enabled, settings?.background_type]);
-
   // Função para buscar vídeos disponíveis
   const fetchAvailableVideos = async () => {
     try {
@@ -86,16 +80,86 @@ export default function DynamicBackground({
       const data = await response.json();
       
       if (data.success && Array.isArray(data.videos) && data.videos.length > 0) {
-        // Selecionar um vídeo aleatório
-        const randomIndex = Math.floor(Math.random() * data.videos.length);
-        setRandomVideo(data.videos[randomIndex]);
+        setAvailableVideos(data.videos);
+        return data.videos;
+      } else {
+        // Fallback para vídeos padrão
+        const fallbackVideos = [
+          '/back_video.mp4',
+          '/back_video1.mp4',
+          '/back_video2.mp4',
+          '/back_video3.mp4',
+          '/back_video4.mp4'
+        ];
+        setAvailableVideos(fallbackVideos);
+        return fallbackVideos;
       }
     } catch (error) {
-      console.error('Erro ao carregar vídeos aleatórios:', error);
-      // Fallback para um vídeo padrão
-      setRandomVideo('/back_video.mp4');
+      console.error('Erro ao carregar vídeos disponíveis:', error);
+      // Fallback para vídeos padrão
+      const fallbackVideos = [
+        '/back_video.mp4',
+        '/back_video1.mp4',
+        '/back_video2.mp4',
+        '/back_video3.mp4',
+        '/back_video4.mp4'
+      ];
+      setAvailableVideos(fallbackVideos);
+      return fallbackVideos;
     }
   };
+
+  // Função para selecionar vídeo aleatório
+  const selectRandomVideo = (videosList: string[]) => {
+    if (videosList.length === 0) {
+      setRandomVideo('/back_video4.mp4');
+      return;
+    }
+    
+    // Selecionar um vídeo aleatório diferente do atual se possível
+    let randomIndex = Math.floor(Math.random() * videosList.length);
+    let selectedVideo = videosList[randomIndex];
+    
+    // Se há mais de um vídeo e o selecionado é igual ao atual, tentar outro
+    if (videosList.length > 1 && selectedVideo === randomVideo) {
+      // Tentar até 5 vezes para encontrar um vídeo diferente
+      for (let i = 0; i < 5; i++) {
+        randomIndex = Math.floor(Math.random() * videosList.length);
+        selectedVideo = videosList[randomIndex];
+        if (selectedVideo !== randomVideo) {
+          break;
+        }
+      }
+    }
+    
+    console.log('🎲 Vídeo aleatório selecionado:', selectedVideo);
+    setRandomVideo(selectedVideo);
+  };
+
+  // Carregar vídeos disponíveis e selecionar aleatório quando necessário
+  useEffect(() => {
+    if (settings?.random_video_enabled && settings?.background_type === 'video') {
+      console.log('🎲 Modo vídeo aleatório ativado, carregando vídeos...');
+      fetchAvailableVideos().then(videos => {
+        selectRandomVideo(videos);
+      });
+    } else if (settings?.background_type === 'video' && !settings?.random_video_enabled) {
+      // Limpar vídeo aleatório se não estiver no modo aleatório
+      setRandomVideo(null);
+    }
+  }, [settings?.random_video_enabled, settings?.background_type]);
+
+  // Forçar nova seleção aleatória a cada vez que o componente é montado (nova página/reload)
+  useEffect(() => {
+    if (settings?.random_video_enabled && settings?.background_type === 'video' && availableVideos.length > 0) {
+      // Adicionar um pequeno delay para garantir que é uma nova montagem
+      const timeoutId = setTimeout(() => {
+        selectRandomVideo(availableVideos);
+      }, 100);
+      
+      return () => clearTimeout(timeoutId);
+    }
+  }, [availableVideos.length]); // Depende apenas do comprimento para evitar loops
 
   const renderVideoBackground = () => {
     if (!settings?.background_type || settings?.background_type !== 'video') {
@@ -108,12 +172,19 @@ export default function DynamicBackground({
     // Se o modo aleatório estiver ativado, usar o vídeo aleatório
     if (settings.random_video_enabled && randomVideo) {
       videoSource = randomVideo;
+      console.log('🎥 Usando vídeo aleatório:', videoSource);
+    } else if (settings.main_background) {
+      console.log('🎥 Usando vídeo configurado:', videoSource);
     }
 
-    if (!videoSource) return null;
+    if (!videoSource) {
+      videoSource = '/back_video4.mp4'; // Fallback final
+      console.log('🎥 Usando vídeo padrão fallback:', videoSource);
+    }
 
     return (
       <video
+        key={videoSource} // Força re-render quando o vídeo muda
         autoPlay
         muted
         loop
@@ -189,6 +260,7 @@ export function useBackgroundSettings(usePublic = false) {
     backgroundValue: settings?.main_background || '/back_video4.mp4',
     primaryColor: settings?.primary_color || '#1e3a8a',
     secondaryColor: settings?.secondary_color || '#3b82f6',
+    randomVideoEnabled: settings?.random_video_enabled || false,
     loading
   }
 }

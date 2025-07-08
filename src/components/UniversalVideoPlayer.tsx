@@ -948,64 +948,203 @@ export default function UniversalVideoPlayer({
             
             {/* Video list */}
             <div className="flex-1 overflow-y-auto">
-              {videos.map((video, index) => (
-                <div
-                  key={video.id}
-                  onClick={() => handleVideoSelect(index)}
-                  className={`p-4 border-b border-gray-800 cursor-pointer transition-colors hover:bg-gray-800 ${
-                    index === currentVideoIndex ? 'bg-gray-800 border-l-4 border-l-blue-500' : ''
-                  }`}
-                >
-                  <div className="flex gap-3">
-                    {/* Thumbnail */}
-                    <div className="relative flex-shrink-0">
-                      <div className="w-20 h-12 bg-gray-700 rounded overflow-hidden">
-                        {video.thumbnail ? (
-                          <img
-                            src={video.thumbnail}
-                            alt={video.title}
-                            className="w-full h-full object-cover"
-                          />
-                        ) : (
-                          <div className="w-full h-full flex items-center justify-center">
-                            <Play className="w-4 h-4 text-gray-400" />
+              {(() => {
+                // Agrupar vídeos por sessão/módulo para melhor organização
+                const videosBySessions: Record<number, VideoSource[]> = {};
+                videos.forEach((video, index) => {
+                  // Algoritmo melhorado para detectar número da sessão:
+                  // 1. Se sessionNumber foi passado como prop, usar esse valor
+                  // 2. Se há module_number no vídeo, usar esse valor
+                  // 3. Se episode_number existe, calcular sessão baseado em grupos de 10
+                  // 4. Fallback: usar sessão 1
+                  let sessionNum = 1;
+                  
+                  if (sessionNumber) {
+                    sessionNum = sessionNumber;
+                  } else if ((video as any).module_number) {
+                    sessionNum = (video as any).module_number;
+                  } else if (video.episode_number) {
+                    // Agrupar episódios em sessões de 10 (1-10 = sessão 1, 11-20 = sessão 2, etc)
+                    sessionNum = Math.ceil(video.episode_number / 10);
+                  }
+                  
+                  if (!videosBySessions[sessionNum]) {
+                    videosBySessions[sessionNum] = [];
+                  }
+                  videosBySessions[sessionNum].push({ ...video, originalIndex: index } as VideoSource & { originalIndex: number });
+                });
+
+                const sessions = Object.keys(videosBySessions).sort((a, b) => parseInt(a) - parseInt(b));
+
+                return sessions.map(sessionKey => {
+                  const sessionNumber = parseInt(sessionKey);
+                  const sessionVideos = videosBySessions[sessionNumber];
+
+                  return (
+                    <div key={`session-${sessionNumber}`} className="mb-2">
+                      {/* Header da Sessão - apenas se há mais de uma sessão */}
+                      {sessions.length > 1 && (
+                        <div className="px-4 py-2 bg-gray-800 border-b border-gray-700">
+                          <div className="flex items-center justify-between">
+                            <h3 className="text-sm font-semibold text-white">
+                              Sessão {sessionNumber}
+                            </h3>
+                            <span className="text-xs text-gray-400">
+                              {sessionVideos.length} vídeo{sessionVideos.length > 1 ? 's' : ''}
+                            </span>
                           </div>
-                        )}
-                      </div>
-                      
-                      {/* Episode number */}
-                      <div className="absolute -top-1 -left-1 bg-blue-500 text-white text-xs font-bold w-5 h-5 rounded-full flex items-center justify-center">
-                        {video.episode_number || index + 1}
-                      </div>
-                      
-                      {/* Play indicator for current video */}
-                      {index === currentVideoIndex && (
-                        <div className="absolute inset-0 bg-black bg-opacity-50 flex items-center justify-center">
-                          <Play className="w-4 h-4 text-white" />
                         </div>
                       )}
-                    </div>
-                    
-                    {/* Video info */}
-                    <div className="flex-1 min-w-0">
-                      <h4 className={`text-sm font-medium line-clamp-2 mb-1 ${
-                        index === currentVideoIndex ? 'text-white' : 'text-gray-300'
-                      }`}>
-                        {video.title}
-                      </h4>
-                      <div className="flex items-center gap-2 text-xs text-gray-500">
-                        {video.duration && (
-                          <div className="flex items-center gap-1">
-                            <Clock className="w-3 h-3" />
-                            <span>{formatVideoDuration(video.duration)}</span>
-                          </div>
-                        )}
-                        <span>Ep. {video.episode_number || index + 1}</span>
+
+                      {/* Lista de vídeos da sessão */}
+                      <div className="divide-y divide-gray-800">
+                        {sessionVideos.map((video) => {
+                          const videoIndex = videos.findIndex(v => v.id === video.id);
+                          const isCurrentVideo = videoIndex === currentVideoIndex;
+                          
+                          return (
+                            <div
+                              key={video.id}
+                              onClick={() => handleVideoSelect(videoIndex)}
+                              className={`p-4 cursor-pointer transition-all duration-200 hover:bg-gray-800 group ${
+                                isCurrentVideo 
+                                  ? 'bg-gray-800 border-l-4 border-l-blue-500 shadow-lg' 
+                                  : 'hover:border-l-4 hover:border-l-gray-600'
+                              }`}
+                            >
+                              <div className="flex gap-3">
+                                {/* Thumbnail aprimorada */}
+                                <div className="relative flex-shrink-0">
+                                  <div className={`w-24 h-14 bg-gray-700 rounded-lg overflow-hidden transition-transform duration-200 ${
+                                    isCurrentVideo ? 'ring-2 ring-blue-500' : 'group-hover:scale-105'
+                                  }`}>
+                                    {video.thumbnail ? (
+                                      <img
+                                        src={video.thumbnail}
+                                        alt={video.title}
+                                        className="w-full h-full object-cover"
+                                        onError={(e) => {
+                                          const target = e.currentTarget as HTMLImageElement;
+                                          target.src = '/placeholder-collection.jpg';
+                                        }}
+                                      />
+                                    ) : (
+                                      <div className="w-full h-full flex items-center justify-center bg-gradient-to-br from-gray-600 to-gray-700">
+                                        <Play className="w-5 h-5 text-gray-400" />
+                                      </div>
+                                    )}
+                                    
+                                    {/* Overlay com play */}
+                                    <div className={`absolute inset-0 flex items-center justify-center transition-opacity duration-200 ${
+                                      isCurrentVideo 
+                                        ? 'bg-blue-500 bg-opacity-60' 
+                                        : 'bg-black bg-opacity-0 group-hover:bg-opacity-40'
+                                    }`}>
+                                      <Play className={`transition-all duration-200 ${
+                                        isCurrentVideo 
+                                          ? 'w-6 h-6 text-white' 
+                                          : 'w-5 h-5 text-white opacity-0 group-hover:opacity-100'
+                                      }`} />
+                                    </div>
+                                  </div>
+                                  
+                                  {/* Número do episódio - design melhorado */}
+                                  <div className={`absolute -top-2 -left-2 text-white text-xs font-bold w-6 h-6 rounded-full flex items-center justify-center shadow-lg ${
+                                    isCurrentVideo 
+                                      ? 'bg-blue-500 ring-2 ring-white' 
+                                      : 'bg-gray-700 group-hover:bg-blue-600'
+                                  }`}>
+                                    {video.episode_number || videoIndex + 1}
+                                  </div>
+
+                                  {/* Status de progresso */}
+                                  {isCurrentVideo && (
+                                    <div className="absolute -bottom-1 left-0 right-0 h-1 bg-gray-600 rounded-full overflow-hidden">
+                                      <div 
+                                        className="h-full bg-blue-500 transition-all duration-300"
+                                        style={{ width: `${(currentTime / duration) * 100 || 0}%` }}
+                                      />
+                                    </div>
+                                  )}
+                                </div>
+                                
+                                {/* Informações do vídeo - layout melhorado */}
+                                <div className="flex-1 min-w-0">
+                                  <div className="mb-2">
+                                    <h4 className={`font-medium line-clamp-2 leading-tight transition-colors duration-200 ${
+                                      isCurrentVideo 
+                                        ? 'text-white text-sm' 
+                                        : 'text-gray-300 text-sm group-hover:text-white'
+                                    }`}>
+                                      {video.title}
+                                    </h4>
+                                  </div>
+
+                                  {/* Metadata do vídeo */}
+                                  <div className="flex items-center gap-3 text-xs text-gray-500 mb-2">
+                                    {video.duration && (
+                                      <div className="flex items-center gap-1">
+                                        <Clock className="w-3 h-3" />
+                                        <span>{formatVideoDuration(video.duration)}</span>
+                                      </div>
+                                    )}
+                                    <span className="flex items-center gap-1">
+                                      <span>Ep. {video.episode_number || videoIndex + 1}</span>
+                                    </span>
+                                    {video.has_subtitles && (
+                                      <div className="flex items-center gap-1 text-yellow-400">
+                                        <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 8h10M7 12h4m1 0h4M7 16h10M5 5h14a2 2 0 012 2v10a2 2 0 01-2 2H5a2 2 0 01-2-2V7a2 2 0 012-2z" />
+                                        </svg>
+                                        <span>CC</span>
+                                      </div>
+                                    )}
+                                  </div>
+
+                                  {/* Descrição do vídeo - apenas para vídeo atual */}
+                                  {isCurrentVideo && video.description && (
+                                    <p className="text-xs text-gray-400 line-clamp-2 leading-relaxed bg-gray-700 bg-opacity-50 p-2 rounded mt-2">
+                                      {video.description}
+                                    </p>
+                                  )}
+
+                                  {/* Versões alternativas */}
+                                  {video.alternative_versions && video.alternative_versions.length > 0 && (
+                                    <div className="mt-2">
+                                      <div className="flex flex-wrap gap-1">
+                                        <span className={`px-2 py-1 rounded-full text-xs font-medium ${
+                                          video.is_default 
+                                            ? 'bg-blue-500 text-white' 
+                                            : 'bg-gray-700 text-gray-300'
+                                        }`}>
+                                          {video.label || 'Padrão'}
+                                        </span>
+                                        {video.alternative_versions.map((alt, altIndex) => (
+                                          <span 
+                                            key={altIndex}
+                                            className="px-2 py-1 bg-gray-600 text-gray-300 rounded-full text-xs font-medium cursor-pointer hover:bg-gray-500 transition-colors"
+                                            onClick={(e) => {
+                                              e.stopPropagation();
+                                              // TODO: Implementar troca de versão
+                                              console.log('Trocar para versão:', alt.label);
+                                            }}
+                                          >
+                                            {alt.label}
+                                          </span>
+                                        ))}
+                                      </div>
+                                    </div>
+                                  )}
+                                </div>
+                              </div>
+                            </div>
+                          );
+                        })}
                       </div>
                     </div>
-                  </div>
-                </div>
-              ))}
+                  );
+                });
+              })()}
             </div>
           </div>
         )}
@@ -1144,20 +1283,92 @@ export default function UniversalVideoPlayer({
           }`}>
             <div className="flex items-start justify-between">
               <div className="flex-1 min-w-0">
-                <h3 className="text-base md:text-lg font-semibold text-white mb-1 line-clamp-1">{currentVideo.title}</h3>
-                <p className="text-gray-400 text-xs md:text-sm mb-1 md:mb-2">
-                  Episódio {currentVideo.episode_number || currentVideoIndex + 1}
-                  {sessionNumber && ` • Sessão ${sessionNumber}`}
-                </p>
+                <div className="flex items-start justify-between mb-2">
+                  <h3 className="text-base md:text-lg font-semibold text-white mb-1 line-clamp-1">{currentVideo.title}</h3>
+                  <div className="flex items-center gap-2 ml-4">
+                    {/* Status de versões alternativas */}
+                    {currentVideo.alternative_versions && currentVideo.alternative_versions.length > 0 && (
+                      <div className="flex items-center gap-1">
+                        <span className={`px-2 py-1 rounded-full text-xs font-medium ${
+                          currentVideo.is_default 
+                            ? 'bg-blue-500 text-white' 
+                            : 'bg-gray-700 text-gray-300'
+                        }`}>
+                          {currentVideo.label || 'Padrão'}
+                        </span>
+                        <span className="text-xs text-gray-400">
+                          (+{currentVideo.alternative_versions.length} versões)
+                        </span>
+                      </div>
+                    )}
+                  </div>
+                </div>
+                
+                {/* Metadados principais */}
+                <div className="flex flex-wrap items-center gap-4 text-xs md:text-sm text-gray-400 mb-3">
+                  <div className="flex items-center gap-2">
+                    <span className="text-gray-500">Episódio:</span>
+                    <span className="font-medium text-white">
+                      {currentVideo.episode_number || currentVideoIndex + 1}
+                    </span>
+                  </div>
+                  
+                  {sessionNumber && (
+                    <div className="flex items-center gap-2">
+                      <span className="text-gray-500">Sessão:</span>
+                      <span className="font-medium text-white">{sessionNumber}</span>
+                    </div>
+                  )}
+                  
+                  {currentVideo.duration && (
+                    <div className="flex items-center gap-2">
+                      <Clock className="w-3 h-3 md:w-4 md:h-4 text-gray-500" />
+                      <span className="font-medium text-white">{formatVideoDuration(currentVideo.duration)}</span>
+                    </div>
+                  )}
+                  
+                  {currentVideo.has_subtitles && (
+                    <div className="flex items-center gap-2 text-yellow-400">
+                      <svg className="w-3 h-3 md:w-4 md:h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 8h10M7 12h4m1 0h4M7 16h10M5 5h14a2 2 0 012 2v10a2 2 0 01-2 2H5a2 2 0 01-2-2V7a2 2 0 012-2z" />
+                      </svg>
+                      <span className="font-medium">Legendas Disponíveis</span>
+                    </div>
+                  )}
+                  
+                  <div className="flex items-center gap-2">
+                    <span className="text-gray-500">Progresso:</span>
+                    <span className="font-medium text-white">
+                      {currentVideoIndex + 1} de {videos.length}
+                    </span>
+                  </div>
+                </div>
+                
+                {/* Sinopse do vídeo */}
                 {currentVideo.description && (
-                  <p className="text-gray-300 text-xs md:text-sm line-clamp-2">{currentVideo.description}</p>
+                  <div className="mb-3">
+                    <h4 className="text-xs font-semibold text-gray-400 mb-1 flex items-center gap-1">
+                      <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.746 0 3.332.477 4.5 1.253v13C20.168 18.477 18.582 18 16.5 18c-1.746 0-3.332.477-4.5 1.253" />
+                      </svg>
+                      Sinopse:
+                    </h4>
+                    <p className="text-xs md:text-sm text-gray-300 leading-relaxed line-clamp-3">
+                      {currentVideo.description}
+                    </p>
+                  </div>
                 )}
-              </div>
-              <div className="flex items-center gap-2 md:gap-4 text-xs md:text-sm text-gray-400 ml-2 flex-shrink-0">
-                {currentVideo.duration && (
-                  <div className="flex items-center gap-1">
-                    <Clock className="w-3 h-3 md:w-4 md:h-4" />
-                    <span>{formatVideoDuration(currentVideo.duration)}</span>
+                
+                {/* Informações da coleção */}
+                {collectionName && (
+                  <div className="pt-2 border-t border-gray-700">
+                    <div className="flex items-center gap-2 text-xs text-gray-500">
+                      <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10" />
+                      </svg>
+                      <span>Coleção:</span>
+                      <span className="font-medium text-gray-300">{collectionName}</span>
+                    </div>
                   </div>
                 )}
               </div>

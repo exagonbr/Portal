@@ -4,7 +4,7 @@ import React, { useState, useEffect } from 'react'
 import Modal from '@/components/ui/Modal'
 import { Button } from '@/components/ui/Button'
 import { UnitDto, CreateUnitDto, UpdateUnitDto } from '@/types/unit'
-import { InstitutionResponseDto } from '@/types/api'
+import { InstitutionDto } from '@/types/institution'
 import { useToast } from '@/components/ToastManager'
 import { unitService } from '@/services/unitService'
 import { Building2, School } from 'lucide-react'
@@ -12,7 +12,7 @@ import { Building2, School } from 'lucide-react'
 interface UnitFormModalProps {
   isOpen: boolean
   unit?: UnitDto | null
-  institutions: InstitutionResponseDto[]
+  institutions: InstitutionDto[]
   onClose: () => void
   onSuccess?: () => void
   viewOnly?: boolean
