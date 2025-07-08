@@ -13,13 +13,12 @@ import { Prisma } from '@prisma/client'
 const createRoleSchema = z.object({
   name: z.string().min(3, 'Nome deve ter pelo menos 3 caracteres'),
   description: z.string().optional(),
-  permissions: z.array(z.string()).default([]),
   is_active: z.boolean().default(true)
 })
 
 // Definindo o tipo para os roles do banco de dados
 interface RoleResponseDto {
-  id: string | number;
+  id: string;
   name: string;
   description: string;
   active: boolean;
@@ -27,7 +26,6 @@ interface RoleResponseDto {
   created_at: string;
   updated_at: string;
   status: string;
-  permissions?: string[];
 }
 
 // Usar o template padronizado para a rota GET
@@ -37,61 +35,94 @@ export const { GET, OPTIONS } = createStandardApiRoute({
   fallbackFunction: async (req: NextRequest) => {
     console.log('🔄 [API-ROLES] Usando dados locais para roles');
     
-    try {
-      // Tentar buscar do banco local primeiro
-      let roles: RoleResponseDto[] = [];
+        try {
+      const url = new URL(req.url)
+      const limit = parseInt(url.searchParams.get('limit') || '50', 10)
+      const search = url.searchParams.get('search')
+  
+      const where: any = {}
+      if (search) {
+        where.OR = [
+          { name: { contains: search, mode: 'insensitive' } },
+          { description: { contains: search, mode: 'insensitive' } },
+        ]
+      }
+  
       try {
-        // Buscar do banco de dados
-        const dbRoles = await prisma.roles.findMany();
-        
+        // Tentar buscar do banco de dados
+        const dbRoles = await prisma.roles.findMany({
+          where,
+          select: {
+            id: true,
+            name: true,
+            description: true,
+            is_active: true,
+            created_at: true,
+            updated_at: true
+          },
+          orderBy: { name: 'asc' },
+          take: Math.min(limit, 1000), // máximo 1000
+        })
+
         // Converter para o formato esperado
-        roles = dbRoles.map(role => ({
+        const roles = dbRoles.map(role => ({
           id: String(role.id),
           name: role.name || '',
           description: role.description || '',
           active: role.is_active,
-          users_count: 0,
+          users_count: 0, // Campo mantido por compatibilidade
           created_at: role.created_at.toISOString(),
           updated_at: role.updated_at.toISOString(),
           status: role.is_active ? 'active' : 'inactive'
         }));
+
+        return NextResponse.json({
+          success: true,
+          data: roles,
+          total: roles.length,
+          page: 1,
+          limit: roles.length,
+          totalPages: 1,
+        }, {
+          headers: getCorsHeaders(req.headers.get('origin') || undefined)
+        }); 
+
       } catch (dbError) {
         console.warn('⚠️ [API-ROLES] Erro ao buscar do banco local:', dbError);
-      }
-      
-      // Se não encontrou no banco, usar dados mock
-      if (!roles || roles.length === 0) {
-        console.log('🔄 [API-ROLES] Usando dados mock para roles');
-        roles = [
+        
+        // Usar dados mock como fallback
+        const mockRoles = [
           { id: '1', name: 'Administrador', description: 'Acesso total ao sistema', active: true, users_count: 0, created_at: new Date().toISOString(), updated_at: new Date().toISOString(), status: 'active' },
           { id: '2', name: 'Professor', description: 'Acesso às funcionalidades de ensino', active: true, users_count: 0, created_at: new Date().toISOString(), updated_at: new Date().toISOString(), status: 'active' },
           { id: '3', name: 'Aluno', description: 'Acesso às funcionalidades de aprendizado', active: true, users_count: 0, created_at: new Date().toISOString(), updated_at: new Date().toISOString(), status: 'active' },
           { id: '4', name: 'Coordenador', description: 'Gerencia professores e turmas', active: true, users_count: 0, created_at: new Date().toISOString(), updated_at: new Date().toISOString(), status: 'active' },
           { id: '5', name: 'Secretaria', description: 'Acesso administrativo limitado', active: true, users_count: 0, created_at: new Date().toISOString(), updated_at: new Date().toISOString(), status: 'active' }
         ];
+
+        return NextResponse.json({
+          success: true,
+          data: mockRoles,
+          total: mockRoles.length,
+          page: 1,
+          limit: mockRoles.length,
+          totalPages: 1,
+        }, {
+          headers: getCorsHeaders(req.headers.get('origin') || undefined)
+        });
       }
-
-      console.log('✅ [API-ROLES] Dados locais obtidos com sucesso:', roles.length);
-
-      // Formatar resposta no padrão esperado pela API
-      return NextResponse.json({
-        items: roles,
-        total: roles.length,
-        page: 1,
-        limit: roles.length,
-        totalPages: 1,
-      }, {
-        headers: getCorsHeaders(req.headers.get('origin') || undefined)
-      });
+      
     } catch (error) {
-      console.error('❌ [API-ROLES] Erro ao gerar dados fallback:', error);
+      console.error('❌ [API-ROLES] Erro geral:', error);
       return NextResponse.json(
         { 
           success: false, 
           message: 'Erro ao buscar funções',
           error: String(error)
         },
-        { status: 500 }
+        { 
+          status: 500,
+          headers: getCorsHeaders(req.headers.get('origin') || undefined)
+        }
       );
     }
   }
@@ -145,23 +176,31 @@ export async function POST(request: NextRequest) {
     }
 
     // Criar role
-    const newRole: RoleResponseDto = {
-      id: Date.now().toString(), // Gerando um ID único
-      name: roleData.name,
-      description: roleData.description || '',
-      permissions: roleData.permissions,
-      status: 'active',
-      active: roleData.is_active,
-      users_count: 0,
-      created_at: new Date().toISOString(),
-      updated_at: new Date().toISOString()
-    }
+    const newRole = await prisma.roles.create({
+      data: {
+        name: roleData.name,
+        description: roleData.description || null,
+        is_active: roleData.is_active,
+        created_at: new Date(),
+        updated_at: new Date()
+      }
+    })
 
-    mockRoles.set(newRole.id.toString(), newRole)
+    // Converter para o formato da resposta
+    const roleResponse: RoleResponseDto = {
+      id: String(newRole.id),
+      name: newRole.name || '',
+      description: newRole.description || '',
+      active: newRole.is_active,
+      users_count: 0,
+      created_at: newRole.created_at.toISOString(),
+      updated_at: newRole.updated_at.toISOString(),
+      status: newRole.is_active ? 'active' : 'inactive'
+    };
 
     return NextResponse.json({
       success: true,
-      data: newRole,
+      data: roleResponse,
       message: 'Role criada com sucesso'
     }, { 
       status: 201,
