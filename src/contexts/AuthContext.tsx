@@ -419,10 +419,10 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     try {
       console.log('🔐 Fazendo login via API...');
       
-      // CORREÇÃO: Adicionar timeout para evitar travamento
+      // CORREÇÃO: Aumentar o timeout para 30 segundos para evitar timeout prematuro
       const loginPromise = apiClient.post('/users/login', { email, password });
       const timeoutPromise = new Promise((_, reject) => 
-        setTimeout(() => reject(new Error('Tempo limite excedido')), 15000)
+        setTimeout(() => reject(new Error('Tempo limite excedido')), 30000)
       );
       
       const response = await Promise.race([loginPromise, timeoutPromise]) as any;
@@ -501,7 +501,9 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
           console.warn('⚠️ Erro no UnifiedAuthService, continuando com login:', saveError);
         }
         
+        // CORREÇÃO: Definir o usuário antes de qualquer redirecionamento
         setUser(user);
+        setIsLoading(false); // Garantir que isLoading seja atualizado imediatamente
         
         console.log('✅ Login realizado com sucesso!', user);
         toast.success('Login realizado com sucesso!');
@@ -541,9 +543,9 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
       }
       
       toast.error(errorMessage);
-      throw new Error(errorMessage);
+      setIsLoading(false); // CORREÇÃO: Garantir que isLoading seja resetado no caso de erro
     } finally {
-      // CORREÇÃO: Garantir que isLoading sempre seja resetado
+      // CORREÇÃO: Garantir que isLoading sempre seja resetado, mesmo que ocorra um erro no toast
       setTimeout(() => {
         setIsLoading(false);
       }, 100);

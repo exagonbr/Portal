@@ -4,7 +4,12 @@ import './globals.css';
 import ClientLayout from '@/components/ClientLayout';
 import Handtalk from '@/components/Handtalk';
 
-const inter = Inter({ subsets: ['latin'] });
+// Configuração da fonte Inter com preload: false para evitar o preload automático
+const inter = Inter({ 
+  subsets: ['latin'],
+  display: 'swap',
+  preload: false
+});
 
 export const metadata: Metadata = {
   title: 'Portal Educacional',

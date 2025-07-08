@@ -73,16 +73,25 @@ export function LoginForm() {
       await clearAllDataForUnauthorized();
       console.log('✅ Dados limpos com sucesso');
       
-      // CORREÇÃO: Adicionar timeout específico para o login
+      // CORREÇÃO: Aumentar timeout específico para o login para 30 segundos
       const loginPromise = login(email, password);
       const timeoutPromise = new Promise((_, reject) => 
-        setTimeout(() => reject(new Error('Tempo limite excedido. Tente novamente.')), 20000)
+        setTimeout(() => reject(new Error('Tempo limite excedido. Tente novamente.')), 30000)
       );
       
       await Promise.race([loginPromise, timeoutPromise]);
     } catch (error: any) {
       console.error('❌ Erro no handleLogin:', error);
-      setSubmitError(error.message || 'Falha no login. Verifique as credenciais e tente novamente.');
+      // CORREÇÃO: Melhor tratamento de mensagens de erro
+      let errorMessage = 'Falha no login. Verifique as credenciais e tente novamente.';
+      
+      if (error.message && error.message.includes('Tempo limite excedido')) {
+        errorMessage = 'Tempo limite excedido. O servidor está demorando para responder. Tente novamente em alguns instantes.';
+      } else if (error.message) {
+        errorMessage = error.message;
+      }
+      
+      setSubmitError(errorMessage);
     } finally {
       // CORREÇÃO: Garantir que o botão seja desbloqueado sempre
       setTimeout(() => {

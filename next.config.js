@@ -204,6 +204,7 @@ const nextConfig = {
       'framer-motion'
     ],
     optimisticClientCache: true,
+    trustHostHeader: true,
   },
 
   // Configurações de build
@@ -231,6 +232,23 @@ const nextConfig = {
   basePath: '',
   assetPrefix: '',
   productionBrowserSourceMaps: false,
+
+  // Configurações experimentais para melhor performance
+  experimental: {
+    optimizeCss: true,
+    scrollRestoration: true,
+    workerThreads: true,
+    cpus: 4,
+    optimizePackageImports: [
+      'react',
+      'react-dom',
+      'next',
+      '@heroicons/react',
+      'lucide-react',
+      'framer-motion'
+    ],
+    optimisticClientCache: true,
+  },
 };
 
 // Configuração para carregar variáveis de ambiente
@@ -241,6 +259,9 @@ const withEnv = (nextConfig) => {
       ...nextConfig.env,
       NEXTAUTH_SECRET: process.env.NEXTAUTH_SECRET,
       NEXTAUTH_URL: process.env.NEXTAUTH_URL,
+      // Adicionar variáveis específicas para cookies seguros
+      USE_SECURE_COOKIES: process.env.NODE_ENV === 'production' ? 'true' : process.env.USE_SECURE_COOKIES || 'false',
+      TRUST_PROXY: process.env.NODE_ENV === 'production' ? 'true' : process.env.TRUST_PROXY || 'false',
     }
   };
 };
