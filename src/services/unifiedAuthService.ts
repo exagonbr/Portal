@@ -5,6 +5,10 @@ import { getDashboardPath } from '@/utils/roleRedirect';
 import { getApiUrl } from '@/config/urls';
 import { clearAllDataForUnauthorized } from '@/utils/clearAllData';
 
+// Flag para evitar loops infinitos durante carregamento e sincronização
+let isLoadingData = false;
+let isSyncingStorages = false;
+
 export interface AuthData {
   accessToken: string;
   refreshToken: string;
@@ -100,25 +104,40 @@ export class UnifiedAuthService {
     cookies: AuthData | null;
     merged: AuthData | null;
   } {
-    console.log('📂 Carregando dados de autenticação...');
+    // Proteção contra loop infinito
+    if (isLoadingData) {
+      console.warn('⚠️ Detectada chamada recursiva a loadAuthData(), retornando dados vazios');
+      return {
+        localStorage: null,
+        cookies: null,
+        merged: null
+      };
+    }
 
-    const localStorageData = this.loadFromLocalStorage();
-    const cookieData = this.loadFromCookies();
+    try {
+      isLoadingData = true;
+      console.log('📂 Carregando dados de autenticação...');
 
-    // Priorizar dados mais recentes (localStorage geralmente é mais atualizado)
-    const merged = localStorageData || cookieData;
+      const localStorageData = this.loadFromLocalStorage();
+      const cookieData = this.loadFromCookies();
 
-    console.log('📋 Dados carregados:', {
-      hasLocalStorage: !!localStorageData,
-      hasCookies: !!cookieData,
-      hasMerged: !!merged
-    });
+      // Priorizar dados mais recentes (localStorage geralmente é mais atualizado)
+      const merged = localStorageData || cookieData;
 
-    return {
-      localStorage: localStorageData,
-      cookies: cookieData,
-      merged
-    };
+      console.log('📋 Dados carregados:', {
+        hasLocalStorage: !!localStorageData,
+        hasCookies: !!cookieData,
+        hasMerged: !!merged
+      });
+
+      return {
+        localStorage: localStorageData,
+        cookies: cookieData,
+        merged
+      };
+    } finally {
+      isLoadingData = false;
+    }
   }
 
   /**
@@ -133,7 +152,12 @@ export class UnifiedAuthService {
 
     // 3. Remover sessão do Redis
     if (sessionId && token) {
-      await SessionService.deleteSession(sessionId, token);
+      try {
+        await SessionService.deleteSession(sessionId, token);
+      } catch (error) {
+        console.error('❌ Erro ao excluir sessão do Redis:', error);
+        // Continuar mesmo com erro
+      }
     }
   }
 
@@ -211,11 +235,17 @@ export class UnifiedAuthService {
     console.log('🔄 Atualizando token de acesso...');
 
     try {
-      // 1. Atualizar localStorage
-      const currentData = this.loadFromLocalStorage();
-      if (currentData) {
-        currentData.accessToken = newToken;
-        this.saveToLocalStorage(currentData);
+      // 1. Atualizar localStorage diretamente sem usar loadAuthData
+      try {
+        const userStr = localStorage.getItem('user');
+        if (userStr && newToken) {
+          localStorage.setItem('accessToken', newToken);
+          localStorage.setItem('auth_token', newToken);
+          localStorage.setItem('token', newToken);
+          localStorage.setItem('authToken', newToken);
+        }
+      } catch (error) {
+        console.error('❌ Erro ao atualizar token no localStorage:', error);
       }
 
       // 2. Atualizar cookies
@@ -236,44 +266,135 @@ export class UnifiedAuthService {
    * Verifica se o usuário está autenticado
    */
   static isAuthenticated(): boolean {
-    const token = this.getAccessToken();
-    return !!token;
+    // Verificar diretamente no localStorage e cookies sem usar loadAuthData
+    try {
+      const lsToken = localStorage.getItem('accessToken') || 
+                     localStorage.getItem('auth_token') || 
+                     localStorage.getItem('token');
+      
+      if (lsToken) return true;
+      
+      const cookieToken = CookieManager.get('access_token');
+      return !!cookieToken;
+    } catch (error) {
+      console.error('❌ Erro ao verificar autenticação:', error);
+      return false;
+    }
   }
 
   /**
    * Obtém usuário atual
    */
   static getCurrentUser(): any | null {
-    const data = this.loadAuthData();
-    return data.merged?.user || null;
+    try {
+      // Tentar obter do localStorage primeiro
+      const userStr = localStorage.getItem('user');
+      if (userStr) {
+        return JSON.parse(userStr);
+      }
+      
+      // Se não encontrar, tentar dos cookies
+      return CookieManager.getAuthData().user;
+    } catch (error) {
+      console.error('❌ Erro ao obter usuário atual:', error);
+      return null;
+    }
   }
 
   /**
    * Obtém token de acesso atual
    */
   static getAccessToken(): string | null {
-    const data = this.loadAuthData();
-    return data.merged?.accessToken || null;
+    try {
+      // Tentar obter do localStorage primeiro
+      const token = localStorage.getItem('accessToken') || 
+                    localStorage.getItem('auth_token') || 
+                    localStorage.getItem('token');
+      
+      if (token) return token;
+      
+      // Se não encontrar, tentar dos cookies
+      return CookieManager.get('access_token');
+    } catch (error) {
+      console.error('❌ Erro ao obter access token:', error);
+      return null;
+    }
   }
 
   /**
    * Obtém ID da sessão atual
    */
   static getSessionId(): string | null {
-    const data = this.loadAuthData();
-    return data.merged?.sessionId || null;
+    try {
+      // Tentar obter do localStorage primeiro
+      const sessionId = localStorage.getItem('sessionId');
+      if (sessionId) return sessionId;
+      
+      // Se não encontrar, tentar dos cookies
+      return CookieManager.get('session_id');
+    } catch (error) {
+      console.error('❌ Erro ao obter sessionId:', error);
+      return null;
+    }
   }
 
   /**
    * Sincroniza dados entre storages
    */
   static syncStorages(): void {
-    const data = this.loadAuthData();
-    
-    if (data.merged) {
-      // Salvar nos dois locais para garantir sincronização
-      this.saveToLocalStorage(data.merged);
-      this.saveToCookies(data.merged);
+    // Proteção contra loop infinito
+    if (isSyncingStorages) {
+      console.warn('⚠️ Detectada chamada recursiva a syncStorages(), abortando');
+      return;
+    }
+
+    try {
+      isSyncingStorages = true;
+      
+      // Carregar dados sem usar loadAuthData para evitar loops
+      let user = null;
+      let accessToken = null;
+      let refreshToken = null;
+      let sessionId: string | undefined = undefined;
+      
+      try {
+        // Tentar obter do localStorage
+        const userStr = localStorage.getItem('user');
+        if (userStr) user = JSON.parse(userStr);
+        accessToken = localStorage.getItem('accessToken');
+        refreshToken = localStorage.getItem('refreshToken');
+        const storedSessionId = localStorage.getItem('sessionId');
+        if (storedSessionId) sessionId = storedSessionId;
+        
+        // Se não encontrar no localStorage, tentar dos cookies
+        if (!user || !accessToken || !refreshToken) {
+          const cookieData = CookieManager.getAuthData();
+          if (!user && cookieData.user) user = cookieData.user;
+          if (!accessToken && cookieData.accessToken) accessToken = cookieData.accessToken;
+          if (!refreshToken && cookieData.refreshToken) refreshToken = cookieData.refreshToken;
+          if (!sessionId && cookieData.sessionId) sessionId = cookieData.sessionId || undefined;
+        }
+        
+        // Se temos dados suficientes, salvar em ambos os lugares
+        if (user && accessToken && refreshToken) {
+          // Garantir que os tipos estão corretos para a interface AuthData
+          const authData: AuthData = {
+            user,
+            accessToken,
+            refreshToken,
+            sessionId,
+            expiresIn: 0
+          };
+          
+          this.saveToLocalStorage(authData);
+          this.saveToCookies(authData);
+          console.log('✅ Dados sincronizados entre storages');
+        }
+      } catch (error) {
+        console.error('❌ Erro ao sincronizar storages:', error);
+      }
+    } finally {
+      isSyncingStorages = false;
     }
   }
 
@@ -281,11 +402,15 @@ export class UnifiedAuthService {
    * Atualiza atividade do usuário
    */
   static async updateActivity(): Promise<void> {
-    const sessionId = this.getSessionId();
-    const token = this.getAccessToken();
-    
-    if (sessionId && token) {
-      await SessionService.updateActivity(sessionId, token);
+    try {
+      const sessionId = this.getSessionId();
+      const token = this.getAccessToken();
+      
+      if (sessionId && token) {
+        await SessionService.updateActivity(sessionId, token);
+      }
+    } catch (error) {
+      console.error('❌ Erro ao atualizar atividade:', error);
     }
   }
 
