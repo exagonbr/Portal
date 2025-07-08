@@ -51,6 +51,12 @@ export function LoginForm() {
       e.preventDefault();
     }
 
+    // CORREÇÃO: Evitar múltiplas submissões
+    if (isSubmitting) {
+      console.log('Login já em andamento, ignorando nova tentativa');
+      return;
+    }
+
     // Validação básica
     if (!email || !password) {
       setSubmitError('Por favor, preencha todos os campos.');
@@ -66,14 +72,23 @@ export function LoginForm() {
       await clearAllDataForUnauthorized();
       console.log('✅ Dados limpos com sucesso');
       
-      // Fazer o login
-      await login(email, password);
+      // CORREÇÃO: Adicionar timeout específico para o login
+      const loginPromise = login(email, password);
+      const timeoutPromise = new Promise((_, reject) => 
+        setTimeout(() => reject(new Error('Tempo limite excedido. Tente novamente.')), 20000)
+      );
+      
+      await Promise.race([loginPromise, timeoutPromise]);
     } catch (error: any) {
+      console.error('❌ Erro no handleLogin:', error);
       setSubmitError(error.message || 'Falha no login. Verifique as credenciais e tente novamente.');
     } finally {
-      setIsSubmitting(false);
+      // CORREÇÃO: Garantir que o botão seja desbloqueado sempre
+      setTimeout(() => {
+        setIsSubmitting(false);
+      }, 500);
     }
-  }, [login, email, password]);
+  }, [login, email, password, isSubmitting]);
 
   return (
     <>

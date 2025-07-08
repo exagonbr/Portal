@@ -243,8 +243,8 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     setIsLoggingOut(true);
 
     try {
-      // Usar o método completo do UnifiedAuthService
-      await UnifiedAuthService.performCompleteLogout(false);
+      // Usar limpeza completa de dados em vez de performCompleteLogout para evitar loop
+      await clearAllDataForUnauthorized();
       
       // Atualizar estado do contexto
       setUser(null);
@@ -366,10 +366,21 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
 
     setIsLoading(true);
 
-
     try {
       console.log('🔐 Fazendo login via API...');
-      const response = await apiClient.post('/users/login', { email, password });
+      
+      // CORREÇÃO: Adicionar timeout para evitar travamento
+      const loginPromise = apiClient.post('/users/login', { email, password });
+      const timeoutPromise = new Promise((_, reject) => 
+        setTimeout(() => reject(new Error('Tempo limite excedido')), 15000)
+      );
+      
+      const response = await Promise.race([loginPromise, timeoutPromise]) as any;
+      
+      // CORREÇÃO: Verificar se a resposta é válida antes de prosseguir
+      if (!response || !response.data) {
+        throw new Error('Resposta inválida do servidor');
+      }
       
       if (response.data.success && response.data.data) {
         const { accessToken, refreshToken, user: userData } = response.data.data;
@@ -410,28 +421,34 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
           institution_name: userData.institution_name || decodedToken.institution_name || undefined
         };
         
-        // Salvar dados em todos os locais usando o serviço unificado
-        const authData = {
-          accessToken,
-          refreshToken: refreshToken || accessToken, // Fallback se não houver refresh token
-          user: {
-            id: user.id.toString(),
-            email: user.email,
-            name: user.name,
-            role: user.role,
-            permissions: user.permissions,
-            institution_name: user.institution_name
-          },
-          expiresIn: decodedToken.exp ? decodedToken.exp - Math.floor(Date.now() / 1000) : 60 * 60 * 24
-        };
+        // CORREÇÃO: Salvar dados sem aguardar o UnifiedAuthService para evitar travamento
+        try {
+          const authData = {
+            accessToken,
+            refreshToken: refreshToken || accessToken,
+            user: {
+              id: user.id.toString(),
+              email: user.email,
+              name: user.name,
+              role: user.role,
+              permissions: user.permissions,
+              institution_name: user.institution_name
+            },
+            expiresIn: decodedToken.exp ? decodedToken.exp - Math.floor(Date.now() / 1000) : 60 * 60 * 24
+          };
 
-        const saveResult = await UnifiedAuthService.saveAuthData(authData);
-        
-        if (saveResult.success) {
-          console.log('✅ Dados salvos em todos os locais com sessão:', saveResult.sessionId);
-        } else {
-          console.warn('⚠️ Erro ao salvar dados:', saveResult.message);
-          // Continuar mesmo com erro, dados já estão no contexto
+          // Salvar de forma assíncrona sem bloquear
+          UnifiedAuthService.saveAuthData(authData).then((saveResult) => {
+            if (saveResult.success) {
+              console.log('✅ Dados salvos em todos os locais com sessão:', saveResult.sessionId);
+            } else {
+              console.warn('⚠️ Erro ao salvar dados:', saveResult.message);
+            }
+          }).catch((error) => {
+            console.warn('⚠️ Erro ao salvar dados UnifiedAuth:', error);
+          });
+        } catch (saveError) {
+          console.warn('⚠️ Erro no UnifiedAuthService, continuando com login:', saveError);
         }
         
         setUser(user);
@@ -439,30 +456,22 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
         console.log('✅ Login realizado com sucesso!', user);
         toast.success('Login realizado com sucesso!');
         
-        // Redirecionar para o dashboard apropriado
+        // CORREÇÃO: Simplificar redirecionamento para evitar travamento
         const targetPath = getDashboardPath(user.role);
         console.log('🎯 Redirecionando para dashboard:', targetPath);
         
         if (targetPath) {
-          // Usar caminho relativo para evitar problemas com URLs absolutas
           console.log('🔄 [AuthContext] Chamando router.push para:', targetPath);
-          router.push(targetPath);
           
-          // Verificar se o redirecionamento aconteceu após um delay
+          // CORREÇÃO: Usar timeout para garantir que o estado seja atualizado antes do redirect
           setTimeout(() => {
-            if (typeof window !== 'undefined') {
-              const redirectSuccessful = window.location.pathname === targetPath;
-              console.log('🔍 [AuthContext] Verificação pós-redirecionamento:', {
-                currentUrl: window.location.href,
-                expectedPath: targetPath,
-                redirectSuccessful
-              });
-            }
-          }, 1000);
+            router.push(targetPath);
+          }, 100);
         } else {
           console.warn('⚠️ Caminho do dashboard não encontrado, usando fallback');
-          console.log('🔄 [AuthContext] Chamando router.push para fallback: /dashboard');
-          router.push('/dashboard');
+          setTimeout(() => {
+            router.push('/dashboard');
+          }, 100);
         }
       } else {
         throw new Error(response.data.message || 'Falha no login');
@@ -472,7 +481,10 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
       
       let errorMessage = 'Falha no login. Verifique suas credenciais.';
       
-      if (error.response?.data?.message) {
+      // CORREÇÃO: Melhor tratamento de mensagens de erro
+      if (error.message === 'Tempo limite excedido') {
+        errorMessage = 'Tempo limite excedido. Tente novamente.';
+      } else if (error.response?.data?.message) {
         errorMessage = error.response.data.message;
       } else if (error.message) {
         errorMessage = error.message;
@@ -481,7 +493,10 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
       toast.error(errorMessage);
       throw new Error(errorMessage);
     } finally {
-      setIsLoading(false);
+      // CORREÇÃO: Garantir que isLoading sempre seja resetado
+      setTimeout(() => {
+        setIsLoading(false);
+      }, 100);
     }
   };
 

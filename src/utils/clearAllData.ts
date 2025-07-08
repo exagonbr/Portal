@@ -4,6 +4,9 @@
  */
 import { UnifiedAuthService } from '@/services/unifiedAuthService';
 
+// Flag para evitar loops infinitos na limpeza de dados
+let isClearingData = false;
+
 /**
  * Limpa todos os dados do localStorage
  */
@@ -191,15 +194,28 @@ const clearBrowserCache = async (): Promise<void> => {
  * Deve ser chamada antes de redirecionar para login com erro de unauthorized
  */
 export const clearAllDataForUnauthorized = async (): Promise<void> => {
+  // Proteção contra loop infinito
+  if (isClearingData) {
+    console.warn('⚠️ clearAllDataForUnauthorized já está executando, ignorando chamada recursiva');
+    return;
+  }
+
+  isClearingData = true;
   console.log('🧹 Iniciando limpeza completa de dados para redirecionamento unauthorized...');
   
   try {
-    // Primeiro limpar dados de autenticação usando o método unificado
-    // Passamos false para não redirecionar automaticamente
-    await UnifiedAuthService.performCompleteLogout(false);
+    // Primeiro limpar dados de autenticação diretamente, SEM chamar performCompleteLogout
+    // para evitar loop infinito
+    const token = typeof window !== 'undefined' ? localStorage.getItem('accessToken') : null;
+    const sessionId = typeof window !== 'undefined' ? localStorage.getItem('sessionId') : null;
+    
+    await UnifiedAuthService.clearAuthData(sessionId, token);
     
     // Executar limpezas adicionais em paralelo quando possível
     await Promise.allSettled([
+      clearLocalStorage(),
+      clearSessionStorage(),
+      clearAllCookies(),
       clearIndexedDB(),
       clearServiceWorkerCache(),
       clearBrowserCache()
@@ -214,6 +230,9 @@ export const clearAllDataForUnauthorized = async (): Promise<void> => {
       localStorage.clear();
       sessionStorage.clear();
     }
+  } finally {
+    // Garantir que a flag seja resetada mesmo em caso de erro
+    isClearingData = false;
   }
 };
 
@@ -223,23 +242,36 @@ export const clearAllDataForUnauthorized = async (): Promise<void> => {
 export const clearAuthDataOnly = async (): Promise<void> => {
   if (typeof window === 'undefined') return;
   
+  // Proteção contra loop infinito
+  if (isClearingData) {
+    console.warn('⚠️ clearAuthDataOnly já está executando, ignorando chamada recursiva');
+    return;
+  }
+
+  isClearingData = true;
   console.log('🧹 Limpando apenas dados de autenticação...');
   
   try {
-    // Usar o método unificado para limpeza de autenticação
-    // Passamos false para não redirecionar automaticamente
-    await UnifiedAuthService.performCompleteLogout(false);
+    // Usar clearAuthData diretamente para evitar loop infinito
+    const token = localStorage.getItem('accessToken');
+    const sessionId = localStorage.getItem('sessionId');
+    
+    await UnifiedAuthService.clearAuthData(sessionId, token);
     console.log('✅ Dados de autenticação limpos');
   } catch (error) {
     console.log('❌ Erro ao limpar dados de autenticação:', error);
     
     // Fallback: limpar manualmente
     try {
-      localStorage.clear();
-      sessionStorage.clear();
+      clearLocalStorage();
+      clearSessionStorage();
+      clearAllCookies();
     } catch (e) {
       console.log('❌ Erro ao limpar storages:', e);
     }
+  } finally {
+    // Garantir que a flag seja resetada mesmo em caso de erro
+    isClearingData = false;
   }
 };
 

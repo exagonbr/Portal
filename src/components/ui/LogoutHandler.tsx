@@ -3,7 +3,7 @@
 import React, { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { EnhancedLoadingState } from './LoadingStates';
-import { UnifiedAuthService } from '@/services/unifiedAuthService';
+import { clearAllDataForUnauthorized } from '@/utils/clearAllData';
 
 interface LogoutHandlerProps {
   onLogout?: () => Promise<void>;
@@ -18,8 +18,8 @@ export function LogoutHandler({ onLogout, children }: LogoutHandlerProps) {
     try {
       setIsLoggingOut(true);
 
-      // Usar o método completo do UnifiedAuthService
-      await UnifiedAuthService.performCompleteLogout(false);
+      // Usar limpeza completa de dados em vez de performCompleteLogout para evitar loop
+      await clearAllDataForUnauthorized();
 
       // Chamar callback de logout se fornecido
       if (onLogout) {

@@ -24,7 +24,15 @@ const SessionInfo: React.FC = () => {
 
   // Atualizar dados da sessão
   const updateSessionData = () => {
-    const authData = UnifiedAuthService.loadAuthData();
+    const user = UnifiedAuthService.getCurrentUser();
+    const accessToken = UnifiedAuthService.getAccessToken();
+    const sessionId = UnifiedAuthService.getSessionId();
+    const authData = {
+      user,
+      accessToken,
+      sessionId,
+      isValid: !!(user && accessToken)
+    };
     setSessionData(authData);
     setLastUpdate(new Date());
   };
@@ -82,9 +90,9 @@ const SessionInfo: React.FC = () => {
   };
 
   const syncStorages = () => {
-    UnifiedAuthService.syncStorages();
+    // Sincronização não é mais necessária
     updateSessionData();
-    console.log('🔄 Storages sincronizados');
+    console.log('🔄 Sincronização não é mais necessária');
   };
 
   return (
@@ -103,15 +111,15 @@ const SessionInfo: React.FC = () => {
           <div>
             <h4 className="font-semibold text-yellow-400">🔐 Autenticação:</h4>
             <p>Status: {UnifiedAuthService.isAuthenticated() ? '✅ Autenticado' : '❌ Não autenticado'}</p>
-            <p>Usuário: {sessionData?.merged?.user?.name || 'N/A'}</p>
-            <p>Role: {sessionData?.merged?.user?.role || 'N/A'}</p>
+            <p>Usuário: {sessionData?.user?.name || 'N/A'}</p>
+            <p>Role: {sessionData?.user?.role || 'N/A'}</p>
           </div>
 
           {/* Dados dos Storages */}
           <div>
             <h4 className="font-semibold text-blue-400">💾 Storages:</h4>
-            <p>localStorage: {sessionData?.localStorage ? '✅' : '❌'}</p>
-            <p>Cookies: {sessionData?.cookies ? '✅' : '❌'}</p>
+            <p>localStorage: {sessionData?.accessToken ? '✅' : '❌'}</p>
+            <p>Cookies: {sessionData?.isValid ? '✅' : '❌'}</p>
             <p>Tamanho: {getStorageSize()}</p>
           </div>
 
@@ -125,7 +133,7 @@ const SessionInfo: React.FC = () => {
           {/* Sessão Redis */}
           <div>
             <h4 className="font-semibold text-purple-400">🗄️ Redis:</h4>
-            <p>Session ID: {sessionData?.merged?.sessionId || 'N/A'}</p>
+            <p>Session ID: {sessionData?.sessionId || 'N/A'}</p>
           </div>
 
           {/* Informações do Sistema */}

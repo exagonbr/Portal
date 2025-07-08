@@ -180,8 +180,7 @@ export function useOptimizedAuth() {
 
   const refreshToken = useCallback(async (): Promise<boolean> => {
     try {
-      const authData = UnifiedAuthService.loadAuthData();
-      const refreshToken = authData.merged?.refreshToken;
+      const refreshToken = localStorage.getItem('refreshToken');
       
       if (!refreshToken) {
         return false;
@@ -227,14 +226,22 @@ export function useOptimizedAuth() {
     return UnifiedAuthService.isAuthenticated();
   }, []);
 
-  // Função para sincronizar dados entre storages
+  // Função para sincronizar dados entre storages (removida - não é mais necessária)
   const syncStorages = useCallback(() => {
-    UnifiedAuthService.syncStorages();
+    console.log('✅ Sincronização não é mais necessária - dados unificados');
   }, []);
 
   // Função para obter dados completos de autenticação
   const getAuthData = useCallback(() => {
-    return UnifiedAuthService.loadAuthData();
+    const user = UnifiedAuthService.getCurrentUser();
+    const accessToken = UnifiedAuthService.getAccessToken();
+    const sessionId = UnifiedAuthService.getSessionId();
+    return {
+      user,
+      accessToken,
+      sessionId,
+      isValid: !!(user && accessToken)
+    };
   }, []);
 
   // Função para atualizar atividade (heartbeat)

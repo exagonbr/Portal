@@ -551,7 +551,7 @@ export default function VideoPortalPage() {
   const initializeAuth = () => {
     try {
       // Sincronizar storages (localStorage, cookies)
-      UnifiedAuthService.syncStorages();
+      // Sincronização não é mais necessária
       
       // Verificar se há token válido
       const token = UnifiedAuthService.getAccessToken();
