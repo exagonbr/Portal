@@ -32,8 +32,8 @@ export async function GET(request: NextRequest) {
 
     console.log('🔗 [TV-SHOWS-API] URL do backend:', backendUrl.toString());
 
-    // Preparar headers de autenticação - função assíncrona
-    const headers = await prepareAuthHeaders(request);
+    // Preparar headers de autenticação
+    const headers = prepareAuthHeaders(request);
 
     // Fazer requisição para o backend com timeout
     const controller = new AbortController();

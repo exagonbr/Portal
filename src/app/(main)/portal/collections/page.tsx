@@ -7,6 +7,7 @@ import { formatDate, formatYear } from '@/utils/date'
 // Importar o UniversalVideoPlayer em vez dos players customizados
 import UniversalVideoPlayer from '@/components/UniversalVideoPlayer'
 import DashboardLayout from '@/components/dashboard/DashboardLayout'
+import { authDebug } from '@/utils/auth-debug'
 
 interface TVShowListItem {
   id: number

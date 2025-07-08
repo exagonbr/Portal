@@ -12,19 +12,30 @@ const getNodeEnv = () => {
 };
 
 const NODE_ENV = getNodeEnv();
-// Forçar desenvolvimento se estiver rodando localmente
-const isProduction = NODE_ENV === 'production' && typeof window === 'undefined' && process.env.FRONTEND_URL;
+const isProduction = NODE_ENV === 'production';
 const isDevelopment = !isProduction;
 const isServer = typeof window === 'undefined';
 
 // URLs otimizadas para cada ambiente
 const getBaseUrls = () => {
-  // FORÇAR LOCALHOST PARA EVITAR LOOP INFINITO
-  // Sempre usar localhost para desenvolvimento local
-  console.log('🔧 [ENV] Forçando configuração de localhost para evitar loop infinito');
+  // CORREÇÃO: Usar configuração baseada apenas no NODE_ENV, não no isServer
+  if (isProduction) {
+    console.log('🌐 [ENV] Usando configuração de produção');
+    
+    return {
+      FRONTEND_URL: 'https://portal.sabercon.com.br',
+      BACKEND_URL: 'https://portal.sabercon.com.br/api',
+      API_BASE_URL: 'https://portal.sabercon.com.br/api',
+      INTERNAL_API_URL: 'https://portal.sabercon.com.br/api'
+    };
+  }
   
-  const frontendUrl = 'http://localhost:3000';
-  const backendUrl = 'http://localhost:3001';
+  // Para desenvolvimento local (tanto servidor quanto browser)
+  console.log('💻 [ENV] Usando configuração de desenvolvimento local');
+  
+  // Verificar se temos variáveis de ambiente específicas
+  const backendUrl = (typeof process !== 'undefined' && process.env.BACKEND_URL) || 'http://localhost:3001/api';
+  const frontendUrl = (typeof process !== 'undefined' && process.env.NEXT_PUBLIC_APP_URL) || 'http://localhost:3000';
   
   return {
     FRONTEND_URL: frontendUrl,
@@ -40,12 +51,24 @@ try {
   BASE_URLS = getBaseUrls();
 } catch (error) {
   console.warn('Erro ao inicializar URLs base, usando fallback:', error);
-  BASE_URLS = {
-    FRONTEND_URL: 'http://localhost:3000',
-    BACKEND_URL: 'http://localhost:3001',
-    API_BASE_URL: 'http://localhost:3001',
-    INTERNAL_API_URL: 'http://localhost:3001'
-  };
+  
+  // Em caso de erro, usar URLs de desenvolvimento como fallback em desenvolvimento
+  if (isDevelopment) {
+    BASE_URLS = {
+      FRONTEND_URL: 'http://localhost:3000',
+      BACKEND_URL: 'http://localhost:3001/api',
+      API_BASE_URL: 'http://localhost:3001/api',
+      INTERNAL_API_URL: 'http://localhost:3001/api'
+    };
+  } else {
+    // Fallback de produção
+    BASE_URLS = {
+      FRONTEND_URL: 'https://portal.sabercon.com.br',
+      BACKEND_URL: 'https://portal.sabercon.com.br/api',
+      API_BASE_URL: 'https://portal.sabercon.com.br/api',
+      INTERNAL_API_URL: 'https://portal.sabercon.com.br/api'
+    };
+  }
 }
 
 export const ENV_CONFIG = {
@@ -93,7 +116,11 @@ export const getApiUrl = (path: string = '') => {
     return `${baseUrl}${cleanPath}`;
   } catch (error) {
     console.warn('Erro ao obter API URL, usando fallback:', error);
-    return `http://localhost:3001${path.startsWith('/') ? path : `/${path}`}`;
+    
+    // Fallback para URLs de produção
+    const fallbackUrl = `https://portal.sabercon.com.br/api${path.startsWith('/') ? path : `/${path}`}`;
+    console.log('🔄 Usando fallback URL:', fallbackUrl);
+    return fallbackUrl;
   }
 };
 
@@ -111,7 +138,11 @@ export const getInternalApiUrl = (path: string = '') => {
     return `${baseUrl}${cleanPath}`;
   } catch (error) {
     console.warn('Erro ao obter Internal API URL, usando fallback:', error);
-    return `http://localhost:3001${path.startsWith('/') ? path : `/${path}`}`;
+    
+    // Fallback para URLs de produção
+    const fallbackUrl = `https://portal.sabercon.com.br/api${path.startsWith('/') ? path : `/${path}`}`;
+    console.log('🔄 Usando fallback Internal URL:', fallbackUrl);
+    return fallbackUrl;
   }
 };
 
