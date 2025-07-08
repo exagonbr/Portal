@@ -57,7 +57,6 @@ export function suppressHydrationWarnings() {
         'Failed to fetch session', // Falha ao buscar sessão
         'Erro na resposta da API de detalhes: 401', // Erro 401 na API de detalhes
         'Erro de autenticação (401) ao carregar detalhes', // Erro específico que está ocorrendo
-        'Coleção não encontrada (404)', // Erro 404 de coleção não encontrada
       ];
 
       // Se é um aviso de hidratação conhecido, não mostrar
@@ -76,8 +75,15 @@ export function suppressHydrationWarnings() {
       }
       
       // Suprimir erros 401 (não autorizados)
-      if ((message.includes('401') || message.includes('Unauthorized')) && 
-          (message.includes('API') || message.includes('fetch'))) {
+      if ((message.includes('401') || message.includes('Unauthorized') || 
+           message.includes('autenticação') || message.includes('authentication')) && 
+          (message.includes('API') || message.includes('fetch') || message.includes('carregar') || 
+           message.includes('load') || message.includes('detalhes'))) {
+        return;
+      }
+      
+      // Verificar especificamente o erro que está ocorrendo
+      if (message.includes('❌ Erro de autenticação (401)')) {
         return;
       }
     }

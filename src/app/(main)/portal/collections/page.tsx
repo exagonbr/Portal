@@ -533,7 +533,8 @@ export default function TVShowsManagePage() {
       // Limpar estados do player ao carregar nova coleção
       closeAllPlayers()
       
-      const token = getAuthToken()
+      // Obter token de autenticação com tentativa de refresh
+      let token = getAuthToken()
       
       // Verificar se o token existe antes de continuar
       if (!token) {
@@ -541,6 +542,12 @@ export default function TVShowsManagePage() {
         setMockMessage("Erro de autenticação: Por favor, faça login novamente.");
         setErrorMessage("Erro de autenticação: Por favor, faça login novamente.");
         setIsLoading(false);
+        
+        // Redirecionar para a página de login
+        if (typeof window !== 'undefined') {
+          window.location.href = '/auth/login?redirect=' + encodeURIComponent(window.location.pathname);
+        }
+        
         return false; // Retornar false indicando falha
       }
 
@@ -574,8 +581,24 @@ export default function TVShowsManagePage() {
         } else {
           if (response.status === 401) {
             console.error('❌ Erro de autenticação (401) ao carregar detalhes');
+            
+            // Tentar refresh do token
+            const refreshed = await tryRefreshToken();
+            if (refreshed) {
+              // Se o token foi atualizado, tentar novamente a requisição
+              console.log('🔄 Token atualizado, tentando requisição novamente...');
+              return loadTvShowDetails(id);
+            }
+            
             setMockMessage("Erro de autenticação: Por favor, faça login novamente.");
             setErrorMessage("Erro de autenticação: Por favor, faça login novamente.");
+            
+            // Redirecionar para login após um breve delay
+            setTimeout(() => {
+              if (typeof window !== 'undefined') {
+                window.location.href = '/auth/login?redirect=' + encodeURIComponent(window.location.pathname);
+              }
+            }, 2000);
           } else if (response.status === 404) {
             console.error('❌ Coleção não encontrada (404)');
             setMockMessage("Coleção não encontrada.");
@@ -601,6 +624,56 @@ export default function TVShowsManagePage() {
       return false; // Retornar false indicando falha
     } finally {
       setIsLoading(false)
+    }
+  }
+
+  // Função para tentar atualizar o token
+  const tryRefreshToken = async (): Promise<boolean> => {
+    try {
+      console.log('🔄 Tentando atualizar token...');
+      
+      // Verificar se temos um refresh token
+      const refreshToken = localStorage.getItem('refreshToken') || 
+                          sessionStorage.getItem('refreshToken') ||
+                          document.cookie.split('; ').find(row => row.startsWith('refreshToken='))?.split('=')[1];
+      
+      if (!refreshToken) {
+        console.error('❌ Refresh token não encontrado');
+        return false;
+      }
+      
+      const response = await fetch('/api/auth/refresh', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ refreshToken }),
+      });
+      
+      if (response.ok) {
+        const data = await response.json();
+        if (data.success && data.data?.accessToken) {
+          // Salvar o novo token
+          const newToken = data.data.accessToken;
+          localStorage.setItem('accessToken', newToken);
+          localStorage.setItem('auth_token', newToken);
+          localStorage.setItem('token', newToken);
+          localStorage.setItem('authToken', newToken);
+          
+          // Atualizar também os cookies
+          document.cookie = `accessToken=${newToken}; path=/; max-age=86400; SameSite=Lax`;
+          document.cookie = `auth_token=${newToken}; path=/; max-age=86400; SameSite=Lax`;
+          
+          console.log('✅ Token atualizado com sucesso!');
+          return true;
+        }
+      }
+      
+      console.error('❌ Falha ao atualizar token:', response.status);
+      return false;
+    } catch (error) {
+      console.error('❌ Erro ao tentar atualizar token:', error);
+      return false;
     }
   }
 
