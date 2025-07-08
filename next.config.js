@@ -5,6 +5,9 @@ const nextConfig = {
   poweredByHeader: false,
   compress: true,
   
+  // Desabilitar indicadores de desenvolvimento
+  devIndicators: false,
+  
   // Configuração para resolver problemas de módulos (Nova sintaxe do Next.js 15)
   serverExternalPackages: [
     'oracledb',

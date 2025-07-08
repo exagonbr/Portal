@@ -1,6 +1,7 @@
 // Serviço simples e direto de autenticação - SEM LOOPS
 import { CookieManager } from '@/utils/cookieManager';
 import { SessionService, SessionData } from './sessionService';
+import { SessionPersistenceService } from './sessionPersistenceService';
 import { getApiUrl } from '@/config/urls';
 
 export interface AuthData {
@@ -31,7 +32,7 @@ export interface LoginResponse {
 export class UnifiedAuthService {
   
   /**
-   * Salva dados de autenticação APENAS no localStorage
+   * Salva dados de autenticação com persistência robusta
    */
   static async saveAuthData(authData: AuthData): Promise<{
     success: boolean;
@@ -41,7 +42,21 @@ export class UnifiedAuthService {
     try {
       console.log('💾 Salvando dados de autenticação...');
 
-      // 1. Salvar no localStorage - SIMPLES E DIRETO
+      // 1. Usar o novo sistema de persistência
+      SessionPersistenceService.saveSession({
+        userId: authData.user.id,
+        email: authData.user.email,
+        name: authData.user.name,
+        role: authData.user.role,
+        permissions: authData.user.permissions,
+        accessToken: authData.accessToken,
+        refreshToken: authData.refreshToken,
+        sessionId: authData.sessionId || `session_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
+        expiresAt: Date.now() + (authData.expiresIn * 1000 || 60 * 60 * 1000), // 1h padrão
+        refreshExpiresAt: Date.now() + (7 * 24 * 60 * 60 * 1000) // 7 dias
+      });
+
+      // 2. Manter compatibilidade com sistema legado
       if (typeof window !== 'undefined' && typeof localStorage !== 'undefined') {
         localStorage.setItem('accessToken', authData.accessToken);
         localStorage.setItem('refreshToken', authData.refreshToken);
@@ -52,7 +67,7 @@ export class UnifiedAuthService {
         localStorage.setItem('token', authData.accessToken);
       }
 
-      // 2. Salvar nos cookies - SIMPLES
+      // 3. Salvar nos cookies - SIMPLES
       CookieManager.setAuthCookies({
         accessToken: authData.accessToken,
         refreshToken: authData.refreshToken,
@@ -60,7 +75,7 @@ export class UnifiedAuthService {
         sessionId: authData.sessionId
       });
 
-      // 3. Tentar criar sessão no Redis (opcional)
+      // 4. Tentar criar sessão no Redis (opcional)
       let sessionId = authData.sessionId;
       try {
         const sessionData: SessionData = {
@@ -92,11 +107,11 @@ export class UnifiedAuthService {
         console.warn('⚠️ Redis indisponível, continuando sem sessão:', error);
       }
 
-      console.log('✅ Dados salvos com sucesso');
+      console.log('✅ Dados salvos com persistência robusta');
       return {
         success: true,
         sessionId,
-        message: 'Dados salvos com sucesso'
+        message: 'Dados salvos com persistência robusta'
       };
 
     } catch (error) {
@@ -109,9 +124,29 @@ export class UnifiedAuthService {
   }
 
   /**
-   * Obtém token de acesso - SIMPLES
+   * Obtém token de acesso - VERSÃO MELHORADA (assíncrona com refresh automático)
    */
-  static getAccessToken(): string | null {
+  static async getAccessToken(): Promise<string | null> {
+    try {
+      // Primeiro, tentar usar o sistema de persistência (com refresh automático)
+      if (typeof window !== 'undefined') {
+        const persistentToken = await SessionPersistenceService.getCurrentAccessToken();
+        if (persistentToken) {
+          return persistentToken;
+        }
+      }
+
+      // Fallback para métodos legados
+      return this.getAccessTokenSync();
+    } catch {
+      return null;
+    }
+  }
+
+  /**
+   * Obtém token de acesso - VERSÃO SÍNCRONA (sem refresh automático)
+   */
+  static getAccessTokenSync(): string | null {
     try {
       if (typeof window !== 'undefined' && typeof localStorage !== 'undefined') {
         return localStorage.getItem('accessToken') || 
@@ -161,10 +196,17 @@ export class UnifiedAuthService {
   }
 
   /**
-   * Verifica se está autenticado - SIMPLES
+   * Verifica se está autenticado - VERSÃO MELHORADA
    */
   static isAuthenticated(): boolean {
-    const token = this.getAccessToken();
+    // Usar o sistema de persistência se disponível
+    if (typeof window !== 'undefined') {
+      const isValid = SessionPersistenceService.isSessionValid();
+      if (isValid) return true;
+    }
+
+    // Fallback para verificação legada
+    const token = localStorage.getItem('accessToken') || localStorage.getItem('auth_token');
     const user = this.getCurrentUser();
     return !!(token && user);
   }
@@ -249,7 +291,7 @@ export class UnifiedAuthService {
   static async updateActivity(): Promise<void> {
     try {
       const sessionId = this.getSessionId();
-      const token = this.getAccessToken();
+      const token = await this.getAccessToken();
       
       if (sessionId && token) {
         await SessionService.updateActivity(sessionId, token);
@@ -266,7 +308,7 @@ export class UnifiedAuthService {
     try {
       console.log('🔓 UnifiedAuthService: Iniciando logout completo...');
       
-      const token = this.getAccessToken();
+      const token = this.getAccessTokenSync();
       const sessionId = this.getSessionId();
       
       // 1. Chamar API de logout (opcional, com timeout)

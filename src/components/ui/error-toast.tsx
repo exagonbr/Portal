@@ -10,7 +10,7 @@ export interface ErrorToastProps {
 
 /**
  * Analisa o tipo de erro e retorna informações sobre ele
- */
+ */ 
 const analyzeError = (error: Error | string) => {
   const message = typeof error === 'string' ? error : error.message;
   

@@ -12,6 +12,7 @@ import { isDevelopment } from '../utils/env';
 import { clearAllDataForUnauthorized } from '@/utils/clearAllData';
 import { debugToken, cleanupTokens } from '@/utils/token-debug';
 import { UnifiedAuthService } from '@/services/unifiedAuthService';
+import { usePersistentSession } from '@/hooks/usePersistentSession';
 
 
 // Variável de ambiente para controlar o uso do token de teste
