@@ -1,3 +1,5 @@
+import React, { useState, useEffect } from 'react';
+
 /**
  * Utilitário para gerenciar indicadores de loading durante requisições com retry
  */
