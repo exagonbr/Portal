@@ -57,6 +57,7 @@ export function suppressHydrationWarnings() {
         'Failed to fetch session', // Falha ao buscar sessão
         'Erro na resposta da API de detalhes: 401', // Erro 401 na API de detalhes
         'Erro de autenticação (401) ao carregar detalhes', // Erro específico que está ocorrendo
+        'Coleção não encontrada (404)', // Erro 404 de coleção não encontrada
       ];
 
       // Se é um aviso de hidratação conhecido, não mostrar
