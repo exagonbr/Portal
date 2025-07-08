@@ -6,11 +6,12 @@ import { ClassRepository } from '../repositories/ClassRepository';
 const classRepository = new ClassRepository();
 
 class ClassController extends BaseController<Class> {
+    private classRepository: ClassRepository;
+
     constructor() {
-    const repository = new ClassRepository();
-    super(repository);
-    this.classRepository = repository;
-        super(classRepository);
+        const repository = new ClassRepository();
+        super(repository);
+        this.classRepository = repository;
     }
 
     async toggleStatus(req: Request, res: Response) {

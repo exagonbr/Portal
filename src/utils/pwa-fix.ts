@@ -76,7 +76,7 @@ class PWALoopFixer {
       const url = typeof input === 'string' ? input : input instanceof URL ? input.toString() : input.url;
       
       // Verificar se é requisição de login
-      if (url.includes('/api/users/login')) {
+      if (url.includes('/api/auth/login')) {
         this.trackLoginRequest(url);
       }
       
@@ -89,7 +89,7 @@ class PWALoopFixer {
         const response = await this.originalFetch!(input, init);
         
         // Verificar se recebemos erro 429 (Too Many Requests)
-        if (response.status === 429 && url.includes('/api/users/login')) {
+        if (response.status === 429 && url.includes('/api/auth/login')) {
           console.warn('🚨 Erro 429 detectado em login - possível loop!');
           this.handleLoginLoop(url, response);
         }

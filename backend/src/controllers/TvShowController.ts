@@ -1,7 +1,7 @@
 import { Request, Response } from 'express';
 import { TvShowRepository } from '../repositories/TvShowRepository';
 import { BaseController } from './BaseController';
-import { TvShow } from '../entities/TVShow';
+import { TvShow } from '../entities/TvShow';
 
 const tvShowRepository = new TvShowRepository();
 

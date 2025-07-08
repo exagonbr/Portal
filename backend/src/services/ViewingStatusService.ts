@@ -4,7 +4,7 @@ import { ViewingStatus } from '../entities/ViewingStatus';
 import { AppDataSource } from '../config/typeorm';
 import { User } from '../entities/User';
 import { Video } from '../entities/Video';
-import { TvShow } from '../entities/TVShow';
+import { TvShow } from '../entities/TvShow';
 import db from '../config/database';
 
 export interface UpdateViewingStatusDTO {

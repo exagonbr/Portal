@@ -6,11 +6,12 @@ import { EducationalStage } from '../entities/EducationalStage';
 const educationalStageRepository = new EducationalStageRepository();
 
 class EducationalStageController extends BaseController<EducationalStage> {
+  private educationalStageRepository: EducationalStageRepository;
+
   constructor() {
     const repository = new EducationalStageRepository();
     super(repository);
     this.educationalStageRepository = repository;
-    super(educationalStageRepository);
   }
 
   async search(req: Request, res: Response) {

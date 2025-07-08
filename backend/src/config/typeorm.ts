@@ -4,7 +4,7 @@ import knexConfig from '../knexfile';
 import { ViewingStatus } from '../entities/ViewingStatus';
 import { User } from '../entities/User';
 import { Video } from '../entities/Video';
-import { TvShow } from '../entities/TVShow';
+import { TvShow } from '../entities/TvShow';
 
 const environment = process.env.NODE_ENV || 'development';
 const config = knexConfig[environment] as Knex.Config;

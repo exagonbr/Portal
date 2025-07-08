@@ -38,7 +38,7 @@ export async function POST(request: NextRequest) {
     }
 
     // Usar a função getInternalApiUrl para obter a URL correta do backend
-    const backendUrl = getInternalApiUrl('/api/users/login');
+    const backendUrl = getInternalApiUrl('/api/auth/login');
     console.log('🔒 [LOGIN] Tentando autenticar usuário:', email);
     console.log('🔗 [LOGIN] URL do backend:', backendUrl);
 

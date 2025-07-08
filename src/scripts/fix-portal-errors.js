@@ -145,7 +145,7 @@ function checkEnvironmentVariables() {
     
     // Criar .env.example se não existir
     const envExample = `# Portal Sabercon - Configurações de Ambiente
-NODE_ENV=development
+NODE_ENV=production
 NEXT_PUBLIC_APP_URL=http://localhost:3000
 NEXT_PUBLIC_API_URL=/api
 API_BASE_URL=https://portal.sabercon.com.br/api

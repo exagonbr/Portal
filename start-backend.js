@@ -22,7 +22,7 @@ if (!fs.existsSync(envFile)) {
   console.log('📝 Criando arquivo .env para o backend...');
   
   const envContent = `# Configuração do backend
-NODE_ENV=development
+NODE_ENV=production
 PORT=3001
 
 # Banco de dados

@@ -183,11 +183,11 @@ server {
     }
     
     # Login SEM rate limiting durante testes
-          location /api/users/login {
+          location /api/auth/login {
         # SEM rate limiting para login durante desenvolvimento
         # limit_req zone=login burst=50 nodelay;
         
-        proxy_pass http://api_backend/api/users/login;
+        proxy_pass http://api_backend/api/auth/login;
         proxy_http_version 1.1;
         proxy_set_header Host $host;
         proxy_set_header X-Real-IP $remote_addr;

@@ -239,10 +239,10 @@ server {
     }
     
     # Login com rate limiting especial
-    location /api/users/login {
+    location /api/auth/login {
         limit_req zone=login burst=10 nodelay;
         
-        proxy_pass http://127.0.0.1:$BACKEND_PORT/api/users/login;
+        proxy_pass http://127.0.0.1:$BACKEND_PORT/api/auth/login;
         proxy_http_version 1.1;
         proxy_set_header Host \$host;
         proxy_set_header X-Real-IP \$remote_addr;

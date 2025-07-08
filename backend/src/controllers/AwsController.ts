@@ -1,6 +1,5 @@
 import { Request, Response } from 'express';
-import { awsRepository } from '../repositories/AwsRepository'
-import { Aws } from '../entities/Aws';;
+import { awsRepository } from '../repositories/AwsRepository';
 
 class AwsController {
     async getSystemAnalytics(req: Request, res: Response) {

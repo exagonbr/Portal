@@ -1,24 +1,83 @@
-import { Entity, Column, PrimaryGeneratedColumn, CreateDateColumn, UpdateDateColumn } from 'typeorm';
+import {
+  Entity,
+  PrimaryGeneratedColumn,
+  Column
+} from 'typeorm';
 
 @Entity('tv_show')
 export class TvShow {
-  @PrimaryGeneratedColumn()
-  id: number;
+  @PrimaryGeneratedColumn('increment')
+  id!: number;
 
-  @Column({ nullable: true })
-  version?: string;
+  @Column({ type: 'bigint', nullable: true })
+  version?: number;
 
-  @Column({ nullable: true })
-  dateCreated?: string;
+  
+  @Column({ name: 'api_id', type: 'varchar', length: 255, nullable: true })
+  apiId?: string;
 
-  @Column({ nullable: true })
-  deleted?: string;
+  @Column({ name: 'backdrop_image_id', type: 'bigint', nullable: true })
+  backdropImageId?: number;
 
-  @Column({ nullable: true })
-  lastUpdated?: string;
+  @Column({ name: 'backdrop_path', type: 'varchar', length: 255, nullable: true })
+  backdropPath?: string;
 
-  @Column({ nullable: true })
-  name?: string;
+  @Column({ name: 'contract_term_end', type: 'timestamp' })
+  contractTermEnd!: Date;
+
+  @Column({ name: 'date_created', type: 'timestamp' })
+  dateCreated!: Date;
+
+  @Column({ type: 'boolean', nullable: true })
+  deleted?: boolean;
+
+  @Column({ name: 'first_air_date', type: 'timestamp' })
+  firstAirDate!: Date;
+
+  @Column({ name: 'imdb_id', type: 'varchar', length: 255, nullable: true })
+  imdbId?: string;
+
+  @Column({ name: 'last_updated', type: 'timestamp' })
+  lastUpdated!: Date;
+
+  @Column({ name: 'manual_input', type: 'boolean', nullable: true })
+  manualInput?: boolean;
+
+  @Column({ name: 'manual_support_id', type: 'bigint', nullable: true })
+  manualSupportId?: number;
+
+  @Column({ name: 'manual_support_path', type: 'varchar', length: 255, nullable: true })
+  manualSupportPath?: string;
+
+  @Column({ type: 'varchar', length: 255 })
+  name!: string;
+
+  @Column({ name: 'original_language', type: 'varchar', length: 255, nullable: true })
+  originalLanguage?: string;
+
+  @Column({ type: 'text', nullable: true })
+  overview?: string;
+
+  @Column({ type: 'double precision', nullable: true })
+  popularity?: number;
+
+  @Column({ name: 'poster_image_id', type: 'bigint', nullable: true })
+  posterImageId?: number;
+
+  @Column({ name: 'poster_path', type: 'varchar', length: 255, nullable: true })
+  posterPath?: string;
+
+  @Column({ type: 'text', nullable: true })
+  producer?: string;
+
+  @Column({ name: 'vote_average', type: 'double precision', nullable: true })
+  voteAverage?: number;
+
+  @Column({ name: 'vote_count', type: 'int', nullable: true })
+  voteCount?: number;
+
+  @Column({ name: 'total_load', type: 'varchar', length: 255, nullable: true })
+  totalLoad?: string;
 
   @Column({ nullable: true })
   description?: string;
@@ -37,5 +96,4 @@ export class TvShow {
 
   @Column({ nullable: true })
   isActive?: string;
-
 }

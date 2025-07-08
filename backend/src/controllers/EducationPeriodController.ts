@@ -6,11 +6,12 @@ import { EducationPeriod } from '../entities/EducationPeriod';
 const educationPeriodRepository = new EducationPeriodRepository();
 
 class EducationPeriodController extends BaseController<EducationPeriod> {
+    private educationPeriodRepository: EducationPeriodRepository;
+
     constructor() {
-    const repository = new EducationPeriodRepository();
-    super(repository);
-    this.educationPeriodRepository = repository;
-        super(educationPeriodRepository);
+        const repository = new EducationPeriodRepository();
+        super(repository);
+        this.educationPeriodRepository = repository;
     }
 
     async toggleStatus(req: Request, res: Response) {

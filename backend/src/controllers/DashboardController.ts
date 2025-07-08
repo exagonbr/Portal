@@ -5,9 +5,6 @@ class DashboardController {
     private dashboardService: DashboardService;
 
     constructor() {
-    const repository = new DashboardRepository();
-    super(repository);
-    this.dashboardRepository = repository;
         this.dashboardService = new DashboardService();
     }
 

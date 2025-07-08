@@ -434,8 +434,8 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
           // Não interrompe o fluxo, apenas loga o erro
         }
         
-        // CORREÇÃO: Aumentar o timeout para 60 segundos para evitar timeout prematuro
-        const loginPromise = apiClient.post('/users/login', { email, password }, { 
+        // CORREÇÃO: Usar o caminho correto '/auth/login' em vez de '/users/login'
+        const loginPromise = apiClient.post('/auth/login', { email, password }, { 
           timeout: 60000 // Garantir que o timeout seja respeitado também pelo axios
         });
         const timeoutPromise = new Promise((_, reject) => 

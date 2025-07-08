@@ -21,7 +21,7 @@ const envTemplate = `# ===================================
 # ===================================
 
 # APPLICATION SETTINGS
-NODE_ENV=development
+NODE_ENV=production
 PORT=3001
 
 # JWT SETTINGS

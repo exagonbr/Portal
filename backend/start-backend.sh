@@ -35,7 +35,7 @@ echo "🔧 Verificando variáveis de ambiente..."
 if [ ! -f ".env" ]; then
     echo "⚠️  Arquivo .env não encontrado, criando um básico..."
     cat > .env << EOF
-NODE_ENV=development
+NODE_ENV=production
 PORT=3001
 JWT_SECRET=your-secret-key-here
 CORS_CREDENTIALS=true

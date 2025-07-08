@@ -1,18 +1,28 @@
 import { Request, Response } from 'express';
-import { ChatRepository } from '../repositories/ChatRepository'
-import { Chat } from '../entities/Chat';;
+import { ChatRepository } from '../repositories/ChatRepository';
+import { ChatMessage } from '../entities/ChatMessage';
 
 const chatRepository = new ChatRepository();
 
 class ChatController {
     async getMessages(req: Request, res: Response) {
-        const messages = await chatRepository.findAll(req.query);
-        res.json(messages);
+        try {
+            const messages = await chatRepository.findAllPaginated(req.query);
+            res.json(messages);
+        } catch (error) {
+            console.error('Erro ao buscar mensagens:', error);
+            res.status(500).json({ success: false, message: 'Erro interno do servidor' });
+        }
     }
 
     async sendMessage(req: Request, res: Response) {
-        const message = await chatRepository.create(req.body);
-        res.status(201).json(message);
+        try {
+            const message = await chatRepository.create(req.body);
+            res.status(201).json(message);
+        } catch (error) {
+            console.error('Erro ao enviar mensagem:', error);
+            res.status(500).json({ success: false, message: 'Erro interno do servidor' });
+        }
     }
 }
 

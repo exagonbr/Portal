@@ -6,11 +6,12 @@ import { BaseController } from './BaseController';
 const courseRepository = new CourseRepository();
 
 class CourseController extends BaseController<Course> {
+  private courseRepository: CourseRepository;
+
   constructor() {
     const repository = new CourseRepository();
     super(repository);
     this.courseRepository = repository;
-    super(courseRepository);
   }
 
   // Métodos específicos para Course, se necessário

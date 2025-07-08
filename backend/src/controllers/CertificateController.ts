@@ -6,11 +6,12 @@ import { BaseController } from './BaseController';
 const certificateRepository = new CertificateRepository();
 
 class CertificateController extends BaseController<Certificate> {
+  private certificateRepository: CertificateRepository;
+
   constructor() {
     const repository = new CertificateRepository();
     super(repository);
     this.certificateRepository = repository;
-    super(certificateRepository);
   }
 
   /**

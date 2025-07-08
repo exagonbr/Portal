@@ -294,7 +294,7 @@ export function setupLoginLoopProtection(): void {
                 input.url;
     
       // Aplicar detecção apenas para login (sem bloquear)
-  if (url.includes('/api/users/login')) {
+  if (url.includes('/api/auth/login')) {
       const method = init?.method || 'POST';
       loginDetector.checkAndLogRequest(url, method);
     }
