@@ -22,6 +22,17 @@ export default function ServiceWorkerRegistration() {
       });
     };
 
+    // Verificar se um arquivo existe
+    const checkFileExists = async (url: string) => {
+      try {
+        const response = await fetch(url, { method: 'HEAD' });
+        return response.ok;
+      } catch (error) {
+        console.error(`Erro ao verificar arquivo ${url}:`, error);
+        return false;
+      }
+    };
+
     const registerSW = async () => {
       try {
         // Carregar utilitários primeiro
@@ -41,52 +52,103 @@ export default function ServiceWorkerRegistration() {
         // Salvar o caminho atual para redirecionamento após reconexão
         localStorage.setItem('lastPath', window.location.pathname + window.location.search);
 
-        // Registrar o service worker
-        const registration = await navigator.serviceWorker.register('/worker.js', {
-          scope: '/',
-          updateViaCache: 'none'
-        });
-
-        // Verificar se há uma atualização disponível
-        if (registration.waiting) {
-          console.log('Atualização do Service Worker disponível');
+        // Verificar se os arquivos existem antes de tentar registrá-los
+        const workerExists = await checkFileExists('/worker.js');
+        const basicWorkerExists = await checkFileExists('/sw-basic.js');
+        
+        // Tentar registrar a versão principal do service worker
+        if (workerExists) {
+          try {
+            const registration = await navigator.serviceWorker.register('/worker.js', {
+              scope: '/',
+              updateViaCache: 'none'
+            });
+            
+            console.log('Service Worker principal registrado com sucesso');
+            handleRegistration(registration);
+            return;
+          } catch (mainError) {
+            console.error('Erro ao registrar Service Worker principal:', mainError);
+          }
+        } else {
+          console.error('Arquivo worker.js não encontrado');
         }
-
-        // Configurar atualizações automáticas
-        registration.addEventListener('updatefound', () => {
-          const newWorker = registration.installing;
-          if (!newWorker) return;
-
-          newWorker.addEventListener('statechange', () => {
-            if (newWorker.state === 'installed' && navigator.serviceWorker.controller) {
-              // Perguntar ao usuário se deseja atualizar
-              if (window.confirm('Nova versão disponível! Deseja atualizar agora?')) {
-                newWorker.postMessage({ type: 'SKIP_WAITING' });
-                window.location.reload();
-              }
+        
+        // Tentar registrar a versão básica como fallback
+        if (basicWorkerExists) {
+          try {
+            console.log('Tentando registrar versão básica do Service Worker...');
+            const basicRegistration = await navigator.serviceWorker.register('/sw-basic.js', {
+              scope: '/',
+              updateViaCache: 'none'
+            });
+            
+            console.log('Service Worker básico registrado com sucesso');
+            handleRegistration(basicRegistration);
+          } catch (basicError) {
+            console.error('Erro ao registrar Service Worker básico:', basicError);
+          }
+        } else {
+          console.error('Arquivo sw-basic.js não encontrado');
+          
+          // Tentar usar o sw.js existente como último recurso
+          const oldSwExists = await checkFileExists('/sw.js');
+          if (oldSwExists) {
+            try {
+              console.log('Tentando usar o Service Worker existente (sw.js)...');
+              const oldRegistration = await navigator.serviceWorker.register('/sw.js', {
+                scope: '/'
+              });
+              
+              console.log('Service Worker antigo (sw.js) registrado com sucesso');
+              handleRegistration(oldRegistration);
+            } catch (oldError) {
+              console.error('Erro ao registrar Service Worker antigo:', oldError);
             }
-          });
-        });
-
-        // Verificar atualizações periodicamente (a cada 6 horas)
-        setInterval(() => {
-          registration.update().catch(error => {
-            console.error('Erro ao verificar atualizações do SW:', error);
-          });
-        }, 6 * 60 * 60 * 1000);
-
-        // Detectar quando o usuário está offline/online
-        window.addEventListener('offline', () => {
-          console.log('Usuário está offline');
-        });
-
-        window.addEventListener('online', () => {
-          console.log('Usuário está online novamente');
-        });
-
+          }
+        }
       } catch (error) {
         console.error('Erro ao registrar o service worker:', error);
       }
+    };
+
+    const handleRegistration = (registration: ServiceWorkerRegistration) => {
+      // Marcar que o SW foi registrado pelo componente
+      window.swRegisteredByComponent = true;
+      
+      // Verificar se há uma atualização disponível
+      if (registration.waiting) {
+        console.log('Atualização do Service Worker disponível');
+      }
+
+      // Configurar atualizações automáticas
+      registration.addEventListener('updatefound', () => {
+        const newWorker = registration.installing;
+        if (!newWorker) return;
+
+        newWorker.addEventListener('statechange', () => {
+          if (newWorker.state === 'installed' && navigator.serviceWorker.controller) {
+            // Notificar sobre atualização disponível
+            console.log('Nova versão do Service Worker instalada e pronta para ativar');
+          }
+        });
+      });
+
+      // Verificar atualizações periodicamente (a cada 6 horas)
+      setInterval(() => {
+        registration.update().catch(error => {
+          console.error('Erro ao verificar atualizações do SW:', error);
+        });
+      }, 6 * 60 * 60 * 1000);
+
+      // Detectar quando o usuário está offline/online
+      window.addEventListener('offline', () => {
+        console.log('Usuário está offline');
+      });
+
+      window.addEventListener('online', () => {
+        console.log('Usuário está online novamente');
+      });
     };
 
     // Registrar o service worker quando a página terminar de carregar
@@ -102,4 +164,13 @@ export default function ServiceWorkerRegistration() {
 
   // Este componente não renderiza nada visível
   return null;
+}
+
+// Adicionar declaração para TypeScript
+declare global {
+  interface Window {
+    swRegisteredByComponent?: boolean;
+    swUtils?: any;
+    swStatus?: any;
+  }
 } 

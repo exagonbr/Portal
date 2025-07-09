@@ -74,6 +74,8 @@ export default function RootLayout({
         <script src="/register-sw.js" defer />
         {/* Adicionar script de utilitários do SW */}
         <script src="/sw-utils.js" defer />
+        {/* Adicionar script de status do SW */}
+        <script src="/sw-status.js" defer />
       </head>
       <body className={`${inter.className} m-0 p-0 h-full w-full`} suppressHydrationWarning>
         {/* Componente Handtalk para acessibilidade em LIBRAS */}

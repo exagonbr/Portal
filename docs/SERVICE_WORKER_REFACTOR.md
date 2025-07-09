@@ -10,26 +10,35 @@ O Service Worker foi completamente refatorado para oferecer uma experiência mai
 4. **Suporte Offline Aprimorado**: Página offline dedicada e sincronização em segundo plano
 5. **Gerenciamento de Ciclo de Vida**: Atualizações automáticas e limpeza de caches antigos
 6. **Ferramentas de Diagnóstico**: Interface de administração para debug e manutenção
+7. **Sistema de Fallback**: Versão básica do Service Worker para navegadores incompatíveis
 
 ## Arquivos Principais
 
-### 1. Service Worker (`worker.js`)
+### 1. Service Worker Principal (`worker.js`)
 
-O arquivo principal do Service Worker com todas as estratégias de cache e tratamento de rotas.
+O arquivo principal do Service Worker com todas as estratégias de cache e tratamento de rotas, usando Workbox.
 
-### 2. Componente de Registro (`src/components/ServiceWorkerRegistration.tsx`)
+### 2. Service Worker Básico (`sw-basic.js`)
+
+Versão simplificada do Service Worker que não depende do Workbox, usada como fallback para navegadores incompatíveis.
+
+### 3. Módulos Workbox (`public/workbox-v6.5.4/`)
+
+Implementações simplificadas dos módulos do Workbox para garantir compatibilidade em diferentes ambientes.
+
+### 4. Componente de Registro (`src/components/ServiceWorkerRegistration.tsx`)
 
 Componente React para registrar o Service Worker com detecção de compatibilidade e gerenciamento do ciclo de vida.
 
-### 3. Utilitários do Service Worker (`public/sw-utils.js`)
+### 5. Utilitários do Service Worker (`public/sw-utils.js`)
 
 Funções auxiliares para gerenciar o Service Worker, incluindo limpeza de cache e verificação de status.
 
-### 4. Página Offline (`public/offline.html`)
+### 6. Página Offline (`public/offline.html`)
 
 Página exibida quando o usuário está sem conexão, com funcionalidade para tentar reconectar.
 
-### 5. Interface de Administração (`src/app/debug-sw/page.tsx`)
+### 7. Interface de Administração (`src/app/debug-sw/page.tsx`)
 
 Painel de controle para administradores gerenciarem e diagnosticarem o Service Worker.
 
