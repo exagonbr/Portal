@@ -9,7 +9,7 @@ import { Select } from '@/components/ui/Select'
 import { Checkbox } from '@/components/ui/checkbox'
 import { Badge } from '@/components/ui/Badge'
 import Card, { CardHeader, CardBody } from '@/components/ui/Card'
-import { Mail, Send, X, Users, UserCheck, Shield, AlertTriangle } from 'lucide-react'
+import { Mail, Send, X, Users, UserCheck, Shield, AlertTriangle, RefreshCw, CheckCircle } from 'lucide-react'
 import { useToast } from '@/components/ToastManager'
 
 interface Recipient {
@@ -32,6 +32,8 @@ interface EmailSenderProps {
   templates?: EmailTemplate[]
   availableRecipients?: any[]
   className?: string
+  sentEmails?: string[]
+  failedEmails?: string[]
 }
 
 export default function EmailSender({
@@ -39,7 +41,9 @@ export default function EmailSender({
   loading = false,
   templates = [],
   availableRecipients = [],
-  className = ''
+  className = '',
+  sentEmails = [],
+  failedEmails = []
 }: EmailSenderProps) {
   const { showSuccess, showError } = useToast()
   const [emailData, setEmailData] = useState({
@@ -59,6 +63,31 @@ export default function EmailSender({
     recipients?: string;
   }>({})
   
+  // Indicador de status para cada destinatário
+  const [recipientStatus, setRecipientStatus] = useState<Record<string, 'pending' | 'success' | 'error'>>({})
+
+  // Atualizar status dos destinatários quando sentEmails ou failedEmails mudarem
+  useEffect(() => {
+    const newStatus: Record<string, 'pending' | 'success' | 'error'> = {};
+    
+    // Marcar todos como pending primeiro
+    recipients.forEach(recipient => {
+      newStatus[recipient.value] = 'pending';
+    });
+    
+    // Marcar os enviados como success
+    sentEmails.forEach(email => {
+      newStatus[email] = 'success';
+    });
+    
+    // Marcar os falhos como error
+    failedEmails.forEach(email => {
+      newStatus[email] = 'error';
+    });
+    
+    setRecipientStatus(newStatus);
+  }, [sentEmails, failedEmails, recipients]);
+
   // Se não houver templates fornecidos, use estes templates padrão
   const defaultTemplates: EmailTemplate[] = [
     {
@@ -182,6 +211,35 @@ export default function EmailSender({
     return isValid;
   }
 
+  // Função para adicionar múltiplos emails de uma vez
+  const addMultipleEmails = (emailsText: string) => {
+    const emailRegex = /[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}/g;
+    const emails = emailsText.match(emailRegex);
+    
+    if (emails && emails.length > 0) {
+      const newRecipients = emails.map(email => ({
+        type: 'email' as const,
+        value: email,
+        label: email
+      }));
+      
+      // Filtrar emails já adicionados
+      const uniqueRecipients = newRecipients.filter(
+        nr => !recipients.some(r => r.value === nr.value)
+      );
+      
+      if (uniqueRecipients.length > 0) {
+        setRecipients(prev => [...prev, ...uniqueRecipients]);
+        showSuccess(`${uniqueRecipients.length} email(s) adicionado(s)`);
+        
+        // Limpar erro de destinatários se houver
+        if (formErrors.recipients) {
+          setFormErrors(prev => ({ ...prev, recipients: undefined }));
+        }
+      }
+    }
+  };
+
   const handleSend = async () => {
     if (!validateForm() || !onSend) return;
 
@@ -197,24 +255,46 @@ export default function EmailSender({
           roles: recipients.filter(r => r.type === 'role').map(r => r.value)
         },
         template: selectedTemplate
-      })
+      });
       
-      // Limpar formulário após envio bem-sucedido
-      setEmailData({
-        subject: '',
-        message: '',
-        html: false
-      })
-      setRecipients([])
-      setSelectedTemplate(null)
-      setFormErrors({})
-      
-      showSuccess('Email enviado com sucesso!')
+      // Não limpar o formulário automaticamente para permitir reenvio
+      // em caso de falhas parciais
+      setFormErrors({});
     } catch (error: any) {
-      console.error('Erro ao enviar email:', error)
-      showError(error.message || 'Erro ao enviar email. Tente novamente.')
+      console.error('Erro ao enviar email:', error);
+      showError(error.message || 'Erro ao enviar email. Tente novamente.');
     }
-  }
+  };
+
+  // Função para tentar reenviar emails que falharam
+  const handleRetry = async () => {
+    if (!onSend) return;
+    
+    // Filtrar apenas os destinatários que falharam
+    const failedRecipients = recipients.filter(r => 
+      r.type === 'email' && failedEmails.includes(r.value)
+    );
+    
+    if (failedRecipients.length === 0) return;
+    
+    try {
+      await onSend({
+        title: emailData.subject,
+        subject: emailData.subject,
+        message: emailData.message,
+        html: emailData.html,
+        recipients: {
+          emails: failedRecipients.map(r => r.value),
+          users: [],
+          roles: []
+        },
+        template: selectedTemplate
+      });
+    } catch (error: any) {
+      console.error('Erro ao reenviar email:', error);
+      showError(error.message || 'Erro ao reenviar email. Tente novamente.');
+    }
+  };
 
   // Efeito para processar colar múltiplos emails
   const handlePasteEmails = (e: React.ClipboardEvent) => {
@@ -321,28 +401,91 @@ export default function EmailSender({
               </Button>
             </div>
 
+            {/* Área para colar múltiplos emails */}
+            {newRecipient.type === 'email' && (
+              <div className="mt-2 mb-4">
+                <Label htmlFor="multipleEmails" className="text-sm text-gray-600">
+                  Ou cole múltiplos emails (separados por vírgulas, espaços ou linhas)
+                </Label>
+                <div className="flex gap-2 mt-1">
+                  <Textarea
+                    id="multipleEmails"
+                    placeholder="email1@exemplo.com, email2@exemplo.com, email3@exemplo.com"
+                    rows={2}
+                    className="flex-1 text-sm"
+                  />
+                  <Button 
+                    onClick={() => {
+                      const textarea = document.getElementById('multipleEmails') as HTMLTextAreaElement;
+                      if (textarea && textarea.value) {
+                        addMultipleEmails(textarea.value);
+                        textarea.value = '';
+                      }
+                    }} 
+                    size="sm"
+                    className="self-end"
+                  >
+                    Adicionar Todos
+                  </Button>
+                </div>
+              </div>
+            )}
+
             {recipients.length > 0 && (
               <div className="mt-2">
                 <div className="flex flex-wrap gap-2 max-h-32 overflow-y-auto p-2 border rounded-md">
-                  {recipients.map((recipient, index) => (
-                    <Badge
-                      key={index}
-                      className={`${getRecipientColor(recipient.type)} flex items-center gap-1`}
-                    >
-                      {getRecipientIcon(recipient.type)}
-                      {recipient.label}
-                      <button
-                        onClick={() => removeRecipient(index)}
-                        className="ml-1 hover:bg-black/10 rounded-full p-0.5"
+                  {recipients.map((recipient, index) => {
+                    // Determinar cor com base no status (apenas para emails)
+                    let badgeClass = getRecipientColor(recipient.type);
+                    let icon = getRecipientIcon(recipient.type);
+                    
+                    // Adicionar ícone de status para emails
+                    if (recipient.type === 'email') {
+                      const status = recipientStatus[recipient.value];
+                      if (status === 'success') {
+                        badgeClass = 'bg-green-100 text-green-800';
+                        icon = <CheckCircle className="w-3 h-3" />;
+                      } else if (status === 'error') {
+                        badgeClass = 'bg-red-100 text-red-800';
+                        icon = <AlertTriangle className="w-3 h-3" />;
+                      }
+                    }
+                    
+                    return (
+                      <Badge
+                        key={index}
+                        className={`${badgeClass} flex items-center gap-1`}
                       >
-                        <X className="w-3 h-3" />
-                      </button>
-                    </Badge>
-                  ))}
+                        {icon}
+                        {recipient.label}
+                        <button
+                          onClick={() => removeRecipient(index)}
+                          className="ml-1 hover:bg-black/10 rounded-full p-0.5"
+                        >
+                          <X className="w-3 h-3" />
+                        </button>
+                      </Badge>
+                    );
+                  })}
                 </div>
-                <p className="text-xs text-gray-500 mt-1">
-                  {recipients.length} destinatário(s) selecionado(s)
-                </p>
+                <div className="flex justify-between items-center mt-1">
+                  <p className="text-xs text-gray-500">
+                    {recipients.length} destinatário(s) selecionado(s)
+                  </p>
+                  
+                  {/* Botão de reenvio para emails que falharam */}
+                  {failedEmails.length > 0 && (
+                    <Button 
+                      onClick={handleRetry}
+                      size="sm"
+                      variant="outline"
+                      className="text-xs flex items-center gap-1"
+                    >
+                      <RefreshCw className="w-3 h-3" />
+                      Reenviar para {failedEmails.length} falha(s)
+                    </Button>
+                  )}
+                </div>
               </div>
             )}
 

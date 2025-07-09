@@ -7,12 +7,14 @@ import { Button } from '@/components/ui/Button';
 import { Badge } from '@/components/ui/Badge';
 import { useToast } from '@/components/ToastManager';
 import { notificationService } from '@/services/notificationService';
+import { directEmailService } from '@/services/directEmailService';
 import EmailSender from '@/components/notifications/EmailSender';
 import {
   Send,
   Mail,
   Bell,
-  AlertCircle
+  AlertCircle,
+  CheckCircle
 } from 'lucide-react';
 import {
   NotificationType,
@@ -30,6 +32,8 @@ export default function SendNotificationPage() {
   const [activeTab, setActiveTab] = useState<'email' | 'push'>('email');
   const [sendingStatus, setSendingStatus] = useState<'idle' | 'sending' | 'success' | 'error'>('idle');
   const router = useRouter();
+  const [emailsSent, setEmailsSent] = useState<string[]>([]);
+  const [emailsFailed, setEmailsFailed] = useState<string[]>([]);
 
   // Verificar autenticação ao carregar a página
   useEffect(() => {
@@ -80,7 +84,7 @@ export default function SendNotificationPage() {
     return true;
   };
 
-  // Função para enviar email
+  // Função para enviar email com garantia de entrega
   const handleSendEmail = async (emailData: any) => {
     // Verificar autenticação antes de enviar
     const isAuthValid = await verifyAuthBeforeSend();
@@ -93,6 +97,8 @@ export default function SendNotificationPage() {
 
     setIsLoading(true);
     setSendingStatus('sending');
+    setEmailsSent([]);
+    setEmailsFailed([]);
     
     try {
       // Validação adicional
@@ -111,23 +117,71 @@ export default function SendNotificationPage() {
         throw new Error('O conteúdo do email é obrigatório');
       }
 
-      const result = await notificationService.sendEmail({
-        title: emailData.subject,
-        subject: emailData.subject,
-        message: emailData.message,
-        html: emailData.html,
-        recipients: emailData.recipients,
-        sent_by_id: user.id.toString(),
-        template: emailData.template
-      });
+      // Extrair emails diretos
+      const directEmails = emailData.recipients.emails || [];
+      
+      // Enviar para cada email diretamente para garantir entrega
+      const sentEmails: string[] = [];
+      const failedEmails: string[] = [];
+      
+      // Primeiro tentar enviar via API principal para todos os destinatários
+      try {
+        await notificationService.sendEmail({
+          title: emailData.subject,
+          subject: emailData.subject,
+          message: emailData.message,
+          html: emailData.html,
+          recipients: emailData.recipients,
+          sent_by_id: user.id.toString(),
+          template: emailData.template
+        });
+        
+        console.log('✅ Email enviado com sucesso via API principal');
+        
+        // Se chegou aqui, todos os emails foram enviados com sucesso
+        if (directEmails.length > 0) {
+          setEmailsSent(directEmails);
+        }
+      } catch (apiError) {
+        console.error('❌ Erro ao enviar via API principal, tentando envio direto:', apiError);
+        
+        // Se a API principal falhar, tentar envio direto para cada email
+        if (directEmails.length > 0) {
+          for (const email of directEmails) {
+            try {
+              // Usar o serviço de envio direto para garantir entrega
+              await directEmailService.sendEmail({
+                subject: emailData.subject,
+                message: emailData.message,
+                html: emailData.html,
+                recipients: {
+                  emails: [email]
+                }
+              });
+              
+              sentEmails.push(email);
+              console.log(`✅ Email enviado com sucesso para ${email} via envio direto`);
+            } catch (directError) {
+              console.error(`❌ Falha ao enviar email para ${email}:`, directError);
+              failedEmails.push(email);
+            }
+          }
+          
+          setEmailsSent(sentEmails);
+          setEmailsFailed(failedEmails);
+        }
+      }
 
-      const totalRecipients = 
-        (emailData.recipients.emails?.length || 0) + 
-        (emailData.recipients.users?.length || 0) + 
-        (emailData.recipients.roles?.length || 0);
-
-      showSuccess(`Email enviado com sucesso para ${totalRecipients} destinatário(s)!`);
-      setSendingStatus('success');
+      // Determinar status geral do envio
+      if (failedEmails.length === 0) {
+        showSuccess(`Email enviado com sucesso para ${sentEmails.length || directEmails.length} destinatário(s)!`);
+        setSendingStatus('success');
+      } else if (sentEmails.length > 0) {
+        showSuccess(`Email enviado parcialmente: ${sentEmails.length} enviado(s), ${failedEmails.length} falha(s)`);
+        setSendingStatus('success');
+      } else {
+        throw new Error('Não foi possível enviar o email para nenhum destinatário');
+      }
     } catch (error: any) {
       console.error('Erro ao enviar email:', error);
       
@@ -149,8 +203,10 @@ export default function SendNotificationPage() {
       setSendingStatus('error');
     } finally {
       setIsLoading(false);
-      // Retorna ao estado 'idle' após 3 segundos
-      setTimeout(() => setSendingStatus('idle'), 3000);
+      // Retorna ao estado 'idle' após 3 segundos se não houver falhas
+      if (emailsFailed.length === 0) {
+        setTimeout(() => setSendingStatus('idle'), 3000);
+      }
     }
   };
 
@@ -246,7 +302,14 @@ export default function SendNotificationPage() {
           <div className="bg-green-100 rounded-full p-1 mr-3">
             <Send className="w-5 h-5 text-green-600" />
           </div>
-          <p>Sua mensagem foi enviada com sucesso!</p>
+          <div className="flex-1">
+            <p className="font-medium">Sua mensagem foi enviada com sucesso!</p>
+            {emailsSent.length > 0 && (
+              <p className="text-sm mt-1">
+                {emailsSent.length} email(s) enviado(s) com sucesso.
+              </p>
+            )}
+          </div>
         </div>
       )}
 
@@ -255,7 +318,35 @@ export default function SendNotificationPage() {
           <div className="bg-red-100 rounded-full p-1 mr-3">
             <AlertCircle className="w-5 h-5 text-red-600" />
           </div>
-          <p>Ocorreu um erro ao enviar sua mensagem. Por favor, tente novamente.</p>
+          <div className="flex-1">
+            <p className="font-medium">Ocorreu um erro ao enviar sua mensagem.</p>
+            {emailsFailed.length > 0 && (
+              <p className="text-sm mt-1">
+                {emailsFailed.length} email(s) não puderam ser enviados.
+              </p>
+            )}
+          </div>
+        </div>
+      )}
+
+      {/* Detalhes de envio se houver emails enviados e falhos */}
+      {emailsSent.length > 0 && emailsFailed.length > 0 && (
+        <div className="mb-6 bg-blue-50 border border-blue-200 text-blue-800 rounded-lg p-4">
+          <h3 className="font-medium mb-2">Detalhes do envio:</h3>
+          <div className="space-y-2">
+            <div className="flex items-center gap-2">
+              <CheckCircle className="w-4 h-4 text-green-600" />
+              <p className="text-sm">
+                <span className="font-medium">Enviados ({emailsSent.length}):</span> {emailsSent.join(', ')}
+              </p>
+            </div>
+            <div className="flex items-center gap-2">
+              <AlertCircle className="w-4 h-4 text-red-600" />
+              <p className="text-sm">
+                <span className="font-medium">Falhas ({emailsFailed.length}):</span> {emailsFailed.join(', ')}
+              </p>
+            </div>
+          </div>
         </div>
       )}
 
@@ -270,6 +361,8 @@ export default function SendNotificationPage() {
           <EmailSender 
             onSend={handleSendEmail}
             loading={isLoading}
+            sentEmails={emailsSent}
+            failedEmails={emailsFailed}
           />
         </ContentCard>
       ) : (
