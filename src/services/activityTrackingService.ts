@@ -27,6 +27,73 @@ export interface WatchlistItem {
   addedAt: Date;
 }
 
+export interface SystemLog {
+  id: string | number;
+  user_id: string;
+  user_name?: string;
+  user_email?: string;
+  activity_type: string;
+  entity_type?: string;
+  entity_id?: string;
+  action: string;
+  details?: Record<string, any>;
+  ip_address?: string;
+  ip?: string;
+  user_agent?: string;
+  device_info?: string;
+  browser?: string;
+  operating_system?: string;
+  location?: string;
+  duration_seconds?: number;
+  start_time?: string;
+  end_time?: string;
+  session_id?: string;
+  created_at: string;
+  updated_at: string;
+  timestamp?: string;
+  severity?: string;
+  user?: string;
+}
+
+export interface SystemLogParams {
+  page?: number;
+  limit?: number;
+  activityType?: string;
+  severity?: string;
+  search?: string;
+  startDate?: string;
+  endDate?: string;
+  sortOrder?: 'asc' | 'desc';
+}
+
+export interface SystemLogStats {
+  totalActivities: number;
+  uniqueUsers: number;
+  uniqueSessions: number;
+  errorCount: number;
+  warningCount: number;
+  logSize: string;
+}
+
+export interface SystemLogsResponse {
+  logs: SystemLog[];
+  pagination: {
+    page: number;
+    limit: number;
+    total: number;
+    totalPages: number;
+  };
+}
+
+export interface CleanupLogsParams {
+  daysToKeep: number;
+}
+
+export interface CleanupLogsResponse {
+  deletedCount: number;
+  success: boolean;
+}
+
 class ActivityTrackingServiceClass {
   async trackActivity(activity: ActivityTrack): Promise<void> {
     try {
@@ -112,6 +179,68 @@ class ActivityTrackingServiceClass {
     } catch (error) {
       console.error('Erro ao buscar atividades do conteúdo:', error);
       return [];
+    }
+  }
+
+  // Novos métodos para gerenciamento de logs do sistema
+  async getSystemLogs(params: SystemLogParams): Promise<SystemLogsResponse> {
+    try {
+      // Converter parâmetros para formato de query string
+      const queryParams: Record<string, string> = {};
+      if (params.page) queryParams.page = params.page.toString();
+      if (params.limit) queryParams.limit = params.limit.toString();
+      if (params.activityType) queryParams.activity_type = params.activityType;
+      if (params.severity) queryParams.severity = params.severity;
+      if (params.search) queryParams.search = params.search;
+      if (params.startDate) queryParams.start_date = params.startDate;
+      if (params.endDate) queryParams.end_date = params.endDate;
+      if (params.sortOrder) queryParams.sort_order = params.sortOrder;
+
+      const response = await apiGet<SystemLogsResponse>('/admin/audit', queryParams);
+      return response;
+    } catch (error) {
+      console.error('Erro ao buscar logs do sistema:', error);
+      throw error;
+    }
+  }
+
+  async getSystemLogStats(params?: { startDate?: string; endDate?: string }): Promise<SystemLogStats> {
+    try {
+      const response = await apiPost<SystemLogStats>('/admin/audit', params || {});
+      return response;
+    } catch (error) {
+      console.error('Erro ao buscar estatísticas dos logs:', error);
+      throw error;
+    }
+  }
+
+  async exportSystemLogs(params: SystemLogParams & { format: string }): Promise<void> {
+    try {
+      // Converter parâmetros para formato de query string
+      const queryParams: Record<string, string> = {};
+      if (params.activityType) queryParams.activity_type = params.activityType;
+      if (params.severity) queryParams.severity = params.severity;
+      if (params.search) queryParams.search = params.search;
+      if (params.startDate) queryParams.start_date = params.startDate;
+      if (params.endDate) queryParams.end_date = params.endDate;
+      if (params.format) queryParams.format = params.format;
+
+      // Construir URL para download
+      const queryString = new URLSearchParams(queryParams).toString();
+      window.location.href = `/api/admin/audit/export?${queryString}`;
+    } catch (error) {
+      console.error('Erro ao exportar logs do sistema:', error);
+      throw error;
+    }
+  }
+
+  async cleanupSystemLogs(params: CleanupLogsParams): Promise<CleanupLogsResponse> {
+    try {
+      const response = await apiPost<CleanupLogsResponse>('/admin/audit/cleanup', params);
+      return response;
+    } catch (error) {
+      console.error('Erro ao limpar logs antigos:', error);
+      throw error;
     }
   }
 }

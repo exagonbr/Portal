@@ -11,6 +11,7 @@ import { ThemeProvider } from '@/contexts/ThemeContext'
 import { PersistentAuthWrapper } from '@/components/auth/PersistentAuthWrapper'
 import dynamic from 'next/dynamic'
 import { GamificationProvider } from '@/contexts/GamificationContext'
+import { SessionInitializer } from '@/components/auth/SessionInitializer'
 
 // Carregamento dinâmico dos providers menos críticos
 const NavigationLoadingProvider = dynamic(() => import('@/contexts/NavigationLoadingContext').then(mod => mod.NavigationLoadingProvider), {
@@ -173,6 +174,7 @@ export default function SimpleProviders({ children }: { children: ReactNode }) {
                     <NavigationLoadingProvider>
                       <UpdateProvider>
                         <ToastManager>
+                          <SessionInitializer />
                           {children}
                         </ToastManager>
                       </UpdateProvider>

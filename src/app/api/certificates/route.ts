@@ -1,143 +1,307 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { cookies } from 'next/headers';
+import { createStandardApiRoute } from '../lib/api-route-template';
+import { getCorsHeaders } from '@/config/cors';
 
-const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'https://portal.sabercon.com.br/api';
+// Dados mockados para fallback
+let mockCertificates = [
+  {
+    id: 1,
+    date_created: new Date().toISOString(),
+    last_updated: new Date().toISOString(),
+    path: '/certificates/cert-001.pdf',
+    score: 85,
+    tv_show_id: 101,
+    user_id: 1001,
+    document: '123.456.789-00',
+    license_code: 'LIC-2023-001',
+    tv_show_name: 'Curso de Matemática Básica',
+    recreate: false
+  },
+  {
+    id: 2,
+    date_created: new Date().toISOString(),
+    last_updated: new Date().toISOString(),
+    path: '/certificates/cert-002.pdf',
+    score: 92,
+    tv_show_id: 102,
+    user_id: 1002,
+    document: '987.654.321-00',
+    license_code: 'LIC-2023-002',
+    tv_show_name: 'Curso de Português Avançado',
+    recreate: false
+  },
+  {
+    id: 3,
+    date_created: new Date().toISOString(),
+    last_updated: new Date().toISOString(),
+    path: '/certificates/cert-003.pdf',
+    score: 78,
+    tv_show_id: 103,
+    user_id: 1003,
+    document: '111.222.333-44',
+    license_code: 'LIC-2023-003',
+    tv_show_name: 'Curso de Ciências',
+    recreate: true
+  }
+];
 
-export async function GET(request: NextRequest) {
-  try {
-    const { searchParams } = new URL(request.url);
-    
-    // Obter token de autenticação
-    const cookieStore = await cookies();
-    const token = cookieStore.get('token')?.value ||
-                  request.headers.get('authorization')?.replace('Bearer ', '');
-    
-    if (!token) {
-      return NextResponse.json(
-        {
-          success: false,
-          message: 'Token de autenticação não encontrado'
+// Usar o template padronizado para a rota GET
+export const { GET, OPTIONS } = createStandardApiRoute({
+  endpoint: '/api/certificates',
+  name: 'certificates',
+  fallbackFunction: async (req: NextRequest) => {
+    try {
+      const url = new URL(req.url);
+      const searchParams = url.searchParams;
+      
+      // Parâmetros de paginação
+      const page = parseInt(searchParams.get('page') || '1');
+      const limit = parseInt(searchParams.get('limit') || '10');
+      
+      // Filtros
+      const userId = searchParams.get('user_id');
+      const tvShowId = searchParams.get('tv_show_id');
+      const score = searchParams.get('score');
+      const document = searchParams.get('document');
+      const licenseCode = searchParams.get('license_code');
+      const tvShowName = searchParams.get('tv_show_name');
+      const search = searchParams.get('search');
+      
+      console.log('📚 [API-CERTIFICATES] Usando dados mockados para fallback');
+      
+      // Aplicar filtros
+      let filteredCertificates = [...mockCertificates];
+      
+      if (userId) {
+        filteredCertificates = filteredCertificates.filter(cert => cert.user_id === parseInt(userId));
+      }
+      
+      if (tvShowId) {
+        filteredCertificates = filteredCertificates.filter(cert => cert.tv_show_id === parseInt(tvShowId));
+      }
+      
+      if (score) {
+        filteredCertificates = filteredCertificates.filter(cert => cert.score === parseInt(score));
+      }
+      
+      if (document) {
+        filteredCertificates = filteredCertificates.filter(cert => cert.document?.includes(document));
+      }
+      
+      if (licenseCode) {
+        filteredCertificates = filteredCertificates.filter(cert => cert.license_code?.includes(licenseCode));
+      }
+      
+      if (tvShowName) {
+        filteredCertificates = filteredCertificates.filter(cert => cert.tv_show_name?.toLowerCase().includes(tvShowName.toLowerCase()));
+      }
+      
+      if (search) {
+        const searchLower = search.toLowerCase();
+        filteredCertificates = filteredCertificates.filter(cert => 
+          cert.document?.toLowerCase().includes(searchLower) ||
+          cert.license_code?.toLowerCase().includes(searchLower) ||
+          cert.tv_show_name?.toLowerCase().includes(searchLower)
+        );
+      }
+      
+      // Aplicar paginação
+      const start = (page - 1) * limit;
+      const end = start + limit;
+      const paginatedCertificates = filteredCertificates.slice(start, end);
+      
+      return NextResponse.json({
+        success: true,
+        data: {
+          items: paginatedCertificates,
+          total: filteredCertificates.length,
+          page,
+          limit,
+          totalPages: Math.ceil(filteredCertificates.length / limit)
         },
-        { status: 401 }
+        message: 'Certificados encontrados (dados mockados)'
+      }, {
+        headers: getCorsHeaders(req.headers.get('origin') || undefined)
+      });
+    } catch (error) {
+      console.error('Error in certificates fallback:', error);
+      return NextResponse.json(
+        { 
+          success: false, 
+          message: 'Erro ao buscar certificados',
+          data: {
+            items: [],
+            total: 0,
+            page: 1,
+            limit: 10,
+            totalPages: 0
+          }
+        },
+        { 
+          status: 500,
+          headers: getCorsHeaders(req.headers.get('origin') || undefined)
+        }
       );
     }
-    
-    // Construir URL com parâmetros de query
-    const params = new URLSearchParams();
-    
-    // Paginação
-    params.set('page', searchParams.get('page') || '1');
-    params.set('limit', searchParams.get('limit') || '10');
-    
-    // Filtros
-    if (searchParams.get('user_id')) {
-      params.set('user_id', searchParams.get('user_id')!);
-    }
-    if (searchParams.get('tv_show_id')) {
-      params.set('tv_show_id', searchParams.get('tv_show_id')!);
-    }
-    if (searchParams.get('score')) {
-      params.set('score', searchParams.get('score')!);
-    }
-    if (searchParams.get('document')) {
-      params.set('document', searchParams.get('document')!);
-    }
-    if (searchParams.get('license_code')) {
-      params.set('license_code', searchParams.get('license_code')!);
-    }
-    if (searchParams.get('tv_show_name')) {
-      params.set('tv_show_name', searchParams.get('tv_show_name')!);
-    }
-    if (searchParams.get('recreate')) {
-      params.set('recreate', searchParams.get('recreate')!);
-    }
-    if (searchParams.get('search')) {
-      params.set('search', searchParams.get('search')!);
-    }
-    
-    // Ordenação
-    if (searchParams.get('sort_by')) {
-      params.set('sort_by', searchParams.get('sort_by')!);
-    }
-    if (searchParams.get('sort_order')) {
-      params.set('sort_order', searchParams.get('sort_order')!);
-    }
-
-    // Fazer a chamada real para a API
-    const response = await fetch(`${API_BASE_URL}/certificates?${params.toString()}`, {
-      method: 'GET',
-      headers: {
-        'Content-Type': 'application/json',
-        'Authorization': `Bearer ${token}`,
-      },
-    });
-
-    if (!response.ok) {
-      const errorData = await response.json();
-      throw new Error(errorData.message || `HTTP error! status: ${response.status}`);
-    }
-
-    const data = await response.json();
-    return NextResponse.json(data);
-
-  } catch (error) {
-    console.log('Erro ao buscar certificados:', error);
-    return NextResponse.json(
-      { 
-        success: false, 
-        message: 'Erro ao buscar certificados',
-        error: error instanceof Error ? error.message : 'Erro desconhecido'
-      },
-      { status: 500 }
-    );
   }
-}
+});
 
+// POST handler para criar certificado
 export async function POST(request: NextRequest) {
   try {
     const body = await request.json();
     
-    // Obter token de autenticação
-    const cookieStore = await cookies();
-    const token = cookieStore.get('token')?.value ||
-                  request.headers.get('authorization')?.replace('Bearer ', '');
+    // Criar novo certificado com dados mockados
+    const newId = Math.max(...mockCertificates.map(c => c.id)) + 1;
+    const newCertificate = {
+      id: newId,
+      date_created: new Date().toISOString(),
+      last_updated: new Date().toISOString(),
+      ...body,
+      recreate: body.recreate !== undefined ? body.recreate : true
+    };
     
-    if (!token) {
-      return NextResponse.json(
-        {
-          success: false,
-          message: 'Token de autenticação não encontrado'
-        },
-        { status: 401 }
-      );
-    }
-
-    const response = await fetch(`${API_BASE_URL}/certificates`, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'Authorization': `Bearer ${token}`,
-      },
-      body: JSON.stringify(body),
+    mockCertificates.push(newCertificate);
+    console.log('📝 [API-CERTIFICATES] Certificado criado com mock:', newCertificate);
+    
+    return NextResponse.json({
+      success: true,
+      data: newCertificate,
+      message: 'Certificado criado com sucesso (dados mockados)'
+    }, { 
+      status: 201,
+      headers: getCorsHeaders(request.headers.get('origin') || undefined)
     });
 
-    if (!response.ok) {
-      const errorData = await response.json();
-      throw new Error(errorData.message || `HTTP error! status: ${response.status}`);
-    }
-
-    const data = await response.json();
-    return NextResponse.json(data, { status: 201 });
-
   } catch (error) {
-    console.log('Erro ao criar certificado:', error);
+    console.error('Erro ao criar certificado:', error);
     return NextResponse.json(
       { 
         success: false, 
         message: 'Erro ao criar certificado',
         error: error instanceof Error ? error.message : 'Erro desconhecido'
       },
-      { status: 500 }
+      { 
+        status: 500,
+        headers: getCorsHeaders(request.headers.get('origin') || undefined)
+      }
+    );
+  }
+}
+
+// PUT handler para atualizar certificado
+export async function PUT(request: NextRequest) {
+  try {
+    const url = new URL(request.url);
+    const id = url.pathname.split('/').pop();
+    
+    if (!id) {
+      return NextResponse.json(
+        { success: false, message: 'ID do certificado não fornecido' },
+        { 
+          status: 400,
+          headers: getCorsHeaders(request.headers.get('origin') || undefined)
+        }
+      );
+    }
+    
+    const body = await request.json();
+    
+    // Atualizar certificado mockado
+    const certificateIndex = mockCertificates.findIndex(c => c.id === parseInt(id));
+    if (certificateIndex === -1) {
+      return NextResponse.json(
+        { success: false, message: 'Certificado não encontrado' },
+        { 
+          status: 404,
+          headers: getCorsHeaders(request.headers.get('origin') || undefined)
+        }
+      );
+    }
+    
+    const updatedCertificate = {
+      ...mockCertificates[certificateIndex],
+      ...body,
+      last_updated: new Date().toISOString()
+    };
+    
+    mockCertificates[certificateIndex] = updatedCertificate;
+    console.log('✏️ [API-CERTIFICATES] Certificado atualizado com mock:', updatedCertificate);
+    
+    return NextResponse.json({
+      success: true,
+      data: updatedCertificate,
+      message: 'Certificado atualizado com sucesso (dados mockados)'
+    }, {
+      headers: getCorsHeaders(request.headers.get('origin') || undefined)
+    });
+
+  } catch (error) {
+    console.error('Erro ao atualizar certificado:', error);
+    return NextResponse.json(
+      { 
+        success: false, 
+        message: 'Erro ao atualizar certificado',
+        error: error instanceof Error ? error.message : 'Erro desconhecido'
+      },
+      { 
+        status: 500,
+        headers: getCorsHeaders(request.headers.get('origin') || undefined)
+      }
+    );
+  }
+}
+
+// DELETE handler para excluir certificado
+export async function DELETE(request: NextRequest) {
+  try {
+    const url = new URL(request.url);
+    const id = url.pathname.split('/').pop();
+    
+    if (!id) {
+      return NextResponse.json(
+        { success: false, message: 'ID do certificado não fornecido' },
+        { 
+          status: 400,
+          headers: getCorsHeaders(request.headers.get('origin') || undefined)
+        }
+      );
+    }
+    
+    // Excluir certificado mockado
+    const certificateIndex = mockCertificates.findIndex(c => c.id === parseInt(id));
+    if (certificateIndex === -1) {
+      return NextResponse.json(
+        { success: false, message: 'Certificado não encontrado' },
+        { 
+          status: 404,
+          headers: getCorsHeaders(request.headers.get('origin') || undefined)
+        }
+      );
+    }
+    
+    mockCertificates = mockCertificates.filter(c => c.id !== parseInt(id));
+    console.log('🗑️ [API-CERTIFICATES] Certificado excluído com mock:', id);
+    
+    return NextResponse.json({
+      success: true,
+      message: 'Certificado excluído com sucesso (dados mockados)'
+    }, {
+      headers: getCorsHeaders(request.headers.get('origin') || undefined)
+    });
+
+  } catch (error) {
+    console.error('Erro ao excluir certificado:', error);
+    return NextResponse.json(
+      { 
+        success: false, 
+        message: 'Erro ao excluir certificado',
+        error: error instanceof Error ? error.message : 'Erro desconhecido'
+      },
+      { 
+        status: 500,
+        headers: getCorsHeaders(request.headers.get('origin') || undefined)
+      }
     );
   }
 }

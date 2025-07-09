@@ -9,6 +9,7 @@ import {
 } from 'lucide-react'
 import { formatDate, formatYear } from '@/utils/date'
 import DashboardLayout from '@/components/dashboard/DashboardLayout'
+import { tvShowService } from '@/services/tvShowService'
 
 interface TVShowListItem {
   id: number
@@ -427,55 +428,178 @@ export default function TVShowsManagePage() {
     return null;
   }
 
-  const loadTvShows = async (page = 1, search = '') => {
+  // Função para carregar os TV Shows
+  const loadTvShows = async (page = 1, searchQuery = '') => {
     try {
       setIsLoading(true)
-      const params = new URLSearchParams({
-        page: page.toString(),
-        limit: '12',
-        ...(search && { search })
-      })
-
-      const token = getAuthToken()
-      const headers: Record<string, string> = {
-        'Content-Type': 'application/json',
-      }
       
-      if (token) {
-        headers['Authorization'] = `Bearer ${token}`
-      }
-
-      const response = await fetch(`https://portal.sabercon.com.br/api/tv-shows?${params}`, {
-        headers
+      // Usar o tvShowService para buscar os dados
+      const result = await tvShowService.getTvShows({
+        page,
+        limit: 10,
+        ...(searchQuery && { search: searchQuery })
       })
-
-      if (response.ok) {
-        const data = await response.json()
-        if (data.success) {
-          const tvShowsData = data.data?.tvShows || []
-          
-          // Log para debug
-          console.log('TV Shows carregados:', tvShowsData.length)
-          console.log('Contagem de vídeos por show:', tvShowsData.map((show: TVShowListItem) => ({
-            name: show.name,
-            video_count: show.video_count
-          })))
-          
-          setTvShows(tvShowsData)
-          setTotalPages(data.data?.totalPages || 1)
-          setCurrentPage(data.data?.page || 1)
-          
-          // Recalcular estatísticas após carregar os dados
-          if (page === 1) {
-            setTimeout(() => calculateStats(), 100)
-          }
+      
+      if (result && result.items) {
+        // Converter o id de string para number para compatibilidade com TVShowListItem
+        const formattedItems = result.items.map(item => ({
+          ...item,
+          id: parseInt(item.id, 10) // Converter string para number
+        })) as TVShowListItem[]
+        
+        setTvShows(formattedItems)
+        setTotalPages(result.totalPages || 1)
+        setCurrentPage(result.page || 1)
+        
+        // Recalcular estatísticas após carregar os dados
+        if (page === 1) {
+          setTimeout(() => calculateStats(), 100)
         }
       } else {
-        console.log('Erro na resposta da API:', response.status, response.statusText)
+        setFormErrors({
+          general: 'Nenhum dado encontrado'
+        })
       }
-    } catch (error) {
-      console.log('Erro ao carregar TV Shows:', error)
-      setTvShows([])
+    } catch (err) {
+      console.error('Erro ao carregar TV Shows:', err)
+      setFormErrors({
+        general: err instanceof Error ? err.message : 'Erro desconhecido ao carregar dados'
+      })
+    } finally {
+      setIsLoading(false)
+    }
+  }
+
+  // Função para carregar um TV Show específico
+  const loadTvShowDetails = async (id: number) => {
+    try {
+      setIsLoading(true)
+      
+      const tvShowData = await tvShowService.getTvShowById(id)
+      
+      if (tvShowData) {
+        // Converter para o formato esperado por TVShowCollection
+        const formattedData = {
+          ...tvShowData,
+          id: parseInt(tvShowData.id, 10) // Converter string para number
+        } as unknown as TVShowCollection
+        
+        setSelectedTvShow(formattedData)
+        setCurrentView('detail' as ViewMode)
+      } else {
+        setFormErrors({
+          general: 'TV Show não encontrado'
+        })
+      }
+    } catch (err) {
+      console.error('Erro ao carregar detalhes do TV Show:', err)
+      setFormErrors({
+        general: err instanceof Error ? err.message : 'Erro desconhecido ao carregar detalhes'
+      })
+    } finally {
+      setIsLoading(false)
+    }
+  }
+
+  // Função para criar um novo TV Show
+  const createNewTvShow = async (data: TVShowFormData) => {
+    try {
+      setIsSubmitting(true)
+      
+      const newTvShow = await tvShowService.createTvShow({
+        name: data.name,
+        overview: data.overview,
+        producer: data.producer,
+        first_air_date: data.first_air_date,
+        contract_term_end: data.contract_term_end,
+        // Adicionar outros campos conforme necessário
+      })
+      
+      // Recarregar a lista após criar
+      await loadTvShows(currentPage, searchTerm)
+      
+      // Fechar modal e limpar formulário
+      setShowEditModal(false)
+      resetTVShowForm() // Corrigido para resetTVShowForm
+      
+    } catch (err) {
+      console.error('Erro ao criar TV Show:', err)
+      setFormErrors({
+        general: err instanceof Error ? err.message : 'Erro desconhecido ao criar TV Show'
+      })
+    } finally {
+      setIsSubmitting(false)
+    }
+  }
+
+  // Função para atualizar um TV Show existente
+  const updateExistingTvShow = async (id: number, data: TVShowFormData) => {
+    try {
+      setIsSubmitting(true)
+      
+      const updatedTvShow = await tvShowService.updateTvShow(id, {
+        name: data.name,
+        overview: data.overview,
+        producer: data.producer,
+        first_air_date: data.first_air_date,
+        contract_term_end: data.contract_term_end,
+        // Adicionar outros campos conforme necessário
+      })
+      
+      // Recarregar a lista após atualizar
+      await loadTvShows(currentPage, searchTerm)
+      
+      // Fechar modal e limpar formulário
+      setShowEditModal(false)
+      resetTVShowForm() // Corrigido para resetTVShowForm
+      
+    } catch (err) {
+      console.error('Erro ao atualizar TV Show:', err)
+      setFormErrors({
+        general: err instanceof Error ? err.message : 'Erro desconhecido ao atualizar TV Show'
+      })
+    } finally {
+      setIsSubmitting(false)
+    }
+  }
+
+  // Função para excluir um TV Show
+  const deleteTvShowHandler = async (id: number) => {
+    if (window.confirm('Tem certeza que deseja excluir este TV Show?')) {
+      try {
+        setIsLoading(true)
+        
+        await tvShowService.deleteTvShow(id)
+        
+        // Recarregar a lista após excluir
+        await loadTvShows(currentPage, searchTerm)
+        
+      } catch (err) {
+        console.error('Erro ao excluir TV Show:', err)
+        setFormErrors({
+          general: err instanceof Error ? err.message : 'Erro desconhecido ao excluir TV Show'
+        })
+      } finally {
+        setIsLoading(false)
+      }
+    }
+  }
+
+  // Função para alternar o status de um TV Show
+  const toggleTvShowStatusHandler = async (id: number) => {
+    try {
+      setIsLoading(true)
+      
+      await tvShowService.toggleTvShowStatus(id)
+      
+      // Recarregar a lista após alternar o status
+      await loadTvShows(currentPage, searchTerm)
+      
+    } catch (err) {
+      console.error('Erro ao alternar status do TV Show:', err)
+      setFormErrors({
+        general: err instanceof Error ? err.message : 'Erro desconhecido ao alternar status'
+      })
     } finally {
       setIsLoading(false)
     }
@@ -598,42 +722,6 @@ export default function TVShowsManagePage() {
         totalDuration: '0h 0m',
         avgRating: 0
       })
-    }
-  }
-
-  const loadTvShowDetails = async (id: number) => {
-    try {
-      setIsLoading(true)
-      
-      // Função removida para simplificar
-      
-      const token = getAuthToken()
-      const headers: Record<string, string> = {
-        'Content-Type': 'application/json',
-      }
-      
-      if (token) {
-        headers['Authorization'] = `Bearer ${token}`
-      }
-
-      const response = await fetch(`https://portal.sabercon.com.br/api/tv-shows/${id}`, { headers })
-      if (response.ok) {
-        const data = await response.json()
-        if (data.success) {
-          const tvShowData = data.data
-          setSelectedTvShow(tvShowData)
-          // Os módulos já vêm incluídos na resposta
-          if (tvShowData.modules) {
-            setModules(tvShowData.modules)
-          }
-        }
-      }
-    } catch (error) {
-      console.log('Erro ao carregar detalhes do TV Show:', error)
-      setSelectedTvShow(null)
-      setModules({})
-    } finally {
-      setIsLoading(false)
     }
   }
 
@@ -1028,8 +1116,6 @@ export default function TVShowsManagePage() {
       </div>
     )
   }
-
-  // Função removida - não é mais necessária
 
   // Renderização dos formulários
   const renderTVShowForm = () => (
@@ -1777,7 +1863,7 @@ export default function TVShowsManagePage() {
                       <button
                         onClick={(e) => {
                           e.stopPropagation()
-                          deleteTVShow(tvShow.id)
+                          deleteTvShowHandler(tvShow.id)
                         }}
                         className="flex-1 sm:flex-none flex items-center justify-center gap-1.5 px-3 py-2.5 sm:py-2 bg-red-50 text-red-600 rounded-lg hover:bg-red-100 transition-colors text-sm font-medium border border-red-200 hover:border-red-300"
                       >

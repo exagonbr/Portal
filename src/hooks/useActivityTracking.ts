@@ -116,7 +116,7 @@ export function useActivityTracking(options: UseActivityTrackingOptions = {}): A
     }
   }, [trackErrors, user])
 
-  // Função para obter ID do usuário do localStorage se não estiver disponível no contexto
+  // Função para obter ID do usuário do localStorage, sessionStorage ou cookies se não estiver disponível no contexto
   const getUserId = useCallback((): string | null => {
     // Primeiro tenta obter do contexto de autenticação
     if (user?.id) {
@@ -125,6 +125,7 @@ export function useActivityTracking(options: UseActivityTrackingOptions = {}): A
     
     // Se não estiver disponível, tenta obter do localStorage
     try {
+      // Verificar localStorage
       const userStr = localStorage.getItem('user')
       if (userStr) {
         const userData = JSON.parse(userStr)
@@ -132,8 +133,45 @@ export function useActivityTracking(options: UseActivityTrackingOptions = {}): A
           return userData.id.toString()
         }
       }
+      
+      // Verificar sessionStorage
+      const userStrSession = sessionStorage.getItem('user')
+      if (userStrSession) {
+        const userData = JSON.parse(userStrSession)
+        if (userData && userData.id) {
+          return userData.id.toString()
+        }
+      }
+      
+      // Verificar cookies - user_data
+      const cookies = document.cookie.split('; ')
+      const userDataCookie = cookies.find(c => c.startsWith('user_data='))
+      if (userDataCookie) {
+        const userData = JSON.parse(decodeURIComponent(userDataCookie.split('=')[1]))
+        if (userData && userData.id) {
+          return userData.id.toString()
+        }
+      }
+      
+      // Verificar session_data no localStorage
+      const sessionDataStr = localStorage.getItem('session_data')
+      if (sessionDataStr) {
+        const sessionData = JSON.parse(sessionDataStr)
+        if (sessionData && sessionData.userId) {
+          return sessionData.userId.toString()
+        }
+      }
+      
+      // Verificar session_data no sessionStorage
+      const sessionDataStrSession = sessionStorage.getItem('session_data')
+      if (sessionDataStrSession) {
+        const sessionData = JSON.parse(sessionDataStrSession)
+        if (sessionData && sessionData.userId) {
+          return sessionData.userId.toString()
+        }
+      }
     } catch (error) {
-      console.log('❌ Erro ao obter user_id do localStorage:', error)
+      console.log('❌ Erro ao obter user_id do armazenamento:', error)
     }
     
     return null

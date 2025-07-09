@@ -1,21 +1,21 @@
 import { Router } from 'express';
 import { requireAuth } from '../middleware/requireAuth';
 
-import InstitutionController from '../controllers/InstitutionController';
+import institutionController from '../controllers/InstitutionController';
 
 const router = Router();
 
 router.use(requireAuth);
 
-router.get('/', InstitutionController.getAll);
-router.post('/', InstitutionController.create);
-router.get('/:id', InstitutionController.getById);
-router.put('/:id', InstitutionController.update);
-router.delete('/:id', InstitutionController.delete);
-router.get('/:id/stats', InstitutionController.getStats);
-router.get('/:id/users', InstitutionController.getUsers);
-router.get('/:id/classes', InstitutionController.getClasses);
-router.get('/:id/schedules', InstitutionController.getSchedules);
-router.get('/:id/analytics', InstitutionController.getAnalytics);
+router.get('/', institutionController.getAll.bind(institutionController));
+router.post('/', institutionController.create.bind(institutionController));
+router.get('/:id', institutionController.getById.bind(institutionController));
+router.put('/:id', institutionController.update.bind(institutionController));
+router.delete('/:id', institutionController.delete.bind(institutionController));
+router.get('/:id/stats', institutionController.getStats.bind(institutionController));
+router.get('/:id/users', institutionController.getUsers.bind(institutionController));
+router.get('/:id/classes', institutionController.getClasses.bind(institutionController));
+router.get('/:id/schedules', institutionController.getSchedules.bind(institutionController));
+router.get('/:id/analytics', institutionController.getAnalytics.bind(institutionController));
 
 export default router;

@@ -26,7 +26,7 @@ export interface InstitutionFilters {
 
 export class InstitutionRepository extends ExtendedRepository<Institution> {
   constructor() {
-    super("institutions");
+    super("institution");
   }
   // Implementação do método abstrato findAllPaginated
   async findAllPaginated(options: {
@@ -81,44 +81,76 @@ export class InstitutionRepository extends ExtendedRepository<Institution> {
     options: PaginationOptions
   ): Promise<{ items: Institution[]; total: number }> {
     const { page = 1, limit = 10 } = options;
-    const query = this.db(this.tableName).where((builder) => {
-      if (filters.search) {
-        builder.where('name', 'ilike', `%${filters.search}%`)
-          .orWhere('company_name', 'ilike', `%${filters.search}%`)
-          .orWhere('document', 'ilike', `%${filters.search}%`);
-      }
+    
+    // Início da medição de tempo para debug
+    const startTime = Date.now();
+    
+    try {
+      // Otimização 1: Selecionar apenas os campos necessários
+      const selectFields = [
+        'id', 'name', 'company_name', 'document', 'state', 
+        'city', 'deleted', 'has_student_platform', 
+        'has_principal_platform', 'has_library_platform'
+      ];
       
-      if (filters.state) {
-        builder.where('state', '=', filters.state);
-      }
-      
-      if (filters.is_active !== undefined) {
-        builder.where('deleted', '=', !filters.is_active);
-      }
-      
-      if (filters.has_student_platform !== undefined) {
-        builder.where('has_student_platform', '=', filters.has_student_platform);
-      }
-      
-      if (filters.has_principal_platform !== undefined) {
-        builder.where('has_principal_platform', '=', filters.has_principal_platform);
-      }
-      
-      if (filters.has_library_platform !== undefined) {
-        builder.where('has_library_platform', '=', filters.has_library_platform);
-      }
-    });
+      // Construir a consulta base
+      const query = this.db(this.tableName)
+        .select(selectFields)
+        .where((builder) => {
+          if (filters.search) {
+            builder.where('name', 'ilike', `%${filters.search}%`)
+              .orWhere('company_name', 'ilike', `%${filters.search}%`)
+              .orWhere('document', 'ilike', `%${filters.search}%`);
+          }
+          
+          if (filters.state) {
+            builder.where('state', '=', filters.state);
+          }
+          
+          if (filters.is_active !== undefined) {
+            builder.where('deleted', '=', !filters.is_active);
+          }
+          
+          if (filters.has_student_platform !== undefined) {
+            builder.where('has_student_platform', '=', filters.has_student_platform);
+          }
+          
+          if (filters.has_principal_platform !== undefined) {
+            builder.where('has_principal_platform', '=', filters.has_principal_platform);
+          }
+          
+          if (filters.has_library_platform !== undefined) {
+            builder.where('has_library_platform', '=', filters.has_library_platform);
+          }
+        });
 
-    const total = await query.clone().count('id as count').first();
-    const items = await query
-      .orderBy('name', 'asc')
-      .offset((page - 1) * limit)
-      .limit(limit);
-
-    return {
-      items: items as Institution[],
-      total: total ? Number(total.count) : 0
-    };
+      // Otimização 2: Fazer duas consultas separadas (total e itens)
+      // para evitar problemas de desempenho em grandes conjuntos de dados
+      const countQuery = query.clone().count('id as count').first();
+      
+      const itemsQuery = query.clone()
+        .orderBy('name', 'asc')
+        .offset((page - 1) * limit)
+        .limit(limit);
+      
+      // Executar as duas consultas em paralelo
+      const [total, items] = await Promise.all([
+        countQuery,
+        itemsQuery
+      ]);
+      
+      // Log de desempenho
+      const endTime = Date.now();
+      console.log(`Consulta de instituições concluída em ${endTime - startTime}ms`);
+      
+      return {
+        items: items as Institution[],
+        total: total ? Number(total.count) : 0
+      };
+    } catch (error) {
+      console.error('Erro ao buscar instituições:', error);
+      throw error;
+    }
   }
 
   async toggleStatus(id: string): Promise<Institution | null> {

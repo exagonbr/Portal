@@ -1,5 +1,7 @@
-import { apiClient } from '@/lib/api-client';
 import { BaseApiService } from './base-api-service';
+import { apiGet, apiPost, apiPut, apiDelete } from './apiService';
+import { UnifiedAuthService } from './unifiedAuthService';
+import { AuthHeaderService } from './authHeaderService';
 
 export interface SecurityPolicy {
   id: string;
@@ -82,52 +84,24 @@ class SecurityPoliciesService extends BaseApiService<SecurityPolicy> {
   }
 
   async getAllWithPagination(page: number = 1, limit: number = 10): Promise<SecurityPoliciesResponse> {
-    const response = await apiClient.post<any>(`${this.basePath}?page=${page}&limit=${limit}`, policy);
-    return response.data;
+    return apiGet<SecurityPoliciesResponse>(`${this.basePath}?page=${page}&limit=${limit}`);
   }
 
   async validatePassword(password: string): Promise<{ isValid: boolean; errors: string[] }> {
-    const response = await apiClient.post<any>(`${this.basePath}/validate-password`, { password });
-    return response.data;
+    return apiPost<{ isValid: boolean; errors: string[] }>(`${this.basePath}/validate-password`, { password });
   }
 
   async applyPolicy(policyId: string): Promise<{ success: boolean; message: string }> {
-    const response = await fetch(`${this.basePath}/${policyId}/apply`, {
-      method: 'POST',
-      headers: {
-        'Authorization': `Bearer ${localStorage.getItem('accessToken')}`,
-        'Content-Type': 'application/json',
-      },
-    });
-
-    if (!response.ok) {
-      throw new Error('Falha ao aplicar política de segurança');
-    }
-
-    return response.json();
+    return apiPost<{ success: boolean; message: string }>(`${this.basePath}/${policyId}/apply`, {});
   }
 
   async resetToDefaults(): Promise<SecurityPolicy> {
-    const response = await fetch(`${this.basePath}/reset-defaults`, {
-      method: 'POST',
-      headers: {
-        'Authorization': `Bearer ${localStorage.getItem('accessToken')}`,
-        'Content-Type': 'application/json',
-      },
-    });
-
-    if (!response.ok) {
-      throw new Error('Falha ao resetar para padrões');
-    }
-
-    return response.json();
+    return apiPost<SecurityPolicy>(`${this.basePath}/reset-defaults`, {});
   }
 
   async exportPolicy(policyId: string): Promise<Blob> {
     const response = await fetch(`${this.basePath}/${policyId}/export`, {
-      headers: {
-        'Authorization': `Bearer ${localStorage.getItem('accessToken')}`,
-      },
+      headers: await this.getHeaders(),
     });
 
     if (!response.ok) {
@@ -143,9 +117,7 @@ class SecurityPoliciesService extends BaseApiService<SecurityPolicy> {
 
     const response = await fetch(`${this.basePath}/import`, {
       method: 'POST',
-      headers: {
-        'Authorization': `Bearer ${localStorage.getItem('accessToken')}`,
-      },
+      headers: await this.getHeaders(false),
       body: formData,
     });
 
@@ -162,18 +134,11 @@ class SecurityPoliciesService extends BaseApiService<SecurityPolicy> {
       url += `&policyId=${policyId}`;
     }
 
-    const response = await fetch(url, {
-      headers: {
-        'Authorization': `Bearer ${localStorage.getItem('accessToken')}`,
-        'Content-Type': 'application/json',
-      },
-    });
+    return apiGet<any[]>(url);
+  }
 
-    if (!response.ok) {
-      throw new Error('Falha ao buscar log de auditoria');
-    }
-
-    return response.json();
+  private async getHeaders(includeContentType: boolean = true): Promise<HeadersInit> {
+    return AuthHeaderService.getHeaders(includeContentType);
   }
 }
 

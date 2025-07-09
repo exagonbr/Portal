@@ -1,26 +1,27 @@
 import axios from 'axios';
+import { buildLoginUrl } from '@/utils/urlBuilder';
 
 // Cria uma instância do axios com configurações padrão
-export const api = axios.create({
-  baseURL: process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3000/api',
+const api = axios.create({
+  baseURL: '/api',
   headers: {
     'Content-Type': 'application/json',
   },
 });
 
-// Interceptor para adicionar o token de autenticação
-api.interceptors.request.use((config) => {
-  // Verifica se estamos no browser
-  if (typeof window !== 'undefined') {
-    const accessToken = localStorage.getItem('accessToken');
-    
-    if (accessToken) {
-      config.headers.Authorization = `Bearer ${accessToken}`;
+// Adiciona o token de autenticação a todas as requisições
+api.interceptors.request.use(
+  (config) => {
+    if (typeof window !== 'undefined') {
+      const token = localStorage.getItem('accessToken');
+      if (token) {
+        config.headers.Authorization = `Bearer ${token}`;
+      }
     }
-  }
-  
-  return config;
-});
+    return config;
+  },
+  (error) => Promise.reject(error)
+);
 
 // Interceptor para tratamento de erros
 api.interceptors.response.use(
@@ -32,11 +33,16 @@ api.interceptors.response.use(
         localStorage.removeItem('accessToken');
         localStorage.removeItem('user');
         
-        // Redirecionar para a página de login se necessário
-        window.location.href = '/login';
+        // Redirecionar para a página de login apenas se não estiver em um ambiente de servidor
+        if (typeof document !== 'undefined' && !document.URL.includes('/api/')) {
+          console.log('🔄 [API] Redirecionando para página de login após erro 401');
+          window.location.href = buildLoginUrl({ error: 'unauthorized' });
+        }
       }
     }
     
     return Promise.reject(error);
   }
-); 
+);
+
+export default api; 

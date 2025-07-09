@@ -3,7 +3,7 @@
 import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import { certificateService } from '@/services/certificateService'
-import { CertificateDto, CertificateStats } from '@/types/certificate'
+import { CertificateDto, CertificateStats, CertificateFilter } from '@/types/certificate'
 import { useToast } from '@/components/ToastManager'
 import { Button } from '@/components/ui/Button'
 import { StatCard } from '@/components/ui/StandardCard'
@@ -32,10 +32,10 @@ export default function ManageCertificates() {
   const [itemsPerPage] = useState(10)
   const [searchQuery, setSearchQuery] = useState('')
   const [stats, setStats] = useState<CertificateStats>({
-    total: 0,
-    issuedToday: 0,
-    issuedThisMonth: 0,
-    pendingGeneration: 0
+    totalCertificates: 0,
+    recreatable: 0,
+    programs: 0,
+    usersWithCerts: 0
   })
 
   const fetchCertificates = async (page = 1, search = '', showLoadingIndicator = true) => {
@@ -46,16 +46,28 @@ export default function ManageCertificates() {
     }
 
     try {
-      const response = await certificateService.getCertificates({
+      const filter: CertificateFilter = {
         page,
         limit: itemsPerPage,
         search
-      })
+      };
+      
+      const response = await certificateService.getCertificates(filter);
 
       if (response.success && response.data) {
         setCertificates(response.data.items)
         setTotalItems(response.data.total)
-        setCurrentPage(page)
+      } else {
+        // Verificar se é um erro de autenticação
+        if (response.message?.includes('Sessão expirada') || response.message?.includes('não autenticado')) {
+          showError("Sessão expirada. Por favor, faça login novamente.")
+          setTimeout(() => {
+            router.push('/auth/login?auth_error=expired')
+          }, 1000)
+          return;
+        }
+        
+        throw new Error(response.message || 'Erro ao carregar certificados');
       }
 
       // Fetch stats
@@ -65,11 +77,11 @@ export default function ManageCertificates() {
       }
 
       if (!showLoadingIndicator) {
-        showSuccess("Atualizado", "Lista de certificados atualizada com sucesso!")
+        showSuccess("Lista de certificados atualizada com sucesso!")
       }
-    } catch (error) {
+    } catch (error: any) {
       console.error('❌ Erro ao carregar certificados:', error)
-      showError("Erro ao carregar certificados", "Não foi possível carregar a lista de certificados.")
+      showError("Não foi possível carregar a lista de certificados.")
     } finally {
       setLoading(false)
       setRefreshing(false)
@@ -77,8 +89,11 @@ export default function ManageCertificates() {
   }
 
   useEffect(() => {
-    fetchCertificates(currentPage, searchQuery)
-  }, [currentPage])
+    const loadCertificates = async () => {
+      await fetchCertificates(currentPage, searchQuery)
+    }
+    loadCertificates()
+  }, [currentPage, searchQuery])
 
   const handleSearch = (e: React.FormEvent) => {
     e.preventDefault()
@@ -98,13 +113,23 @@ export default function ManageCertificates() {
     try {
       setLoading(true)
       await certificateService.deleteCertificate(Number(certificate.id))
-      showSuccess("Certificado excluído", "O certificado foi excluído com sucesso.")
+      showSuccess("O certificado foi excluído com sucesso.")
       
       // Recarregar a lista
       await fetchCertificates(currentPage, searchQuery, false)
-    } catch (error) {
+    } catch (error: any) {
       console.error('❌ Erro ao excluir certificado:', error)
-      showError("Erro ao excluir certificado", "Não foi possível excluir o certificado.")
+      
+      // Verificar se é um erro de autenticação
+      if (error.message?.includes('Sessão expirada') || error.message?.includes('não autenticado')) {
+        showError("Sessão expirada. Por favor, faça login novamente.")
+        setTimeout(() => {
+          router.push('/auth/login?auth_error=expired')
+        }, 1000)
+        return;
+      }
+      
+      showError("Não foi possível excluir o certificado.")
     } finally {
       setLoading(false)
     }
@@ -118,8 +143,8 @@ export default function ManageCertificates() {
   const handleDownloadCertificate = (certificate: CertificateDto) => {
     // Iniciar download do certificado
     const link = document.createElement('a')
-    link.href = certificate.path
-    link.download = `certificate-${certificate.license_code}.pdf`
+    link.href = certificate.path || '#'
+    link.download = `certificate-${certificate.license_code || 'download'}.pdf`
     document.body.appendChild(link)
     link.click()
     document.body.removeChild(link)
@@ -155,29 +180,29 @@ export default function ManageCertificates() {
             <StatCard
               icon={Award}
               title="Total"
-              value={stats.total}
+              value={stats.totalCertificates}
               subtitle="Certificados"
               color="blue"
             />
             <StatCard
-              icon={Clock}
-              title="Hoje"
-              value={stats.issuedToday}
-              subtitle="Emitidos"
+              icon={Users}
+              title="Usuários"
+              value={stats.usersWithCerts}
+              subtitle="Com Certificados"
               color="green"
             />
             <StatCard
               icon={FileText}
-              title="Este Mês"
-              value={stats.issuedThisMonth}
-              subtitle="Emitidos"
+              title="Programas"
+              value={stats.programs}
+              subtitle="Diferentes"
               color="purple"
             />
             <StatCard
-              icon={CheckCircle}
-              title="Pendentes"
-              value={stats.pendingGeneration}
-              subtitle="Geração"
+              icon={RefreshCw}
+              title="Recriáveis"
+              value={stats.recreatable}
+              subtitle="Certificados"
               color="amber"
             />
           </div>

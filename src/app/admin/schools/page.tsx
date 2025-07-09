@@ -20,36 +20,42 @@ import {
   Building2,
   MapPin
 } from 'lucide-react'
-import { unitService } from '@/services/unitService'
+import { schoolService } from '@/services/schoolService'
 import { institutionService } from '@/services/institutionService'
 import { useRouter } from 'next/navigation'
 import UnitFormModal from '@/components/admin/units/UnitFormModal'
-import { UnitDto, UnitFilter } from '@/types/unit'
-import { InstitutionDto, InstitutionType } from '@/types/institution'
+import { SchoolDto, SchoolFilter } from '@/types/school'
+import { InstitutionDto } from '@/types/institution'
 import { useAuth } from '@/contexts/AuthContext'
 import { UserRole } from '@/types/roles'
 
-// Interface para estatísticas de unidades
-interface UnitStats {
-  totalUnits: number
-  activeUnits: number
-  inactiveUnits: number
+// Interface para resposta paginada
+interface PaginatedResponse<T> {
+  items: T[];
+  total: number;
+}
+
+// Interface para estatísticas de escolas
+interface SchoolStats {
+  totalSchools: number
+  activeSchools: number
+  inactiveSchools: number
   totalInstitutions: number
 }
 
-export default function AdminUnitsPage() {
+export default function AdminSchoolsPage() {
   const { showSuccess, showError } = useToast()
   const [loading, setLoading] = useState(true)
   const [refreshing, setRefreshing] = useState(false)
   const router = useRouter()
   
   // Dados principais
-  const [units, setUnits] = useState<UnitDto[]>([])
+  const [schools, setSchools] = useState<SchoolDto[]>([])
   const [institutions, setInstitutions] = useState<InstitutionDto[]>([])
 
   // Modal de formulário
   const [modalOpen, setModalOpen] = useState(false)
-  const [selectedUnit, setSelectedUnit] = useState<UnitDto | null>(null)
+  const [selectedSchool, setSelectedSchool] = useState<SchoolDto | null>(null)
   const [modalMode, setModalMode] = useState<'create' | 'edit' | 'view'>('create')
 
   // Paginação e Filtros
@@ -57,98 +63,63 @@ export default function AdminUnitsPage() {
   const [currentPage, setCurrentPage] = useState(1)
   const [itemsPerPage] = useState(10)
   const [searchQuery, setSearchQuery] = useState('')
-  const [filters, setFilters] = useState<UnitFilter>({})
+  const [filters, setFilters] = useState<SchoolFilter>({})
   const [showFilterPanel, setShowFilterPanel] = useState(false)
 
   // Estatísticas
-  const [stats, setStats] = useState<UnitStats>({
-    totalUnits: 0,
-    activeUnits: 0,
-    inactiveUnits: 0,
+  const [stats, setStats] = useState<SchoolStats>({
+    totalSchools: 0,
+    activeSchools: 0,
+    inactiveSchools: 0,
     totalInstitutions: 0,
   })
 
-  // Forçar autenticação com token de teste
-  useEffect(() => {
-    // Criar um token de teste para garantir acesso total
-    const createTestToken = () => {
-      const payload = {
-        id: 1,
-        name: 'Admin',
-        email: 'admin@example.com',
-        role: 'SYSTEM_ADMIN',
-        permissions: ['*'],
-        exp: Math.floor(Date.now() / 1000) + (60 * 60 * 24), // 24 horas
-      };
-      return `test-header.${btoa(JSON.stringify(payload))}.test-signature`;
-    };
-
-    // Forçar token no localStorage para garantir acesso
-    if (typeof window !== 'undefined') {
-      const token = createTestToken();
-      localStorage.setItem('accessToken', token);
-      localStorage.setItem('auth_token', token);
-      localStorage.setItem('token', token);
-      
-      // Forçar user no localStorage
-      const user = {
-        id: 1,
-        name: 'Admin',
-        email: 'admin@example.com',
-        role: 'SYSTEM_ADMIN',
-        permissions: ['*']
-      };
-      localStorage.setItem('user', JSON.stringify(user));
-    }
-  }, []);
-
-  const calculateStats = useCallback((allUnits: UnitDto[], allInstitutions: InstitutionDto[]) => {
-    const totalUnits = allUnits.length
-    const activeUnits = allUnits.filter(unit => !unit.deleted).length
-    const inactiveUnits = allUnits.filter(unit => unit.deleted).length
+  const calculateStats = useCallback((allSchools: SchoolDto[], allInstitutions: InstitutionDto[]) => {
+    const totalSchools = allSchools.length
+    const activeSchools = allSchools.filter(school => school.is_active).length
+    const inactiveSchools = allSchools.filter(school => !school.is_active).length
     const totalInstitutions = allInstitutions.length
 
-    setStats({ totalUnits, activeUnits, inactiveUnits, totalInstitutions })
+    setStats({ totalSchools, activeSchools, inactiveSchools, totalInstitutions })
   }, [])
 
   const fetchInstitutions = async () => {
     try {
+      setLoading(true);
+      console.log('Buscando instituições...');
+      
       const response = await institutionService.getInstitutions({
         page: 1,
         limit: 100 // Buscar todas as instituições disponíveis
       });
       
       if (response && response.items) {
+        console.log(`Instituições carregadas: ${response.items.length}`);
         setInstitutions(response.items);
         return response.items;
       } else {
-        throw new Error('Erro ao buscar instituições');
+        throw new Error('Resposta vazia do serviço de instituições');
       }
     } catch (error) {
-      console.error('Erro ao carregar instituições:', error)
-      showError("Erro ao carregar instituições.");
+      console.error('Erro ao carregar instituições:', error);
       
-      // Em caso de erro, definir algumas instituições padrão
-      const defaultInstitutions: InstitutionDto[] = [
-        { 
-          id: '1', 
-          name: 'Sabercon Educação', 
-          code: 'SAB001',
-          type: InstitutionType.SCHOOL,
-          is_active: true,
-          created_at: '',
-          updated_at: ''
-        },
-      ];
-      setInstitutions(defaultInstitutions);
-      return defaultInstitutions;
+      // Verificar se é um erro de timeout
+      const errorMessage = error instanceof Error ? error.message : String(error);
+      if (errorMessage.includes('timeout') || errorMessage.includes('Timeout')) {
+        showError("Timeout ao carregar instituições. Tente novamente mais tarde.");
+      } else {
+        showError("Erro ao carregar instituições. Tente novamente.");
+      }
+      
+      setInstitutions([]);
+      return [];
     }
   }
 
-  const fetchPageData = async (
+  const fetchPageData = useCallback(async (
     page = 1, 
     search = '', 
-    currentFilters: UnitFilter = {}, 
+    currentFilters: SchoolFilter = {}, 
     showLoadingIndicator = true
   ) => {
     if (showLoadingIndicator) setLoading(true)
@@ -161,8 +132,8 @@ export default function AdminUnitsPage() {
         currentInstitutions = await fetchInstitutions()
       }
 
-      // Preparar parâmetros para o serviço de unidades
-      const params: UnitFilter = {
+      // Preparar parâmetros para o serviço de escolas
+      const params: SchoolFilter = {
         page,
         limit: itemsPerPage,
         ...currentFilters
@@ -170,11 +141,11 @@ export default function AdminUnitsPage() {
       
       if (search) params.search = search
 
-      // Usar o serviço de unidades
-      const response = await unitService.getUnits(params)
+      // Usar o serviço de escolas
+      const response = await schoolService.getSchools(params) as PaginatedResponse<SchoolDto>
 
       if (response && response.items) {
-        setUnits(response.items)
+        setSchools(response.items)
         setTotalItems(response.total || response.items.length)
         setCurrentPage(page)
         
@@ -182,34 +153,33 @@ export default function AdminUnitsPage() {
         calculateStats(response.items, currentInstitutions)
 
         if (!showLoadingIndicator) {
-          showSuccess("Lista de unidades atualizada!");
+          showSuccess("Lista de escolas atualizada!");
         }
       } else {
-        throw new Error('Resposta inválida do serviço de unidades')
+        throw new Error('Resposta inválida do serviço de escolas')
       }
     } catch (error) {
-      console.error('Erro ao carregar unidades:', error)
-      showError("Erro ao carregar unidades.")
+      console.error('Erro ao carregar escolas:', error)
+      showError("Erro ao carregar escolas.")
       
       // Em caso de erro, limpar os dados
-      setUnits([])
+      setSchools([])
       setTotalItems(0)
       setStats({
-        totalUnits: 0,
-        activeUnits: 0,
-        inactiveUnits: 0,
-        totalInstitutions: 0,
+        totalSchools: 0,
+        activeSchools: 0,
+        inactiveSchools: 0,
+        totalInstitutions: 0
       })
     } finally {
       setLoading(false)
       setRefreshing(false)
     }
-  }
+  }, [institutions, itemsPerPage, calculateStats, showSuccess, showError])
 
   useEffect(() => {
-    // Carrega os dados sempre, sem verificação de autenticação
     fetchPageData(currentPage, searchQuery, filters)
-  }, [currentPage])
+  }, [currentPage, fetchPageData])
 
   const handleSearch = (e: React.FormEvent) => {
     e.preventDefault()
@@ -217,200 +187,287 @@ export default function AdminUnitsPage() {
     fetchPageData(1, searchQuery, filters)
   }
 
-  const handleFilterChange = (key: keyof UnitFilter, value: any) => {
-    const newFilters = { ...filters };
-    if (value === '' || value === undefined || value === null) {
-      delete newFilters[key];
+  const handleFilterChange = (key: keyof SchoolFilter, value: any) => {
+    const newFilters = { ...filters }
+    
+    if (value === '') {
+      delete newFilters[key]
     } else {
-      newFilters[key] = value;
+      newFilters[key] = value
     }
-    setFilters(newFilters);
-  };
+    
+    setFilters(newFilters)
+  }
 
   const applyFilters = () => {
-    setCurrentPage(1);
-    fetchPageData(1, searchQuery, filters);
-  };
+    setCurrentPage(1)
+    fetchPageData(1, searchQuery, filters)
+    setShowFilterPanel(false)
+  }
 
   const clearFilters = () => {
-    setSearchQuery('');
-    setFilters({});
-    setCurrentPage(1);
-    fetchPageData(1, '', {});
-  };
+    setFilters({})
+    setCurrentPage(1)
+    fetchPageData(1, searchQuery, {})
+    setShowFilterPanel(false)
+  }
 
   const handleRefresh = () => {
     fetchPageData(currentPage, searchQuery, filters, false)
   }
 
-  const handleDelete = async (unit: UnitDto) => {
-    if (!confirm(`Tem certeza que deseja excluir a unidade "${unit.name}"?`)) return
-
+  const handleDelete = async (school: SchoolDto) => {
+    if (!confirm(`Tem certeza que deseja excluir a escola "${school.name}"?`)) {
+      return
+    }
+    
     try {
       setLoading(true)
-      await unitService.deleteUnit(Number(unit.id))
-      showSuccess("Unidade excluída com sucesso.")
-      await fetchPageData(currentPage, searchQuery, filters, false)
+      await schoolService.deleteSchool(Number(school.id))
+      showSuccess("Escola excluída com sucesso!")
+      fetchPageData(currentPage, searchQuery, filters)
     } catch (error) {
-      console.error('Erro ao excluir unidade:', error)
-      showError("Erro ao excluir unidade.")
+      console.error('Erro ao excluir escola:', error)
+      showError("Erro ao excluir a escola.")
     } finally {
       setLoading(false)
     }
   }
 
-  // Funções para o modal
-  const openModal = (mode: 'create' | 'edit' | 'view', unit?: UnitDto) => {
+  const openModal = (mode: 'create' | 'edit' | 'view', school?: SchoolDto) => {
     setModalMode(mode)
-    setSelectedUnit(unit || null)
+    setSelectedSchool(school || null)
     setModalOpen(true)
   }
 
   const closeModal = () => {
     setModalOpen(false)
-    setSelectedUnit(null)
+    setSelectedSchool(null)
   }
 
-  const handleModalSave = async () => {
-    closeModal()
-    await fetchPageData(currentPage, searchQuery, filters, false)
+  const handleModalSave = async (data: any) => {
+    try {
+      setLoading(true)
+      
+      if (modalMode === 'create') {
+        await schoolService.createSchool(data)
+        showSuccess("Escola criada com sucesso!")
+      } else if (modalMode === 'edit' && selectedSchool) {
+        await schoolService.updateSchool(Number(selectedSchool.id), data)
+        showSuccess("Escola atualizada com sucesso!")
+      }
+      
+      closeModal()
+      fetchPageData(currentPage, searchQuery, filters)
+    } catch (error) {
+      console.error('Erro ao salvar escola:', error)
+      showError("Erro ao salvar escola.")
+    } finally {
+      setLoading(false)
+    }
   }
 
   const getInstitutionName = (institutionId?: string) => {
     if (!institutionId) return 'N/A'
-    return institutions.find(i => String(i.id) === String(institutionId))?.name || 'N/A'
+    const institution = institutions.find(i => i.id === institutionId)
+    return institution ? institution.name : 'N/A'
   }
 
   const totalPages = Math.ceil(totalItems / itemsPerPage)
 
   return (
-    <div className="container mx-auto px-4 py-6 max-w-7xl">
+    <div className="container mx-auto px-4 py-6">
       <div className="bg-white rounded-xl shadow-sm border border-gray-200">
         {/* Header */}
         <div className="p-6 border-b border-gray-200">
           <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4 mb-6">
             <div>
-              <h1 className="text-2xl font-bold text-gray-900">Unidades de Ensino</h1>
-              <p className="text-gray-600 mt-1">Gerencie as unidades de ensino do sistema</p>
+              <h1 className="text-2xl font-bold text-gray-900">Escolas</h1>
+              <p className="text-gray-600 mt-1">Gerencie as escolas do sistema</p>
             </div>
             <div className="flex gap-3">
-              <Button onClick={handleRefresh} variant="outline" disabled={refreshing} className="flex items-center gap-2">
+              <Button 
+                onClick={handleRefresh} 
+                variant="outline" 
+                disabled={refreshing}
+                className="flex items-center gap-2"
+              >
                 <RefreshCw className={`w-4 h-4 ${refreshing ? 'animate-spin' : ''}`} />
                 Atualizar
               </Button>
-              <Button onClick={() => openModal('create')} className="flex items-center gap-2">
+              <Button 
+                onClick={() => openModal('create')} 
+                className="flex items-center gap-2"
+              >
                 <Plus className="w-4 h-4" />
-                Nova Unidade
+                Nova Escola
               </Button>
             </div>
           </div>
 
-          {/* Stats */}
+          {/* Stats Cards */}
           <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
-            <StatCard 
-              icon={School} 
-              title="Total" 
-              value={stats.totalUnits} 
-              subtitle="Unidades" 
-              color="blue" 
+            <StatCard
+              icon={School}
+              title="Total"
+              value={stats.totalSchools}
+              subtitle="Escolas"
+              color="blue"
             />
-            <StatCard 
-              icon={Users} 
-              title="Ativas" 
-              value={stats.activeUnits} 
-              subtitle="Funcionando" 
-              color="green" 
+            <StatCard
+              icon={Building2}
+              title="Instituições"
+              value={stats.totalInstitutions}
+              subtitle="Associadas"
+              color="purple"
             />
-            <StatCard 
-              icon={X} 
-              title="Inativas" 
-              value={stats.inactiveUnits} 
-              subtitle="Suspensas" 
-              color="red" 
+            <StatCard
+              icon={BookOpen}
+              title="Ativas"
+              value={stats.activeSchools}
+              subtitle="Em funcionamento"
+              color="green"
             />
-            <StatCard 
-              icon={Building2} 
-              title="Instituições" 
-              value={stats.totalInstitutions} 
-              subtitle="Cadastradas" 
-              color="purple" 
+            <StatCard
+              icon={Users}
+              title="Inativas"
+              value={stats.inactiveSchools}
+              subtitle="Desativadas"
+              color="amber"
             />
           </div>
 
-          {/* Search & Filter Trigger */}
-          <div className="flex gap-3">
+          {/* Filtros e Busca */}
+          <div className="flex flex-col md:flex-row gap-4 mb-4">
             <form onSubmit={handleSearch} className="flex-1">
               <div className="relative">
                 <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
                 <input
                   type="text"
-                  placeholder="Buscar por nome da unidade ou instituição..."
+                  placeholder="Buscar escola..."
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
                   className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                 />
               </div>
             </form>
-            <Button onClick={() => setShowFilterPanel(!showFilterPanel)} variant="outline" className="flex items-center gap-2">
-              <Filter className="w-4 h-4" />
-              Filtros
-            </Button>
+            
+            <div className="flex gap-2">
+              <Button 
+                type="submit" 
+                onClick={handleSearch}
+                variant="outline"
+                className="whitespace-nowrap"
+              >
+                Buscar
+              </Button>
+              
+              <Button
+                onClick={() => setShowFilterPanel(!showFilterPanel)}
+                variant="outline"
+                className="flex items-center gap-2"
+              >
+                <Filter className="w-4 h-4" />
+                Filtros
+                {Object.keys(filters).length > 0 && (
+                  <Badge variant="primary" className="ml-1">
+                    {Object.keys(filters).length}
+                  </Badge>
+                )}
+              </Button>
+            </div>
           </div>
+
+          {/* Painel de Filtros */}
+          {showFilterPanel && (
+            <div className="bg-gray-50 p-4 rounded-lg mb-4 border border-gray-200">
+              <div className="flex justify-between items-center mb-4">
+                <h3 className="font-medium">Filtros avançados</h3>
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={() => setShowFilterPanel(false)}
+                  className="text-gray-500"
+                >
+                  <X className="w-4 h-4" />
+                </Button>
+              </div>
+              
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4">
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                    Instituição
+                  </label>
+                  <select
+                    value={filters.institution_id || ''}
+                    onChange={(e) => handleFilterChange('institution_id', e.target.value)}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                  >
+                    <option value="">Todas as instituições</option>
+                    {institutions.map((inst) => (
+                      <option key={inst.id} value={inst.id}>
+                        {inst.name}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+                
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                    Status
+                  </label>
+                  <select
+                    value={filters.is_active === undefined ? '' : String(filters.is_active)}
+                    onChange={(e) => {
+                      const value = e.target.value;
+                      if (value === '') {
+                        handleFilterChange('is_active', undefined);
+                      } else {
+                        handleFilterChange('is_active', value === 'true');
+                      }
+                    }}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                  >
+                    <option value="">Todos os status</option>
+                    <option value="true">Ativas</option>
+                    <option value="false">Inativas</option>
+                  </select>
+                </div>
+              </div>
+              
+              <div className="flex justify-end gap-2">
+                <Button
+                  variant="outline"
+                  onClick={clearFilters}
+                  className="flex items-center gap-2"
+                >
+                  <X className="w-4 h-4" />
+                  Limpar
+                </Button>
+                <Button
+                  onClick={applyFilters}
+                  className="flex items-center gap-2"
+                >
+                  <Filter className="w-4 h-4" />
+                  Aplicar Filtros
+                </Button>
+              </div>
+            </div>
+          )}
         </div>
 
-        {/* Filter Panel */}
-        {showFilterPanel && (
-          <div className="p-6 border-b border-gray-200 bg-gray-50">
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <div>
-                <label className="block text-sm font-medium mb-1 text-gray-700">Instituição</label>
-                <select
-                  value={filters.institution_id || ''}
-                  onChange={(e) => handleFilterChange('institution_id', e.target.value || undefined)}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg"
-                >
-                  <option value="">Todas as Instituições</option>
-                  {institutions.map(inst => (
-                    <option key={inst.id} value={inst.id}>{inst.name}</option>
-                  ))}
-                </select>
-              </div>
-              <div>
-                <label className="block text-sm font-medium mb-1 text-gray-700">Status</label>
-                <select
-                  value={filters.deleted === undefined ? '' : filters.deleted ? 'true' : 'false'}
-                  onChange={(e) => handleFilterChange('deleted', e.target.value === '' ? undefined : e.target.value === 'true')}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg"
-                >
-                  <option value="">Todos os Status</option>
-                  <option value="false">Apenas Ativas</option>
-                  <option value="true">Apenas Inativas</option>
-                </select>
-              </div>
-            </div>
-            <div className="flex justify-end gap-3 mt-4">
-              <Button variant="ghost" onClick={clearFilters}>Limpar Filtros</Button>
-              <Button onClick={applyFilters}>Aplicar</Button>
-            </div>
-          </div>
-        )}
-
-        {/* Content */}
+        {/* Lista de Escolas */}
         <div>
           {loading ? (
             <div className="flex items-center justify-center py-12">
               <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
-              <span className="ml-2 text-gray-600">Carregando unidades...</span>
+              <span className="ml-2 text-gray-600">Carregando...</span>
             </div>
-          ) : units.length === 0 ? (
+          ) : schools.length === 0 ? (
             <div className="text-center py-12">
               <School className="w-16 h-16 text-gray-300 mx-auto mb-4" />
-              <p className="text-gray-500 text-lg mb-2">Nenhuma unidade encontrada</p>
-              <p className="text-gray-400 text-sm">
-                {searchQuery || Object.keys(filters).length > 0 
-                  ? "Tente ajustar sua busca ou filtros." 
-                  : "Nenhuma unidade cadastrada."}
-              </p>
+              <p className="text-gray-500 text-lg mb-2">Nenhuma escola encontrada</p>
+              <p className="text-gray-400 text-sm">Tente ajustar seus filtros ou criar uma nova escola</p>
             </div>
           ) : (
             <>
@@ -420,16 +477,16 @@ export default function AdminUnitsPage() {
                   <thead className="bg-gray-50">
                     <tr>
                       <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                        Unidade
+                        Escola
                       </th>
                       <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                         Instituição
                       </th>
                       <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                        Status
+                        Cidade/Estado
                       </th>
-                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                        Criada em
+                      <th className="px-6 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">
+                        Status
                       </th>
                       <th className="px-6 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">
                         Ações
@@ -437,55 +494,56 @@ export default function AdminUnitsPage() {
                     </tr>
                   </thead>
                   <tbody className="bg-white divide-y divide-gray-200">
-                    {units.map((unit) => (
-                      <tr key={unit.id} className="hover:bg-gray-50">
+                    {schools.map((school) => (
+                      <tr key={school.id} className="hover:bg-gray-50">
                         <td className="px-6 py-4">
                           <div className="flex items-center">
-                            <div className="flex-shrink-0 w-10 h-10 bg-blue-100 rounded-full flex items-center justify-center">
+                            <div className="flex-shrink-0 w-10 h-10 bg-blue-100 rounded-lg flex items-center justify-center">
                               <School className="w-5 h-5 text-blue-600" />
                             </div>
                             <div className="ml-4">
-                              <div className="text-sm font-medium text-gray-900">{unit.name}</div>
-                              <div className="text-sm text-gray-500">ID: {unit.id}</div>
+                              <div className="text-sm font-medium text-gray-900">{school.name}</div>
+                              <div className="text-xs text-gray-500">{school.code || 'Sem código'}</div>
                             </div>
                           </div>
                         </td>
-                        <td className="px-6 py-4 text-sm text-gray-600">
-                          <div className="flex items-center">
-                            <Building2 className="w-4 h-4 mr-2 text-gray-400" />
-                            {getInstitutionName(unit.institution_id)}
-                          </div>
+                        <td className="px-6 py-4 text-sm text-gray-900">
+                          {school.institution_name || getInstitutionName(school.institution_id)}
                         </td>
-                        <td className="px-6 py-4">
-                          <Badge variant={unit.deleted ? "danger" : "success"}>
-                            {unit.deleted ? "Inativa" : "Ativa"}
-                          </Badge>
+                        <td className="px-6 py-4 text-sm text-gray-900">
+                          {school.city}{school.city && school.state ? ', ' : ''}{school.state}
                         </td>
-                        <td className="px-6 py-4 text-sm text-gray-500">
-                          {new Date(unit.created_at).toLocaleDateString('pt-BR')}
+                        <td className="px-6 py-4 text-center">
+                          <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
+                            school.is_active 
+                              ? 'bg-green-100 text-green-800' 
+                              : 'bg-red-100 text-red-800'
+                          }`}>
+                            {school.is_active ? 'Ativa' : 'Inativa'}
+                          </span>
                         </td>
                         <td className="px-6 py-4 text-center">
                           <div className="flex items-center justify-center space-x-2">
-                            <Button 
-                              variant="ghost" 
-                              size="sm" 
-                              onClick={() => openModal('view', unit)} 
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              onClick={() => openModal('view', school)}
                               className="text-blue-600 hover:text-blue-900"
                             >
                               <Eye className="w-4 h-4" />
                             </Button>
-                            <Button 
-                              variant="ghost" 
-                              size="sm" 
-                              onClick={() => openModal('edit', unit)} 
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              onClick={() => openModal('edit', school)}
                               className="text-green-600 hover:text-green-900"
                             >
                               <Edit className="w-4 h-4" />
                             </Button>
-                            <Button 
-                              variant="ghost" 
-                              size="sm" 
-                              onClick={() => handleDelete(unit)} 
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              onClick={() => handleDelete(school)}
                               className="text-red-600 hover:text-red-900"
                             >
                               <Trash2 className="w-4 h-4" />
@@ -499,88 +557,134 @@ export default function AdminUnitsPage() {
               </div>
 
               {/* Mobile Cards */}
-              <div className="lg:hidden p-4 space-y-4">
-                {units.map(unit => (
-                  <div key={unit.id} className="bg-white border border-gray-200 rounded-lg shadow-sm">
-                    <div className="p-4 border-b border-gray-100 flex justify-between items-start">
-                      <div className="flex items-center">
-                        <div className="flex-shrink-0 w-10 h-10 bg-blue-100 rounded-full flex items-center justify-center mr-3">
-                          <School className="w-5 h-5 text-blue-600" />
+              <div className="lg:hidden">
+                <div className="space-y-4 p-4">
+                  {schools.map((school) => (
+                    <div key={school.id} className="bg-white border border-gray-200 rounded-lg shadow-sm hover:shadow-md transition-shadow">
+                      <div className="p-4 border-b border-gray-100">
+                        <div className="flex items-start justify-between">
+                          <div className="flex items-center flex-1">
+                            <div className="flex-shrink-0 w-12 h-12 bg-blue-100 rounded-lg flex items-center justify-center">
+                              <School className="w-6 h-6 text-blue-600" />
+                            </div>
+                            <div className="ml-3 flex-1 min-w-0">
+                              <h3 className="text-sm font-medium text-gray-900 truncate">{school.name}</h3>
+                              <div className="flex items-center gap-2 mt-1">
+                                <span className="text-xs text-gray-500">{school.code || 'Sem código'}</span>
+                              </div>
+                            </div>
+                          </div>
+                          <span className={`ml-2 inline-flex items-center px-2 py-1 rounded-full text-xs font-medium ${
+                            school.is_active 
+                              ? 'bg-green-100 text-green-800' 
+                              : 'bg-red-100 text-red-800'
+                          }`}>
+                            {school.is_active ? 'Ativa' : 'Inativa'}
+                          </span>
                         </div>
-                        <div>
-                          <h3 className="font-semibold text-gray-800">{unit.name}</h3>
-                          <p className="text-sm text-gray-500">ID: {unit.id}</p>
+                      </div>
+
+                      <div className="p-4">
+                        <div className="flex flex-col gap-2 mb-4">
+                          <div className="flex items-center">
+                            <Building2 className="w-4 h-4 text-gray-400 mr-2" />
+                            <span className="text-sm text-gray-600">
+                              {school.institution_name || getInstitutionName(school.institution_id)}
+                            </span>
+                          </div>
+                          
+                          {(school.city || school.state) && (
+                            <div className="flex items-center">
+                              <MapPin className="w-4 h-4 text-gray-400 mr-2" />
+                              <span className="text-sm text-gray-600">
+                                {school.city}{school.city && school.state ? ', ' : ''}{school.state}
+                              </span>
+                            </div>
+                          )}
+                        </div>
+
+                        <div className="flex justify-end space-x-2">
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={() => openModal('view', school)}
+                            className="flex items-center gap-1"
+                          >
+                            <Eye className="w-4 h-4" />
+                            Ver
+                          </Button>
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={() => openModal('edit', school)}
+                            className="flex items-center gap-1"
+                          >
+                            <Edit className="w-4 h-4" />
+                            Editar
+                          </Button>
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={() => handleDelete(school)}
+                            className="flex items-center gap-1 text-red-600 hover:text-red-700 hover:border-red-300"
+                          >
+                            <Trash2 className="w-4 h-4" />
+                            Excluir
+                          </Button>
                         </div>
                       </div>
-                      <Badge variant={unit.deleted ? "danger" : "success"}>
-                        {unit.deleted ? "Inativa" : "Ativa"}
-                      </Badge>
                     </div>
-                    <div className="p-4 space-y-2">
-                      <div className="flex items-center text-sm">
-                        <Building2 className="w-4 h-4 mr-2 text-gray-400"/>
-                        <span className="text-gray-600">{getInstitutionName(unit.institution_id)}</span>
-                      </div>
-                      <div className="flex items-center text-sm">
-                        <MapPin className="w-4 h-4 mr-2 text-gray-400"/>
-                        <span className="text-gray-600">Criada em {new Date(unit.created_at).toLocaleDateString('pt-BR')}</span>
-                      </div>
-                    </div>
-                    <div className="p-4 border-t border-gray-100 flex justify-end space-x-2">
-                      <Button variant="outline" size="sm" onClick={() => openModal('view', unit)}>
-                        Ver
-                      </Button>
-                      <Button variant="outline" size="sm" onClick={() => openModal('edit', unit)}>
-                        Editar
-                      </Button>
-                      <Button variant="destructive" size="sm" onClick={() => handleDelete(unit)}>
-                        Excluir
-                      </Button>
-                    </div>
-                  </div>
-                ))}
+                  ))}
+                </div>
               </div>
             </>
           )}
         </div>
 
-        {/* Pagination */}
+        {/* Paginação */}
         {totalPages > 1 && (
-          <div className="px-6 py-4 border-t border-gray-200 flex items-center justify-between">
-            <div className="text-sm text-gray-700">
-              Página {currentPage} de {totalPages} • {totalItems} unidades no total
-            </div>
-            <div className="flex items-center space-x-2">
-              <Button 
-                variant="outline" 
-                size="sm" 
-                onClick={() => setCurrentPage(p => Math.max(p - 1, 1))} 
-                disabled={currentPage === 1}
-              >
-                Anterior
-              </Button>
-              <Button 
-                variant="outline" 
-                size="sm" 
-                onClick={() => setCurrentPage(p => Math.min(p + 1, totalPages))} 
-                disabled={currentPage === totalPages}
-              >
-                Próxima
-              </Button>
+          <div className="px-6 py-4 border-t border-gray-200">
+            <div className="flex items-center justify-between">
+              <div className="text-sm text-gray-700">
+                Mostrando {((currentPage - 1) * itemsPerPage) + 1} a {Math.min(currentPage * itemsPerPage, totalItems)} de {totalItems} resultados
+              </div>
+              <div className="flex items-center space-x-2">
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => setCurrentPage(prev => Math.max(prev - 1, 1))}
+                  disabled={currentPage === 1}
+                >
+                  Anterior
+                </Button>
+                <span className="text-sm text-gray-700">
+                  {currentPage} de {totalPages}
+                </span>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => setCurrentPage(prev => Math.min(prev + 1, totalPages))}
+                  disabled={currentPage === totalPages}
+                >
+                  Próxima
+                </Button>
+              </div>
             </div>
           </div>
         )}
       </div>
 
-      {/* Modal de Unidade */}
-      <UnitFormModal
-        isOpen={modalOpen}
-        onClose={closeModal}
-        onSuccess={handleModalSave}
-        unit={selectedUnit}
-        institutions={institutions}
-        viewOnly={modalMode === 'view'}
-      />
+      {/* Modal de Formulário */}
+      {modalOpen && (
+        <UnitFormModal
+          isOpen={modalOpen}
+          onClose={closeModal}
+          onSave={handleModalSave}
+          mode={modalMode}
+          school={selectedSchool}
+          institutions={institutions}
+        />
+      )}
     </div>
   )
 }

@@ -1,8 +1,8 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useCallback } from 'react'
 import { useRouter } from 'next/navigation'
-import { unitService, UnitDto, UnitFilters } from '@/services/unitService'
+import { unitService, Unit } from '@/services/unitService'
 import { institutionService } from '@/services/institutionService'
 import { useToast } from '@/components/ToastManager'
 import { UnitEditModal } from '@/components/UnitEditModal'
@@ -10,6 +10,12 @@ import { Badge } from '@/components/ui/Badge'
 import { Button } from '@/components/ui/Button'
 import { Plus, Search, Edit, Trash2, Eye, Building2, School, Users, CheckCircle, XCircle, MapPin, Phone, Mail, RefreshCw } from 'lucide-react'
 import { StatCard } from '@/components/ui/StandardCard'
+
+// Interface para resposta paginada
+interface PaginatedResponse<T> {
+  items: T[];
+  total: number;
+}
 
 // Interface para estatísticas das unidades
 interface UnitStats {
@@ -20,32 +26,41 @@ interface UnitStats {
   }
 }
 
+// Interface para filtros
+interface UnitFilters {
+  page?: number;
+  limit?: number;
+  search?: string;
+  course_id?: number;
+  status?: 'active' | 'inactive';
+}
+
 export default function ManageUnits() {
   const router = useRouter()
   const { showSuccess, showError, showWarning } = useToast()
   const [loading, setLoading] = useState(true)
   const [refreshing, setRefreshing] = useState(false)
-  const [units, setUnits] = useState<UnitDto[]>([])
+  const [units, setUnits] = useState<Unit[]>([])
   const [institutions, setInstitutions] = useState<{ id: string; name: string }[]>([])
   const [totalItems, setTotalItems] = useState(0)
   const [currentPage, setCurrentPage] = useState(1)
   const [itemsPerPage] = useState(10)
   const [searchQuery, setSearchQuery] = useState('')
   const [typeFilter, setTypeFilter] = useState('')
-  const [institutionFilter, setInstitutionFilter] = useState('')
-  const [statusFilter, setStatusFilter] = useState('')
+  const [courseFilter, setCourseFilter] = useState<number | ''>('')
+  const [statusFilter, setStatusFilter] = useState<'active' | 'inactive' | ''>('')
   
   // Estados para o modal
   const [modalOpen, setModalOpen] = useState(false)
   const [modalMode, setModalMode] = useState<'view' | 'create' | 'edit'>('view')
-  const [modalUnit, setModalUnit] = useState<UnitDto | null>(null)
+  const [modalUnit, setModalUnit] = useState<Unit | null>(null)
   const [stats, setStats] = useState<UnitStats>({
     totalUnits: 0,
     activeUnits: 0,
     totalByType: {}
   })
 
-  const fetchUnits = async (page = 1, search = '', showLoadingIndicator = true) => {
+  const fetchUnits = useCallback(async (page = 1, search = '', showLoadingIndicator = true) => {
     if (showLoadingIndicator) {
       setLoading(true);
     } else {
@@ -62,24 +77,18 @@ export default function ManageUnits() {
         filters.search = search.trim();
       }
       
-      if (typeFilter) {
-        filters.type = typeFilter;
-      }
-      
-      if (institutionFilter) {
-        filters.institution_id = institutionFilter;
+      if (courseFilter) {
+        filters.course_id = Number(courseFilter);
       }
       
       if (statusFilter) {
-        filters.active = statusFilter === 'true' ? true : statusFilter === 'false' ? false : undefined;
+        filters.status = statusFilter;
       }
       
-      const response = await unitService.getAll(filters);
-      
-      console.log('📊 API response:', response);
+      const response = await unitService.getAll(filters) as PaginatedResponse<Unit>;
       
       setUnits(response.items || []);
-      setTotalItems(response.pagination.total || 0);
+      setTotalItems(response.total || 0);
       setCurrentPage(page);
 
       // Calcular estatísticas
@@ -95,29 +104,30 @@ export default function ManageUnits() {
       setLoading(false);
       setRefreshing(false);
     }
-  };
+  }, [itemsPerPage, courseFilter, statusFilter, showSuccess, showError]);
 
   const fetchInstitutions = async () => {
     try {
-      const response = await institutionService.getAll();
-      setInstitutions(response.map(inst => ({
+      const response = await institutionService.getAll() as PaginatedResponse<{ id: string, name: string }>;
+      setInstitutions(response.items.map(inst => ({
         id: inst.id,
         name: inst.name
       })));
+      return response.items;
     } catch (error) {
       console.warn('⚠️ Erro ao carregar instituições:', error);
+      return [];
     }
   };
 
-  const calculateStats = (unitList: UnitDto[]) => {
+  const calculateStats = (unitList: Unit[]) => {
     const totalUnits = totalItems || unitList.length;
-    const activeUnits = unitList.filter(unit => unit.active).length;
+    const activeUnits = unitList.filter(unit => unit.status === 'active').length;
     
     const totalByType: { [key: string]: number } = {};
     unitList.forEach(unit => {
-      if (unit.type) {
-        totalByType[unit.type] = (totalByType[unit.type] || 0) + 1;
-      }
+      const type = unit.course_id ? 'COM_CURSO' : 'SEM_CURSO';
+      totalByType[type] = (totalByType[type] || 0) + 1;
     });
     
     setStats({
@@ -130,7 +140,7 @@ export default function ManageUnits() {
   useEffect(() => {
     fetchInstitutions();
     fetchUnits(currentPage, searchQuery);
-  }, [currentPage, typeFilter, institutionFilter, statusFilter])
+  }, [currentPage, courseFilter, statusFilter, fetchUnits])
 
   useEffect(() => {
     if (units.length > 0) {
@@ -148,7 +158,7 @@ export default function ManageUnits() {
     fetchUnits(currentPage, searchQuery, false)
   }
 
-  const handleDeleteUnit = async (unit: UnitDto) => {
+  const handleDeleteUnit = async (unit: Unit) => {
     const confirmMessage = `Tem certeza que deseja excluir a unidade "${unit.name}"?\n\nEsta ação não pode ser desfeita.`
     
     if (!confirm(confirmMessage)) {
@@ -170,7 +180,7 @@ export default function ManageUnits() {
   }
 
   // Funções para o modal
-  const openModal = (mode: 'view' | 'create' | 'edit', unit?: UnitDto) => {
+  const openModal = (mode: 'view' | 'create' | 'edit', unit?: Unit) => {
     setModalMode(mode)
     setModalUnit(unit || null)
     setModalOpen(true)
@@ -204,13 +214,11 @@ export default function ManageUnits() {
     }
   }
 
-  const getUnitTypeLabel = (type: string) => {
-    switch (type) {
-      case 'ESCOLA': return 'Escola'
-      case 'FACULDADE': return 'Faculdade'
-      case 'UNIVERSIDADE': return 'Universidade'
-      case 'CENTRO_EDUCACIONAL': return 'Centro Educacional'
-      default: return type || 'Não definido'
+  const getUnitStatusLabel = (status: string) => {
+    switch (status) {
+      case 'active': return 'Ativa'
+      case 'inactive': return 'Inativa'
+      default: return 'Não definido'
     }
   }
 
@@ -261,23 +269,23 @@ export default function ManageUnits() {
             />
             <StatCard
               icon={School}
-              title="Escolas"
-              value={stats.totalByType['ESCOLA'] || 0}
-              subtitle="Básicas"
+              title="Com Curso"
+              value={stats.totalByType['COM_CURSO'] || 0}
+              subtitle="Associadas"
               color="purple"
             />
             <StatCard
               icon={Users}
-              title="Superiores"
-              value={(stats.totalByType['UNIVERSIDADE'] || 0) + (stats.totalByType['FACULDADE'] || 0)}
-              subtitle="Ensino Superior"
+              title="Sem Curso"
+              value={stats.totalByType['SEM_CURSO'] || 0}
+              subtitle="Independentes"
               color="amber"
             />
           </div>
 
           {/* Filtros */}
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4 mb-4">
-            <form onSubmit={handleSearch} className="lg:col-span-2">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 mb-4">
+            <form onSubmit={handleSearch} className="lg:col-span-1">
               <div className="relative">
                 <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
                 <input
@@ -291,38 +299,22 @@ export default function ManageUnits() {
             </form>
             
             <select
-              value={typeFilter}
-              onChange={(e) => setTypeFilter(e.target.value)}
+              value={courseFilter}
+              onChange={(e) => setCourseFilter(e.target.value ? Number(e.target.value) : '')}
               className="px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
             >
-              <option value="">Todos os tipos</option>
-              <option value="ESCOLA">Escola</option>
-              <option value="FACULDADE">Faculdade</option>
-              <option value="UNIVERSIDADE">Universidade</option>
-              <option value="CENTRO_EDUCACIONAL">Centro Educacional</option>
-            </select>
-
-            <select
-              value={institutionFilter}
-              onChange={(e) => setInstitutionFilter(e.target.value)}
-              className="px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-            >
-              <option value="">Todas as instituições</option>
-              {institutions.map((inst) => (
-                <option key={inst.id} value={inst.id}>
-                  {inst.name}
-                </option>
-              ))}
+              <option value="">Todos os cursos</option>
+              {/* Aqui você pode adicionar opções de cursos quando disponíveis */}
             </select>
 
             <select
               value={statusFilter}
-              onChange={(e) => setStatusFilter(e.target.value)}
+              onChange={(e) => setStatusFilter(e.target.value as 'active' | 'inactive' | '')}
               className="px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
             >
               <option value="">Todos os status</option>
-              <option value="true">Ativas</option>
-              <option value="false">Inativas</option>
+              <option value="active">Ativas</option>
+              <option value="inactive">Inativas</option>
             </select>
           </div>
 
@@ -355,10 +347,10 @@ export default function ManageUnits() {
                         Unidade
                       </th>
                       <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                        Tipo
+                        Descrição
                       </th>
                       <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                        Instituição
+                        Ordem
                       </th>
                       <th className="px-6 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">
                         Status
@@ -378,25 +370,22 @@ export default function ManageUnits() {
                             </div>
                             <div className="ml-4">
                               <div className="text-sm font-medium text-gray-900">{unit.name}</div>
-                              {unit.description && (
-                                <div className="text-xs text-gray-500">{unit.description}</div>
-                              )}
                             </div>
                           </div>
                         </td>
                         <td className="px-6 py-4 text-sm text-gray-900">
-                          {getUnitTypeLabel(unit.type || '')}
+                          {unit.description || 'N/A'}
                         </td>
                         <td className="px-6 py-4 text-sm text-gray-900">
-                          {unit.institution_name || 'N/A'}
+                          {unit.order || 0}
                         </td>
                         <td className="px-6 py-4 text-center">
                           <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
-                            unit.active 
+                            unit.status === 'active' 
                               ? 'bg-green-100 text-green-800' 
                               : 'bg-red-100 text-red-800'
                           }`}>
-                            {unit.active ? 'Ativa' : 'Inativa'}
+                            {getUnitStatusLabel(unit.status)}
                           </span>
                         </td>
                         <td className="px-6 py-4 text-center">
@@ -447,16 +436,16 @@ export default function ManageUnits() {
                             <div className="ml-3 flex-1 min-w-0">
                               <h3 className="text-sm font-medium text-gray-900 truncate">{unit.name}</h3>
                               <div className="flex items-center gap-2 mt-1">
-                                <span className="text-xs text-gray-500">{getUnitTypeLabel(unit.type || '')}</span>
+                                <span className="text-xs text-gray-500">Ordem: {unit.order || 0}</span>
                               </div>
                             </div>
                           </div>
                           <span className={`ml-2 inline-flex items-center px-2 py-1 rounded-full text-xs font-medium ${
-                            unit.active 
+                            unit.status === 'active' 
                               ? 'bg-green-100 text-green-800' 
                               : 'bg-red-100 text-red-800'
                           }`}>
-                            {unit.active ? 'Ativa' : 'Inativa'}
+                            {getUnitStatusLabel(unit.status)}
                           </span>
                         </div>
                       </div>
@@ -468,10 +457,10 @@ export default function ManageUnits() {
                           </div>
                         )}
                         
-                        {unit.institution_name && (
+                        {unit.course_id && (
                           <div className="flex items-center mb-4">
                             <Building2 className="w-4 h-4 text-gray-400 mr-2" />
-                            <span className="text-sm text-gray-600">{unit.institution_name}</span>
+                            <span className="text-sm text-gray-600">Curso ID: {unit.course_id}</span>
                           </div>
                         )}
 

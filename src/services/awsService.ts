@@ -1,6 +1,8 @@
 // src/services/awsService.ts
 import { SystemUsageData } from '../types/analytics';
 import { apiGet } from './apiService';
+import { UnifiedAuthService } from './unifiedAuthService';
+import { AuthHeaderService } from './authHeaderService';
 
 // --- Interfaces ---
 
@@ -125,77 +127,58 @@ export interface AwsServiceHealth {
  * Uma função helper para fazer requisições fetch e tratar erros.
  */
 const fetcher = async <T>(url: string, options?: RequestInit): Promise<T> => {
-  const headers = new Headers(options?.headers);
-  headers.set('Content-Type', 'application/json');
+  const headers = await AuthHeaderService.getHeaders();
 
-  const token = getAuthToken();
+  const res = await fetch(url, {
+    ...options,
+    headers,
+    credentials: 'omit',
+  });
 
-  if (token) {
-    headers.set('Authorization', `Bearer ${token}`);
-  }
-
-  try {
-    const res = await fetch(url, {
-      ...options,
-      headers,
-      credentials: 'omit',
-    });
-
-    if (!res.ok) {
-      let errorMessage = 'Ocorreu um erro ao buscar os dados da AWS.';
-      let errorInfo = {};
-      
-      // Customizar mensagem de erro baseada no status HTTP
-      switch (res.status) {
-        case 401:
-          errorMessage = 'Não autorizado. Verifique suas credenciais de acesso.';
-          break;
-        case 403:
-          errorMessage = 'Acesso negado aos recursos da AWS.';
-          break;
-        case 404:
-          errorMessage = 'Recurso AWS não encontrado.';
-          break;
-        case 429:
-          errorMessage = 'Limite de requisições excedido. Tente novamente em alguns instantes.';
-          break;
-        case 500:
-          errorMessage = 'Erro interno no servidor AWS.';
-          break;
-        case 502:
-        case 503:
-        case 504:
-          errorMessage = 'Serviço AWS temporariamente indisponível.';
-          break;
-      }
-      
-      const error = new Error(errorMessage);
-      
-      try {
-        const errorData = await res.json();
-        errorInfo = errorData;
-      } catch (e) {
-        errorInfo = { message: 'Não foi possível analisar a resposta de erro.' };
-      }
-      
-      (error as any).info = errorInfo;
-      (error as any).status = res.status;
-      (error as any).url = url;
-      throw error;
+  if (!res.ok) {
+    let errorMessage = 'Ocorreu um erro ao buscar os dados da AWS.';
+    let errorInfo = {};
+    
+    // Customizar mensagem de erro baseada no status HTTP
+    switch (res.status) {
+      case 401:
+        errorMessage = 'Não autorizado. Verifique suas credenciais de acesso.';
+        break;
+      case 403:
+        errorMessage = 'Acesso negado aos recursos da AWS.';
+        break;
+      case 404:
+        errorMessage = 'Recurso AWS não encontrado.';
+        break;
+      case 429:
+        errorMessage = 'Limite de requisições excedido. Tente novamente em alguns instantes.';
+        break;
+      case 500:
+        errorMessage = 'Erro interno no servidor AWS.';
+        break;
+      case 502:
+      case 503:
+      case 504:
+        errorMessage = 'Serviço AWS temporariamente indisponível.';
+        break;
     }
     
-    return res.json();
-  } catch (error) {
-    if (error instanceof Error) {
-      // Se já é um erro tratado, apenas propaga
-      throw error;
+    const error = new Error(errorMessage);
+    
+    try {
+      const errorData = await res.json();
+      errorInfo = errorData;
+    } catch (e) {
+      errorInfo = { message: 'Não foi possível analisar a resposta de erro.' };
     }
     
-    // Erros de rede ou outros erros não tratados
-    const networkError = new Error('Erro de conexão ao acessar os serviços AWS. Verifique sua conexão de internet.');
-    (networkError as any).info = { original: error };
-    throw networkError;
+    (error as any).info = errorInfo;
+    (error as any).status = res.status;
+    (error as any).url = url;
+    throw error;
   }
+  
+  return res.json();
 };
 
 /**
@@ -275,8 +258,3 @@ const awsService = {
 };
 
 export { awsService };
-
-function getAuthToken() {
-  const accessToken = localStorage.getItem('accessToken') || localStorage.getItem('authToken');
-  return accessToken;
-}

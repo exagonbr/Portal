@@ -1,5 +1,5 @@
-import { apiClient } from '@/lib/api-client';
 import { BaseApiService } from './base-api-service';
+import { apiGet, apiPost, apiPut, apiDelete } from './apiService';
 
 export interface WatchlistEntry {
   id: string;
@@ -39,22 +39,20 @@ export interface WatchlistEntryResponse {
 
 class WatchlistEntryService extends BaseApiService<WatchlistEntry> {
   constructor() {
-    super('/api/watchlist-entry');
+    super('/api/watchlist');
   }
 
   async getAllWithPagination(page: number = 1, limit: number = 10): Promise<WatchlistEntryResponse> {
-    const response = await apiClient.post<any>(`${this.basePath}?page=${page}&limit=${limit}`, { videoId });
-    return response.data;
+    return apiGet<WatchlistEntryResponse>(`${this.basePath}?page=${page}&limit=${limit}`);
   }
 
   async removeFromWatchlist(videoId: string): Promise<{ success: boolean }> {
-    const response = await apiClient.put<any>(`${this.basePath}/remove/${videoId}`);
-    return response.data;
+    await apiDelete(`${this.basePath}/${videoId}`);
+    return { success: true };
   }
 
   async markAsUnwatched(id: string): Promise<WatchlistEntry> {
-    const response = await apiClient.put<any>(`${this.basePath}/${id}/unwatched`);
-    return response.data;
+    return apiPut<WatchlistEntry>(`${this.basePath}/${id}/unwatched`, {});
   }
 
   async getWatchedVideos(userId?: string): Promise<WatchlistEntry[]> {
@@ -62,19 +60,7 @@ class WatchlistEntryService extends BaseApiService<WatchlistEntry> {
     if (userId) {
       url += `?userId=${userId}`;
     }
-
-    const response = await fetch(url, {
-      headers: {
-        'Authorization': `Bearer ${localStorage.getItem('accessToken')}`,
-        'Content-Type': 'application/json',
-      },
-    });
-
-    if (!response.ok) {
-      throw new Error('Falha ao buscar vídeos assistidos');
-    }
-
-    return response.json();
+    return apiGet<WatchlistEntry[]>(url);
   }
 
   async getUnwatchedVideos(userId?: string): Promise<WatchlistEntry[]> {
@@ -82,19 +68,7 @@ class WatchlistEntryService extends BaseApiService<WatchlistEntry> {
     if (userId) {
       url += `?userId=${userId}`;
     }
-
-    const response = await fetch(url, {
-      headers: {
-        'Authorization': `Bearer ${localStorage.getItem('accessToken')}`,
-        'Content-Type': 'application/json',
-      },
-    });
-
-    if (!response.ok) {
-      throw new Error('Falha ao buscar vídeos não assistidos');
-    }
-
-    return response.json();
+    return apiGet<WatchlistEntry[]>(url);
   }
 
   async clearWatchlist(userId?: string): Promise<{ deleted: number }> {
@@ -102,36 +76,13 @@ class WatchlistEntryService extends BaseApiService<WatchlistEntry> {
     if (userId) {
       url += `?userId=${userId}`;
     }
-
-    const response = await fetch(url, {
-      method: 'DELETE',
-      headers: {
-        'Authorization': `Bearer ${localStorage.getItem('accessToken')}`,
-        'Content-Type': 'application/json',
-      },
-    });
-
-    if (!response.ok) {
-      throw new Error('Falha ao limpar lista de observação');
-    }
-
-    return response.json();
+    await apiDelete(url);
+    return { deleted: 1 }; // Assumindo que pelo menos um item foi deletado
   }
 
   async isInWatchlist(videoId: string): Promise<boolean> {
-    const response = await fetch(`${this.basePath}/check/${videoId}`, {
-      headers: {
-        'Authorization': `Bearer ${localStorage.getItem('accessToken')}`,
-        'Content-Type': 'application/json',
-      },
-    });
-
-    if (!response.ok) {
-      throw new Error('Falha ao verificar se está na lista');
-    }
-
-    const result = await response.json();
-    return result.inWatchlist;
+    const response = await apiGet<{ inWatchlist: boolean }>(`${this.basePath}/check/${videoId}`);
+    return response.inWatchlist;
   }
 }
 

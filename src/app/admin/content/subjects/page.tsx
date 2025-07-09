@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useCallback } from 'react'
 import DashboardPageLayout from '@/components/dashboard/DashboardPageLayout'
 import GenericCRUD, { CRUDColumn } from '@/components/crud/GenericCRUD'
 import Modal from '@/components/ui/Modal'
@@ -11,6 +11,12 @@ import { subjectService } from '@/services/subjectService'
 import SubjectForm from '@/components/forms/SubjectForm'
 import { useToast } from '@/components/ToastManager'
 import { Badge } from '@/components/ui/Badge'
+
+// Interface para resposta paginada
+interface PaginatedResponse<T> {
+  items: T[];
+  total: number;
+}
 
 export default function SubjectsPage() {
   const [subjects, setSubjects] = useState<SubjectDto[]>([])
@@ -53,30 +59,31 @@ export default function SubjectsPage() {
     }
   ]
 
-  const loadSubjects = async () => {
+  const loadSubjects = useCallback(async () => {
     setLoading(true)
     try {
       const response = await subjectService.getSubjects({
         page: pagination.currentPage,
         limit: pagination.pageSize,
         search: searchQuery
-      })
+      }) as PaginatedResponse<SubjectDto>
+      
       setSubjects(response.items)
-      setPagination({
-        ...pagination,
+      setPagination(prev => ({
+        ...prev,
         total: response.total
-      })
+      }))
     } catch (error) {
       console.error('Erro ao carregar disciplinas:', error)
       showError('Não foi possível carregar as disciplinas.')
     } finally {
       setLoading(false)
     }
-  }
+  }, [pagination.currentPage, pagination.pageSize, searchQuery, showError])
 
   useEffect(() => {
     loadSubjects()
-  }, [pagination.currentPage, searchQuery])
+  }, [loadSubjects])
 
   const handleCreate = () => {
     setModalMode('create')
@@ -136,18 +143,18 @@ export default function SubjectsPage() {
   }
 
   const setPage = (page: number) => {
-    setPagination({
-      ...pagination,
+    setPagination(prev => ({
+      ...prev,
       currentPage: page
-    })
+    }))
   }
 
   const search = (query: string) => {
     setSearchQuery(query)
-    setPagination({
-      ...pagination,
+    setPagination(prev => ({
+      ...prev,
       currentPage: 1
-    })
+    }))
   }
 
   const customActions = [

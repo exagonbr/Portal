@@ -12,6 +12,8 @@ import Card from '@/components/ui/Card'
 import Table from '@/components/ui/Table'
 import { format } from 'date-fns'
 import { pt } from 'date-fns/locale'
+import { activityTrackingService, ActivityTrack } from '@/services/activityTrackingService'
+import { useToast } from '@/components/ToastManager'
 
 interface UserActivity {
   id: string | number
@@ -62,6 +64,7 @@ interface ApiResponse {
 
 export default function AdminLogsPage() {
   const { user } = useAuth()
+  const { showSuccess, showError } = useToast()
   const [logs, setLogs] = useState<UserActivity[]>([])
   const [stats, setStats] = useState<LogStats | null>(null)
   const [loading, setLoading] = useState(true)
@@ -85,45 +88,34 @@ export default function AdminLogsPage() {
   const fetchLogs = async () => {
     setLoading(true)
     try {
-      // Construir parâmetros de consulta
-      const params = new URLSearchParams({
-        page: page.toString(),
-        limit: limit.toString(),
-        activity_type: activityType,
-        severity: severity
-      })
-
-      if (searchQuery) {
-        params.append('search', searchQuery)
+      // Preparar parâmetros para a consulta
+      const params = {
+        page,
+        limit,
+        activityType: activityType !== 'all' ? activityType : undefined,
+        severity: severity !== 'all' ? severity : undefined,
+        search: searchQuery || undefined,
+        startDate: startDate || undefined,
+        endDate: endDate || undefined,
+        sortOrder
       }
 
-      if (startDate) {
-        params.append('start_date', startDate)
-      }
-
-      if (endDate) {
-        params.append('end_date', endDate)
-      }
-
-      // Buscar logs
-      const response = await fetch(`/api/admin/audit?${params.toString()}`, {
-        credentials: 'include' // Importante para enviar cookies de autenticação
-      })
+      // Usar o serviço de rastreamento de atividades
+      const response = await activityTrackingService.getSystemLogs(params)
       
-      if (!response.ok) {
-        throw new Error(`Falha ao buscar logs: ${response.status} ${response.statusText}`)
+      if (response) {
+        setLogs(response.logs || [])
+        setTotalItems(response.pagination?.total || 0)
+        setTotalPages(response.pagination?.totalPages || 1)
+      } else {
+        throw new Error('Resposta vazia ao buscar logs')
       }
-
-      const data: ApiResponse = await response.json()
-      setLogs(data.logs || [])
-      setTotalItems(data.pagination?.total || 0)
-      setTotalPages(data.pagination?.totalPages || 1)
 
       // Buscar estatísticas
       await fetchStats()
     } catch (error) {
       console.error('Erro ao buscar logs:', error)
-      alert('Erro ao carregar logs do sistema')
+      showError('Erro ao carregar logs do sistema')
     } finally {
       setLoading(false)
     }
@@ -131,33 +123,26 @@ export default function AdminLogsPage() {
 
   const fetchStats = async () => {
     try {
-      // Como não existe um endpoint específico para estatísticas, vamos usar o endpoint POST
-      const response = await fetch('/api/admin/audit', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          startDate,
-          endDate
-        }),
-        credentials: 'include' // Importante para enviar cookies de autenticação
-      })
-
-      if (response.ok) {
-        const data = await response.json()
-        // Adaptar os dados para o formato esperado
+      const params = {
+        startDate: startDate || undefined,
+        endDate: endDate || undefined
+      }
+      
+      const statsData = await activityTrackingService.getSystemLogStats(params)
+      
+      if (statsData) {
         setStats({
-          totalActivities: data.totalActivities || 0,
-          uniqueUsers: data.uniqueUsers || 0,
-          uniqueSessions: data.uniqueSessions || 0,
-          errorCount: data.errorCount || 0,
-          warningCount: data.warningCount || 0,
-          logSize: data.logSize || '0 KB'
+          totalActivities: statsData.totalActivities || 0,
+          uniqueUsers: statsData.uniqueUsers || 0,
+          uniqueSessions: statsData.uniqueSessions || 0,
+          errorCount: statsData.errorCount || 0,
+          warningCount: statsData.warningCount || 0,
+          logSize: statsData.logSize || '0 KB'
         })
       }
     } catch (error) {
       console.error('Erro ao buscar estatísticas:', error)
+      showError('Não foi possível carregar as estatísticas dos logs')
     }
   }
 
@@ -169,56 +154,32 @@ export default function AdminLogsPage() {
 
   const handleExportLogs = async () => {
     try {
-      // Construir parâmetros para exportação
-      const params = new URLSearchParams({
-        activity_type: activityType,
-        severity: severity,
+      const params = {
+        activityType: activityType !== 'all' ? activityType : undefined,
+        severity: severity !== 'all' ? severity : undefined,
+        search: searchQuery || undefined,
+        startDate: startDate || undefined,
+        endDate: endDate || undefined,
         format: 'csv'
-      })
-
-      if (startDate) {
-        params.append('start_date', startDate)
       }
-
-      if (endDate) {
-        params.append('end_date', endDate)
-      }
-
-      if (searchQuery) {
-        params.append('search', searchQuery)
-      }
-
-      // Iniciar download
-      window.location.href = `/api/admin/audit/export?${params.toString()}`
-      alert('Exportação de logs iniciada')
+      
+      await activityTrackingService.exportSystemLogs(params)
+      showSuccess('Exportação de logs iniciada')
     } catch (error) {
       console.error('Erro ao exportar logs:', error)
-      alert('Erro ao exportar logs')
+      showError('Erro ao exportar logs')
     }
   }
 
   const handleCleanupLogs = async () => {
     if (confirm('Tem certeza que deseja limpar logs antigos? Esta ação não pode ser desfeita.')) {
       try {
-        const response = await fetch('/api/admin/audit/cleanup', {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-          },
-          body: JSON.stringify({ daysToKeep: 90 }),
-          credentials: 'include' // Importante para enviar cookies de autenticação
-        })
-
-        if (!response.ok) {
-          throw new Error('Falha ao limpar logs')
-        }
-
-        const data = await response.json()
-        alert(`${data.deletedCount} logs antigos foram removidos`)
+        const result = await activityTrackingService.cleanupSystemLogs({ daysToKeep: 90 })
+        showSuccess(`${result.deletedCount} logs antigos foram removidos`)
         fetchLogs()
       } catch (error) {
         console.error('Erro ao limpar logs:', error)
-        alert('Erro ao limpar logs antigos')
+        showError('Erro ao limpar logs antigos')
       }
     }
   }

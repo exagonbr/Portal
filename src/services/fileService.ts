@@ -1,6 +1,7 @@
 import { FileUploadResponseDto, FileFilter, FileDto } from '@/types/file';
 import { PaginatedResponse, FileResponseDto as ApiFileResponseDto } from '@/types/api';
 import { apiGet, apiPost, apiDelete } from './apiService';
+import { AuthHeaderService } from './authHeaderService';
 
 // Função para mapear a resposta da API para o DTO do frontend
 const mapToFileDto = (data: ApiFileResponseDto): FileDto => ({
@@ -20,12 +21,8 @@ export const uploadFile = async (file: File, onUploadProgress?: (progressEvent: 
 
   // A função apiPost precisaria ser adaptada para lidar com FormData e onUploadProgress
   // Por agora, vamos assumir uma implementação simplificada.
-  const token = localStorage.getItem('authToken');
-  const headers = new Headers();
-  if (token) {
-    headers.set('Authorization', `Bearer ${token}`);
-  }
-
+  const headers = await AuthHeaderService.getHeaders(false); // Não incluir Content-Type para FormData
+  
   const response = await fetch('/api/upload', {
     method: 'POST',
     headers,

@@ -12,6 +12,8 @@ import {
 } from '@/types/api';
 import { apiGet, apiPost, apiPut, apiDelete } from './apiService';
 
+const ENDPOINT = '/certificates';
+
 // Função para mapear a resposta da API para o DTO do frontend
 const mapToCertificateDto = (data: ApiCertificateResponseDto): CertificateDto => ({
   id: String(data.id),
@@ -28,11 +30,49 @@ const mapToCertificateDto = (data: ApiCertificateResponseDto): CertificateDto =>
 });
 
 export const getCertificates = async (params: CertificateFilter): Promise<ApiResponse<PaginatedResponse<CertificateDto>>> => {
-  const response = await apiGet<ApiResponse<PaginatedResponse<ApiCertificateResponseDto>>>('/certificates', params);
-  
-  // Verificar se a resposta tem o formato esperado
-  if (!response || !response.data || !response.data.items || !Array.isArray(response.data.items)) {
-    console.warn('Resposta da API de certificados não tem o formato esperado:', response);
+  try {
+    const response = await apiGet<ApiResponse<PaginatedResponse<ApiCertificateResponseDto>>>(`${ENDPOINT}`, params);
+    
+    // Se a resposta indica erro de autenticação, retornar o erro
+    if (!response.success && response.message?.includes('autenticação')) {
+      return {
+        success: false,
+        data: {
+          items: [],
+          total: 0,
+          page: 1,
+          limit: 10,
+          totalPages: 0,
+        },
+        message: response.message
+      };
+    }
+    
+    // Verificar se a resposta tem o formato esperado
+    if (!response || !response.data || !response.data.items || !Array.isArray(response.data.items)) {
+      console.warn('Resposta da API de certificados não tem o formato esperado:', response);
+      return {
+        success: false,
+        data: {
+          items: [],
+          total: 0,
+          page: 1,
+          limit: 10,
+          totalPages: 0,
+        },
+        message: 'Formato de resposta inválido'
+      };
+    }
+    
+    return {
+      ...response,
+      data: {
+        ...response.data,
+        items: response.data.items.map(mapToCertificateDto),
+      }
+    };
+  } catch (error) {
+    console.error('Erro ao buscar certificados:', error);
     return {
       success: false,
       data: {
@@ -42,49 +82,66 @@ export const getCertificates = async (params: CertificateFilter): Promise<ApiRes
         limit: 10,
         totalPages: 0,
       },
-      message: 'Formato de resposta inválido'
+      message: error instanceof Error ? error.message : 'Erro ao buscar certificados'
     };
   }
-  
-  return {
-    ...response,
-    data: {
-      ...response.data,
-      items: response.data.items.map(mapToCertificateDto),
-    }
-  };
 };
 
 export const getCertificateById = async (id: number): Promise<CertificateDto> => {
-  const response = await apiGet<ApiResponse<ApiCertificateResponseDto>>(`/certificates/${id}`);
-  if (!response.data) {
-    throw new Error('Certificado não encontrado');
+  try {
+    const response = await apiGet<ApiResponse<ApiCertificateResponseDto>>(`${ENDPOINT}/${id}`);
+    if (!response.data) {
+      throw new Error('Certificado não encontrado');
+    }
+    return mapToCertificateDto(response.data);
+  } catch (error) {
+    console.error(`❌ Erro ao buscar certificado ${id}:`, error);
+    throw error;
   }
-  return mapToCertificateDto(response.data);
 };
 
 export const createCertificate = async (data: CreateCertificateDto): Promise<CertificateDto> => {
-  const response = await apiPost<ApiResponse<ApiCertificateResponseDto>>('/certificates', data);
-  if (!response.data) {
-    throw new Error('Erro ao criar certificado');
+  try {
+    const response = await apiPost<ApiResponse<ApiCertificateResponseDto>>(ENDPOINT, data);
+    if (!response.data) {
+      throw new Error('Erro ao criar certificado');
+    }
+    return mapToCertificateDto(response.data);
+  } catch (error) {
+    console.error('❌ Erro ao criar certificado:', error);
+    throw error;
   }
-  return mapToCertificateDto(response.data);
 };
 
 export const updateCertificate = async (id: number, data: UpdateCertificateDto): Promise<CertificateDto> => {
-  const response = await apiPut<ApiResponse<ApiCertificateResponseDto>>(`/certificates/${id}`, data);
-  if (!response.data) {
-    throw new Error('Erro ao atualizar certificado');
+  try {
+    const response = await apiPut<ApiResponse<ApiCertificateResponseDto>>(`${ENDPOINT}/${id}`, data);
+    if (!response.data) {
+      throw new Error('Erro ao atualizar certificado');
+    }
+    return mapToCertificateDto(response.data);
+  } catch (error) {
+    console.error(`❌ Erro ao atualizar certificado ${id}:`, error);
+    throw error;
   }
-  return mapToCertificateDto(response.data);
 };
 
 export const deleteCertificate = async (id: number): Promise<void> => {
-  return apiDelete(`/certificates/${id}`);
+  try {
+    await apiDelete(`${ENDPOINT}/${id}`);
+  } catch (error) {
+    console.error(`❌ Erro ao excluir certificado ${id}:`, error);
+    throw error;
+  }
 };
 
 export const getStats = async (): Promise<ApiResponse<CertificateStats>> => {
-  return apiGet<ApiResponse<CertificateStats>>('/certificates/stats');
+  try {
+    return await apiGet<ApiResponse<CertificateStats>>(`${ENDPOINT}/stats`);
+  } catch (error) {
+    console.error('❌ Erro ao buscar estatísticas de certificados:', error);
+    throw error;
+  }
 };
 
 export const certificateService = {

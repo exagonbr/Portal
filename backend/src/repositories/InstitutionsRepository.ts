@@ -4,7 +4,7 @@ import { Institutions } from '../entities/Institutions';
 
 export class InstitutionsRepository extends ExtendedRepository<Institutions> {
   constructor() {
-    super("institutionss");
+    super("institution");
   }
   
   // Implementação do método abstrato findAllPaginated

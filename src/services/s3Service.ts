@@ -1,4 +1,5 @@
 import { apiGet, apiPost, apiDelete } from './apiService';
+import { AuthHeaderService } from './authHeaderService';
 
 export interface S3UploadResponse {
   url: string;
@@ -68,7 +69,17 @@ class S3ServiceClass {
 
         xhr.open('PUT', uploadData.url);
         xhr.setRequestHeader('Content-Type', file.type);
-        xhr.send(file);
+        
+        // Adicionar header de autorização se necessário
+        AuthHeaderService.getHeadersObject(false).then(headers => {
+          if (headers.Authorization) {
+            xhr.setRequestHeader('Authorization', headers.Authorization);
+          }
+          xhr.send(file);
+        }).catch(error => {
+          console.error('Erro ao obter headers de autorização:', error);
+          xhr.send(file);
+        });
       });
     } catch (error) {
       console.error('Erro ao fazer upload do arquivo:', error);

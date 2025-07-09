@@ -1,28 +1,22 @@
 import { CrudService } from './crudService';
+import { InstitutionDto } from '@/types/institution';
+import { apiPost, apiGet } from './apiService';
 
-export interface Institution {
-  id: number;
-  name: string;
-  code?: string;
-  type: string;
-  description?: string;
-  is_active: boolean;
-  address?: string;
-  city?: string;
-  state?: string;
-  country?: string;
-  postal_code?: string;
-  phone?: string;
-  email?: string;
-  website?: string;
-  logo_url?: string;
-  schools_count?: number;
-  users_count?: number;
-  created_at?: string;
-  updated_at?: string;
-}
+// Função auxiliar para retry
+const withRetry = async <T>(fn: () => Promise<T>, retries = 3, delay = 2000): Promise<T> => {
+  try {
+    return await fn();
+  } catch (error) {
+    if (retries <= 0) throw error;
+    
+    console.log(`Tentativa falhou, tentando novamente em ${delay}ms...`, error);
+    await new Promise(resolve => setTimeout(resolve, delay));
+    
+    return withRetry(fn, retries - 1, delay * 1.5);
+  }
+};
 
-class InstitutionService extends CrudService<Institution> {
+export class InstitutionService extends CrudService<InstitutionDto> {
   constructor() {
     super('/institutions');
   }
@@ -31,7 +25,7 @@ class InstitutionService extends CrudService<Institution> {
     const formData = new FormData();
     formData.append('logo', file);
     
-    const response = await fetch(`${this.endpoint}/${id}/logo`, {
+    const response = await fetch(`/api/institutions/${id}/logo`, {
       method: 'POST',
       body: formData,
     });
@@ -40,22 +34,17 @@ class InstitutionService extends CrudService<Institution> {
   }
 
   async getStats(id: number) {
-    const response = await fetch(`${this.endpoint}/${id}/stats`);
-    return response.json();
+    return apiGet(`/institutions/${id}/stats`);
   }
 
   async toggleInstitutionStatus(id: number) {
-    const response = await fetch(`${this.endpoint}/${id}/toggle-status`, {
-      method: 'POST',
-    });
-    return response.json();
+    return apiPost(`/institutions/${id}/toggle-status`, {});
   }
 
   async canDeleteInstitution(id: number) {
     try {
-      const response = await fetch(`${this.endpoint}/${id}/can-delete`);
-      const data = await response.json();
-      return data.canDelete;
+      const response = await apiGet<{ canDelete: boolean }>(`/institutions/${id}/can-delete`);
+      return response.canDelete;
     } catch (error) {
       console.error('Error checking if institution can be deleted:', error);
       return false;
@@ -63,42 +52,20 @@ class InstitutionService extends CrudService<Institution> {
   }
 
   async getInstitutions(params: { page?: number; limit?: number; search?: string }) {
-    const queryParams = new URLSearchParams();
-    if (params.page) queryParams.append('page', params.page.toString());
-    if (params.limit) queryParams.append('limit', params.limit.toString());
-    if (params.search) queryParams.append('search', params.search);
-
-    const response = await fetch(`${this.endpoint}?${queryParams}`);
-    return response.json();
+    // Usar o método withRetry para tentar novamente em caso de falha
+    return withRetry(() => this.getAll(params));
   }
 
-  async createInstitution(data: Partial<Institution>) {
-    const response = await fetch(this.endpoint, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify(data),
-    });
-    return response.json();
+  async createInstitution(data: Partial<InstitutionDto>) {
+    return this.create(data);
   }
 
-  async updateInstitution(id: number, data: Partial<Institution>) {
-    const response = await fetch(`${this.endpoint}/${id}`, {
-      method: 'PUT',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify(data),
-    });
-    return response.json();
+  async updateInstitution(id: number, data: Partial<InstitutionDto>) {
+    return this.update(id, data);
   }
 
   async deleteInstitution(id: number) {
-    const response = await fetch(`${this.endpoint}/${id}`, {
-      method: 'DELETE',
-    });
-    return response.json();
+    return this.delete(id);
   }
 }
 

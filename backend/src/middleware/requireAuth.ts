@@ -12,11 +12,13 @@ declare global {
 }
 
 export const requireAuth: RequestHandler = async (req: Request, res: Response, next: NextFunction) => {
+  // Garantir que a resposta sempre será JSON
+  res.setHeader('Content-Type', 'application/json');
+
   const authHeader = req.headers.authorization;
 
   if (!authHeader || !authHeader.startsWith('Bearer ')) {
-    res.status(401).json({ success: false, message: 'No token provided or invalid format.' });
-    return;
+    return res.status(401).json({ success: false, message: 'No token provided or invalid format.' });
   }
 
   const token = authHeader.split(' ')[1];
@@ -25,15 +27,13 @@ export const requireAuth: RequestHandler = async (req: Request, res: Response, n
     const secret = JWT_CONFIG.SECRET;
     if (!secret) {
       console.error('JWT_SECRET is not configured in environment variables.');
-      res.status(500).json({ success: false, message: 'Internal server error: JWT secret not configured.' });
-      return;
+      return res.status(500).json({ success: false, message: 'Internal server error: JWT secret not configured.' });
     }
     
     const decoded = jwt.verify(token, secret) as unknown as AccessTokenPayload;
 
     if (decoded.type && decoded.type !== 'access') {
-      res.status(403).json({ success: false, message: 'Invalid token type. Access token required.' });
-      return;
+      return res.status(403).json({ success: false, message: 'Invalid token type. Access token required.' });
     }
 
     const user = await db('users')
@@ -41,8 +41,7 @@ export const requireAuth: RequestHandler = async (req: Request, res: Response, n
       .first();
 
     if (!user) {
-      res.status(401).json({ success: false, message: 'User not found or inactive.' });
-      return;
+      return res.status(401).json({ success: false, message: 'User not found or inactive.' });
     }
 
     req.user = user;
@@ -51,15 +50,12 @@ export const requireAuth: RequestHandler = async (req: Request, res: Response, n
 
   } catch (error) {
     if (error instanceof jwt.TokenExpiredError) {
-      res.status(401).json({ success: false, message: 'Token expired.' });
-      return;
+      return res.status(401).json({ success: false, message: 'Token expired.' });
     }
     if (error instanceof jwt.JsonWebTokenError) {
-      res.status(401).json({ success: false, message: 'Invalid token.' });
-      return;
+      return res.status(401).json({ success: false, message: 'Invalid token.' });
     }
     console.error('Authentication error:', error);
-    res.status(500).json({ success: false, message: 'Internal server error during authentication.'});
-    return;
+    return res.status(500).json({ success: false, message: 'Internal server error during authentication.'});
   }
 };

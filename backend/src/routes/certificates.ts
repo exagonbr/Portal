@@ -1,26 +1,26 @@
 import { Router } from 'express';
 import { requireAuth } from '../middleware/requireAuth';
 
-import CertificateController from '../controllers/CertificateController';
+import certificateController from '../controllers/CertificateController';
 
 const router = Router();
 
 // Rotas públicas (sem autenticação)
-router.get('/public/search', CertificateController.searchPublic.bind(CertificateController));
+router.get('/public/search', certificateController.searchPublic.bind(certificateController));
 
 // Rotas protegidas (com autenticação)
 router.use(requireAuth);
 
 // Busca paginada com filtros
-router.get('/', CertificateController.findAll.bind(CertificateController));
+router.get('/', certificateController.findAll.bind(certificateController));
 
 // Estatísticas
-router.get('/stats', CertificateController.getStats.bind(CertificateController));
+router.get('/stats', certificateController.getStats.bind(certificateController));
 
 // CRUD básico
-router.post('/', CertificateController.create.bind(CertificateController));
-router.get('/:id', CertificateController.getById.bind(CertificateController));
-router.put('/:id', CertificateController.update.bind(CertificateController));
-router.delete('/:id', CertificateController.delete.bind(CertificateController));
+router.post('/', certificateController.create.bind(certificateController));
+router.get('/:id', certificateController.getById.bind(certificateController));
+router.put('/:id', certificateController.update.bind(certificateController));
+router.delete('/:id', certificateController.delete.bind(certificateController));
 
 export default router;

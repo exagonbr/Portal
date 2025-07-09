@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { getServerSession } from 'next-auth'
 import { authOptions } from '@/lib/auth'
 import { createCorsOptionsResponse, getCorsHeaders } from '@/config/cors'
+import { notificationQueueService, CreateNotificationQueueDto } from '@/services/notificationqueueService'
 
 export async function OPTIONS(request: NextRequest) {
   const origin = request.headers.get('origin') || undefined;
@@ -23,7 +24,6 @@ export async function POST(request: NextRequest) {
     }
 
     const body = await request.json()
-    console.log('📣 [Notification API] Dados recebidos:', body)
 
     // Validar canal de envio
     const channel = body.channel?.toUpperCase() || 'EMAIL'
@@ -108,6 +108,15 @@ export async function POST(request: NextRequest) {
       })
     }
 
+    // Criar objeto para a fila de notificações
+    const notificationQueueItem: CreateNotificationQueueDto = {
+      type: body.type || 'info',
+      description: body.subject || body.title
+    }
+
+    // Adicionar à fila de notificações
+    const queueResult = await notificationQueueService.create(notificationQueueItem)
+
     // Enviar notificação pelo canal apropriado
     const result = await sendNotification({
       channel,
@@ -125,7 +134,7 @@ export async function POST(request: NextRequest) {
 
     // Criar registro da notificação enviada
     const notification = {
-      id: `notification_${Date.now()}`,
+      id: queueResult.id || `notification_${Date.now()}`,
       title: body.subject || body.title,
       message: messageContent,
       type: body.type || 'info',
@@ -143,9 +152,6 @@ export async function POST(request: NextRequest) {
       created_at: new Date().toISOString(),
       updated_at: new Date().toISOString()
     }
-
-    // Aqui você salvaria no banco de dados
-    console.log(`📣 [${channel} API] Notificação criada:`, notification)
 
     return NextResponse.json({
       success: result.success,
@@ -171,7 +177,6 @@ export async function POST(request: NextRequest) {
 // Função para carregar um template pelo ID
 async function loadTemplate(templateId: string) {
   // Aqui você buscaria o template no banco de dados
-  console.log(`📑 [Template] Carregando template: ${templateId}`)
   
   // Simulação de templates
   const templates = {
@@ -296,28 +301,18 @@ async function sendNotification(params: {
   try {
     const { channel, recipients, subject, message } = params
     
-    console.log(`📣 [${channel} API] Enviando notificação...`)
-    console.log(`📣 [${channel} API] Destinatários:`, recipients)
-    console.log(`📣 [${channel} API] Assunto:`, subject)
-    console.log(`📣 [${channel} API] Mensagem:`, message)
-    
     // Simular envio pelo canal apropriado
     switch (channel) {
       case 'EMAIL':
         // Integração com serviço de email (ex: SendGrid, AWS SES)
-        console.log('📧 [EMAIL] Simulando envio de email...')
-        console.log('📧 [EMAIL] HTML:', params.html ? 'Sim' : 'Não')
         break
         
       case 'SMS':
         // Integração com serviço de SMS (ex: Twilio, AWS SNS)
-        console.log('📱 [SMS] Simulando envio de SMS...')
         break
         
       case 'PUSH':
         // Integração com serviço de notificações push (ex: Firebase Cloud Messaging)
-        console.log('🔔 [PUSH] Simulando envio de notificação push...')
-        console.log('🔔 [PUSH] Dados adicionais:', params.metadata)
         break
     }
     
@@ -330,7 +325,6 @@ async function sendNotification(params: {
     }
     
   } catch (error) {
-    console.error(`❌ [${params.channel} API] Erro ao enviar notificação:`, error)
     return {
       success: false,
       message: `Erro ao enviar notificação via ${params.channel}`,

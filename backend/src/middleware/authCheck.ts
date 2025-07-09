@@ -8,6 +8,9 @@ import { JWT_CONFIG } from '../config/jwt';
  * Sets req.authenticated to true if valid, false otherwise.
  */
 export function authCheckMiddleware(req: Request, res: Response, next: NextFunction) {
+  // Garantir que a resposta sempre será JSON
+  res.setHeader('Content-Type', 'application/json');
+
   const authHeader = req.headers['authorization'];
   const token = authHeader && authHeader.split(' ')[1];
 

@@ -199,9 +199,8 @@ export class SessionPersistenceService {
           lastActivity: Date.now()
         };
         
+        // Salvar sessão atualizada
         this.saveSession(updatedSession);
-        
-        console.log('✅ Access token renovado com sucesso');
         
         return {
           success: true,
@@ -211,13 +210,16 @@ export class SessionPersistenceService {
         };
       }
       
-      return { success: false, message: 'Resposta inválida do servidor' };
+      return {
+        success: false,
+        message: 'Resposta inválida do servidor'
+      };
       
     } catch (error) {
-      console.error('❌ Erro na renovação do token:', error);
-      return { 
-        success: false, 
-        message: 'Erro de rede ao renovar token' 
+      console.error('❌ Erro ao renovar token:', error);
+      return {
+        success: false,
+        message: error instanceof Error ? error.message : 'Erro desconhecido'
       };
     }
   }
@@ -279,21 +281,45 @@ export class SessionPersistenceService {
   }
 
   /**
-   * Obtém token de acesso atual (renovando se necessário)
+   * Obtém o access token atual, renovando se necessário
    */
   static async getCurrentAccessToken(): Promise<string | null> {
-    const session = this.getSession();
-    if (!session) return null;
-    
-    // Se token está próximo do vencimento, tentar renovar
-    if (this.needsTokenRefresh()) {
-      const refreshResult = await this.refreshAccessToken();
-      if (refreshResult.success && refreshResult.accessToken) {
-        return refreshResult.accessToken;
+    try {
+      const session = this.getSession();
+      if (!session) {
+        return null;
       }
+      
+      const now = Date.now();
+      
+      // Se o token expirou, tentar renovar
+      if (session.expiresAt <= now) {
+        console.log('🔄 Token expirado, tentando renovar...');
+        const refreshResult = await this.refreshAccessToken();
+        
+        if (!refreshResult.success) {
+          console.warn('⚠️ Falha ao renovar token:', refreshResult.message);
+          await this.forceLogout();
+          return null;
+        }
+        
+        return refreshResult.accessToken || null;
+      }
+      
+      // Se está próximo de expirar, renovar em background
+      if (this.needsTokenRefresh()) {
+        console.log('🔄 Token próximo de expirar, renovando em background...');
+        this.refreshAccessToken().catch(error => {
+          console.error('❌ Erro ao renovar token em background:', error);
+        });
+      }
+      
+      return session.accessToken;
+    } catch (error) {
+      console.error('❌ Erro ao obter access token:', error);
+      await this.forceLogout();
+      return null;
     }
-    
-    return session.accessToken;
   }
 
   /**

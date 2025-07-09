@@ -1,5 +1,6 @@
 import { apiClient } from '@/lib/api-client';
 import { BaseApiService } from './base-api-service';
+import { apiGet, apiPost, apiPut, apiDelete } from './apiService';
 
 export interface ActivitySummary {
   id: string;
@@ -61,18 +62,7 @@ class ActivitySummariesService extends BaseApiService<ActivitySummary> {
   }
 
   async getAllWithPagination(page: number = 1, limit: number = 10): Promise<ActivitySummariesResponse> {
-    const response = await fetch(`${this.basePath}?page=${page}&limit=${limit}`, {
-      headers: {
-        'Authorization': `Bearer ${localStorage.getItem('accessToken')}`,
-        'Content-Type': 'application/json',
-      },
-    });
-
-    if (!response.ok) {
-      throw new Error('Falha ao buscar resumos de atividade');
-    }
-
-    return response.json();
+    return apiGet<ActivitySummariesResponse>(`${this.basePath}?page=${page}&limit=${limit}`);
   }
 
   async getByUserId(userId: string, startDate?: string, endDate?: string): Promise<ActivitySummary[]> {
@@ -86,33 +76,11 @@ class ActivitySummariesService extends BaseApiService<ActivitySummary> {
       url += `?${params.toString()}`;
     }
 
-    const response = await fetch(url, {
-      headers: {
-        'Authorization': `Bearer ${localStorage.getItem('accessToken')}`,
-        'Content-Type': 'application/json',
-      },
-    });
-
-    if (!response.ok) {
-      throw new Error('Falha ao buscar resumos do usuário');
-    }
-
-    return response.json();
+    return apiGet<ActivitySummary[]>(url);
   }
 
   async getByDateRange(startDate: string, endDate: string): Promise<ActivitySummary[]> {
-    const response = await fetch(`${this.basePath}/date-range?startDate=${startDate}&endDate=${endDate}`, {
-      headers: {
-        'Authorization': `Bearer ${localStorage.getItem('accessToken')}`,
-        'Content-Type': 'application/json',
-      },
-    });
-
-    if (!response.ok) {
-      throw new Error('Falha ao buscar resumos por período');
-    }
-
-    return response.json();
+    return apiGet<ActivitySummary[]>(`${this.basePath}/date-range?startDate=${startDate}&endDate=${endDate}`);
   }
 
   async getStats(startDate?: string, endDate?: string): Promise<ActivityStats> {
@@ -126,18 +94,7 @@ class ActivitySummariesService extends BaseApiService<ActivitySummary> {
       url += `?${params.toString()}`;
     }
 
-    const response = await fetch(url, {
-      headers: {
-        'Authorization': `Bearer ${localStorage.getItem('accessToken')}`,
-        'Content-Type': 'application/json',
-      },
-    });
-
-    if (!response.ok) {
-      throw new Error('Falha ao buscar estatísticas de atividade');
-    }
-
-    return response.json();
+    return apiGet<ActivityStats>(url);
   }
 
   async generateReport(userId?: string, startDate?: string, endDate?: string): Promise<Blob> {

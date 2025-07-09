@@ -1,6 +1,7 @@
 import { getAuthentication } from '@/lib/auth-utils';
 import { PaginatedResponse } from '@/types/api';
 import { UnifiedAuthService } from '@/services/unifiedAuthService';
+import { AuthHeaderService } from './authHeaderService';
 
 const API_BASE_URL = '/api';
 
@@ -121,49 +122,8 @@ const getErrorMessage = (status: number, statusText?: string): string => {
  * Retorna os headers padrões para as requisições à API.
  * Inclui o token de autenticação se estiver disponível.
  */
-const getHeaders = (): Headers => {
-  const headers = new Headers();
-  headers.set('Content-Type', 'application/json');
-
-  // Busca o accessToken usando o serviço unificado
-  const accessToken = UnifiedAuthService.getAccessToken();
-  
-  // Verificar se o token existe e tem formato válido
-  if (accessToken && typeof accessToken === 'string' && accessToken.length > 20) {
-    console.log(`🔑 [API] Usando token para requisição (${accessToken.substring(0, 10)}...)`);
-    headers.set('Authorization', `Bearer ${accessToken}`);
-    
-    // Adicionar também como cookie para maior compatibilidade
-    if (typeof document !== 'undefined') {
-      document.cookie = `accessToken=${accessToken}; path=/; max-age=86400; SameSite=Lax`;
-    }
-  } else {
-    console.warn("⚠️ [API] Token de autenticação não encontrado ou inválido. As requisições à API podem falhar.");
-    console.log("🔍 [API] Token encontrado:", accessToken);
-    
-    // Tentar recuperar token de outras fontes - verificando se estamos no navegador
-    if (typeof window !== 'undefined' && typeof localStorage !== 'undefined' && typeof document !== 'undefined') {
-      try {
-        const alternativeTokens = [
-          localStorage.getItem('accessToken'),
-          localStorage.getItem('token'),
-          localStorage.getItem('authToken'),
-          document.cookie.split(';').find(c => c.trim().startsWith('accessToken='))?.split('=')[1]
-        ].filter(Boolean);
-        
-        if (alternativeTokens.length > 0) {
-          console.log("🔄 [API] Tentando usar token alternativo");
-          const token = alternativeTokens[0];
-          if (token) {
-            headers.set('Authorization', `Bearer ${token}`);
-          }
-        }
-      } catch (error) {
-        console.error("❌ [API] Erro ao tentar acessar tokens alternativos:", error);
-      }
-    }
-  }
-  return headers;
+const getHeaders = async (): Promise<Headers> => {
+  return AuthHeaderService.getHeaders();
 };
 
 /**
@@ -178,174 +138,123 @@ async function handleResponse<T>(response: Response): Promise<T> {
     if (response.status === 401) {
       console.error('❌ [API] Erro de autenticação: Token inválido ou expirado');
       
-      // Se estiver no navegador, podemos redirecionar para a página de login
+      // Verificar se estamos no navegador
       if (typeof window !== 'undefined' && typeof localStorage !== 'undefined') {
         try {
-          // Limpar tokens inválidos
           localStorage.removeItem('accessToken');
           localStorage.removeItem('authToken');
           localStorage.removeItem('token');
           localStorage.removeItem('refreshToken');
           localStorage.removeItem('user');
           
-          // Redirecionar para login após um pequeno delay
-          setTimeout(() => {
-            window.location.href = '/auth/login?auth_error=expired';
-          }, 100);
+          // Redirecionar apenas se estamos no navegador e não em um ambiente de servidor
+          if (typeof document !== 'undefined' && !document.URL.includes('/api/')) {
+            console.log('🔄 [API] Redirecionando para página de login após erro 401');
+            window.location.href = '/auth/login?error=session_expired';
+            return { success: false, redirected: true } as unknown as T;
+          }
         } catch (error) {
           console.error('❌ [API] Erro ao limpar tokens:', error);
         }
       }
       
-      throw new Error('Sessão expirada ou usuário não autenticado');
+      // Retornar um erro JSON em vez de redirecionar
+      return {
+        success: false,
+        message: 'Sessão expirada ou usuário não autenticado',
+        data: null
+      } as unknown as T;
     }
     
-    // Tratamento especial para erro 504 (Gateway Timeout)
-    if (response.status === 504) {
-      console.error('❌ [API] Erro 504: Gateway Timeout - Servidor demorou muito para responder');
-      throw new Error('Servidor demorou muito para responder. Tente novamente em alguns momentos.');
-    }
-    
-    // Tratamento para outros erros 5xx (Erros do servidor)
-    if (response.status >= 500) {
-      console.error(`❌ [API] Erro ${response.status}: Erro interno do servidor`);
-      throw new Error(`Erro interno do servidor (${response.status}). Tente novamente mais tarde.`);
-    }
-    
+    // Tentar obter a mensagem de erro do corpo da resposta
+    let errorMessage: string;
     try {
-      const error = await response.json();
-      throw new Error(error.message || getErrorMessage(response.status, response.statusText));
-    } catch (e) {
-      // Se não conseguir fazer parse do JSON, usar mensagem amigável
-      const errorMessage = getErrorMessage(response.status, response.statusText);
-      throw new Error(errorMessage);
+      const errorData = await response.json();
+      errorMessage = errorData.message || getErrorMessage(response.status, response.statusText);
+    } catch {
+      errorMessage = getErrorMessage(response.status, response.statusText);
     }
+    
+    throw new Error(errorMessage);
   }
-  // Retorna um objeto vazio se o status for 204 No Content
-  if (response.status === 204) {
-    return {} as T;
+  
+  try {
+    return await response.json();
+  } catch (error) {
+    console.error('❌ [API] Erro ao fazer parse do JSON:', error);
+    throw new Error('Erro ao processar resposta do servidor');
   }
-  return response.json() as Promise<T>;
 }
 
 /**
- * Realiza uma requisição GET para a API.
- * @param endpoint O endpoint da API.
- * @param params Os parâmetros de query.
- * @returns Uma promessa que resolve com os dados da resposta.
+ * Faz uma requisição GET à API.
  */
 export const apiGet = async <T>(endpoint: string, params?: Record<string, any>): Promise<T> => {
-  let query = '';
+  const url = new URL(`${API_BASE_URL}${endpoint}`, window.location.origin);
   if (params) {
-    // Filtrar parâmetros undefined, null ou vazios
-    const filteredParams: Record<string, string> = {};
     Object.entries(params).forEach(([key, value]) => {
-      if (value !== undefined && value !== null && value !== '') {
-        filteredParams[key] = String(value);
+      if (value !== undefined && value !== null) {
+        url.searchParams.append(key, String(value));
       }
     });
-    query = new URLSearchParams(filteredParams).toString();
   }
   
-  const url = query ? `${API_BASE_URL}${endpoint}?${query}` : `${API_BASE_URL}${endpoint}`;
-  
-  // Verificar token antes de fazer a requisição
-  const token = UnifiedAuthService.getAccessToken();
-  if (!token && typeof window !== 'undefined') {
-    console.warn('Tentativa de requisição sem token de autenticação:', endpoint);
-  }
-  
-  try {
-    const response = await fetchWithRetry(url, {
-      headers: getHeaders(),
-      credentials: 'include',
-    });
-    return handleResponse<T>(response);
-  } catch (error) {
-    console.error(`❌ [API] Erro ao fazer requisição GET para ${endpoint}:`, error);
-    throw error;
-  }
+  const headers = await getHeaders();
+  const response = await fetchWithRetry(url.toString(), { headers });
+  return handleResponse<T>(response);
 };
 
 /**
- * Realiza uma requisição POST para a API.
- * @param endpoint O endpoint da API.
- * @param data O corpo da requisição.
- * @returns Uma promessa que resolve com os dados da resposta.
+ * Faz uma requisição POST à API.
  */
 export const apiPost = async <T>(endpoint: string, data: any): Promise<T> => {
-  try {
-    const response = await fetchWithRetry(`${API_BASE_URL}${endpoint}`, {
-      method: 'POST',
-      headers: getHeaders(),
-      credentials: 'include',
-      body: JSON.stringify(data),
-    });
-    return handleResponse<T>(response);
-  } catch (error) {
-    console.error(`❌ [API] Erro ao fazer requisição POST para ${endpoint}:`, error);
-    throw error;
-  }
+  const url = `${API_BASE_URL}${endpoint}`;
+  const headers = await getHeaders();
+  const response = await fetchWithRetry(url, {
+    method: 'POST',
+    headers,
+    body: JSON.stringify(data)
+  });
+  return handleResponse<T>(response);
 };
 
 /**
- * Realiza uma requisição PUT para a API.
- * @param endpoint O endpoint da API.
- * @param data O corpo da requisição.
- * @returns Uma promessa que resolve com os dados da resposta.
+ * Faz uma requisição PUT à API.
  */
 export const apiPut = async <T>(endpoint: string, data: any): Promise<T> => {
-  try {
-    const response = await fetchWithRetry(`${API_BASE_URL}${endpoint}`, {
-      method: 'PUT',
-      headers: getHeaders(),
-      credentials: 'include',
-      body: JSON.stringify(data),
-    });
-    return handleResponse<T>(response);
-  } catch (error) {
-    console.error(`❌ [API] Erro ao fazer requisição PUT para ${endpoint}:`, error);
-    throw error;
-  }
+  const url = `${API_BASE_URL}${endpoint}`;
+  const headers = await getHeaders();
+  const response = await fetchWithRetry(url, {
+    method: 'PUT',
+    headers,
+    body: JSON.stringify(data)
+  });
+  return handleResponse<T>(response);
 };
 
 /**
- * Realiza uma requisição PATCH para a API.
- * @param endpoint O endpoint da API.
- * @param data O corpo da requisição.
- * @returns Uma promessa que resolve com os dados da resposta.
- */
-export const apiPatch = async <T>(endpoint: string, data: any): Promise<T> => {
-  try {
-    const response = await fetchWithRetry(`${API_BASE_URL}${endpoint}`, {
-      method: 'PATCH',
-      headers: getHeaders(),
-      credentials: 'include',
-      body: JSON.stringify(data),
-    });
-    return handleResponse<T>(response);
-  } catch (error) {
-    console.error(`❌ [API] Erro ao fazer requisição PATCH para ${endpoint}:`, error);
-    throw error;
-  }
-};
-
-
-/**
- * Realiza uma requisição DELETE para a API.
- * @param endpoint O endpoint da API.
- * @returns Uma promessa que resolve quando a requisição é completada.
+ * Faz uma requisição DELETE à API.
  */
 export const apiDelete = async (endpoint: string): Promise<void> => {
-  try {
-    const response = await fetchWithRetry(`${API_BASE_URL}${endpoint}`, {
-      method: 'DELETE',
-      headers: getHeaders(),
-      credentials: 'include',
-    });
-    await handleResponse<void>(response);
-  } catch (error) {
-    console.error(`❌ [API] Erro ao fazer requisição DELETE para ${endpoint}:`, error);
-    throw error;
-  }
+  const url = `${API_BASE_URL}${endpoint}`;
+  const headers = await getHeaders();
+  const response = await fetchWithRetry(url, {
+    method: 'DELETE',
+    headers
+  });
+  await handleResponse(response);
+};
+
+/**
+ * Faz uma requisição PATCH à API.
+ */
+export const apiPatch = async <T>(endpoint: string, data: any): Promise<T> => {
+  const url = `${API_BASE_URL}${endpoint}`;
+  const headers = await getHeaders();
+  const response = await fetchWithRetry(url, {
+    method: 'PATCH',
+    headers,
+    body: JSON.stringify(data)
+  });
+  return handleResponse<T>(response);
 };
