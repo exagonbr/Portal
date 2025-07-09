@@ -66,7 +66,7 @@ const defaultSettings: SystemSettings = {
   email_smtp_port: 587,
   email_smtp_user: '',
   email_smtp_password: '',
-  email_smtp_secure: true,
+  email_smtp_secure: false,
   email_from_name: '',
   email_from_address: '',
   notifications_email_enabled: false,

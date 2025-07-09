@@ -36,6 +36,7 @@ export { EducationCycle } from './EducationCycle';
 export { ForgotPassword } from './ForgotPassword';
 export { Module } from './Module';
 export { NotificationLog } from './NotificationLog';
+export { NotificationTemplate } from './NotificationTemplate';
 export { Profile } from './Profile';
 export { Public } from './Public';
 export { Answer } from './Answer';

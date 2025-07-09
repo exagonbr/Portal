@@ -16,9 +16,6 @@ export const env = {
     SMTP_HOST: process.env.SMTP_HOST || 'localhost',
     SMTP_PORT: process.env.SMTP_PORT || '587',
     SMTP_SECURE: process.env.SMTP_SECURE || 'false',
-    SMTP_USER: process.env.SMTP_USER,
-    SMTP_PASS: process.env.SMTP_PASS,
-    SMTP_TLS_REJECT_UNAUTHORIZED: process.env.SMTP_TLS_REJECT_UNAUTHORIZED || 'true',
     EMAIL_FROM: process.env.EMAIL_FROM || 'noreply@portal.sabercon.com',
     FRONTEND_URL: process.env.FRONTEND_URL || 'https://portal.sabercon.com.br',
     

@@ -26,6 +26,7 @@ import {
   Module,
   Notification,
   NotificationLog,
+  NotificationTemplate,
   Profile,
   Public,
   Publisher,

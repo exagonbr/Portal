@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { useAuth } from '@/contexts/AuthContext';
 import { Button } from '@/components/ui/Button';
 import { Badge } from '@/components/ui/Badge';
@@ -32,7 +32,13 @@ import {
   Type,
   X,
   ChevronDown,
-  ChevronUp
+  ChevronUp,
+  Wifi,
+  WifiOff,
+  Edit,
+  Trash2,
+  Save,
+  Palette
 } from 'lucide-react';
 
 interface StepProps {
@@ -53,6 +59,20 @@ interface EmailFormData {
   html: boolean;
 }
 
+interface CustomTemplate {
+  id: string
+  name: string
+  subject: string
+  message: string
+  html: boolean
+  category: string
+  is_public: boolean
+  user_id: string
+  created_by: string
+  created_at: string
+  updated_at: string
+}
+
 const STEPS = [
   { id: 1, title: 'Template', description: 'Escolha um template ou crie do zero' },
   { id: 2, title: 'Destinatários', description: 'Selecione quem receberá o email' },
@@ -69,6 +89,7 @@ export default function SendNotificationPage() {
   const [currentStep, setCurrentStep] = useState(1);
   const [loading, setLoading] = useState(false);
   const [refreshing, setRefreshing] = useState(false);
+  const [testingConnectivity, setTestingConnectivity] = useState(false)
   
   // Estados do formulário
   const [formData, setFormData] = useState<EmailFormData>({
@@ -518,6 +539,190 @@ Equipe Portal Educacional`,
     }
   }
 
+  // Função para testar conectividade do email
+  const testEmailConnectivity = async () => {
+    setTestingConnectivity(true)
+    try {
+      const response = await fetch('/api/notifications/send', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          action: 'test_connectivity',
+          testEmail: 'noreply@sabercon.com.br'
+        })
+      })
+
+      const result = await response.json()
+      
+      if (result.success) {
+        showSuccess(`✅ ${result.message}`)
+        console.log('📧 Configurações de email testadas:', result.data?.config)
+      } else {
+        showError(`❌ ${result.message}`)
+        console.error('❌ Erro no teste:', result.data)
+      }
+    } catch (error) {
+      console.error('❌ Erro ao testar conectividade:', error)
+      showError('❌ Erro ao testar conectividade do email')
+    } finally {
+      setTestingConnectivity(false)
+    }
+  }
+
+  const [customTemplates, setCustomTemplates] = useState<CustomTemplate[]>([])
+  const [showTemplateModal, setShowTemplateModal] = useState(false)
+  const [editingTemplate, setEditingTemplate] = useState<CustomTemplate | null>(null)
+  const [templateForm, setTemplateForm] = useState({
+    name: '',
+    subject: '',
+    message: '',
+    html: false,
+    category: 'custom',
+    is_public: false
+  })
+  const [loadingTemplates, setLoadingTemplates] = useState(false)
+  const [savingTemplate, setSavingTemplate] = useState(false)
+
+  // Carregar templates personalizados
+  const loadCustomTemplates = useCallback(async () => {
+    setLoadingTemplates(true)
+    try {
+      const response = await fetch('/api/notifications/templates')
+      const result = await response.json()
+      
+      if (result.success) {
+        setCustomTemplates(result.data || [])
+      } else {
+        console.error('Erro ao carregar templates:', result.message)
+      }
+    } catch (error) {
+      console.error('Erro ao carregar templates:', error)
+    } finally {
+      setLoadingTemplates(false)
+    }
+  }, [])
+
+  // Salvar template (criar ou editar)
+  const saveTemplate = async () => {
+    if (!templateForm.name || !templateForm.subject || !templateForm.message) {
+      showError('Nome, assunto e mensagem são obrigatórios')
+      return
+    }
+
+    setSavingTemplate(true)
+    try {
+      const url = '/api/notifications/templates'
+      const method = editingTemplate ? 'PUT' : 'POST'
+      const body = editingTemplate 
+        ? { ...templateForm, id: editingTemplate.id }
+        : templateForm
+
+      const response = await fetch(url, {
+        method,
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(body)
+      })
+
+      const result = await response.json()
+      
+      if (result.success) {
+        showSuccess(editingTemplate ? 'Template atualizado com sucesso!' : 'Template criado com sucesso!')
+        setShowTemplateModal(false)
+        setEditingTemplate(null)
+        setTemplateForm({
+          name: '',
+          subject: '',
+          message: '',
+          html: false,
+          category: 'custom',
+          is_public: false
+        })
+        loadCustomTemplates()
+      } else {
+        showError(result.message || 'Erro ao salvar template')
+      }
+    } catch (error) {
+      console.error('Erro ao salvar template:', error)
+      showError('Erro ao salvar template')
+    } finally {
+      setSavingTemplate(false)
+    }
+  }
+
+  // Excluir template
+  const deleteTemplate = async (templateId: string) => {
+    if (!confirm('Tem certeza que deseja excluir este template?')) {
+      return
+    }
+
+    try {
+      const response = await fetch(`/api/notifications/templates?id=${templateId}`, {
+        method: 'DELETE'
+      })
+
+      const result = await response.json()
+      
+      if (result.success) {
+        showSuccess('Template excluído com sucesso!')
+        loadCustomTemplates()
+      } else {
+        showError(result.message || 'Erro ao excluir template')
+      }
+    } catch (error) {
+      console.error('Erro ao excluir template:', error)
+      showError('Erro ao excluir template')
+    }
+  }
+
+  // Aplicar template personalizado
+  const applyCustomTemplate = (template: CustomTemplate) => {
+    setFormData(prev => ({
+      ...prev,
+      template: template.id,
+      subject: template.subject,
+      message: template.message,
+      html: template.html
+    }))
+    showInfo(`Template "${template.name}" aplicado! Assunto e mensagem foram preenchidos automaticamente.`)
+  }
+
+  // Abrir modal para editar template
+  const openEditTemplate = (template: CustomTemplate) => {
+    setEditingTemplate(template)
+    setTemplateForm({
+      name: template.name,
+      subject: template.subject,
+      message: template.message,
+      html: template.html,
+      category: template.category,
+      is_public: template.is_public
+    })
+    setShowTemplateModal(true)
+  }
+
+  // Abrir modal para criar template
+  const openCreateTemplate = () => {
+    setEditingTemplate(null)
+    setTemplateForm({
+      name: '',
+      subject: '',
+      message: '',
+      html: false,
+      category: 'custom',
+      is_public: false
+    })
+    setShowTemplateModal(true)
+  }
+
+  // Carregar templates no início
+  useEffect(() => {
+    loadCustomTemplates()
+  }, [loadCustomTemplates])
+
   return (
     <div className="container mx-auto px-2 sm:px-4 py-3 sm:py-6 max-w-6xl">
       <div className="bg-white rounded-lg sm:rounded-xl shadow-sm">
@@ -530,6 +735,20 @@ Equipe Portal Educacional`,
               <p className="text-gray-600 mt-1 text-sm sm:text-base">Envie emails profissionais usando nosso sistema por etapas</p>
             </div>
             <div className="flex gap-2 sm:gap-3">
+              <Button 
+                onClick={testEmailConnectivity}
+                variant="outline" 
+                disabled={testingConnectivity}
+                className="flex items-center gap-2 text-xs sm:text-sm border-green-300 text-green-700 hover:bg-green-50"
+                size="sm"
+              >
+                {testingConnectivity ? (
+                  <RefreshCw className="w-3 h-3 sm:w-4 sm:h-4 animate-spin" />
+                ) : (
+                  <Wifi className="w-3 h-3 sm:w-4 sm:h-4" />
+                )}
+                {testingConnectivity ? 'Testando...' : 'Testar Email'}
+              </Button>
               <Button 
                 onClick={handleRefresh} 
                 variant="outline" 
@@ -680,7 +899,7 @@ Equipe Portal Educacional`,
                     </div>
                   </div>
                   <Button 
-                    variant="outline"
+                    variant="secondary"
                     onClick={() => {
                       applyTemplate('welcome');
                       handleNext();
@@ -693,7 +912,103 @@ Equipe Portal Educacional`,
                 </div>
               </div>
 
-              {/* Templates Recentes */}
+              {/* Seus Templates */}
+              <div className="bg-gray-50 rounded-lg p-4 sm:p-6">
+                <div className="flex items-center justify-between mb-3 sm:mb-4">
+                  <h4 className="font-medium text-gray-900 text-sm sm:text-base flex items-center gap-2">
+                    <FileText className="w-4 h-4" />
+                    Seus Templates
+                  </h4>
+                  <div className="flex gap-2">
+                    <Button
+                      onClick={openCreateTemplate}
+                      variant="secondary"
+                      size="sm"
+                      className="flex items-center gap-2 text-xs sm:text-sm"
+                    >
+                      <Plus className="w-3 h-3 sm:w-4 sm:h-4" />
+                      Simples
+                    </Button>
+                    <Button
+                      onClick={() => router.push('/notifications/templates/editor')}
+                      size="sm"
+                      className="flex items-center gap-2 text-xs sm:text-sm"
+                    >
+                      <Palette className="w-3 h-3 sm:w-4 sm:h-4" />
+                      Editor Visual
+                    </Button>
+                  </div>
+                </div>
+                
+                {loadingTemplates ? (
+                  <div className="flex items-center justify-center py-8">
+                    <RefreshCw className="w-6 h-6 animate-spin text-gray-400" />
+                    <span className="ml-2 text-gray-500">Carregando templates...</span>
+                  </div>
+                ) : customTemplates.length === 0 ? (
+                  <div className="text-center py-8">
+                    <FileText className="w-12 h-12 text-gray-300 mx-auto mb-3" />
+                    <p className="text-gray-500 text-sm">Nenhum template personalizado criado ainda</p>
+                    <p className="text-gray-400 text-xs mt-1">Clique em "Criar Template" para começar</p>
+                  </div>
+                ) : (
+                  <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-2 sm:gap-3">
+                    {customTemplates.map((template) => (
+                      <div
+                        key={template.id}
+                        className="p-3 bg-white rounded-lg border border-gray-200 hover:border-blue-300 hover:bg-blue-50 transition-colors group"
+                      >
+                        <div className="flex items-start justify-between mb-2">
+                          <div className="flex-1 min-w-0">
+                            <div className="font-medium text-gray-900 text-sm truncate">{template.name}</div>
+                            <div className="text-xs text-gray-500 truncate">{template.subject}</div>
+                          </div>
+                          <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                            <Button
+                              onClick={() => openEditTemplate(template)}
+                              size="sm"
+                              variant="ghost"
+                              className="h-6 w-6 p-0 text-gray-400 hover:text-blue-600"
+                            >
+                              <Edit className="w-3 h-3" />
+                            </Button>
+                            <Button
+                              onClick={() => deleteTemplate(template.id)}
+                              size="sm"
+                              variant="ghost"
+                              className="h-6 w-6 p-0 text-gray-400 hover:text-red-600"
+                            >
+                              <Trash2 className="w-3 h-3" />
+                            </Button>
+                          </div>
+                        </div>
+                        <div className="flex items-center justify-between">
+                          <div className="flex items-center gap-2">
+                            {template.html && (
+                              <Badge variant="secondary" className="text-xs px-1 py-0">HTML</Badge>
+                            )}
+                            {template.is_public && (
+                              <Badge variant="secondary" className="text-xs px-1 py-0">Público</Badge>
+                            )}
+                          </div>
+                          <Button
+                            onClick={() => {
+                              applyCustomTemplate(template);
+                              handleNext();
+                            }}
+                            size="sm"
+                            className="text-xs"
+                          >
+                            Usar
+                          </Button>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
+
+              {/* Templates Populares (antigos templates fixos) */}
               <div className="bg-gray-50 rounded-lg p-4 sm:p-6">
                 <h4 className="font-medium text-gray-900 mb-3 sm:mb-4 flex items-center gap-2 text-sm sm:text-base">
                   <FileText className="w-4 h-4" />
@@ -702,9 +1017,9 @@ Equipe Portal Educacional`,
                 <div className="grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-4 gap-2 sm:gap-3">
                   {Object.values(availableTemplates).map((template) => (
                     <button
-                      key={template.id}
+                      key={template.name}
                       onClick={() => {
-                        applyTemplate(template.id);
+                        applyTemplate(template.name.toLowerCase().replace(/\s+/g, '_'));
                         handleNext();
                       }}
                       className="p-2 sm:p-3 bg-white rounded-lg border border-gray-200 hover:border-blue-300 hover:bg-blue-50 transition-colors text-left"
@@ -1200,6 +1515,117 @@ Equipe Portal Educacional`,
           </div>
         </div>
       </div>
+
+      {/* Modal para criar/editar template */}
+      {showTemplateModal && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+          <div className="bg-white rounded-lg max-w-2xl w-full max-h-[90vh] overflow-y-auto">
+            <div className="p-6">
+              <div className="flex items-center justify-between mb-6">
+                <h3 className="text-lg font-semibold">
+                  {editingTemplate ? 'Editar Template' : 'Criar Novo Template'}
+                </h3>
+                <Button
+                  onClick={() => setShowTemplateModal(false)}
+                  variant="ghost"
+                  size="sm"
+                  className="text-gray-400 hover:text-gray-600"
+                >
+                  <X className="w-4 h-4" />
+                </Button>
+              </div>
+
+              <div className="space-y-4">
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    Nome do Template *
+                  </label>
+                  <input
+                    type="text"
+                    value={templateForm.name}
+                    onChange={(e) => setTemplateForm(prev => ({ ...prev, name: e.target.value }))}
+                    placeholder="Ex: Comunicado Importante"
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    Assunto *
+                  </label>
+                  <input
+                    type="text"
+                    value={templateForm.subject}
+                    onChange={(e) => setTemplateForm(prev => ({ ...prev, subject: e.target.value }))}
+                    placeholder="Ex: Comunicado importante do sistema"
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    Mensagem *
+                  </label>
+                  <textarea
+                    value={templateForm.message}
+                    onChange={(e) => setTemplateForm(prev => ({ ...prev, message: e.target.value }))}
+                    placeholder="Digite a mensagem do template..."
+                    rows={6}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent resize-y"
+                  />
+                  <p className="text-xs text-gray-500 mt-1">
+                    Você pode usar variáveis como {'{{nome}}'}, {'{{data}}'}, etc.
+                  </p>
+                </div>
+
+                <div className="flex items-center gap-4">
+                  <label className="flex items-center gap-2">
+                    <input
+                      type="checkbox"
+                      checked={templateForm.html}
+                      onChange={(e) => setTemplateForm(prev => ({ ...prev, html: e.target.checked }))}
+                      className="rounded border-gray-300 text-blue-600 focus:ring-blue-500"
+                    />
+                    <span className="text-sm text-gray-700">Usar HTML</span>
+                  </label>
+
+                  <label className="flex items-center gap-2">
+                    <input
+                      type="checkbox"
+                      checked={templateForm.is_public}
+                      onChange={(e) => setTemplateForm(prev => ({ ...prev, is_public: e.target.checked }))}
+                      className="rounded border-gray-300 text-blue-600 focus:ring-blue-500"
+                    />
+                    <span className="text-sm text-gray-700">Template público</span>
+                  </label>
+                </div>
+              </div>
+
+              <div className="flex items-center justify-end gap-3 mt-6 pt-4 border-t">
+                <Button
+                  onClick={() => setShowTemplateModal(false)}
+                  variant="outline"
+                  disabled={savingTemplate}
+                >
+                  Cancelar
+                </Button>
+                <Button
+                  onClick={saveTemplate}
+                  disabled={savingTemplate}
+                  className="flex items-center gap-2"
+                >
+                  {savingTemplate ? (
+                    <RefreshCw className="w-4 h-4 animate-spin" />
+                  ) : (
+                    <Save className="w-4 h-4" />
+                  )}
+                  {savingTemplate ? 'Salvando...' : 'Salvar Template'}
+                </Button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   )
 }

@@ -2,10 +2,146 @@ import { NextRequest, NextResponse } from 'next/server'
 import { getServerSession } from 'next-auth'
 import { authOptions } from '@/lib/auth'
 import { createCorsOptionsResponse, getCorsHeaders } from '@/config/cors'
+import { getSafeConnection } from '@/lib/database-safe'
+import nodemailer from 'nodemailer'
 
 export async function OPTIONS(request: NextRequest) {
   const origin = request.headers.get('origin') || undefined;
   return createCorsOptionsResponse(origin);
+}
+
+// Função para carregar configurações de email do banco de dados
+async function loadEmailSettings() {
+  try {
+    const connection = await getSafeConnection();
+    const settings = await connection('system_settings')
+      .select('key', 'value')
+      .where('category', 'email');
+    
+    const emailConfig: Record<string, any> = {};
+    settings.forEach((setting: any) => {
+      emailConfig[setting.key] = setting.value;
+    });
+    
+    return {
+      host: emailConfig.email_smtp_host || 'smtp.gmail.com',
+      port: parseInt(emailConfig.email_smtp_port || '587'),
+      secure: emailConfig.email_smtp_secure === 'true',
+      user: emailConfig.email_smtp_user || 'noreply@sabercon.com.br',
+      pass: emailConfig.email_smtp_password || 'wcba xeda vopf nbwh',
+      fromName: emailConfig.email_from_name || 'Portal Educacional - Sabercon',
+      fromAddress: emailConfig.email_from_address || 'noreply@sabercon.com.br'
+    };
+  } catch (error) {
+    console.error('❌ Erro ao carregar configurações de email:', error);
+    // Fallback para configurações padrão
+    return {
+      host: 'smtp.gmail.com',
+      port: 587,
+      secure: false,
+      user: 'noreply@sabercon.com.br',
+      pass: 'wcba xeda vopf nbwh',
+      fromName: 'Portal Educacional - Sabercon',
+      fromAddress: 'noreply@sabercon.com.br'
+    };
+  }
+}
+
+// Função para testar conectividade do email
+async function testEmailConnection(emailConfig: any) {
+  try {
+    const transporter = nodemailer.createTransport({
+      host: emailConfig.host,
+      port: emailConfig.port,
+      secure: emailConfig.secure,
+      auth: {
+        user: emailConfig.user,
+        pass: emailConfig.pass,
+      },
+      tls: {
+        rejectUnauthorized: false
+      }
+    });
+
+    // Verificar conexão
+    await transporter.verify();
+    
+    return {
+      success: true,
+      message: 'Conexão com servidor de email estabelecida com sucesso'
+    };
+  } catch (error: any) {
+    return {
+      success: false,
+      message: `Erro na conexão: ${error.message}`,
+      error: error.code || 'UNKNOWN_ERROR'
+    };
+  }
+}
+
+// Função para enviar email de teste
+async function sendTestEmail(emailConfig: any, testEmail: string = 'noreply@sabercon.com.br') {
+  try {
+    const transporter = nodemailer.createTransport({
+      host: emailConfig.host,
+      port: emailConfig.port,
+      secure: emailConfig.secure,
+      auth: {
+        user: emailConfig.user,
+        pass: emailConfig.pass,
+      },
+      tls: {
+        rejectUnauthorized: false
+      }
+    });
+
+    const mailOptions = {
+      from: `"${emailConfig.fromName}" <${emailConfig.fromAddress}>`,
+      to: testEmail,
+      subject: 'Teste de Conectividade - Portal Educacional',
+      html: `
+        <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
+          <h2 style="color: #1e3a8a;">🔧 Teste de Conectividade</h2>
+          <p>Este é um email de teste para verificar se o sistema de envio está funcionando corretamente.</p>
+          
+          <div style="background-color: #f0f9ff; padding: 20px; border-radius: 8px; margin: 20px 0;">
+            <h3 style="color: #1e40af; margin-top: 0;">📧 Configurações Testadas:</h3>
+            <ul style="color: #374151;">
+              <li><strong>Servidor SMTP:</strong> ${emailConfig.host}</li>
+              <li><strong>Porta:</strong> ${emailConfig.port}</li>
+              <li><strong>Segurança:</strong> ${emailConfig.secure ? 'SSL/TLS' : 'STARTTLS'}</li>
+              <li><strong>Usuário:</strong> ${emailConfig.user}</li>
+              <li><strong>Remetente:</strong> ${emailConfig.fromAddress}</li>
+            </ul>
+          </div>
+          
+          <div style="background-color: #dcfce7; padding: 15px; border-radius: 8px; border-left: 4px solid #16a34a;">
+            <p style="color: #166534; margin: 0;">
+              <strong>✅ Sucesso!</strong> O sistema de email está funcionando corretamente.
+            </p>
+          </div>
+          
+          <p style="color: #6b7280; font-size: 14px; margin-top: 30px;">
+            Data/Hora: ${new Date().toLocaleString('pt-BR')}<br>
+            Sistema: Portal Educacional - Sabercon
+          </p>
+        </div>
+      `
+    };
+
+    await transporter.sendMail(mailOptions);
+    
+    return {
+      success: true,
+      message: `Email de teste enviado com sucesso para ${testEmail}`
+    };
+  } catch (error: any) {
+    return {
+      success: false,
+      message: `Erro ao enviar email de teste: ${error.message}`,
+      error: error.code || 'UNKNOWN_ERROR'
+    };
+  }
 }
 
 export async function POST(request: NextRequest) {
@@ -33,6 +169,58 @@ export async function POST(request: NextRequest) {
 
     const body = await request.json()
     console.log('🔍 [Notification API] Dados recebidos:', JSON.stringify(body, null, 2))
+
+    // Verificar se é uma requisição de teste de conectividade
+    if (body.action === 'test_connectivity') {
+      const emailConfig = await loadEmailSettings();
+      const testResult = await testEmailConnection(emailConfig);
+      
+      if (testResult.success) {
+        // Se a conexão foi bem-sucedida, enviar email de teste
+        const sendResult = await sendTestEmail(emailConfig, body.testEmail || 'noreply@sabercon.com.br');
+        
+        return NextResponse.json({
+          success: sendResult.success,
+          message: sendResult.success 
+            ? `✅ Conectividade testada com sucesso! ${sendResult.message}`
+            : `❌ Falha no teste: ${sendResult.message}`,
+          data: {
+            connection: testResult,
+            email: sendResult,
+            config: {
+              host: emailConfig.host,
+              port: emailConfig.port,
+              secure: emailConfig.secure,
+              user: emailConfig.user,
+              fromAddress: emailConfig.fromAddress
+            }
+          }
+        }, {
+          headers: getCorsHeaders(request.headers.get('origin') || undefined)
+        });
+      } else {
+        return NextResponse.json({
+          success: false,
+          message: `❌ Falha na conectividade: ${testResult.message}`,
+          data: {
+            connection: testResult,
+            config: {
+              host: emailConfig.host,
+              port: emailConfig.port,
+              secure: emailConfig.secure,
+              user: emailConfig.user,
+              fromAddress: emailConfig.fromAddress
+            }
+          }
+        }, {
+          status: 500,
+          headers: getCorsHeaders(request.headers.get('origin') || undefined)
+        });
+      }
+    }
+
+    // Carregar configurações de email do banco de dados
+    const emailConfig = await loadEmailSettings();
 
     // Validar canal de envio
     const channel = body.channel?.toUpperCase() || 'EMAIL'
@@ -163,7 +351,7 @@ export async function POST(request: NextRequest) {
       createdAt: new Date().toISOString()
     }
 
-    // Enviar notificação pelo canal apropriado
+    // Enviar notificação pelo canal apropriado usando as credenciais do banco
     const result = await sendNotification({
       channel,
       recipients,
@@ -175,7 +363,8 @@ export async function POST(request: NextRequest) {
       priority: body.priority || 'medium',
       category: body.category || channel.toLowerCase(),
       type: body.type || 'info',
-      metadata: body.metadata || {}
+      metadata: body.metadata || {},
+      emailConfig // Passar as configurações do banco
     })
 
     // Criar registro da notificação enviada
@@ -410,17 +599,60 @@ async function sendNotification(params: {
   priority?: string,
   category?: string,
   type?: string,
-  metadata?: Record<string, any>
+  metadata?: Record<string, any>,
+  emailConfig?: any
 }): Promise<{ success: boolean, message: string, error?: any }> {
   try {
-    const { channel, recipients, subject, message } = params
+    const { channel, recipients, subject, message, html, emailConfig } = params
     
-    // Simular envio pelo canal apropriado
-    switch (channel) {
-      case 'EMAIL':
-        // Integração com serviço de email (ex: SendGrid, AWS SES)
-        break
+    // Usar configurações do banco de dados para envio real
+    if (channel === 'EMAIL' && emailConfig) {
+      try {
+                 const transporter = nodemailer.createTransport({
+           host: emailConfig.host,
+           port: emailConfig.port,
+           secure: emailConfig.secure,
+           auth: {
+             user: emailConfig.user,
+             pass: emailConfig.pass,
+           },
+           tls: {
+             rejectUnauthorized: false
+           }
+         });
+
+        // Enviar para todos os destinatários
+        const emailPromises = recipients.map(async (recipient) => {
+          const mailOptions = {
+            from: `"${emailConfig.fromName}" <${emailConfig.fromAddress}>`,
+            to: recipient,
+            subject: subject,
+            html: html ? message : undefined,
+            text: html ? undefined : message,
+          };
+
+          await transporter.sendMail(mailOptions);
+          console.log(`✅ Email enviado para: ${recipient}`);
+        });
+
+        await Promise.all(emailPromises);
         
+        return {
+          success: true,
+          message: `Notificação enviada com sucesso para ${recipients.length} destinatário(s) via ${channel}`
+        };
+      } catch (emailError: any) {
+        console.error('❌ Erro ao enviar email:', emailError);
+        return {
+          success: false,
+          message: `Erro ao enviar notificação via ${channel}: ${emailError.message}`,
+          error: emailError
+        };
+      }
+    }
+    
+    // Simular envio para outros canais
+    switch (channel) {
       case 'SMS':
         // Integração com serviço de SMS (ex: Twilio, AWS SNS)
         break
@@ -430,7 +662,7 @@ async function sendNotification(params: {
         break
     }
     
-    // Simular delay do envio
+    // Simular delay do envio para outros canais
     await new Promise(resolve => setTimeout(resolve, 1000))
     
     return {
