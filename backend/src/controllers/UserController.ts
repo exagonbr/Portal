@@ -9,63 +9,9 @@ class UserController extends BaseController<User> {
   private userRepository: any;
 
   constructor() {
-    try {
-      const repository = new UserRepository();
-      super(repository);
-      this.userRepository = repository;
-    } catch (error) {
-      console.error('Erro ao inicializar UserRepository, usando fallback:', error);
-      // Fallback para usar diretamente o repositório do TypeORM
-      const fallbackRepo = {
-        // Implementar métodos necessários do BaseRepository
-        findAll: async () => {
-          return AppDataSource.getRepository(User).find();
-        },
-        findById: async (id: string | number) => {
-          return AppDataSource.getRepository(User).findOneBy({ id: Number(id) });
-        },
-        create: async (data: any) => {
-          const repo = AppDataSource.getRepository(User);
-          const entity = repo.create(data);
-          return repo.save(entity);
-        },
-        update: async (id: string | number, data: any) => {
-          const repo = AppDataSource.getRepository(User);
-          await repo.update(Number(id), data);
-          return repo.findOneBy({ id: Number(id) });
-        },
-        delete: async (id: string | number) => {
-          await AppDataSource.getRepository(User).delete(Number(id));
-          return true;
-        },
-        findAllPaginated: async (options: any) => {
-          const repo = AppDataSource.getRepository(User);
-          const { page = 1, limit = 10, search } = options;
-          
-          const queryBuilder = repo.createQueryBuilder('user');
-          
-          if (search) {
-            queryBuilder.where('user.name LIKE :search OR user.email LIKE :search', { search: `%${search}%` });
-          }
-          
-          const total = await queryBuilder.getCount();
-          const data = await queryBuilder
-            .skip((page - 1) * limit)
-            .take(limit)
-            .getMany();
-            
-          return {
-            data,
-            page,
-            limit,
-            total
-          };
-        }
-      };
-      
-      super(fallbackRepo as any);
-      this.userRepository = fallbackRepo;
-    }
+    const repository = new UserRepository();
+    super(repository);
+    this.userRepository = repository;
   }
 
   public async getAll(req: Request, res: Response): Promise<Response> {

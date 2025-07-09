@@ -8,71 +8,9 @@ class RoleController extends BaseController<Role> {
   private roleRepository: any;
 
   constructor() {
-    try {
-      const repository = new RoleRepository();
-      super(repository);
-      this.roleRepository = repository;
-    } catch (error) {
-      console.error('Erro ao inicializar RoleRepository, usando fallback:', error);
-      // Fallback para usar diretamente o repositório do TypeORM
-      const fallbackRepo = {
-        // Implementar métodos necessários do BaseRepository
-        findAll: async () => {
-          return AppDataSource.getRepository(Role).find();
-        },
-        findById: async (id: string | number) => {
-          return AppDataSource.getRepository(Role).findOneBy({ id: Number(id) });
-        },
-        create: async (data: any) => {
-          const repo = AppDataSource.getRepository(Role);
-          const entity = repo.create(data);
-          return repo.save(entity);
-        },
-        update: async (id: string | number, data: any) => {
-          const repo = AppDataSource.getRepository(Role);
-          await repo.update(Number(id), data);
-          return repo.findOneBy({ id: Number(id) });
-        },
-        delete: async (id: string | number) => {
-          await AppDataSource.getRepository(Role).delete(Number(id));
-          return true;
-        },
-        findAllPaginated: async (options: any) => {
-          const repo = AppDataSource.getRepository(Role);
-          const { page = 1, limit = 10, search } = options;
-          
-          const queryBuilder = repo.createQueryBuilder('role');
-          
-          if (search) {
-            queryBuilder.where('role.name LIKE :search', { search: `%${search}%` });
-          }
-          
-          const total = await queryBuilder.getCount();
-          const data = await queryBuilder
-            .skip((page - 1) * limit)
-            .take(limit)
-            .getMany();
-            
-          return {
-            data,
-            page,
-            limit,
-            total
-          };
-        },
-        toggleStatus: async (id: string) => {
-          const repo = AppDataSource.getRepository(Role);
-          const role = await repo.findOneBy({ id: Number(id) });
-          if (!role) return null;
-          
-          role.isActive = !role.isActive;
-          return repo.save(role);
-        }
-      };
-      
-      super(fallbackRepo as any);
-      this.roleRepository = fallbackRepo;
-    }
+    const repository = new RoleRepository();
+    super(repository);
+    this.roleRepository = repository;
   }
 
   public async getAll(req: Request, res: Response): Promise<Response> {
