@@ -1,12 +1,14 @@
-// Script para registrar o Service Worker com Workbox
-// Deve ser carregado no HTML principal
+// Script para registrar o Service Worker
+// Este script foi mantido para compatibilidade com código existente,
+// mas o registro principal agora é feito pelo componente ServiceWorkerRegistration.tsx
 
 // Função para registrar o Service Worker
 async function registerServiceWorker() {
   if ('serviceWorker' in navigator) {
     try {
-      const registration = await navigator.serviceWorker.register('/sw.js', {
-        scope: '/'
+      const registration = await navigator.serviceWorker.register('/worker.js', {
+        scope: '/',
+        updateViaCache: 'none'
       });
 
       if (registration.installing) {
@@ -17,14 +19,18 @@ async function registerServiceWorker() {
         console.log('Service worker ativo');
       }
 
-      // Atualizar o service worker imediatamente se houver uma nova versão
+      // Verificar se há uma atualização disponível
+      if (registration.waiting) {
+        showUpdateNotification();
+      }
+
+      // Atualizar o service worker quando houver uma nova versão
       registration.addEventListener('updatefound', () => {
         const newWorker = registration.installing;
         
         newWorker.addEventListener('statechange', () => {
           if (newWorker.state === 'installed' && navigator.serviceWorker.controller) {
-            // Recarregar a página para usar o novo service worker
-            window.location.reload();
+            showUpdateNotification();
           }
         });
       });
@@ -36,31 +42,40 @@ async function registerServiceWorker() {
 }
 
 // Registrar o service worker quando a página carregar
-if (document.readyState === 'complete') {
-  registerServiceWorker();
-} else {
-  window.addEventListener('load', registerServiceWorker);
+// Apenas se não foi registrado pelo componente React
+if (!window.swRegisteredByComponent) {
+  if (document.readyState === 'complete') {
+    registerServiceWorker();
+  } else {
+    window.addEventListener('load', registerServiceWorker);
+  }
 }
 
 // Escutar mensagens do Service Worker
-navigator.serviceWorker.addEventListener('message', (event) => {
-  if (!event.data) return;
-
-  const { type, data } = event.data;
-
-  switch (type) {
-    case 'CACHE_CLEARED':
-      console.log('✅ Cache limpo pelo Service Worker:', data);
-      break;
-
-    case 'CACHE_ERROR':
-      console.log('❌ Erro no cache do Service Worker:', data);
-      break;
-
-    default:
-      console.log('📨 Mensagem do Service Worker:', event.data);
-  }
-});
+if ('serviceWorker' in navigator) {
+  navigator.serviceWorker.addEventListener('message', (event) => {
+    if (!event.data) return;
+  
+    const { type, data } = event.data;
+  
+    switch (type) {
+      case 'CACHE_CLEARED':
+        console.log('✅ Cache limpo pelo Service Worker:', data);
+        break;
+  
+      case 'CACHE_ERROR':
+        console.log('❌ Erro no cache do Service Worker:', data);
+        break;
+  
+      case 'SW_STATUS':
+        console.log('📊 Status do Service Worker:', data);
+        break;
+  
+      default:
+        console.log('📨 Mensagem do Service Worker:', event.data);
+    }
+  });
+}
 
 // Função para mostrar notificação de atualização
 function showUpdateNotification() {
@@ -102,6 +117,11 @@ function showUpdateNotification() {
       </div>
     `;
 
+    // Enviar mensagem para o SW atualizar
+    if (navigator.serviceWorker.controller) {
+      navigator.serviceWorker.controller.postMessage({ type: 'SKIP_WAITING' });
+    }
+
     setTimeout(() => {
       window.location.reload();
     }, 1000);
@@ -110,6 +130,12 @@ function showUpdateNotification() {
 
 // Função global para limpar cache via Service Worker
 window.clearServiceWorkerCache = async (reason = 'manual') => {
+  // Verificar se os utilitários estão disponíveis
+  if (window.swUtils && window.swUtils.clearServiceWorkerCache) {
+    return window.swUtils.clearServiceWorkerCache();
+  }
+  
+  // Fallback para o método antigo
   if ('serviceWorker' in navigator && navigator.serviceWorker.controller) {
     try {
       // Criar um MessageChannel para comunicação bidirecional
@@ -156,6 +182,12 @@ window.clearServiceWorkerCache = async (reason = 'manual') => {
 
 // Função global para obter informações do cache
 window.getServiceWorkerCacheInfo = async () => {
+  // Verificar se os utilitários estão disponíveis
+  if (window.swUtils && window.swUtils.checkServiceWorkerStatus) {
+    return window.swUtils.checkServiceWorkerStatus();
+  }
+  
+  // Fallback para o método antigo
   if ('serviceWorker' in navigator && navigator.serviceWorker.controller) {
     try {
       const messageChannel = new MessageChannel();

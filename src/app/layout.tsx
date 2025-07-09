@@ -3,6 +3,7 @@ import { Inter } from 'next/font/google';
 import './globals.css';
 import ClientLayout from '@/components/ClientLayout';
 import Handtalk from '@/components/Handtalk';
+import ServiceWorkerDebug from '@/components/ServiceWorkerDebug';
 
 // Configuração da fonte Inter com preload: false para evitar o preload automático
 const inter = Inter({ 
@@ -71,6 +72,8 @@ export default function RootLayout({
         
         {/* Service Worker personalizado para limpeza de cache */}
         <script src="/register-sw.js" defer />
+        {/* Adicionar script de utilitários do SW */}
+        <script src="/sw-utils.js" defer />
       </head>
       <body className={`${inter.className} m-0 p-0 h-full w-full`} suppressHydrationWarning>
         {/* Componente Handtalk para acessibilidade em LIBRAS */}
@@ -79,6 +82,8 @@ export default function RootLayout({
         <ClientLayout>
           {children}
         </ClientLayout>
+        {/* Registrar o Service Worker */}
+        <ServiceWorkerDebug />
       </body>
     </html>
   );
