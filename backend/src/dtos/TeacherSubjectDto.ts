@@ -11,10 +11,10 @@ export class UpdateTeacherSubjectDto {
 }
 
 export class TeacherSubjectResponseDto {
-  id: string;
-  version: string;
-  dateCreated: string;
-  deleted: string;
-  lastUpdated: string;
-  name: string;
+  id: string = "";
+  version: string = "";
+  dateCreated: string = "";
+  deleted: string = "";
+  lastUpdated: string = "";
+  name: string = "";
 }

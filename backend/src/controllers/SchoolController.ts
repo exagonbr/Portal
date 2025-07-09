@@ -1,39 +1,43 @@
 import { Request, Response } from 'express';
 import { BaseController } from './BaseController';
-import { Unit } from '../entities/Unit';
-import { UnitRepository } from '../repositories/UnitRepository'
-import { School } from '../entities/School';;
+import { School } from '../entities/School';
+import { SchoolRepository } from '../repositories/SchoolRepository';
 
-const unitRepository = new UnitRepository();
+class SchoolController extends BaseController<School> {
+  private schoolRepository: SchoolRepository;
 
-class SchoolController extends BaseController<Unit> {
   constructor() {
     const repository = new SchoolRepository();
     super(repository);
     this.schoolRepository = repository;
-    super(unitRepository);
   }
 
   public async getAll(req: Request, res: Response): Promise<Response> {
     try {
       const { page = '1', limit = '10', search, institution_id } = req.query;
       
-      const filters = {
+      const options = {
         page: parseInt(page as string, 10),
         limit: parseInt(limit as string, 10),
-        search: search as string,
-        institutionId: institution_id ? parseInt(institution_id as string, 10) : undefined
+        search: search as string
       };
 
-      const result = await unitRepository.findWithFilters(filters);
+      const result = await this.schoolRepository.findAllPaginated(options);
+      
+      // Se institution_id estiver presente, filtramos os resultados
+      let filteredData = result.data;
+      if (institution_id) {
+        const institutionId = parseInt(institution_id as string, 10);
+        filteredData = filteredData.filter(school => school.institutionId === institutionId);
+      }
       
       return res.json({
         success: true,
-        items: result.data,
+        items: filteredData,
         total: result.total,
-        page: filters.page,
-        limit: filters.limit,
-        totalPages: Math.ceil(result.total / filters.limit)
+        page: options.page,
+        limit: options.limit,
+        totalPages: Math.ceil(result.total / options.limit)
       });
     } catch (error) {
       console.error(`Error in getAll: ${error}`);
@@ -44,11 +48,11 @@ class SchoolController extends BaseController<Unit> {
   public async toggleStatus(req: Request, res: Response): Promise<Response> {
     try {
       const { id } = req.params;
-      const unit = await unitRepository.toggleStatus(id);
-      if (!unit) {
+      const school = await this.schoolRepository.toggleStatus(id);
+      if (!school) {
         return res.status(404).json({ success: false, message: 'School not found' });
       }
-      return res.status(200).json({ success: true, data: unit });
+      return res.status(200).json({ success: true, data: school });
     } catch (error) {
       console.error(`Error in toggleStatus: ${error}`);
       return res.status(500).json({ success: false, message: 'Internal Server Error' });

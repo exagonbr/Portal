@@ -12,123 +12,123 @@ export class ActivitySessionsController extends BaseController<ActivitySessions>
     this.activitySessionsRepository = repository;
   }
 
-  // Sobrescrever os métodos do BaseController para usar o repositório específico
-  public async findAll(req: Request, res: Response): Promise<Response> {
-    try {
-      const page = parseInt(req.query.page as string) || 1;
-      const limit = parseInt(req.query.limit as string) || 10;
-      const search = req.query.search as string;
+ // Sobrescrever os métodos do BaseController para usar o repositório específico
+ public async findAll(req: Request, res: Response): Promise<Response> {
+  try {
+   const page = parseInt(req.query.page as string) || 1;
+   const limit = parseInt(req.query.limit as string) || 10;
+   const search = req.query.search as string;
 
-      const result = await this.activitySessionsRepository.findAllPaginated({
-        page,
-        limit,
-        search
-      });
+   const result = await this.activitySessionsRepository.findAllPaginated({
+    page,
+    limit,
+    search
+   });
 
-      return res.status(200).json({ success: true, data: result });
-    } catch (error) {
-      console.error(`Error in findAll: ${error}`);
-      return res.status(500).json({ success: false, message: 'Internal Server Error' });
-    }
+   return res.status(200).json({ success: true, data: result });
+  } catch (error) {
+   console.error(`Error in findAll: ${error}`);
+   return res.status(500).json({ success: false, message: 'Internal Server Error' });
   }
+ }
 
-  public async findOne(req: Request, res: Response): Promise<Response> {
-    try {
-      const { id } = req.params;
-      const record = await this.activitySessionsRepository.findById(parseInt(id));
+ public async findOne(req: Request, res: Response): Promise<Response> {
+  try {
+   const { id } = req.params;
+   const record = await this.activitySessionsRepository.findById(parseInt(id));
 
-      if (!record) {
-        return res.status(404).json({ success: false, message: 'Registro não encontrado' });
-      }
+   if (!record) {
+    return res.status(404).json({ success: false, message: 'Registro não encontrado' });
+   }
 
-      return res.status(200).json({ success: true, data: record });
-    } catch (error) {
-      console.error(`Error in findOne: ${error}`);
-      return res.status(500).json({ success: false, message: 'Internal Server Error' });
-    }
+   return res.status(200).json({ success: true, data: record });
+  } catch (error) {
+   console.error(`Error in findOne: ${error}`);
+   return res.status(500).json({ success: false, message: 'Internal Server Error' });
   }
+ }
 
-  public async search(req: Request, res: Response): Promise<Response> {
-    try {
-      const query = req.query.q as string;
-      const page = parseInt(req.query.page as string) || 1;
-      const limit = parseInt(req.query.limit as string) || 10;
+ public async search(req: Request, res: Response): Promise<Response> {
+  try {
+   const query = req.query.q as string;
+   const page = parseInt(req.query.page as string) || 1;
+   const limit = parseInt(req.query.limit as string) || 10;
 
-      const result = await this.activitySessionsRepository.findAllPaginated({
-        page,
-        limit,
-        search: query
-      });
+   const result = await this.activitySessionsRepository.findAllPaginated({
+    page,
+    limit,
+    search: query
+   });
 
-      return res.status(200).json({ success: true, data: result });
-    } catch (error) {
-      console.error(`Error in search: ${error}`);
-      return res.status(500).json({ success: false, message: 'Internal Server Error' });
-    }
+   return res.status(200).json({ success: true, data: result });
+  } catch (error) {
+   console.error(`Error in search: ${error}`);
+   return res.status(500).json({ success: false, message: 'Internal Server Error' });
   }
+ }
 
-  public async findById(req: Request, res: Response): Promise<Response> {
-    try {
-      const { id } = req.params;
-      const record = await this.activitySessionsRepository.findById(parseInt(id));
+ public async findById(req: Request, res: Response): Promise<Response> {
+  try {
+   const { id } = req.params;
+   const record = await this.activitySessionsRepository.findById(parseInt(id));
 
-      if (!record) {
-        return res.status(404).json({ success: false, message: 'Registro não encontrado' });
-      }
+   if (!record) {
+    return res.status(404).json({ success: false, message: 'Registro não encontrado' });
+   }
 
-      return res.status(200).json({ success: true, data: record });
-    } catch (error) {
-      console.error(`Error in findById: ${error}`);
-      return res.status(500).json({ success: false, message: 'Internal Server Error' });
-    }
+   return res.status(200).json({ success: true, data: record });
+  } catch (error) {
+   console.error(`Error in findById: ${error}`);
+   return res.status(500).json({ success: false, message: 'Internal Server Error' });
   }
+ }
 
-  public async create(req: Request, res: Response): Promise<Response> {
-    try {
-      const data = req.body;
-      const record = await this.activitySessionsRepository.create(data);
-      return res.status(201).json({ success: true, data: record });
-    } catch (error) {
-      console.error(`Error in create: ${error}`);
-      return res.status(500).json({ success: false, message: 'Internal Server Error' });
-    }
+ public async create(req: Request, res: Response): Promise<Response> {
+  try {
+   const data = req.body;
+   const record = await this.activitySessionsRepository.create(data);
+   return res.status(201).json({ success: true, data: record });
+  } catch (error) {
+   console.error(`Error in create: ${error}`);
+   return res.status(500).json({ success: false, message: 'Internal Server Error' });
   }
+ }
 
-  public async update(req: Request, res: Response): Promise<Response> {
-    try {
-      const { id } = req.params;
-      const data = req.body;
-      
-      const record = await this.activitySessionsRepository.update(parseInt(id), data);
-      
-      if (!record) {
-        return res.status(404).json({ success: false, message: 'Registro não encontrado' });
-      }
+ public async update(req: Request, res: Response): Promise<Response> {
+  try {
+   const { id } = req.params;
+   const data = req.body;
+   
+   const record = await this.activitySessionsRepository.update(parseInt(id), data);
+   
+   if (!record) {
+    return res.status(404).json({ success: false, message: 'Registro não encontrado' });
+   }
 
-      return res.status(200).json({ success: true, data: record });
-    } catch (error) {
-      console.error(`Error in update: ${error}`);
-      return res.status(500).json({ success: false, message: 'Internal Server Error' });
-    }
+   return res.status(200).json({ success: true, data: record });
+  } catch (error) {
+   console.error(`Error in update: ${error}`);
+   return res.status(500).json({ success: false, message: 'Internal Server Error' });
   }
+ }
 
-  public async delete(req: Request, res: Response): Promise<Response> {
-    try {
-      const { id } = req.params;
-      const success = await this.activitySessionsRepository.delete(parseInt(id));
-      
-      if (!success) {
-        return res.status(404).json({ success: false, message: 'Registro não encontrado' });
-      }
+ public async delete(req: Request, res: Response): Promise<Response> {
+  try {
+   const { id } = req.params;
+   const success = await this.activitySessionsRepository.delete(parseInt(id));
+   
+   if (!success) {
+    return res.status(404).json({ success: false, message: 'Registro não encontrado' });
+   }
 
-      return res.status(200).json({ success: true, message: 'Registro deletado com sucesso' });
-    } catch (error) {
-      console.error(`Error in delete: ${error}`);
-      return res.status(500).json({ success: false, message: 'Internal Server Error' });
-    }
+   return res.status(200).json({ success: true, message: 'Registro deletado com sucesso' });
+  } catch (error) {
+   console.error(`Error in delete: ${error}`);
+   return res.status(500).json({ success: false, message: 'Internal Server Error' });
   }
+ }
 
-  public async remove(req: Request, res: Response): Promise<Response> {
-    return this.delete(req, res);
-  }
+ public async remove(req: Request, res: Response): Promise<Response> {
+  return this.delete(req, res);
+ }
 }

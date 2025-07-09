@@ -1,5 +1,5 @@
+import { apiClient } from '@/lib/api-client';
 import { BaseApiService } from './base-api-service';
-import { apiClient } from '@/lib/api-client' from './base-api-service';
 
 export interface ActivitySummary {
   id: string;

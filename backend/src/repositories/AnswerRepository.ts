@@ -1,3 +1,4 @@
+import { Repository } from "typeorm";
 import { AppDataSource } from '../config/typeorm.config';
 import { Repository, DeleteResult } from 'typeorm';
 import { ExtendedRepository, PaginatedResult } from './ExtendedRepository';

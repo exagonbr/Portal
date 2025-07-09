@@ -1,20 +1,19 @@
 import { Router } from 'express';
-import { SystemSettingsController } from '../controllers/SystemSettingsController';
+import systemSettingsController from '../controllers/SystemSettingsController';
 import { requireAuth } from '../middleware/requireAuth';
 import { CreateSystemSettingsDto, UpdateSystemSettingsDto } from '../dtos/SystemSettingsDto';
 
 const router = Router();
-const SystemSettingsController = new SystemSettingsController();
 
 // Aplicar middleware de autenticação
 // Middleware aplicado no index.ts
 
 // Rotas CRUD
-router.get('/', SystemSettingsController.findAll.bind(SystemSettingsController));
-router.get('/search', SystemSettingsController.search.bind(SystemSettingsController));
-router.get('/:id', SystemSettingsController.findOne.bind(SystemSettingsController));
-router.post('/', SystemSettingsController.create.bind(SystemSettingsController));
-router.put('/:id', SystemSettingsController.update.bind(SystemSettingsController));
-router.delete('/:id', SystemSettingsController.remove.bind(SystemSettingsController));
+router.get('/', systemSettingsController.getAll.bind(systemSettingsController));
+router.get('/search', systemSettingsController.search.bind(systemSettingsController));
+router.get('/:id', systemSettingsController.getById.bind(systemSettingsController));
+router.post('/', systemSettingsController.create.bind(systemSettingsController));
+router.put('/:id', systemSettingsController.update.bind(systemSettingsController));
+router.delete('/:id', systemSettingsController.delete.bind(systemSettingsController));
 
 export default router;

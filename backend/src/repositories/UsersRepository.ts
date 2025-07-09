@@ -1,3 +1,4 @@
+import { Repository } from "typeorm";
 import { ExtendedRepository, PaginatedResult } from './ExtendedRepository';
 import { User } from '../entities/User';
 import db from '../config/database';
@@ -41,7 +42,9 @@ export interface UsersListResult {
 }
 
 export class UsersRepository extends BaseRepository<User> {
+  private repository: Repository<Users>;
   constructor() {
+    this.repository = AppDataSource.getRepository(Users);
     super('users'); // Corrigindo o nome da tabela para users (plural)
   }
   // Implementação do método abstrato findAllPaginated

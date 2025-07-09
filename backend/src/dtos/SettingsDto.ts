@@ -23,14 +23,14 @@ export class UpdateSettingsDto {
 }
 
 export class SettingsResponseDto {
-  id: string;
-  version: string;
-  defaultValue: string;
-  description: string;
-  name: string;
-  required: string;
-  settingsKey: string;
-  settingsType: string;
-  validationRequired: string;
-  value: string;
+  id: string = "";
+  version: string = "";
+  defaultValue: string = "";
+  description: string = "";
+  name: string = "";
+  required: string = "";
+  settingsKey: string = "";
+  settingsType: string = "";
+  validationRequired: string = "";
+  value: string = "";
 }

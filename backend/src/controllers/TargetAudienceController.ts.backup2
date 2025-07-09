@@ -1,0 +1,57 @@
+import { Request, Response } from 'express';
+import { TargetAudienceRepository } from '../repositories/TargetAudienceRepository';
+import { BaseController } from './BaseController';
+import { TargetAudience } from '../entities/TargetAudience';
+
+
+
+class TargetAudienceController extends BaseController<TargetAudience> {
+    private TargetAudienceRepository: TargetAudienceRepository;
+
+    constructor() {
+        const repository = new TargetAudienceRepository();
+        super(repository);
+        this.TargetAudienceRepository = repository;
+    }
+
+  async toggleStatus(req: Request, res: Response) {
+    try {
+      const { id } = req.params;
+      const targetAudience = await targetAudienceRepository.toggleStatus(id);
+      if (!targetAudience) {
+        return res.status(404).json({ success: false, message: 'Target Audience not found' });
+      }
+      return res.status(200).json({ success: true, data: targetAudience });
+    } catch (error) {
+      console.error(`Error in toggleStatus: ${error}`);
+      return res.status(500).json({ success: false, message: 'Internal Server Error' });
+    }
+  }
+
+  async search(req: Request, res: Response) {
+    try {
+      const { q } = req.query;
+      if (!q) {
+        return res.status(400).json({ success: false, message: 'Query parameter "q" is required' });
+      }
+      
+      const targetAudiences = await targetAudienceRepository.findByName(q as string);
+      return res.status(200).json({ success: true, data: targetAudiences });
+    } catch (error) {
+      console.error(`Error in search target audiences: ${error}`);
+      return res.status(500).json({ success: false, message: 'Internal Server Error' });
+    }
+  }
+
+  async getActive(req: Request, res: Response) {
+    try {
+      const targetAudiences = await targetAudienceRepository.findActive();
+      return res.status(200).json({ success: true, data: targetAudiences });
+    } catch (error) {
+      console.error(`Error in getActive: ${error}`);
+      return res.status(500).json({ success: false, message: 'Internal Server Error' });
+    }
+  }
+}
+
+export default new TargetAudienceController();

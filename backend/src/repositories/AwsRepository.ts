@@ -13,6 +13,10 @@ interface AwsData {
 }
 
 class AwsRepository {
+  constructor() {
+    // Inicialização do cliente AWS SDK poderia ser feita aqui
+  }
+  
   async getSystemAnalytics() {
     console.log('Fetching system analytics from AWS...');
     return { cpu: 50, memory: 65 };

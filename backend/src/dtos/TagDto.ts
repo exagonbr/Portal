@@ -11,10 +11,10 @@ export class UpdateTagDto {
 }
 
 export class TagResponseDto {
-  id: string;
-  version: string;
-  dateCreated: string;
-  deleted: string;
-  lastUpdated: string;
-  name: string;
+  id: string = "";
+  version: string = "";
+  dateCreated: string = "";
+  deleted: string = "";
+  lastUpdated: string = "";
+  name: string = "";
 }

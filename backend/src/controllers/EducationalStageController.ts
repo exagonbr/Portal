@@ -3,8 +3,6 @@ import { EducationalStageRepository } from '../repositories/EducationalStageRepo
 import { BaseController } from './BaseController';
 import { EducationalStage } from '../entities/EducationalStage';
 
-const educationalStageRepository = new EducationalStageRepository();
-
 class EducationalStageController extends BaseController<EducationalStage> {
   private educationalStageRepository: EducationalStageRepository;
 
@@ -14,63 +12,63 @@ class EducationalStageController extends BaseController<EducationalStage> {
     this.educationalStageRepository = repository;
   }
 
-  async search(req: Request, res: Response) {
-    try {
-      const { q } = req.query;
-      if (!q) {
-        return res.status(400).json({ success: false, message: 'Query parameter "q" is required' });
-      }
-      
-      const educationalStages = await educationalStageRepository.findByName(q as string);
-      return res.status(200).json({ success: true, data: educationalStages });
-    } catch (error) {
-      console.error(`Error in search educational stages: ${error}`);
-      return res.status(500).json({ success: false, message: 'Internal Server Error' });
-    }
+ async search(req: Request, res: Response) {
+  try {
+   const { q } = req.query;
+   if (!q) {
+    return res.status(400).json({ success: false, message: 'Query parameter "q" is required' });
+   }
+   
+   const educationalStages = await this.educationalStageRepository.findByName(q as string);
+   return res.status(200).json({ success: true, data: educationalStages });
+  } catch (error) {
+   console.error(`Error in search educational stages: ${error}`);
+   return res.status(500).json({ success: false, message: 'Internal Server Error' });
   }
+ }
 
-  async getActive(req: Request, res: Response) {
-    try {
-      const educationalStages = await educationalStageRepository.findActive();
-      return res.status(200).json({ success: true, data: educationalStages });
-    } catch (error) {
-      console.error(`Error in getActive: ${error}`);
-      return res.status(500).json({ success: false, message: 'Internal Server Error' });
-    }
+ async getActive(req: Request, res: Response) {
+  try {
+   const educationalStages = await this.educationalStageRepository.findActive();
+   return res.status(200).json({ success: true, data: educationalStages });
+  } catch (error) {
+   console.error(`Error in getActive: ${error}`);
+   return res.status(500).json({ success: false, message: 'Internal Server Error' });
   }
+ }
 
-  async getByGrade(req: Request, res: Response) {
-    try {
-      const { grade } = req.params;
-      const gradeNumber = parseInt(grade);
-      
-      if (isNaN(gradeNumber) || gradeNumber < 1 || gradeNumber > 9) {
-        return res.status(400).json({ success: false, message: 'Grade must be a number between 1 and 9' });
-      }
-      
-      const educationalStages = await educationalStageRepository.findByGrade(gradeNumber);
-      return res.status(200).json({ success: true, data: educationalStages });
-    } catch (error) {
-      console.error(`Error in getByGrade: ${error}`);
-      return res.status(500).json({ success: false, message: 'Internal Server Error' });
-    }
+ async getByGrade(req: Request, res: Response) {
+  try {
+   const { grade } = req.params;
+   const gradeNumber = parseInt(grade);
+   
+   if (isNaN(gradeNumber) || gradeNumber < 1 || gradeNumber > 9) {
+    return res.status(400).json({ success: false, message: 'Grade must be a number between 1 and 9' });
+   }
+   
+   const educationalStages = await this.educationalStageRepository.findByGrade(gradeNumber);
+   return res.status(200).json({ success: true, data: educationalStages });
+  } catch (error) {
+   console.error(`Error in getByGrade: ${error}`);
+   return res.status(500).json({ success: false, message: 'Internal Server Error' });
   }
+ }
 
-  async getByUuid(req: Request, res: Response) {
-    try {
-      const { uuid } = req.params;
-      const educationalStage = await educationalStageRepository.findByUuid(uuid);
-      
-      if (!educationalStage) {
-        return res.status(404).json({ success: false, message: 'Educational Stage not found' });
-      }
-      
-      return res.status(200).json({ success: true, data: educationalStage });
-    } catch (error) {
-      console.error(`Error in getByUuid: ${error}`);
-      return res.status(500).json({ success: false, message: 'Internal Server Error' });
-    }
+ async getByUuid(req: Request, res: Response) {
+  try {
+   const { uuid } = req.params;
+   const educationalStage = await this.educationalStageRepository.findByUuid(uuid);
+   
+   if (!educationalStage) {
+    return res.status(404).json({ success: false, message: 'Educational Stage not found' });
+   }
+   
+   return res.status(200).json({ success: true, data: educationalStage });
+  } catch (error) {
+   console.error(`Error in getByUuid: ${error}`);
+   return res.status(500).json({ success: false, message: 'Internal Server Error' });
   }
+ }
 }
 
 export default new EducationalStageController();

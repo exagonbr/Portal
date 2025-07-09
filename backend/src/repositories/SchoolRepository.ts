@@ -1,4 +1,6 @@
 import { ExtendedRepository, PaginatedResult } from './ExtendedRepository';
+import { Repository } from 'typeorm';
+import { AppDataSource } from '../config/typeorm.config';
 import { School } from '../entities/School';
 
 export interface CreateSchoolData extends Omit<School, 'id' | 'dateCreated' | 'lastUpdated' | 'institution' | 'total_students' | 'total_teachers' | 'total_classes' | 'total_managers' | 'active_classes'> {}
@@ -16,8 +18,9 @@ export interface SchoolFilters {
 
 export class SchoolRepository extends ExtendedRepository<School> {
   constructor() {
-    super('schools');
+    super("schools");
   }
+  
   // Implementação do método abstrato findAllPaginated
   async findAllPaginated(options: {
     page?: number;
@@ -27,57 +30,41 @@ export class SchoolRepository extends ExtendedRepository<School> {
     const { page = 1, limit = 10, search } = options;
     
     try {
-      if (this.repository) {
-        let queryBuilder = this.repository.createQueryBuilder('school');
-        
-        // Adicione condições de pesquisa específicas para esta entidade
-        if (search) {
-          queryBuilder = queryBuilder
-            .where('school.name ILIKE :search', { search: `%${search}%` });
-        }
-        
-        const [data, total] = await queryBuilder
-          .skip((page - 1) * limit)
-          .take(limit)
-          .orderBy('school.id', 'DESC')
-          .getManyAndCount();
-          
-        return {
-          data,
-          total,
-          page,
-          limit
-        };
-      } else {
-        // Fallback para query raw
-        const query = `
-          SELECT * FROM school
-          ${search ? `WHERE name ILIKE '%${search}%'` : ''}
-          ORDER BY id DESC
-          LIMIT ${limit} OFFSET ${(page - 1) * limit}
-        `;
-        
-        const countQuery = `
-          SELECT COUNT(*) as total FROM school
-          ${search ? `WHERE name ILIKE '%${search}%'` : ''}
-        `;
+      // Usar diretamente o db e tableName herdados da classe base
+      let query = this.db(this.tableName).select("*");
 
-        const [data, countResult] = await Promise.all([
-          AppDataSource.query(query),
-          AppDataSource.query(countQuery)
-        ]);
-
-        const total = parseInt(countResult[0].total);
-
-        return {
-          data,
-          total,
-          page,
-          limit
-        };
+      // Adicione condições de pesquisa específicas para esta entidade
+      if (search) {
+        query = query.whereILike("name", `%${search}%`);
       }
+
+      // Executar a consulta paginada
+      const offset = (page - 1) * limit;
+      const data = await query
+        .orderBy("id", "DESC")
+        .limit(limit)
+        .offset(offset);
+
+      // Contar o total de registros
+      const countResult = await this.db(this.tableName)
+        .count("* as total")
+        .modify(qb => {
+          if (search) {
+            qb.whereILike("name", `%${search}%`);
+          }
+        })
+        .first();
+
+      const total = parseInt(countResult?.total as string, 10) || 0;
+
+      return {
+        data,
+        total,
+        page,
+        limit
+      };
     } catch (error) {
-      console.error(`Erro ao buscar registros de school:`, error);
+      console.error(`Erro ao buscar registros de escola:`, error);
       throw error;
     }
   }
@@ -105,44 +92,54 @@ export class SchoolRepository extends ExtendedRepository<School> {
     return [];
   }
 
-  async findWithFilters(filters: SchoolFilters): Promise<{ data: School[], total: number }> {
+  async findWithFilters(filters: SchoolFilters): Promise<PaginatedResult<School>> {
     const {
       page = 1,
       limit = 10,
-      sortBy = 'name',
+      sortBy = 'name' as keyof School,
       sortOrder = 'asc',
       search,
       ...otherFilters
     } = filters;
 
-    const query = this.db(this.tableName).select('*');
-    const countQuery = this.db(this.tableName).count('* as total').first();
+    try {
+      const query = this.db(this.tableName).select('*');
+      const countQuery = this.db(this.tableName).count('* as total').first();
 
-    if (search) {
-      query.where(builder => {
-        builder
-          .where('name', 'ilike', `%${search}%`)
-          .orWhere('institutionName', 'ilike', `%${search}%`);
-      });
-      countQuery.where(builder => {
-        builder
-          .where('name', 'ilike', `%${search}%`)
-          .orWhere('institutionName', 'ilike', `%${search}%`);
-      });
-    }
+      if (search) {
+        query.where(builder => {
+          builder
+            .where('name', 'ilike', `%${search}%`)
+            .orWhere('institutionName', 'ilike', `%${search}%`);
+        });
+        countQuery.where(builder => {
+          builder
+            .where('name', 'ilike', `%${search}%`)
+            .orWhere('institutionName', 'ilike', `%${search}%`);
+        });
+      }
 
-    if (Object.keys(otherFilters).length > 0) {
+      if (Object.keys(otherFilters).length > 0) {
         query.where(otherFilters);
         countQuery.where(otherFilters);
+      }
+      
+      query.orderBy(sortBy, sortOrder).limit(limit).offset((page - 1) * limit);
+
+      const [data, totalResult] = await Promise.all([query, countQuery]);
+      
+      const total = totalResult ? parseInt(totalResult.total as string, 10) : 0;
+
+      return {
+        data,
+        total,
+        page,
+        limit
+      };
+    } catch (error) {
+      console.error(`Erro ao buscar escolas com filtros:`, error);
+      throw error;
     }
-    
-    query.orderBy(sortBy, sortOrder).limit(limit).offset((page - 1) * limit);
-
-    const [data, totalResult] = await Promise.all([query, countQuery]);
-    
-    const total = totalResult ? parseInt(totalResult.total as string, 10) : 0;
-
-    return { data, total };
   }
 
   async toggleStatus(id: string): Promise<School | null> {

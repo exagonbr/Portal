@@ -25,17 +25,17 @@ export class UpdateVideoDto {
 }
 
 export class VideoResponseDto {
-  id: string;
-  version: string;
-  title: string;
-  description: string;
-  filePath: string;
-  duration: string;
-  thumbnailUrl: string;
-  tvShowId: string;
-  episodeNumber: string;
-  seasonNumber: string;
-  isActive: string;
-  createdAt: string;
-  updatedAt: string;
+  id: string = "";
+  version: string = "";
+  title: string = "";
+  description: string = "";
+  filePath: string = "";
+  duration: string = "";
+  thumbnailUrl: string = "";
+  tvShowId: string = "";
+  episodeNumber: string = "";
+  seasonNumber: string = "";
+  isActive: string = "";
+  createdAt: string = "";
+  updatedAt: string = "";
 }

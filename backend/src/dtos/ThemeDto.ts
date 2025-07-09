@@ -11,8 +11,8 @@ export class UpdateThemeDto {
 }
 
 export class ThemeResponseDto {
-  id: string;
-  version: string;
-  apiId: string;
-  name: string;
+  id: string = "";
+  version: string = "";
+  apiId: string = "";
+  name: string = "";
 }

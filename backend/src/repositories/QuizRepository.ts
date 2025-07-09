@@ -1,19 +1,20 @@
 import { ExtendedRepository, PaginatedResult } from './ExtendedRepository';
+import { Repository } from 'typeorm';
+import { AppDataSource } from '../config/typeorm.config';
 import { Quiz } from '../entities/Quiz';
 import { Question } from '../entities/Question';
-
-// Supondo que exista uma entidade QuizAttempt
-// import { QuizAttempt } from '../entities/QuizAttempt';
+import { QuizAttempt } from '../entities/QuizAttempt';
+import { QuizAttemptRepository } from './QuizAttemptRepository';
 
 export interface CreateQuizData extends Omit<Quiz, 'id' | 'created_at' | 'updated_at' | 'questions'> {}
 export interface UpdateQuizData extends Partial<CreateQuizData> {}
 
 export class QuizRepository extends ExtendedRepository<Quiz> {
-  // private attemptRepository: BaseRepository<QuizAttempt>;
+  private attemptRepository: QuizAttemptRepository;
 
   constructor() {
-    super('quizzes');
-    // this.attemptRepository = new BaseRepository<QuizAttempt>('quiz_attempts');
+    super("quizs");
+    this.attemptRepository = new QuizAttemptRepository();
   }
   // Implementação do método abstrato findAllPaginated
   async findAllPaginated(options: {
@@ -24,55 +25,39 @@ export class QuizRepository extends ExtendedRepository<Quiz> {
     const { page = 1, limit = 10, search } = options;
     
     try {
-      if (this.repository) {
-        let queryBuilder = this.repository.createQueryBuilder('quiz');
-        
-        // Adicione condições de pesquisa específicas para esta entidade
-        if (search) {
-          queryBuilder = queryBuilder
-            .where('quiz.name ILIKE :search', { search: `%${search}%` });
-        }
-        
-        const [data, total] = await queryBuilder
-          .skip((page - 1) * limit)
-          .take(limit)
-          .orderBy('quiz.id', 'DESC')
-          .getManyAndCount();
-          
-        return {
-          data,
-          total,
-          page,
-          limit
-        };
-      } else {
-        // Fallback para query raw
-        const query = `
-          SELECT * FROM quiz
-          ${search ? `WHERE name ILIKE '%${search}%'` : ''}
-          ORDER BY id DESC
-          LIMIT ${limit} OFFSET ${(page - 1) * limit}
-        `;
-        
-        const countQuery = `
-          SELECT COUNT(*) as total FROM quiz
-          ${search ? `WHERE name ILIKE '%${search}%'` : ''}
-        `;
+      // Usar diretamente o db e tableName herdados da classe base
+      let query = this.db(this.tableName).select("*");
 
-        const [data, countResult] = await Promise.all([
-          AppDataSource.query(query),
-          AppDataSource.query(countQuery)
-        ]);
-
-        const total = parseInt(countResult[0].total);
-
-        return {
-          data,
-          total,
-          page,
-          limit
-        };
+      // Adicione condições de pesquisa específicas para esta entidade
+      if (search) {
+        query = query.whereILike("name", `%${search}%`);
       }
+
+      // Executar a consulta paginada
+      const offset = (page - 1) * limit;
+      const data = await query
+        .orderBy("id", "DESC")
+        .limit(limit)
+        .offset(offset);
+
+      // Contar o total de registros
+      const countResult = await this.db(this.tableName)
+        .count("* as total")
+        .modify(qb => {
+          if (search) {
+            qb.whereILike("name", `%${search}%`);
+          }
+        })
+        .first();
+
+      const total = parseInt(countResult?.total as string, 10) || 0;
+
+      return {
+        data,
+        total,
+        page,
+        limit
+      };
     } catch (error) {
       console.error(`Erro ao buscar registros de quiz:`, error);
       throw error;
@@ -102,18 +87,36 @@ export class QuizRepository extends ExtendedRepository<Quiz> {
     return this.db('questions').where('quiz_id', quizId).orderBy('order', 'asc');
   }
 
-  // Métodos para QuizAttempt (exemplo)
-  /*
-  async startAttempt(quizId: string, userId: string): Promise<QuizAttempt> {
-    return this.attemptRepository.create({ quiz_id: quizId, user_id: userId, status: 'started' });
+  // Métodos para QuizAttempt
+  async startAttempt(quizId: number, userId: number): Promise<QuizAttempt> {
+    return this.attemptRepository.startAttempt(quizId, userId);
   }
 
-  async submitAttempt(attemptId: string, score: number): Promise<QuizAttempt | null> {
-    return this.attemptRepository.update(attemptId, { score, status: 'completed', completed_at: new Date() });
+  async submitAttempt(attemptId: number, score: number, answers: Record<string, any>): Promise<QuizAttempt | null> {
+    return this.attemptRepository.submitAttempt(attemptId, score, answers);
   }
 
-  async getUserAttempts(quizId: string, userId: string): Promise<QuizAttempt[]> {
-    return this.attemptRepository.findAll({ quiz_id: quizId, user_id: userId });
+  async getUserAttempts(quizId: number, userId: number): Promise<QuizAttempt[]> {
+    return this.attemptRepository.getUserAttempts(quizId, userId);
   }
-  */
+  
+  async getLatestAttempt(quizId: number, userId: number): Promise<QuizAttempt | null> {
+    return this.attemptRepository.getLatestAttempt(quizId, userId);
+  }
+
+  async getCompletedAttempts(quizId: number, userId: number): Promise<QuizAttempt[]> {
+    return this.attemptRepository.getCompletedAttempts(quizId, userId);
+  }
+
+  async updateAttemptStatus(attemptId: number, status: string, answers?: Record<string, any>): Promise<QuizAttempt | null> {
+    return this.attemptRepository.updateAttemptStatus(attemptId, status, answers);
+  }
+
+  async getAttemptDetails(attemptId: number): Promise<QuizAttempt | null> {
+    return this.attemptRepository.getAttemptDetails(attemptId);
+  }
+
+  async abandonAttempt(attemptId: number): Promise<QuizAttempt | null> {
+    return this.attemptRepository.abandonAttempt(attemptId);
+  }
 }

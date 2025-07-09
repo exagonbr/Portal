@@ -1,6 +1,13 @@
 import { Knex } from 'knex';
 import db from '../config/database';
 
+export interface PaginatedResult<T> {
+  data: T[];
+  total: number;
+  page: number;
+  limit: number;
+}
+
 // Interface para os métodos comuns entre repositórios
 export interface IRepository<T> {
   findAll(options?: any): Promise<any>;
@@ -40,7 +47,7 @@ export abstract class BaseRepository<T extends { id: string | number }> implemen
     page?: number;
     limit?: number;
     search?: string;
-  } = {}): Promise<{ data: T[]; total: number; page: number; limit: number }> {
+  } = {}): Promise<PaginatedResult<T>> {
     const { page = 1, limit = 10 } = options;
     
     const data = await this.findAll({} as Partial<T>, { page, limit });

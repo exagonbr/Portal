@@ -2,11 +2,14 @@ import { Request } from 'express';
 import jwt from 'jsonwebtoken';
 import { db } from '../database';
 import { JWT_CONFIG, AccessTokenPayload, RefreshTokenPayload } from '../config/jwt';
-import { user as User } from '@prisma/client';
 import { v4 as uuidv4 } from 'uuid';
 
 // Tipagem para o usuário obtido do banco de dados
-interface UserWithRole extends User {
+export interface UserWithRole {
+  id: number;
+  email: string;
+  full_name?: string;
+  institution_id?: number;
   role: string;
   permissions: string[];
 }

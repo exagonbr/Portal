@@ -1,9 +1,10 @@
+import { Repository } from "typeorm";
 import { ExtendedRepository, PaginatedResult } from './ExtendedRepository';
 import { Book } from '../entities/Book';
 
 export class BookRepository extends ExtendedRepository<Book> {
   constructor() {
-    super('books');
+    super("books");
   }
   // Implementação do método abstrato findAllPaginated
   async findAllPaginated(options: {

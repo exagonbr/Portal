@@ -25,4 +25,20 @@ export abstract class ExtendedRepository<T extends { id: string | number }> exte
   async findAll(filters?: Partial<T>, pagination?: { page: number; limit: number }): Promise<T[]> {
     return super.findAll(filters, pagination);
   }
+
+  async findById(id: string | number): Promise<T | null> {
+    return super.findById(id);
+  }
+
+  async create(data: Partial<T>): Promise<T> {
+    return super.create(data);
+  }
+
+  async update(id: string | number, data: Partial<T>): Promise<T | null> {
+    return super.update(id, data);
+  }
+
+  async delete(id: string | number): Promise<boolean> {
+    return super.delete(id);
+  }
 } 

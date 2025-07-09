@@ -15,12 +15,12 @@ export class UpdateViewingStatusDto {
 }
 
 export class ViewingStatusResponseDto {
-  id: string;
-  userId: string;
-  videoId: string;
-  progressSeconds: string;
-  completed: string;
-  lastWatched: string;
-  createdAt: string;
-  updatedAt: string;
+  id: string = "";
+  userId: string = "";
+  videoId: string = "";
+  progressSeconds: string = "";
+  completed: string = "";
+  lastWatched: string = "";
+  createdAt: string = "";
+  updatedAt: string = "";
 }

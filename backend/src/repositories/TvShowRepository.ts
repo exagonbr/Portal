@@ -1,3 +1,4 @@
+import { Repository } from "typeorm";
 import { ExtendedRepository, PaginatedResult } from './ExtendedRepository';
 import { TvShow } from '../entities/TvShow';
 import { TvShowResponseDto } from '../dto/TvShowDto';
@@ -24,7 +25,7 @@ export interface TvShowListResult {
 
 export class TvShowRepository extends ExtendedRepository<TvShow> {
   constructor() {
-    super('tv_show'); // Corrigido: usar tv_show (singular)
+    super("tvshows");
   }
   // Implementação do método abstrato findAllPaginated
   async findAllPaginated(options: {

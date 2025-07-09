@@ -1,3 +1,4 @@
+import { Repository } from "typeorm";
 import { ExtendedRepository, PaginatedResult } from './ExtendedRepository';
 import { Collection } from '../entities/Collection';
 import { Module } from '../entities/Module';
@@ -6,7 +7,9 @@ export interface CreateCollectionData extends Omit<Collection, 'id' | 'created_a
 export interface UpdateCollectionData extends Partial<CreateCollectionData> {}
 
 export class ContentCollectionRepository extends BaseRepository<Collection> {
+  private repository: Repository<ContentCollection>;
   constructor() {
+    this.repository = AppDataSource.getRepository(ContentCollection);
     super('collections');
   }
   // Implementação do método abstrato findAllPaginated

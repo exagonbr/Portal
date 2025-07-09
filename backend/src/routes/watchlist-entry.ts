@@ -1,20 +1,18 @@
 import { Router } from 'express';
 import { WatchlistEntryController } from '../controllers/WatchlistEntryController';
 import { requireAuth } from '../middleware/requireAuth';
-import { CreateWatchlistEntryDto, UpdateWatchlistEntryDto } from '../dtos/WatchlistEntryDto';
 
 const router = Router();
-const WatchlistEntryController = new WatchlistEntryController();
+const watchlistEntryController = new WatchlistEntryController();
 
-// Aplicar middleware de autenticação
-// Middleware aplicado no index.ts
+// Middleware de autenticação
+router.use(requireAuth);
 
 // Rotas CRUD
-router.get('/', WatchlistEntryController.findAll.bind(WatchlistEntryController));
-router.get('/search', WatchlistEntryController.search.bind(WatchlistEntryController));
-router.get('/:id', WatchlistEntryController.findOne.bind(WatchlistEntryController));
-router.post('/', WatchlistEntryController.create.bind(WatchlistEntryController));
-router.put('/:id', WatchlistEntryController.update.bind(WatchlistEntryController));
-router.delete('/:id', WatchlistEntryController.remove.bind(WatchlistEntryController));
+router.get('/', watchlistEntryController.getAll.bind(watchlistEntryController));
+router.get('/:id', watchlistEntryController.getById.bind(watchlistEntryController));
+router.post('/', watchlistEntryController.create.bind(watchlistEntryController));
+router.put('/:id', watchlistEntryController.update.bind(watchlistEntryController));
+router.delete('/:id', watchlistEntryController.delete.bind(watchlistEntryController));
 
 export default router;

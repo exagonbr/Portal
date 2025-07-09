@@ -17,13 +17,13 @@ export class UpdateUnitDto {
 }
 
 export class UnitResponseDto {
-  id: string;
-  version: string;
-  name: string;
-  code: string;
-  description: string;
-  institutionId: string;
-  status: string;
-  createdAt: string;
-  updatedAt: string;
+  id: string = "";
+  version: string = "";
+  name: string = "";
+  code: string = "";
+  description: string = "";
+  institutionId: string = "";
+  status: string = "";
+  createdAt: string = "";
+  updatedAt: string = "";
 }

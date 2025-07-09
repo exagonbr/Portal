@@ -1,3 +1,4 @@
+import { Repository } from "typeorm";
 import { ExtendedRepository, PaginatedResult } from './ExtendedRepository';
 import { Certificate } from '../entities/Certificate';
 import { Knex } from 'knex';
@@ -25,7 +26,7 @@ export interface CertificateStats {
 
 export class CertificateRepository extends ExtendedRepository<Certificate> {
   constructor() {
-    super('certificate');
+    super("certificates");
   }
   // Implementação do método abstrato findAllPaginated
   async findAllPaginated(options: {

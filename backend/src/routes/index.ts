@@ -45,7 +45,7 @@ import videoModulesRouter from './video-modules';
 import videosRouter from './videos';
 import authRouter from './auth';
 import healthRouter from './health';
-import viewingStatusRouter from './viewingStatusRoutes';
+import viewingStatusRouter from './viewing-status';
 
 // Importação das novas rotas geradas
 import activitysessionsRouter from './activity-sessions';
@@ -59,7 +59,6 @@ import systemsettingsRouter from './system-settings';
 import targetaudienceRouter from './target-audience';
 import teachersubjectRouter from './teacher-subject';
 import tvshowRouter from './tv-show';
-import viewingstatusRouter from './viewing-status';
 import watchlistentryRouter from './watchlist-entry';
 
 const router = express.Router();
@@ -83,7 +82,7 @@ router.use('/system-settings', requireAuth, systemsettingsRouter);
 router.use('/target-audience', requireAuth, targetaudienceRouter);
 router.use('/teacher-subject', requireAuth, teachersubjectRouter);
 router.use('/tv-show', requireAuth, tvshowRouter);
-router.use('/viewing-status', requireAuth, viewingstatusRouter);
+router.use('/viewing-status', requireAuth, viewingStatusRouter);
 router.use('/watchlist-entry', requireAuth, watchlistentryRouter);
 
 // Rotas Protegidas - Rotas existentes

@@ -1,18 +1,12 @@
-import { AppDataSource } from '../config/typeorm.config';
-import { Repository, DeleteResult } from 'typeorm';
+import { Repository } from "typeorm";
 import { ExtendedRepository, PaginatedResult } from './ExtendedRepository';
+import { Profile } from '../entities/Profile';
 
-// Nota: Você precisa criar/importar a entidade correspondente
-// import { Profile } from '../entities/Profile';
-
-export class ProfileRepository extends BaseRepository {
-  private repository: Repository<any>;
-
+export class ProfileRepository extends ExtendedRepository<Profile> {
   constructor() {
-    super();
-    // Descomente e ajuste quando a entidade estiver criada
-    // this.repository = AppDataSource.getRepository(Profile);
+    super("profiles");
   }
+  
   // Implementação do método abstrato findAllPaginated
   async findAllPaginated(options: {
     page?: number;
@@ -22,89 +16,33 @@ export class ProfileRepository extends BaseRepository {
     const { page = 1, limit = 10, search } = options;
     
     try {
-      if (this.repository) {
-        let queryBuilder = this.repository.createQueryBuilder('profile');
-        
-        // Adicione condições de pesquisa específicas para esta entidade
-        if (search) {
-          queryBuilder = queryBuilder
-            .where('profile.name ILIKE :search', { search: `%${search}%` });
-        }
-        
-        const [data, total] = await queryBuilder
-          .skip((page - 1) * limit)
-          .take(limit)
-          .orderBy('profile.id', 'DESC')
-          .getManyAndCount();
-          
-        return {
-          data,
-          total,
-          page,
-          limit
-        };
-      } else {
-        // Fallback para query raw
-        const query = `
-          SELECT * FROM profile
-          ${search ? `WHERE name ILIKE '%${search}%'` : ''}
-          ORDER BY id DESC
-          LIMIT ${limit} OFFSET ${(page - 1) * limit}
-        `;
-        
-        const countQuery = `
-          SELECT COUNT(*) as total FROM profile
-          ${search ? `WHERE name ILIKE '%${search}%'` : ''}
-        `;
-
-        const [data, countResult] = await Promise.all([
-          AppDataSource.query(query),
-          AppDataSource.query(countQuery)
-        ]);
-
-        const total = parseInt(countResult[0].total);
-
-        return {
-          data,
-          total,
-          page,
-          limit
-        };
-      }
-    } catch (error) {
-      console.error(`Erro ao buscar registros de profile:`, error);
-      throw error;
-    }
-  }
-
-  async findAll(options: {
-    page?: number;
-    limit?: number;
-    search?: string;
-  } = {}): Promise<{ data: any[]; total: number; page: number; limit: number }> {
-    const { page = 1, limit = 10, search } = options;
-    
-    try {
-      // Implementação temporária usando query raw
-      const query = `
-        SELECT * FROM profile
-        ${search ? `WHERE name ILIKE '%${search}%' OR description ILIKE '%${search}%'` : ''}
-        ORDER BY id DESC
-        LIMIT ${limit} OFFSET ${(page - 1) * limit}
-      `;
+      // Usar diretamente o db e tableName herdados da classe base
+      let query = this.db(this.tableName).select('*');
       
-      const countQuery = `
-        SELECT COUNT(*) as total FROM profile
-        ${search ? `WHERE name ILIKE '%${search}%' OR description ILIKE '%${search}%'` : ''}
-      `;
-
-      const [data, countResult] = await Promise.all([
-        AppDataSource.query(query),
-        AppDataSource.query(countQuery)
-      ]);
-
-      const total = parseInt(countResult[0].total);
-
+      // Adicione condições de pesquisa específicas para esta entidade
+      if (search) {
+        query = query.whereILike('name', `%${search}%`);
+      }
+      
+      // Executar a consulta paginada
+      const offset = (page - 1) * limit;
+      const data = await query
+        .orderBy('id', 'DESC')
+        .limit(limit)
+        .offset(offset);
+      
+      // Contar o total de registros
+      const countResult = await this.db(this.tableName)
+        .count('* as total')
+        .modify(qb => {
+          if (search) {
+            qb.whereILike('name', `%${search}%`);
+          }
+        })
+        .first();
+      
+      const total = parseInt(countResult?.total as string, 10) || 0;
+      
       return {
         data,
         total,
@@ -117,31 +55,19 @@ export class ProfileRepository extends BaseRepository {
     }
   }
 
-  async findById(id: number): Promise<any | null> {
+  async findById(id: number): Promise<Profile | null> {
     try {
-      const query = `SELECT * FROM profile WHERE id = $1`;
-      const result = await AppDataSource.query(query, [id]);
-      return result[0] || null;
+      const result = await this.db(this.tableName).where({ id }).first();
+      return result || null;
     } catch (error) {
       console.error(`Erro ao buscar registro por ID em profile:`, error);
       throw error;
     }
   }
 
-  async create(data: any): Promise<any> {
+  async create(data: Partial<Profile>): Promise<Profile> {
     try {
-      // Implementação básica - você deve ajustar os campos conforme a estrutura da tabela
-      const fields = Object.keys(data).filter(key => key !== 'id');
-      const values = fields.map(field => data[field]);
-      const placeholders = fields.map((_, index) => `$${index + 1}`).join(', ');
-      
-      const query = `
-        INSERT INTO profile (${fields.join(', ')})
-        VALUES (${placeholders})
-        RETURNING *
-      `;
-      
-      const result = await AppDataSource.query(query, values);
+      const result = await this.db(this.tableName).insert(data).returning('*');
       return result[0];
     } catch (error) {
       console.error(`Erro ao criar registro em profile:`, error);
@@ -149,20 +75,12 @@ export class ProfileRepository extends BaseRepository {
     }
   }
 
-  async update(id: number, data: any): Promise<any | null> {
+  async update(id: number, data: Partial<Profile>): Promise<Profile | null> {
     try {
-      const fields = Object.keys(data).filter(key => key !== 'id');
-      const values = fields.map(field => data[field]);
-      const setClause = fields.map((field, index) => `${field} = $${index + 2}`).join(', ');
-      
-      const query = `
-        UPDATE profile
-        SET ${setClause}, updated_at = CURRENT_TIMESTAMP
-        WHERE id = $1
-        RETURNING *
-      `;
-      
-      const result = await AppDataSource.query(query, [id, ...values]);
+      const result = await this.db(this.tableName)
+        .where({ id })
+        .update({ ...data, updatedAt: new Date() })
+        .returning('*');
       return result[0] || null;
     } catch (error) {
       console.error(`Erro ao atualizar registro em profile:`, error);
@@ -172,9 +90,8 @@ export class ProfileRepository extends BaseRepository {
 
   async delete(id: number): Promise<boolean> {
     try {
-      const query = `DELETE FROM profile WHERE id = $1`;
-      const result = await AppDataSource.query(query, [id]);
-      return result.rowCount > 0;
+      const result = await this.db(this.tableName).where({ id }).del();
+      return result > 0;
     } catch (error) {
       console.error(`Erro ao deletar registro em profile:`, error);
       throw error;

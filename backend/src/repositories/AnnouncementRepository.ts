@@ -1,3 +1,4 @@
+import { Repository } from "typeorm";
 import { ExtendedRepository, PaginatedResult } from './ExtendedRepository';
 import { Announcement } from '../entities/Announcement';
 
@@ -22,7 +23,7 @@ export interface UpdateAnnouncementData extends Partial<CreateAnnouncementData> 
 
 export class AnnouncementRepository extends ExtendedRepository<Announcement> {
   constructor() {
-    super('announcements');
+    super("announcements");
   }
   // Implementação do método abstrato findAllPaginated
   async findAllPaginated(options: {

@@ -3,227 +3,225 @@ import { TvShowRepository } from '../repositories/TvShowRepository';
 import { BaseController } from './BaseController';
 import { TvShow } from '../entities/TvShow';
 
-const tvShowRepository = new TvShowRepository();
-
 export class TvShowController extends BaseController<TvShow> {
   private tvShowRepository: TvShowRepository;
-    constructor() {
+
+  constructor() {
     const repository = new TvShowRepository();
     super(repository);
     this.tvShowRepository = repository;
-        super(tvShowRepository);
+  }
+  
+  async getAll(req: Request, res: Response) {
+    try {
+      // Adicionar timeout para evitar travamentos
+      const timeoutPromise = new Promise((_, reject) => {
+        setTimeout(() => reject(new Error('Timeout na busca de TV Shows')), 25000); // 25 segundos
+      });
+
+      const tvShowsPromise = this.tvShowRepository.findWithFilters({
+        page: req.query.page ? parseInt(req.query.page as string, 10) : 1,
+        limit: req.query.limit ? parseInt(req.query.limit as string, 10) : 10,
+        sortBy: 'name',
+        sortOrder: req.query.sortOrder as 'asc' | 'desc',
+        search: req.query.search as string,
+      });
+
+      const tvShowsResult = await Promise.race([tvShowsPromise, timeoutPromise]) as any;
+  
+      if (!tvShowsResult) {
+        return res.status(404).json({ success: false, message: 'TV Shows not found' });
+      }
+      
+      // Transformar o formato para o que o frontend espera
+      const responseData = {
+        tvShows: tvShowsResult.items || [],
+        page: tvShowsResult.pagination?.page || 1,
+        limit: tvShowsResult.pagination?.limit || 10,
+        total: tvShowsResult.pagination?.total || 0,
+        totalPages: tvShowsResult.pagination?.totalPages || 1
+      };
+      
+      return res.status(200).json({ success: true, data: responseData });
+    } catch (error) {
+      console.error(`Error in getAllTvShows: ${error}`);
+      
+      // Se for timeout, retornar erro específico
+      if (error instanceof Error && error.message.includes('Timeout')) {
+        return res.status(504).json({ 
+          success: false, 
+          message: 'Timeout na busca de TV Shows - operação demorou muito',
+          code: 'TIMEOUT_ERROR'
+        });
+      }
+      
+      return res.status(500).json({ 
+        success: false, 
+        message: 'TV Shows Internal Server Error: ' + error,
+        code: 'INTERNAL_ERROR'
+      });
     }
-    
-    async getAll(req: Request, res: Response) {
-        try {
-            // Adicionar timeout para evitar travamentos
-            const timeoutPromise = new Promise((_, reject) => {
-                setTimeout(() => reject(new Error('Timeout na busca de TV Shows')), 25000); // 25 segundos
-            });
+  }
 
-            const tvShowsPromise = tvShowRepository.findWithFilters({
-                page: req.query.page ? parseInt(req.query.page as string, 10) : 1,
-                limit: req.query.limit ? parseInt(req.query.limit as string, 10) : 10,
-                sortBy: 'name',
-                sortOrder: req.query.sortOrder as 'asc' | 'desc',
-                search: req.query.search as string,
-            });
+  async getById(req: Request, res: Response) {
+    try {
+      // Adicionar timeout para evitar travamentos
+      const timeoutPromise = new Promise((_, reject) => {
+        setTimeout(() => reject(new Error('Timeout na busca de TV Show')), 25000); // 25 segundos
+      });
 
-            const tvShowsResult = await Promise.race([tvShowsPromise, timeoutPromise]) as any;
-    
-            if (!tvShowsResult) {
-                return res.status(404).json({ success: false, message: 'TV Shows not found' });
-            }
-            
-            // Transformar o formato para o que o frontend espera
-            const responseData = {
-                tvShows: tvShowsResult.items || [],
-                page: tvShowsResult.pagination?.page || 1,
-                limit: tvShowsResult.pagination?.limit || 10,
-                total: tvShowsResult.pagination?.total || 0,
-                totalPages: tvShowsResult.pagination?.totalPages || 1
-            };
-            
-            return res.status(200).json({ success: true, data: responseData });
-        } catch (error) {
-            console.error(`Error in getAllTvShows: ${error}`);
-            
-            // Se for timeout, retornar erro específico
-            if (error instanceof Error && error.message.includes('Timeout')) {
-                return res.status(504).json({ 
-                    success: false, 
-                    message: 'Timeout na busca de TV Shows - operação demorou muito',
-                    code: 'TIMEOUT_ERROR'
-                });
-            }
-            
-            return res.status(500).json({ 
-                success: false, 
-                message: 'TV Shows Internal Server Error: ' + error,
-                code: 'INTERNAL_ERROR'
-            });
-        }
+      const tvShowPromise = this.tvShowRepository.findByIdForApi(req.params.id);
+      const tvShow = await Promise.race([tvShowPromise, timeoutPromise]);
+      
+      if (!tvShow) {
+        return res.status(404).json({ success: false, message: 'TV Show not found' });
+      }
+      
+      return res.status(200).json({ success: true, data: tvShow });
+    } catch (error) {
+      console.error(`Error in getByIdTvShows: ${error}`);
+      
+      // Se for timeout, retornar erro específico
+      if (error instanceof Error && error.message.includes('Timeout')) {
+        return res.status(504).json({ 
+          success: false, 
+          message: 'Timeout na busca de TV Show - operação demorou muito',
+          code: 'TIMEOUT_ERROR'
+        });
+      }
+      
+      return res.status(500).json({ 
+        success: false, 
+        message: 'Internal Server Error: ' + error,
+        code: 'INTERNAL_ERROR'
+      });
     }
+  }
 
-    async getById(req: Request, res: Response) {
-        try {
-            // Adicionar timeout para evitar travamentos
-            const timeoutPromise = new Promise((_, reject) => {
-                setTimeout(() => reject(new Error('Timeout na busca de TV Show')), 25000); // 25 segundos
-            });
+  async getModules(req: Request, res: Response) {
+    try {
+      console.log(`🔍 Buscando módulos para TV Show ID: ${req.params.id}`);
+      
+      const timeoutPromise = new Promise((_, reject) => {
+        setTimeout(() => reject(new Error('Timeout na busca de módulos')), 25000);
+      });
 
-            const tvShowPromise = tvShowRepository.findByIdForApi(req.params.id);
-            const tvShow = await Promise.race([tvShowPromise, timeoutPromise]);
-            
-            if (!tvShow) {
-                return res.status(404).json({ success: false, message: 'TV Show not found' });
-            }
-            
-            return res.status(200).json({ success: true, data: tvShow });
-        } catch (error) {
-            console.error(`Error in getByIdTvShows: ${error}`);
-            
-            // Se for timeout, retornar erro específico
-            if (error instanceof Error && error.message.includes('Timeout')) {
-                return res.status(504).json({ 
-                    success: false, 
-                    message: 'Timeout na busca de TV Show - operação demorou muito',
-                    code: 'TIMEOUT_ERROR'
-                });
-            }
-            
-            return res.status(500).json({ 
-                success: false, 
-                message: 'Internal Server Error: ' + error,
-                code: 'INTERNAL_ERROR'
-            });
-        }
+      const modulesPromise = this.tvShowRepository.findModulesByTvShowId(req.params.id);
+      const modules = await Promise.race([modulesPromise, timeoutPromise]);
+      
+      console.log(`✅ Módulos encontrados: ${Object.keys(modules || {}).length}`);
+      
+      return res.status(200).json({ 
+        success: true, 
+        data: modules || {},
+        message: 'Módulos carregados com sucesso'
+      });
+    } catch (error) {
+      console.error(`Error in getModules: ${error}`);
+      
+      if (error instanceof Error && error.message.includes('Timeout')) {
+        return res.status(504).json({ 
+          success: false, 
+          message: 'Timeout na busca de módulos - operação demorou muito',
+          code: 'TIMEOUT_ERROR'
+        });
+      }
+      
+      return res.status(500).json({ 
+        success: false, 
+        message: 'Erro ao buscar módulos: ' + error,
+        code: 'INTERNAL_ERROR'
+      });
     }
+  }
 
-    async getModules(req: Request, res: Response) {
-        try {
-            console.log(`🔍 Buscando módulos para TV Show ID: ${req.params.id}`);
-            
-            const timeoutPromise = new Promise((_, reject) => {
-                setTimeout(() => reject(new Error('Timeout na busca de módulos')), 25000);
-            });
+  async getVideos(req: Request, res: Response) {
+    try {
+      console.log(`🎬 Buscando vídeos para TV Show ID: ${req.params.id}`);
+      
+      const timeoutPromise = new Promise((_, reject) => {
+        setTimeout(() => reject(new Error('Timeout na busca de vídeos')), 25000);
+      });
 
-            const modulesPromise = tvShowRepository.findModulesByTvShowId(req.params.id);
-            const modules = await Promise.race([modulesPromise, timeoutPromise]);
-            
-            console.log(`✅ Módulos encontrados: ${Object.keys(modules || {}).length}`);
-            
-            return res.status(200).json({ 
-                success: true, 
-                data: modules || {},
-                message: 'Módulos carregados com sucesso'
-            });
-        } catch (error) {
-            console.error(`Error in getModules: ${error}`);
-            
-            if (error instanceof Error && error.message.includes('Timeout')) {
-                return res.status(504).json({ 
-                    success: false, 
-                    message: 'Timeout na busca de módulos - operação demorou muito',
-                    code: 'TIMEOUT_ERROR'
-                });
-            }
-            
-            return res.status(500).json({ 
-                success: false, 
-                message: 'Erro ao buscar módulos: ' + error,
-                code: 'INTERNAL_ERROR'
-            });
-        }
+      const videosPromise = this.tvShowRepository.findVideosByTvShowId(req.params.id);
+      const videos = await Promise.race([videosPromise, timeoutPromise]);
+      
+      console.log(`✅ Vídeos encontrados: ${Array.isArray(videos) ? videos.length : 0}`);
+      
+      return res.status(200).json({ 
+        success: true, 
+        data: videos || [],
+        message: 'Vídeos carregados com sucesso'
+      });
+    } catch (error) {
+      console.error(`Error in getVideos: ${error}`);
+      
+      if (error instanceof Error && error.message.includes('Timeout')) {
+        return res.status(504).json({ 
+          success: false, 
+          message: 'Timeout na busca de vídeos - operação demorou muito',
+          code: 'TIMEOUT_ERROR'
+        });
+      }
+      
+      return res.status(500).json({ 
+        success: false, 
+        message: 'Erro ao buscar vídeos: ' + error,
+        code: 'INTERNAL_ERROR'
+      });
     }
+  }
 
-    async getVideos(req: Request, res: Response) {
-        try {
-            console.log(`🎬 Buscando vídeos para TV Show ID: ${req.params.id}`);
-            
-            const timeoutPromise = new Promise((_, reject) => {
-                setTimeout(() => reject(new Error('Timeout na busca de vídeos')), 25000);
-            });
+  async getStats(req: Request, res: Response) {
+    try {
+      console.log(`📊 Buscando estatísticas para TV Show ID: ${req.params.id}`);
+      
+      const timeoutPromise = new Promise((_, reject) => {
+        setTimeout(() => reject(new Error('Timeout na busca de estatísticas')), 25000);
+      });
 
-            const videosPromise = tvShowRepository.findVideosByTvShowId(req.params.id);
-            const videos = await Promise.race([videosPromise, timeoutPromise]);
-            
-            console.log(`✅ Vídeos encontrados: ${Array.isArray(videos) ? videos.length : 0}`);
-            
-            return res.status(200).json({ 
-                success: true, 
-                data: videos || [],
-                message: 'Vídeos carregados com sucesso'
-            });
-        } catch (error) {
-            console.error(`Error in getVideos: ${error}`);
-            
-            if (error instanceof Error && error.message.includes('Timeout')) {
-                return res.status(504).json({ 
-                    success: false, 
-                    message: 'Timeout na busca de vídeos - operação demorou muito',
-                    code: 'TIMEOUT_ERROR'
-                });
-            }
-            
-            return res.status(500).json({ 
-                success: false, 
-                message: 'Erro ao buscar vídeos: ' + error,
-                code: 'INTERNAL_ERROR'
-            });
-        }
+      const statsPromise = this.tvShowRepository.getStatsByTvShowId(req.params.id);
+      const stats = await Promise.race([statsPromise, timeoutPromise]);
+      
+      console.log(`✅ Estatísticas calculadas:`, stats);
+      
+      return res.status(200).json({ 
+        success: true, 
+        data: stats,
+        message: 'Estatísticas carregadas com sucesso'
+      });
+    } catch (error) {
+      console.error(`Error in getStats: ${error}`);
+      
+      if (error instanceof Error && error.message.includes('Timeout')) {
+        return res.status(504).json({ 
+          success: false, 
+          message: 'Timeout na busca de estatísticas - operação demorou muito',
+          code: 'TIMEOUT_ERROR'
+        });
+      }
+      
+      return res.status(500).json({ 
+        success: false, 
+        message: 'Erro ao buscar estatísticas: ' + error,
+        code: 'INTERNAL_ERROR'
+      });
     }
+  }
 
-    async getStats(req: Request, res: Response) {
-        try {
-            console.log(`📊 Buscando estatísticas para TV Show ID: ${req.params.id}`);
-            
-            const timeoutPromise = new Promise((_, reject) => {
-                setTimeout(() => reject(new Error('Timeout na busca de estatísticas')), 25000);
-            });
-
-            const statsPromise = tvShowRepository.getStatsByTvShowId(req.params.id);
-            const stats = await Promise.race([statsPromise, timeoutPromise]);
-            
-            console.log(`✅ Estatísticas calculadas:`, stats);
-            
-            return res.status(200).json({ 
-                success: true, 
-                data: stats,
-                message: 'Estatísticas carregadas com sucesso'
-            });
-        } catch (error) {
-            console.error(`Error in getStats: ${error}`);
-            
-            if (error instanceof Error && error.message.includes('Timeout')) {
-                return res.status(504).json({ 
-                    success: false, 
-                    message: 'Timeout na busca de estatísticas - operação demorou muito',
-                    code: 'TIMEOUT_ERROR'
-                });
-            }
-            
-            return res.status(500).json({ 
-                success: false, 
-                message: 'Erro ao buscar estatísticas: ' + error,
-                code: 'INTERNAL_ERROR'
-            });
-        }
+  async toggleStatus(req: Request, res: Response) {
+    try {
+      const { id } = req.params;
+      const tvShow = await this.tvShowRepository.toggleStatus(id);
+      if (!tvShow) {
+        return res.status(404).json({ success: false, message: 'TV Show not found' });
+      }
+      return res.status(200).json({ success: true, data: tvShow });
+    } catch (error) {
+      console.error(`Error in toggleStatus: ${error}`);
+      return res.status(500).json({ success: false, message: 'Internal Server Error' });
     }
-
-    async toggleStatus(req: Request, res: Response) {
-        try {
-            const { id } = req.params;
-            const tvShow = await tvShowRepository.toggleStatus(id);
-            if (!tvShow) {
-                return res.status(404).json({ success: false, message: 'TV Show not found' });
-            }
-            return res.status(200).json({ success: true, data: tvShow });
-        } catch (error) {
-            console.error(`Error in toggleStatus: ${error}`);
-            return res.status(500).json({ success: false, message: 'Internal Server Error' });
-        }
-    }
+  }
 }
 
 export default new TvShowController();

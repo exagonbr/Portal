@@ -11,8 +11,8 @@ export class UpdateTargetAudienceDto {
 }
 
 export class TargetAudienceResponseDto {
-  id: string;
-  version: string;
-  apiId: string;
-  name: string;
+  id: string = "";
+  version: string = "";
+  apiId: string = "";
+  name: string = "";
 }

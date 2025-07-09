@@ -9,9 +9,9 @@ export class UpdateRolePermissionsDto {
 }
 
 export class RolePermissionsResponseDto {
-  id: string;
-  roleId: string;
-  permissionId: string;
-  createdAt: string;
-  updatedAt: string;
+  id: string = "";
+  roleId: string = "";
+  permissionId: string = "";
+  createdAt: string = "";
+  updatedAt: string = "";
 }

@@ -1,3 +1,4 @@
+import { Repository } from "typeorm";
 export * from './BaseRepository';
 export * from './AnnotationRepository';
 export * from './AnnouncementRepository';
@@ -13,6 +14,7 @@ export * from './LessonRepository';
 export * from './ModuleRepository';
 export * from './QuestionRepository';
 export * from './QuizRepository';
+export * from './QuizAttemptRepository';
 export * from './RoleRepository';
 export * from './SchoolManagerRepository';
 export * from './SchoolRepository';

@@ -1,3 +1,4 @@
+import { Repository } from "typeorm";
 import { ExtendedRepository, PaginatedResult } from './ExtendedRepository';
 import { ForumThread } from '../entities/ForumThread';
 import { ForumReply } from '../entities/ForumReply';
@@ -9,7 +10,9 @@ export interface CreateForumReplyData extends Omit<ForumReply, 'id' | 'created_a
 export interface UpdateForumReplyData extends Partial<Omit<CreateForumReplyData, 'thread_id' | 'author_id' | 'parent_reply_id'>> {}
 
 export class ForumThreadRepository extends BaseRepository<ForumThread> {
+  private repository: Repository<Forum>;
   constructor() {
+    this.repository = AppDataSource.getRepository(Forum);
     super('forum_threads');
   }
   // Implementação do método abstrato findAllPaginated
@@ -118,7 +121,9 @@ export class ForumThreadRepository extends BaseRepository<ForumThread> {
 }
 
 export class ForumReplyRepository extends BaseRepository<ForumReply> {
+  private repository: Repository<Forum>;
   constructor() {
+    this.repository = AppDataSource.getRepository(Forum);
     super('forum_replies');
   }
 

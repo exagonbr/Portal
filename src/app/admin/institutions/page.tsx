@@ -2,10 +2,9 @@
 
 import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
-import institutionService from '@/services/institutionService'
+import { institutionService, Institution } from '@/services/institutionService'
 import { dashboardService } from '@/services/dashboardService'
 import schoolService from '@/services/schoolService'
-import { InstitutionDto, InstitutionType } from '@/types/institution'
 import { useToast } from '@/components/ToastManager'
 import { InstitutionModalWithSchools } from '@/components/modals/InstitutionModalWithSchools'
 import { Badge } from '@/components/ui/Badge'
@@ -34,7 +33,7 @@ export default function ManageInstitutions() {
   const { showSuccess, showError, showWarning } = useToast()
   const [loading, setLoading] = useState(true)
   const [refreshing, setRefreshing] = useState(false)
-  const [institutions, setInstitutions] = useState<InstitutionDto[]>([])
+  const [institutions, setInstitutions] = useState<Institution[]>([])
   const [totalItems, setTotalItems] = useState(0)
   const [currentPage, setCurrentPage] = useState(1)
   const [itemsPerPage] = useState(10)
@@ -43,7 +42,7 @@ export default function ManageInstitutions() {
   // Estados para o modal unificado
   const [modalOpen, setModalOpen] = useState(false)
   const [modalMode, setModalMode] = useState<'view' | 'create' | 'edit'>('view')
-  const [modalInstitution, setModalInstitution] = useState<InstitutionDto | null>(null)
+  const [modalInstitution, setModalInstitution] = useState<Institution | null>(null)
   const [stats, setStats] = useState<InstitutionStats>({
     totalInstitutions: 0,
     activeInstitutions: 0,
@@ -58,7 +57,7 @@ export default function ManageInstitutions() {
     }
   })
 
-  const enrichInstitutionsWithSchoolData = async (institutions: InstitutionDto[]): Promise<InstitutionDto[]> => {
+  const enrichInstitutionsWithSchoolData = async (institutions: Institution[]): Promise<Institution[]> => {
     // Por enquanto, vamos comentar o enriquecimento para evitar erros
     // e usar os dados básicos das instituições
     console.log('📝 Usando dados básicos das instituições (sem enriquecimento por enquanto)');
@@ -249,7 +248,7 @@ export default function ManageInstitutions() {
     fetchInstitutions(currentPage, searchQuery, false)
   }
 
-  const handleDeleteInstitution = async (institution: InstitutionDto) => {
+  const handleDeleteInstitution = async (institution: Institution) => {
     // Verificar se a instituição pode ser excluída
     try {
       const canDelete = await institutionService.canDeleteInstitution(Number(institution.id))
@@ -286,12 +285,12 @@ export default function ManageInstitutions() {
     }
   }
 
-  const handleViewInstitution = (institution: InstitutionDto) => {
+  const handleViewInstitution = (institution: Institution) => {
     router.push(`/admin/institutions/${institution.id}`)
   }
 
   // Funções para o modal unificado
-  const openModal = (mode: 'view' | 'create' | 'edit', institution?: InstitutionDto) => {
+  const openModal = (mode: 'view' | 'create' | 'edit', institution?: Institution) => {
     setModalMode(mode)
     setModalInstitution(institution || null)
     setModalOpen(true)
@@ -362,7 +361,7 @@ export default function ManageInstitutions() {
     }
   }
 
-  const handleToggleStatus = async (institution: InstitutionDto) => {
+  const handleToggleStatus = async (institution: Institution) => {
     try {
       setLoading(true)
       const updatedInstitution = await institutionService.toggleInstitutionStatus(Number(institution.id))

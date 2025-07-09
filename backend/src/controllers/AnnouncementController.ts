@@ -3,8 +3,6 @@ import { AnnouncementRepository } from '../repositories/AnnouncementRepository';
 import { Announcement } from '../entities/Announcement';
 import { BaseController } from './BaseController';
 
-const announcementRepository = new AnnouncementRepository();
-
 class AnnouncementController extends BaseController<Announcement> {
   private announcementRepository: AnnouncementRepository;
 
@@ -17,7 +15,7 @@ class AnnouncementController extends BaseController<Announcement> {
   async toggleStatus(req: Request, res: Response) {
     try {
       const { id } = req.params;
-      const announcement = await announcementRepository.toggleStatus(id);
+      const announcement = await this.announcementRepository.toggleStatus(id);
       if (!announcement) {
         return res.status(404).json({ success: false, message: 'Announcement not found' });
       }

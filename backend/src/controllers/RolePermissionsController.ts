@@ -1,39 +1,107 @@
-import { RolePermissionsService } from '../services/RolePermissionsService';
-import { CreateRolePermissionsDto, UpdateRolePermissionsDto, RolePermissionsResponseDto } from '../dtos/RolePermissionsDto';
+import { Request, Response } from 'express';
+import { RolePermissionsRepository } from '../repositories/RolePermissionsRepository';
+import { RolePermissions } from '../entities/RolePermissions';
+import { BaseController } from './BaseController';
 
-export class RolePermissionsController {
-  constructor(private readonly RolePermissionsService: RolePermissionsService) {}
+class RolePermissionsController extends BaseController<RolePermissions> {
+  private rolePermissionsRepository: RolePermissionsRepository;
 
-          async create( createDto: CreateRolePermissionsDto): Promise<RolePermissionsResponseDto> {
-    return this.RolePermissionsService.create(createDto);
+  constructor() {
+    const repository = new RolePermissionsRepository();
+    super(repository);
+    this.rolePermissionsRepository = repository;
   }
 
-        async findAll(
-     page: number = 1,
-     limit: number = 10
-  ): Promise<{ data: RolePermissionsResponseDto[], total: number }> {
-    return this.RolePermissionsService.findAll(page, limit);
+  async getAll(req: Request, res: Response): Promise<Response> {
+    try {
+      const page = parseInt(req.query.page as string) || 1;
+      const limit = parseInt(req.query.limit as string) || 10;
+      const search = req.query.search as string;
+
+      const result = await this.rolePermissionsRepository.findAllPaginated({ page, limit, search });
+
+      return res.status(200).json({ success: true, data: result });
+    } catch (error) {
+      console.error(error);
+      return res.status(500).json({ success: false, message: 'Internal Server Error' });
+    }
   }
 
-  @Get('search')
-      async search( name: string): Promise<RolePermissionsResponseDto[]> {
-    return this.RolePermissionsService.search(name);
+  async getById(req: Request, res: Response): Promise<Response> {
+    try {
+      const { id } = req.params;
+      const record = await this.rolePermissionsRepository.findById(parseInt(id));
+
+      if (!record) {
+        return res.status(404).json({ success: false, message: 'Registro não encontrado' });
+      }
+
+      return res.status(200).json({ success: true, data: record });
+    } catch (error) {
+      console.error(error);
+      return res.status(500).json({ success: false, message: 'Internal Server Error' });
+    }
   }
 
-  @Get(':id')
-        async findOne( id: number): Promise<RolePermissionsResponseDto | null> {
-    return this.RolePermissionsService.findOne(id);
+  async create(req: Request, res: Response): Promise<Response> {
+    try {
+      const data = req.body;
+      const record = await this.rolePermissionsRepository.create(data);
+      return res.status(201).json({ success: true, data: record });
+    } catch (error) {
+      console.error(error);
+      return res.status(500).json({ success: false, message: 'Internal Server Error' });
+    }
   }
 
-          async update(
-     id: number,
-     updateDto: UpdateRolePermissionsDto
-  ): Promise<RolePermissionsResponseDto | null> {
-    return this.RolePermissionsService.update(id, updateDto);
+  async update(req: Request, res: Response): Promise<Response> {
+    try {
+      const { id } = req.params;
+      const data = req.body;
+      
+      const record = await this.rolePermissionsRepository.update(parseInt(id), data);
+      
+      if (!record) {
+        return res.status(404).json({ success: false, message: 'Registro não encontrado' });
+      }
+
+      return res.status(200).json({ success: true, data: record });
+    } catch (error) {
+      console.error(error);
+      return res.status(500).json({ success: false, message: 'Internal Server Error' });
+    }
   }
 
-          async remove( id: number): Promise<{ success: boolean }> {
-    const success = await this.RolePermissionsService.remove(id);
-    return { success };
+  async delete(req: Request, res: Response): Promise<Response> {
+    try {
+      const { id } = req.params;
+      const success = await this.rolePermissionsRepository.delete(parseInt(id));
+      
+      if (!success) {
+        return res.status(404).json({ success: false, message: 'Registro não encontrado' });
+      }
+
+      return res.status(200).json({ success: true, data: { message: 'Registro deletado com sucesso' } });
+    } catch (error) {
+      console.error(error);
+      return res.status(500).json({ success: false, message: 'Internal Server Error' });
+    }
+  }
+
+  async search(req: Request, res: Response): Promise<Response> {
+    try {
+      const { q } = req.query;
+      if (!q) {
+        return res.status(400).json({ success: false, message: 'Query parameter "q" is required' });
+      }
+      
+      const rolePermissions = await this.rolePermissionsRepository.searchByName(q as string);
+      return res.status(200).json({ success: true, data: rolePermissions });
+    } catch (error) {
+      console.error(`Error in search role permissions: ${error}`);
+      return res.status(500).json({ success: false, message: 'Internal Server Error' });
+    }
   }
 }
+
+export default new RolePermissionsController();

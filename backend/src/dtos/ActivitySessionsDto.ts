@@ -29,19 +29,19 @@ export class UpdateActivitySessionsDto {
 }
 
 export class ActivitySessionsResponseDto {
-  id: string;
-  sessionId: string;
-  userId: string;
-  startTime: string;
-  endTime: string;
-  durationSeconds: string;
-  pageViews: string;
-  actionsCount: string;
-  ipAddress: string;
-  userAgent: string;
-  deviceInfo: string;
-  isActive: string;
-  lastActivity: string;
-  createdAt: string;
-  updatedAt: string;
+  id: string = "";
+  sessionId: string = "";
+  userId: string = "";
+  startTime: string = "";
+  endTime: string = "";
+  durationSeconds: string = "";
+  pageViews: string = "";
+  actionsCount: string = "";
+  ipAddress: string = "";
+  userAgent: string = "";
+  deviceInfo: string = "";
+  isActive: string = "";
+  lastActivity: string = "";
+  createdAt: string = "";
+  updatedAt: string = "";
 }

@@ -1,3 +1,4 @@
+import { Repository } from "typeorm";
 import { BaseRepository } from './BaseRepository';
 import { ExtendedRepository, PaginatedResult } from './ExtendedRepository';
 import { ChatMessage } from '../entities/ChatMessage';

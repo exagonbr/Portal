@@ -1,17 +1,15 @@
 import { Request, Response } from 'express';
 import { ActivitySummariesRepository } from '../repositories/ActivitySummariesRepository'
-import { ActivitySummaries } from '../entities/ActivitySummaries';;
+import { ActivitySummaries } from '../entities/ActivitySummaries';
 import { BaseController } from './BaseController';
 
 export class ActivitySummariesController extends BaseController<ActivitySummaries> {
   private activitySummariesRepository: ActivitySummariesRepository;
-  private activity_summariesRepository: ActivitySummariesRepository;
 
   constructor() {
     const repository = new ActivitySummariesRepository();
     super(repository);
     this.activitySummariesRepository = repository;
-    this.activity_summariesRepository = new ActivitySummariesRepository();
   }
 
   async findAll(req: Request, res: Response): Promise<Response> {
@@ -20,7 +18,7 @@ export class ActivitySummariesController extends BaseController<ActivitySummarie
       const limit = parseInt(req.query.limit as string) || 10;
       const search = req.query.search as string;
 
-      const result = await this.activity_summariesRepository.findAllPaginated({ page, limit, search });
+      const result = await this.activitySummariesRepository.findAllPaginated({ page, limit, search });
 
       return res.status(200).json({ success: true, data: result });
     } catch (error) {
@@ -32,7 +30,7 @@ export class ActivitySummariesController extends BaseController<ActivitySummarie
   async findById(req: Request, res: Response): Promise<Response> {
     try {
       const { id } = req.params;
-      const record = await this.activity_summariesRepository.findById(parseInt(id));
+      const record = await this.activitySummariesRepository.findById(parseInt(id));
 
       if (!record) {
         return res.status(404).json({ success: false, message: 'Registro não encontrado' });
@@ -48,7 +46,7 @@ export class ActivitySummariesController extends BaseController<ActivitySummarie
   async create(req: Request, res: Response): Promise<Response> {
     try {
       const data = req.body;
-      const record = await this.activity_summariesRepository.create(data);
+      const record = await this.activitySummariesRepository.create(data);
       return res.status(201).json({ success: true, data: record });
     } catch (error) {
       console.error(error);
@@ -61,7 +59,7 @@ export class ActivitySummariesController extends BaseController<ActivitySummarie
       const { id } = req.params;
       const data = req.body;
       
-      const record = await this.activity_summariesRepository.update(parseInt(id), data);
+      const record = await this.activitySummariesRepository.update(parseInt(id), data);
       
       if (!record) {
         return res.status(404).json({ success: false, message: 'Registro não encontrado' });
@@ -77,7 +75,7 @@ export class ActivitySummariesController extends BaseController<ActivitySummarie
   async delete(req: Request, res: Response): Promise<Response> {
     try {
       const { id } = req.params;
-      const success = await this.activity_summariesRepository.delete(parseInt(id));
+      const success = await this.activitySummariesRepository.delete(parseInt(id));
       
       if (!success) {
         return res.status(404).json({ success: false, message: 'Registro não encontrado' });

@@ -1,19 +1,13 @@
-import { AppDataSource } from '../config/typeorm.config';
-import { Repository, DeleteResult } from 'typeorm';
-import { ExtendedRepository, PaginatedResult } from './ExtendedRepository';
+import { DeleteResult } from 'typeorm';
+import { BaseRepository, PaginatedResult } from './BaseRepository';
+import { ActivitySummaries } from '../entities/ActivitySummaries';
+import { Knex } from 'knex';
 
-// Nota: Você precisa criar/importar a entidade correspondente
-// import { ActivitySummaries } from '../entities/ActivitySummaries';
-
-export class ActivitySummariesRepository extends BaseRepository {
-  private repository: Repository<any>;
-
+export class ActivitySummariesRepository extends BaseRepository<ActivitySummaries> {
   constructor() {
-    super();
-    // Descomente e ajuste quando a entidade estiver criada
-    // this.repository = AppDataSource.getRepository(ActivitySummaries);
+    super("activity_summaries");
   }
-  // Implementação do método abstrato findAllPaginated
+
   async findAllPaginated(options: {
     page?: number;
     limit?: number;
@@ -22,88 +16,30 @@ export class ActivitySummariesRepository extends BaseRepository {
     const { page = 1, limit = 10, search } = options;
     
     try {
-      if (this.repository) {
-        let queryBuilder = this.repository.createQueryBuilder('activitysummaries');
-        
-        // Adicione condições de pesquisa específicas para esta entidade
-        if (search) {
-          queryBuilder = queryBuilder
-            .where('activitysummaries.name ILIKE :search', { search: `%${search}%` });
-        }
-        
-        const [data, total] = await queryBuilder
-          .skip((page - 1) * limit)
-          .take(limit)
-          .orderBy('activitysummaries.id', 'DESC')
-          .getManyAndCount();
-          
-        return {
-          data,
-          total,
-          page,
-          limit
-        };
-      } else {
-        // Fallback para query raw
-        const query = `
-          SELECT * FROM activitysummaries
-          ${search ? `WHERE name ILIKE '%${search}%'` : ''}
-          ORDER BY id DESC
-          LIMIT ${limit} OFFSET ${(page - 1) * limit}
-        `;
-        
-        const countQuery = `
-          SELECT COUNT(*) as total FROM activitysummaries
-          ${search ? `WHERE name ILIKE '%${search}%'` : ''}
-        `;
+      let query = this.db(this.tableName).select("*");
 
-        const [data, countResult] = await Promise.all([
-          AppDataSource.query(query),
-          AppDataSource.query(countQuery)
-        ]);
-
-        const total = parseInt(countResult[0].total);
-
-        return {
-          data,
-          total,
-          page,
-          limit
-        };
+      if (search) {
+        query = query.whereILike("title", `%${search}%`)
+          .orWhereILike("description", `%${search}%`);
       }
-    } catch (error) {
-      console.error(`Erro ao buscar registros de activitysummaries:`, error);
-      throw error;
-    }
-  }
 
-  async findAll(options: {
-    page?: number;
-    limit?: number;
-    search?: string;
-  } = {}): Promise<{ data: any[]; total: number; page: number; limit: number }> {
-    const { page = 1, limit = 10, search } = options;
-    
-    try {
-      // Implementação temporária usando query raw
-      const query = `
-        SELECT * FROM activity_summaries
-        ${search ? `WHERE name ILIKE '%${search}%' OR description ILIKE '%${search}%'` : ''}
-        ORDER BY id DESC
-        LIMIT ${limit} OFFSET ${(page - 1) * limit}
-      `;
-      
-      const countQuery = `
-        SELECT COUNT(*) as total FROM activity_summaries
-        ${search ? `WHERE name ILIKE '%${search}%' OR description ILIKE '%${search}%'` : ''}
-      `;
+      const offset = (page - 1) * limit;
+      const data = await query
+        .orderBy("id", "DESC")
+        .limit(limit)
+        .offset(offset);
 
-      const [data, countResult] = await Promise.all([
-        AppDataSource.query(query),
-        AppDataSource.query(countQuery)
-      ]);
+      const countResult = await this.db(this.tableName)
+        .count("* as total")
+        .modify((qb: Knex.QueryBuilder) => {
+          if (search) {
+            qb.whereILike("title", `%${search}%`)
+              .orWhereILike("description", `%${search}%`);
+          }
+        })
+        .first();
 
-      const total = parseInt(countResult[0].total);
+      const total = parseInt(countResult?.total as string, 10) || 0;
 
       return {
         data,
@@ -112,71 +48,64 @@ export class ActivitySummariesRepository extends BaseRepository {
         limit
       };
     } catch (error) {
-      console.error(`Erro ao buscar registros de activity_summaries:`, error);
+      console.error('Error in findAllPaginated:', error);
       throw error;
     }
   }
 
-  async findById(id: number): Promise<any | null> {
+  async findAllWithSearch(options: {
+    page?: number;
+    limit?: number;
+    search?: string;
+  } = {}): Promise<{ data: ActivitySummaries[]; total: number; page: number; limit: number }> {
+    return this.findAllPaginated(options);
+  }
+
+  async findOne(filters: Partial<ActivitySummaries>): Promise<ActivitySummaries | null> {
     try {
-      const query = `SELECT * FROM activity_summaries WHERE id = $1`;
-      const result = await AppDataSource.query(query, [id]);
-      return result[0] || null;
+      const result = await this.db(this.tableName)
+        .where(filters)
+        .first();
+      return result || null;
     } catch (error) {
-      console.error(`Erro ao buscar registro por ID em activity_summaries:`, error);
+      console.error('Error in findOne:', error);
       throw error;
     }
   }
 
-  async create(data: any): Promise<any> {
+  async findByActivityId(activityId: number): Promise<ActivitySummaries[]> {
     try {
-      // Implementação básica - você deve ajustar os campos conforme a estrutura da tabela
-      const fields = Object.keys(data).filter(key => key !== 'id');
-      const values = fields.map(field => data[field]);
-      const placeholders = fields.map((_, index) => `$${index + 1}`).join(', ');
-      
-      const query = `
-        INSERT INTO activity_summaries (${fields.join(', ')})
-        VALUES (${placeholders})
-        RETURNING *
-      `;
-      
-      const result = await AppDataSource.query(query, values);
-      return result[0];
+      return await this.db(this.tableName)
+        .where({ activity_id: activityId })
+        .orderBy('created_at', 'DESC');
     } catch (error) {
-      console.error(`Erro ao criar registro em activity_summaries:`, error);
+      console.error('Error in findByActivityId:', error);
       throw error;
     }
   }
 
-  async update(id: number, data: any): Promise<any | null> {
+  async findByUserId(userId: number): Promise<ActivitySummaries[]> {
     try {
-      const fields = Object.keys(data).filter(key => key !== 'id');
-      const values = fields.map(field => data[field]);
-      const setClause = fields.map((field, index) => `${field} = $${index + 2}`).join(', ');
-      
-      const query = `
-        UPDATE activity_summaries
-        SET ${setClause}, updated_at = CURRENT_TIMESTAMP
-        WHERE id = $1
-        RETURNING *
-      `;
-      
-      const result = await AppDataSource.query(query, [id, ...values]);
-      return result[0] || null;
+      return await this.db(this.tableName)
+        .where({ user_id: userId })
+        .orderBy('created_at', 'DESC');
     } catch (error) {
-      console.error(`Erro ao atualizar registro em activity_summaries:`, error);
+      console.error('Error in findByUserId:', error);
       throw error;
     }
   }
 
-  async delete(id: number): Promise<boolean> {
+  async findByUserAndActivity(userId: number, activityId: number): Promise<ActivitySummaries | null> {
     try {
-      const query = `DELETE FROM activity_summaries WHERE id = $1`;
-      const result = await AppDataSource.query(query, [id]);
-      return result.rowCount > 0;
+      const result = await this.db(this.tableName)
+        .where({
+          user_id: userId,
+          activity_id: activityId
+        })
+        .first();
+      return result || null;
     } catch (error) {
-      console.error(`Erro ao deletar registro em activity_summaries:`, error);
+      console.error('Error in findByUserAndActivity:', error);
       throw error;
     }
   }

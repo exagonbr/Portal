@@ -11,8 +11,8 @@ export class UpdateEducationPeriodDto {
 }
 
 export class EducationPeriodResponseDto {
-  id: string;
-  version: string;
-  description: string;
-  isActive: string;
+  id: string = "";
+  version: string = "";
+  description: string = "";
+  isActive: string = "";
 }

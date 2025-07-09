@@ -15,10 +15,10 @@ export class UpdateAuthorDto {
 }
 
 export class AuthorResponseDto {
-  id: string;
-  version: string;
-  description: string;
-  email: string;
-  isActive: string;
-  name: string;
+  id: string = "";
+  version: string = "";
+  description: string = "";
+  email: string = "";
+  isActive: string = "";
+  name: string = "";
 }

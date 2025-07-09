@@ -1,3 +1,4 @@
+import { Repository } from "typeorm";
 import { ExtendedRepository, PaginatedResult } from './ExtendedRepository';
 // Supondo que as entidades UserGroup, GroupMember, GroupPermission existam
 // import { UserGroup, GroupMember, GroupPermission } from '../entities/UserGroup';
@@ -41,7 +42,9 @@ export interface UpdateUserGroupData extends Partial<CreateUserGroupData> {}
 export interface CreateGroupMemberData extends Omit<GroupMember, 'id' | 'joined_at'> {}
 
 export class GroupRepository extends BaseRepository<UserGroup> {
+  private repository: Repository<Group>;
   constructor() {
+    this.repository = AppDataSource.getRepository(Group);
     super('user_groups');
   }
   // Implementação do método abstrato findAllPaginated

@@ -1,10 +1,12 @@
+import { Repository } from "typeorm";
 import { ExtendedRepository, PaginatedResult } from './ExtendedRepository';
 import { Course } from '../entities/Course';
 
 export class CourseRepository extends ExtendedRepository<Course> {
   constructor() {
-    super('courses');
+    super("courses");
   }
+  
   // Implementação do método abstrato findAllPaginated
   async findAllPaginated(options: {
     page?: number;
@@ -64,9 +66,11 @@ export class CourseRepository extends ExtendedRepository<Course> {
     console.log(`Getting students for course ${courseId}`);
     return [];
   }
+  
   async addStudent(courseId: string, studentId: string): Promise<void> {
     console.log(`Adding student ${studentId} to course ${courseId}`);
   }
+  
   async removeStudent(courseId: string, studentId: string): Promise<boolean> {
     console.log(`Removing student ${studentId} from course ${courseId}`);
     return true;

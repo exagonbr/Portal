@@ -1,19 +1,13 @@
+import { Repository } from 'typeorm';
 import { AppDataSource } from '../config/typeorm.config';
-import { Repository, DeleteResult } from 'typeorm';
-import { ExtendedRepository, PaginatedResult } from './ExtendedRepository';
+import { BaseRepository, PaginatedResult } from './BaseRepository';
+import { SecurityPolicies } from '../entities/SecurityPolicies';
 
-// Nota: Você precisa criar/importar a entidade correspondente
-// import { SecurityPolicies } from '../entities/SecurityPolicies';
-
-export class SecurityPoliciesRepository extends BaseRepository {
-  private repository: Repository<any>;
-
+export class SecurityPoliciesRepository extends BaseRepository<SecurityPolicies> {
   constructor() {
-    super();
-    // Descomente e ajuste quando a entidade estiver criada
-    // this.repository = AppDataSource.getRepository(SecurityPolicies);
+    super("security_policies");
   }
-  // Implementação do método abstrato findAllPaginated
+
   async findAllPaginated(options: {
     page?: number;
     limit?: number;
@@ -22,88 +16,30 @@ export class SecurityPoliciesRepository extends BaseRepository {
     const { page = 1, limit = 10, search } = options;
     
     try {
-      if (this.repository) {
-        let queryBuilder = this.repository.createQueryBuilder('securitypolicies');
-        
-        // Adicione condições de pesquisa específicas para esta entidade
-        if (search) {
-          queryBuilder = queryBuilder
-            .where('securitypolicies.name ILIKE :search', { search: `%${search}%` });
-        }
-        
-        const [data, total] = await queryBuilder
-          .skip((page - 1) * limit)
-          .take(limit)
-          .orderBy('securitypolicies.id', 'DESC')
-          .getManyAndCount();
-          
-        return {
-          data,
-          total,
-          page,
-          limit
-        };
-      } else {
-        // Fallback para query raw
-        const query = `
-          SELECT * FROM securitypolicies
-          ${search ? `WHERE name ILIKE '%${search}%'` : ''}
-          ORDER BY id DESC
-          LIMIT ${limit} OFFSET ${(page - 1) * limit}
-        `;
-        
-        const countQuery = `
-          SELECT COUNT(*) as total FROM securitypolicies
-          ${search ? `WHERE name ILIKE '%${search}%'` : ''}
-        `;
+      let query = this.db(this.tableName).select("*");
 
-        const [data, countResult] = await Promise.all([
-          AppDataSource.query(query),
-          AppDataSource.query(countQuery)
-        ]);
-
-        const total = parseInt(countResult[0].total);
-
-        return {
-          data,
-          total,
-          page,
-          limit
-        };
+      if (search) {
+        query = query.whereILike("name", `%${search}%`)
+          .orWhereILike("description", `%${search}%`);
       }
-    } catch (error) {
-      console.error(`Erro ao buscar registros de securitypolicies:`, error);
-      throw error;
-    }
-  }
 
-  async findAll(options: {
-    page?: number;
-    limit?: number;
-    search?: string;
-  } = {}): Promise<{ data: any[]; total: number; page: number; limit: number }> {
-    const { page = 1, limit = 10, search } = options;
-    
-    try {
-      // Implementação temporária usando query raw
-      const query = `
-        SELECT * FROM security_policies
-        ${search ? `WHERE name ILIKE '%${search}%' OR description ILIKE '%${search}%'` : ''}
-        ORDER BY id DESC
-        LIMIT ${limit} OFFSET ${(page - 1) * limit}
-      `;
-      
-      const countQuery = `
-        SELECT COUNT(*) as total FROM security_policies
-        ${search ? `WHERE name ILIKE '%${search}%' OR description ILIKE '%${search}%'` : ''}
-      `;
+      const offset = (page - 1) * limit;
+      const data = await query
+        .orderBy("id", "DESC")
+        .limit(limit)
+        .offset(offset);
 
-      const [data, countResult] = await Promise.all([
-        AppDataSource.query(query),
-        AppDataSource.query(countQuery)
-      ]);
+      const countResult = await this.db(this.tableName)
+        .count("* as total")
+        .modify(qb => {
+          if (search) {
+            qb.whereILike("name", `%${search}%`)
+              .orWhereILike("description", `%${search}%`);
+          }
+        })
+        .first();
 
-      const total = parseInt(countResult[0].total);
+      const total = parseInt(countResult?.total as string, 10) || 0;
 
       return {
         data,
@@ -112,71 +48,22 @@ export class SecurityPoliciesRepository extends BaseRepository {
         limit
       };
     } catch (error) {
-      console.error(`Erro ao buscar registros de security_policies:`, error);
+      console.error('Error in findAllPaginated:', error);
       throw error;
     }
   }
 
-  async findById(id: number): Promise<any | null> {
+  async searchByName(name: string): Promise<SecurityPolicies[]> {
     try {
-      const query = `SELECT * FROM security_policies WHERE id = $1`;
-      const result = await AppDataSource.query(query, [id]);
-      return result[0] || null;
-    } catch (error) {
-      console.error(`Erro ao buscar registro por ID em security_policies:`, error);
-      throw error;
-    }
-  }
+      const result = await this.db(this.tableName)
+        .select("*")
+        .whereILike("name", `%${name}%`)
+        .orWhereILike("description", `%${name}%`)
+        .orderBy("name", "ASC");
 
-  async create(data: any): Promise<any> {
-    try {
-      // Implementação básica - você deve ajustar os campos conforme a estrutura da tabela
-      const fields = Object.keys(data).filter(key => key !== 'id');
-      const values = fields.map(field => data[field]);
-      const placeholders = fields.map((_, index) => `$${index + 1}`).join(', ');
-      
-      const query = `
-        INSERT INTO security_policies (${fields.join(', ')})
-        VALUES (${placeholders})
-        RETURNING *
-      `;
-      
-      const result = await AppDataSource.query(query, values);
-      return result[0];
+      return result;
     } catch (error) {
-      console.error(`Erro ao criar registro em security_policies:`, error);
-      throw error;
-    }
-  }
-
-  async update(id: number, data: any): Promise<any | null> {
-    try {
-      const fields = Object.keys(data).filter(key => key !== 'id');
-      const values = fields.map(field => data[field]);
-      const setClause = fields.map((field, index) => `${field} = $${index + 2}`).join(', ');
-      
-      const query = `
-        UPDATE security_policies
-        SET ${setClause}, updated_at = CURRENT_TIMESTAMP
-        WHERE id = $1
-        RETURNING *
-      `;
-      
-      const result = await AppDataSource.query(query, [id, ...values]);
-      return result[0] || null;
-    } catch (error) {
-      console.error(`Erro ao atualizar registro em security_policies:`, error);
-      throw error;
-    }
-  }
-
-  async delete(id: number): Promise<boolean> {
-    try {
-      const query = `DELETE FROM security_policies WHERE id = $1`;
-      const result = await AppDataSource.query(query, [id]);
-      return result.rowCount > 0;
-    } catch (error) {
-      console.error(`Erro ao deletar registro em security_policies:`, error);
+      console.error('Error in searchByName:', error);
       throw error;
     }
   }

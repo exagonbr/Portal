@@ -21,15 +21,15 @@ export class UpdateEducationCyclesDto {
 }
 
 export class EducationCyclesResponseDto {
-  id: string;
-  name: string;
-  code: string;
-  description: string;
-  minAge: string;
-  maxAge: string;
-  durationYears: string;
-  institutionId: string;
-  status: string;
-  createdAt: string;
-  updatedAt: string;
+  id: string = "";
+  name: string = "";
+  code: string = "";
+  description: string = "";
+  minAge: string = "";
+  maxAge: string = "";
+  durationYears: string = "";
+  institutionId: string = "";
+  status: string = "";
+  createdAt: string = "";
+  updatedAt: string = "";
 }

@@ -1,20 +1,15 @@
 import { Router } from 'express';
-import { EducationPeriodController } from '../controllers/EducationPeriodController';
-import { requireAuth } from '../middleware/requireAuth';
-import { CreateEducationPeriodDto, UpdateEducationPeriodDto } from '../dtos/EducationPeriodDto';
+import educationPeriodController from '../controllers/EducationPeriodController';
 
 const router = Router();
-const EducationPeriodController = new EducationPeriodController();
 
-// Aplicar middleware de autenticação
-// Middleware aplicado no index.ts
-
-// Rotas CRUD
-router.get('/', EducationPeriodController.findAll.bind(EducationPeriodController));
-router.get('/search', EducationPeriodController.search.bind(EducationPeriodController));
-router.get('/:id', EducationPeriodController.findOne.bind(EducationPeriodController));
-router.post('/', EducationPeriodController.create.bind(EducationPeriodController));
-router.put('/:id', EducationPeriodController.update.bind(EducationPeriodController));
-router.delete('/:id', EducationPeriodController.remove.bind(EducationPeriodController));
+router.get('/', educationPeriodController.getAll.bind(educationPeriodController));
+router.get('/search', educationPeriodController.search.bind(educationPeriodController));
+router.get('/active', educationPeriodController.getActive.bind(educationPeriodController));
+router.get('/:id', educationPeriodController.getById.bind(educationPeriodController));
+router.post('/', educationPeriodController.create.bind(educationPeriodController));
+router.put('/:id', educationPeriodController.update.bind(educationPeriodController));
+router.put('/:id/toggle-status', educationPeriodController.toggleStatus.bind(educationPeriodController));
+router.delete('/:id', educationPeriodController.delete.bind(educationPeriodController));
 
 export default router;

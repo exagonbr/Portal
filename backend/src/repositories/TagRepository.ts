@@ -1,4 +1,6 @@
 import { ExtendedRepository, PaginatedResult } from './ExtendedRepository';
+import { Repository } from 'typeorm';
+import { AppDataSource } from '../config/typeorm.config';
 import { Tag } from '../entities/Tag';
 
 export interface CreateTagData {
@@ -10,8 +12,9 @@ export interface UpdateTagData extends Partial<CreateTagData> {}
 
 export class TagRepository extends ExtendedRepository<Tag> {
   constructor() {
-    super('tag');
+    super("tags");
   }
+  
   // Implementação do método abstrato findAllPaginated
   async findAllPaginated(options: {
     page?: number;
@@ -21,83 +24,87 @@ export class TagRepository extends ExtendedRepository<Tag> {
     const { page = 1, limit = 10, search } = options;
     
     try {
-      if (this.repository) {
-        let queryBuilder = this.repository.createQueryBuilder('tag');
-        
-        // Adicione condições de pesquisa específicas para esta entidade
-        if (search) {
-          queryBuilder = queryBuilder
-            .where('tag.name ILIKE :search', { search: `%${search}%` });
-        }
-        
-        const [data, total] = await queryBuilder
-          .skip((page - 1) * limit)
-          .take(limit)
-          .orderBy('tag.id', 'DESC')
-          .getManyAndCount();
-          
-        return {
-          data,
-          total,
-          page,
-          limit
-        };
-      } else {
-        // Fallback para query raw
-        const query = `
-          SELECT * FROM tag
-          ${search ? `WHERE name ILIKE '%${search}%'` : ''}
-          ORDER BY id DESC
-          LIMIT ${limit} OFFSET ${(page - 1) * limit}
-        `;
-        
-        const countQuery = `
-          SELECT COUNT(*) as total FROM tag
-          ${search ? `WHERE name ILIKE '%${search}%'` : ''}
-        `;
+      // Usar diretamente o db e tableName herdados da classe base
+      let query = this.db(this.tableName).select("*");
 
-        const [data, countResult] = await Promise.all([
-          AppDataSource.query(query),
-          AppDataSource.query(countQuery)
-        ]);
-
-        const total = parseInt(countResult[0].total);
-
-        return {
-          data,
-          total,
-          page,
-          limit
-        };
+      // Adicione condições de pesquisa específicas para esta entidade
+      if (search) {
+        query = query.whereILike("name", `%${search}%`);
       }
+
+      // Executar a consulta paginada
+      const offset = (page - 1) * limit;
+      const data = await query
+        .orderBy("id", "DESC")
+        .limit(limit)
+        .offset(offset);
+
+      // Contar o total de registros
+      const countResult = await this.db(this.tableName)
+        .count("* as total")
+        .modify(qb => {
+          if (search) {
+            qb.whereILike("name", `%${search}%`);
+          }
+        })
+        .first();
+
+      const total = parseInt(countResult?.total as string, 10) || 0;
+
+      return {
+        data,
+        total,
+        page,
+        limit
+      };
     } catch (error) {
-      console.error(`Erro ao buscar registros de tag:`, error);
+      console.error(`Erro ao buscar registros de tags:`, error);
       throw error;
     }
   }
 
   async findByName(name: string): Promise<Tag[]> {
-    return this.db(this.tableName)
-      .where('name', 'ilike', `%${name}%`)
-      .andWhere('deleted', false)
-      .orderBy('name', 'asc');
+    try {
+      return this.db(this.tableName)
+        .where('name', 'ilike', `%${name}%`)
+        .andWhere('deleted', false)
+        .orderBy('name', 'asc');
+    } catch (error) {
+      console.error(`Erro ao buscar tags por nome:`, error);
+      throw error;
+    }
   }
 
   async findActive(): Promise<Tag[]> {
-    return this.db(this.tableName)
-      .where('deleted', false)
-      .orderBy('name', 'asc');
+    try {
+      return this.db(this.tableName)
+        .where('deleted', false)
+        .orderBy('name', 'asc');
+    } catch (error) {
+      console.error(`Erro ao buscar tags ativas:`, error);
+      throw error;
+    }
   }
 
   async findByExactName(name: string): Promise<Tag | null> {
-    return this.db(this.tableName)
-      .where('name', name)
-      .andWhere('deleted', false)
-      .first();
+    try {
+      return this.db(this.tableName)
+        .where('name', name)
+        .andWhere('deleted', false)
+        .first();
+    } catch (error) {
+      console.error(`Erro ao buscar tag pelo nome exato:`, error);
+      throw error;
+    }
   }
 
   async softDelete(id: string): Promise<boolean> {
-    const result = await this.update(id, { deleted: true });
-    return !!result;
+    try {
+      const result = await this.update(id, { deleted: true });
+      return !!result;
+    } catch (error) {
+      console.error(`Erro ao deletar tag:`, error);
+      throw error;
+    }
   }
-} 
+}

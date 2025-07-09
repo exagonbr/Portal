@@ -15,12 +15,12 @@ export class UpdateAnswerDto {
 }
 
 export class AnswerResponseDto {
-  id: string;
-  version: string;
-  dateCreated: string;
-  deleted: string;
-  isCorrect: string;
-  lastUpdated: string;
-  questionId: string;
-  reply: string;
+  id: string = "";
+  version: string = "";
+  dateCreated: string = "";
+  deleted: string = "";
+  isCorrect: string = "";
+  lastUpdated: string = "";
+  questionId: string = "";
+  reply: string = "";
 }

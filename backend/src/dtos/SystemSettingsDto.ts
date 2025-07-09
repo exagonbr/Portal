@@ -19,14 +19,14 @@ export class UpdateSystemSettingsDto {
 }
 
 export class SystemSettingsResponseDto {
-  id: string;
-  key: string;
-  value: string;
-  type: string;
-  description: string;
-  category: string;
-  isPublic: string;
-  isEncrypted: string;
-  createdAt: string;
-  updatedAt: string;
+  id: string = "";
+  key: string = "";
+  value: string = "";
+  type: string = "";
+  description: string = "";
+  category: string = "";
+  isPublic: string = "";
+  isEncrypted: string = "";
+  createdAt: string = "";
+  updatedAt: string = "";
 }

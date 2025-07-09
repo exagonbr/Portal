@@ -1,20 +1,15 @@
 import { Router } from 'express';
-import { TargetAudienceController } from '../controllers/TargetAudienceController';
-import { requireAuth } from '../middleware/requireAuth';
-import { CreateTargetAudienceDto, UpdateTargetAudienceDto } from '../dtos/TargetAudienceDto';
+import targetAudienceController from '../controllers/TargetAudienceController';
 
 const router = Router();
-const TargetAudienceController = new TargetAudienceController();
 
-// Aplicar middleware de autenticação
-// Middleware aplicado no index.ts
-
-// Rotas CRUD
-router.get('/', TargetAudienceController.findAll.bind(TargetAudienceController));
-router.get('/search', TargetAudienceController.search.bind(TargetAudienceController));
-router.get('/:id', TargetAudienceController.findOne.bind(TargetAudienceController));
-router.post('/', TargetAudienceController.create.bind(TargetAudienceController));
-router.put('/:id', TargetAudienceController.update.bind(TargetAudienceController));
-router.delete('/:id', TargetAudienceController.remove.bind(TargetAudienceController));
+router.get('/', targetAudienceController.getAll.bind(targetAudienceController));
+router.get('/search', targetAudienceController.search.bind(targetAudienceController));
+router.get('/active', targetAudienceController.getActive.bind(targetAudienceController));
+router.get('/:id', targetAudienceController.getById.bind(targetAudienceController));
+router.post('/', targetAudienceController.create.bind(targetAudienceController));
+router.put('/:id', targetAudienceController.update.bind(targetAudienceController));
+router.put('/:id/toggle-status', targetAudienceController.toggleStatus.bind(targetAudienceController));
+router.delete('/:id', targetAudienceController.delete.bind(targetAudienceController));
 
 export default router;

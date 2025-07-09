@@ -11,8 +11,8 @@ export class UpdateGenreDto {
 }
 
 export class GenreResponseDto {
-  id: string;
-  version: string;
-  apiId: string;
-  name: string;
+  id: string = "";
+  version: string = "";
+  apiId: string = "";
+  name: string = "";
 }

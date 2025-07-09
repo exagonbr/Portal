@@ -1,4 +1,6 @@
 import { ExtendedRepository, PaginatedResult } from './ExtendedRepository';
+import { Repository } from 'typeorm';
+import { AppDataSource } from '../config/typeorm.config';
 // import { Lesson } from '../entities/Lesson'; // Supondo que a entidade Lesson exista
 
 // Interface para desacoplar
@@ -18,8 +20,9 @@ export interface CreateLessonData extends Omit<Lesson, 'id' | 'created_at' | 'up
 export interface UpdateLessonData extends Partial<CreateLessonData> {}
 
 export class LessonRepository extends ExtendedRepository<Lesson> {
+
   constructor() {
-    super('lessons');
+    super("lessons");
   }
   // Implementação do método abstrato findAllPaginated
   async findAllPaginated(options: {
@@ -30,59 +33,39 @@ export class LessonRepository extends ExtendedRepository<Lesson> {
     const { page = 1, limit = 10, search } = options;
     
     try {
-      if (this.repository) {
-        let queryBuilder = this.repository.createQueryBuilder('lesson');
-        
-        // Adicione condições de pesquisa específicas para esta entidade
-        if (search) {
-          queryBuilder = queryBuilder
-            .where('lesson.name ILIKE :search', { search: `%${search}%` });
-        }
-        
-        const [data, total] = await queryBuilder
-          .skip((page - 1) * limit)
-          .take(limit)
-          .orderBy('lesson.id', 'DESC')
-          .getManyAndCount();
-          
-        return {
-          data,
-          total,
-          page,
-          limit
-        };
-      } else {
-        // Fallback para query raw
-        const query = `
-          SELECT * FROM lesson
-          ${search ? `WHERE name ILIKE '%${search}%'` : ''}
-          ORDER BY id DESC
-          LIMIT ${limit} OFFSET ${(page - 1) * limit}
-        `;
-        
-        const countQuery = `
-          SELECT COUNT(*) as total FROM lesson
-          ${search ? `WHERE name ILIKE '%${search}%'` : ''}
-        `;
+      // Usar diretamente o db e tableName herdados da classe base
+      let query = this.db(this.tableName).select("*");
 
-        const [data, countResult] = await Promise.all([
-          AppDataSource.query(query),
-          AppDataSource.query(countQuery)
-        ]);
-
-        const total = parseInt(countResult[0].total);
-
-        return {
-          data,
-          total,
-          page,
-          limit
-        };
+      // Adicione condições de pesquisa específicas para esta entidade
+      if (search) {
+        query = query.whereILike("name", `%${search}%`);
       }
-    } catch (error) {
-      console.error(`Erro ao buscar registros de lesson:`, error);
-      throw error;
-    }
+
+      // Executar a consulta paginada
+      const offset = (page - 1) * limit;
+      const data = await query
+        .orderBy("id", "DESC")
+        .limit(limit)
+        .offset(offset);
+
+      // Contar o total de registros
+      const countResult = await this.db(this.tableName)
+        .count("* as total")
+        .modify(qb => {
+          if (search) {
+            qb.whereILike("name", `%${search}%`);
+          }
+        })
+        .first();
+
+      const total = parseInt(countResult?.total as string, 10) || 0;
+
+      return {
+        data,
+        total,
+        page,
+        limit
+      };
   }
 
   async findByModule(moduleId: string): Promise<Lesson[]> {

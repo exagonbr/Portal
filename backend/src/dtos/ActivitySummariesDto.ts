@@ -25,17 +25,17 @@ export class UpdateActivitySummariesDto {
 }
 
 export class ActivitySummariesResponseDto {
-  id: string;
-  userId: string;
-  date: string;
-  totalTimeSeconds: string;
-  pageViews: string;
-  videoTimeSeconds: string;
-  videosWatched: string;
-  quizzesAttempted: string;
-  assignmentsSubmitted: string;
-  loginCount: string;
-  uniqueSessions: string;
-  createdAt: string;
-  updatedAt: string;
+  id: string = "";
+  userId: string = "";
+  date: string = "";
+  totalTimeSeconds: string = "";
+  pageViews: string = "";
+  videoTimeSeconds: string = "";
+  videosWatched: string = "";
+  quizzesAttempted: string = "";
+  assignmentsSubmitted: string = "";
+  loginCount: string = "";
+  uniqueSessions: string = "";
+  createdAt: string = "";
+  updatedAt: string = "";
 }

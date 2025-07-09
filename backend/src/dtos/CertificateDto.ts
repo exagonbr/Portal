@@ -23,16 +23,16 @@ export class UpdateCertificateDto {
 }
 
 export class CertificateResponseDto {
-  id: string;
-  version: string;
-  dateCreated: string;
-  lastUpdated: string;
-  path: string;
-  score: string;
-  tvShowId: string;
-  userId: string;
-  document: string;
-  licenseCode: string;
-  tvShowName: string;
-  recreate: string;
+  id: string = "";
+  version: string = "";
+  dateCreated: string = "";
+  lastUpdated: string = "";
+  path: string = "";
+  score: string = "";
+  tvShowId: string = "";
+  userId: string = "";
+  document: string = "";
+  licenseCode: string = "";
+  tvShowName: string = "";
+  recreate: string = "";
 }

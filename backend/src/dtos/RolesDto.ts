@@ -13,11 +13,11 @@ export class UpdateRolesDto {
 }
 
 export class RolesResponseDto {
-  id: string;
-  name: string;
-  description: string;
-  isActive: string;
-  createdAt: string;
-  updatedAt: string;
-  version: string;
+  id: string = "";
+  name: string = "";
+  description: string = "";
+  isActive: string = "";
+  createdAt: string = "";
+  updatedAt: string = "";
+  version: string = "";
 }

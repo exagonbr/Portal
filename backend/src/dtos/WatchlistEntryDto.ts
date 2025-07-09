@@ -13,11 +13,11 @@ export class UpdateWatchlistEntryDto {
 }
 
 export class WatchlistEntryResponseDto {
-  id: string;
-  userId: string;
-  videoId: string;
-  addedAt: string;
-  watched: string;
-  createdAt: string;
-  updatedAt: string;
+  id: string = "";
+  userId: string = "";
+  videoId: string = "";
+  addedAt: string = "";
+  watched: string = "";
+  createdAt: string = "";
+  updatedAt: string = "";
 }

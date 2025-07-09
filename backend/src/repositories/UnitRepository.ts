@@ -1,4 +1,6 @@
 import { ExtendedRepository, PaginatedResult } from './ExtendedRepository';
+import { Repository } from 'typeorm';
+import { AppDataSource } from '../config/typeorm.config';
 import { Unit } from '../entities/Unit';
 
 export interface CreateUnitData {
@@ -29,114 +31,26 @@ export interface UnitFilters {
 
 export class UnitRepository extends ExtendedRepository<Unit> {
   constructor() {
-    super('unit');
-  }
-  // Implementação do método abstrato findAllPaginated
-  async findAllPaginated(options: {
-    page?: number;
-    limit?: number;
-    search?: string;
-  } = {}): Promise<PaginatedResult<Unit>> {
-    const { page = 1, limit = 10, search } = options;
-    
-    try {
-      if (this.repository) {
-        let queryBuilder = this.repository.createQueryBuilder('unit');
-        
-        // Adicione condições de pesquisa específicas para esta entidade
-        if (search) {
-          queryBuilder = queryBuilder
-            .where('unit.name ILIKE :search', { search: `%${search}%` });
-        }
-        
-        const [data, total] = await queryBuilder
-          .skip((page - 1) * limit)
-          .take(limit)
-          .orderBy('unit.id', 'DESC')
-          .getManyAndCount();
-          
-        return {
-          data,
-          total,
-          page,
-          limit
-        };
-      } else {
-        // Fallback para query raw
-        const query = `
-          SELECT * FROM unit
-          ${search ? `WHERE name ILIKE '%${search}%'` : ''}
-          ORDER BY id DESC
-          LIMIT ${limit} OFFSET ${(page - 1) * limit}
-        `;
-        
-        const countQuery = `
-          SELECT COUNT(*) as total FROM unit
-          ${search ? `WHERE name ILIKE '%${search}%'` : ''}
-        `;
-
-        const [data, countResult] = await Promise.all([
-          AppDataSource.query(query),
-          AppDataSource.query(countQuery)
-        ]);
-
-        const total = parseInt(countResult[0].total);
-
-        return {
-          data,
-          total,
-          page,
-          limit
-        };
-      }
-    } catch (error) {
-      console.error(`Erro ao buscar registros de unit:`, error);
-      throw error;
-    }
+    super('units');
   }
 
-  /**
-   * Buscar unidades por nome com termo de pesquisa
-   */
-  async findByName(name: string, limit: number = 10): Promise<Unit[]> {
-    return this.db(this.tableName)
-      .where('name', 'ilike', `%${name}%`)
-      .andWhere('deleted', false)
-      .andWhere('status', 'active')
-      .orderBy('name', 'asc')
-      .limit(limit);
-  }
-
-  /**
-   * Buscar unidade específica por nome e instituição (para verificar duplicatas)
-   */
   async findByNameAndInstitution(name: string, institutionId: number): Promise<Unit | null> {
     const result = await this.db(this.tableName)
       .where('name', 'ilike', name)
       .andWhere('institution_id', institutionId)
       .first();
-    
     return result || null;
   }
 
-  /**
-   * Buscar unidades por instituição
-   */
   async findByInstitution(institutionId: number, includeInactive: boolean = false): Promise<Unit[]> {
     const query = this.db(this.tableName)
       .where('institution_id', institutionId);
-
     if (!includeInactive) {
-      query.andWhere('deleted', false)
-           .andWhere('status', 'active');
+      query.andWhere('deleted', false).andWhere('status', 'active');
     }
-
     return query.orderBy('name', 'asc');
   }
 
-  /**
-   * Buscar apenas unidades ativas
-   */
   async findActive(limit: number = 100): Promise<Unit[]> {
     return this.db(this.tableName)
       .where('deleted', false)
@@ -145,20 +59,14 @@ export class UnitRepository extends ExtendedRepository<Unit> {
       .limit(limit);
   }
 
-  /**
-   * Soft delete - marcar como excluída
-   */
   async softDelete(id: string): Promise<boolean> {
-    const result = await this.update(id, { 
-      deleted: true, 
-      lastUpdated: new Date() 
+    const result = await this.update(id, {
+      deleted: true,
+      lastUpdated: new Date()
     } as UpdateUnitData);
     return !!result;
   }
 
-  /**
-   * Buscar unidades com filtros e paginação
-   */
   async findWithFilters(filters: UnitFilters): Promise<{ data: Unit[], total: number }> {
     const {
       page = 1,
@@ -171,211 +79,91 @@ export class UnitRepository extends ExtendedRepository<Unit> {
       active,
       deleted
     } = filters;
-
-    // Query principal para buscar dados
     const query = this.db(this.tableName).select('*');
-    
-    // Query para contar total
     const countQuery = this.db(this.tableName).count('* as total').first();
-
-    // Aplicar filtros em ambas as queries
-    const applyFilters = (q: any) => {
-      // Filtro de busca por texto
-      if (search) {
-        q.where(function(this: any) {
-          this.where('name', 'ilike', `%${search}%`)
-              .orWhere('institution_name', 'ilike', `%${search}%`)
-              .orWhere('description', 'ilike', `%${search}%`);
+    if (search) {
+      query.where(function(this: any) {
+        this.where('name', 'ilike', `%${search}%`)
+            .orWhere('institution_name', 'ilike', `%${search}%`)
+            .orWhere('description', 'ilike', `%${search}%`);
+      });
+      countQuery.where(function(this: any) {
+        this.where('name', 'ilike', `%${search}%`)
+            .orWhere('institution_name', 'ilike', `%${search}%`)
+            .orWhere('description', 'ilike', `%${search}%`);
+      });
+    }
+    if (institution_id !== undefined) {
+      query.where('institution_id', institution_id);
+      countQuery.where('institution_id', institution_id);
+    }
+    if (type) {
+      query.where('type', 'ilike', type);
+      countQuery.where('type', 'ilike', type);
+    }
+    if (active !== undefined) {
+      if (active) {
+        query.where('status', 'active').andWhere('deleted', false);
+        countQuery.where('status', 'active').andWhere('deleted', false);
+      } else {
+        query.where(function(this: any) {
+          this.where('status', '!=', 'active').orWhere('deleted', true);
+        });
+        countQuery.where(function(this: any) {
+          this.where('status', '!=', 'active').orWhere('deleted', true);
         });
       }
-
-      // Filtro por instituição
-      if (institution_id !== undefined) {
-        q.where('institution_id', institution_id);
-      }
-
-      // Filtro por tipo
-      if (type) {
-        q.where('type', 'ilike', type);
-      }
-
-      // Filtro por status ativo
-      if (active !== undefined) {
-        if (active) {
-          q.where('status', 'active').andWhere('deleted', false);
-        } else {
-          q.where(function(this: any) {
-            this.where('status', '!=', 'active').orWhere('deleted', true);
-          });
-        }
-      }
-
-      // Filtro por status excluído
-      if (deleted !== undefined) {
-        q.where('deleted', deleted);
-      }
-
-      return q;
-    };
-
-    applyFilters(query);
-    applyFilters(countQuery);
-    
-    // Aplicar ordenação e paginação na query principal
+    }
+    if (deleted !== undefined) {
+      query.where('deleted', deleted);
+      countQuery.where('deleted', deleted);
+    }
     const validSortColumns = ['id', 'name', 'institution_name', 'type', 'status', 'date_created', 'last_updated'];
     const safeSortBy = validSortColumns.includes(sortBy as string) ? sortBy : 'name';
-    
-    query
-      .orderBy(safeSortBy as string, sortOrder)
-      .limit(limit)
-      .offset((page - 1) * limit);
-
-    // Executar ambas as queries em paralelo
+    query.orderBy(safeSortBy as string, sortOrder).limit(limit).offset((page - 1) * limit);
     const [data, totalResult] = await Promise.all([query, countQuery]);
-    
     const total = totalResult ? parseInt(totalResult.total as string, 10) : 0;
-
     return { data, total };
   }
 
-  /**
-   * Alternar status da unidade (ativa/inativa)
-   */
   async toggleStatus(id: string): Promise<Unit | null> {
-    try {
-      const unit = await this.findById(id);
-      if (!unit) {
-        return null;
-      }
-
-      const newStatus = unit.status === 'active' ? 'inactive' : 'active';
-      const updatedUnit = await this.update(id, { 
-        status: newStatus,
-        lastUpdated: new Date()
-      } as UpdateUnitData);
-      
-      return updatedUnit;
-    } catch (error) {
-      console.error('Erro ao alternar status da Unit:', error);
-      throw error;
-    }
+    const unit = await this.findById(id);
+    if (!unit) return null;
+    const newStatus = unit.status === 'active' ? 'inactive' : 'active';
+    const updatedUnit = await this.update(id, {
+      status: newStatus,
+      lastUpdated: new Date()
+    } as UpdateUnitData);
+    return updatedUnit;
   }
 
-  /**
-   * Sobrescrever o método create para incluir timestamps automaticamente
-   */
-  async create(data: CreateUnitData): Promise<Unit> {
-    const now = new Date();
-    const unitData = {
-      ...data,
-      date_created: data.dateCreated || now,
-      last_updated: data.lastUpdated || now,
-      deleted: data.deleted || false,
-      status: data.status || 'active'
-    };
-
-    const [result] = await this.db(this.tableName)
-      .insert(unitData)
-      .returning('*');
-    
-    return result;
-  }
-
-  /**
-   * Sobrescrever o método update para incluir timestamp de atualização
-   */
-  async update(id: string | number, data: UpdateUnitData): Promise<Unit | null> {
-    const updateData = {
-      ...data,
-      last_updated: new Date()
-    };
-
-    const [result] = await this.db(this.tableName)
-      .where('id', id)
-      .update(updateData)
-      .returning('*');
-    
-    return result || null;
-  }
-
-  /**
-   * Buscar estatísticas das unidades
-   */
-  async getStats(): Promise<{
-    total: number;
-    active: number;
-    inactive: number;
-    byType: { type: string; count: number }[];
-    byInstitution: { institution_id: number; institution_name: string; count: number }[];
-  }> {
-    const [totalResult, activeResult, inactiveResult, byTypeResult, byInstitutionResult] = await Promise.all([
-      this.db(this.tableName).count('* as count').first(),
-      this.db(this.tableName).where('deleted', false).andWhere('status', 'active').count('* as count').first(),
-      this.db(this.tableName).where(function(this: any) {
-        this.where('deleted', true).orWhere('status', '!=', 'active');
-      }).count('* as count').first(),
-      this.db(this.tableName)
-        .select('type')
-        .count('* as count')
-        .whereNotNull('type')
-        .groupBy('type')
-        .orderBy('count', 'desc'),
-      this.db(this.tableName)
-        .select('institution_id', 'institution_name')
-        .count('* as count')
-        .groupBy('institution_id', 'institution_name')
-        .orderBy('count', 'desc')
-    ]) as [any, any, any, any[], any[]];
-
-    return {
-      total: parseInt(totalResult?.count as string, 10) || 0,
-      active: parseInt(activeResult?.count as string, 10) || 0,
-      inactive: parseInt(inactiveResult?.count as string, 10) || 0,
-      byType: byTypeResult.map(item => ({
-        type: String(item.type || 'N/A'),
-        count: parseInt(item.count as string, 10)
-      })),
-      byInstitution: byInstitutionResult.map(item => ({
-        institution_id: parseInt(item.institution_id as string, 10),
-        institution_name: String(item.institution_name || 'N/A'),
-        count: parseInt(item.count as string, 10)
-      }))
-    };
-  }
-
-  /**
-   * Verificar se existe uma unidade com o mesmo nome em uma instituição
-   */
   async existsByNameAndInstitution(name: string, institutionId: number, excludeId?: string | number): Promise<boolean> {
     const query = this.db(this.tableName)
       .where('name', 'ilike', name)
       .andWhere('institution_id', institutionId);
-
     if (excludeId) {
       query.andWhere('id', '!=', excludeId);
     }
-
     const result = await query.first();
     return !!result;
   }
 
-  /**
-   * Buscar unidades recentemente criadas
-   */
-  async findRecentlyCreated(limit: number = 10): Promise<Unit[]> {
+  async findByName(name: string, limit: number = 10): Promise<Unit[]> {
     return this.db(this.tableName)
-      .where('deleted', false)
-      .orderBy('date_created', 'desc')
+      .where('name', 'ilike', `%${name}%`)
+      .andWhere('deleted', false)
+      .andWhere('status', 'active')
+      .orderBy('name', 'asc')
       .limit(limit);
   }
 
-  /**
-   * Buscar unidades recentemente atualizadas
-   */
-  async findRecentlyUpdated(limit: number = 10): Promise<Unit[]> {
-    return this.db(this.tableName)
-      .where('deleted', false)
-      .orderBy('last_updated', 'desc')
-      .limit(limit);
+  async findAllPaginated(options: {
+    page?: number;
+    limit?: number;
+    search?: string;
+  } = {}): Promise<PaginatedResult<Unit>> {
+    const { page = 1, limit = 10, search } = options;
+    const { data, total } = await this.findWithFilters({ page, limit, search });
+    return { data, total, page, limit };
   }
 } 

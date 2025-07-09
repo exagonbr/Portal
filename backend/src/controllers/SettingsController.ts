@@ -1,14 +1,18 @@
 import { Request, Response } from 'express';
-import { SettingsRepository } from '../repositories/SettingsRepository'
-import { Settings } from '../entities/Settings';;
-
-const settingsRepository = new SettingsRepository();
+import { SettingsRepository } from '../repositories/SettingsRepository';
+import { Settings } from '../entities/Settings';
 
 class SettingsController {
+  private settingsRepository: SettingsRepository;
+
+  constructor() {
+    this.settingsRepository = new SettingsRepository();
+  }
+
   public async getSetting(req: Request, res: Response): Promise<Response> {
     try {
       const { key } = req.params;
-      const setting = await settingsRepository.findByKey(key);
+      const setting = await this.settingsRepository.findByKey(key);
       if (!setting) {
         return res.status(404).json({ success: false, message: 'Setting not found' });
       }
@@ -21,7 +25,7 @@ class SettingsController {
 
   public async getAllSettings(req: Request, res: Response): Promise<Response> {
     try {
-      const settings = await settingsRepository.findAll();
+      const settings = await this.settingsRepository.findAll();
       return res.status(200).json({ success: true, data: settings });
     } catch (error) {
       console.error(`Error in getAllSettings: ${error}`);
@@ -36,7 +40,7 @@ class SettingsController {
       if (value === undefined) {
         return res.status(400).json({ success: false, message: 'Value is required' });
       }
-      const setting = await settingsRepository.setValue(key, value);
+      const setting = await this.settingsRepository.setValue(key, value);
       return res.status(200).json({ success: true, data: setting, message: 'Setting updated successfully' });
     } catch (error) {
       console.error(`Error in setSetting: ${error}`);

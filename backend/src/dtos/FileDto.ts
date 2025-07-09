@@ -37,23 +37,23 @@ export class UpdateFileDto {
 }
 
 export class FileResponseDto {
-  id: string;
-  version: string;
-  contentType: string;
-  dateCreated: string;
-  extension: string;
-  externalLink: string;
-  isDefault: string;
-  isPublic: string;
-  label: string;
-  lastUpdated: string;
-  localFile: string;
-  name: string;
-  originalFilename: string;
-  quality: string;
-  sha256hex: string;
-  size: string;
-  subtitleLabel: string;
-  subtitleSrcLang: string;
-  isSubtitled: string;
+  id: string = "";
+  version: string = "";
+  contentType: string = "";
+  dateCreated: string = "";
+  extension: string = "";
+  externalLink: string = "";
+  isDefault: string = "";
+  isPublic: string = "";
+  label: string = "";
+  lastUpdated: string = "";
+  localFile: string = "";
+  name: string = "";
+  originalFilename: string = "";
+  quality: string = "";
+  sha256hex: string = "";
+  size: string = "";
+  subtitleLabel: string = "";
+  subtitleSrcLang: string = "";
+  isSubtitled: string = "";
 }

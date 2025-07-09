@@ -1,26 +1,24 @@
 import { Request, Response } from 'express';
 import { SecurityPoliciesRepository } from '../repositories/SecurityPoliciesRepository'
-import { SecurityPolicies } from '../entities/SecurityPolicies';;
+import { SecurityPolicies } from '../entities/SecurityPolicies';
 import { BaseController } from './BaseController';
 
-export class SecurityPoliciesController extends BaseController<SecurityPolicies> {
+class SecurityPoliciesController extends BaseController<SecurityPolicies> {
   private securityPoliciesRepository: SecurityPoliciesRepository;
-  private security_policiesRepository: SecurityPoliciesRepository;
 
   constructor() {
     const repository = new SecurityPoliciesRepository();
     super(repository);
     this.securityPoliciesRepository = repository;
-    this.security_policiesRepository = new SecurityPoliciesRepository();
   }
 
-  async findAll(req: Request, res: Response): Promise<Response> {
+  async getAll(req: Request, res: Response): Promise<Response> {
     try {
       const page = parseInt(req.query.page as string) || 1;
       const limit = parseInt(req.query.limit as string) || 10;
       const search = req.query.search as string;
 
-      const result = await this.security_policiesRepository.findAllPaginated({ page, limit, search });
+      const result = await this.securityPoliciesRepository.findAllPaginated({ page, limit, search });
 
       return res.status(200).json({ success: true, data: result });
     } catch (error) {
@@ -29,10 +27,10 @@ export class SecurityPoliciesController extends BaseController<SecurityPolicies>
     }
   }
 
-  async findById(req: Request, res: Response): Promise<Response> {
+  async getById(req: Request, res: Response): Promise<Response> {
     try {
       const { id } = req.params;
-      const record = await this.security_policiesRepository.findById(parseInt(id));
+      const record = await this.securityPoliciesRepository.findById(parseInt(id));
 
       if (!record) {
         return res.status(404).json({ success: false, message: 'Registro não encontrado' });
@@ -48,7 +46,7 @@ export class SecurityPoliciesController extends BaseController<SecurityPolicies>
   async create(req: Request, res: Response): Promise<Response> {
     try {
       const data = req.body;
-      const record = await this.security_policiesRepository.create(data);
+      const record = await this.securityPoliciesRepository.create(data);
       return res.status(201).json({ success: true, data: record });
     } catch (error) {
       console.error(error);
@@ -61,7 +59,7 @@ export class SecurityPoliciesController extends BaseController<SecurityPolicies>
       const { id } = req.params;
       const data = req.body;
       
-      const record = await this.security_policiesRepository.update(parseInt(id), data);
+      const record = await this.securityPoliciesRepository.update(parseInt(id), data);
       
       if (!record) {
         return res.status(404).json({ success: false, message: 'Registro não encontrado' });
@@ -77,7 +75,7 @@ export class SecurityPoliciesController extends BaseController<SecurityPolicies>
   async delete(req: Request, res: Response): Promise<Response> {
     try {
       const { id } = req.params;
-      const success = await this.security_policiesRepository.delete(parseInt(id));
+      const success = await this.securityPoliciesRepository.delete(parseInt(id));
       
       if (!success) {
         return res.status(404).json({ success: false, message: 'Registro não encontrado' });
@@ -89,4 +87,21 @@ export class SecurityPoliciesController extends BaseController<SecurityPolicies>
       return res.status(500).json({ success: false, message: 'Internal Server Error' });
     }
   }
+
+  async search(req: Request, res: Response): Promise<Response> {
+    try {
+      const { q } = req.query;
+      if (!q) {
+        return res.status(400).json({ success: false, message: 'Query parameter "q" is required' });
+      }
+      
+      const securityPolicies = await this.securityPoliciesRepository.searchByName(q as string);
+      return res.status(200).json({ success: true, data: securityPolicies });
+    } catch (error) {
+      console.error(`Error in search security policies: ${error}`);
+      return res.status(500).json({ success: false, message: 'Internal Server Error' });
+    }
+  }
 }
+
+export default new SecurityPoliciesController();

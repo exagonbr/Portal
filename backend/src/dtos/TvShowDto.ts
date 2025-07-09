@@ -23,16 +23,16 @@ export class UpdateTvShowDto {
 }
 
 export class TvShowResponseDto {
-  id: string;
-  version: string;
-  dateCreated: string;
-  deleted: string;
-  lastUpdated: string;
-  name: string;
-  description: string;
-  thumbnailUrl: string;
-  duration: string;
-  rating: string;
-  releaseYear: string;
-  isActive: string;
+  id: string = "";
+  version: string = "";
+  dateCreated: string = "";
+  deleted: string = "";
+  lastUpdated: string = "";
+  name: string = "";
+  description: string = "";
+  thumbnailUrl: string = "";
+  duration: string = "";
+  rating: string = "";
+  releaseYear: string = "";
+  isActive: string = "";
 }

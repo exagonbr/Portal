@@ -1,11 +1,14 @@
 import { Request, Response } from 'express';
-import { NotificationRepository } from '../repositories/NotificationRepository'
-import { Notification } from '../entities/Notification';;
+import { NotificationRepository } from '../repositories/NotificationRepository';
 import { Notification, NotificationCategory, NotificationStatus, NotificationType } from '../entities/Notification';
 
-const notificationRepository = new NotificationRepository();
-
 class NotificationController {
+  private notificationRepository: NotificationRepository;
+
+  constructor() {
+    this.notificationRepository = new NotificationRepository();
+  }
+
   public async getNotifications(req: Request, res: Response): Promise<Response> {
     try {
       // Supondo que o ID do usuário venha do middleware de autenticação
@@ -15,7 +18,7 @@ class NotificationController {
       const limit = parseInt(req.query.limit as string) || 10;
       const offset = (page - 1) * limit;
 
-      const notifications = await notificationRepository.findByRecipient(
+      const notifications = await this.notificationRepository.findByRecipient(
         userId,
         {
           category: category as NotificationCategory,
@@ -27,7 +30,7 @@ class NotificationController {
         offset
       );
       
-      const total = await notificationRepository.count({ recipient_id: userId } as Partial<Notification>);
+      const total = await this.notificationRepository.count({ recipient_id: userId } as Partial<Notification>);
 
       return res.status(200).json({ 
           success: true, 
@@ -49,7 +52,7 @@ class NotificationController {
     try {
       const { id } = req.params;
       const userId = (req as any).user.id;
-      const success = await notificationRepository.markAsRead(id, userId);
+      const success = await this.notificationRepository.markAsRead(id, userId);
       if (!success) {
         return res.status(404).json({ success: false, message: 'Notification not found for this user' });
       }
@@ -63,7 +66,7 @@ class NotificationController {
   public async markAllAsRead(req: Request, res: Response): Promise<Response> {
     try {
       const userId = (req as any).user.id;
-      const count = await notificationRepository.markAllAsRead(userId);
+      const count = await this.notificationRepository.markAllAsRead(userId);
       return res.status(200).json({ success: true, message: `${count} notifications marked as read` });
     } catch (error) {
       console.error(`Error in markAllAsRead: ${error}`);
@@ -74,7 +77,7 @@ class NotificationController {
   public async getNotificationById(req: Request, res: Response): Promise<Response> {
     const { id } = req.params;
     // Lógica para buscar notificação por ID
-    const notification = await notificationRepository.findById(id);
+    const notification = await this.notificationRepository.findById(id);
     if (!notification) {
       return res.status(404).json({ success: false, message: 'Notification not found' });
     }

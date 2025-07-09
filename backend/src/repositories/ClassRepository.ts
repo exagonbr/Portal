@@ -1,9 +1,10 @@
+import { Repository } from "typeorm";
 import { ExtendedRepository, PaginatedResult } from './ExtendedRepository';
 import { Class, ShiftType } from '../entities/Class';
 
 export class ClassRepository extends ExtendedRepository<Class> {
   constructor() {
-    super('classes');
+    super("classs");
   }
   // Implementação do método abstrato findAllPaginated
   async findAllPaginated(options: {

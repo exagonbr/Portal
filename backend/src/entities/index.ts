@@ -40,6 +40,7 @@ export { Profile } from './Profile';
 export { Public } from './Public';
 export { Question } from './Question';
 export { Quiz } from './Quiz';
+export { QuizAttempt } from './QuizAttempt';
 export { School } from './School';
 export { Settings } from './Settings';
 export { Tag } from './Tag';

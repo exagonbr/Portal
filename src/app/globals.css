@@ -1,3 +1,7 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
 /* Importar correções específicas para mobile */
 @import '../styles/mobile-fixes.css';
 
@@ -8,10 +12,6 @@
 @import '../styles/cards-standard.css';
 
 @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap');
-
-@tailwind base;
-@tailwind components;
-@tailwind utilities;
 
 :root {
   /* Cores Primárias - Azul Corporativo */

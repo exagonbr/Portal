@@ -1,20 +1,16 @@
 import { Router } from 'express';
-import { EducationalStageController } from '../controllers/EducationalStageController';
-import { requireAuth } from '../middleware/requireAuth';
-import { CreateEducationalStageDto, UpdateEducationalStageDto } from '../dtos/EducationalStageDto';
+import educationalStageController from '../controllers/EducationalStageController';
 
 const router = Router();
-const EducationalStageController = new EducationalStageController();
 
-// Aplicar middleware de autenticação
-// Middleware aplicado no index.ts
-
-// Rotas CRUD
-router.get('/', EducationalStageController.findAll.bind(EducationalStageController));
-router.get('/search', EducationalStageController.search.bind(EducationalStageController));
-router.get('/:id', EducationalStageController.findOne.bind(EducationalStageController));
-router.post('/', EducationalStageController.create.bind(EducationalStageController));
-router.put('/:id', EducationalStageController.update.bind(EducationalStageController));
-router.delete('/:id', EducationalStageController.remove.bind(EducationalStageController));
+router.get('/', educationalStageController.getAll.bind(educationalStageController));
+router.get('/search', educationalStageController.search.bind(educationalStageController));
+router.get('/active', educationalStageController.getActive.bind(educationalStageController));
+router.get('/grade/:grade', educationalStageController.getByGrade.bind(educationalStageController));
+router.get('/uuid/:uuid', educationalStageController.getByUuid.bind(educationalStageController));
+router.get('/:id', educationalStageController.getById.bind(educationalStageController));
+router.post('/', educationalStageController.create.bind(educationalStageController));
+router.put('/:id', educationalStageController.update.bind(educationalStageController));
+router.delete('/:id', educationalStageController.delete.bind(educationalStageController));
 
 export default router;

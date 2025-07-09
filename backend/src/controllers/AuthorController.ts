@@ -3,8 +3,6 @@ import { AuthorRepository } from '../repositories/AuthorRepository';
 import { Author } from '../entities/Author';
 import { BaseController } from './BaseController';
 
-const authorRepository = new AuthorRepository();
-
 class AuthorController extends BaseController<Author> {
   private authorRepository: AuthorRepository;
 
@@ -17,7 +15,7 @@ class AuthorController extends BaseController<Author> {
   async toggleStatus(req: Request, res: Response) {
     try {
       const { id } = req.params;
-      const author = await authorRepository.toggleStatus(id);
+      const author = await this.authorRepository.toggleStatus(id);
       if (!author) {
         return res.status(404).json({ success: false, message: 'Author not found' });
       }

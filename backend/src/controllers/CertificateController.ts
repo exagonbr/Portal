@@ -3,8 +3,6 @@ import { CertificateRepository, CertificateFilter } from '../repositories/Certif
 import { Certificate } from '../entities/Certificate';
 import { BaseController } from './BaseController';
 
-const certificateRepository = new CertificateRepository();
-
 class CertificateController extends BaseController<Certificate> {
   private certificateRepository: CertificateRepository;
 
@@ -48,7 +46,7 @@ class CertificateController extends BaseController<Certificate> {
         sort_order: (sort_order as 'asc' | 'desc') || 'desc'
       };
 
-      const result = await certificateRepository.findWithFilters(filters);
+      const result = await this.certificateRepository.findWithFilters(filters);
 
       return res.status(200).json({
         success: true,
@@ -118,7 +116,7 @@ class CertificateController extends BaseController<Certificate> {
         params = [digits, `%-${lastTwoDigits}`];
       }
 
-      const certificates = await certificateRepository.findByCondition(whereClause, params);
+      const certificates = await this.certificateRepository.findByCondition(whereClause, params);
 
       // Retornar apenas informações públicas dos certificados
       const publicCertificates = certificates.map((cert: Certificate) => ({
@@ -154,7 +152,7 @@ class CertificateController extends BaseController<Certificate> {
    */
   async getStats(req: Request, res: Response) {
     try {
-      const stats = await certificateRepository.getStats();
+      const stats = await this.certificateRepository.getStats();
       
       return res.status(200).json({
         success: true,
@@ -186,7 +184,7 @@ class CertificateController extends BaseController<Certificate> {
       }
 
       // Verificar se já existe certificado com o mesmo código de licença
-      const existingCertificate = await certificateRepository.findOne({
+      const existingCertificate = await this.certificateRepository.findOne({
         licenseCode: certificateData.license_code
       } as any);
 
@@ -211,7 +209,7 @@ class CertificateController extends BaseController<Certificate> {
         lastUpdated: new Date()
       };
 
-      const newCertificate = await certificateRepository.create(newCertificateData as any);
+      const newCertificate = await this.certificateRepository.create(newCertificateData as any);
 
       return res.status(201).json({
         success: true,
@@ -237,7 +235,7 @@ class CertificateController extends BaseController<Certificate> {
       const certificateData = req.body;
 
       // Verificar se o certificado existe
-      const existingCertificate = await certificateRepository.findById(id);
+      const existingCertificate = await this.certificateRepository.findById(id);
       if (!existingCertificate) {
         return res.status(404).json({
           success: false,
@@ -247,7 +245,7 @@ class CertificateController extends BaseController<Certificate> {
 
       // Verificar se está tentando atualizar para um código de licença já existente
       if (certificateData.license_code && certificateData.license_code !== existingCertificate.licenseCode) {
-        const duplicateLicense = await certificateRepository.findOne({
+        const duplicateLicense = await this.certificateRepository.findOne({
           licenseCode: certificateData.license_code
         } as any);
 
@@ -277,7 +275,7 @@ class CertificateController extends BaseController<Certificate> {
         (updateData as any)[key] === undefined && delete (updateData as any)[key]
       );
 
-      const updatedCertificate = await certificateRepository.update(id, updateData as any);
+      const updatedCertificate = await this.certificateRepository.update(id, updateData as any);
 
       return res.status(200).json({
         success: true,
@@ -302,7 +300,7 @@ class CertificateController extends BaseController<Certificate> {
       const { id } = req.params;
 
       // Verificar se o certificado existe
-      const existingCertificate = await certificateRepository.findById(id);
+      const existingCertificate = await this.certificateRepository.findById(id);
       if (!existingCertificate) {
         return res.status(404).json({
           success: false,
@@ -310,7 +308,7 @@ class CertificateController extends BaseController<Certificate> {
         });
       }
 
-      await certificateRepository.delete(id);
+      await this.certificateRepository.delete(id);
 
       return res.status(200).json({
         success: true,
