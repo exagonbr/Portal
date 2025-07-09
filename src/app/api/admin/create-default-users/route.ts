@@ -1,8 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
-import db from '../../../../../backend/src/config/database'
+import { getSafeConnection } from '../../../../lib/database-safe'
 import bcrypt from 'bcryptjs'
 import { v4 as uuidv4 } from 'uuid'
-import { createCorsOptionsResponse, getCorsHeaders } from '@/config/cors'
 
 // Função para criar headers CORS
 function getCorsHeaders(origin?: string) {
@@ -106,6 +105,9 @@ export async function OPTIONS(request: NextRequest) {
 export async function POST(request: NextRequest) {
   try {
     console.log('🚀 Iniciando criação automática de usuários padrão...')
+    
+    // Obter conexão segura
+    const db = await getSafeConnection()
 
     // 1. Verificar/criar instituições
     let saberconInstitution = await db('institution')

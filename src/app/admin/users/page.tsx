@@ -150,12 +150,21 @@ export default function AdminUsersPage() {
       
       console.log('✅ [USERS] Dados auxiliares carregados:', {
         roles: rolesResponse?.items?.length || 0,
-        institutions: (institutionsResponse as any)?.items?.length || institutionsResponse?.length || 0
+        institutions: Array.isArray(institutionsResponse) 
+          ? institutionsResponse.length 
+          : (institutionsResponse as any)?.items?.length || 0
       })
       
+      const rolesData = rolesResponse.items || []
+      const institutionsData = Array.isArray(institutionsResponse) 
+        ? institutionsResponse 
+        : (institutionsResponse as any).items || []
+      
+
+      
       updateState({
-        roles: rolesResponse.items || [],
-        institutions: (institutionsResponse as any).items || institutionsResponse || []
+        roles: rolesData,
+        institutions: institutionsData
       })
       
       return {
@@ -204,6 +213,8 @@ export default function AdminUsersPage() {
         total: response.total,
         page: response.page
       })
+      
+
       
       // Verificar se a resposta tem o formato esperado
       if (!response || !Array.isArray(response.items)) {
@@ -349,11 +360,17 @@ export default function AdminUsersPage() {
   }
 
   // Helpers
-  const getRoleName = (roleId?: string) => 
-    state.roles.find(r => r.id === roleId)?.name || 'N/A'
+  const getRoleName = (roleId?: string) => {
+    if (!roleId) return 'N/A'
+    // Comparar tanto como string quanto como número para flexibilidade
+    return state.roles.find(r => r.id === roleId || String(r.id) === String(roleId))?.name || 'N/A'
+  }
   
-  const getInstitutionName = (instId?: string | null) => 
-    state.institutions.find(i => i.id === instId)?.name || 'N/A'
+  const getInstitutionName = (instId?: string | null) => {
+    if (!instId) return 'N/A'
+    // Comparar tanto como string quanto como número para flexibilidade
+    return state.institutions.find(i => i.id === instId || String(i.id) === String(instId))?.name || 'N/A'
+  }
 
   // Converter UserDto para UserResponseDto para compatibilidade com o UserFormModal
   const mapToUserResponseDto = (user: UserDto): UserResponseDto => ({
@@ -372,7 +389,6 @@ export default function AdminUsersPage() {
   })
 
   return (
-    <AuthenticatedLayout>
       <div className="container mx-auto px-4 py-6 max-w-7xl">
         <div className="bg-white rounded-xl shadow-sm border border-gray-200">
           {/* Header */}
@@ -699,6 +715,5 @@ export default function AdminUsersPage() {
           institutions={state.institutions as unknown as InstitutionResponseDto[]}
         />
       </div>
-    </AuthenticatedLayout>
   )
 }

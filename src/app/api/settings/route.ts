@@ -136,7 +136,7 @@ export async function GET(request: NextRequest) {
           email_smtp_host: 'smtp.gmail.com',
           email_smtp_port: 587,
           email_smtp_user: 'sabercon@sabercon.com.br',
-          email_smtp_password: 'Mayta#P1730*K',
+          email_smtp_password: 'wcba xeda vopf nbwh',
           email_smtp_secure: true,
           email_from_name: 'Portal Educacional - Sabercon',
           email_from_address: 'noreply@sabercon.com.br',

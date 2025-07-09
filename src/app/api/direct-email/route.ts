@@ -106,7 +106,7 @@ export async function POST(request: NextRequest) {
 
     // Preparar email
     const mailOptions = {
-      from: process.env.EMAIL_FROM || 'Portal Sabercon <no-reply@sabercon.com.br>',
+      from: 'Portal Sabercon <no-reply@sabercon.com.br>',
       to: recipients.join(', '),
       subject: body.subject,
       html: body.html ? body.message : undefined,

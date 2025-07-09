@@ -220,13 +220,13 @@
   --warning: #fbbf24;
   --error: #f87171;
   --info: #60a5fa;
-  --background-primary: #0f172a;
-  --background-secondary: #1e293b;
-  --background-tertiary: #334155;
+  --background-primary: #dadada;
+  --background-secondary: #5673d1;
+  --background-tertiary: #203450;
   --text-primary: #f8fafc;
   --text-secondary: #cbd5e1;
   --text-tertiary: #94a3b8;
-  --border: #334155;
+  --border: #33415500;
   --border-light: #475569;
   --border-dark: #1e293b;
   --sidebar-bg: #1e293b;

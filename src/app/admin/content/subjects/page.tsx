@@ -2,23 +2,42 @@
 
 import { useState, useEffect, useCallback } from 'react'
 import { useRouter } from 'next/navigation'
-import { subjectService } from '@/services/subjectService'
-import { SubjectDto } from '@/types/subject'
+import { 
+  teacherSubjectService, 
+  TeacherSubject, 
+  TeacherSubjectFilter,
+  CreateTeacherSubjectDto,
+  UpdateTeacherSubjectDto
+} from '@/services/teachersubjectService'
 import { useToast } from '@/components/ToastManager'
 import { Badge } from '@/components/ui/Badge'
 import { Button } from '@/components/ui/Button'
-import { Plus, Search, Edit, Trash2, Eye, RefreshCw, CheckCircle, XCircle, BookOpen, Users, UserCheck, GraduationCap, AlertTriangle } from 'lucide-react'
-import { StatCard, ContentCard } from '@/components/ui/StandardCard'
+import { StatCard } from '@/components/ui/StandardCard'
 import Modal from '@/components/ui/Modal'
 import SubjectForm from '@/components/forms/SubjectForm'
+import {
+  Plus,
+  Search,
+  Edit,
+  Trash2,
+  Eye,
+  RefreshCw,
+  BookOpen,
+  CheckCircle,
+  XCircle,
+  GraduationCap,
+  AlertCircle,
+  Filter,
+  X
+} from 'lucide-react'
 
-// Interface para resposta paginada - usando a mesma do serviço
+// Interface para resposta paginada
 interface PaginatedResponse<T> {
   items: T[];
   total: number;
-  page: number;
-  limit: number;
-  totalPages: number;
+  page?: number;
+  limit?: number;
+  totalPages?: number;
 }
 
 // Interface para estatísticas das disciplinas
@@ -29,20 +48,37 @@ interface SubjectStats {
   subjectsWithDescription: number;
 }
 
+// Interface para filtros
+interface SubjectFilters {
+  page?: number;
+  limit?: number;
+  search?: string;
+  isActive?: boolean;
+}
+
 export default function SubjectsPage() {
   const router = useRouter()
   const { showSuccess, showError, showWarning } = useToast()
-  const [subjects, setSubjects] = useState<SubjectDto[]>([])
+  
+  // Estados principais
   const [loading, setLoading] = useState(true)
   const [refreshing, setRefreshing] = useState(false)
-  const [modalOpen, setModalOpen] = useState(false)
-  const [modalMode, setModalMode] = useState<'create' | 'edit' | 'view'>('create')
-  const [selectedSubject, setSelectedSubject] = useState<SubjectDto | null>(null)
+  const [subjects, setSubjects] = useState<TeacherSubject[]>([])
   const [totalItems, setTotalItems] = useState(0)
   const [currentPage, setCurrentPage] = useState(1)
   const [itemsPerPage] = useState(10)
   const [searchQuery, setSearchQuery] = useState('')
-  const [loadingError, setLoadingError] = useState<string | null>(null)
+  const [showFilterPanel, setShowFilterPanel] = useState(false)
+  
+  // Filtros
+  const [filters, setFilters] = useState<SubjectFilters>({})
+  
+  // Estados do modal
+  const [modalOpen, setModalOpen] = useState(false)
+  const [modalMode, setModalMode] = useState<'create' | 'edit' | 'view'>('create')
+  const [selectedSubject, setSelectedSubject] = useState<TeacherSubject | null>(null)
+  
+  // Estados de estatísticas
   const [stats, setStats] = useState<SubjectStats>({
     totalSubjects: 0,
     activeSubjects: 0,
@@ -50,129 +86,127 @@ export default function SubjectsPage() {
     subjectsWithDescription: 0
   })
 
-  const calculateStatsFromSubjects = (subjectsList?: SubjectDto[], totalCount?: number) => {
-    const currentSubjects = subjectsList || subjects;
-    const totalSubjects = totalCount || totalItems || currentSubjects.length;
-    
-    // Contar disciplinas ativas e inativas
-    const activeSubjects = currentSubjects.filter(subject => subject.is_active).length;
-    const inactiveSubjects = currentSubjects.filter(subject => !subject.is_active).length;
-    
-    // Contar disciplinas com descrição
-    const subjectsWithDescription = currentSubjects.filter(subject => subject.description && subject.description.trim()).length;
-    
-    setStats({
-      totalSubjects,
-      activeSubjects,
-      inactiveSubjects,
-      subjectsWithDescription
-    });
-    
-    console.log('📊 Stats de disciplinas calculados:', {
-      totalSubjects,
-      activeSubjects,
-      inactiveSubjects,
-      subjectsWithDescription
-    });
-  };
+  // Função para calcular estatísticas
+  const calculateStats = useCallback((subjectList: TeacherSubject[]): SubjectStats => {
+    const totalSubjects = totalItems || subjectList.length
+    const activeSubjects = subjectList.filter(subject => subject.isActive).length
+    const inactiveSubjects = subjectList.filter(subject => !subject.isActive).length
+    const subjectsWithDescription = subjectList.filter(subject => 
+      subject.description && subject.description.trim()
+    ).length
 
-  const fetchSubjects = async (page = 1, search = '', showLoadingIndicator = true) => {
-    if (showLoadingIndicator) {
-      setLoading(true);
-    } else {
-      setRefreshing(true);
-    }
+    return { totalSubjects, activeSubjects, inactiveSubjects, subjectsWithDescription }
+  }, [totalItems])
 
-    setLoadingError(null); // Limpar erros anteriores
-
+  // Função para carregar disciplinas
+  const loadSubjects = useCallback(async (page = 1, search = '', subjectFilters: SubjectFilters = {}, showLoadingIndicator = true) => {
     try {
-      console.log('🔄 [SUBJECTS] Carregando disciplinas...', { page, search, limit: itemsPerPage })
-      
-      const params: any = {
-        page,
-        limit: itemsPerPage
-      };
-      
-      if (search && search.trim()) {
-        params.search = search.trim();
+      if (showLoadingIndicator) {
+        setLoading(true)
+      } else {
+        setRefreshing(true)
       }
+
+      const params: TeacherSubjectFilter = {
+        page,
+        limit: itemsPerPage,
+        search: search || undefined,
+        isActive: subjectFilters.isActive,
+      }
+
+      console.log('🔄 [TEACHER_SUBJECTS] Carregando disciplinas com parâmetros:', params)
       
-      const response = await subjectService.getSubjects(params);
+      const response = await teacherSubjectService.getTeacherSubjects(params)
       
-      console.log('✅ [SUBJECTS] Resposta do serviço de disciplinas:', {
+      console.log('✅ [TEACHER_SUBJECTS] Disciplinas carregadas:', {
         items: response.items?.length || 0,
         total: response.total,
-        page: response.page,
-        totalPages: response.totalPages,
-        format: Array.isArray(response.items) ? 'PaginatedResponse' : 'unknown'
-      });
+        page: response.page
+      })
       
-      // Verificar se a resposta tem o formato esperado
-      if (!response || !Array.isArray(response.items)) {
-        console.error('❌ [SUBJECTS] Formato de resposta inválido:', response);
-        throw new Error('Formato de resposta inválido do servidor');
-      }
-      
-      setSubjects(response.items);
-      setTotalItems(response.total || 0);
-      setCurrentPage(response.page || page);
-      
+      setSubjects(response.items || [])
+      setTotalItems(response.total || 0)
+      setCurrentPage(page)
+      setSearchQuery(search)
+      setFilters(subjectFilters)
+
       // Calcular estatísticas
-      calculateStatsFromSubjects(response.items, response.total);
-      
+      const newStats = calculateStats(response.items || [])
+      setStats(newStats)
+
       if (!showLoadingIndicator) {
-        showSuccess("Atualizado", "Lista de disciplinas atualizada com sucesso!");
+        showSuccess("Lista de disciplinas atualizada com sucesso!")
       }
       
-      console.log('✅ [SUBJECTS] Disciplinas carregadas com sucesso:', response.items.length);
     } catch (error: any) {
-      console.error('❌ [SUBJECTS] Erro ao carregar disciplinas:', error);
+      console.error('❌ [TEACHER_SUBJECTS] Erro ao carregar disciplinas:', error)
       
-      // Verificar se é um erro de autenticação
-      if (error.message?.includes('Sessão expirada') || error.message?.includes('não autenticado')) {
-        setLoadingError("Sessão expirada. Por favor, faça login novamente.");
-        showError("Sessão expirada", "Por favor, faça login novamente.");
-        // Redirecionar para login se necessário
-        setTimeout(() => router.push('/auth/login'), 2000);
-        return;
-      }
+      const errorMessage = error.message || "Erro ao carregar disciplinas. Verifique sua conexão e tente novamente."
       
-      const errorMessage = error.message || "Erro desconhecido";
-      setLoadingError("Não foi possível carregar a lista de disciplinas. Tente novamente.");
-      showError("Erro ao carregar disciplinas", `Não foi possível carregar a lista de disciplinas: ${errorMessage}`);
+      setSubjects([])
+      setTotalItems(0)
       
-      // Em caso de erro, limpar dados para evitar inconsistências
-      setSubjects([]);
-      setTotalItems(0);
+      showError(errorMessage)
     } finally {
-      setLoading(false);
-      setRefreshing(false);
+      setLoading(false)
+      setRefreshing(false)
     }
-  };
+  }, [calculateStats, showSuccess, showError])
 
+  // Inicialização
   useEffect(() => {
-    fetchSubjects(currentPage, searchQuery)
-  }, [currentPage])
+    loadSubjects()
+  }, [loadSubjects])
 
-  // Recalcular estatísticas quando as disciplinas mudarem
+  // Recalcular estatísticas quando disciplinas mudarem
   useEffect(() => {
     if (subjects.length > 0) {
-      calculateStatsFromSubjects()
+      const newStats = calculateStats(subjects)
+      setStats(newStats)
     }
-  }, [subjects, totalItems])
+  }, [subjects, calculateStats])
 
+  // Handlers de eventos
   const handleSearch = (e: React.FormEvent) => {
     e.preventDefault()
     setCurrentPage(1)
-    fetchSubjects(1, searchQuery)
+    loadSubjects(1, searchQuery, filters)
+  }
+
+  const handleFilterChange = (key: keyof SubjectFilters, value: any) => {
+    const newFilters = { ...filters }
+    if (value === '' || value === undefined || value === null) {
+      delete (newFilters as any)[key]
+    } else {
+      (newFilters as any)[key] = value
+    }
+    setFilters(newFilters)
+  }
+
+  const applyFilters = () => {
+    setCurrentPage(1)
+    loadSubjects(1, searchQuery, filters)
+  }
+
+  const clearFilters = () => {
+    setSearchQuery('')
+    setFilters({})
+    setShowFilterPanel(false)
+    setCurrentPage(1)
+    loadSubjects(1, '', {})
   }
 
   const handleRefresh = () => {
-    fetchSubjects(currentPage, searchQuery, false)
+    loadSubjects(currentPage, searchQuery, filters, false)
   }
 
-  // Funções para o modal
-  const openModal = (mode: 'view' | 'create' | 'edit', subject?: SubjectDto) => {
+  const handlePageChange = (page: number) => {
+    setCurrentPage(page)
+    loadSubjects(page, searchQuery, filters)
+  }
+
+  // Funções do modal
+  const openModal = (mode: 'view' | 'create' | 'edit', subject?: TeacherSubject) => {
     setModalMode(mode)
     setSelectedSubject(subject || null)
     setModalOpen(true)
@@ -187,110 +221,84 @@ export default function SubjectsPage() {
     try {
       setLoading(true)
       
-      console.log('💾 [SUBJECTS] Salvando disciplina...', { mode: modalMode, data })
-      
       if (modalMode === 'create') {
-        const newSubject = await subjectService.createSubject(data)
-        console.log('✅ [SUBJECTS] Disciplina criada:', newSubject)
-        showSuccess("Sucesso", `Disciplina "${data.name}" criada com sucesso!`)
+        const createData: CreateTeacherSubjectDto = {
+          name: data.name,
+          description: data.description,
+          isActive: data.isActive !== undefined ? data.isActive : true
+        }
+        await teacherSubjectService.createTeacherSubject(createData)
+        showSuccess(`Disciplina "${data.name}" criada com sucesso!`)
       } else if (modalMode === 'edit' && selectedSubject) {
-        const updatedSubject = await subjectService.updateSubject(Number(selectedSubject.id), data)
-        console.log('✅ [SUBJECTS] Disciplina atualizada:', updatedSubject)
-        showSuccess("Sucesso", `Disciplina "${data.name}" atualizada com sucesso!`)
+        const updateData: UpdateTeacherSubjectDto = {
+          name: data.name,
+          description: data.description,
+          isActive: data.isActive
+        }
+        await teacherSubjectService.updateTeacherSubject(Number(selectedSubject.id), updateData)
+        showSuccess(`Disciplina "${data.name}" atualizada com sucesso!`)
       }
       
       closeModal()
-      
-      // Recarregar a lista para garantir sincronização completa
-      await fetchSubjects(currentPage, searchQuery, false)
+      await loadSubjects(currentPage, searchQuery, filters, false)
     } catch (error: any) {
-      console.error('❌ [SUBJECTS] Erro ao salvar disciplina:', error)
-      
-      // Verificar se é um erro de autenticação
-      if (error.message?.includes('Sessão expirada') || error.message?.includes('não autenticado')) {
-        showError("Sessão expirada", "Por favor, faça login novamente.");
-        setTimeout(() => router.push('/auth/login'), 2000);
-        return;
-      }
-      
-      const errorMessage = error.message || "Erro desconhecido";
-      showError("Erro ao salvar disciplina", `Não foi possível salvar a disciplina: ${errorMessage}`);
+      console.error('❌ [TEACHER_SUBJECTS] Erro ao salvar disciplina:', error)
+      showError("Erro ao salvar disciplina.")
     } finally {
       setLoading(false)
     }
   }
 
-  const handleDeleteSubject = async (subject: SubjectDto) => {
-    const confirmMessage = `Tem certeza que deseja excluir a disciplina "${subject.name}"?\n\nEsta ação não pode ser desfeita.`
-    
-    if (!confirm(confirmMessage)) {
-      return
-    }
+  const handleDeleteSubject = async (subject: TeacherSubject) => {
+    if (!confirm(`Tem certeza que deseja excluir a disciplina "${subject.name}"?`)) return
 
     try {
       setLoading(true)
-      console.log('🗑️ [SUBJECTS] Excluindo disciplina:', subject.id)
-      
-      await subjectService.deleteSubject(Number(subject.id))
-      console.log('✅ [SUBJECTS] Disciplina excluída com sucesso')
-      
-      showSuccess("Disciplina excluída", `Disciplina "${subject.name}" excluída com sucesso.`)
-      
-      // Recarregar a lista
-      await fetchSubjects(currentPage, searchQuery, false)
+      await teacherSubjectService.deleteTeacherSubject(Number(subject.id))
+      showSuccess("Disciplina excluída com sucesso.")
+      await loadSubjects(currentPage, searchQuery, filters, false)
     } catch (error: any) {
-      console.error('❌ [SUBJECTS] Erro ao excluir disciplina:', error)
-      
-      // Verificar se é um erro de autenticação
-      if (error.message?.includes('Sessão expirada') || error.message?.includes('não autenticado')) {
-        showError("Sessão expirada", "Por favor, faça login novamente.");
-        setTimeout(() => router.push('/auth/login'), 2000);
-        return;
-      }
-      
-      const errorMessage = error.message || "Erro desconhecido";
-      showError("Erro ao excluir disciplina", `Não foi possível excluir a disciplina: ${errorMessage}`);
+      console.error('❌ Erro ao excluir disciplina:', error)
+      showError("Erro ao excluir disciplina.")
     } finally {
       setLoading(false)
     }
   }
 
-  const handleToggleStatus = async (subject: SubjectDto) => {
+  const handleToggleStatus = async (subject: TeacherSubject) => {
     try {
       setLoading(true)
-      console.log('🔄 [SUBJECTS] Alterando status da disciplina:', subject.id, 'atual:', subject.is_active)
+      const updatedSubject = await teacherSubjectService.toggleTeacherSubjectStatus(Number(subject.id))
+      const statusText = updatedSubject.isActive ? 'ativada' : 'desativada'
+      showSuccess(`Disciplina "${subject.name}" ${statusText} com sucesso!`)
       
-      const updatedSubject = await subjectService.toggleSubjectStatus(Number(subject.id))
-      console.log('✅ [SUBJECTS] Status alterado:', updatedSubject)
-      
-      const statusText = updatedSubject.is_active ? 'ativada' : 'desativada'
-      showSuccess("Status alterado", `Disciplina "${subject.name}" ${statusText} com sucesso!`)
-      
-      // Atualizar o estado local imediatamente para feedback visual rápido
+      // Atualizar estado local para feedback visual rápido
       const updatedSubjects = subjects.map(sub =>
-        sub.id === subject.id
-          ? { ...sub, is_active: updatedSubject.is_active }
-          : sub
+        sub.id === subject.id ? { ...sub, isActive: updatedSubject.isActive } : sub
       )
-      
       setSubjects(updatedSubjects)
       
-      // Recalcular estatísticas com os dados atualizados
-      calculateStatsFromSubjects(updatedSubjects)
+      // Recalcular estatísticas
+      const newStats = calculateStats(updatedSubjects)
+      setStats(newStats)
     } catch (error: any) {
-      console.error('❌ [SUBJECTS] Erro ao alterar status da disciplina:', error)
-      
-      // Verificar se é um erro de autenticação
-      if (error.message?.includes('Sessão expirada') || error.message?.includes('não autenticado')) {
-        showError("Sessão expirada", "Por favor, faça login novamente.");
-        setTimeout(() => router.push('/auth/login'), 2000);
-        return;
-      }
-      
-      const errorMessage = error.message || "Erro desconhecido";
-      showError("Erro ao alterar status", `Não foi possível alterar o status da disciplina: ${errorMessage}`);
+      console.error('❌ Erro ao alterar status da disciplina:', error)
+      showError("Erro ao alterar status da disciplina.")
     } finally {
       setLoading(false)
+    }
+  }
+
+  // Função para mapear TeacherSubject para o formato esperado pelo SubjectForm
+  const mapToSubjectForm = (subject: TeacherSubject | null) => {
+    if (!subject) return null
+    return {
+      id: subject.id,
+      name: subject.name,
+      description: subject.description || '',
+      is_active: subject.isActive,
+      created_at: subject.createdAt,
+      updated_at: subject.updatedAt
     }
   }
 
@@ -303,27 +311,31 @@ export default function SubjectsPage() {
         <div className="p-6 border-b border-gray-200">
           <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4 mb-6">
             <div>
-              <h1 className="text-2xl font-bold text-gray-900">Disciplinas</h1>
-              <p className="text-gray-600 mt-1">Gerencie as disciplinas do sistema</p>
+              <h1 className="text-2xl font-bold text-gray-900">Gerenciamento de Disciplinas</h1>
+              <p className="text-gray-600 mt-1">Gerencie as disciplinas do sistema educacional</p>
             </div>
             <div className="flex gap-3">
               <Button 
                 onClick={handleRefresh} 
                 variant="outline" 
-                disabled={refreshing}
+                disabled={refreshing || loading} 
                 className="flex items-center gap-2"
               >
                 <RefreshCw className={`w-4 h-4 ${refreshing ? 'animate-spin' : ''}`} />
                 Atualizar
               </Button>
-              <Button onClick={() => openModal('create')} className="flex items-center gap-2">
+              <Button 
+                onClick={() => openModal('create')} 
+                disabled={loading}
+                className="flex items-center gap-2"
+              >
                 <Plus className="w-4 h-4" />
                 Nova Disciplina
               </Button>
             </div>
           </div>
 
-          {/* Stats Cards */}
+          {/* Stats */}
           <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
             <StatCard
               icon={BookOpen}
@@ -355,24 +367,66 @@ export default function SubjectsPage() {
             />
           </div>
 
-          {/* Search */}
-          <form onSubmit={handleSearch} className="flex gap-3">
-            <div className="flex-1">
-              <div className="relative">
-                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
-                <input
-                  type="text"
-                  placeholder="Buscar disciplina..."
-                  value={searchQuery}
-                  onChange={(e) => setSearchQuery(e.target.value)}
-                  className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                />
+          {/* Search & Filter */}
+          <div className="space-y-4">
+            <form onSubmit={handleSearch} className="flex gap-3">
+              <div className="flex-1">
+                <div className="relative">
+                  <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
+                  <input
+                    type="text"
+                    placeholder="Buscar disciplina..."
+                    value={searchQuery}
+                    onChange={(e) => setSearchQuery(e.target.value)}
+                    disabled={loading}
+                    className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent disabled:bg-gray-100"
+                  />
+                </div>
               </div>
-            </div>
-            <Button type="submit" variant="outline">
-              Buscar
-            </Button>
-          </form>
+              <Button type="submit" variant="outline" disabled={loading}>
+                Buscar
+              </Button>
+              <Button 
+                onClick={() => setShowFilterPanel(!showFilterPanel)} 
+                variant="outline" 
+                disabled={loading}
+                className="flex items-center gap-2"
+              >
+                <Filter className="w-4 h-4" />
+                Filtros
+              </Button>
+            </form>
+
+            {/* Filter Panel */}
+            {showFilterPanel && (
+              <div className="p-4 border border-gray-200 rounded-lg bg-gray-50">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div>
+                    <label className="block text-sm font-medium mb-1 text-gray-700">Status</label>
+                    <select
+                      value={filters.isActive === undefined ? '' : String(filters.isActive)}
+                      onChange={(e) => handleFilterChange('isActive', e.target.value === '' ? undefined : e.target.value === 'true')}
+                      disabled={loading}
+                      className="w-full px-3 py-2 border border-gray-300 rounded-lg disabled:bg-gray-100"
+                    >
+                      <option value="">Todas</option>
+                      <option value="true">Ativa</option>
+                      <option value="false">Inativa</option>
+                    </select>
+                  </div>
+                </div>
+                <div className="flex justify-end gap-3 mt-4">
+                  <Button variant="ghost" onClick={clearFilters} disabled={loading}>
+                    <X className="w-4 h-4 mr-2" />
+                    Limpar Filtros
+                  </Button>
+                  <Button onClick={applyFilters} disabled={loading}>
+                    Aplicar
+                  </Button>
+                </div>
+              </div>
+            )}
+          </div>
         </div>
 
         {/* Content */}
@@ -380,22 +434,17 @@ export default function SubjectsPage() {
           {loading ? (
             <div className="flex items-center justify-center py-12">
               <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
-              <span className="ml-2 text-gray-600">Carregando...</span>
-            </div>
-          ) : loadingError ? (
-            <div className="text-center py-12">
-              <AlertTriangle className="w-16 h-16 text-red-300 mx-auto mb-4" />
-              <p className="text-red-500 text-lg mb-2">{loadingError}</p>
-              <Button onClick={handleRefresh} variant="outline" className="mt-4">
-                Tentar novamente
-              </Button>
+              <span className="ml-2 text-gray-600">Carregando disciplinas...</span>
             </div>
           ) : subjects.length === 0 ? (
             <div className="text-center py-12">
               <BookOpen className="w-16 h-16 text-gray-300 mx-auto mb-4" />
               <p className="text-gray-500 text-lg mb-2">Nenhuma disciplina encontrada</p>
               <p className="text-gray-400 text-sm">
-                {searchQuery ? "Tente ajustar sua busca." : "Clique em \"Nova Disciplina\" para adicionar a primeira"}
+                {searchQuery || Object.keys(filters).length > 0 
+                  ? "Tente ajustar sua busca ou filtros." 
+                  : "Clique em \"Nova Disciplina\" para adicionar a primeira"
+                }
               </p>
             </div>
           ) : (
@@ -431,7 +480,9 @@ export default function SubjectsPage() {
                               <BookOpen className="w-5 h-5 text-blue-600" />
                             </div>
                             <div className="ml-4">
-                              <div className="text-sm font-medium text-gray-900">{subject.name}</div>
+                              <div className="text-sm font-medium text-gray-900">
+                                {subject.name || 'Nome não informado'}
+                              </div>
                               <div className="text-xs text-gray-500">ID: {subject.id}</div>
                             </div>
                           </div>
@@ -448,19 +499,12 @@ export default function SubjectsPage() {
                           </div>
                         </td>
                         <td className="px-6 py-4 text-center">
-                          <button
-                            onClick={() => handleToggleStatus(subject)}
-                            className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
-                              subject.is_active 
-                                ? 'bg-green-100 text-green-800 hover:bg-green-200' 
-                                : 'bg-red-100 text-red-800 hover:bg-red-200'
-                            }`}
-                          >
-                            {subject.is_active ? 'Ativa' : 'Inativa'}
-                          </button>
+                          <Badge variant={subject.isActive ? 'success' : 'danger'}>
+                            {subject.isActive ? 'Ativa' : 'Inativa'}
+                          </Badge>
                         </td>
                         <td className="px-6 py-4 text-center text-sm text-gray-500">
-                          {subject.created_at ? new Date(subject.created_at).toLocaleDateString('pt-BR') : 'N/A'}
+                          {subject.createdAt ? new Date(subject.createdAt).toLocaleDateString('pt-BR') : 'N/A'}
                         </td>
                         <td className="px-6 py-4 text-center">
                           <div className="flex items-center justify-center space-x-2">
@@ -496,117 +540,83 @@ export default function SubjectsPage() {
                 </table>
               </div>
 
-              {/* Cards para Mobile/Tablet */}
-              <div className="lg:hidden">
-                <div className="space-y-4 p-4">
-                  {subjects.map((subject) => (
-                    <div key={subject.id} className="bg-white border border-gray-200 rounded-lg shadow-sm hover:shadow-md transition-shadow">
-                      {/* Header do Card */}
-                      <div className="p-4 border-b border-gray-100">
-                        <div className="flex items-center justify-between">
-                          <div className="flex items-center flex-1">
-                            <div className="flex-shrink-0 w-12 h-12 bg-blue-100 rounded-lg flex items-center justify-center">
-                              <BookOpen className="w-6 h-6 text-blue-600" />
-                            </div>
-                            <div className="ml-3 flex-1 min-w-0">
-                              <h3 className="text-sm font-medium text-gray-900 truncate">{subject.name}</h3>
-                              <div className="text-xs text-gray-500">ID: {subject.id}</div>
-                            </div>
-                          </div>
-                          <button
-                            onClick={() => handleToggleStatus(subject)}
-                            className={`ml-2 inline-flex items-center px-2 py-1 rounded-full text-xs font-medium ${
-                              subject.is_active 
-                                ? 'bg-green-100 text-green-800' 
-                                : 'bg-red-100 text-red-800'
-                            }`}
-                          >
-                            {subject.is_active ? 'Ativa' : 'Inativa'}
-                          </button>
+              {/* Mobile Cards */}
+              <div className="lg:hidden p-4 space-y-4">
+                {subjects.map((subject) => (
+                  <div key={subject.id} className="bg-white border border-gray-200 rounded-lg shadow-sm">
+                    <div className="p-4 border-b border-gray-100 flex justify-between items-start">
+                      <div className="flex items-center flex-1">
+                        <div className="flex-shrink-0 w-10 h-10 bg-blue-100 rounded-lg flex items-center justify-center">
+                          <BookOpen className="w-5 h-5 text-blue-600" />
+                        </div>
+                        <div className="ml-3 flex-1 min-w-0">
+                          <h3 className="text-sm font-medium text-gray-900 truncate">
+                            {subject.name || 'Nome não informado'}
+                          </h3>
+                          <div className="text-xs text-gray-500">ID: {subject.id}</div>
                         </div>
                       </div>
-
-                      {/* Body do Card */}
-                      <div className="p-4">
-                        {/* Descrição */}
-                        <div className="mb-4">
-                          <p className="text-sm text-gray-600">{subject.description || 'Sem descrição'}</p>
+                      <Badge variant={subject.isActive ? 'success' : 'danger'}>
+                        {subject.isActive ? 'Ativa' : 'Inativa'}
+                      </Badge>
+                    </div>
+                    <div className="p-4 space-y-2">
+                      {subject.description && (
+                        <div className="text-sm text-gray-600">
+                          {subject.description.length > 150 
+                            ? `${subject.description.substring(0, 150)}...`
+                            : subject.description
+                          }
                         </div>
-
-                        {/* Data de criação */}
-                        <div className="flex items-center mb-4">
-                          <span className="text-xs text-gray-500">
-                            Criado em: {subject.created_at ? new Date(subject.created_at).toLocaleDateString('pt-BR') : 'N/A'}
-                          </span>
-                        </div>
-
-                        {/* Ações */}
-                        <div className="flex justify-end space-x-2">
-                          <Button
-                            variant="outline"
-                            size="sm"
-                            onClick={() => openModal('view', subject)}
-                            className="flex items-center gap-1"
-                          >
-                            <Eye className="w-4 h-4" />
-                            Ver
-                          </Button>
-                          <Button
-                            variant="outline"
-                            size="sm"
-                            onClick={() => openModal('edit', subject)}
-                            className="flex items-center gap-1"
-                          >
-                            <Edit className="w-4 h-4" />
-                            Editar
-                          </Button>
-                          <Button
-                            variant="outline"
-                            size="sm"
-                            onClick={() => handleDeleteSubject(subject)}
-                            className="flex items-center gap-1 text-red-600 hover:text-red-700 hover:border-red-300"
-                          >
-                            <Trash2 className="w-4 h-4" />
-                            Excluir
-                          </Button>
-                        </div>
+                      )}
+                      <div className="text-xs text-gray-500">
+                        Criado em: {subject.createdAt ? new Date(subject.createdAt).toLocaleDateString('pt-BR') : 'N/A'}
                       </div>
                     </div>
-                  ))}
-                </div>
+                    <div className="p-4 border-t border-gray-100 flex justify-end space-x-2">
+                      <Button variant="outline" size="sm" onClick={() => openModal('view', subject)}>
+                        Ver
+                      </Button>
+                      <Button variant="outline" size="sm" onClick={() => openModal('edit', subject)}>
+                        Editar
+                      </Button>
+                      <Button variant="destructive" size="sm" onClick={() => handleDeleteSubject(subject)}>
+                        Excluir
+                      </Button>
+                    </div>
+                  </div>
+                ))}
               </div>
             </>
           )}
         </div>
 
         {/* Pagination */}
-        {totalPages > 1 && (
-          <div className="px-6 py-4 border-t border-gray-200">
-            <div className="flex items-center justify-between">
-              <div className="text-sm text-gray-700">
-                Mostrando {((currentPage - 1) * itemsPerPage) + 1} a {Math.min(currentPage * itemsPerPage, totalItems)} de {totalItems} resultados
-              </div>
-              <div className="flex items-center space-x-2">
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={() => setCurrentPage(prev => Math.max(prev - 1, 1))}
-                  disabled={currentPage === 1}
-                >
-                  Anterior
-                </Button>
-                <span className="text-sm text-gray-700">
-                  {currentPage} de {totalPages}
-                </span>
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={() => setCurrentPage(prev => Math.min(prev + 1, totalPages))}
-                  disabled={currentPage === totalPages}
-                >
-                  Próxima
-                </Button>
-              </div>
+        {totalPages > 1 && !loading && (
+          <div className="px-6 py-4 border-t border-gray-200 flex items-center justify-between">
+            <div className="text-sm text-gray-700">
+              Mostrando {((currentPage - 1) * itemsPerPage) + 1} a {Math.min(currentPage * itemsPerPage, totalItems)} de {totalItems} disciplinas
+            </div>
+            <div className="flex items-center space-x-2">
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => handlePageChange(currentPage - 1)}
+                disabled={currentPage === 1 || loading}
+              >
+                Anterior
+              </Button>
+              <span className="text-sm text-gray-700">
+                {currentPage} de {totalPages}
+              </span>
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => handlePageChange(currentPage + 1)}
+                disabled={currentPage === totalPages || loading}
+              >
+                Próxima
+              </Button>
             </div>
           </div>
         )}
@@ -626,7 +636,7 @@ export default function SubjectsPage() {
         size="md"
       >
         <SubjectForm
-          subject={selectedSubject}
+          subject={mapToSubjectForm(selectedSubject)}
           mode={modalMode}
           onSubmit={handleModalSave}
           onCancel={closeModal}

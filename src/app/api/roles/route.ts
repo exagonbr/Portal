@@ -82,8 +82,7 @@ export const { GET, OPTIONS } = createStandardApiRoute({
         }));
 
         return NextResponse.json({
-          success: true,
-          data: roles,
+          items: roles,
           total: roles.length,
           page: 1,
           limit: roles.length,
@@ -104,8 +103,7 @@ export const { GET, OPTIONS } = createStandardApiRoute({
         ];
 
         return NextResponse.json({
-          success: true,
-          data: mockRoles,
+          items: mockRoles,
           total: mockRoles.length,
           page: 1,
           limit: mockRoles.length,

@@ -2,6 +2,7 @@ import { EmailSendData, EmailSendResult, EmailRecipients } from '@/types/email'
 import { notificationService } from './notificationService'
 import { directEmailService } from './directEmailService'
 import { UnifiedAuthService } from './unifiedAuthService'
+import { googleEmailService } from './googleEmailService'
 
 interface EmailProvider {
   name: string
@@ -73,10 +74,59 @@ class EnhancedEmailService {
       }
     })
 
+    // Provider Google Email - Alta prioridade para Gmail
+    this.providers.push({
+      name: 'Google Email',
+      priority: 2,
+      send: async (data: EmailSendData): Promise<EmailSendResult> => {
+        try {
+          console.log('📧 Enviando via Google Email:', data)
+          
+          // Verificar se o serviço Google está configurado
+          const isConfigured = await googleEmailService.isServiceConfigured()
+          if (!isConfigured) {
+            throw new Error('Serviço Google Email não está configurado')
+          }
+
+          // Validar se temos emails diretos
+          if (!data.recipients.emails || data.recipients.emails.length === 0) {
+            throw new Error('Google Email requer emails específicos')
+          }
+
+          this.validateEmailData(data)
+
+          const result = await googleEmailService.sendEmail({
+            to: data.recipients.emails,
+            subject: data.subject,
+            html: data.html && data.htmlContent ? data.htmlContent : undefined,
+            text: !data.html ? data.message : undefined,
+          })
+
+          if (!result.success) {
+            throw new Error(result.message || 'Erro no Google Email')
+          }
+
+          return {
+            success: true,
+            message: `Email enviado com sucesso via Google Email${result.messageId ? ` (ID: ${result.messageId})` : ''}`,
+            data: {
+              sentCount: data.recipients.emails.length,
+              failedCount: 0,
+              sentEmails: data.recipients.emails,
+              failedEmails: []
+            }
+          }
+        } catch (error: any) {
+          console.error('❌ Erro no Google Email:', error)
+          throw new Error(`Falha no Google Email: ${error.message}`)
+        }
+      }
+    })
+
     // Provider secundário - Envio direto
     this.providers.push({
       name: 'Envio Direto',
-      priority: 2,
+      priority: 3,
       send: async (data: EmailSendData): Promise<EmailSendResult> => {
         try {
           console.log('🔄 Enviando via API direta:', data)
@@ -121,7 +171,7 @@ class EnhancedEmailService {
     // Provider de fallback - Simulação para desenvolvimento
     this.providers.push({
       name: 'Fallback Local',
-      priority: 3,
+      priority: 4,
       send: async (data: EmailSendData): Promise<EmailSendResult> => {
         try {
           console.log('⚡ Usando fallback local:', data)

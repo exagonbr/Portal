@@ -11,7 +11,6 @@ import {
   Award, 
   Search, 
   Edit, 
-  Trash2, 
   Eye, 
   RefreshCw, 
   Download,
@@ -103,36 +102,6 @@ export default function CertificatesPageContent() {
 
   const handleRefresh = () => {
     fetchCertificates(currentPage, searchQuery, false)
-  }
-
-  const handleDeleteCertificate = async (certificate: CertificateDto) => {
-    if (!confirm(`Tem certeza que deseja excluir o certificado ${certificate.license_code}?`)) {
-      return
-    }
-
-    try {
-      setLoading(true)
-      await certificateService.deleteCertificate(Number(certificate.id))
-      showSuccess("O certificado foi excluído com sucesso.")
-      
-      // Recarregar a lista
-      await fetchCertificates(currentPage, searchQuery, false)
-    } catch (error: any) {
-      console.error('❌ Erro ao excluir certificado:', error)
-      
-      // Verificar se é um erro de autenticação
-      if (error.message?.includes('Sessão expirada') || error.message?.includes('não autenticado')) {
-        showError("Sessão expirada. Por favor, faça login novamente.")
-        setTimeout(() => {
-          router.push('/auth/login?auth_error=expired')
-        }, 1000)
-        return;
-      }
-      
-      showError("Não foi possível excluir o certificado.")
-    } finally {
-      setLoading(false)
-    }
   }
 
   const handleViewCertificate = (certificate: CertificateDto) => {
@@ -293,7 +262,7 @@ export default function CertificatesPageContent() {
                         </td>
                         <td className="px-6 py-4 text-center">
                           <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800">
-                            {certificate.score}%
+                            ⭐ {certificate.score}%
                           </span>
                         </td>
                         <td className="px-6 py-4 text-sm text-center text-gray-500">
@@ -316,14 +285,6 @@ export default function CertificatesPageContent() {
                               className="text-green-600 hover:text-green-900"
                             >
                               <Download className="w-4 h-4" />
-                            </Button>
-                            <Button
-                              variant="ghost"
-                              size="sm"
-                              onClick={() => handleDeleteCertificate(certificate)}
-                              className="text-red-600 hover:text-red-900"
-                            >
-                              <Trash2 className="w-4 h-4" />
                             </Button>
                           </div>
                         </td>
@@ -354,7 +315,7 @@ export default function CertificatesPageContent() {
                             </div>
                           </div>
                           <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800">
-                            {certificate.score}%
+                            ⭐ {certificate.score}%
                           </span>
                         </div>
 
@@ -387,15 +348,6 @@ export default function CertificatesPageContent() {
                           >
                             <Download className="w-4 h-4" />
                             Baixar
-                          </Button>
-                          <Button
-                            variant="outline"
-                            size="sm"
-                            onClick={() => handleDeleteCertificate(certificate)}
-                            className="flex items-center gap-1 text-red-600 hover:text-red-700"
-                          >
-                            <Trash2 className="w-4 h-4" />
-                            Excluir
                           </Button>
                         </div>
                       </div>

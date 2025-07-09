@@ -46,17 +46,17 @@ export const { GET, OPTIONS } = createStandardApiRoute({
         let users;
         if (search) {
           users = await prisma.$queryRaw`
-            SELECT id, full_name, email
-            FROM "users"
-            WHERE full_name ILIKE ${'%' + search + '%'} OR email ILIKE ${'%' + search + '%'}
-            ORDER BY full_name ASC
+            SELECT u.id, u.full_name, u.email, u.enabled, u.role_id, u.institution_id, u.date_created, u.last_updated
+            FROM "users" u
+            WHERE u.full_name ILIKE ${'%' + search + '%'} OR u.email ILIKE ${'%' + search + '%'}
+            ORDER BY u.full_name ASC
             LIMIT ${Math.min(limit, 1000)}
           `;
         } else {
           users = await prisma.$queryRaw`
-            SELECT id, full_name, email
-            FROM "users"
-            ORDER BY full_name ASC
+            SELECT u.id, u.full_name, u.email, u.enabled, u.role_id, u.institution_id, u.date_created, u.last_updated
+            FROM "users" u
+            ORDER BY u.full_name ASC
             LIMIT ${Math.min(limit, 1000)}
           `;
         }
@@ -67,11 +67,12 @@ export const { GET, OPTIONS } = createStandardApiRoute({
           name: user.full_name,
           full_name: user.full_name,
           email: user.email,
-          enabled: true,
-          is_active: true,
-          role_id: '1',
-          date_created: new Date().toISOString(),
-          last_updated: new Date().toISOString(),
+          enabled: user.enabled ?? true,
+          is_active: user.enabled ?? true,
+          role_id: user.role_id ? user.role_id.toString() : null,
+          institution_id: user.institution_id ? user.institution_id.toString() : null,
+          date_created: user.date_created ? user.date_created.toISOString() : new Date().toISOString(),
+          last_updated: user.last_updated ? user.last_updated.toISOString() : new Date().toISOString(),
         }));
 
         console.log('✅ [API-USERS] Dados locais obtidos com sucesso:', serializedUsers.length);

@@ -4,17 +4,16 @@ const nextConfig = {
   experimental: {
     optimizeCss: true,
     workerThreads: true,
+    serverComponentsExternalPackages: ['knex', 'pg'],
   },
-  // Adicionar configuração para ignorar a pasta .next
   distDir: 'build',
   
-  // Configurações de webpack para otimizar chunks e resolver problemas de carregamento
   webpack: (config, { isServer, dev }) => {
-    // Resolver problema com drivers de banco de dados no cliente
+    // Configurações específicas para o lado cliente
     if (!isServer) {
+      // Fallback para módulos Node.js no cliente
       config.resolve.fallback = {
         ...config.resolve.fallback,
-        // Desabilitar drivers de banco de dados no cliente
         'oracledb': false,
         'mysql': false,
         'mysql2': false,
@@ -23,7 +22,6 @@ const nextConfig = {
         'tedious': false,
         'pg-native': false,
         'pg-query-stream': false,
-        // Desabilitar módulos Node.js no cliente
         'fs': false,
         'net': false,
         'tls': false,
@@ -36,34 +34,53 @@ const nextConfig = {
         'assert': false,
         'os': false,
         'path': false,
+        'util': false,
+        'querystring': false,
+        'events': false,
+        'buffer': false,
       };
 
-      // Adicionar externals para drivers de banco
-      config.externals = config.externals || [];
-      config.externals.push({
-        'oracledb': 'commonjs oracledb',
-        'mysql': 'commonjs mysql',
-        'mysql2': 'commonjs mysql2',
-        'sqlite3': 'commonjs sqlite3',
-        'better-sqlite3': 'commonjs better-sqlite3',
-        'tedious': 'commonjs tedious',
-        'pg-native': 'commonjs pg-native',
-      });
+      // Configurar externals para drivers de banco
+      if (Array.isArray(config.externals)) {
+        config.externals.push({
+          'oracledb': 'oracledb',
+          'mysql': 'mysql',
+          'mysql2': 'mysql2',
+          'sqlite3': 'sqlite3',
+          'better-sqlite3': 'better-sqlite3',
+          'tedious': 'tedious',
+          'pg-native': 'pg-native',
+        });
+      } else {
+        config.externals = {
+          ...config.externals,
+          'oracledb': 'oracledb',
+          'mysql': 'mysql',
+          'mysql2': 'mysql2',
+          'sqlite3': 'sqlite3',
+          'better-sqlite3': 'better-sqlite3',
+          'tedious': 'tedious',
+          'pg-native': 'pg-native',
+        };
+      }
     }
-    
+
+    // Configurar aliases para evitar problemas de resolução
+    config.resolve.alias = {
+      ...config.resolve.alias,
+      '@/lib/database-safe': require.resolve('./src/lib/database-safe.ts'),
+    };
+
     // Apenas aplicar otimizações no cliente e em produção
     if (!isServer && !dev) {
-      // Configurar timeout maior para carregamento de chunks
       config.optimization.chunkIds = 'deterministic';
       
-      // Otimizar split chunks para melhor carregamento
       config.optimization.splitChunks = {
         chunks: 'all',
         maxInitialRequests: 25,
         minSize: 20000,
         maxSize: 200000,
         cacheGroups: {
-          // CORREÇÃO: Adicionar framer-motion como chunk específico para evitar problemas de carregamento
           framerMotion: {
             test: /[\\/]node_modules[\\/]framer-motion[\\/]/,
             name: 'framer-motion',
@@ -72,7 +89,6 @@ const nextConfig = {
             enforce: true,
             reuseExistingChunk: true,
           },
-          // Criar chunks específicos para componentes críticos
           apiClient: {
             test: /[\\/]src[\\/]lib[\\/]api-client/,
             name: 'api-client',
@@ -87,11 +103,9 @@ const nextConfig = {
             priority: 15,
             enforce: true,
           },
-          // Separar vendor chunks
           vendors: {
             test: /[\\/]node_modules[\\/]/,
             name(module) {
-              // Obter o nome do pacote com verificação de segurança
               const match = module.context?.match(
                 /[\\/]node_modules[\\/](.*?)([\\/]|$)/
               );
@@ -101,14 +115,11 @@ const nextConfig = {
               }
               
               const packageName = match[1];
-              
-              // Agrupar pacotes grandes em seus próprios chunks
               const bigPackages = ['react', 'react-dom', 'next', 'chart.js', 'antd'];
               if (bigPackages.includes(packageName)) {
                 return `vendor-${packageName}`;
               }
               
-              // Outros pacotes em vendor comum
               return 'vendors';
             },
             priority: 10,
@@ -116,7 +127,6 @@ const nextConfig = {
         },
       };
       
-      // Configurar minimização para ser mais robusta
       config.optimization.minimize = true;
       if (config.optimization.minimizer) {
         config.optimization.minimizer.forEach(minimizer => {
@@ -125,7 +135,7 @@ const nextConfig = {
               ...minimizer.options.terserOptions,
               compress: {
                 ...minimizer.options.terserOptions.compress,
-                drop_console: false, // Manter console logs para diagnóstico
+                drop_console: false,
               },
               keep_classnames: true,
               keep_fnames: true,
