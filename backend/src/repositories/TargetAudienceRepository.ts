@@ -12,8 +12,10 @@ export interface CreateTargetAudienceData {
 export interface UpdateTargetAudienceData extends Partial<CreateTargetAudienceData> {}
 
 export class TargetAudienceRepository extends ExtendedRepository<TargetAudience> {
+  private repository: Repository<TargetAudience>;
   constructor() {
     super("targetaudiences");
+    this.repository = AppDataSource.getRepository(TargetAudience);
   }
   
   // Implementação do método abstrato findAllPaginated

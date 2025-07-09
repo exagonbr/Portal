@@ -1,10 +1,13 @@
+import { AppDataSource } from "../config/typeorm.config";
 import { Repository } from "typeorm";
 import { ExtendedRepository, PaginatedResult } from './ExtendedRepository';
-import { Institutions } from '../entities/Institutions';
+import { Institution } from '../entities/Institutions';
 
-export class InstitutionsRepository extends ExtendedRepository<Institutions> {
+export class InstitutionsRepository extends ExtendedRepository<Institution> {
+  private repository: Repository<Institution>;
   constructor() {
     super("institution");
+    this.repository = AppDataSource.getRepository(Institution);
   }
   
   // Implementação do método abstrato findAllPaginated
@@ -12,7 +15,7 @@ export class InstitutionsRepository extends ExtendedRepository<Institutions> {
     page?: number;
     limit?: number;
     search?: string;
-  } = {}): Promise<PaginatedResult<Institutions>> {
+  } = {}): Promise<PaginatedResult<Institution>> {
     const { page = 1, limit = 10, search } = options;
     
     try {
@@ -55,7 +58,7 @@ export class InstitutionsRepository extends ExtendedRepository<Institutions> {
     }
   }
 
-  async findById(id: number): Promise<Institutions | null> {
+  async findById(id: number): Promise<Institution | null> {
     try {
       const result = await this.db(this.tableName).where({ id }).first();
       return result || null;
@@ -65,7 +68,7 @@ export class InstitutionsRepository extends ExtendedRepository<Institutions> {
     }
   }
 
-  async create(data: Partial<Institutions>): Promise<Institutions> {
+  async create(data: Partial<Institution>): Promise<Institution> {
     try {
       const result = await this.db(this.tableName).insert(data).returning('*');
       return result[0];
@@ -75,7 +78,7 @@ export class InstitutionsRepository extends ExtendedRepository<Institutions> {
     }
   }
 
-  async update(id: number, data: Partial<Institutions>): Promise<Institutions | null> {
+  async update(id: number, data: Partial<Institution>): Promise<Institution | null> {
     try {
       const result = await this.db(this.tableName)
         .where({ id })

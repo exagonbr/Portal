@@ -17,8 +17,10 @@ export interface SchoolFilters {
 }
 
 export class SchoolRepository extends ExtendedRepository<School> {
+  private repository: Repository<School>;
   constructor() {
     super("schools");
+    this.repository = AppDataSource.getRepository(School);
   }
   
   // Implementação do método abstrato findAllPaginated

@@ -1,3 +1,4 @@
+import { AppDataSource } from "../config/typeorm.config";
 import { Repository } from "typeorm";
 import { ExtendedRepository, PaginatedResult } from './ExtendedRepository';
 import { Certificate } from '../entities/Certificate';
@@ -25,8 +26,10 @@ export interface CertificateStats {
 }
 
 export class CertificateRepository extends ExtendedRepository<Certificate> {
+  private repository: Repository<Certificate>;
   constructor() {
     super("certificates");
+    this.repository = AppDataSource.getRepository(Certificate);
   }
   // Implementação do método abstrato findAllPaginated
   async findAllPaginated(options: {

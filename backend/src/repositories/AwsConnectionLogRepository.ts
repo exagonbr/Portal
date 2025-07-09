@@ -1,3 +1,4 @@
+import { AppDataSource } from "../config/typeorm.config";
 import { Repository } from "typeorm";
 import { ExtendedRepository, PaginatedResult } from './ExtendedRepository';
 import { AwsConnectionLog } from '../types/aws'; // Supondo que os tipos AWS estejam definidos
@@ -5,8 +6,10 @@ import { AwsConnectionLog } from '../types/aws'; // Supondo que os tipos AWS est
 export interface CreateAwsConnectionLogDto extends Omit<AwsConnectionLog, 'id' | 'created_at' | 'updated_at'> {}
 
 export class AwsConnectionLogRepository extends ExtendedRepository<AwsConnectionLog> {
+  private repository: Repository<AwsConnectionLog>;
   constructor() {
     super("awsconnectionlogs");
+    this.repository = AppDataSource.getRepository(AwsConnectionLog);
   }
   // Implementação do método abstrato findAllPaginated
   async findAllPaginated(options: {

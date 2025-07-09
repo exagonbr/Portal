@@ -32,16 +32,16 @@ export class NotificationQueue {
   @Column({ nullable: true })
   videoToPlayId?: string;
 
-  @ManyToOne(() => Movie)
-  @JoinColumn({ name: 'movie_id' })
-  movie?: Movie;
+  // Relacionamentos comentados pois as entidades não existem no projeto
+  // @ManyToOne(() => Movie)
+  // @JoinColumn({ name: 'movie_id' })
+  // movie?: Movie;
 
-  @ManyToOne(() => TvShow)
-  @JoinColumn({ name: 'tv_show_id' })
-  tvShow?: TvShow;
+  // @ManyToOne(() => TvShow)
+  // @JoinColumn({ name: 'tv_show_id' })
+  // tvShow?: TvShow;
 
-  @ManyToOne(() => VideoToPlay)
-  @JoinColumn({ name: 'video_to_play_id' })
-  videoToPlay?: VideoToPlay;
-
+  // @ManyToOne(() => VideoToPlay)
+  // @JoinColumn({ name: 'video_to_play_id' })
+  // videoToPlay?: VideoToPlay;
 }

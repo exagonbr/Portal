@@ -7,17 +7,16 @@ import Input from '@/components/ui/Input'
 import Textarea from '@/components/ui/textarea'
 import { Select } from '@/components/ui/Select'
 import { Badge } from '@/components/ui/Badge'
-import Card from '@/components/ui/Card'
-import { CardHeader, CardBody } from '@/components/ui/Card'
+import SimpleCard from '@/components/ui/SimpleCard'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { useToast } from '@/components/ToastManager'
 import { Plus, Edit, Trash, Save, Eye, Code, Bold, Italic, Underline, List, ListOrdered, Link, Image, AlignLeft, AlignCenter, AlignRight, Heading1, Heading2, Heading3 } from 'lucide-react'
 import { useEditor, EditorContent } from '@tiptap/react'
 import StarterKit from '@tiptap/starter-kit'
-import Underline from '@tiptap/extension-underline'
+import UnderlineExtension from '@tiptap/extension-underline'
 import TextAlign from '@tiptap/extension-text-align'
-import Link from '@tiptap/extension-link'
-import Image from '@tiptap/extension-image'
+import LinkExtension from '@tiptap/extension-link'
+import ImageExtension from '@tiptap/extension-image'
 import Placeholder from '@tiptap/extension-placeholder'
 import Color from '@tiptap/extension-color'
 import TextStyle from '@tiptap/extension-text-style'
@@ -203,14 +202,14 @@ export default function EmailTemplateManager({
   const editor = useEditor({
     extensions: [
       StarterKit,
-      Underline,
+      UnderlineExtension,
       TextAlign.configure({
         types: ['heading', 'paragraph'],
       }),
-      Link.configure({
+      LinkExtension.configure({
         openOnClick: false,
       }),
-      Image,
+      ImageExtension,
       Placeholder.configure({
         placeholder: 'Escreva seu conteúdo aqui...',
       }),
@@ -386,8 +385,8 @@ export default function EmailTemplateManager({
         {/* Editor/Visualizador de Template */}
         <div className="lg:col-span-2">
           {selectedTemplate ? (
-            <Card>
-              <CardHeader className="flex flex-row items-center justify-between">
+            <SimpleCard>
+              <div className="flex flex-row items-center justify-between">
                 <h3 className="text-lg font-medium">
                   {isEditing ? 'Editar Template' : 'Detalhes do Template'}
                 </h3>
@@ -414,8 +413,8 @@ export default function EmailTemplateManager({
                     </>
                   )}
                 </div>
-              </CardHeader>
-              <CardBody className="space-y-6">
+              </div>
+              <div className="space-y-6">
                 {previewMode ? (
                   <div className="bg-white rounded-lg shadow-sm border border-gray-200 overflow-hidden">
                     {/* Header do email */}
@@ -597,8 +596,8 @@ export default function EmailTemplateManager({
                     )}
                   </div>
                 )}
-              </CardBody>
-            </Card>
+              </div>
+            </SimpleCard>
           ) : (
             <div className="h-full flex items-center justify-center p-12 border rounded-lg bg-gray-50">
               <div className="text-center">

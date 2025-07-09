@@ -1,11 +1,15 @@
+import { Repository } from "typeorm";
+import { AppDataSource } from "../config/typeorm.config";
 import { DeleteResult } from 'typeorm';
 import { ExtendedRepository, PaginatedResult } from './ExtendedRepository';
 import { ActivitySessions } from '../entities/ActivitySessions';
 import { Knex } from 'knex';
 
 export class ActivitySessionsRepository extends ExtendedRepository<ActivitySessions> {
+  private repository: Repository<ActivitySessions>;
   constructor() {
-    super("activity_sessions");
+    super("activitysessionss");
+    this.repository = AppDataSource.getRepository(ActivitySessions);
   }
 
   async findAllPaginated(options: {

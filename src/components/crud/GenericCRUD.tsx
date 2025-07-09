@@ -2,8 +2,7 @@
 
 import { useState, useEffect, useCallback } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
-import { useTheme } from '@/contexts/ThemeContext'
-import Table from '@/components/ui/Table'
+import SimpleTable from '@/components/ui/SimpleTable'
 import { Button, buttonVariants } from '@/components/ui/Button'
 import type { VariantProps } from 'class-variance-authority'
 import Input from '@/components/ui/Input'
@@ -84,7 +83,6 @@ export default function GenericCRUD<T extends { id: string | number }>({
   showPagination = true,
   showActions = true
 }: GenericCRUDProps<T>) {
-  const { theme } = useTheme()
   const { hasPermission } = usePermissions()
   const [searchQuery, setSearchQuery] = useState('')
   const [deleteModal, setDeleteModal] = useState<{ open: boolean; item: T | null }>({
@@ -157,10 +155,7 @@ export default function GenericCRUD<T extends { id: string | number }>({
       {shouldShowHeader && (
         <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
           {title && (
-            <h1 
-              className="text-2xl font-bold"
-              style={{ color: theme.colors.text.primary }}
-            >
+            <h1 className="text-2xl font-bold text-gray-800">
               {title}
             </h1>
           )}
@@ -195,7 +190,7 @@ export default function GenericCRUD<T extends { id: string | number }>({
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.3 }}
       >
-        <Table
+        <SimpleTable
           columns={tableColumns}
           data={data}
           loading={loading}
@@ -217,7 +212,7 @@ export default function GenericCRUD<T extends { id: string | number }>({
         size="sm"
       >
         <div className="space-y-4">
-          <p style={{ color: theme.colors.text.secondary }}>
+          <p className="text-gray-600">
             Tem certeza que deseja excluir este {entityName.toLowerCase()}? Esta ação não pode ser desfeita.
           </p>
           

@@ -1,3 +1,4 @@
+import { AppDataSource } from "../config/typeorm.config";
 import { Repository } from "typeorm";
 import { ExtendedRepository, PaginatedResult } from './ExtendedRepository';
 // Supondo que as entidades Annotation e Highlight existam
@@ -33,8 +34,10 @@ export interface UpdateHighlightData extends Partial<CreateHighlightData> {}
 
 
 export class AnnotationRepository extends ExtendedRepository<Annotation> {
+  private repository: Repository<Annotation>;
   constructor() {
     super("annotations");
+    this.repository = AppDataSource.getRepository(Annotation);
   }
   // Implementação do método abstrato findAllPaginated
   async findAllPaginated(options: {
@@ -110,6 +113,7 @@ export class AnnotationRepository extends ExtendedRepository<Annotation> {
 export class HighlightRepository extends BaseRepository<Highlight> {
   constructor() {
     super("annotations");
+    this.repository = AppDataSource.getRepository(Annotation);
   }
 
   async findByBook(bookId: string, userId?: string): Promise<Highlight[]> {

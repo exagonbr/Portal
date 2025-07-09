@@ -20,14 +20,12 @@ class InstitutionController extends BaseController<Institution> {
      setTimeout(() => reject(new Error('Timeout na busca de Instituições')), 60000); // 60 segundos
    });
 
-   const { page = '1', limit = '10', search, state, is_active, has_student_platform, has_principal_platform, has_library_platform } = req.query;
+   const { page = '1', limit = '1000', search, state, is_active, has_student_platform, has_principal_platform, has_library_platform } = req.query;
    
-   // Limitar o número máximo de itens para evitar sobrecarga
+   // Remover limite máximo para permitir buscar todos os registros
    let limitValue = parseInt(limit as string, 10);
-   if (limitValue > 1000) {
-     limitValue = 1000; // Limitar a 1000 itens por página no máximo
-     console.log(`Limite ajustado para 1000 (solicitado: ${limit})`);
-   }
+   
+   console.log(`[API] Buscando instituições com limite: ${limitValue}, página: ${page}`);
    
    const paginationOptions: PaginationOptions = {
     page: parseInt(page as string, 10),
@@ -44,7 +42,7 @@ class InstitutionController extends BaseController<Institution> {
    if (has_library_platform !== undefined) filters.has_library_platform = has_library_platform === 'true';
    
    // Adicionar log para debug
-   console.log(`Buscando instituições com filtros: ${JSON.stringify(filters)} e paginação: ${JSON.stringify(paginationOptions)}`);
+   console.log(`[API] Buscando instituições com filtros: ${JSON.stringify(filters)} e paginação: ${JSON.stringify(paginationOptions)}`);
    
    const institutionsPromise = this.institutionRepository.findWithFilters(filters, paginationOptions);
    
@@ -56,7 +54,7 @@ class InstitutionController extends BaseController<Institution> {
    }
    
    // Log para debug
-   console.log(`Encontradas ${result.total} instituições`);
+   console.log(`[API] Encontradas ${result.total} instituições, retornando ${result.items.length} itens`);
    
    return res.json({
     success: true,

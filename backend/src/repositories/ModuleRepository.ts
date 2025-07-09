@@ -1,15 +1,29 @@
 import { ExtendedRepository, PaginatedResult } from './ExtendedRepository';
 import { Repository } from 'typeorm';
 import { AppDataSource } from '../config/typeorm.config';
-import { Module } from '../entities/Module';
+// Comentando a importação da entidade Module para evitar erros
+// import { Module } from '../entities/Module';
 
-export interface CreateModuleData extends Omit<Module, 'id' | 'created_at' | 'updated_at' | 'collection' | 'videos'> {}
+// Interface para desacoplar
+export interface Module {
+    id: string;
+    collection_id: string;
+    name: string;
+    description: string;
+    order: number;
+    created_at: Date;
+    updated_at: Date;
+}
+
+export interface CreateModuleData extends Omit<Module, 'id' | 'created_at' | 'updated_at'> {}
 export interface UpdateModuleData extends Partial<CreateModuleData> {}
 
 export class ModuleRepository extends ExtendedRepository<Module> {
+  // Removendo a propriedade repository já que não estamos usando TypeORM diretamente
 
   constructor() {
     super("modules");
+    // Estamos usando Knex através da classe base, não TypeORM
   }
   // Implementação do método abstrato findAllPaginated
   async findAllPaginated(options: {
@@ -53,42 +67,69 @@ export class ModuleRepository extends ExtendedRepository<Module> {
         page,
         limit
       };
+    } catch (error) {
+      throw error;
+    }
   }
 
   async createModule(data: CreateModuleData): Promise<Module> {
-    return this.create(data);
+    try {
+      return this.create(data);
+    } catch (error) {
+      throw error;
+    }
   }
 
   async updateModule(id: string, data: UpdateModuleData): Promise<Module | null> {
-    return this.update(id, data);
+    try {
+      return this.update(id, data);
+    } catch (error) {
+      throw error;
+    }
   }
 
   async deleteModule(id: string): Promise<boolean> {
-    return this.delete(id);
+    try {
+      return this.delete(id);
+    } catch (error) {
+      throw error;
+    }
   }
 
   async findByCollection(collectionId: string): Promise<Module[]> {
-    return this.db(this.tableName)
-      .where('collection_id', collectionId)
-      .orderBy('order', 'asc');
+    try {
+      return this.db(this.tableName)
+        .where('collection_id', collectionId)
+        .orderBy('order', 'asc');
+    } catch (error) {
+      throw error;
+    }
   }
 
   async getNextOrder(collectionId: string): Promise<number> {
-    const result = await this.db(this.tableName)
-      .where('collection_id', collectionId)
-      .max('order as max_order')
-      .first();
+    try {
+      const result = await this.db(this.tableName)
+        .where('collection_id', collectionId)
+        .max('order as max_order')
+        .first();
 
-    return (result?.max_order || 0) + 1;
+      return (result?.max_order || 0) + 1;
+    } catch (error) {
+      throw error;
+    }
   }
 
   async reorderModules(collectionId: string, moduleOrders: { id: string; order: number }[]): Promise<void> {
-    await this.executeTransaction(async (trx) => {
-      for (const moduleOrder of moduleOrders) {
-        await trx(this.tableName)
-          .where({ id: moduleOrder.id, collection_id: collectionId })
-          .update({ order: moduleOrder.order });
-      }
-    });
+    try {
+      await this.executeTransaction(async (trx) => {
+        for (const moduleOrder of moduleOrders) {
+          await trx(this.tableName)
+            .where({ id: moduleOrder.id, collection_id: collectionId })
+            .update({ order: moduleOrder.order });
+        }
+      });
+    } catch (error) {
+      throw error;
+    }
   }
 }

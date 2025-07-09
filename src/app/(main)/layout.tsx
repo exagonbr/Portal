@@ -1,10 +1,15 @@
 import AuthenticatedLayout from '@/components/AuthenticatedLayout'
 import React from 'react'
+import { NavigationLoadingProvider } from '@/contexts/NavigationLoadingContext'
 
 export default function MainLayout({
   children,
 }: {
   children: React.ReactNode
 }) {
-  return <AuthenticatedLayout>{children}</AuthenticatedLayout>
+  return (
+    <NavigationLoadingProvider>
+      <AuthenticatedLayout>{children}</AuthenticatedLayout>
+    </NavigationLoadingProvider>
+  )
 }

@@ -1,10 +1,14 @@
+import { Repository } from "typeorm";
+import { AppDataSource } from "../config/typeorm.config";
 import { ExtendedRepository, PaginatedResult } from './ExtendedRepository';
 import { WatchlistEntry } from '../entities/WatchlistEntry';
 import { BaseRepository } from './BaseRepository';
 
 export class WatchlistEntryRepository extends ExtendedRepository<WatchlistEntry> {
+  private repository: Repository<WatchlistEntry>;
   constructor() {
-    super("watchlist_entries");
+    super("watchlistentrys");
+    this.repository = AppDataSource.getRepository(WatchlistEntry);
   }
 
   async findAllPaginated(options: {

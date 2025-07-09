@@ -1,10 +1,13 @@
+import { AppDataSource } from "../config/typeorm.config";
 import { Repository } from "typeorm";
 import { ExtendedRepository, PaginatedResult } from './ExtendedRepository';
 import { NotificationQueue } from '../entities/NotificationQueue';
 
 export class NotificationQueueRepository extends ExtendedRepository<NotificationQueue> {
+  private repository: Repository<NotificationQueue>;
   constructor() {
     super("notificationqueues");
+    this.repository = AppDataSource.getRepository(NotificationQueue);
   }
   
   // Implementação do método abstrato findAllPaginated

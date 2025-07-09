@@ -1,3 +1,4 @@
+import { AppDataSource } from "../config/typeorm.config";
 import { Repository } from "typeorm";
 import { Institution } from '../entities';
 import { ExtendedRepository, PaginatedResult } from './ExtendedRepository';
@@ -25,8 +26,10 @@ export interface InstitutionFilters {
 }
 
 export class InstitutionRepository extends ExtendedRepository<Institution> {
+  private repository: Repository<Institution>;
   constructor() {
     super("institution");
+    this.repository = AppDataSource.getRepository(Institution);
   }
   // Implementação do método abstrato findAllPaginated
   async findAllPaginated(options: {
@@ -80,7 +83,7 @@ export class InstitutionRepository extends ExtendedRepository<Institution> {
     filters: InstitutionFilters,
     options: PaginationOptions
   ): Promise<{ items: Institution[]; total: number }> {
-    const { page = 1, limit = 10 } = options;
+    const { page = 1, limit = 1000 } = options;
     
     // Início da medição de tempo para debug
     const startTime = Date.now();
@@ -89,13 +92,12 @@ export class InstitutionRepository extends ExtendedRepository<Institution> {
       // Otimização 1: Selecionar apenas os campos necessários
       const selectFields = [
         'id', 'name', 'company_name', 'document', 'state', 
-        'city', 'deleted', 'has_student_platform', 
+        'deleted', 'has_student_platform', 
         'has_principal_platform', 'has_library_platform'
       ];
       
       // Construir a consulta base
-      const query = this.db(this.tableName)
-        .select(selectFields)
+      const baseQuery = this.db(this.tableName)
         .where((builder) => {
           if (filters.search) {
             builder.where('name', 'ilike', `%${filters.search}%`)
@@ -126,12 +128,53 @@ export class InstitutionRepository extends ExtendedRepository<Institution> {
 
       // Otimização 2: Fazer duas consultas separadas (total e itens)
       // para evitar problemas de desempenho em grandes conjuntos de dados
-      const countQuery = query.clone().count('id as count').first();
+      const countQuery = this.db(this.tableName)
+        .count('id as count')
+        .where((builder) => {
+          if (filters.search) {
+            builder.where('name', 'ilike', `%${filters.search}%`)
+              .orWhere('company_name', 'ilike', `%${filters.search}%`)
+              .orWhere('document', 'ilike', `%${filters.search}%`);
+          }
+          
+          if (filters.state) {
+            builder.where('state', '=', filters.state);
+          }
+          
+          if (filters.is_active !== undefined) {
+            builder.where('deleted', '=', !filters.is_active);
+          }
+          
+          if (filters.has_student_platform !== undefined) {
+            builder.where('has_student_platform', '=', filters.has_student_platform);
+          }
+          
+          if (filters.has_principal_platform !== undefined) {
+            builder.where('has_principal_platform', '=', filters.has_principal_platform);
+          }
+          
+          if (filters.has_library_platform !== undefined) {
+            builder.where('has_library_platform', '=', filters.has_library_platform);
+          }
+        })
+        .first();
       
-      const itemsQuery = query.clone()
-        .orderBy('name', 'asc')
-        .offset((page - 1) * limit)
-        .limit(limit);
+      // Verificar se o limite é muito grande ou zero (trazer todos os registros)
+      const useLimit = limit > 0 && limit < 10000;
+      
+      let itemsQuery = baseQuery.clone()
+        .select(selectFields)
+        .orderBy('name', 'asc');
+      
+      // Só aplicar paginação se o limite for razoável
+      if (useLimit) {
+        console.log(`[REPO] Aplicando paginação: offset ${(page - 1) * limit}, limit ${limit}`);
+        itemsQuery = itemsQuery
+          .offset((page - 1) * limit)
+          .limit(limit);
+      } else {
+        console.log('[REPO] Buscando todos os registros sem paginação');
+      }
       
       // Executar as duas consultas em paralelo
       const [total, items] = await Promise.all([
@@ -141,14 +184,14 @@ export class InstitutionRepository extends ExtendedRepository<Institution> {
       
       // Log de desempenho
       const endTime = Date.now();
-      console.log(`Consulta de instituições concluída em ${endTime - startTime}ms`);
+      console.log(`[REPO] Consulta de instituições concluída em ${endTime - startTime}ms, encontrados ${items.length} de ${total ? Number(total.count) : 0} registros`);
       
       return {
         items: items as Institution[],
         total: total ? Number(total.count) : 0
       };
     } catch (error) {
-      console.error('Erro ao buscar instituições:', error);
+      console.error('[REPO] Erro ao buscar instituições:', error);
       throw error;
     }
   }

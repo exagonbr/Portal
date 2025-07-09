@@ -6,7 +6,7 @@ import { institutionService } from '@/services/institutionService';
 // Usar o template padronizado para a rota GET
 export const { GET, OPTIONS } = createStandardApiRoute({
   endpoint: '/api/institutions',
-  name: 'institutions',
+  name: 'institution',
   fallbackFunction: async (req: NextRequest) => {
     try {
       const url = new URL(req.url);

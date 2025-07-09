@@ -7,9 +7,11 @@ export interface CreateVideoData extends Omit<Video, 'id'> {}
 export interface UpdateVideoData extends Partial<CreateVideoData> {}
 
 export class VideoRepository extends ExtendedRepository<Video> {
+  private repository: Repository<Video>;
 
   constructor() {
     super("videos");
+    this.repository = AppDataSource.getRepository(Video);
   }
   // Implementação do método abstrato findAllPaginated
   async findAllPaginated(options: {

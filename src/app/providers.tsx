@@ -2,6 +2,9 @@
 
 import React from 'react';
 import { Toaster } from 'react-hot-toast';
+import { AuthProvider } from '@/contexts/AuthContext';
+import { ThemeProvider } from '@/contexts/ThemeContext';
+import { UpdateProvider } from '@/components/PWAUpdateManager';
 
 // Importar a configuração do Axios
 import '@/lib/axiosConfig';
@@ -12,9 +15,13 @@ interface ProvidersProps {
 
 export default function Providers({ children }: ProvidersProps) {
   return (
-    <>
-      {children}
-      <Toaster position="top-right" />
-    </>
+    <ThemeProvider>
+      <AuthProvider>
+        <UpdateProvider>
+          {children}
+          <Toaster position="top-right" />
+        </UpdateProvider>
+      </AuthProvider>
+    </ThemeProvider>
   );
 } 

@@ -11,6 +11,12 @@ export default function ServiceWorkerRegistration() {
     // Carregar o script de utilidades do SW
     const loadSwUtils = () => {
       return new Promise<void>((resolve) => {
+        // Verificar se já está carregado
+        if (window.swUtils) {
+          resolve();
+          return;
+        }
+
         const script = document.createElement('script');
         script.src = '/sw-utils.js';
         script.onload = () => resolve();
@@ -121,25 +127,25 @@ export default function ServiceWorkerRegistration() {
         console.log('Atualização do Service Worker disponível');
       }
 
-      // Configurar atualizações automáticas
+      // Configurar atualizações automáticas - SEM RECARREGAMENTO AUTOMÁTICO
       registration.addEventListener('updatefound', () => {
         const newWorker = registration.installing;
         if (!newWorker) return;
 
         newWorker.addEventListener('statechange', () => {
           if (newWorker.state === 'installed' && navigator.serviceWorker.controller) {
-            // Notificar sobre atualização disponível
+            // Apenas registrar que há uma nova versão disponível
             console.log('Nova versão do Service Worker instalada e pronta para ativar');
           }
         });
       });
 
-      // Verificar atualizações periodicamente (a cada 6 horas)
+      // Verificar atualizações periodicamente (a cada 24 horas em vez de 6)
       setInterval(() => {
         registration.update().catch(error => {
           console.error('Erro ao verificar atualizações do SW:', error);
         });
-      }, 6 * 60 * 60 * 1000);
+      }, 24 * 60 * 60 * 1000); // 24 horas
 
       // Detectar quando o usuário está offline/online
       window.addEventListener('offline', () => {
@@ -152,14 +158,14 @@ export default function ServiceWorkerRegistration() {
     };
 
     // Registrar o service worker quando a página terminar de carregar
-    if (document.readyState === 'complete') {
+    // Usar um timeout para evitar que o registro aconteça imediatamente
+    const timer = setTimeout(() => {
       registerSW();
-    } else {
-      window.addEventListener('load', registerSW);
-      return () => {
-        window.removeEventListener('load', registerSW);
-      };
-    }
+    }, 5000); // Esperar 5 segundos antes de registrar
+
+    return () => {
+      clearTimeout(timer);
+    };
   }, []);
 
   // Este componente não renderiza nada visível

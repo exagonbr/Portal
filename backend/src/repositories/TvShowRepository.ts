@@ -1,3 +1,4 @@
+import { AppDataSource } from "../config/typeorm.config";
 import { Repository } from "typeorm";
 import { ExtendedRepository, PaginatedResult } from './ExtendedRepository';
 import { TvShow } from '../entities/TvShow';
@@ -24,8 +25,10 @@ export interface TvShowListResult {
 }
 
 export class TvShowRepository extends ExtendedRepository<TvShow> {
+  private repository: Repository<TvShow>;
   constructor() {
     super("tvshows");
+    this.repository = AppDataSource.getRepository(TvShow);
   }
   // Implementação do método abstrato findAllPaginated
   async findAllPaginated(options: {

@@ -1,3 +1,4 @@
+import { AppDataSource } from "../config/typeorm.config";
 import { Repository } from "typeorm";
 import { ExtendedRepository, PaginatedResult } from './ExtendedRepository';
 
@@ -18,8 +19,10 @@ export interface Collection {
 
 // Repository para a tabela collections original (não tv_show)
 export class ContentCollectionRepository extends ExtendedRepository<Collection> {
+  private repository: Repository<Collection>;
   constructor() {
     super("collections");
+    this.repository = AppDataSource.getRepository(Collection);
   }
   // Implementação do método abstrato findAllPaginated
   async findAllPaginated(options: {

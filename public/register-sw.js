@@ -1,227 +1,143 @@
-// Script para registrar o Service Worker
-// Este script foi mantido para compatibilidade com código existente,
-// mas o registro principal agora é feito pelo componente ServiceWorkerRegistration.tsx
+// Script de registro do Service Worker para o Portal Sabercon
+// Versão: 2.0.0
 
-// Função para registrar o Service Worker
-async function registerServiceWorker() {
+(function() {
+  // Verificar se o navegador suporta Service Worker
   if ('serviceWorker' in navigator) {
-    try {
-      const registration = await navigator.serviceWorker.register('/worker.js', {
-        scope: '/',
-        updateViaCache: 'none'
-      });
-
-      if (registration.installing) {
-        console.log('Service worker instalando');
-      } else if (registration.waiting) {
-        console.log('Service worker instalado');
-      } else if (registration.active) {
-        console.log('Service worker ativo');
-      }
-
-      // Verificar se há uma atualização disponível
-      if (registration.waiting) {
-        showUpdateNotification();
-      }
-
-      // Atualizar o service worker quando houver uma nova versão
-      registration.addEventListener('updatefound', () => {
-        const newWorker = registration.installing;
+    // Registrar o Service Worker apenas quando a página estiver totalmente carregada
+    window.addEventListener('load', async () => {
+      try {
+        // Registrar o Service Worker com escopo raiz
+        const registration = await navigator.serviceWorker.register('/sw.js', {
+          scope: '/',
+          updateViaCache: 'none' // Não usar cache para atualizações
+        });
         
-        newWorker.addEventListener('statechange', () => {
-          if (newWorker.state === 'installed' && navigator.serviceWorker.controller) {
-            showUpdateNotification();
+        console.log('Service Worker registrado com sucesso:', registration.scope);
+        
+        // Verificar se há atualização disponível
+        registration.addEventListener('updatefound', () => {
+          const newWorker = registration.installing;
+          console.log('Novo Service Worker em instalação');
+          
+          newWorker.addEventListener('statechange', () => {
+            if (newWorker.state === 'installed' && navigator.serviceWorker.controller) {
+              console.log('Novo Service Worker instalado e pronto para ativação');
+              // Mostrar notificação de atualização (opcional)
+              showUpdateNotification();
+            }
+          });
+        });
+        
+        // Verificar se há uma atualização pendente
+        if (registration.waiting) {
+          console.log('Atualização do Service Worker pendente');
+          // Mostrar notificação de atualização (opcional)
+          showUpdateNotification();
+        }
+        
+        // Lidar com mensagens do Service Worker
+        navigator.serviceWorker.addEventListener('message', (event) => {
+          const { type, payload } = event.data || {};
+          
+          switch (type) {
+            case 'CACHE_UPDATED':
+              console.log('Cache atualizado:', payload);
+              break;
+            case 'OFFLINE_READY':
+              console.log('Aplicação pronta para uso offline');
+              break;
           }
         });
-      });
-
-    } catch (error) {
-      console.error('Erro ao registrar service worker:', error);
-    }
-  }
-}
-
-// Registrar o service worker quando a página carregar
-// Apenas se não foi registrado pelo componente React
-if (!window.swRegisteredByComponent) {
-  if (document.readyState === 'complete') {
-    registerServiceWorker();
+        
+        // Verificar conexão e notificar o Service Worker
+        window.addEventListener('online', updateOnlineStatus);
+        window.addEventListener('offline', updateOnlineStatus);
+        updateOnlineStatus();
+        
+      } catch (error) {
+        console.error('Falha ao registrar o Service Worker:', error);
+      }
+    });
   } else {
-    window.addEventListener('load', registerServiceWorker);
+    console.log('Service Worker não é suportado neste navegador');
   }
-}
-
-// Escutar mensagens do Service Worker
-if ('serviceWorker' in navigator) {
-  navigator.serviceWorker.addEventListener('message', (event) => {
-    if (!event.data) return;
   
-    const { type, data } = event.data;
-  
-    switch (type) {
-      case 'CACHE_CLEARED':
-        console.log('✅ Cache limpo pelo Service Worker:', data);
-        break;
-  
-      case 'CACHE_ERROR':
-        console.log('❌ Erro no cache do Service Worker:', data);
-        break;
-  
-      case 'SW_STATUS':
-        console.log('📊 Status do Service Worker:', data);
-        break;
-  
-      default:
-        console.log('📨 Mensagem do Service Worker:', event.data);
+  // Função para atualizar status de conexão
+  function updateOnlineStatus() {
+    const isOnline = navigator.onLine;
+    console.log('Status de conexão:', isOnline ? 'Online' : 'Offline');
+    
+    if (navigator.serviceWorker.controller) {
+      navigator.serviceWorker.controller.postMessage({
+        type: 'CONNECTION_STATUS',
+        payload: { isOnline }
+      });
     }
-  });
-}
-
-// Função para mostrar notificação de atualização
-function showUpdateNotification() {
-  // Verificar se já existe notificação
-  if (document.getElementById('sw-update-notification')) return;
-
-  const notification = document.createElement('div');
-  notification.id = 'sw-update-notification';
-  notification.style.position = 'fixed';
-  notification.style.bottom = '20px';
-  notification.style.right = '20px';
-  notification.style.backgroundColor = '#0f3460';
-  notification.style.color = 'white';
-  notification.style.padding = '12px 20px';
-  notification.style.borderRadius = '8px';
-  notification.style.boxShadow = '0 4px 12px rgba(0, 0, 0, 0.15)';
-  notification.style.zIndex = '9999';
-  notification.style.display = 'flex';
-  notification.style.alignItems = 'center';
-  notification.style.justifyContent = 'space-between';
-  notification.style.maxWidth = '400px';
-
-  notification.innerHTML = `
-    <div>
-      <strong style="display: block; margin-bottom: 4px;">Nova versão disponível</strong>
-      <span>Atualize para obter as últimas melhorias</span>
-    </div>
-    <button id="sw-update-button" style="background: white; color: #0f3460; border: none; padding: 6px 12px; border-radius: 4px; margin-left: 16px; cursor: pointer; font-weight: 500;">Atualizar</button>
-  `;
-
-  document.body.appendChild(notification);
-
-  // Adicionar evento ao botão
-  document.getElementById('sw-update-button')?.addEventListener('click', () => {
-    notification.innerHTML = `
-      <div>
-        <strong style="display: block; margin-bottom: 4px;">Atualizando...</strong>
-        <span>A página será recarregada</span>
-      </div>
-    `;
-
-    // Enviar mensagem para o SW atualizar
+  }
+  
+  // Função para mostrar notificação de atualização
+  function showUpdateNotification() {
+    // Implementação básica - pode ser personalizada conforme necessário
+    if (window.updateNotificationShown) return;
+    window.updateNotificationShown = true;
+    
+    // Criar elemento de notificação
+    const notification = document.createElement('div');
+    notification.style.position = 'fixed';
+    notification.style.bottom = '20px';
+    notification.style.right = '20px';
+    notification.style.backgroundColor = '#2563eb';
+    notification.style.color = 'white';
+    notification.style.padding = '12px 20px';
+    notification.style.borderRadius = '4px';
+    notification.style.boxShadow = '0 2px 10px rgba(0,0,0,0.2)';
+    notification.style.zIndex = '9999';
+    notification.style.display = 'flex';
+    notification.style.alignItems = 'center';
+    notification.style.justifyContent = 'space-between';
+    
+    // Adicionar texto
+    const text = document.createElement('span');
+    text.textContent = 'Nova versão disponível!';
+    notification.appendChild(text);
+    
+    // Adicionar botão de atualização
+    const button = document.createElement('button');
+    button.textContent = 'Atualizar';
+    button.style.marginLeft = '15px';
+    button.style.backgroundColor = 'white';
+    button.style.color = '#2563eb';
+    button.style.border = 'none';
+    button.style.padding = '6px 12px';
+    button.style.borderRadius = '4px';
+    button.style.cursor = 'pointer';
+    
+    // Adicionar evento de clique para atualizar
+    button.addEventListener('click', () => {
+      // Remover notificação
+      document.body.removeChild(notification);
+      
+      // Enviar mensagem para o Service Worker atualizar
+      if (navigator.serviceWorker.controller) {
+        navigator.serviceWorker.controller.postMessage({ type: 'SKIP_WAITING' });
+      }
+      
+      // Recarregar a página
+      window.location.reload();
+    });
+    
+    notification.appendChild(button);
+    
+    // Adicionar ao corpo do documento
+    document.body.appendChild(notification);
+  }
+  
+  // Função para atualizar o Service Worker
+  window.updateServiceWorker = function() {
     if (navigator.serviceWorker.controller) {
       navigator.serviceWorker.controller.postMessage({ type: 'SKIP_WAITING' });
-    }
-
-    setTimeout(() => {
       window.location.reload();
-    }, 1000);
-  });
-}
-
-// Função global para limpar cache via Service Worker
-window.clearServiceWorkerCache = async (reason = 'manual') => {
-  // Verificar se os utilitários estão disponíveis
-  if (window.swUtils && window.swUtils.clearServiceWorkerCache) {
-    return window.swUtils.clearServiceWorkerCache();
-  }
-  
-  // Fallback para o método antigo
-  if ('serviceWorker' in navigator && navigator.serviceWorker.controller) {
-    try {
-      // Criar um MessageChannel para comunicação bidirecional
-      const messageChannel = new MessageChannel();
-
-      // Prometer resposta
-      const response = new Promise((resolve, reject) => {
-        messageChannel.port1.onmessage = (event) => {
-          if (event.data && event.data.success) {
-            resolve(event.data);
-          } else {
-            reject(new Error((event.data && event.data.error) || 'Erro desconhecido'));
-          }
-        };
-
-        // Timeout de 10 segundos
-        setTimeout(() => {
-          reject(new Error('Timeout na limpeza de cache'));
-        }, 10000);
-      });
-
-      // Enviar mensagem para o Service Worker
-      navigator.serviceWorker.controller.postMessage(
-        {
-          type: 'CLEAR_CACHE',
-          payload: { reason }
-        },
-        [messageChannel.port2]
-      );
-
-      const result = await response;
-      console.log('✅ Cache limpo com sucesso:', result);
-      return result;
-
-    } catch (error) {
-      console.log('❌ Erro ao limpar cache via Service Worker:', error);
-      throw error;
     }
-  } else {
-    console.warn('⚠️ Service Worker não disponível para limpeza de cache');
-    throw new Error('Service Worker não disponível');
-  }
-};
-
-// Função global para obter informações do cache
-window.getServiceWorkerCacheInfo = async () => {
-  // Verificar se os utilitários estão disponíveis
-  if (window.swUtils && window.swUtils.checkServiceWorkerStatus) {
-    return window.swUtils.checkServiceWorkerStatus();
-  }
-  
-  // Fallback para o método antigo
-  if ('serviceWorker' in navigator && navigator.serviceWorker.controller) {
-    try {
-      const messageChannel = new MessageChannel();
-
-      const response = new Promise((resolve, reject) => {
-        messageChannel.port1.onmessage = (event) => {
-          if (event.data.success) {
-            resolve(event.data);
-          } else {
-            reject(new Error(event.data.error || 'Erro desconhecido'));
-          }
-        };
-
-        setTimeout(() => {
-          reject(new Error('Timeout ao obter informações do cache'));
-        }, 5000);
-      });
-
-      navigator.serviceWorker.controller.postMessage(
-        { type: 'GET_CACHE_INFO' },
-        [messageChannel.port2]
-      );
-
-      const result = await response;
-      console.log('📊 Informações do cache:', result);
-      return result;
-
-    } catch (error) {
-      console.log('❌ Erro ao obter informações do cache:', error);
-      throw error;
-    }
-  } else {
-    throw new Error('Service Worker não disponível');
-  }
-};
-
-console.log('🚀 Script de registro do Service Worker carregado'); 
+  };
+})(); 

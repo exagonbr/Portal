@@ -2,16 +2,18 @@
 @tailwind components;
 @tailwind utilities;
 
-/* Importar correções específicas para mobile */
-@import '../styles/mobile-fixes.css';
-
-/* Importar estilos de modal responsivo */
-@import '../styles/modal-responsive.css';
-
-/* Importar estilos padronizados para cards */
-@import '../styles/cards-standard.css';
+/* Importações CSS */
+@import url('../styles/mobile-fixes.css');
+@import url('../styles/modal-responsive.css');
+@import url('../styles/cards-standard.css');
 
 @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200');
+
+/* Configuração dos ícones Material Symbols */
+.material-symbols-outlined {
+  font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+}
 
 :root {
   /* Cores Primárias - Azul Corporativo */

@@ -15,6 +15,21 @@ const STATIC_ASSETS = [
   '/icons/icon-512x512.png',
 ];
 
+// Lista de URLs para ignorar no cache
+const IGNORE_URLS = [
+  '/_next/webpack-hmr',
+  '/__nextjs_original-stack-frame',
+  '/_next/static/chunks/main-app.js',
+  '/_next/static/chunks/app-pages-internals.js',
+  '/_next/static/chunks/app/admin/institutions/page.js',
+  '/_next/static/chunks/app/admin/layout.js',
+  '/_next/static/chunks/app/template.js',
+  '/_next/static/chunks/app/layout.js',
+  '/_next/static/chunks/app/loading.js',
+  '/_next/static/chunks/_app-pages-browser_node_modules_framer-motion_dist_es_index_mjs.js',
+  '/_next/static/css/app/layout.css'
+];
+
 // Função para limpar caches antigos
 async function deleteOldCaches() {
   const cacheWhitelist = [CACHE_NAME, STATIC_CACHE_NAME];
@@ -125,6 +140,11 @@ function isChunkError(error) {
   );
 }
 
+// Função para verificar se uma URL deve ser ignorada
+function shouldIgnoreUrl(url) {
+  return IGNORE_URLS.some(ignorePattern => url.includes(ignorePattern));
+}
+
 // Função para retry de requisições
 async function fetchWithRetry(request, retries = 3) {
   for (let i = 0; i < retries; i++) {
@@ -157,9 +177,9 @@ self.addEventListener('fetch', (event) => {
     return;
   }
 
-  // Ignorar requisições do webpack HMR
-  if (url.pathname.includes('_next/webpack-hmr') || 
-      url.pathname.includes('__nextjs_original-stack-frame')) {
+  // Ignorar requisições problemáticas
+  if (shouldIgnoreUrl(url.pathname)) {
+    // Passar diretamente para a rede sem interceptação
     return;
   }
 
@@ -175,9 +195,9 @@ self.addEventListener('fetch', (event) => {
     return;
   }
 
-  // Estratégia para assets do Next.js: Network First com cache
+  // Estratégia para assets do Next.js: Network First sem cache para evitar problemas
   if (url.pathname.startsWith('/_next/')) {
-    event.respondWith(networkFirstWithCacheFallback(request));
+    event.respondWith(networkFirstStrategy(request));
     return;
   }
 
@@ -209,7 +229,7 @@ async function networkFirstWithCacheFallback(request) {
     
     return networkResponse;
   } catch (error) {
-    console.warn('Service Worker: Network request failed, trying cache', { url: request.url, error });
+    console.log('Service Worker: Network request failed, trying cache', request.url);
     
     // Tentar buscar do cache
     const cachedResponse = await caches.match(request);
@@ -218,15 +238,8 @@ async function networkFirstWithCacheFallback(request) {
       return cachedResponse;
     }
     
-    // Se não houver cache, retornar erro
-    return new Response(
-      JSON.stringify({ success: false, message: 'Offline - sem cache disponível' }), 
-      { 
-        status: 503, 
-        statusText: 'Service Unavailable', 
-        headers: { 'Content-Type': 'application/json' } 
-      }
-    );
+    // Se não houver cache, passar para a rede diretamente
+    return fetch(request);
   }
 }
 
@@ -238,15 +251,9 @@ async function networkFirstStrategy(request) {
       credentials: 'same-origin'
     });
   } catch (error) {
-    console.error('Service Worker: Network request failed', { url: request.url, error });
-    return new Response(
-      JSON.stringify({ success: false, message: 'Falha na conexão de rede.' }), 
-      { 
-        status: 503, 
-        statusText: 'Service Unavailable', 
-        headers: { 'Content-Type': 'application/json' } 
-      }
-    );
+    console.log('Service Worker: Network request failed, bypassing SW', request.url);
+    // Retornar um erro que não será interceptado pelo SW
+    throw error;
   }
 }
 
@@ -265,7 +272,7 @@ async function cacheFirstWithRevalidation(request) {
     }
     return networkResponse;
   }).catch(error => {
-    console.warn('Service Worker: Background fetch failed', { url: request.url, error });
+    console.log('Service Worker: Background fetch failed', request.url);
     return null;
   });
 
@@ -276,6 +283,11 @@ async function cacheFirstWithRevalidation(request) {
   }
 
   // Se não houver cache, aguardar a rede
-  const networkResponse = await fetchPromise;
-  return networkResponse || new Response('Network error', { status: 503 });
+  try {
+    const networkResponse = await fetchPromise;
+    return networkResponse || fetch(request);
+  } catch (error) {
+    // Falha na rede, tentar requisição direta
+    return fetch(request);
+  }
 }

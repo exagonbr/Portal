@@ -14,8 +14,10 @@ export interface CreateRoleData extends Omit<Role, 'id' | 'users'> {}
 export interface UpdateRoleData extends Partial<CreateRoleData> {}
 
 export class RoleRepository extends ExtendedRepository<Role> {
+  private repository: Repository<Role>;
   constructor() {
     super("roles");
+    this.repository = AppDataSource.getRepository(Role);
   }
   // Implementação do método abstrato findAllPaginated
   async findAllPaginated(options: {

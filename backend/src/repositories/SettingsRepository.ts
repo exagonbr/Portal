@@ -4,8 +4,10 @@ import { AppDataSource } from '../config/typeorm.config';
 import { Settings } from '../entities/Settings';
 
 export class SettingsRepository extends ExtendedRepository<Settings> {
+  private repository: Repository<Settings>;
   constructor() {
     super("settingss");
+    this.repository = AppDataSource.getRepository(Settings);
   }
   
   // Implementação do método abstrato findAllPaginated

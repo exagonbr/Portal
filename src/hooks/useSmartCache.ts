@@ -1,6 +1,10 @@
 import { useState, useEffect, useCallback, useRef } from 'react';
 import { cacheManager, withSmartCache } from '@/utils/cacheManager';
 
+// Cache global para evitar múltiplas requisições simultâneas para a mesma chave
+const GLOBAL_FETCH_CACHE = new Map<string, Promise<any>>();
+const DEBOUNCE_TIMEOUT = 300; // ms
+
 export interface UseSmartCacheOptions<T> {
   key: string;
   fetcher: () => Promise<T>;
@@ -12,6 +16,7 @@ export interface UseSmartCacheOptions<T> {
   retryOnError?: boolean;
   retryDelay?: number;
   maxRetries?: number;
+  debounceMs?: number; // Novo parâmetro para controlar o debounce
 }
 
 export interface UseSmartCacheReturn<T> {
@@ -37,7 +42,8 @@ export function useSmartCache<T>({
   onError,
   retryOnError = true,
   retryDelay = 1000,
-  maxRetries = 3
+  maxRetries = 3,
+  debounceMs = DEBOUNCE_TIMEOUT
 }: UseSmartCacheOptions<T>): UseSmartCacheReturn<T> {
   const [data, setData] = useState<T | null>(null);
   const [isLoading, setIsLoading] = useState(false);
@@ -68,28 +74,57 @@ export function useSmartCache<T>({
         setIsValidating(true);
       }
 
-      // Evitar múltiplas requisições simultâneas
-      if (lastFetchRef.current && !forceRefresh) {
-        return await lastFetchRef.current;
+      // Verificar se já existe uma requisição em andamento para esta chave
+      if (GLOBAL_FETCH_CACHE.has(key) && !forceRefresh) {
+        console.log(`⏳ [SmartCache] Reutilizando requisição em andamento para: ${key}`);
+        const cachedPromise = GLOBAL_FETCH_CACHE.get(key);
+        try {
+          const result = await cachedPromise;
+          if (mountedRef.current) {
+            setData(result);
+            retryCountRef.current = 0;
+            onSuccess?.(result);
+          }
+          return result;
+        } catch (err) {
+          // Se a requisição em cache falhar, continuamos com uma nova
+          console.log(`❌ [SmartCache] Requisição em cache falhou para ${key}, tentando novamente`);
+        }
       }
 
+      // Criar nova promessa de fetch
       const fetchPromise = withSmartCache(key, fetcher, {
         ttl,
         forceRefresh,
         skipCache: !staleWhileRevalidate && forceRefresh
       });
 
+      // Armazenar no cache global
+      GLOBAL_FETCH_CACHE.set(key, fetchPromise);
       lastFetchRef.current = fetchPromise;
 
-      const result = await fetchPromise;
-      
-      if (mountedRef.current) {
-        setData(result);
-        retryCountRef.current = 0;
-        onSuccess?.(result);
-      }
+      // Limpar do cache global após a conclusão
+      const clearCacheAfterFetch = () => {
+        setTimeout(() => {
+          GLOBAL_FETCH_CACHE.delete(key);
+        }, debounceMs);
+      };
 
-      return result;
+      try {
+        const result = await fetchPromise;
+        
+        if (mountedRef.current) {
+          setData(result);
+          retryCountRef.current = 0;
+          onSuccess?.(result);
+        }
+        
+        clearCacheAfterFetch();
+        return result;
+      } catch (err) {
+        clearCacheAfterFetch();
+        throw err;
+      }
     } catch (err) {
       const error = err instanceof Error ? err : new Error(String(err));
       
@@ -100,7 +135,7 @@ export function useSmartCache<T>({
         // Retry logic
         if (retryOnError && retryCountRef.current < maxRetries) {
           retryCountRef.current++;
-          console.log(`🔄 Tentativa ${retryCountRef.current}/${maxRetries} para ${key}`);
+          console.log(`🔄 [SmartCache] Tentativa ${retryCountRef.current}/${maxRetries} para ${key}`);
           
           setTimeout(() => {
             if (mountedRef.current) {
@@ -118,7 +153,7 @@ export function useSmartCache<T>({
       }
       lastFetchRef.current = null;
     }
-  }, [key, fetcher, ttl, enabled, staleWhileRevalidate, data, onSuccess, onError, retryOnError, retryDelay, maxRetries]);
+  }, [key, fetcher, ttl, enabled, staleWhileRevalidate, data, onSuccess, onError, retryOnError, retryDelay, maxRetries, debounceMs]);
 
   // Fetch inicial
   useEffect(() => {
@@ -127,28 +162,30 @@ export function useSmartCache<T>({
     }
   }, [fetchData, enabled]);
 
-  // Função para mutar dados localmente
+  // Função para mutar os dados manualmente
   const mutate = useCallback(async (newData?: T): Promise<void> => {
     if (newData !== undefined) {
       setData(newData);
-      // Atualizar cache
-      await cacheManager.revalidate(key, () => Promise.resolve(newData), ttl);
+      // Atualizar o cache
+      await cacheManager.set(key, newData, ttl);
     } else {
-      // Revalidar do servidor
+      // Se não for fornecido novo dado, revalidar
       await fetchData(true);
     }
   }, [key, ttl, fetchData]);
 
-  // Função para revalidar
+  // Função para forçar revalidação
   const revalidate = useCallback(async (): Promise<void> => {
+    console.log(`🔄 [SmartCache] Revalidando ${key}`);
     await fetchData(true);
   }, [fetchData]);
 
-  // Função para limpar cache
+  // Função para limpar o cache
   const clear = useCallback(async (): Promise<void> => {
-    setData(null);
-    setError(null);
-    await cacheManager.invalidate(key);
+    console.log(`🧹 [SmartCache] Limpando cache para ${key}`);
+    await cacheManager.delete(key);
+    // Remover do cache global também
+    GLOBAL_FETCH_CACHE.delete(key);
   }, [key]);
 
   return {

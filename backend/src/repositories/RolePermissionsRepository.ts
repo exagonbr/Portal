@@ -4,8 +4,10 @@ import { ExtendedRepository, PaginatedResult } from './ExtendedRepository';
 import { RolePermissions } from '../entities/RolePermissions';
 
 export class RolePermissionsRepository extends ExtendedRepository<RolePermissions> {
+  private repository: Repository<RolePermissions>;
   constructor() {
     super("rolepermissionss");
+    this.repository = AppDataSource.getRepository(RolePermissions);
   }
   
   async findAllPaginated(options: {

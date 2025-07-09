@@ -136,6 +136,12 @@ export const getSystemAdminMenuItems = (): AdminMenuSection[] => {
           icon: 'book',
           label: 'Disciplinas',
           permission: 'canManageSystem'
+        },
+        {
+          href: '/admin/themes',
+          icon: 'palette',
+          label: 'Temas',
+          permission: 'canManageSystem'
         }
       ]
     },

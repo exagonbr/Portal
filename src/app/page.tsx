@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation';
 import { useAuthSafe } from '@/contexts/AuthContext';
 import { buildLoginUrl, buildDashboardUrl } from '@/utils/urlBuilder';
 import { standardizeTokens } from '@/utils/tokenCleanup';
+import ServiceWorkerRegistration from '@/components/ServiceWorkerRegistration';
 
 export default function HomePage() {
   const authContext = useAuthSafe();
@@ -42,11 +43,14 @@ export default function HomePage() {
   }, []);
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gray-50">
-      <div className="text-center">
-        <div className="animate-spin rounded-full h-32 w-32 border-b-2 border-blue-600 mx-auto"></div>
-        <p className="mt-4 text-gray-600">Redirecionando...</p>
+    <>
+      <div className="min-h-screen flex items-center justify-center bg-gray-50">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-32 w-32 border-b-2 border-blue-600 mx-auto"></div>
+          <p className="mt-4 text-gray-600"></p>
+        </div>
       </div>
-    </div>
+      <ServiceWorkerRegistration />
+    </>
   );
 }

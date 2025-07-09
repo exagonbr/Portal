@@ -1,10 +1,13 @@
+import { AppDataSource } from "../config/typeorm.config";
 import { Repository } from "typeorm";
 import { ExtendedRepository, PaginatedResult } from './ExtendedRepository';
 import { Permissions } from '../entities/Permissions';
 
 export class PermissionsRepository extends ExtendedRepository<Permissions> {
+  private repository: Repository<Permissions>;
   constructor() {
     super("permissionss");
+    this.repository = AppDataSource.getRepository(Permissions);
   }
   
   // Implementação do método abstrato findAllPaginated

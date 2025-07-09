@@ -30,8 +30,10 @@ export interface UnitFilters {
 }
 
 export class UnitRepository extends ExtendedRepository<Unit> {
+  private repository: Repository<Unit>;
   constructor() {
-    super('units');
+    super("units");
+    this.repository = AppDataSource.getRepository(Unit);
   }
 
   async findByNameAndInstitution(name: string, institutionId: number): Promise<Unit | null> {

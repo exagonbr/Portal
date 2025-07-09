@@ -4,9 +4,11 @@ import { AppDataSource } from '../config/typeorm.config';
 import { VideoCollection } from '../entities/VideoCollection';
 
 export class VideoCollectionRepository extends ExtendedRepository<VideoCollection> {
+  private repository: Repository<VideoCollection>;
 
   constructor() {
     super("videocollections");
+    this.repository = AppDataSource.getRepository(VideoCollection);
   }
   // Implementação do método abstrato findAllPaginated
   async findAllPaginated(options: {

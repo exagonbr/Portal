@@ -5,6 +5,7 @@ import institutionController from '../controllers/InstitutionController';
 
 const router = Router();
 
+// Aplicar middleware de autenticação
 router.use(requireAuth);
 
 router.get('/', institutionController.getAll.bind(institutionController));

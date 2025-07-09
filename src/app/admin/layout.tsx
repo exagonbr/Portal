@@ -3,6 +3,7 @@
 import AuthenticatedLayout from '@/components/AuthenticatedLayout'
 import { UserRole } from '@/types/roles'
 import { ErrorBoundary } from '@/components/ErrorBoundary'
+import { NavigationLoadingProvider } from '@/contexts/NavigationLoadingContext'
 
 export default function AdminLayout({
   children,
@@ -11,9 +12,11 @@ export default function AdminLayout({
 }) {
   return (
     <ErrorBoundary>
-      <AuthenticatedLayout requiredRole={UserRole.SYSTEM_ADMIN}>
-        {children}
-      </AuthenticatedLayout>
+      <NavigationLoadingProvider>
+        <AuthenticatedLayout requiredRole={UserRole.SYSTEM_ADMIN}>
+          {children}
+        </AuthenticatedLayout>
+      </NavigationLoadingProvider>
     </ErrorBoundary>
   )
 }

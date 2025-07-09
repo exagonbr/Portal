@@ -17,8 +17,8 @@ const requestCache = new Map<string, {
 
 // Configurações para prevenção de loops
 const LOOP_DETECTION = {
-  WINDOW_MS: 10000, // 10 segundos
-  MAX_REQUESTS: 5, // Máximo de requisições em 10 segundos
+  WINDOW_MS: 60000, // 60 segundos (era 10000)
+  MAX_REQUESTS: 10, // Máximo de requisições em 60 segundos (era 5)
   BLOCK_DURATION_MS: 30000, // 30 segundos de bloqueio
   CLEANUP_INTERVAL_MS: 60000 * 5 // Limpar cache a cada 5 minutos
 };

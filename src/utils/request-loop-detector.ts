@@ -88,7 +88,14 @@ class RequestLoopDetector {
       '/api/users/stats',
       '/api/settings',
       '/api/dashboard/metrics/realtime',
-      '/api/tv-shows'
+      '/api/tv-shows',
+      // Adicionados para resolver problema de falsos positivos
+      '/api/auth/validate',
+      '/api/auth/me',
+      '/api/auth/session',
+      '/api/users/me',
+      '/api/dashboard',
+      '/api/aws/connection-logs'
     ];
 
     return ignorePatterns.some(pattern => url.includes(pattern));

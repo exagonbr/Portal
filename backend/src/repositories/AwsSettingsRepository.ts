@@ -1,3 +1,4 @@
+import { AppDataSource } from "../config/typeorm.config";
 import { Repository } from "typeorm";
 import { ExtendedRepository, PaginatedResult } from './ExtendedRepository';
 import { AwsSettings } from '../types/aws'; // Supondo que os tipos AWS estejam definidos
@@ -6,8 +7,10 @@ export interface CreateAwsSettingsDto extends Omit<AwsSettings, 'id' | 'created_
 export interface UpdateAwsSettingsDto extends Partial<CreateAwsSettingsDto> {}
 
 export class AwsSettingsRepository extends ExtendedRepository<AwsSettings> {
+  private repository: Repository<AwsSettings>;
   constructor() {
     super("awssettingss");
+    this.repository = AppDataSource.getRepository(AwsSettings);
   }
   // Implementação do método abstrato findAllPaginated
   async findAllPaginated(options: {

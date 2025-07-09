@@ -11,8 +11,10 @@ export interface CreatePublicData {
 export interface UpdatePublicData extends Partial<CreatePublicData> {}
 
 export class PublicRepository extends ExtendedRepository<Public> {
+  private repository: Repository<Public>;
   constructor() {
     super("publics");
+    this.repository = AppDataSource.getRepository(Public);
   }
   // Implementação do método abstrato findAllPaginated
   async findAllPaginated(options: {

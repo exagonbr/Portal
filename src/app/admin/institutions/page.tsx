@@ -37,8 +37,9 @@ export default function ManageInstitutions() {
   const [institutions, setInstitutions] = useState<InstitutionDto[]>([])
   const [totalItems, setTotalItems] = useState(0)
   const [currentPage, setCurrentPage] = useState(1)
-  const [itemsPerPage] = useState(10)
+  const [itemsPerPage] = useState(100) // Aumentar o número de itens por página para exibir mais registros
   const [searchQuery, setSearchQuery] = useState('')
+  const [loadingError, setLoadingError] = useState<string | null>(null)
   
   // Estados para o modal unificado
   const [modalOpen, setModalOpen] = useState(false)
@@ -59,45 +60,50 @@ export default function ManageInstitutions() {
   })
 
   const enrichInstitutionsWithSchoolData = async (institutions: InstitutionDto[]): Promise<InstitutionDto[]> => {
-    // Por enquanto, vamos comentar o enriquecimento para evitar erros
-    // e usar os dados básicos das instituições
-    console.log('📝 Usando dados básicos das instituições (sem enriquecimento por enquanto)');
-    return institutions;
+    // Usar diretamente os dados da tabela institution sem mock
+    console.log('📝 Usando dados diretamente da tabela institution');
+    console.log('📝 Total de instituições para processar:', institutions.length);
     
-    /* TODO: Implementar enriquecimento quando a API de escolas estiver funcionando
-    try {
-      const enrichedInstitutions = await Promise.all(
-        institutions.map(async (institution) => {
-          try {
-            // Buscar escolas da instituição
-            const schoolsResponse = await schoolService.getSchools({
-              institution_id: institution.id,
-              page: 1,
-              limit: 1000 // Buscar todas as escolas da instituição
-            });
-            
-            // Calcular totais de estudantes e professores
-            const totalStudents = schoolsResponse.items.reduce((sum, school) => sum + (school.students_count || 0), 0);
-            const totalTeachers = schoolsResponse.items.reduce((sum, school) => sum + (school.teachers_count || 0), 0);
-            
-            return {
-              ...institution,
-              schools_count: schoolsResponse.total || 0,
-              users_count: totalStudents + totalTeachers
-            };
-          } catch (error) {
-            console.warn(`⚠️ Erro ao buscar dados da instituição ${institution.name}:`, error);
-            return institution; // Retornar instituição original se houver erro
-          }
-        })
-      );
-      
-      return enrichedInstitutions;
-    } catch (error) {
-      console.warn('⚠️ Erro ao enriquecer dados das instituições:', error);
-      return institutions; // Retornar instituições originais se houver erro
+    if (!institutions || institutions.length === 0) {
+      console.warn('⚠️ Array de instituições vazio ou nulo');
+      return [];
     }
-    */
+    
+    // Mapear os campos do formato da API para o formato esperado pelo componente
+    return institutions.map(institution => {
+      if (!institution) {
+        console.warn('⚠️ Instituição nula encontrada');
+        return null;
+      }
+      
+      // Verificar se a instituição está ativa
+      const isActive = institution.is_active !== undefined ? 
+        institution.is_active : 
+        institution.hasOwnProperty('deleted') ? !(institution as any).deleted : true;
+      
+      // Obter o nome da empresa ou usar o nome da instituição
+      const companyName = institution.company_name || '';
+      
+      // Log detalhado para debug
+      console.log(`📝 Processando instituição: ${institution.name || 'Sem nome'} (ID: ${institution.id || 'Sem ID'})`);
+      
+      return {
+        ...institution,
+        // Garantir que campos essenciais estejam presentes
+        is_active: isActive,
+        type: institution.type || 'SCHOOL', // Valor padrão se não existir
+        schools_count: institution.schools_count || 0,
+        users_count: institution.users_count || 0,
+        // Campos adicionais do formato da API
+        city: institution.city || '',
+        state: institution.state || '',
+        code: institution.code || institution.id?.toString() || '',
+        // Garantir que o documento esteja disponível
+        document: institution.document || '',
+        // Garantir que o nome da empresa esteja disponível
+        company_name: companyName
+      };
+    }).filter(Boolean) as InstitutionDto[]; // Remover itens nulos
   };
 
   const fetchInstitutions = async (page = 1, search = '', showLoadingIndicator = true) => {
@@ -106,11 +112,13 @@ export default function ManageInstitutions() {
     } else {
       setRefreshing(true);
     }
+    
+    setLoadingError(null); // Limpar erros anteriores
 
     try {
       const params: any = {
-        page,
-        limit: itemsPerPage
+        page: 1, // Sempre começar da primeira página
+        limit: 1000 // Aumentar o limite para buscar todos os registros
       };
       
       // Só adicionar parâmetros se eles tiverem valor
@@ -118,12 +126,24 @@ export default function ManageInstitutions() {
         params.search = search.trim();
       }
       
+      console.log('🔍 Buscando instituições com parâmetros:', params);
+      
       const response = await institutionService.getInstitutions(params);
       
       console.log('📊 API response:', response);
+      console.log('📊 Total de instituições encontradas:', response.items?.length || 0);
+      
+      if (!response.items || response.items.length === 0) {
+        console.warn('⚠️ Nenhuma instituição encontrada na resposta da API');
+      } else {
+        console.log('📊 Primeira instituição:', response.items[0]);
+        console.log('📊 Última instituição:', response.items[response.items.length - 1]);
+      }
       
       // Enriquecer instituições com dados de escolas
       const enrichedInstitutions = await enrichInstitutionsWithSchoolData(response.items || []);
+      
+      console.log('📊 Total de instituições após processamento:', enrichedInstitutions.length);
       
       setInstitutions(enrichedInstitutions);
       setTotalItems(response.total || 0);
@@ -137,6 +157,7 @@ export default function ManageInstitutions() {
       }
     } catch (error) {
       console.error('❌ Erro ao carregar instituições:', error);
+      setLoadingError("Não foi possível carregar a lista de instituições. Tente novamente.");
       showError("Erro ao carregar instituições", "Não foi possível carregar a lista de instituições.");
     } finally {
       setLoading(false);
@@ -248,6 +269,12 @@ export default function ManageInstitutions() {
   const handleRefresh = () => {
     fetchInstitutions(currentPage, searchQuery, false)
   }
+
+  // Adicionar um botão de força de atualização
+  const handleForceRefresh = () => {
+    showSuccess("Atualizando", "Buscando todos os dados da tabela institution...");
+    fetchInstitutions(1, '', true);
+  };
 
   const handleDeleteInstitution = async (institution: InstitutionDto) => {
     // Verificar se a instituição pode ser excluída
@@ -364,44 +391,55 @@ export default function ManageInstitutions() {
 
   const handleToggleStatus = async (institution: InstitutionDto) => {
     try {
-      setLoading(true)
-      const updatedInstitution = await institutionService.toggleInstitutionStatus(Number(institution.id))
+      setLoading(true);
+      const response = await institutionService.toggleInstitutionStatus(Number(institution.id));
       
-      const statusText = updatedInstitution.is_active ? 'ativada' : 'desativada'
-      showSuccess("Status alterado", `Instituição ${statusText} com sucesso!`)
+      // Converter a resposta para o tipo esperado
+      const updatedInstitution = response as unknown as InstitutionDto;
+      
+      // Verificar se temos a propriedade is_active na resposta
+      const isActive = updatedInstitution.is_active !== undefined ? 
+        updatedInstitution.is_active : 
+        updatedInstitution.hasOwnProperty('deleted') ? !(updatedInstitution as any).deleted : true;
+      
+      const statusText = isActive ? 'ativada' : 'desativada';
+      showSuccess("Status alterado", `Instituição ${statusText} com sucesso!`);
       
       // Atualizar o estado local imediatamente para feedback visual rápido
       setInstitutions(prevInstitutions =>
         prevInstitutions.map(inst =>
           inst.id === institution.id
-            ? { ...inst, is_active: updatedInstitution.is_active }
+            ? { ...inst, is_active: isActive }
             : inst
         )
-      )
+      );
       
       // Recalcular estatísticas com os dados atualizados
       const updatedInstitutions = institutions.map(inst =>
         inst.id === institution.id
-          ? { ...inst, is_active: updatedInstitution.is_active }
+          ? { ...inst, is_active: isActive }
           : inst
-      )
+      );
       
       // Atualizar stats baseado nos dados atualizados
-      const activeInstitutions = updatedInstitutions.filter(inst => inst.is_active).length
+      const activeInstitutions = updatedInstitutions.filter(inst => inst.is_active).length;
       setStats(prevStats => ({
         ...prevStats,
         activeInstitutions
-      }))
+      }));
       
     } catch (error) {
-      console.error('❌ Erro ao alterar status da instituição:', error)
-      showError("Erro ao alterar status", "Não foi possível alterar o status da instituição.")
+      console.error('❌ Erro ao alterar status da instituição:', error);
+      showError("Erro ao alterar status", "Não foi possível alterar o status da instituição.");
     } finally {
-      setLoading(false)
+      setLoading(false);
     }
-  }
+  };
 
   const getInstitutionTypeLabel = (type: string) => {
+    // Se o tipo não estiver definido, retornar um valor padrão
+    if (!type) return 'Escola';
+    
     switch (type) {
       case 'SCHOOL': return 'Escola'
       case 'COLLEGE': return 'Faculdade'
@@ -435,6 +473,15 @@ export default function ManageInstitutions() {
                 >
                   <RefreshCw className={`w-4 h-4 ${refreshing ? 'animate-spin' : ''}`} />
                   Atualizar
+                </Button>
+                <Button 
+                  onClick={handleForceRefresh}
+                  variant="outline" 
+                  disabled={refreshing}
+                  className="flex items-center gap-2 bg-amber-100 hover:bg-amber-200 text-amber-800"
+                >
+                  <RefreshCw className={`w-4 h-4 ${refreshing ? 'animate-spin' : ''}`} />
+                  Forçar Atualização
                 </Button>
                 <Button onClick={() => openModal('create')} className="flex items-center gap-2">
                   <Plus className="w-4 h-4" />
@@ -502,6 +549,14 @@ export default function ManageInstitutions() {
                 <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
                 <span className="ml-2 text-gray-600">Carregando...</span>
               </div>
+            ) : loadingError ? (
+              <div className="text-center py-12">
+                <AlertTriangle className="w-16 h-16 text-red-300 mx-auto mb-4" />
+                <p className="text-red-500 text-lg mb-2">{loadingError}</p>
+                <Button onClick={handleForceRefresh} variant="outline" className="mt-4">
+                  Tentar novamente
+                </Button>
+              </div>
             ) : institutions.length === 0 ? (
               <div className="text-center py-12">
                 <Building2 className="w-16 h-16 text-gray-300 mx-auto mb-4" />
@@ -510,6 +565,13 @@ export default function ManageInstitutions() {
               </div>
             ) : (
               <>
+                {/* Debug info */}
+                <div className="p-4 bg-blue-50 border-b border-blue-200 text-sm">
+                  <p className="font-medium text-blue-700">Informações de debug:</p>
+                  <p className="text-blue-600">Total de instituições carregadas: {institutions.length}</p>
+                  <p className="text-blue-600">Total de registros no banco: {totalItems}</p>
+                </div>
+
                 {/* Desktop Table - Simplificada */}
                 <div className="hidden lg:block overflow-x-auto">
                   <table className="w-full divide-y divide-gray-200">
@@ -550,6 +612,12 @@ export default function ManageInstitutions() {
                                 <div className="text-sm font-medium text-gray-900">{institution.name}</div>
                                 {institution.code && (
                                   <div className="text-xs text-gray-500 font-mono">{institution.code}</div>
+                                )}
+                                {institution.company_name && institution.company_name !== institution.name && (
+                                  <div className="text-xs text-gray-500">{institution.company_name}</div>
+                                )}
+                                {institution.document && (
+                                  <div className="text-xs text-gray-500">{institution.document}</div>
                                 )}
                               </div>
                             </div>
@@ -647,6 +715,12 @@ export default function ManageInstitutions() {
                                   )}
                                   <span className="text-xs text-gray-500">{getInstitutionTypeLabel(institution.type)}</span>
                                 </div>
+                                {institution.company_name && institution.company_name !== institution.name && (
+                                  <div className="text-xs text-gray-500">{institution.company_name}</div>
+                                )}
+                                {institution.document && (
+                                  <div className="text-xs text-gray-500">{institution.document}</div>
+                                )}
                               </div>
                             </div>
                             <button

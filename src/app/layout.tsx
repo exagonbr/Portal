@@ -1,92 +1,73 @@
-import type { Metadata, Viewport } from 'next';
-import { Inter } from 'next/font/google';
-import './globals.css';
-import ClientLayout from '@/components/ClientLayout';
-import Handtalk from '@/components/Handtalk';
-import ServiceWorkerDebug from '@/components/ServiceWorkerDebug';
+import './globals.css'
+import { Inter } from 'next/font/google'
+import GlobalStyles from '@/components/GlobalStyles'
+import Script from 'next/script'
 
-// Configuração da fonte Inter com preload: false para evitar o preload automático
 const inter = Inter({ 
   subsets: ['latin'],
   display: 'swap',
-  preload: false
-});
+})
 
-export const metadata: Metadata = {
-  title: 'Portal Educacional',
-  description: 'Plataforma educacional brasileira com suporte BNCC',
-  manifest: '/manifest.json',
-  appleWebApp: {
-    capable: true,
-    statusBarStyle: 'default',
-    title: 'Portal Edu',
-  },
-  formatDetection: {
-    telephone: false,
-  },
-  icons: {
-    icon: [
-      { url: '/icons/icon-192x192.png', sizes: '192x192', type: 'image/png' },
-      { url: '/icons/icon-512x512.png', sizes: '512x512', type: 'image/png' },
-    ],
-    apple: [
-      { url: '/icons/icon-192x192.png' },
-    ],
-  },
-};
-
-export const viewport: Viewport = {
-  width: 'device-width',
-  initialScale: 1,
-  minimumScale: 1,
-  maximumScale: 5, // Permitir zoom até 5x
-  userScalable: true, // Permitir zoom do usuário
-  viewportFit: 'cover',
-};
+export const metadata = {
+  title: 'Portal',
+  description: 'Portal de serviços',
+}
 
 export default function RootLayout({
   children,
 }: {
-  children: React.ReactNode;
+  children: React.ReactNode
 }) {
   return (
-    <html lang="pt-BR" className="h-full antialiased" suppressHydrationWarning>
+    <html lang="pt-BR">
       <head>
-        <meta name="apple-mobile-web-app-capable" content="yes" />
-        <meta name="apple-mobile-web-app-status-bar-style" content="default" />
-        <meta name="apple-mobile-web-app-title" content="Portal Edu" />
-        <meta name="mobile-web-app-capable" content="yes" />
-        <meta name="theme-color" content="#0f3460" media="(prefers-color-scheme: light)" />
-        <meta name="theme-color" content="#1e293b" media="(prefers-color-scheme: dark)" />
-        <meta name="referrer" content="no-referrer-when-downgrade" />
-        <link rel="apple-touch-icon" href="/icons/icon-192x192.png" />
         <link rel="manifest" href="/manifest.json" />
-        <link
-          href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200&display=swap"
-          rel="stylesheet"
+        <meta name="theme-color" content="#ffffff" />
+        <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1" />
+        <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200" rel="stylesheet" />
+        {/* Preload do framer-motion para evitar erros de carregamento */}
+        <link 
+          rel="preload" 
+          href="/_next/static/chunks/_app-pages-browser_node_modules_framer-motion_dist_es_index_mjs.js" 
+          as="script" 
         />
-        {/* Remover preload de fontes específicas para evitar avisos */}
-        
-        {/* Script de limpeza de cache */}
-        <script src="/clear-cache.js" defer />
-        
-        {/* Service Worker personalizado para limpeza de cache */}
-        <script src="/register-sw.js" defer />
-        {/* Adicionar script de utilitários do SW */}
-        <script src="/sw-utils.js" defer />
-        {/* Adicionar script de status do SW */}
-        <script src="/sw-status.js" defer />
+        <GlobalStyles />
       </head>
-      <body className={`${inter.className} m-0 p-0 h-full w-full`} suppressHydrationWarning>
-        {/* Componente Handtalk para acessibilidade em LIBRAS */}
-        <Handtalk token="fe964e92fd91396436b25c2ee95b3976" />
-        
-        <ClientLayout>
-          {children}
-        </ClientLayout>
-        {/* Registrar o Service Worker */}
-        <ServiceWorkerDebug />
+      <body className={inter.className}>
+        {children}
+        {/* Script para pré-carregar o framer-motion */}
+        <Script
+          id="preload-framer-motion"
+          strategy="afterInteractive"
+          dangerouslySetInnerHTML={{
+            __html: `
+              try {
+                // Pré-carregar framer-motion para evitar erros de chunk
+                const preloadFramerMotion = () => {
+                  // Carregar o chunk específico do framer-motion
+                  const link = document.createElement('link');
+                  link.rel = 'prefetch';
+                  link.href = '/_next/static/chunks/_app-pages-browser_node_modules_framer-motion_dist_es_index_mjs.js';
+                  link.as = 'script';
+                  document.head.appendChild(link);
+                  
+                  // Tentar importar framer-motion
+                  import('framer-motion').catch(e => console.warn('Pré-carregamento do framer-motion falhou:', e));
+                };
+                
+                // Executar após carregamento da página
+                if (document.readyState === 'complete') {
+                  preloadFramerMotion();
+                } else {
+                  window.addEventListener('load', preloadFramerMotion);
+                }
+              } catch (error) {
+                console.warn('Erro no script de pré-carregamento:', error);
+              }
+            `
+          }}
+        />
       </body>
     </html>
-  );
+  )
 }

@@ -1,11 +1,15 @@
+import { Repository } from "typeorm";
+import { AppDataSource } from "../config/typeorm.config";
 import { DeleteResult } from 'typeorm';
 import { ExtendedRepository, PaginatedResult } from './ExtendedRepository';
 import { ViewingStatus } from '../entities/ViewingStatus';
 import { Knex } from 'knex';
 
 export class ViewingStatusRepository extends ExtendedRepository<ViewingStatus> {
+  private repository: Repository<ViewingStatus>;
   constructor() {
-    super("viewingstatus");
+    super("viewingstatuss");
+    this.repository = AppDataSource.getRepository(ViewingStatus);
   }
 
   async findAllPaginated(options: {

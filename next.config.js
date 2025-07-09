@@ -1,278 +1,103 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
-  // Configurações básicas
   reactStrictMode: true,
-  poweredByHeader: false,
-  compress: true,
+  experimental: {
+    optimizeCss: true,
+    workerThreads: true,
+  },
+  // Adicionar configuração para ignorar a pasta .next
+  distDir: 'build',
   
-  // Desabilitar indicadores de desenvolvimento
-  devIndicators: false,
-  
-  // Configuração para resolver problemas de módulos (Nova sintaxe do Next.js 15)
-  serverExternalPackages: [
-    'oracledb',
-    'mysql',
-    'mysql2', 
-    'sqlite3',
-    'better-sqlite3',
-    'tedious',
-    'pg-native',
-    'sharp',
-    'knex'
-  ],
-
-  // Configuração do Webpack para resolver o problema do oracledb
-  webpack: (config, { dev, isServer }) => {
-    // Configurações específicas para servidor
-    if (isServer) {
-      // Marcar drivers de banco como externos
-      config.externals.push(
-        'oracledb', 
-        'mysql', 
-        'mysql2', 
-        'sqlite3', 
-        'better-sqlite3', 
-        'tedious', 
-        'pg-native'
-      );
-    } else {
-      // Fallbacks para o cliente
+  // Configurações de webpack para otimizar chunks e resolver problemas de carregamento
+  webpack: (config, { isServer, dev }) => {
+    // Resolver problema com o módulo oracledb
+    if (!isServer) {
       config.resolve.fallback = {
         ...config.resolve.fallback,
-        'oracledb': false,
-        'mysql': false,
-        'mysql2': false,
-        'sqlite3': false,
-        'better-sqlite3': false,
-        'tedious': false,
-        'pg-native': false,
+        oracledb: false,
       };
-
-      // Adicionar retry logic para carregamento de chunks
-      config.output.chunkLoadingGlobal = 'webpackChunkportal';
-      config.output.crossOriginLoading = 'anonymous';
     }
-
-    // Plugins para ignorar módulos problemáticos
-    const webpack = require('webpack');
-    config.plugins.push(
-      // Ignorar drivers de banco específicos do Knex
-      new webpack.IgnorePlugin({
-        resourceRegExp: /^oracledb$/,
-        contextRegExp: /knex/,
-      }),
-      new webpack.IgnorePlugin({
-        resourceRegExp: /^mysql$/,
-        contextRegExp: /knex/,
-      }),
-      new webpack.IgnorePlugin({
-        resourceRegExp: /^mysql2$/,
-        contextRegExp: /knex/,
-      }),
-      new webpack.IgnorePlugin({
-        resourceRegExp: /^sqlite3$/,
-        contextRegExp: /knex/,
-      }),
-      new webpack.IgnorePlugin({
-        resourceRegExp: /^better-sqlite3$/,
-        contextRegExp: /knex/,
-      }),
-      new webpack.IgnorePlugin({
-        resourceRegExp: /^tedious$/,
-        contextRegExp: /knex/,
-      })
-    );
-
-    // Otimizações para PWA e chunks
-    if (!dev && !isServer) {
-      config.optimization = {
-        ...config.optimization,
-        splitChunks: {
-          chunks: 'all',
-          minSize: 20000,
-          maxSize: 90000,
-          minChunks: 1,
-          maxAsyncRequests: 30,
-          maxInitialRequests: 30,
-          cacheGroups: {
-            defaultVendors: {
-              test: /[\\/]node_modules[\\/]/,
-              priority: -10,
-              reuseExistingChunk: true,
-              name(module) {
-                const match = module.context.match(
-                  /[\\/]node_modules[\\/](.*?)([\\/]|$)/
-                );
-                return match ? `vendor.${match[1].replace('@', '')}` : 'vendor';
-              },
+    
+    // Apenas aplicar otimizações no cliente e em produção
+    if (!isServer && !dev) {
+      // Configurar timeout maior para carregamento de chunks
+      config.optimization.chunkIds = 'deterministic';
+      
+      // Otimizar split chunks para melhor carregamento
+      config.optimization.splitChunks = {
+        chunks: 'all',
+        maxInitialRequests: 25,
+        minSize: 20000,
+        maxSize: 200000,
+        cacheGroups: {
+          // CORREÇÃO: Adicionar framer-motion como chunk específico para evitar problemas de carregamento
+          framerMotion: {
+            test: /[\\/]node_modules[\\/]framer-motion[\\/]/,
+            name: 'framer-motion',
+            chunks: 'all',
+            priority: 30,
+            enforce: true,
+            reuseExistingChunk: true,
+          },
+          // Criar chunks específicos para componentes críticos
+          apiClient: {
+            test: /[\\/]src[\\/]lib[\\/]api-client/,
+            name: 'api-client',
+            chunks: 'all',
+            priority: 20,
+            enforce: true,
+          },
+          authServices: {
+            test: /[\\/]src[\\/]services[\\/]auth/,
+            name: 'auth-services',
+            chunks: 'all',
+            priority: 15,
+            enforce: true,
+          },
+          // Separar vendor chunks
+          vendors: {
+            test: /[\\/]node_modules[\\/]/,
+            name(module) {
+              // Obter o nome do pacote
+              const packageName = module.context.match(
+                /[\\/]node_modules[\\/](.*?)([\\/]|$)/
+              )[1];
+              
+              // Agrupar pacotes grandes em seus próprios chunks
+              const bigPackages = ['react', 'react-dom', 'next', 'chart.js', 'antd'];
+              if (bigPackages.includes(packageName)) {
+                return `vendor-${packageName}`;
+              }
+              
+              // Outros pacotes em vendor comum
+              return 'vendors';
             },
-            default: {
-              minChunks: 2,
-              priority: -20,
-              reuseExistingChunk: true,
-            },
+            priority: 10,
           },
         },
       };
-
-      // Configurar output para melhor compatibilidade
-      config.output = {
-        ...config.output,
-        chunkLoadTimeout: 120000,
-        chunkFilename: isServer
-          ? 'static/chunks/[name].[chunkhash].js'
-          : 'static/chunks/[name].[contenthash].js',
-        crossOriginLoading: 'anonymous',
-      };
-
-      // Adicionar plugin para melhor tratamento de erros
-      config.plugins.push(
-        new webpack.DefinePlugin({
-          '__CACHE_VERSION__': JSON.stringify(new Date().toISOString())
-        })
-      );
+      
+      // Configurar minimização para ser mais robusta
+      config.optimization.minimize = true;
+      if (config.optimization.minimizer) {
+        config.optimization.minimizer.forEach(minimizer => {
+          if (minimizer.constructor.name === 'TerserPlugin') {
+            minimizer.options.terserOptions = {
+              ...minimizer.options.terserOptions,
+              compress: {
+                ...minimizer.options.terserOptions.compress,
+                drop_console: false, // Manter console logs para diagnóstico
+              },
+              keep_classnames: true,
+              keep_fnames: true,
+            };
+          }
+        });
+      }
     }
-
+    
     return config;
   },
-  
-  // Headers customizados para melhor controle de cache
-  async headers() {
-    return [
-      {
-        source: '/:path*',
-        headers: [
-          {
-            key: 'X-DNS-Prefetch-Control',
-            value: 'on',
-          },
-          {
-            key: 'X-XSS-Protection',
-            value: '1; mode=block',
-          },
-          {
-            key: 'X-Frame-Options',
-            value: 'SAMEORIGIN',
-          },
-          {
-            key: 'X-Content-Type-Options',
-            value: 'nosniff',
-          },
-          {
-            key: 'Referrer-Policy',
-            value: 'origin-when-cross-origin',
-          },
-          {
-            key: 'Cache-Control',
-            value: 'no-cache, no-store, must-revalidate',
-          },
-          {
-            key: 'Pragma',
-            value: 'no-cache',
-          },
-          {
-            key: 'Expires',
-            value: '0',
-          },
-        ],
-      },
-      {
-        source: '/_next/static/chunks/:path*',
-        headers: [
-          {
-            key: 'Cache-Control',
-            value: 'public, max-age=31536000, immutable',
-          },
-          {
-            key: 'Content-Type',
-            value: 'application/javascript; charset=utf-8',
-          },
-        ],
-      }
-    ];
-  },
-  
-  // Configurações experimentais para melhor performance
-  experimental: {
-    optimizeCss: true,
-    scrollRestoration: true,
-    workerThreads: true,
-    cpus: 4,
-    optimizePackageImports: [
-      'react',
-      'react-dom',
-      'next',
-      '@heroicons/react',
-      'lucide-react',
-      'framer-motion'
-    ],
-    optimisticClientCache: true,
-    trustHostHeader: true,
-  },
+}
 
-  // Configurações de build
-  compiler: {
-    removeConsole: process.env.NODE_ENV === 'production',
-  },
-
-  // Configurações de imagens
-  images: {
-    remotePatterns: [
-      {
-        protocol: 'https',
-        hostname: 'd26a2wm7tuz2gu.cloudfront.net',
-        pathname: '/**',
-      },
-    ],
-    deviceSizes: [640, 750, 828, 1080, 1200, 1920, 2048, 3840],
-    imageSizes: [16, 32, 48, 64, 96, 128, 256, 384],
-    minimumCacheTTL: 60,
-  },
-  
-  // Configuração para informar ao Next.js que estamos atrás de um proxy seguro
-  serverRuntimeConfig: {
-    // Configurações disponíveis apenas no servidor
-  },
-  publicRuntimeConfig: {
-    // Configurações disponíveis no cliente e servidor
-  },
-  // Configuração para confiar em headers de proxy (X-Forwarded-Proto, X-Forwarded-Host)
-  trailingSlash: false,
-  basePath: '',
-  assetPrefix: '',
-  productionBrowserSourceMaps: false,
-
-  // Configurações experimentais para melhor performance
-  experimental: {
-    optimizeCss: true,
-    scrollRestoration: true,
-    workerThreads: true,
-    cpus: 4,
-    optimizePackageImports: [
-      'react',
-      'react-dom',
-      'next',
-      '@heroicons/react',
-      'lucide-react',
-      'framer-motion'
-    ],
-    optimisticClientCache: true,
-  },
-};
-
-// Configuração para carregar variáveis de ambiente
-const withEnv = (nextConfig) => {
-  return {
-    ...nextConfig,
-    env: {
-      ...nextConfig.env,
-      NEXTAUTH_SECRET: process.env.NEXTAUTH_SECRET,
-      NEXTAUTH_URL: process.env.NEXTAUTH_URL,
-      // Adicionar variáveis específicas para cookies seguros
-      USE_SECURE_COOKIES: process.env.NODE_ENV === 'production' ? 'true' : process.env.USE_SECURE_COOKIES || 'false',
-      TRUST_PROXY: process.env.NODE_ENV === 'production' ? 'true' : process.env.TRUST_PROXY || 'false',
-    }
-  };
-};
-
-module.exports = withEnv(nextConfig); 
+module.exports = nextConfig 

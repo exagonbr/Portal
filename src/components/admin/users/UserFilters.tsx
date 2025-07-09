@@ -1,7 +1,7 @@
 'use client'
 
 import React from 'react'
-import Card from '@/components/ui/Card'
+import SimpleCard from '@/components/ui/SimpleCard'
 import { Button } from '@/components/ui/Button'
 import { Badge } from '@/components/ui/Badge'
 import { UserFilterDto, RoleResponseDto, InstitutionResponseDto } from '@/types/api'
@@ -83,7 +83,7 @@ export default function UserFilters({
   // Active filters summary (compact)
   if (!showFilters && hasActiveFilters()) {
     return (
-      <Card className="mb-6 p-4 bg-blue-50 border-blue-200">
+      <SimpleCard className="mb-6 p-4 bg-blue-50 border-blue-200">
         <div className="flex flex-wrap items-center gap-2">
           <span className="text-sm font-medium text-blue-800">Filtros ativos:</span>
           
@@ -143,7 +143,7 @@ export default function UserFilters({
             Expandir filtros
           </Button>
         </div>
-      </Card>
+      </SimpleCard>
     )
   }
 
@@ -151,7 +151,7 @@ export default function UserFilters({
   if (!showFilters) return null
 
   return (
-    <Card className="mb-6 p-6 bg-gradient-to-br from-blue-50 to-indigo-50 border-blue-200">
+    <SimpleCard className="mb-6 p-6 bg-gradient-to-br from-blue-50 to-indigo-50 border-blue-200">
       <div className="flex justify-between items-center mb-6">
         <div className="flex items-center gap-3">
           <div className="p-2 bg-blue-500 rounded-lg shadow-sm">
@@ -356,6 +356,6 @@ export default function UserFilters({
           )}
         </div>
       </div>
-    </Card>
+    </SimpleCard>
   )
 }

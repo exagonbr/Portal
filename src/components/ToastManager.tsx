@@ -4,8 +4,20 @@ import { createContext, useContext, ReactNode, useState, useEffect } from 'react
 import { useToast as useToastHook } from '@/hooks/useToast';
 import { ToastContainer } from '@/components/ui/Toast';
 
-// Contexto para disponibilizar o toast globalmente
-const ToastContext = createContext<ReturnType<typeof useToastHook> | undefined>(undefined);
+// Criando funções vazias padrão para evitar o erro de "no-op functions"
+const defaultToastFunctions = {
+  toasts: [],
+  showToast: () => {},
+  showSuccess: () => {},
+  showError: () => {},
+  showWarning: () => {},
+  showInfo: () => {},
+  removeToast: () => {},
+  clearAllToasts: () => {},
+};
+
+// Contexto para disponibilizar o toast globalmente, inicializado com valores padrão
+const ToastContext = createContext<ReturnType<typeof useToastHook>>(defaultToastFunctions as ReturnType<typeof useToastHook>);
 
 export function ToastManager({ children }: { children: ReactNode }) {
   const [mounted, setMounted] = useState(false);
@@ -37,20 +49,6 @@ export function ToastManager({ children }: { children: ReactNode }) {
 export function useToast() {
   const context = useContext(ToastContext);
   
-  // Durante o carregamento, retornar funções vazias para evitar erros
-  if (!context) {
-    console.warn('useToast called before ToastManager is ready, returning no-op functions');
-    return {
-      toasts: [],
-      showToast: () => {},
-      showSuccess: () => {},
-      showError: () => {},
-      showWarning: () => {},
-      showInfo: () => {},
-      removeToast: () => {},
-      clearAllToasts: () => {},
-    };
-  }
-  
+  // Não é mais necessário verificar se o contexto existe, pois ele sempre terá pelo menos as funções padrão
   return context;
 } 
