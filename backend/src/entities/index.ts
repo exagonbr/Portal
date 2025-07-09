@@ -52,4 +52,5 @@ export { Unit } from './Unit';
 export { UnitClass } from './UnitClass';
 export { Video } from './Video';
 export { VideoCollection } from './VideoCollection';
+export { VideoFile } from './VideoFile';
 export { VideoModule } from './VideoModule';

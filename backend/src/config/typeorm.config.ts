@@ -48,6 +48,7 @@ import {
   UserRoleMapping,
   Video,
   VideoCollection,
+  VideoFile,
   VideoModule
 } from '../entities';
 
@@ -110,6 +111,7 @@ export const AppDataSource = new DataSource({
     UserRoleMapping,
     Video,
     VideoCollection,
+    VideoFile,
     VideoModule
   ],
   migrations: ['src/database/migrations/*.ts'],

@@ -10,12 +10,45 @@ const nextConfig = {
   
   // Configurações de webpack para otimizar chunks e resolver problemas de carregamento
   webpack: (config, { isServer, dev }) => {
-    // Resolver problema com o módulo oracledb
+    // Resolver problema com drivers de banco de dados no cliente
     if (!isServer) {
       config.resolve.fallback = {
         ...config.resolve.fallback,
-        oracledb: false,
+        // Desabilitar drivers de banco de dados no cliente
+        'oracledb': false,
+        'mysql': false,
+        'mysql2': false,
+        'sqlite3': false,
+        'better-sqlite3': false,
+        'tedious': false,
+        'pg-native': false,
+        'pg-query-stream': false,
+        // Desabilitar módulos Node.js no cliente
+        'fs': false,
+        'net': false,
+        'tls': false,
+        'crypto': false,
+        'stream': false,
+        'url': false,
+        'zlib': false,
+        'http': false,
+        'https': false,
+        'assert': false,
+        'os': false,
+        'path': false,
       };
+
+      // Adicionar externals para drivers de banco
+      config.externals = config.externals || [];
+      config.externals.push({
+        'oracledb': 'commonjs oracledb',
+        'mysql': 'commonjs mysql',
+        'mysql2': 'commonjs mysql2',
+        'sqlite3': 'commonjs sqlite3',
+        'better-sqlite3': 'commonjs better-sqlite3',
+        'tedious': 'commonjs tedious',
+        'pg-native': 'commonjs pg-native',
+      });
     }
     
     // Apenas aplicar otimizações no cliente e em produção
