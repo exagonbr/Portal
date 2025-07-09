@@ -1,110 +1,156 @@
-import { ExtendedRepository, PaginatedResult } from './ExtendedRepository';
 import { Repository } from 'typeorm';
 import { AppDataSource } from '../config/typeorm.config';
 import { Video } from '../entities/Video';
+import { VideoFilterDto } from '../dto/VideoDto';
 
-export interface CreateVideoData extends Omit<Video, 'id'> {}
-export interface UpdateVideoData extends Partial<CreateVideoData> {}
-
-export class VideoRepository extends ExtendedRepository<Video> {
+export class VideoRepository {
   private repository: Repository<Video>;
 
   constructor() {
-    super("videos");
     this.repository = AppDataSource.getRepository(Video);
   }
-  // Implementação do método abstrato findAllPaginated
-  async findAllPaginated(options: {
-    page?: number;
-    limit?: number;
-    search?: string;
-  } = {}): Promise<PaginatedResult<Video>> {
-    const { page = 1, limit = 10, search } = options;
+
+  async findAll(filters: VideoFilterDto = {}) {
+    const { 
+      page = 1, 
+      limit = 10, 
+      search, 
+      deleted, 
+      class: videoClass, 
+      showId, 
+      seasonNumber, 
+      episodeNumber,
+      originalLanguage 
+    } = filters;
     
-    try {
-      // Usar diretamente o db e tableName herdados da classe base
-      let query = this.db(this.tableName).select("*");
-
-      // Adicione condições de pesquisa específicas para esta entidade
-      if (search) {
-        query = query.whereILike("name", `%${search}%`);
-      }
-
-      // Executar a consulta paginada
-      const offset = (page - 1) * limit;
-      const data = await query
-        .orderBy("id", "DESC")
-        .limit(limit)
-        .offset(offset);
-
-      // Contar o total de registros
-      const countResult = await this.db(this.tableName)
-        .count("* as total")
-        .modify(qb => {
-          if (search) {
-            qb.whereILike("name", `%${search}%`);
-          }
-        })
-        .first();
-
-      const total = parseInt(countResult?.total as string, 10) || 0;
-
-      return {
-        data,
-        total,
-        page,
-        limit
-      };
-    } catch (error) {
-      throw error;
+    const queryBuilder = this.repository.createQueryBuilder('video');
+    
+    // Aplicar filtros
+    if (search) {
+      queryBuilder.andWhere(
+        '(video.title ILIKE :search OR video.name ILIKE :search OR video.overview ILIKE :search)', 
+        { search: `%${search}%` }
+      );
     }
+    
+    if (deleted !== undefined) {
+      queryBuilder.andWhere('video.deleted = :deleted', { deleted });
+    }
+    
+    if (videoClass) {
+      queryBuilder.andWhere('video.class = :class', { class: videoClass });
+    }
+    
+    if (showId) {
+      queryBuilder.andWhere('video.showId = :showId', { showId });
+    }
+    
+    if (seasonNumber) {
+      queryBuilder.andWhere('video.seasonNumber = :seasonNumber', { seasonNumber });
+    }
+    
+    if (episodeNumber) {
+      queryBuilder.andWhere('video.episodeNumber = :episodeNumber', { episodeNumber });
+    }
+    
+    if (originalLanguage) {
+      queryBuilder.andWhere('video.originalLanguage = :originalLanguage', { originalLanguage });
+    }
+    
+    // Paginação
+    const total = await queryBuilder.getCount();
+    const videos = await queryBuilder
+      .skip((page - 1) * limit)
+      .take(limit)
+      .orderBy('video.dateCreated', 'DESC')
+      .getMany();
+    
+    return {
+      data: videos,
+      pagination: {
+        page,
+        limit,
+        total,
+        totalPages: Math.ceil(total / limit)
+      }
+    };
   }
 
-  async createVideo(data: CreateVideoData): Promise<Video> {
-    return this.create(data);
+  async findById(id: number): Promise<Video | null> {
+    return await this.repository.findOne({
+      where: { id },
+      relations: ['videoFiles']
+    });
   }
 
-  async updateVideo(id: number, data: UpdateVideoData): Promise<Video | null> {
-    return this.update(id, data);
+  async create(videoData: Partial<Video>): Promise<Video> {
+    const video = this.repository.create(videoData);
+    return await this.repository.save(video);
   }
 
-  async deleteVideo(id: number): Promise<boolean> {
-    return this.delete(id);
+  async update(id: number, videoData: Partial<Video>): Promise<Video | null> {
+    await this.repository.update(id, videoData);
+    return await this.findById(id);
   }
 
-  async findByTitle(title: string): Promise<Video[]> {
-    return this.db(this.tableName).where('title', 'ilike', `%${title}%`);
+  async delete(id: number): Promise<boolean> {
+    const result = await this.repository.delete(id);
+    return (result.affected ?? 0) > 0;
   }
 
-  async findByShowId(showId: number): Promise<Video[]> {
-    return this.findAll({ showId } as Partial<Video>);
+  async softDelete(id: number): Promise<boolean> {
+    const result = await this.repository.update(id, { deleted: true });
+    return (result.affected ?? 0) > 0;
   }
 
-  async search(term: string): Promise<Video[]> {
-    return this.db(this.tableName)
-      .where('title', 'ilike', `%${term}%`)
-      .orWhere('overview', 'ilike', `%${term}%`);
+  async restore(id: number): Promise<boolean> {
+    const result = await this.repository.update(id, { deleted: false });
+    return (result.affected ?? 0) > 0;
   }
 
-  // A lógica de progresso do usuário geralmente fica em uma tabela separada (ex: user_video_progress)
-  // Os métodos abaixo são exemplos e precisariam dessa tabela de junção.
-
-  async updateUserProgress(userId: number, videoId: number, progressSeconds: number): Promise<void> {
-    // Exemplo:
-    // await this.db('user_video_progress')
-    //   .insert({ user_id: userId, video_id: videoId, progress_seconds: progressSeconds })
-    //   .onConflict(['user_id', 'video_id'])
-    //   .merge();
-    console.log(`Progresso de ${progressSeconds}s salvo para usuário ${userId} no vídeo ${videoId}`);
+  async findByShow(showId: number): Promise<Video[]> {
+    return await this.repository.find({
+      where: { showId, deleted: false },
+      order: { seasonNumber: 'ASC', episodeNumber: 'ASC' }
+    });
   }
 
-  async getUserProgress(userId: number, videoId: number): Promise<number | null> {
-    // Exemplo:
-    // const result = await this.db('user_video_progress')
-    //   .where({ user_id: userId, video_id: videoId })
-    //   .first();
-    // return result?.progress_seconds || null;
-    console.log(`Buscando progresso para usuário ${userId} no vídeo ${videoId}`);
-    return null;
+  async findBySeason(showId: number, seasonNumber: number): Promise<Video[]> {
+    return await this.repository.find({
+      where: { showId, seasonNumber, deleted: false },
+      order: { episodeNumber: 'ASC' }
+    });
+  }
+
+  async findByClass(videoClass: string): Promise<Video[]> {
+    return await this.repository.find({
+      where: { class: videoClass, deleted: false }
+    });
+  }
+
+  async count(): Promise<number> {
+    return await this.repository.count();
+  }
+
+  async getStats() {
+    const [total, active, byClass] = await Promise.all([
+      this.repository.count(),
+      this.repository.count({ where: { deleted: false } }),
+      this.repository.createQueryBuilder('video')
+        .select('video.class', 'class')
+        .addSelect('COUNT(*)', 'count')
+        .where('video.deleted = false')
+        .groupBy('video.class')
+        .getRawMany()
+    ]);
+
+    return {
+      total,
+      active,
+      byClass: byClass.reduce((acc, item) => {
+        acc[item.class] = parseInt(item.count);
+        return acc;
+      }, {} as Record<string, number>)
+    };
   }
 }

@@ -45,6 +45,7 @@ import videoModulesRouter from './video-modules';
 import videosRouter from './videos';
 import authRouter from './auth';
 import healthRouter from './health';
+import questionsRouter from './questions';
 import viewingStatusRouter from './viewing-status';
 
 // Importação das novas rotas geradas
@@ -128,6 +129,9 @@ router.use('/video-collections', videoCollectionsRouter);
 router.use('/video-modules', videoModulesRouter);
 router.use('/videos', videosRouter);
 router.use('/viewing-status', viewingStatusRouter);
+
+// Novas rotas criadas para as entidades solicitadas
+router.use('/questions', questionsRouter);
 
 // Rotas de Admin
 router.use('/admin/sessions', sessionsRouter);

@@ -1,115 +1,113 @@
-import { ExtendedRepository, PaginatedResult } from './ExtendedRepository';
 import { Repository } from 'typeorm';
 import { AppDataSource } from '../config/typeorm.config';
-// Comentando a importação da entidade Question para evitar erros
-// import { Question } from '../entities/Question';
+import { Question } from '../entities/Question';
+import { QuestionFilterDto } from '../dto/QuestionDto';
 
-// Interface para desacoplar
-export interface Question {
-    id: string;
-    quiz_id: number;
-    text: string;
-    type: string;
-    options: any[]; // Opções da questão
-    correct_answer: any; // Resposta correta
-    created_at: Date;
-    updated_at: Date;
-}
-
-export interface CreateQuestionData extends Omit<Question, 'id' | 'created_at' | 'updated_at'> {}
-export interface UpdateQuestionData extends Partial<CreateQuestionData> {}
-
-export class QuestionRepository extends ExtendedRepository<Question> {
-  // Removendo a propriedade repository já que não estamos usando TypeORM diretamente
+export class QuestionRepository {
+  private repository: Repository<Question>;
 
   constructor() {
-    super("questions");
-    // Estamos usando Knex através da classe base, não TypeORM
+    this.repository = AppDataSource.getRepository(Question);
   }
-  // Implementação do método abstrato findAllPaginated
-  async findAllPaginated(options: {
-    page?: number;
-    limit?: number;
-    search?: string;
-  } = {}): Promise<PaginatedResult<Question>> {
-    const { page = 1, limit = 10, search } = options;
+
+  async findAll(filters: QuestionFilterDto = {}) {
+    const { 
+      page = 1, 
+      limit = 10, 
+      search, 
+      deleted, 
+      tvShowId, 
+      episodeId, 
+      fileId 
+    } = filters;
     
-    try {
-      // Usar diretamente o db e tableName herdados da classe base
-      let query = this.db(this.tableName).select("*");
-
-      // Adicione condições de pesquisa específicas para esta entidade
-      if (search) {
-        query = query.whereILike("name", `%${search}%`);
-      }
-
-      // Executar a consulta paginada
-      const offset = (page - 1) * limit;
-      const data = await query
-        .orderBy("id", "DESC")
-        .limit(limit)
-        .offset(offset);
-
-      // Contar o total de registros
-      const countResult = await this.db(this.tableName)
-        .count("* as total")
-        .modify(qb => {
-          if (search) {
-            qb.whereILike("name", `%${search}%`);
-          }
-        })
-        .first();
-
-      const total = parseInt(countResult?.total as string, 10) || 0;
-
-      return {
-        data,
-        total,
+    const queryBuilder = this.repository.createQueryBuilder('question');
+    
+    // Aplicar filtros
+    if (search) {
+      queryBuilder.andWhere('question.test ILIKE :search', { search: `%${search}%` });
+    }
+    
+    if (deleted !== undefined) {
+      queryBuilder.andWhere('question.deleted = :deleted', { deleted });
+    }
+    
+    if (tvShowId) {
+      queryBuilder.andWhere('question.tvShowId = :tvShowId', { tvShowId });
+    }
+    
+    if (episodeId) {
+      queryBuilder.andWhere('question.episodeId = :episodeId', { episodeId });
+    }
+    
+    if (fileId) {
+      queryBuilder.andWhere('question.fileId = :fileId', { fileId });
+    }
+    
+    // Paginação
+    const total = await queryBuilder.getCount();
+    const questions = await queryBuilder
+      .skip((page - 1) * limit)
+      .take(limit)
+      .orderBy('question.dateCreated', 'DESC')
+      .getMany();
+    
+    return {
+      data: questions,
+      pagination: {
         page,
-        limit
-      };
-    } catch (error) {
-      throw error;
-    }
+        limit,
+        total,
+        totalPages: Math.ceil(total / limit)
+      }
+    };
   }
 
-  async createQuestion(data: CreateQuestionData): Promise<Question> {
-    try {
-      return this.create(data);
-    } catch (error) {
-      throw error;
-    }
+  async findById(id: number): Promise<Question | null> {
+    return await this.repository.findOne({
+      where: { id },
+      relations: ['answers']
+    });
   }
 
-  async updateQuestion(id: string, data: UpdateQuestionData): Promise<Question | null> {
-    try {
-      return this.update(id, data);
-    } catch (error) {
-      throw error;
-    }
+  async create(questionData: Partial<Question>): Promise<Question> {
+    const question = this.repository.create(questionData);
+    return await this.repository.save(question);
   }
 
-  async deleteQuestion(id: string): Promise<boolean> {
-    try {
-      return this.delete(id);
-    } catch (error) {
-      throw error;
-    }
+  async update(id: number, questionData: Partial<Question>): Promise<Question | null> {
+    await this.repository.update(id, questionData);
+    return await this.findById(id);
   }
 
-  async findByQuiz(quizId: string): Promise<Question[]> {
-    try {
-      return this.findAll({ quiz_id: parseInt(quizId) } as Partial<Question>);
-    } catch (error) {
-      throw error;
-    }
+  async delete(id: number): Promise<boolean> {
+    const result = await this.repository.delete(id);
+    return (result.affected ?? 0) > 0;
   }
 
-  async findByType(type: string): Promise<Question[]> {
-    try {
-      return this.findAll({ type } as Partial<Question>);
-    } catch (error) {
-      throw error;
-    }
+  async softDelete(id: number): Promise<boolean> {
+    const result = await this.repository.update(id, { deleted: true });
+    return (result.affected ?? 0) > 0;
+  }
+
+  async restore(id: number): Promise<boolean> {
+    const result = await this.repository.update(id, { deleted: false });
+    return (result.affected ?? 0) > 0;
+  }
+
+  async findByTvShow(tvShowId: number): Promise<Question[]> {
+    return await this.repository.find({
+      where: { tvShowId, deleted: false }
+    });
+  }
+
+  async findByEpisode(episodeId: number): Promise<Question[]> {
+    return await this.repository.find({
+      where: { episodeId, deleted: false }
+    });
+  }
+
+  async count(): Promise<number> {
+    return await this.repository.count();
   }
 }

@@ -1,33 +1,42 @@
-import { Entity, Column, PrimaryGeneratedColumn, CreateDateColumn, UpdateDateColumn, ManyToOne, JoinColumn } from 'typeorm';
+import { 
+  Entity, 
+  Column, 
+  PrimaryGeneratedColumn, 
+  CreateDateColumn, 
+  UpdateDateColumn, 
+  ManyToOne, 
+  JoinColumn 
+} from 'typeorm';
+import { Question } from './Question';
 
 @Entity('answer')
 export class Answer {
-  @PrimaryGeneratedColumn()
+  @PrimaryGeneratedColumn('increment')
   id!: number;
 
-  @Column({ nullable: true })
-  version?: string;
+  @Column({ type: 'bigint', nullable: true })
+  version?: number;
 
-  @Column({ nullable: true })
-  dateCreated?: string;
+  @CreateDateColumn({ name: 'date_created' })
+  dateCreated!: Date;
 
-  @Column({ nullable: true })
-  deleted?: string;
+  @Column({ type: 'boolean', nullable: true })
+  deleted?: boolean;
 
-  @Column({ nullable: true })
-  isCorrect?: string;
+  @Column({ name: 'is_correct', type: 'boolean', nullable: true })
+  isCorrect?: boolean;
 
-  @Column({ nullable: true })
-  lastUpdated?: string;
+  @UpdateDateColumn({ name: 'last_updated' })
+  lastUpdated!: Date;
 
-  @Column({ nullable: true })
-  questionId?: string;
+  @Column({ name: 'question_id', type: 'bigint', nullable: true })
+  questionId?: number;
 
-  @Column({ nullable: true })
+  @Column({ type: 'text', nullable: true })
   reply?: string;
 
-  @ManyToOne(() => Question)
+  // Relacionamentos
+  @ManyToOne(() => Question, question => question.answers)
   @JoinColumn({ name: 'question_id' })
   question?: Question;
-
 }

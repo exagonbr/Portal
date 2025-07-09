@@ -7,14 +7,26 @@ import { SubjectDto } from '@/types/subject'
 import { useToast } from '@/components/ToastManager'
 import { Badge } from '@/components/ui/Badge'
 import { Button } from '@/components/ui/Button'
-import { Plus, Search, Edit, Trash2, Eye, RefreshCw, CheckCircle, XCircle } from 'lucide-react'
+import { Plus, Search, Edit, Trash2, Eye, RefreshCw, CheckCircle, XCircle, BookOpen, Users, UserCheck, GraduationCap, AlertTriangle } from 'lucide-react'
+import { StatCard, ContentCard } from '@/components/ui/StandardCard'
 import Modal from '@/components/ui/Modal'
 import SubjectForm from '@/components/forms/SubjectForm'
 
-// Interface para resposta paginada
+// Interface para resposta paginada - usando a mesma do serviço
 interface PaginatedResponse<T> {
   items: T[];
   total: number;
+  page: number;
+  limit: number;
+  totalPages: number;
+}
+
+// Interface para estatísticas das disciplinas
+interface SubjectStats {
+  totalSubjects: number;
+  activeSubjects: number;
+  inactiveSubjects: number;
+  subjectsWithDescription: number;
 }
 
 export default function SubjectsPage() {
@@ -30,6 +42,39 @@ export default function SubjectsPage() {
   const [currentPage, setCurrentPage] = useState(1)
   const [itemsPerPage] = useState(10)
   const [searchQuery, setSearchQuery] = useState('')
+  const [loadingError, setLoadingError] = useState<string | null>(null)
+  const [stats, setStats] = useState<SubjectStats>({
+    totalSubjects: 0,
+    activeSubjects: 0,
+    inactiveSubjects: 0,
+    subjectsWithDescription: 0
+  })
+
+  const calculateStatsFromSubjects = (subjectsList?: SubjectDto[], totalCount?: number) => {
+    const currentSubjects = subjectsList || subjects;
+    const totalSubjects = totalCount || totalItems || currentSubjects.length;
+    
+    // Contar disciplinas ativas e inativas
+    const activeSubjects = currentSubjects.filter(subject => subject.is_active).length;
+    const inactiveSubjects = currentSubjects.filter(subject => !subject.is_active).length;
+    
+    // Contar disciplinas com descrição
+    const subjectsWithDescription = currentSubjects.filter(subject => subject.description && subject.description.trim()).length;
+    
+    setStats({
+      totalSubjects,
+      activeSubjects,
+      inactiveSubjects,
+      subjectsWithDescription
+    });
+    
+    console.log('📊 Stats de disciplinas calculados:', {
+      totalSubjects,
+      activeSubjects,
+      inactiveSubjects,
+      subjectsWithDescription
+    });
+  };
 
   const fetchSubjects = async (page = 1, search = '', showLoadingIndicator = true) => {
     if (showLoadingIndicator) {
@@ -38,7 +83,11 @@ export default function SubjectsPage() {
       setRefreshing(true);
     }
 
+    setLoadingError(null); // Limpar erros anteriores
+
     try {
+      console.log('🔄 [SUBJECTS] Carregando disciplinas...', { page, search, limit: itemsPerPage })
+      
       const params: any = {
         page,
         limit: itemsPerPage
@@ -48,20 +97,53 @@ export default function SubjectsPage() {
         params.search = search.trim();
       }
       
-      const response = await subjectService.getSubjects(params) as PaginatedResponse<SubjectDto>;
+      const response = await subjectService.getSubjects(params);
       
-      console.log('📊 API response:', response);
+      console.log('✅ [SUBJECTS] Resposta do serviço de disciplinas:', {
+        items: response.items?.length || 0,
+        total: response.total,
+        page: response.page,
+        totalPages: response.totalPages,
+        format: Array.isArray(response.items) ? 'PaginatedResponse' : 'unknown'
+      });
       
-      setSubjects(response.items || []);
+      // Verificar se a resposta tem o formato esperado
+      if (!response || !Array.isArray(response.items)) {
+        console.error('❌ [SUBJECTS] Formato de resposta inválido:', response);
+        throw new Error('Formato de resposta inválido do servidor');
+      }
+      
+      setSubjects(response.items);
       setTotalItems(response.total || 0);
-      setCurrentPage(page);
+      setCurrentPage(response.page || page);
+      
+      // Calcular estatísticas
+      calculateStatsFromSubjects(response.items, response.total);
       
       if (!showLoadingIndicator) {
         showSuccess("Atualizado", "Lista de disciplinas atualizada com sucesso!");
       }
-    } catch (error) {
-      console.error('❌ Erro ao carregar disciplinas:', error);
-      showError("Erro ao carregar disciplinas", "Não foi possível carregar a lista de disciplinas.");
+      
+      console.log('✅ [SUBJECTS] Disciplinas carregadas com sucesso:', response.items.length);
+    } catch (error: any) {
+      console.error('❌ [SUBJECTS] Erro ao carregar disciplinas:', error);
+      
+      // Verificar se é um erro de autenticação
+      if (error.message?.includes('Sessão expirada') || error.message?.includes('não autenticado')) {
+        setLoadingError("Sessão expirada. Por favor, faça login novamente.");
+        showError("Sessão expirada", "Por favor, faça login novamente.");
+        // Redirecionar para login se necessário
+        setTimeout(() => router.push('/auth/login'), 2000);
+        return;
+      }
+      
+      const errorMessage = error.message || "Erro desconhecido";
+      setLoadingError("Não foi possível carregar a lista de disciplinas. Tente novamente.");
+      showError("Erro ao carregar disciplinas", `Não foi possível carregar a lista de disciplinas: ${errorMessage}`);
+      
+      // Em caso de erro, limpar dados para evitar inconsistências
+      setSubjects([]);
+      setTotalItems(0);
     } finally {
       setLoading(false);
       setRefreshing(false);
@@ -71,6 +153,13 @@ export default function SubjectsPage() {
   useEffect(() => {
     fetchSubjects(currentPage, searchQuery)
   }, [currentPage])
+
+  // Recalcular estatísticas quando as disciplinas mudarem
+  useEffect(() => {
+    if (subjects.length > 0) {
+      calculateStatsFromSubjects()
+    }
+  }, [subjects, totalItems])
 
   const handleSearch = (e: React.FormEvent) => {
     e.preventDefault()
@@ -98,21 +187,34 @@ export default function SubjectsPage() {
     try {
       setLoading(true)
       
+      console.log('💾 [SUBJECTS] Salvando disciplina...', { mode: modalMode, data })
+      
       if (modalMode === 'create') {
-        await subjectService.createSubject(data)
-        showSuccess("Sucesso", "Disciplina criada com sucesso!")
+        const newSubject = await subjectService.createSubject(data)
+        console.log('✅ [SUBJECTS] Disciplina criada:', newSubject)
+        showSuccess("Sucesso", `Disciplina "${data.name}" criada com sucesso!`)
       } else if (modalMode === 'edit' && selectedSubject) {
-        await subjectService.updateSubject(Number(selectedSubject.id), data)
-        showSuccess("Sucesso", "Disciplina atualizada com sucesso!")
+        const updatedSubject = await subjectService.updateSubject(Number(selectedSubject.id), data)
+        console.log('✅ [SUBJECTS] Disciplina atualizada:', updatedSubject)
+        showSuccess("Sucesso", `Disciplina "${data.name}" atualizada com sucesso!`)
       }
       
       closeModal()
       
       // Recarregar a lista para garantir sincronização completa
       await fetchSubjects(currentPage, searchQuery, false)
-    } catch (error) {
-      console.error('❌ Erro ao salvar disciplina:', error)
-      showError("Erro ao salvar disciplina", "Não foi possível salvar a disciplina.")
+    } catch (error: any) {
+      console.error('❌ [SUBJECTS] Erro ao salvar disciplina:', error)
+      
+      // Verificar se é um erro de autenticação
+      if (error.message?.includes('Sessão expirada') || error.message?.includes('não autenticado')) {
+        showError("Sessão expirada", "Por favor, faça login novamente.");
+        setTimeout(() => router.push('/auth/login'), 2000);
+        return;
+      }
+      
+      const errorMessage = error.message || "Erro desconhecido";
+      showError("Erro ao salvar disciplina", `Não foi possível salvar a disciplina: ${errorMessage}`);
     } finally {
       setLoading(false)
     }
@@ -127,14 +229,27 @@ export default function SubjectsPage() {
 
     try {
       setLoading(true)
+      console.log('🗑️ [SUBJECTS] Excluindo disciplina:', subject.id)
+      
       await subjectService.deleteSubject(Number(subject.id))
-      showSuccess("Disciplina excluída", "A disciplina foi excluída com sucesso.")
+      console.log('✅ [SUBJECTS] Disciplina excluída com sucesso')
+      
+      showSuccess("Disciplina excluída", `Disciplina "${subject.name}" excluída com sucesso.`)
       
       // Recarregar a lista
       await fetchSubjects(currentPage, searchQuery, false)
-    } catch (error) {
-      console.error('❌ Erro ao excluir disciplina:', error)
-      showError("Erro ao excluir disciplina", "Não foi possível excluir a disciplina.")
+    } catch (error: any) {
+      console.error('❌ [SUBJECTS] Erro ao excluir disciplina:', error)
+      
+      // Verificar se é um erro de autenticação
+      if (error.message?.includes('Sessão expirada') || error.message?.includes('não autenticado')) {
+        showError("Sessão expirada", "Por favor, faça login novamente.");
+        setTimeout(() => router.push('/auth/login'), 2000);
+        return;
+      }
+      
+      const errorMessage = error.message || "Erro desconhecido";
+      showError("Erro ao excluir disciplina", `Não foi possível excluir a disciplina: ${errorMessage}`);
     } finally {
       setLoading(false)
     }
@@ -143,22 +258,37 @@ export default function SubjectsPage() {
   const handleToggleStatus = async (subject: SubjectDto) => {
     try {
       setLoading(true)
+      console.log('🔄 [SUBJECTS] Alterando status da disciplina:', subject.id, 'atual:', subject.is_active)
+      
       const updatedSubject = await subjectService.toggleSubjectStatus(Number(subject.id))
+      console.log('✅ [SUBJECTS] Status alterado:', updatedSubject)
       
       const statusText = updatedSubject.is_active ? 'ativada' : 'desativada'
-      showSuccess("Status alterado", `Disciplina ${statusText} com sucesso!`)
+      showSuccess("Status alterado", `Disciplina "${subject.name}" ${statusText} com sucesso!`)
       
       // Atualizar o estado local imediatamente para feedback visual rápido
-      setSubjects(prevSubjects =>
-        prevSubjects.map(sub =>
-          sub.id === subject.id
-            ? { ...sub, is_active: updatedSubject.is_active }
-            : sub
-        )
+      const updatedSubjects = subjects.map(sub =>
+        sub.id === subject.id
+          ? { ...sub, is_active: updatedSubject.is_active }
+          : sub
       )
-    } catch (error) {
-      console.error('❌ Erro ao alterar status da disciplina:', error)
-      showError("Erro ao alterar status", "Não foi possível alterar o status da disciplina.")
+      
+      setSubjects(updatedSubjects)
+      
+      // Recalcular estatísticas com os dados atualizados
+      calculateStatsFromSubjects(updatedSubjects)
+    } catch (error: any) {
+      console.error('❌ [SUBJECTS] Erro ao alterar status da disciplina:', error)
+      
+      // Verificar se é um erro de autenticação
+      if (error.message?.includes('Sessão expirada') || error.message?.includes('não autenticado')) {
+        showError("Sessão expirada", "Por favor, faça login novamente.");
+        setTimeout(() => router.push('/auth/login'), 2000);
+        return;
+      }
+      
+      const errorMessage = error.message || "Erro desconhecido";
+      showError("Erro ao alterar status", `Não foi possível alterar o status da disciplina: ${errorMessage}`);
     } finally {
       setLoading(false)
     }
@@ -169,7 +299,7 @@ export default function SubjectsPage() {
   return (
     <div className="container mx-auto px-4 py-6 max-w-7xl">
       <div className="bg-white rounded-xl shadow-sm border border-gray-200">
-        {/* Header Simplificado */}
+        {/* Header */}
         <div className="p-6 border-b border-gray-200">
           <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4 mb-6">
             <div>
@@ -193,7 +323,39 @@ export default function SubjectsPage() {
             </div>
           </div>
 
-          {/* Search Simplificado */}
+          {/* Stats Cards */}
+          <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
+            <StatCard
+              icon={BookOpen}
+              title="Total"
+              value={stats.totalSubjects}
+              subtitle="Disciplinas"
+              color="blue"
+            />
+            <StatCard
+              icon={CheckCircle}
+              title="Ativas"
+              value={stats.activeSubjects}
+              subtitle="Funcionando"
+              color="green"
+            />
+            <StatCard
+              icon={XCircle}
+              title="Inativas"
+              value={stats.inactiveSubjects}
+              subtitle="Desativadas"
+              color="red"
+            />
+            <StatCard
+              icon={GraduationCap}
+              title="Com Descrição"
+              value={stats.subjectsWithDescription}
+              subtitle="Descrições"
+              color="purple"
+            />
+          </div>
+
+          {/* Search */}
           <form onSubmit={handleSearch} className="flex gap-3">
             <div className="flex-1">
               <div className="relative">
@@ -220,11 +382,21 @@ export default function SubjectsPage() {
               <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
               <span className="ml-2 text-gray-600">Carregando...</span>
             </div>
+          ) : loadingError ? (
+            <div className="text-center py-12">
+              <AlertTriangle className="w-16 h-16 text-red-300 mx-auto mb-4" />
+              <p className="text-red-500 text-lg mb-2">{loadingError}</p>
+              <Button onClick={handleRefresh} variant="outline" className="mt-4">
+                Tentar novamente
+              </Button>
+            </div>
           ) : subjects.length === 0 ? (
             <div className="text-center py-12">
-              <CheckCircle className="w-16 h-16 text-gray-300 mx-auto mb-4" />
+              <BookOpen className="w-16 h-16 text-gray-300 mx-auto mb-4" />
               <p className="text-gray-500 text-lg mb-2">Nenhuma disciplina encontrada</p>
-              <p className="text-gray-400 text-sm">Clique em "Nova Disciplina" para adicionar a primeira</p>
+              <p className="text-gray-400 text-sm">
+                {searchQuery ? "Tente ajustar sua busca." : "Clique em \"Nova Disciplina\" para adicionar a primeira"}
+              </p>
             </div>
           ) : (
             <>
@@ -234,7 +406,7 @@ export default function SubjectsPage() {
                   <thead className="bg-gray-50">
                     <tr>
                       <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                        Nome
+                        Disciplina
                       </th>
                       <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                         Descrição
@@ -254,10 +426,26 @@ export default function SubjectsPage() {
                     {subjects.map((subject) => (
                       <tr key={subject.id} className="hover:bg-gray-50">
                         <td className="px-6 py-4">
-                          <div className="text-sm font-medium text-gray-900">{subject.name}</div>
+                          <div className="flex items-center">
+                            <div className="flex-shrink-0 w-10 h-10 bg-blue-100 rounded-lg flex items-center justify-center">
+                              <BookOpen className="w-5 h-5 text-blue-600" />
+                            </div>
+                            <div className="ml-4">
+                              <div className="text-sm font-medium text-gray-900">{subject.name}</div>
+                              <div className="text-xs text-gray-500">ID: {subject.id}</div>
+                            </div>
+                          </div>
                         </td>
                         <td className="px-6 py-4">
-                          <div className="text-sm text-gray-500">{subject.description || 'N/A'}</div>
+                          <div className="text-sm text-gray-900">
+                            {subject.description ? (
+                              subject.description.length > 100 
+                                ? `${subject.description.substring(0, 100)}...`
+                                : subject.description
+                            ) : (
+                              <span className="text-gray-400">Sem descrição</span>
+                            )}
+                          </div>
                         </td>
                         <td className="px-6 py-4 text-center">
                           <button
@@ -272,7 +460,7 @@ export default function SubjectsPage() {
                           </button>
                         </td>
                         <td className="px-6 py-4 text-center text-sm text-gray-500">
-                          {new Date(subject.created_at).toLocaleDateString('pt-BR')}
+                          {subject.created_at ? new Date(subject.created_at).toLocaleDateString('pt-BR') : 'N/A'}
                         </td>
                         <td className="px-6 py-4 text-center">
                           <div className="flex items-center justify-center space-x-2">
@@ -315,9 +503,15 @@ export default function SubjectsPage() {
                     <div key={subject.id} className="bg-white border border-gray-200 rounded-lg shadow-sm hover:shadow-md transition-shadow">
                       {/* Header do Card */}
                       <div className="p-4 border-b border-gray-100">
-                        <div className="flex items-start justify-between">
-                          <div className="flex-1 min-w-0">
-                            <h3 className="text-sm font-medium text-gray-900 truncate">{subject.name}</h3>
+                        <div className="flex items-center justify-between">
+                          <div className="flex items-center flex-1">
+                            <div className="flex-shrink-0 w-12 h-12 bg-blue-100 rounded-lg flex items-center justify-center">
+                              <BookOpen className="w-6 h-6 text-blue-600" />
+                            </div>
+                            <div className="ml-3 flex-1 min-w-0">
+                              <h3 className="text-sm font-medium text-gray-900 truncate">{subject.name}</h3>
+                              <div className="text-xs text-gray-500">ID: {subject.id}</div>
+                            </div>
                           </div>
                           <button
                             onClick={() => handleToggleStatus(subject)}
@@ -342,7 +536,7 @@ export default function SubjectsPage() {
                         {/* Data de criação */}
                         <div className="flex items-center mb-4">
                           <span className="text-xs text-gray-500">
-                            Criado em: {new Date(subject.created_at).toLocaleDateString('pt-BR')}
+                            Criado em: {subject.created_at ? new Date(subject.created_at).toLocaleDateString('pt-BR') : 'N/A'}
                           </span>
                         </div>
 

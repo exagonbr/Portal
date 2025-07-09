@@ -60,7 +60,6 @@ export default function ManageInstitutions() {
   })
 
   const enrichInstitutionsWithSchoolData = async (institutions: InstitutionDto[]): Promise<InstitutionDto[]> => {
-    // Usar diretamente os dados da tabela institution sem mock
     console.log('📝 Usando dados diretamente da tabela institution');
     console.log('📝 Total de instituições para processar:', institutions.length);
     
@@ -84,7 +83,6 @@ export default function ManageInstitutions() {
       // Obter o nome da empresa ou usar o nome da instituição
       const companyName = institution.company_name || '';
       
-      // Log detalhado para debug
       console.log(`📝 Processando instituição: ${institution.name || 'Sem nome'} (ID: ${institution.id || 'Sem ID'})`);
       
       return {
@@ -146,11 +144,11 @@ export default function ManageInstitutions() {
       console.log('📊 Total de instituições após processamento:', enrichedInstitutions.length);
       
       setInstitutions(enrichedInstitutions);
-      setTotalItems(response.total || 0);
+      setTotalItems(response.total || enrichedInstitutions.length);
       setCurrentPage(page);
 
-      // Buscar estatísticas do dashboard
-      await fetchDashboardStats();
+      // Calcular estatísticas diretamente dos dados carregados
+      calculateStatsFromInstitutions(enrichedInstitutions, response.total || enrichedInstitutions.length);
       
       if (!showLoadingIndicator) {
         showSuccess("Atualizado", "Lista de instituições atualizada com sucesso!");
@@ -165,67 +163,20 @@ export default function ManageInstitutions() {
     }
   };
 
-  const fetchDashboardStats = async () => {
-    try {
-      const response = await dashboardService.getSystemDashboardData();
-      
-      console.log('📊 Resposta completa da API:', response);
-      
-      // A API retorna a estrutura: { success: true, data: { institutions: { total: 3 }, ... } }
-      // Precisamos acessar response.data para obter os dados reais
-      const dashboardData = response.data || response;
-      
-      // IMPORTANTE: O total correto de instituições vem da paginação (totalItems)
-      // que é setado em fetchInstitutions, não da API do dashboard
-      const totalInstitutions = totalItems || dashboardData.institutions?.total || 0;
-      const totalSchools = dashboardData.schools?.total || 0;
-      const totalUsers = dashboardData.users?.total || 0;
-
-      // Calcular instituições ativas com base nos dados atuais carregados
-      const activeInstitutions = institutions.filter(inst => inst.is_active).length;
-      
-      setStats({
-        totalInstitutions,
-        activeInstitutions,
-        totalSchools,
-        totalUsers,
-        usersByRole: {
-          STUDENT: dashboardData.users_by_role?.STUDENT || 0,
-          TEACHER: dashboardData.users_by_role?.TEACHER || 0,
-          COORDINATOR: dashboardData.users_by_role?.COORDINATOR || 0,
-          ADMIN: dashboardData.users_by_role?.ADMIN || 0,
-          PARENT: dashboardData.users_by_role?.PARENT || 0
-        }
-      });
-      
-      console.log('📊 Estatísticas do dashboard carregadas:', {
-        totalInstitutions: `${totalInstitutions} (fonte: ${totalItems ? 'paginação' : 'dashboard'})`,
-        activeInstitutions,
-        totalSchools,
-        totalUsers,
-        totalItemsFromPagination: totalItems,
-        dashboardTotal: dashboardData.institutions?.total,
-        rawData: dashboardData
-      });
-    } catch (error) {
-      console.warn('⚠️ Erro ao carregar estatísticas do dashboard:', error);
-      // Manter estatísticas baseadas apenas nos dados das instituições carregadas
-      calculateStatsFromInstitutions();
-    }
-  };
-
-  const calculateStatsFromInstitutions = () => {
-    // Use totalItems (total real da paginação) se disponível, senão institutions.length (dados da página atual)
-    const totalInstitutions = totalItems || institutions.length;
-    const activeInstitutions = institutions.filter(inst => inst.is_active).length;
+  const calculateStatsFromInstitutions = (institutionsList?: InstitutionDto[], totalCount?: number) => {
+    const currentInstitutions = institutionsList || institutions;
+    const totalInstitutions = totalCount || totalItems || currentInstitutions.length;
+    
+    // Contar instituições ativas
+    const activeInstitutions = currentInstitutions.filter(inst => inst.is_active).length;
     
     // Somar escolas das instituições
-    const totalSchools = institutions.reduce((total, inst) => {
+    const totalSchools = currentInstitutions.reduce((total, inst) => {
       return total + (inst.schools_count || 0);
     }, 0);
 
     // Somar usuários das instituições
-    const totalUsers = institutions.reduce((total, inst) => total + (inst.users_count || 0), 0);
+    const totalUsers = currentInstitutions.reduce((total, inst) => total + (inst.users_count || 0), 0);
     
     setStats({
       totalInstitutions,
@@ -241,11 +192,11 @@ export default function ManageInstitutions() {
       }
     });
     
-    console.log('📊 Stats calculados localmente:', {
-      totalInstitutions: `${totalInstitutions} (fonte: ${totalItems ? 'totalItems' : 'institutions.length'})`,
-      totalItemsAvailable: totalItems,
-      institutionsLength: institutions.length,
-      activeInstitutions
+    console.log('📊 Stats calculados:', {
+      totalInstitutions,
+      activeInstitutions,
+      totalSchools,
+      totalUsers
     });
   };
 
@@ -258,7 +209,7 @@ export default function ManageInstitutions() {
     if (institutions.length > 0) {
       calculateStatsFromInstitutions()
     }
-  }, [institutions])
+  }, [institutions, totalItems])
 
   const handleSearch = (e: React.FormEvent) => {
     e.preventDefault()
@@ -360,8 +311,11 @@ export default function ManageInstitutions() {
         
         // Adicionar a nova instituição à lista local se estivermos na primeira página
         if (currentPage === 1) {
-          setInstitutions(prevInstitutions => [newInstitution, ...prevInstitutions.slice(0, itemsPerPage - 1)])
+          const updatedInstitutions = [newInstitution, ...institutions.slice(0, itemsPerPage - 1)]
+          setInstitutions(updatedInstitutions)
           setTotalItems(prev => prev + 1)
+          // Recalcular stats com a nova instituição
+          calculateStatsFromInstitutions(updatedInstitutions, totalItems + 1)
         }
         
       } else if (modalMode === 'edit' && modalInstitution) {
@@ -370,11 +324,12 @@ export default function ManageInstitutions() {
         console.log('✅ Instituição atualizada:', updatedInstitution)
         
         // Atualizar a instituição na lista local
-        setInstitutions(prevInstitutions =>
-          prevInstitutions.map(inst =>
-            inst.id === modalInstitution.id ? updatedInstitution : inst
-          )
+        const updatedInstitutions = institutions.map(inst =>
+          inst.id === modalInstitution.id ? updatedInstitution : inst
         )
+        setInstitutions(updatedInstitutions)
+        // Recalcular stats com os dados atualizados
+        calculateStatsFromInstitutions(updatedInstitutions)
       }
       
       closeModal()
@@ -406,27 +361,16 @@ export default function ManageInstitutions() {
       showSuccess("Status alterado", `Instituição ${statusText} com sucesso!`);
       
       // Atualizar o estado local imediatamente para feedback visual rápido
-      setInstitutions(prevInstitutions =>
-        prevInstitutions.map(inst =>
-          inst.id === institution.id
-            ? { ...inst, is_active: isActive }
-            : inst
-        )
-      );
-      
-      // Recalcular estatísticas com os dados atualizados
       const updatedInstitutions = institutions.map(inst =>
         inst.id === institution.id
           ? { ...inst, is_active: isActive }
           : inst
       );
       
-      // Atualizar stats baseado nos dados atualizados
-      const activeInstitutions = updatedInstitutions.filter(inst => inst.is_active).length;
-      setStats(prevStats => ({
-        ...prevStats,
-        activeInstitutions
-      }));
+      setInstitutions(updatedInstitutions);
+      
+      // Recalcular estatísticas com os dados atualizados
+      calculateStatsFromInstitutions(updatedInstitutions);
       
     } catch (error) {
       console.error('❌ Erro ao alterar status da instituição:', error);
@@ -565,13 +509,6 @@ export default function ManageInstitutions() {
               </div>
             ) : (
               <>
-                {/* Debug info */}
-                <div className="p-4 bg-blue-50 border-b border-blue-200 text-sm">
-                  <p className="font-medium text-blue-700">Informações de debug:</p>
-                  <p className="text-blue-600">Total de instituições carregadas: {institutions.length}</p>
-                  <p className="text-blue-600">Total de registros no banco: {totalItems}</p>
-                </div>
-
                 {/* Desktop Table - Simplificada */}
                 <div className="hidden lg:block overflow-x-auto">
                   <table className="w-full divide-y divide-gray-200">

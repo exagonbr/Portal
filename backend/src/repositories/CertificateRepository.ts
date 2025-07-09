@@ -28,7 +28,7 @@ export interface CertificateStats {
 export class CertificateRepository extends ExtendedRepository<Certificate> {
   private repository: Repository<Certificate>;
   constructor() {
-    super("certificates");
+    super("certificate");
     this.repository = AppDataSource.getRepository(Certificate);
   }
   // Implementação do método abstrato findAllPaginated

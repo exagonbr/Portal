@@ -7,7 +7,7 @@ const ENDPOINT = '/users';
 // Função para mapear a resposta da API para o DTO do frontend
 const mapToUserDto = (data: UserResponseDto): UserDto => ({
   id: String(data.id),
-  name: data.full_name,
+  name: data.full_name || 'Nome não informado',
   email: data.email,
   phone: data.phone,
   address: data.address,
@@ -58,15 +58,66 @@ const mapToApiFilter = (filter: UserFilter): UserFilterDto => {
 export const getUsers = async (filters: UserFilter): Promise<PaginatedResponse<UserDto>> => {
   try {
     const apiFilters = mapToApiFilter(filters);
-    const response = await apiGet<PaginatedResponse<UserResponseDto>>(ENDPOINT, apiFilters);
+    const response = await apiGet<any>(ENDPOINT, apiFilters);
+    console.log('🔍 [DEBUG] Resposta bruta da API de usuários:', JSON.stringify(response, null, 2));
     
-    return {
-      ...response,
-      items: response.items.map(mapToUserDto)
+    // Verificar diferentes formatos de resposta da API
+    let items: UserResponseDto[] = [];
+    let total = 0;
+    let page = filters.page || 1;
+    let limit = filters.limit || 10;
+    let totalPages = 0;
+
+    // Verificar se a resposta tem o formato padrão PaginatedResponse
+    if (response && response.items && Array.isArray(response.items)) {
+      items = response.items;
+      total = response.total || 0;
+      page = response.page || page;
+      limit = response.limit || limit;
+      totalPages = response.totalPages || Math.ceil(total / limit);
+    }
+    // Verificar se a resposta tem formato ApiResponse com data
+    else if (response && response.data && response.data.items && Array.isArray(response.data.items)) {
+      items = response.data.items;
+      total = response.data.total || 0;
+      page = response.data.page || page;
+      limit = response.data.limit || limit;
+      totalPages = response.data.totalPages || Math.ceil(total / limit);
+    }
+    // Verificar se a resposta é diretamente um array
+    else if (response && Array.isArray(response)) {
+      items = response;
+      total = response.length;
+      totalPages = Math.ceil(total / limit);
+    }
+    // Se não conseguiu identificar o formato, usar valores padrão
+    else {
+      console.warn('⚠️ [API] Formato de resposta não reconhecido para usuários:', response);
+      items = [];
+      total = 0;
+      totalPages = 0;
+    }
+
+    const result: PaginatedResponse<UserDto> = {
+      items: items.map(mapToUserDto),
+      total,
+      page,
+      limit,
+      totalPages,
     };
+
+    return result;
   } catch (error) {
     console.error('❌ Erro ao buscar usuários:', error);
-    throw error;
+    
+    // Retornar uma resposta vazia em caso de erro
+    return {
+      items: [],
+      total: 0,
+      page: filters.page || 1,
+      limit: filters.limit || 10,
+      totalPages: 0,
+    };
   }
 };
 

@@ -6,12 +6,35 @@ import { AppDataSource } from '../config/typeorm.config';
 import authService from '../services/AuthService';
 
 class UserController extends BaseController<User> {
-  private userRepository: any;
+  private _userRepository: UserRepository | null = null;
 
   constructor() {
-    const repository = new UserRepository();
+    let repository;
+    try {
+      repository = new UserRepository();
+      console.log('UserRepository inicializado com sucesso');
+    } catch (error) {
+      console.error('Erro ao inicializar UserRepository:', error);
+      repository = {} as UserRepository;
+    }
+    
     super(repository);
-    this.userRepository = repository;
+    this._userRepository = repository;
+  }
+
+  // Getter para garantir que sempre temos um repositório, mesmo que seja um fallback
+  private get userRepository(): UserRepository {
+    if (!this._userRepository) {
+      console.log('Criando nova instância de UserRepository');
+      try {
+        this._userRepository = new UserRepository();
+      } catch (error) {
+        console.error('Falha ao criar nova instância de UserRepository:', error);
+        // Retornar um objeto que não vai causar erro ao acessar propriedades
+        return {} as UserRepository;
+      }
+    }
+    return this._userRepository;
   }
 
   public async getAll(req: Request, res: Response): Promise<Response> {
@@ -42,49 +65,82 @@ class UserController extends BaseController<User> {
       // Criar um fallback local caso o repositório não esteja disponível
       const getFallbackResults = async () => {
         console.error('Usando fallback direto para buscar usuários');
-        const repo = AppDataSource.getRepository(User);
-        const queryBuilder = repo.createQueryBuilder('user');
-        
-        if (search) {
-          queryBuilder.where('user.name LIKE :search OR user.email LIKE :search', { search: `%${search as string}%` });
-        }
-        
-        const total = await queryBuilder.getCount();
-        const data = await queryBuilder
-          .skip((parseInt(page as string, 10) - 1) * parseInt(limit as string, 10))
-          .take(parseInt(limit as string, 10))
-          .getMany();
+        try {
+          const repo = AppDataSource.getRepository(User);
           
-        return {
-          data,
-          page: parseInt(page as string, 10),
-          limit: parseInt(limit as string, 10),
-          total
-        };
+          if (!repo) {
+            console.error('Repositório TypeORM não disponível');
+            return {
+              data: [],
+              page: parseInt(page as string, 10),
+              limit: parseInt(limit as string, 10),
+              total: 0
+            };
+          }
+          
+          const queryBuilder = repo.createQueryBuilder('user');
+          
+          if (search) {
+            queryBuilder.where('user.name LIKE :search OR user.email LIKE :search', { search: `%${search as string}%` });
+          }
+          
+          const total = await queryBuilder.getCount();
+          const data = await queryBuilder
+            .skip((parseInt(page as string, 10) - 1) * parseInt(limit as string, 10))
+            .take(parseInt(limit as string, 10))
+            .getMany();
+            
+          return {
+            data,
+            page: parseInt(page as string, 10),
+            limit: parseInt(limit as string, 10),
+            total
+          };
+        } catch (fallbackError) {
+          console.error('Erro no fallback:', fallbackError);
+          // Retornar resultado vazio em caso de falha total
+          return {
+            data: [],
+            page: parseInt(page as string, 10),
+            limit: parseInt(limit as string, 10),
+            total: 0
+          };
+        }
       };
 
       // Verificar se this.userRepository está definido
       let result;
-      if (!this.userRepository) {
-        console.error('userRepository não está definido, usando fallback');
-        result = await getFallbackResults();
-      } else {
-        try {
-          const usersPromise = this.userRepository.findAllPaginated({
-            ...options,
-            ...filters
-          });
-          
-          // Usar Promise.race para aplicar timeout
-          result = await Promise.race([usersPromise, timeoutPromise]) as any;
-        } catch (repoError) {
-          console.error('Erro ao usar userRepository.findAllPaginated:', repoError);
+      try {
+        if (!this.userRepository || !this.userRepository.findAllPaginated) {
+          console.error('userRepository ou findAllPaginated não está definido, usando fallback');
           result = await getFallbackResults();
+        } else {
+          try {
+            const usersPromise = this.userRepository.findAllPaginated({
+              ...options,
+              ...filters
+            });
+            
+            // Usar Promise.race para aplicar timeout
+            result = await Promise.race([usersPromise, timeoutPromise]) as any;
+          } catch (repoError) {
+            console.error('Erro ao usar userRepository.findAllPaginated:', repoError);
+            result = await getFallbackResults();
+          }
         }
+      } catch (error) {
+        console.error('Erro ao acessar userRepository:', error);
+        result = await getFallbackResults();
       }
 
+      // Garantir que result nunca seja undefined
       if (!result) {
-        return res.status(404).json({ success: false, message: 'Usuários não encontrados' });
+        result = {
+          data: [],
+          page: parseInt(page as string, 10),
+          limit: parseInt(limit as string, 10),
+          total: 0
+        };
       }
 
       return res.status(200).json({
@@ -95,7 +151,7 @@ class UserController extends BaseController<User> {
             page: result.page || 1,
             limit: result.limit || 10,
             total: result.total || 0,
-            totalPages: Math.ceil(result.total / result.limit) || 1
+            totalPages: Math.ceil((result.total || 0) / (result.limit || 10)) || 1
           }
         }
       });
@@ -112,15 +168,16 @@ class UserController extends BaseController<User> {
           success: false, 
           message: 'Timeout na busca de Usuários - operação demorou muito',
           code: 'TIMEOUT_ERROR',
-          stack: stack
+          stack: process.env.NODE_ENV === 'development' ? stack : undefined
         });
       }
       
       return res.status(500).json({ 
         success: false, 
-        message: 'Erro interno do servidor: ' + error,
+        message: 'Erro interno do servidor ao buscar usuários',
+        details: error instanceof Error ? error.message : String(error),
         code: 'INTERNAL_ERROR',
-        stack: stack
+        stack: process.env.NODE_ENV === 'development' ? stack : undefined
       });
     }
   }

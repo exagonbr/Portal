@@ -58,10 +58,16 @@ const nextConfig = {
           vendors: {
             test: /[\\/]node_modules[\\/]/,
             name(module) {
-              // Obter o nome do pacote
-              const packageName = module.context.match(
+              // Obter o nome do pacote com verificação de segurança
+              const match = module.context?.match(
                 /[\\/]node_modules[\\/](.*?)([\\/]|$)/
-              )[1];
+              );
+              
+              if (!match || !match[1]) {
+                return 'vendors';
+              }
+              
+              const packageName = match[1];
               
               // Agrupar pacotes grandes em seus próprios chunks
               const bigPackages = ['react', 'react-dom', 'next', 'chart.js', 'antd'];

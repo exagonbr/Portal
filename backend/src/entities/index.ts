@@ -38,6 +38,7 @@ export { Module } from './Module';
 export { NotificationLog } from './NotificationLog';
 export { Profile } from './Profile';
 export { Public } from './Public';
+export { Answer } from './Answer';
 export { Question } from './Question';
 export { Quiz } from './Quiz';
 export { QuizAttempt } from './QuizAttempt';

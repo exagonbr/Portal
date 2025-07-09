@@ -2,6 +2,7 @@ import './globals.css'
 import { Inter } from 'next/font/google'
 import GlobalStyles from '@/components/GlobalStyles'
 import Script from 'next/script'
+import ChunkErrorInitializer from '@/components/ChunkErrorInitializer'
 
 const inter = Inter({ 
   subsets: ['latin'],
@@ -34,6 +35,7 @@ export default function RootLayout({
         <GlobalStyles />
       </head>
       <body className={inter.className}>
+        <ChunkErrorInitializer />
         {children}
         {/* Script para pré-carregar o framer-motion */}
         <Script

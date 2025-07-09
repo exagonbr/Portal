@@ -2,6 +2,7 @@ import { DataSource } from 'typeorm';
 import * as dotenv from 'dotenv';
 import {
   Announcement,
+  Answer,
   Author,
   Book,
   Certificate,
@@ -63,6 +64,7 @@ export const AppDataSource = new DataSource({
   logging: process.env.NODE_ENV === 'development',
   entities: [
     Announcement,
+    Answer,
     Author,
     Book,
     Certificate,

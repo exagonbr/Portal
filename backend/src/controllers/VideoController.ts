@@ -1,15 +1,12 @@
 import { Request, Response } from 'express';
-import { BaseController } from './BaseController';
 import { Video } from '../entities/Video';
 import { VideoRepository } from '../repositories/VideoRepository';
 
-export class VideoController extends BaseController<Video> {
+export class VideoController {
   private videoRepository: VideoRepository;
 
   constructor() {
-    const repository = new VideoRepository();
-    super(repository);
-    this.videoRepository = repository;
+    this.videoRepository = new VideoRepository();
   }
 
   async getAll(req: Request, res: Response): Promise<Response> {

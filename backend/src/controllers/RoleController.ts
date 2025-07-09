@@ -5,12 +5,35 @@ import { RoleRepository } from '../repositories/RoleRepository';
 import { AppDataSource } from '../config/typeorm.config';
 
 class RoleController extends BaseController<Role> {
-  private roleRepository: any;
+  private _roleRepository: RoleRepository | null = null;
 
   constructor() {
-    const repository = new RoleRepository();
+    let repository;
+    try {
+      repository = new RoleRepository();
+      console.log('RoleRepository inicializado com sucesso');
+    } catch (error) {
+      console.error('Erro ao inicializar RoleRepository:', error);
+      repository = {} as RoleRepository;
+    }
+    
     super(repository);
-    this.roleRepository = repository;
+    this._roleRepository = repository;
+  }
+
+  // Getter para garantir que sempre temos um repositório, mesmo que seja um fallback
+  private get roleRepository(): RoleRepository {
+    if (!this._roleRepository) {
+      console.log('Criando nova instância de RoleRepository');
+      try {
+        this._roleRepository = new RoleRepository();
+      } catch (error) {
+        console.error('Falha ao criar nova instância de RoleRepository:', error);
+        // Retornar um objeto que não vai causar erro ao acessar propriedades
+        return {} as RoleRepository;
+      }
+    }
+    return this._roleRepository;
   }
 
   public async getAll(req: Request, res: Response): Promise<Response> {
@@ -40,50 +63,83 @@ class RoleController extends BaseController<Role> {
 
       // Criar um fallback local caso o repositório não esteja disponível
       const getFallbackResults = async () => {
-        console.error('Usando fallback direto para buscar roles');
-        const repo = AppDataSource.getRepository(Role);
-        const queryBuilder = repo.createQueryBuilder('role');
-        
-        if (search) {
-          queryBuilder.where('role.name LIKE :search', { search: `%${search as string}%` });
-        }
-        
-        const total = await queryBuilder.getCount();
-        const data = await queryBuilder
-          .skip((parseInt(page as string, 10) - 1) * parseInt(limit as string, 10))
-          .take(parseInt(limit as string, 10))
-          .getMany();
+        try {
+          console.error('Usando fallback direto para buscar roles');
+          const repo = AppDataSource.getRepository(Role);
           
-        return {
-          data,
-          page: parseInt(page as string, 10),
-          limit: parseInt(limit as string, 10),
-          total
-        };
+          if (!repo) {
+            console.error('Repositório TypeORM não disponível');
+            return {
+              data: [],
+              page: parseInt(page as string, 10),
+              limit: parseInt(limit as string, 10),
+              total: 0
+            };
+          }
+          
+          const queryBuilder = repo.createQueryBuilder('role');
+          
+          if (search) {
+            queryBuilder.where('role.name LIKE :search', { search: `%${search as string}%` });
+          }
+          
+          const total = await queryBuilder.getCount();
+          const data = await queryBuilder
+            .skip((parseInt(page as string, 10) - 1) * parseInt(limit as string, 10))
+            .take(parseInt(limit as string, 10))
+            .getMany();
+            
+          return {
+            data,
+            page: parseInt(page as string, 10),
+            limit: parseInt(limit as string, 10),
+            total
+          };
+        } catch (fallbackError) {
+          console.error('Erro no fallback:', fallbackError);
+          // Retornar resultado vazio em caso de falha total
+          return {
+            data: [],
+            page: parseInt(page as string, 10),
+            limit: parseInt(limit as string, 10),
+            total: 0
+          };
+        }
       };
 
       // Verificar se this.roleRepository está definido
       let result;
-      if (!this.roleRepository) {
-        console.error('roleRepository não está definido, usando fallback');
-        result = await getFallbackResults();
-      } else {
-        try {
-          const rolesPromise = this.roleRepository.findAllPaginated({
-            ...options,
-            ...filters
-          });
-          
-          // Usar Promise.race para aplicar timeout
-          result = await Promise.race([rolesPromise, timeoutPromise]) as any;
-        } catch (repoError) {
-          console.error('Erro ao usar roleRepository.findAllPaginated:', repoError);
+      try {
+        if (!this.roleRepository || !this.roleRepository.findAllPaginated) {
+          console.error('roleRepository ou findAllPaginated não está definido, usando fallback');
           result = await getFallbackResults();
+        } else {
+          try {
+            const rolesPromise = this.roleRepository.findAllPaginated({
+              ...options,
+              ...filters
+            });
+            
+            // Usar Promise.race para aplicar timeout
+            result = await Promise.race([rolesPromise, timeoutPromise]) as any;
+          } catch (repoError) {
+            console.error('Erro ao usar roleRepository.findAllPaginated:', repoError);
+            result = await getFallbackResults();
+          }
         }
+      } catch (error) {
+        console.error('Erro ao acessar roleRepository:', error);
+        result = await getFallbackResults();
       }
 
+      // Garantir que result nunca seja undefined
       if (!result) {
-        return res.status(404).json({ success: false, message: 'Roles não encontradas' });
+        result = {
+          data: [],
+          page: parseInt(page as string, 10),
+          limit: parseInt(limit as string, 10),
+          total: 0
+        };
       }
 
       return res.status(200).json({
@@ -94,7 +150,7 @@ class RoleController extends BaseController<Role> {
             page: result.page || 1,
             limit: result.limit || 10,
             total: result.total || 0,
-            totalPages: Math.ceil(result.total / result.limit) || 1
+            totalPages: Math.ceil((result.total || 0) / (result.limit || 10)) || 1
           }
         }
       });
@@ -111,15 +167,16 @@ class RoleController extends BaseController<Role> {
           success: false, 
           message: 'Timeout na busca de Roles - operação demorou muito',
           code: 'TIMEOUT_ERROR',
-          stack: stack
+          stack: process.env.NODE_ENV === 'development' ? stack : undefined
         });
       }
       
       return res.status(500).json({ 
         success: false, 
-        message: 'Erro interno do servidor: ' + error,
+        message: 'Erro interno do servidor ao buscar roles',
+        details: error instanceof Error ? error.message : String(error),
         code: 'INTERNAL_ERROR',
-        stack: stack
+        stack: process.env.NODE_ENV === 'development' ? stack : undefined
       });
     }
   }
@@ -156,7 +213,7 @@ class RoleController extends BaseController<Role> {
       return res.status(500).json({ 
         success: false, 
         message: 'Internal Server Error', 
-        stack: stack 
+        stack: process.env.NODE_ENV === 'development' ? stack : undefined 
       });
     }
   }
