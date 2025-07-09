@@ -46,7 +46,7 @@ export default function SendNotificationPage() {
       }
       
       try {
-        // Tentar renovar os dados do usuário
+        // Tentar renovar os dados do usuário apenas uma vez ao carregar a página
         await refreshUser();
       } catch (error) {
         console.error('Erro ao renovar dados do usuário:', error);
@@ -54,7 +54,8 @@ export default function SendNotificationPage() {
     };
     
     checkAuth();
-  }, []);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []); // Manter sem dependências, mas adicionar o comentário para desabilitar o linter
 
   // Função para verificar autenticação antes de enviar
   const verifyAuthBeforeSend = async (): Promise<boolean> => {
@@ -92,6 +93,16 @@ export default function SendNotificationPage() {
 
     if (!user?.id) {
       showError('Sessão inválida. Por favor, faça login novamente.');
+      return;
+    }
+
+    // Verificar token explicitamente
+    const token = await UnifiedAuthService.getAccessToken();
+    if (!token) {
+      showError('Token de autenticação não encontrado. Por favor, faça login novamente.');
+      setTimeout(() => {
+        router.push('/auth/login?redirect=/notifications/send');
+      }, 1500);
       return;
     }
 

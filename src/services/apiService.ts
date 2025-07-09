@@ -211,12 +211,32 @@ export const apiGet = async <T>(endpoint: string, params?: Record<string, any>):
 /**
  * Faz uma requisição POST à API.
  */
-export const apiPost = async <T>(endpoint: string, data: any): Promise<T> => {
+export const apiPost = async <T>(
+  endpoint: string, 
+  data: any, 
+  options: { headers?: Record<string, string> } = {}
+): Promise<T> => {
   const url = `${API_BASE_URL}${endpoint}`;
-  const headers = await getHeaders();
+  const baseHeaders = await getHeaders();
+  
+  // Combinar headers padrão com os headers personalizados
+  const mergedHeaders = new Headers();
+  
+  // Adicionar headers padrão
+  baseHeaders.forEach((value, key) => {
+    mergedHeaders.set(key, value);
+  });
+  
+  // Adicionar headers personalizados
+  if (options.headers) {
+    Object.entries(options.headers).forEach(([key, value]) => {
+      mergedHeaders.set(key, value);
+    });
+  }
+  
   const response = await fetchWithRetry(url, {
     method: 'POST',
-    headers,
+    headers: mergedHeaders,
     body: JSON.stringify(data)
   });
   return handleResponse<T>(response);

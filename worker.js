@@ -1,23 +1,95 @@
 
-import { precacheAndRoute } from 'workbox-precaching';
-import { registerRoute } from 'workbox-routing';
+import { precacheAndRoute, cleanupOutdatedCaches } from 'workbox-precaching';
+import { registerRoute, NavigationRoute, setDefaultHandler } from 'workbox-routing';
 import { NetworkFirst, CacheFirst, StaleWhileRevalidate } from 'workbox-strategies';
 import { ExpirationPlugin } from 'workbox-expiration';
+import { CacheableResponsePlugin } from 'workbox-cacheable-response';
+import { BackgroundSyncPlugin } from 'workbox-background-sync';
+import { clientsClaim } from 'workbox-core';
 
+// Habilitar clientsClaim para tomar controle imediatamente
+self.skipWaiting();
+clientsClaim();
 
-// Pré-cache dos recursos gerados pelo Workbox
-precacheAndRoute(self.__WB_MANIFEST);
+// Configuração do manifesto de pré-cache
+const PRECACHE_MANIFEST = self.__WB_MANIFEST || [];
+precacheAndRoute(PRECACHE_MANIFEST);
+cleanupOutdatedCaches();
 
-// Cache para imagens
+// Função para verificar se uma resposta pode ser cacheada
+function isCacheableResponse(response) {
+  // Não cachear respostas parciais (206), redirecionamentos (3xx), ou erros (4xx, 5xx)
+  if (!response || response.status === 206 || response.status >= 300) {
+    return false;
+  }
+  
+  // Não cachear se contém headers de range
+  if (response.headers.get('content-range')) {
+    return false;
+  }
+  
+  // Não cachear se é uma resposta de streaming
+  if (response.headers.get('content-type')?.includes('text/event-stream')) {
+    return false;
+  }
+  
+  return true;
+}
+
+// Detecção de navegador/dispositivo para tratamento específico
+function getUserAgentInfo() {
+  const userAgent = self.navigator?.userAgent || '';
+  
+  return {
+    isMobile: /Mobile|Android|iPhone|iPad|iPod/i.test(userAgent),
+    isSafari: /Safari/i.test(userAgent) && !/Chrome/i.test(userAgent),
+    isIOS: /iPhone|iPad|iPod/i.test(userAgent),
+    isOldBrowser: /MSIE|Trident|Edge\/1[0-5]/i.test(userAgent)
+  };
+}
+
+// Plugin personalizado para verificar se a resposta pode ser cacheada
+class SafeCachePlugin {
+  async cacheWillUpdate({ response }) {
+    return isCacheableResponse(response) ? response : null;
+  }
+}
+
+// Estratégia para assets do Next.js
+const nextJsAssetsStrategy = new StaleWhileRevalidate({
+  cacheName: 'next-js-assets',
+  plugins: [
+    new CacheableResponsePlugin({
+      statuses: [0, 200],
+    }),
+    new ExpirationPlugin({
+      maxEntries: 100,
+      maxAgeSeconds: 7 * 24 * 60 * 60, // 7 dias
+    }),
+    new SafeCachePlugin(),
+  ],
+});
+
+// Verificar se é um asset do Next.js
+function isNextJSAsset(url) {
+  return url.pathname.includes('/_next/static/') && 
+         (url.pathname.endsWith('.css') || url.pathname.endsWith('.js'));
+}
+
+// Cache para imagens com tratamento específico para dispositivos móveis
 registerRoute(
-  ({ request }) => request.destination === 'image',
+  ({ request, url }) => request.destination === 'image',
   new CacheFirst({
     cacheName: 'images',
     plugins: [
+      new CacheableResponsePlugin({
+        statuses: [0, 200],
+      }),
       new ExpirationPlugin({
-        maxEntries: 60,
+        maxEntries: getUserAgentInfo().isMobile ? 30 : 60, // Menos entradas para mobile
         maxAgeSeconds: 30 * 24 * 60 * 60, // 30 dias
       }),
+      new SafeCachePlugin(),
     ],
   })
 );
@@ -28,48 +100,139 @@ registerRoute(
   new CacheFirst({
     cacheName: 'fonts',
     plugins: [
+      new CacheableResponsePlugin({
+        statuses: [0, 200],
+      }),
       new ExpirationPlugin({
         maxEntries: 30,
         maxAgeSeconds: 60 * 24 * 60 * 60, // 60 dias
       }),
+      new SafeCachePlugin(),
     ],
   })
 );
 
-// Cache para scripts e estilos
+// Cache para scripts e estilos (não Next.js)
 registerRoute(
-  ({ request }) => 
-    request.destination === 'script' || 
-    request.destination === 'style',
+  ({ request, url }) => 
+    (request.destination === 'script' || request.destination === 'style') && 
+    !isNextJSAsset(url),
   new StaleWhileRevalidate({
     cacheName: 'static-resources',
-  })
-);
-
-// Cache para API
-registerRoute(
-  ({ url }) => url.pathname.startsWith('/api/'),
-  new NetworkFirst({
-    cacheName: 'api-responses',
     plugins: [
+      new CacheableResponsePlugin({
+        statuses: [0, 200],
+      }),
       new ExpirationPlugin({
         maxEntries: 50,
-        maxAgeSeconds: 10 * 60, // 10 minutos
+        maxAgeSeconds: 7 * 24 * 60 * 60, // 7 dias
       }),
+      new SafeCachePlugin(),
     ],
   })
 );
 
-// Cache para páginas HTML
+// Tratamento específico para assets do Next.js
 registerRoute(
-  ({ request }) => request.destination === 'document',
+  ({ url }) => isNextJSAsset(url),
+  nextJsAssetsStrategy
+);
+
+// Cache para API com diferentes estratégias baseadas no dispositivo
+registerRoute(
+  ({ url }) => url.pathname.startsWith('/api/'),
+  ({ url, request }) => {
+    const uaInfo = getUserAgentInfo();
+    
+    // Para dispositivos móveis com conexões potencialmente instáveis, usar StaleWhileRevalidate
+    if (uaInfo.isMobile) {
+      return new StaleWhileRevalidate({
+        cacheName: 'api-responses-mobile',
+        plugins: [
+          new CacheableResponsePlugin({
+            statuses: [0, 200],
+          }),
+          new ExpirationPlugin({
+            maxEntries: 30,
+            maxAgeSeconds: 5 * 60, // 5 minutos
+          }),
+          new SafeCachePlugin(),
+        ],
+      }).handle({ request, url });
+    }
+    
+    // Para desktop, usar NetworkFirst
+    return new NetworkFirst({
+      cacheName: 'api-responses',
+      plugins: [
+        new CacheableResponsePlugin({
+          statuses: [0, 200],
+        }),
+        new ExpirationPlugin({
+          maxEntries: 50,
+          maxAgeSeconds: 10 * 60, // 10 minutos
+        }),
+        new SafeCachePlugin(),
+      ],
+      networkTimeoutSeconds: 3, // Timeout para fallback para cache
+    }).handle({ request, url });
+  }
+);
+
+// Estratégia para navegação
+const navigationStrategy = new NetworkFirst({
+  cacheName: 'pages',
+  plugins: [
+    new CacheableResponsePlugin({
+      statuses: [0, 200],
+    }),
+    new ExpirationPlugin({
+      maxEntries: 30,
+      maxAgeSeconds: getUserAgentInfo().isMobile ? 10 * 60 : 5 * 60, // Mais tempo para mobile
+    }),
+    new SafeCachePlugin(),
+  ],
+  networkTimeoutSeconds: 3, // Timeout para fallback para cache
+});
+
+// Registrar rota para navegação
+const navigationRoute = new NavigationRoute(navigationStrategy, {
+  // Excluir rotas de debug e admin
+  denylist: [
+    new RegExp('/debug-sw'),
+    new RegExp('/admin'),
+  ],
+});
+registerRoute(navigationRoute);
+
+// Background Sync para operações offline (POST/PUT/DELETE)
+const bgSyncPlugin = new BackgroundSyncPlugin('offline-operations', {
+  maxRetentionTime: 24 * 60, // Reter por 24 horas (em minutos)
+});
+
+// Registrar rota para operações que modificam dados
+registerRoute(
+  ({ url, request }) => 
+    (request.method === 'POST' || request.method === 'PUT' || request.method === 'DELETE') && 
+    url.pathname.startsWith('/api/'),
   new NetworkFirst({
-    cacheName: 'pages',
+    plugins: [bgSyncPlugin],
+  })
+);
+
+// Handler padrão para outras requisições
+setDefaultHandler(
+  new NetworkFirst({
+    cacheName: 'default-cache',
     plugins: [
-      new ExpirationPlugin({
-        maxEntries: 30,
-        maxAgeSeconds: 5 * 60, // 5 minutos
+      new CacheableResponsePlugin({
+        statuses: [0, 200],
       }),
+      new ExpirationPlugin({
+        maxEntries: 50,
+        maxAgeSeconds: 24 * 60 * 60, // 1 dia
+      }),
+      new SafeCachePlugin(),
     ],
   })
 );
@@ -77,6 +240,22 @@ registerRoute(
 // Evento de instalação
 self.addEventListener('install', (event) => {
   self.skipWaiting();
+  
+  // Pré-cachear recursos críticos
+  const preCacheUrls = [
+    '/',
+    '/offline',
+    '/styles/main.css',
+    '/scripts/main.js',
+    '/images/logo.png',
+    '/images/offline.svg',
+  ];
+  
+  event.waitUntil(
+    caches.open('critical-assets').then((cache) => {
+      return cache.addAll(preCacheUrls);
+    })
+  );
 });
 
 // Evento de ativação - limpar caches antigos
@@ -93,7 +272,11 @@ self.addEventListener('activate', (event) => {
                   !cacheName.includes('fonts') && 
                   !cacheName.includes('static-resources') && 
                   !cacheName.includes('api-responses') && 
-                  !cacheName.includes('pages');
+                  !cacheName.includes('pages') &&
+                  !cacheName.includes('next-js-assets') &&
+                  !cacheName.includes('critical-assets') &&
+                  !cacheName.includes('default-cache') &&
+                  !cacheName.includes('api-responses-mobile');
           })
           .map((cacheName) => {
             return caches.delete(cacheName);
@@ -104,4 +287,50 @@ self.addEventListener('activate', (event) => {
   
   // Reivindicar o controle de todos os clientes
   self.clients.claim();
+});
+
+// Evento de fetch para tratamento de erros
+self.addEventListener('fetch', (event) => {
+  // Não interceptar requisições para o próprio service worker ou para debug
+  if (event.request.url.includes('worker.js') || 
+      event.request.url.includes('debug-sw')) {
+    return;
+  }
+  
+  // Apenas para requisições que não são tratadas por rotas registradas
+  if (!event.respondWith) {
+    event.respondWith(
+      fetch(event.request)
+        .catch((error) => {
+          console.error('Fetch error:', error);
+          
+          // Se for uma página HTML, redirecionar para página offline
+          if (event.request.destination === 'document') {
+            return caches.match('/offline');
+          }
+          
+          // Para outros recursos, tentar buscar do cache
+          return caches.match(event.request);
+        })
+    );
+  }
+});
+
+// Evento de mensagem para comunicação com a página
+self.addEventListener('message', (event) => {
+  if (event.data && event.data.type === 'SKIP_WAITING') {
+    self.skipWaiting();
+  }
+  
+  if (event.data && event.data.type === 'CLEAR_CACHE') {
+    event.waitUntil(
+      caches.keys().then((cacheNames) => {
+        return Promise.all(
+          cacheNames.map((cacheName) => {
+            return caches.delete(cacheName);
+          })
+        );
+      })
+    );
+  }
 }); 

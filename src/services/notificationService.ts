@@ -12,6 +12,7 @@ import {
   NotificationResponseDto as ApiNotificationResponseDto,
 } from '@/types/api';
 import { apiGet, apiPost } from './apiService';
+import { UnifiedAuthService } from './unifiedAuthService';
 
 // Função para mapear a resposta da API para o DTO do frontend
 const mapToNotificationDto = (data: ApiNotificationResponseDto): NotificationDto => ({
@@ -82,6 +83,12 @@ async function sendEmail(data: SendEmailDto): Promise<any> {
   }
 
   try {
+    // Obter token explicitamente
+    const token = await UnifiedAuthService.getAccessToken();
+    if (!token) {
+      throw new Error('Não autorizado - Token de autenticação não encontrado');
+    }
+
     // Garantir que os arrays de destinatários existam para evitar erros no backend
     const preparedData = {
       ...data,
@@ -99,7 +106,12 @@ async function sendEmail(data: SendEmailDto): Promise<any> {
 
     while (attempts < maxAttempts) {
       try {
-        const response = await apiPost('/notifications/send', preparedData);
+        // Usar apiPost com token explícito
+        const response = await apiPost('/notifications/send', preparedData, {
+          headers: {
+            'Authorization': `Bearer ${token}`
+          }
+        });
         return response;
       } catch (error) {
         lastError = error;

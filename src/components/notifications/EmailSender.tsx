@@ -331,7 +331,7 @@ export default function EmailSender({
       {/* Templates */}
       <Card>
         <CardHeader>
-          <h3 className="text-lg font-semibold">Templates de Email</h3>
+          Templates de Email
         </CardHeader>
         <CardBody>
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
@@ -345,7 +345,7 @@ export default function EmailSender({
                     : 'border-gray-200 hover:border-gray-300'
                 }`}
               >
-                <h4 className="font-medium text-gray-800">{template.name}</h4>
+                <div className="font-medium text-gray-800">{template.name}</div>
                 <p className="text-sm text-gray-500 mt-1">{template.subject}</p>
               </button>
             ))}
@@ -356,7 +356,7 @@ export default function EmailSender({
       {/* Formulário de Email */}
       <Card>
         <CardHeader>
-          <h3 className="text-lg font-semibold">Composição do Email</h3>
+          Composição do Email
         </CardHeader>
         <CardBody className="space-y-6">
           {/* Destinatários */}
@@ -590,7 +590,7 @@ export default function EmailSender({
       {/* Preview */}
       <Card>
         <CardHeader>
-          <h3 className="text-lg font-semibold">Preview do Email</h3>
+          Preview do Email
         </CardHeader>
         <CardBody>
           <div className="bg-white rounded-lg shadow-sm border border-gray-200 overflow-hidden">

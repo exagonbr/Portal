@@ -209,6 +209,13 @@ const clearInvalidTokens = (): void => {
   }
 };
 
+// Declaração para o TypeScript
+declare global {
+  interface Window {
+    lastUserRefreshTime?: number;
+  }
+}
+
 export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   const [user, setUser] = useState<User | null>(null);
   const [isLoading, setIsLoading] = useState(true);
@@ -668,6 +675,20 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     handleGoogleLogin,
     refreshUser: async () => {
       console.log('🔄 Tentando atualizar dados do usuário...');
+      
+      // Proteção contra chamadas excessivas
+      const now = Date.now();
+      const lastRefreshTime = window.lastUserRefreshTime || 0;
+      const minRefreshInterval = 10000; // 10 segundos entre refreshes
+      
+      if (now - lastRefreshTime < minRefreshInterval) {
+        console.log('⚠️ Refresh do usuário ignorado - muito frequente');
+        return; // Sair sem fazer nada se a última chamada foi muito recente
+      }
+      
+      // Atualizar timestamp da última chamada
+      window.lastUserRefreshTime = now;
+      
       try {
         setIsLoading(true);
         
