@@ -20,20 +20,20 @@ export class ViewingStatusController extends BaseController<ViewingStatus> {
 
  // Métodos de resposta HTTP
  protected unauthorized(res: Response, message: string = 'Usuário não autenticado'): Response {
-  return res.status(401).json({ error: message });
+  return res.status(401).json({ success: false, error: message });
  }
 
  protected notFound(res: Response, message: string = 'Recurso não encontrado'): Response {
-  return res.status(404).json({ error: message });
+  return res.status(404).json({ success: false, error: message });
  }
 
  protected success(res: Response, data: any, status: number = 200): Response {
-  return res.status(status).json(data);
+  return res.status(status).json({ success: true, data });
  }
 
  protected error(res: Response, error: any, status: number = 500): Response {
   console.error('Erro:', error);
-  return res.status(status).json({ error: error.message || 'Erro interno do servidor' });
+  return res.status(status).json({ success: false, error: error.message || 'Erro interno do servidor' });
  }
 
  // Sobrescrevendo os métodos da classe base
@@ -163,7 +163,7 @@ export class ViewingStatusController extends BaseController<ViewingStatus> {
    const user = await getUserFromRequest(req);
    
    if (!user) {
-    return res.status(401).json({ error: 'Usuário não autenticado' });
+    return res.status(401).json({ success: false, error: 'Usuário não autenticado' });
    }
 
    const data: UpdateViewingStatusDTO = {
@@ -174,12 +174,13 @@ export class ViewingStatusController extends BaseController<ViewingStatus> {
    // Validação básica
    if (!data.videoId && !data.tvShowId && !(data.contentType && data.contentId)) {
     return res.status(400).json({ 
+     success: false,
      error: 'É necessário informar videoId, tvShowId ou contentType+contentId' 
     });
    }
 
    if (data.currentPlayTime === undefined) {
-    return res.status(400).json({ error: 'É necessário informar currentPlayTime' });
+    return res.status(400).json({ success: false, error: 'É necessário informar currentPlayTime' });
    }
 
    // Detectar informações do dispositivo a partir do cabeçalho User-Agent
@@ -223,10 +224,10 @@ export class ViewingStatusController extends BaseController<ViewingStatus> {
 
    const result = await this.service.updateViewingStatus(data);
    
-   return res.status(200).json(result);
+   return res.status(200).json({ success: true, data: result });
   } catch (error) {
    console.error('Erro ao atualizar status de visualização:', error);
-   return res.status(500).json({ error: 'Erro ao atualizar status de visualização' });
+   return res.status(500).json({ success: false, error: 'Erro ao atualizar status de visualização' });
   }
  }
 
@@ -238,13 +239,14 @@ export class ViewingStatusController extends BaseController<ViewingStatus> {
    const user = await getUserFromRequest(req);
    
    if (!user) {
-    return res.status(401).json({ error: 'Usuário não autenticado' });
+    return res.status(401).json({ success: false, error: 'Usuário não autenticado' });
    }
 
    const { videoId, action, timestamp, value } = req.body;
 
    if (!videoId || !action || timestamp === undefined) {
     return res.status(400).json({ 
+     success: false,
      error: 'É necessário informar videoId, action e timestamp' 
     });
    }
@@ -260,7 +262,7 @@ export class ViewingStatusController extends BaseController<ViewingStatus> {
    return res.status(200).json({ success: true });
   } catch (error) {
    console.error('Erro ao registrar interação:', error);
-   return res.status(500).json({ error: 'Erro ao registrar interação' });
+   return res.status(500).json({ success: false, error: 'Erro ao registrar interação' });
   }
  }
 
@@ -272,21 +274,21 @@ export class ViewingStatusController extends BaseController<ViewingStatus> {
    const user = await getUserFromRequest(req);
    
    if (!user) {
-    return res.status(401).json({ error: 'Usuário não autenticado' });
+    return res.status(401).json({ success: false, error: 'Usuário não autenticado' });
    }
 
    const { videoId, tvShowId } = req.body;
 
    if (!videoId) {
-    return res.status(400).json({ error: 'É necessário informar videoId' });
+    return res.status(400).json({ success: false, error: 'É necessário informar videoId' });
    }
 
    const result = await this.service.startWatchSession(Number(user.id), videoId, tvShowId);
    
-   return res.status(200).json(result);
+   return res.status(200).json({ success: true, data: result });
   } catch (error) {
    console.error('Erro ao iniciar sessão de visualização:', error);
-   return res.status(500).json({ error: 'Erro ao iniciar sessão de visualização' });
+   return res.status(500).json({ success: false, error: 'Erro ao iniciar sessão de visualização' });
   }
  }
 
@@ -298,7 +300,7 @@ export class ViewingStatusController extends BaseController<ViewingStatus> {
    const user = await getUserFromRequest(req);
    
    if (!user) {
-    return res.status(401).json({ error: 'Usuário não autenticado' });
+    return res.status(401).json({ success: false, error: 'Usuário não autenticado' });
    }
 
    const videoId = parseInt(req.params.videoId);
@@ -308,6 +310,7 @@ export class ViewingStatusController extends BaseController<ViewingStatus> {
 
    if (!videoId && !tvShowId && !(contentType && contentId)) {
     return res.status(400).json({ 
+     success: false,
      error: 'É necessário informar videoId, tvShowId ou contentType+contentId' 
     });
    }
@@ -321,13 +324,13 @@ export class ViewingStatusController extends BaseController<ViewingStatus> {
    );
    
    if (!result) {
-    return res.status(404).json({ error: 'Status de visualização não encontrado' });
+    return res.status(404).json({ success: false, error: 'Status de visualização não encontrado' });
    }
    
-   return res.status(200).json(result);
+   return res.status(200).json({ success: true, data: result });
   } catch (error) {
    console.error('Erro ao obter status de visualização:', error);
-   return res.status(500).json({ error: 'Erro ao obter status de visualização' });
+   return res.status(500).json({ success: false, error: 'Erro ao obter status de visualização' });
   }
  }
 
@@ -339,7 +342,7 @@ export class ViewingStatusController extends BaseController<ViewingStatus> {
    const user = await getUserFromRequest(req);
    
    if (!user) {
-    return res.status(401).json({ error: 'Usuário não autenticado' });
+    return res.status(401).json({ success: false, error: 'Usuário não autenticado' });
    }
 
    const limit = req.query.limit ? parseInt(req.query.limit as string) : 10;
@@ -353,10 +356,10 @@ export class ViewingStatusController extends BaseController<ViewingStatus> {
     }
    );
    
-   return res.status(200).json(result);
+   return res.status(200).json({ success: true, data: result });
   } catch (error) {
    console.error('Erro ao obter histórico de visualização:', error);
-   return res.status(500).json({ error: 'Erro ao obter histórico de visualização' });
+   return res.status(500).json({ success: false, error: 'Erro ao obter histórico de visualização' });
   }
  }
 
@@ -368,15 +371,15 @@ export class ViewingStatusController extends BaseController<ViewingStatus> {
    const user = await getUserFromRequest(req);
    
    if (!user) {
-    return res.status(401).json({ error: 'Usuário não autenticado' });
+    return res.status(401).json({ success: false, error: 'Usuário não autenticado' });
    }
 
    const result = await this.service.getUserViewingStats(Number(user.id));
    
-   return res.status(200).json(result);
+   return res.status(200).json({ success: true, data: result });
   } catch (error) {
    console.error('Erro ao obter estatísticas de visualização:', error);
-   return res.status(500).json({ error: 'Erro ao obter estatísticas de visualização' });
+   return res.status(500).json({ success: false, error: 'Erro ao obter estatísticas de visualização' });
   }
  }
 
@@ -388,14 +391,14 @@ export class ViewingStatusController extends BaseController<ViewingStatus> {
    const user = await getUserFromRequest(req);
    
    if (!user) {
-    return res.status(401).json({ error: 'Usuário não autenticado' });
+    return res.status(401).json({ success: false, error: 'Usuário não autenticado' });
    }
 
    const videoId = parseInt(req.params.videoId);
    const tvShowId = req.query.tvShowId ? parseInt(req.query.tvShowId as string) : undefined;
 
    if (!videoId) {
-    return res.status(400).json({ error: 'É necessário informar videoId' });
+    return res.status(400).json({ success: false, error: 'É necessário informar videoId' });
    }
 
    await this.service.removeViewingStatus(Number(user.id), videoId, tvShowId);
@@ -403,7 +406,7 @@ export class ViewingStatusController extends BaseController<ViewingStatus> {
    return res.status(200).json({ success: true });
   } catch (error) {
    console.error('Erro ao remover status de visualização:', error);
-   return res.status(500).json({ error: 'Erro ao remover status de visualização' });
+   return res.status(500).json({ success: false, error: 'Erro ao remover status de visualização' });
   }
  }
 } 

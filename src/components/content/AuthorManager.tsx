@@ -1,9 +1,8 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import { authorService } from '@/services/authorService';
 import { AuthorDto, CreateAuthorDto, UpdateAuthorDto } from '@/types/author';
-import { PaginatedResponse } from '@/types/api';
 import { toast } from 'react-hot-toast';
 import Table from '@/components/ui/Table';
 import {
@@ -17,13 +16,36 @@ import { Button } from '@/components/ui/Button';
 import Input from '@/components/ui/Input';
 import { Label } from '@/components/ui/label';
 import Textarea from '@/components/ui/textarea';
-import { Checkbox } from '@/components/ui/checkbox';
 import { Switch } from '@/components/ui/Switch';
 import { Pencil, Trash2, Plus } from 'lucide-react';
 
-export default function AuthorManager() {
-  const [authors, setAuthors] = useState<AuthorDto[]>([]);
-  const [loading, setLoading] = useState(true);
+interface PaginationProps {
+  currentPage: number;
+  pageSize: number;
+  total: number;
+}
+
+interface AuthorManagerProps {
+  authors: AuthorDto[];
+  loading: boolean;
+  pagination: PaginationProps;
+  onPageChange: (page: number) => void;
+  onAuthorCreated: () => void;
+  onAuthorUpdated: () => void;
+  onAuthorDeleted: () => void;
+  onAuthorStatusToggled: () => void;
+}
+
+export default function AuthorManager({
+  authors,
+  loading,
+  pagination,
+  onPageChange,
+  onAuthorCreated,
+  onAuthorUpdated,
+  onAuthorDeleted,
+  onAuthorStatusToggled
+}: AuthorManagerProps) {
   const [error, setError] = useState<string | null>(null);
   const [showModal, setShowModal] = useState(false);
   const [isEditing, setIsEditing] = useState(false);
@@ -34,34 +56,10 @@ export default function AuthorManager() {
     is_active: true,
   });
   const [currentId, setCurrentId] = useState<number | null>(null);
-  const [page, setPage] = useState(1);
-  const [totalPages, setTotalPages] = useState(1);
   const [searchTerm, setSearchTerm] = useState('');
+  const [localLoading, setLocalLoading] = useState(false);
 
-  useEffect(() => {
-    loadAuthors();
-  }, [page, searchTerm]);
-
-  const loadAuthors = async () => {
-    try {
-      setLoading(true);
-      setError(null);
-      
-      const response = await authorService.getAuthors({
-        page,
-        limit: 10,
-        search: searchTerm,
-      });
-      
-      setAuthors(response.items);
-      setTotalPages(Math.ceil(response.total / 10));
-    } catch (err) {
-      setError(err instanceof Error ? err.message : 'Falha ao carregar autores');
-      toast.error('Erro ao carregar a lista de autores');
-    } finally {
-      setLoading(false);
-    }
-  };
+  const totalPages = Math.ceil(pagination.total / pagination.pageSize);
 
   const handleCreateAuthor = async () => {
     try {
@@ -70,54 +68,55 @@ export default function AuthorManager() {
         return;
       }
 
-      setLoading(true);
+      setLocalLoading(true);
       
       if (isEditing && currentId) {
         await authorService.updateAuthor(currentId, currentAuthor as UpdateAuthorDto);
         toast.success('Autor atualizado com sucesso');
+        onAuthorUpdated();
       } else {
         await authorService.createAuthor(currentAuthor);
         toast.success('Autor criado com sucesso');
+        onAuthorCreated();
       }
       
       setShowModal(false);
       resetForm();
-      loadAuthors();
     } catch (err) {
       toast.error(isEditing ? 'Erro ao atualizar autor' : 'Erro ao criar autor');
       console.error(err);
     } finally {
-      setLoading(false);
+      setLocalLoading(false);
     }
   };
 
   const handleDeleteAuthor = async (id: number) => {
     if (window.confirm('Tem certeza que deseja excluir este autor?')) {
       try {
-        setLoading(true);
+        setLocalLoading(true);
         await authorService.deleteAuthor(id);
         toast.success('Autor excluído com sucesso');
-        loadAuthors();
+        onAuthorDeleted();
       } catch (err) {
         toast.error('Erro ao excluir autor');
         console.error(err);
       } finally {
-        setLoading(false);
+        setLocalLoading(false);
       }
     }
   };
 
   const handleToggleStatus = async (id: number) => {
     try {
-      setLoading(true);
+      setLocalLoading(true);
       await authorService.toggleAuthorStatus(id);
       toast.success('Status do autor alterado com sucesso');
-      loadAuthors();
+      onAuthorStatusToggled();
     } catch (err) {
       toast.error('Erro ao alterar status do autor');
       console.error(err);
     } finally {
-      setLoading(false);
+      setLocalLoading(false);
     }
   };
 
@@ -168,7 +167,7 @@ export default function AuthorManager() {
         />
       </div>
 
-      {loading && !showModal ? (
+      {loading ? (
         <div className="text-center py-12">
           <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-500 mx-auto" />
           <p className="mt-4 text-gray-600">Carregando autores...</p>
@@ -214,7 +213,7 @@ export default function AuthorManager() {
               }
             ]}
             data={authors}
-            loading={loading}
+            loading={localLoading}
             emptyText="Nenhum autor encontrado"
           />
 
@@ -222,8 +221,8 @@ export default function AuthorManager() {
             <div className="flex justify-center mt-6 gap-2">
               <Button
                 variant="outline"
-                onClick={() => setPage(p => Math.max(1, p - 1))}
-                disabled={page === 1}
+                onClick={() => onPageChange(Math.max(1, pagination.currentPage - 1))}
+                disabled={pagination.currentPage === 1}
               >
                 Anterior
               </Button>
@@ -232,8 +231,8 @@ export default function AuthorManager() {
                 {Array.from({ length: totalPages }, (_, i) => i + 1).map(p => (
                   <Button
                     key={p}
-                    variant={p === page ? 'default' : 'outline'}
-                    onClick={() => setPage(p)}
+                    variant={p === pagination.currentPage ? 'default' : 'outline'}
+                    onClick={() => onPageChange(p)}
                     className="w-10 h-10 p-0"
                   >
                     {p}
@@ -243,8 +242,8 @@ export default function AuthorManager() {
               
               <Button
                 variant="outline"
-                onClick={() => setPage(p => Math.min(totalPages, p + 1))}
-                disabled={page === totalPages}
+                onClick={() => onPageChange(Math.min(totalPages, pagination.currentPage + 1))}
+                disabled={pagination.currentPage === totalPages}
               >
                 Próximo
               </Button>
@@ -301,7 +300,7 @@ export default function AuthorManager() {
             <Button variant="outline" onClick={() => setShowModal(false)}>
               Cancelar
             </Button>
-            <Button onClick={handleCreateAuthor} disabled={loading}>
+            <Button onClick={handleCreateAuthor} disabled={localLoading}>
               {isEditing ? 'Atualizar' : 'Criar'}
             </Button>
           </DialogFooter>

@@ -13,7 +13,7 @@ export interface UpdateAuthorData extends Partial<CreateAuthorData> {}
 
 export class AuthorRepository extends ExtendedRepository<Author> {
   constructor() {
-    super("authors");
+    super("author");
   }
   // Implementação do método abstrato findAllPaginated
   async findAllPaginated(options: {

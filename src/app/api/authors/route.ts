@@ -19,6 +19,7 @@ export async function GET(request: NextRequest) {
     
     // Construir URL para o backend
     const backendUrl = getInternalApiUrl(`/authors${queryString ? `?${queryString}` : ''}`);
+    console.log('Fazendo requisição para:', backendUrl);
     
     // Fazer requisição para o backend
     const response = await fetch(backendUrl, {
@@ -31,16 +32,91 @@ export async function GET(request: NextRequest) {
 
     // Obter dados da resposta
     const data = await response.json();
+    console.log('Resposta do backend:', JSON.stringify(data));
+    
+    // Garantir que a resposta esteja no formato esperado
+    let formattedResponse;
+    
+    if (Array.isArray(data)) {
+      // Se for um array, converter para o formato esperado
+      formattedResponse = {
+        items: data,
+        total: data.length,
+        page: parseInt(searchParams.get('page') || '1'),
+        limit: parseInt(searchParams.get('limit') || '10'),
+        totalPages: Math.ceil(data.length / parseInt(searchParams.get('limit') || '10'))
+      };
+    } else if (data && typeof data === 'object') {
+      if (data.items && Array.isArray(data.items)) {
+        // Já está no formato esperado
+        formattedResponse = data;
+      } else if (data.data && Array.isArray(data.data)) {
+        // Formato { data: [...], ... }
+        formattedResponse = {
+          items: data.data,
+          total: data.total || data.data.length,
+          page: data.page || parseInt(searchParams.get('page') || '1'),
+          limit: data.limit || parseInt(searchParams.get('limit') || '10'),
+          totalPages: data.totalPages || Math.ceil((data.total || data.data.length) / (data.limit || parseInt(searchParams.get('limit') || '10')))
+        };
+      } else {
+        // Tentar encontrar um array em alguma propriedade
+        let arrayFound = false;
+        for (const key of Object.keys(data)) {
+          if (Array.isArray(data[key])) {
+            formattedResponse = {
+              items: data[key],
+              total: data[key].length,
+              page: parseInt(searchParams.get('page') || '1'),
+              limit: parseInt(searchParams.get('limit') || '10'),
+              totalPages: Math.ceil(data[key].length / parseInt(searchParams.get('limit') || '10'))
+            };
+            arrayFound = true;
+            break;
+          }
+        }
+        
+        if (!arrayFound) {
+          // Se não encontrar nenhum array, retornar array vazio
+          formattedResponse = {
+            items: [],
+            total: 0,
+            page: parseInt(searchParams.get('page') || '1'),
+            limit: parseInt(searchParams.get('limit') || '10'),
+            totalPages: 0
+          };
+        }
+      }
+    } else {
+      // Fallback para array vazio
+      formattedResponse = {
+        items: [],
+        total: 0,
+        page: parseInt(searchParams.get('page') || '1'),
+        limit: parseInt(searchParams.get('limit') || '10'),
+        totalPages: 0
+      };
+    }
+    
+    console.log('Resposta formatada:', JSON.stringify(formattedResponse));
     
     // Retornar resposta com headers CORS
-    return NextResponse.json(data, {
+    return NextResponse.json(formattedResponse, {
       status: response.status,
       headers: getCorsHeaders(request.headers.get('origin') || undefined)
     });
   } catch (error) {
     console.error('Erro ao buscar autores:', error);
     return NextResponse.json(
-      { success: false, message: 'Erro interno do servidor' },
+      { 
+        items: [], 
+        total: 0,
+        page: 1,
+        limit: 10,
+        totalPages: 0,
+        success: false, 
+        message: 'Erro interno do servidor' 
+      },
       { status: 500 }
     );
   }

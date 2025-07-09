@@ -27,18 +27,30 @@ export default function AuthorsPage() {
   const loadAuthors = useCallback(async () => {
     setLoading(true);
     try {
+      console.log('Iniciando carregamento de autores...');
       const response = await authorService.getAuthors({
         page: pagination.currentPage,
         limit: pagination.pageSize
-      }) as PaginatedResponse<AuthorDto>;
+      });
+      
+      console.log('Resposta processada:', response);
+      
+      if (!response.items) {
+        console.error('Resposta sem items:', response);
+        setAuthors([]);
+        showError('Formato de resposta inválido do servidor.');
+        return;
+      }
       
       setAuthors(response.items);
       setPagination({
         ...pagination,
         total: response.total
       });
+      console.log('Autores carregados com sucesso:', response.items.length);
     } catch (error) {
       console.error('Erro ao carregar autores:', error);
+      setAuthors([]);
       showError('Não foi possível carregar os autores.');
     } finally {
       setLoading(false);

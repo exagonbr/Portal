@@ -175,7 +175,11 @@ async function handleResponse<T>(response: Response): Promise<T> {
       errorMessage = getErrorMessage(response.status, response.statusText);
     }
     
-    throw new Error(errorMessage);
+    // Incluir a URL da requisição na mensagem de erro para facilitar a depuração
+    const requestUrl = response.url || 'URL desconhecida';
+    console.error(`❌ [API] Erro ${response.status} ao acessar ${requestUrl}: ${errorMessage}`);
+    
+    throw new Error(`${errorMessage} (URL: ${requestUrl})`);
   }
   
   try {
