@@ -9,7 +9,7 @@ import { Select } from '@/components/ui/Select'
 import { Checkbox } from '@/components/ui/checkbox'
 import { Badge } from '@/components/ui/Badge'
 import Card, { CardHeader, CardBody } from '@/components/ui/Card'
-import { Mail, Send, X, Users, UserCheck, Shield } from 'lucide-react'
+import { Mail, Send, X, Users, UserCheck, Shield, AlertTriangle } from 'lucide-react'
 import { useToast } from '@/components/ToastManager'
 
 interface Recipient {
@@ -53,6 +53,11 @@ export default function EmailSender({
     type: 'email' as 'user' | 'email' | 'role',
     value: ''
   })
+  const [formErrors, setFormErrors] = useState<{
+    subject?: string;
+    message?: string;
+    recipients?: string;
+  }>({})
   
   // Se não houver templates fornecidos, use estes templates padrão
   const defaultTemplates: EmailTemplate[] = [
@@ -150,23 +155,35 @@ export default function EmailSender({
 
   // Validação e envio
   const validateForm = () => {
+    const errors: {
+      subject?: string;
+      message?: string;
+      recipients?: string;
+    } = {};
+    
+    let isValid = true;
+
     if (!emailData.subject.trim()) {
-      showError('Assunto é obrigatório')
-      return false
+      errors.subject = 'Assunto é obrigatório';
+      isValid = false;
     }
+    
     if (!emailData.message.trim()) {
-      showError('Mensagem é obrigatória')
-      return false
+      errors.message = 'Mensagem é obrigatória';
+      isValid = false;
     }
+    
     if (recipients.length === 0) {
-      showError('Adicione pelo menos um destinatário')
-      return false
+      errors.recipients = 'Adicione pelo menos um destinatário';
+      isValid = false;
     }
-    return true
+    
+    setFormErrors(errors);
+    return isValid;
   }
 
   const handleSend = async () => {
-    if (!validateForm() || !onSend) return
+    if (!validateForm() || !onSend) return;
 
     try {
       await onSend({
@@ -190,11 +207,12 @@ export default function EmailSender({
       })
       setRecipients([])
       setSelectedTemplate(null)
+      setFormErrors({})
       
       showSuccess('Email enviado com sucesso!')
-    } catch (error) {
+    } catch (error: any) {
       console.error('Erro ao enviar email:', error)
-      showError('Erro ao enviar email. Tente novamente.')
+      showError(error.message || 'Erro ao enviar email. Tente novamente.')
     }
   }
 
@@ -289,7 +307,7 @@ export default function EmailSender({
                     ? 'Digite o ID do usuário'
                     : 'Digite o ID da função'
                 }
-                className="flex-1"
+                className={`flex-1 ${formErrors.recipients ? 'border-red-500' : ''}`}
                 onPaste={newRecipient.type === 'email' ? handlePasteEmails : undefined}
                 onKeyDown={(e) => {
                   if (e.key === 'Enter' && newRecipient.value) {
@@ -327,6 +345,13 @@ export default function EmailSender({
                 </p>
               </div>
             )}
+
+            {formErrors.recipients && (
+              <div className="mt-1 flex items-center text-red-600 text-sm">
+                <AlertTriangle className="w-3 h-3 mr-1" />
+                {formErrors.recipients}
+              </div>
+            )}
           </div>
 
           {/* Assunto */}
@@ -335,9 +360,21 @@ export default function EmailSender({
             <Input
               id="subject"
               value={emailData.subject}
-              onChange={(e) => setEmailData(prev => ({ ...prev, subject: e.target.value }))}
+              onChange={(e) => {
+                setEmailData(prev => ({ ...prev, subject: e.target.value }))
+                if (e.target.value.trim()) {
+                  setFormErrors(prev => ({ ...prev, subject: undefined }))
+                }
+              }}
               placeholder="Digite o assunto do email"
+              className={formErrors.subject ? 'border-red-500' : ''}
             />
+            {formErrors.subject && (
+              <div className="mt-1 flex items-center text-red-600 text-sm">
+                <AlertTriangle className="w-3 h-3 mr-1" />
+                {formErrors.subject}
+              </div>
+            )}
           </div>
 
           {/* Opção HTML */}
@@ -366,10 +403,22 @@ export default function EmailSender({
             <Textarea
               id="message"
               value={emailData.message}
-              onChange={(e) => setEmailData(prev => ({ ...prev, message: e.target.value }))}
+              onChange={(e) => {
+                setEmailData(prev => ({ ...prev, message: e.target.value }))
+                if (e.target.value.trim()) {
+                  setFormErrors(prev => ({ ...prev, message: undefined }))
+                }
+              }}
               placeholder="Digite o conteúdo do email"
               rows={10}
+              className={formErrors.message ? 'border-red-500' : ''}
             />
+            {formErrors.message && (
+              <div className="mt-1 flex items-center text-red-600 text-sm">
+                <AlertTriangle className="w-3 h-3 mr-1" />
+                {formErrors.message}
+              </div>
+            )}
           </div>
 
           {/* Botões de ação */}

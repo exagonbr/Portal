@@ -578,30 +578,30 @@ function SystemAdminDashboardContent() {
   }
 
   return (
-    <div className="p-2 sm:p-4 lg:p-6 max-w-7xl mx-auto">
+    <div className="p-3 sm:p-5 lg:p-7 max-w-full mx-auto bg-gray-50">
       {/* Cabeçalho */}
       <div className="mb-4 sm:mb-6">
         <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
           <div className="flex-1 min-w-0">
-            <h1 className="text-lg sm:text-xl lg:text-2xl font-bold text-gray-700 dark:text-gray-800 flex items-center gap-2 sm:gap-3">
-              <Shield className="w-5 h-5 sm:w-6 sm:h-6 lg:w-7 lg:h-7 text-primary flex-shrink-0" />
+            <h1 className="text-lg sm:text-xl lg:text-2xl font-bold text-gray-700 flex items-center gap-2 sm:gap-3">
+              <Shield className="w-5 h-5 sm:w-6 sm:h-6 lg:w-7 lg:h-7 text-blue-500 flex-shrink-0" />
               <span className="truncate">Painel do Administrador do Sistema</span>
             </h1>
-            <p className="text-xs sm:text-sm text-gray-600 dark:text-gray-600 mt-1">
+            <p className="text-xs sm:text-sm text-gray-500 mt-1">
               Monitoramento e gestão completa da plataforma Portal Sabercon
             </p>
           </div>
           <div className="flex flex-col sm:flex-row gap-2 sm:gap-2 w-full sm:w-auto">
             <button 
               onClick={loadRealTimeMetrics}
-              className="px-3 py-2 bg-primary text-white rounded-lg hover:bg-primary-dark transition-colors flex items-center justify-center gap-2 text-xs sm:text-sm w-full sm:w-auto"
+              className="px-3 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 transition-colors flex items-center justify-center gap-2 text-xs sm:text-sm w-full sm:w-auto"
             >
               <RefreshCw className="w-3 h-3 sm:w-4 sm:h-4" />
               <span className="sm:inline">Atualizar</span>
             </button>
             <button 
               onClick={() => router.push('/admin/monitoring')}
-              className="px-3 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition-colors flex items-center justify-center gap-2 text-xs sm:text-sm w-full sm:w-auto"
+              className="px-3 py-2 bg-purple-500 text-white rounded-lg hover:bg-purple-600 transition-colors flex items-center justify-center gap-2 text-xs sm:text-sm w-full sm:w-auto"
             >
               <Gauge className="w-3 h-3 sm:w-4 sm:h-4" />
               <span className="sm:inline">Monitoramento</span>
@@ -615,21 +615,21 @@ function SystemAdminDashboardContent() {
               title="Resumo Geral do Sistema"
               subtitle="Estatísticas principais em tempo real"
               icon={BarChart3}
-              iconColor="bg-blue-500"
+              iconColor="bg-blue-400"
             >
               
               {/* Informações detalhadas do sistema */}
               <div className="mt-4 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
                 {/* Status do Servidor */}
-                <SimpleCard className="p-3">
+                <SimpleCard className="p-3 bg-white shadow-sm hover:shadow-md transition-shadow">
                   <div className="flex items-start justify-between">
                     <div className="flex items-center gap-2">
-                      <Server className="w-5 h-5 text-emerald-500" />
+                      <Server className="w-5 h-5 text-emerald-400" />
                       <div>
                         <h4 className="text-xs font-semibold text-gray-700">Status do Servidor</h4>
                         <div className="flex items-center gap-1 mt-1">
-                          <div className="w-2 h-2 bg-green-500 rounded-full animate-pulse"></div>
-                          <span className="text-xs font-medium text-green-600">Online</span>
+                          <div className="w-2 h-2 bg-green-400 rounded-full animate-pulse"></div>
+                          <span className="text-xs font-medium text-green-500">Online</span>
                         </div>
                       </div>
                     </div>
@@ -651,10 +651,10 @@ function SystemAdminDashboardContent() {
                 </SimpleCard>
                 
                 {/* Uso de Memória */}
-                <SimpleCard className="p-3">
+                <SimpleCard className="p-3 bg-white shadow-sm hover:shadow-md transition-shadow">
                   <div className="flex items-start justify-between">
                     <div className="flex items-center gap-2">
-                      <Database className="w-5 h-5 text-blue-500" />
+                      <Database className="w-5 h-5 text-blue-400" />
                       <div>
                         <h4 className="text-xs font-semibold text-gray-700">Uso de Memória</h4>
                         <p className="text-xs text-gray-500 mt-1">Heap usado/total</p>
@@ -672,7 +672,7 @@ function SystemAdminDashboardContent() {
                   <div className="mt-2">
                     <div className="w-full h-2 bg-gray-100 rounded-full overflow-hidden">
                       <div 
-                        className="h-2 bg-gradient-to-r from-blue-500 to-blue-600 rounded-full" 
+                        className="h-2 bg-gradient-to-r from-blue-400 to-blue-500 rounded-full" 
                         style={{ width: `${Math.round(((dashboardData?.system?.memoryUsage?.heapUsed || 0) / (dashboardData?.system?.memoryUsage?.heapTotal || 1)) * 100)}%` }}
                       ></div>
                     </div>
@@ -680,10 +680,10 @@ function SystemAdminDashboardContent() {
                 </SimpleCard>
                 
                 {/* Infraestrutura AWS */}
-                <SimpleCard className="p-3">
+                <SimpleCard className="p-3 bg-white shadow-sm hover:shadow-md transition-shadow">
                   <div className="flex items-start justify-between">
                     <div className="flex items-center gap-2">
-                      <Cloud className="w-5 h-5 text-orange-500" />
+                      <Cloud className="w-5 h-5 text-orange-400" />
                       <div>
                         <h4 className="text-xs font-semibold text-gray-700">Infraestrutura AWS</h4>
                         <p className="text-xs text-gray-500 mt-1">Status dos serviços</p>
@@ -700,7 +700,7 @@ function SystemAdminDashboardContent() {
                   </div>
                   <div className="mt-2 pt-2 border-t border-gray-100 flex flex-wrap gap-1">
                     {(dashboardData?.infrastructure?.aws?.services || ['S3', 'EC2', 'RDS', 'Lambda']).map((service: string, idx: number) => (
-                      <span key={idx} className="px-1.5 py-0.5 bg-orange-50 text-orange-700 rounded text-xs font-medium">
+                      <span key={idx} className="px-1.5 py-0.5 bg-orange-50 text-orange-600 rounded text-xs font-medium">
                         {service}
                       </span>
                     ))}
@@ -711,9 +711,9 @@ function SystemAdminDashboardContent() {
               {/* Métricas de sessões e dispositivos */}
               <div className="mt-4 grid grid-cols-1 sm:grid-cols-2 gap-3">
                 {/* Sessões ativas */}
-                <SimpleCard className="p-3">
+                <SimpleCard className="p-3 bg-white shadow-sm hover:shadow-md transition-shadow">
                   <h4 className="text-xs font-semibold text-gray-700 flex items-center gap-1.5 mb-2">
-                    <Activity className="w-4 h-4 text-indigo-500" />
+                    <Activity className="w-4 h-4 text-indigo-400" />
                     Sessões Ativas por Dispositivo
                   </h4>
                   <div className="flex items-center gap-3">
@@ -722,18 +722,18 @@ function SystemAdminDashboardContent() {
                         {Object.entries(dashboardData?.sessions?.sessionsByDevice || {}).map(([device, count], idx) => (
                           <div key={device} className="flex items-center justify-between text-xs">
                             <div className="flex items-center gap-1.5">
-                              {device === 'Desktop' && <Monitor className="w-3 h-3 text-indigo-500" />}
-                              {device === 'Mobile' && <Smartphone className="w-3 h-3 text-green-500" />}
-                              {device === 'Tablet' && <Tablet className="w-3 h-3 text-orange-500" />}
+                              {device === 'Desktop' && <Monitor className="w-3 h-3 text-indigo-400" />}
+                              {device === 'Mobile' && <Smartphone className="w-3 h-3 text-green-400" />}
+                              {device === 'Tablet' && <Tablet className="w-3 h-3 text-orange-400" />}
                               <span>{device}</span>
                             </div>
                             <div className="flex items-center gap-2">
                               <div className="w-16 h-1.5 bg-gray-100 rounded-full overflow-hidden">
                                 <div 
                                   className={`h-1.5 rounded-full ${
-                                    idx === 0 ? 'bg-indigo-500' : 
-                                    idx === 1 ? 'bg-green-500' : 
-                                    'bg-orange-500'
+                                    idx === 0 ? 'bg-indigo-400' : 
+                                    idx === 1 ? 'bg-green-400' : 
+                                    'bg-orange-400'
                                   }`}
                                   style={{ width: `${Math.round((Number(count) / (dashboardData?.sessions?.totalActiveSessions || 1)) * 100)}%` }}
                                 ></div>
@@ -745,33 +745,33 @@ function SystemAdminDashboardContent() {
                       </div>
                     </div>
                     <div className="flex-shrink-0 border-l border-gray-100 pl-3 text-center">
-                      <p className="text-lg font-bold text-indigo-600">{dashboardData?.sessions?.totalActiveSessions || 0}</p>
+                      <p className="text-lg font-bold text-indigo-500">{dashboardData?.sessions?.totalActiveSessions || 0}</p>
                       <p className="text-xs text-gray-500">Total de<br />Sessões</p>
                     </div>
                   </div>
                 </SimpleCard>
                 
                 {/* Custos e Recursos */}
-                <SimpleCard className="p-3">
+                <SimpleCard className="p-3 bg-white shadow-sm hover:shadow-md transition-shadow">
                   <h4 className="text-xs font-semibold text-gray-700 flex items-center gap-1.5 mb-2">
-                    <HardDrive className="w-4 h-4 text-emerald-500" />
+                    <HardDrive className="w-4 h-4 text-emerald-400" />
                     Recursos e Custos
                   </h4>
                   <div className="grid grid-cols-2 gap-3">
                     <div className="text-center p-2 bg-emerald-50 rounded-lg">
-                      <p className="text-sm font-bold text-emerald-600">R$ {dashboardData?.infrastructure?.aws?.costs?.monthly?.toLocaleString('pt-BR', {minimumFractionDigits: 2, maximumFractionDigits: 2}) || '1.500,50'}</p>
+                      <p className="text-sm font-bold text-emerald-500">R$ {dashboardData?.infrastructure?.aws?.costs?.monthly?.toLocaleString('pt-BR', {minimumFractionDigits: 2, maximumFractionDigits: 2}) || '1.500,50'}</p>
                       <p className="text-xs text-gray-600">Custo Mensal</p>
                     </div>
                     <div className="text-center p-2 bg-blue-50 rounded-lg">
-                      <p className="text-sm font-bold text-blue-600">4</p>
+                      <p className="text-sm font-bold text-blue-500">4</p>
                       <p className="text-xs text-gray-600">Serviços AWS</p>
                     </div>
                     <div className="text-center p-2 bg-purple-50 rounded-lg">
-                      <p className="text-sm font-bold text-purple-600">2</p>
+                      <p className="text-sm font-bold text-purple-500">2</p>
                       <p className="text-xs text-gray-600">Instâncias EC2</p>
                     </div>
                     <div className="text-center p-2 bg-amber-50 rounded-lg">
-                      <p className="text-sm font-bold text-amber-600">1</p>
+                      <p className="text-sm font-bold text-amber-500">1</p>
                       <p className="text-xs text-gray-600">RDS Database</p>
                     </div>
                   </div>

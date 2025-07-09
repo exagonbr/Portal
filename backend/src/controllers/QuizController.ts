@@ -13,23 +13,23 @@ class QuizController extends BaseController<Quiz> {
   }
 
   async getAll(req: Request, res: Response): Promise<Response> {
-    return res.json({ message: `getAll quizzes with query ${JSON.stringify(req.query)}` });
+    return res.json({ success: true, data: { message: `getAll quizzes with query ${JSON.stringify(req.query)}` } });
   }
 
   async getById(req: Request, res: Response): Promise<Response> {
-    return res.json({ message: `get quiz by id ${req.params.id}` });
+    return res.json({ success: true, data: { message: `get quiz by id ${req.params.id}` } });
   }
 
   async create(req: Request, res: Response): Promise<Response> {
-    return res.status(201).json({ message: 'create quiz', data: req.body });
+    return res.status(201).json({ success: true, data: { message: 'create quiz', data: req.body } });
   }
 
   async update(req: Request, res: Response): Promise<Response> {
-    return res.json({ message: `update quiz ${req.params.id}`, data: req.body });
+    return res.json({ success: true, data: { message: `update quiz ${req.params.id}`, data: req.body } });
   }
 
   async delete(req: Request, res: Response): Promise<Response> {
-    return res.status(204).send();
+    return res.status(204).json({ success: true, message: 'Quiz deleted successfully' });
   }
 }
 

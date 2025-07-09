@@ -1,35 +1,33 @@
-'use client'
-
 import React, { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/Button';
-import { SubjectDto } from '@/types/subject';
+import { AuthorDto } from '@/types/author';
 
-interface SubjectFormProps {
-  subject?: SubjectDto | null;
+interface AuthorFormProps {
+  author?: AuthorDto | null;
   mode: 'create' | 'edit' | 'view';
   onSubmit: (data: any) => void;
   onCancel: () => void;
 }
 
-export default function SubjectForm({ subject, mode, onSubmit, onCancel }: SubjectFormProps) {
+export default function AuthorForm({ author, mode, onSubmit, onCancel }: AuthorFormProps) {
   const [formData, setFormData] = useState({
     name: '',
-    description: '',
+    bio: '',
     is_active: true
   });
   
   const [errors, setErrors] = useState<Record<string, string>>({});
   
-  // Carregar dados da disciplina se estiver em modo de edição ou visualização
+  // Carregar dados do autor se estiver em modo de edição ou visualização
   useEffect(() => {
-    if (subject) {
+    if (author) {
       setFormData({
-        name: subject.name || '',
-        description: subject.description || '',
-        is_active: subject.is_active !== undefined ? subject.is_active : true
+        name: author.name || '',
+        bio: author.bio || '',
+        is_active: author.is_active !== undefined ? author.is_active : true
       });
     }
-  }, [subject]);
+  }, [author]);
   
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
     const { name, value, type } = e.target;
@@ -96,14 +94,14 @@ export default function SubjectForm({ subject, mode, onSubmit, onCancel }: Subje
       </div>
       
       <div>
-        <label htmlFor="description" className="block text-sm font-medium text-gray-700 mb-1">
-          Descrição
+        <label htmlFor="bio" className="block text-sm font-medium text-gray-700 mb-1">
+          Biografia
         </label>
         <textarea
-          id="description"
-          name="description"
+          id="bio"
+          name="bio"
           rows={4}
-          value={formData.description}
+          value={formData.bio}
           onChange={handleChange}
           disabled={isReadOnly}
           className={`w-full px-3 py-2 border rounded-md shadow-sm border-gray-300 focus:outline-none focus:ring-2 focus:ring-blue-500 ${

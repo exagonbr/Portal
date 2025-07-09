@@ -2,31 +2,31 @@ import { Request, Response } from 'express';
 
 class ForumController {
     async getThreads(req: Request, res: Response) {
-        res.json({ message: `get forum threads with query ${JSON.stringify(req.query)}` });
+        res.json({ success: true, data: { message: `get forum threads with query ${JSON.stringify(req.query)}` } });
     }
 
     async getThreadById(req: Request, res: Response) {
-        res.json({ message: `get forum thread by id ${req.params.id}` });
+        res.json({ success: true, data: { message: `get forum thread by id ${req.params.id}` } });
     }
 
     async createThread(req: Request, res: Response) {
-        res.status(201).json({ message: 'create forum thread', data: req.body });
+        res.status(201).json({ success: true, data: { message: 'create forum thread', data: req.body } });
     }
 
     async updateThread(req: Request, res: Response) {
-        res.json({ message: `update forum thread ${req.params.id}`, data: req.body });
+        res.json({ success: true, data: { message: `update forum thread ${req.params.id}`, data: req.body } });
     }
 
     async deleteThread(req: Request, res: Response) {
-        res.status(204).send();
+        res.status(204).json({ success: true, message: 'Thread deleted successfully' });
     }
 
     async getReplies(req: Request, res: Response) {
-        res.json({ message: `get replies for thread ${req.params.threadId}` });
+        res.json({ success: true, data: { message: `get replies for thread ${req.params.threadId}` } });
     }
 
     async createReply(req: Request, res: Response) {
-        res.status(201).json({ message: 'create reply', data: req.body });
+        res.status(201).json({ success: true, data: { message: 'create reply', data: req.body } });
     }
 }
 

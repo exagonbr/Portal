@@ -1,49 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createStandardApiRoute } from '../lib/api-route-template';
 import { getCorsHeaders } from '@/config/cors';
-
-// Dados mockados para fallback
-let mockCertificates = [
-  {
-    id: 1,
-    date_created: new Date().toISOString(),
-    last_updated: new Date().toISOString(),
-    path: '/certificates/cert-001.pdf',
-    score: 85,
-    tv_show_id: 101,
-    user_id: 1001,
-    document: '123.456.789-00',
-    license_code: 'LIC-2023-001',
-    tv_show_name: 'Curso de Matemática Básica',
-    recreate: false
-  },
-  {
-    id: 2,
-    date_created: new Date().toISOString(),
-    last_updated: new Date().toISOString(),
-    path: '/certificates/cert-002.pdf',
-    score: 92,
-    tv_show_id: 102,
-    user_id: 1002,
-    document: '987.654.321-00',
-    license_code: 'LIC-2023-002',
-    tv_show_name: 'Curso de Português Avançado',
-    recreate: false
-  },
-  {
-    id: 3,
-    date_created: new Date().toISOString(),
-    last_updated: new Date().toISOString(),
-    path: '/certificates/cert-003.pdf',
-    score: 78,
-    tv_show_id: 103,
-    user_id: 1003,
-    document: '111.222.333-44',
-    license_code: 'LIC-2023-003',
-    tv_show_name: 'Curso de Ciências',
-    recreate: true
-  }
-];
+import { certificateService } from '@/services/certificateService';
 
 // Usar o template padronizado para a rota GET
 export const { GET, OPTIONS } = createStandardApiRoute({
@@ -67,64 +25,30 @@ export const { GET, OPTIONS } = createStandardApiRoute({
       const tvShowName = searchParams.get('tv_show_name');
       const search = searchParams.get('search');
       
-      console.log('📚 [API-CERTIFICATES] Usando dados mockados para fallback');
+      console.log('📚 [API-CERTIFICATES] Usando serviço para buscar certificados');
       
-      // Aplicar filtros
-      let filteredCertificates = [...mockCertificates];
+      // Construir objeto de filtros
+      const filters: any = {
+        page,
+        limit,
+        search
+      };
       
-      if (userId) {
-        filteredCertificates = filteredCertificates.filter(cert => cert.user_id === parseInt(userId));
-      }
+      if (userId) filters.user_id = userId;
+      if (tvShowId) filters.tv_show_id = tvShowId;
+      if (score) filters.score = parseInt(score);
+      if (document) filters.document = document;
+      if (licenseCode) filters.license_code = licenseCode;
+      if (tvShowName) filters.tv_show_name = tvShowName;
       
-      if (tvShowId) {
-        filteredCertificates = filteredCertificates.filter(cert => cert.tv_show_id === parseInt(tvShowId));
-      }
+      // Usar o serviço de certificados
+      const result = await certificateService.getCertificates(filters);
       
-      if (score) {
-        filteredCertificates = filteredCertificates.filter(cert => cert.score === parseInt(score));
-      }
-      
-      if (document) {
-        filteredCertificates = filteredCertificates.filter(cert => cert.document?.includes(document));
-      }
-      
-      if (licenseCode) {
-        filteredCertificates = filteredCertificates.filter(cert => cert.license_code?.includes(licenseCode));
-      }
-      
-      if (tvShowName) {
-        filteredCertificates = filteredCertificates.filter(cert => cert.tv_show_name?.toLowerCase().includes(tvShowName.toLowerCase()));
-      }
-      
-      if (search) {
-        const searchLower = search.toLowerCase();
-        filteredCertificates = filteredCertificates.filter(cert => 
-          cert.document?.toLowerCase().includes(searchLower) ||
-          cert.license_code?.toLowerCase().includes(searchLower) ||
-          cert.tv_show_name?.toLowerCase().includes(searchLower)
-        );
-      }
-      
-      // Aplicar paginação
-      const start = (page - 1) * limit;
-      const end = start + limit;
-      const paginatedCertificates = filteredCertificates.slice(start, end);
-      
-      return NextResponse.json({
-        success: true,
-        data: {
-          items: paginatedCertificates,
-          total: filteredCertificates.length,
-          page,
-          limit,
-          totalPages: Math.ceil(filteredCertificates.length / limit)
-        },
-        message: 'Certificados encontrados (dados mockados)'
-      }, {
+      return NextResponse.json(result, {
         headers: getCorsHeaders(req.headers.get('origin') || undefined)
       });
     } catch (error) {
-      console.error('Error in certificates fallback:', error);
+      console.error('Error in certificates service:', error);
       return NextResponse.json(
         { 
           success: false, 
@@ -151,23 +75,15 @@ export async function POST(request: NextRequest) {
   try {
     const body = await request.json();
     
-    // Criar novo certificado com dados mockados
-    const newId = Math.max(...mockCertificates.map(c => c.id)) + 1;
-    const newCertificate = {
-      id: newId,
-      date_created: new Date().toISOString(),
-      last_updated: new Date().toISOString(),
-      ...body,
-      recreate: body.recreate !== undefined ? body.recreate : true
-    };
+    console.log('📝 [API-CERTIFICATES] Criando certificado com serviço');
     
-    mockCertificates.push(newCertificate);
-    console.log('📝 [API-CERTIFICATES] Certificado criado com mock:', newCertificate);
+    // Usar o serviço para criar o certificado
+    const newCertificate = await certificateService.createCertificate(body);
     
     return NextResponse.json({
       success: true,
       data: newCertificate,
-      message: 'Certificado criado com sucesso (dados mockados)'
+      message: 'Certificado criado com sucesso'
     }, { 
       status: 201,
       headers: getCorsHeaders(request.headers.get('origin') || undefined)
@@ -207,31 +123,15 @@ export async function PUT(request: NextRequest) {
     
     const body = await request.json();
     
-    // Atualizar certificado mockado
-    const certificateIndex = mockCertificates.findIndex(c => c.id === parseInt(id));
-    if (certificateIndex === -1) {
-      return NextResponse.json(
-        { success: false, message: 'Certificado não encontrado' },
-        { 
-          status: 404,
-          headers: getCorsHeaders(request.headers.get('origin') || undefined)
-        }
-      );
-    }
+    console.log('✏️ [API-CERTIFICATES] Atualizando certificado com serviço:', id);
     
-    const updatedCertificate = {
-      ...mockCertificates[certificateIndex],
-      ...body,
-      last_updated: new Date().toISOString()
-    };
-    
-    mockCertificates[certificateIndex] = updatedCertificate;
-    console.log('✏️ [API-CERTIFICATES] Certificado atualizado com mock:', updatedCertificate);
+    // Usar o serviço para atualizar o certificado
+    const updatedCertificate = await certificateService.updateCertificate(parseInt(id), body);
     
     return NextResponse.json({
       success: true,
       data: updatedCertificate,
-      message: 'Certificado atualizado com sucesso (dados mockados)'
+      message: 'Certificado atualizado com sucesso'
     }, {
       headers: getCorsHeaders(request.headers.get('origin') || undefined)
     });
@@ -268,24 +168,14 @@ export async function DELETE(request: NextRequest) {
       );
     }
     
-    // Excluir certificado mockado
-    const certificateIndex = mockCertificates.findIndex(c => c.id === parseInt(id));
-    if (certificateIndex === -1) {
-      return NextResponse.json(
-        { success: false, message: 'Certificado não encontrado' },
-        { 
-          status: 404,
-          headers: getCorsHeaders(request.headers.get('origin') || undefined)
-        }
-      );
-    }
+    console.log('🗑️ [API-CERTIFICATES] Excluindo certificado com serviço:', id);
     
-    mockCertificates = mockCertificates.filter(c => c.id !== parseInt(id));
-    console.log('🗑️ [API-CERTIFICATES] Certificado excluído com mock:', id);
+    // Usar o serviço para excluir o certificado
+    await certificateService.deleteCertificate(parseInt(id));
     
     return NextResponse.json({
       success: true,
-      message: 'Certificado excluído com sucesso (dados mockados)'
+      message: 'Certificado excluído com sucesso'
     }, {
       headers: getCorsHeaders(request.headers.get('origin') || undefined)
     });

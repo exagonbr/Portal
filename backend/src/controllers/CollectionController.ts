@@ -92,15 +92,39 @@ class CollectionController {
     }
 
     async create(req: Request, res: Response) {
-        res.status(201).json({ message: 'create collection', data: req.body });
+        try {
+            const newCollection = await collectionService.createCollection(req.body);
+            return res.status(201).json({ success: true, data: newCollection });
+        } catch (error) {
+            console.error(`Error in createCollection: ${error}`);
+            return res.status(500).json({ success: false, message: 'Error creating collection: ' + error });
+        }
     }
 
     async update(req: Request, res: Response) {
-        res.json({ message: `update collection ${req.params.id}`, data: req.body });
+        try {
+            const updatedCollection = await collectionService.updateCollection(req.params.id, req.body);
+            if (!updatedCollection) {
+                return res.status(404).json({ success: false, message: 'Collection not found' });
+            }
+            return res.status(200).json({ success: true, data: updatedCollection });
+        } catch (error) {
+            console.error(`Error in updateCollection: ${error}`);
+            return res.status(500).json({ success: false, message: 'Error updating collection: ' + error });
+        }
     }
 
     async delete(req: Request, res: Response) {
-        res.status(204).send();
+        try {
+            const result = await collectionService.deleteCollection(req.params.id);
+            if (!result) {
+                return res.status(404).json({ success: false, message: 'Collection not found' });
+            }
+            return res.status(200).json({ success: true, message: 'Collection deleted successfully' });
+        } catch (error) {
+            console.error(`Error in deleteCollection: ${error}`);
+            return res.status(500).json({ success: false, message: 'Error deleting collection: ' + error });
+        }
     }
 }
 
