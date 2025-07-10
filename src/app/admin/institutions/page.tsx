@@ -1,18 +1,15 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useCallback } from 'react'
 import { useRouter } from 'next/navigation'
+import useSWR from 'swr'
 import { institutionService } from '../../../services/institutionService'
 import { InstitutionDto } from '../../../types/institution'
-import { dashboardService } from '@/services/dashboardService'
-import schoolService from '@/services/schoolService'
 import { useToast } from '@/components/ToastManager'
 import { InstitutionModalWithSchools } from '@/components/modals/InstitutionModalWithSchools'
-import { Badge } from '@/components/ui/Badge'
 import { Button } from '@/components/ui/Button'
-import AuthenticatedLayout from '@/components/AuthenticatedLayout'
-import { Plus, Search, Edit, Trash2, Eye, Building2, School, Users, UserCheck, GraduationCap, UserCog, CheckCircle, XCircle, MapPin, Phone, Mail, Globe, AlertTriangle, RefreshCw, Download, Upload } from 'lucide-react'
-import { StatCard, ContentCard } from '@/components/ui/StandardCard'
+import { Plus, Search, Edit, Trash2, Eye, Building2, School, Users, CheckCircle, AlertTriangle, RefreshCw, MapPin, Mail, Phone } from 'lucide-react'
+import { StatCard } from '@/components/ui/StandardCard'
 
 // Interface para estatísticas das instituições
 interface InstitutionStats {
@@ -20,205 +17,67 @@ interface InstitutionStats {
   activeInstitutions: number
   totalSchools: number
   totalUsers: number
-  usersByRole: {
-    STUDENT: number
-    TEACHER: number
-    COORDINATOR: number
-    ADMIN: number
-    PARENT: number
-  }
 }
 
 export default function ManageInstitutions() {
   const router = useRouter()
   const { showSuccess, showError, showWarning } = useToast()
-  const [loading, setLoading] = useState(true)
-  const [refreshing, setRefreshing] = useState(false)
-  const [institutions, setInstitutions] = useState<InstitutionDto[]>([])
-  const [totalItems, setTotalItems] = useState(0)
   const [currentPage, setCurrentPage] = useState(1)
-  const [itemsPerPage] = useState(100) // Aumentar o número de itens por página para exibir mais registros
+  const [itemsPerPage] = useState(100)
   const [searchQuery, setSearchQuery] = useState('')
-  const [loadingError, setLoadingError] = useState<string | null>(null)
+  const [loading, setLoading] = useState(false)
   
-  // Estados para o modal unificado
   const [modalOpen, setModalOpen] = useState(false)
   const [modalMode, setModalMode] = useState<'view' | 'create' | 'edit'>('view')
   const [modalInstitution, setModalInstitution] = useState<InstitutionDto | null>(null)
-  const [stats, setStats] = useState<InstitutionStats>({
-    totalInstitutions: 0,
-    activeInstitutions: 0,
-    totalSchools: 0,
-    totalUsers: 0,
-    usersByRole: {
-      STUDENT: 0,
-      TEACHER: 0,
-      COORDINATOR: 0,
-      ADMIN: 0,
-      PARENT: 0
-    }
-  })
 
-  const enrichInstitutionsWithSchoolData = async (institutions: InstitutionDto[]): Promise<InstitutionDto[]> => {
-    console.log('📝 Usando dados diretamente da tabela institution');
-    console.log('📝 Total de instituições para processar:', institutions.length);
+  const handleAuthError = useCallback(() => {
+    showError("Sessão expirada. Por favor, faça login novamente.")
     
-    if (!institutions || institutions.length === 0) {
-      console.warn('⚠️ Array de instituições vazio ou nulo');
-      return [];
+    // Limpar tokens inválidos
+    if (typeof window !== 'undefined') {
+      localStorage.removeItem('accessToken')
+      localStorage.removeItem('authToken')
+      localStorage.removeItem('token')
+      localStorage.removeItem('refreshToken')
+      localStorage.removeItem('user')
     }
     
-    // Mapear os campos do formato da API para o formato esperado pelo componente
-    return institutions.map(institution => {
-      if (!institution) {
-        console.warn('⚠️ Instituição nula encontrada');
-        return null;
-      }
-      
-      // Verificar se a instituição está ativa
-      const isActive = institution.is_active !== undefined ? 
-        institution.is_active : 
-        institution.hasOwnProperty('deleted') ? !(institution as any).deleted : true;
-      
-      // Obter o nome da empresa ou usar o nome da instituição
-      const companyName = institution.company_name || '';
-      
-      console.log(`📝 Processando instituição: ${institution.name || 'Sem nome'} (ID: ${institution.id || 'Sem ID'})`);
-      
-      return {
-        ...institution,
-        // Garantir que campos essenciais estejam presentes
-        is_active: isActive,
-        type: institution.type || 'SCHOOL', // Valor padrão se não existir
-        schools_count: institution.schools_count || 0,
-        users_count: institution.users_count || 0,
-        // Campos adicionais do formato da API
-        city: institution.city || '',
-        state: institution.state || '',
-        code: institution.code || institution.id?.toString() || '',
-        // Garantir que o documento esteja disponível
-        document: institution.document || '',
-        // Garantir que o nome da empresa esteja disponível
-        company_name: companyName
-      };
-    }).filter(Boolean) as InstitutionDto[]; // Remover itens nulos
-  };
+    // Redirecionar para a página de login
+    setTimeout(() => {
+      router.push('/auth/login?auth_error=expired')
+    }, 1000)
+  }, [showError, router])
 
-  const fetchInstitutions = async (page = 1, search = '', showLoadingIndicator = true) => {
-    if (showLoadingIndicator) {
-      setLoading(true);
-    } else {
-      setRefreshing(true);
+  const fetcher = () => institutionService.getInstitutions({ page: currentPage, limit: itemsPerPage, search: searchQuery })
+  const { data, error, isLoading, mutate, isValidating } = useSWR(
+    `/api/institutions?page=${currentPage}&limit=${itemsPerPage}&search=${searchQuery}`,
+    fetcher,
+    {
+      onError: (err: any) => {
+        console.error('❌ [INSTITUTIONS] Erro ao carregar instituições:', err)
+        
+        // Verificar se é erro de autenticação
+        if (err.message?.includes('Sessão expirada') || err.message?.includes('não autenticado')) {
+          handleAuthError()
+          return
+        }
+      }
     }
-    
-    setLoadingError(null); // Limpar erros anteriores
+  )
 
-    try {
-      const params: any = {
-        page: 1, // Sempre começar da primeira página
-        limit: 1000 // Aumentar o limite para buscar todos os registros
-      };
-      
-      // Só adicionar parâmetros se eles tiverem valor
-      if (search && search.trim()) {
-        params.search = search.trim();
-      }
-      
-      console.log('🔍 Buscando instituições com parâmetros:', params);
-      
-      const response = await institutionService.getInstitutions(params);
-      
-      console.log('📊 API response:', response);
-      console.log('📊 Total de instituições encontradas:', response.items?.length || 0);
-      
-      if (!response.items || response.items.length === 0) {
-        console.warn('⚠️ Nenhuma instituição encontrada na resposta da API');
-      } else {
-        console.log('📊 Primeira instituição:', response.items[0]);
-        console.log('📊 Última instituição:', response.items[response.items.length - 1]);
-      }
-      
-      // Enriquecer instituições com dados de escolas
-      const enrichedInstitutions = await enrichInstitutionsWithSchoolData(response.items || []);
-      
-      console.log('📊 Total de instituições após processamento:', enrichedInstitutions.length);
-      
-      setInstitutions(enrichedInstitutions);
-      setTotalItems(response.total || enrichedInstitutions.length);
-      setCurrentPage(page);
-
-      // Calcular estatísticas diretamente dos dados carregados
-      calculateStatsFromInstitutions(enrichedInstitutions, response.total || enrichedInstitutions.length);
-      
-      if (!showLoadingIndicator) {
-        showSuccess("Atualizado", "Lista de instituições atualizada com sucesso!");
-      }
-    } catch (error) {
-      console.error('❌ Erro ao carregar instituições:', error);
-      setLoadingError("Não foi possível carregar a lista de instituições. Tente novamente.");
-      showError("Erro ao carregar instituições", "Não foi possível carregar a lista de instituições.");
-    } finally {
-      setLoading(false);
-      setRefreshing(false);
-    }
-  };
-
-  const calculateStatsFromInstitutions = (institutionsList?: InstitutionDto[], totalCount?: number) => {
-    const currentInstitutions = institutionsList || institutions;
-    const totalInstitutions = totalCount || totalItems || currentInstitutions.length;
-    
-    // Contar instituições ativas
-    const activeInstitutions = currentInstitutions.filter(inst => inst.is_active).length;
-    
-    // Somar escolas das instituições
-    const totalSchools = currentInstitutions.reduce((total, inst) => {
-      return total + (inst.schools_count || 0);
-    }, 0);
-
-    // Somar usuários das instituições
-    const totalUsers = currentInstitutions.reduce((total, inst) => total + (inst.users_count || 0), 0);
-    
-    setStats({
-      totalInstitutions,
-      activeInstitutions,
-      totalSchools,
-      totalUsers,
-      usersByRole: {
-        STUDENT: 0,
-        TEACHER: 0,
-        COORDINATOR: 0,
-        ADMIN: 0,
-        PARENT: 0
-      }
-    });
-    
-    console.log('📊 Stats calculados:', {
-      totalInstitutions,
-      activeInstitutions,
-      totalSchools,
-      totalUsers
-    });
-  };
-
-  useEffect(() => {
-    fetchInstitutions(currentPage, searchQuery)
-  }, [currentPage])
-
-  // Recalcular estatísticas quando as instituições mudarem
-  useEffect(() => {
-    if (institutions.length > 0) {
-      calculateStatsFromInstitutions()
-    }
-  }, [institutions, totalItems])
+  const institutions = data?.items || []
+  const totalItems = data?.total || 0
+  const stats: InstitutionStats = data?.stats || { totalInstitutions: 0, activeInstitutions: 0, totalSchools: 0, totalUsers: 0 }
 
   const handleSearch = (e: React.FormEvent) => {
     e.preventDefault()
     setCurrentPage(1)
-    fetchInstitutions(1, searchQuery)
+    mutate()
   }
 
   const handleRefresh = () => {
-    fetchInstitutions(currentPage, searchQuery, false)
+    mutate()
   }
 
 
@@ -247,11 +106,11 @@ export default function ManageInstitutions() {
 
     try {
       setLoading(true)
-      await institutionService.deleteInstitution(Number(institution.id))
+      await institutionService.delete(Number(institution.id))
       showSuccess("Instituição excluída", "A instituição foi excluída com sucesso.")
       
       // Recarregar a lista
-      await fetchInstitutions(currentPage, searchQuery, false)
+      await mutate()
     } catch (error) {
       console.error('❌ Erro ao excluir instituição:', error)
       showError("Erro ao excluir instituição", "Não foi possível excluir a instituição.")
@@ -284,7 +143,7 @@ export default function ManageInstitutions() {
         // Extrair escolas atribuídas dos dados
         const { assignedSchools, ...institutionData } = data
         
-        const newInstitution = await institutionService.createInstitution(institutionData)
+        const newInstitution = await institutionService.create(institutionData)
         showSuccess("Sucesso", "Instituição criada com sucesso!")
         console.log('✅ Nova instituição criada:', newInstitution)
         
@@ -305,33 +164,16 @@ export default function ManageInstitutions() {
           }
         }
         
-        // Adicionar a nova instituição à lista local se estivermos na primeira página
-        if (currentPage === 1) {
-          const updatedInstitutions = [newInstitution, ...institutions.slice(0, itemsPerPage - 1)]
-          setInstitutions(updatedInstitutions)
-          setTotalItems(prev => prev + 1)
-          // Recalcular stats com a nova instituição
-          calculateStatsFromInstitutions(updatedInstitutions, totalItems + 1)
-        }
-        
       } else if (modalMode === 'edit' && modalInstitution) {
-        const updatedInstitution = await institutionService.updateInstitution(Number(modalInstitution.id), data)
+        const updatedInstitution = await institutionService.update(Number(modalInstitution.id), data)
         showSuccess("Sucesso", "Instituição atualizada com sucesso!")
         console.log('✅ Instituição atualizada:', updatedInstitution)
-        
-        // Atualizar a instituição na lista local
-        const updatedInstitutions = institutions.map(inst =>
-          inst.id === modalInstitution.id ? updatedInstitution : inst
-        )
-        setInstitutions(updatedInstitutions)
-        // Recalcular stats com os dados atualizados
-        calculateStatsFromInstitutions(updatedInstitutions)
       }
       
       closeModal()
       
       // Recarregar a lista para garantir sincronização completa
-      await fetchInstitutions(currentPage, searchQuery, false)
+      await mutate()
     } catch (error) {
       console.error('❌ Erro ao salvar instituição:', error)
       showError("Erro ao salvar instituição", "Não foi possível salvar a instituição.")
@@ -356,17 +198,8 @@ export default function ManageInstitutions() {
       const statusText = isActive ? 'ativada' : 'desativada';
       showSuccess("Status alterado", `Instituição ${statusText} com sucesso!`);
       
-      // Atualizar o estado local imediatamente para feedback visual rápido
-      const updatedInstitutions = institutions.map(inst =>
-        inst.id === institution.id
-          ? { ...inst, is_active: isActive }
-          : inst
-      );
-      
-      setInstitutions(updatedInstitutions);
-      
-      // Recalcular estatísticas com os dados atualizados
-      calculateStatsFromInstitutions(updatedInstitutions);
+      // Recarregar dados
+      await mutate();
       
     } catch (error) {
       console.error('❌ Erro ao alterar status da instituição:', error);
@@ -408,10 +241,10 @@ export default function ManageInstitutions() {
                 <Button 
                   onClick={handleRefresh} 
                   variant="outline" 
-                  disabled={refreshing}
+                  disabled={isValidating}
                   className="flex items-center gap-2"
                 >
-                  <RefreshCw className={`w-4 h-4 ${refreshing ? 'animate-spin' : ''}`} />
+                  <RefreshCw className={`w-4 h-4 ${isValidating ? 'animate-spin' : ''}`} />
                   Atualizar
                 </Button>
                 <Button onClick={() => openModal('create')} className="flex items-center gap-2">
@@ -475,15 +308,15 @@ export default function ManageInstitutions() {
 
           {/* Content */}
           <div>
-            {loading ? (
+            {loading || isLoading ? (
               <div className="flex items-center justify-center py-12">
                 <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
                 <span className="ml-2 text-gray-600">Carregando...</span>
               </div>
-            ) : loadingError ? (
+            ) : error ? (
               <div className="text-center py-12">
                 <AlertTriangle className="w-16 h-16 text-red-300 mx-auto mb-4" />
-                <p className="text-red-500 text-lg mb-2">{loadingError}</p>
+                <p className="text-red-500 text-lg mb-2">Erro ao carregar dados</p>
                 <Button onClick={handleRefresh} variant="outline" className="mt-4">
                   Tentar novamente
                 </Button>

@@ -1,21 +1,16 @@
 'use client'
 
 import React, { useState, useEffect } from 'react'
-import { useRouter } from 'next/navigation'
-import { Plus, Search, Edit, Trash2, Eye, Building2, CheckCircle, XCircle, MapPin, RefreshCw } from 'lucide-react'
+// import { useRouter } from 'next/navigation' // TEMPORARIAMENTE DESABILITADO
+import { Plus, Search, Edit, Trash2, Eye, Building2, CheckCircle, XCircle, MapPin, RefreshCw, ChevronLeft, ChevronRight } from 'lucide-react'
+import { unitService, Unit } from '@/services/unitService'
 
-// Interfaces básicas
-interface Unit {
-  id: string
-  name: string
-  code?: string
-  address?: string
-  city?: string
-  state?: string
-  status: 'active' | 'inactive'
-  course_id?: number
-  created_at?: string
-  updated_at?: string
+// Interface para paginação
+interface PaginationData {
+  currentPage: number
+  totalPages: number
+  totalItems: number
+  itemsPerPage: number
 }
 
 // Componente de Loading simples
@@ -90,81 +85,187 @@ const Button = ({
   )
 }
 
+// Componente de Paginação
+const Pagination = ({ 
+  pagination, 
+  onPageChange 
+}: { 
+  pagination: PaginationData
+  onPageChange: (page: number) => void 
+}) => {
+  const { currentPage, totalPages, totalItems, itemsPerPage } = pagination
+  
+  const startItem = (currentPage - 1) * itemsPerPage + 1
+  const endItem = Math.min(currentPage * itemsPerPage, totalItems)
+  
+  return (
+    <div className="flex items-center justify-between px-6 py-3 bg-gray-50 border-t border-gray-200">
+      <div className="flex items-center text-sm text-gray-700">
+        <span>
+          Mostrando {startItem} a {endItem} de {totalItems} resultados
+        </span>
+      </div>
+      
+      <div className="flex items-center space-x-2">
+        <Button
+          onClick={() => onPageChange(currentPage - 1)}
+          disabled={currentPage <= 1}
+          variant="ghost"
+          size="sm"
+        >
+          <ChevronLeft className="w-4 h-4" />
+          Anterior
+        </Button>
+        
+        <div className="flex space-x-1">
+          {Array.from({ length: Math.min(5, totalPages) }, (_, i) => {
+            let pageNum
+            if (totalPages <= 5) {
+              pageNum = i + 1
+            } else {
+              if (currentPage <= 3) {
+                pageNum = i + 1
+              } else if (currentPage >= totalPages - 2) {
+                pageNum = totalPages - 4 + i
+              } else {
+                pageNum = currentPage - 2 + i
+              }
+            }
+            
+            return (
+              <button
+                key={pageNum}
+                onClick={() => onPageChange(pageNum)}
+                className={`px-3 py-1 text-sm rounded ${
+                  pageNum === currentPage
+                    ? 'bg-blue-600 text-white'
+                    : 'bg-white text-gray-700 hover:bg-gray-100 border border-gray-300'
+                }`}
+              >
+                {pageNum}
+              </button>
+            )
+          })}
+        </div>
+        
+        <Button
+          onClick={() => onPageChange(currentPage + 1)}
+          disabled={currentPage >= totalPages}
+          variant="ghost"
+          size="sm"
+        >
+          Próxima
+          <ChevronRight className="w-4 h-4" />
+        </Button>
+      </div>
+    </div>
+  )
+}
+
 export default function ManageUnits() {
-  const router = useRouter()
+  // const router = useRouter() // TEMPORARIAMENTE DESABILITADO
   const [loading, setLoading] = useState(true)
+  const [refreshing, setRefreshing] = useState(false)
   const [units, setUnits] = useState<Unit[]>([])
   const [searchQuery, setSearchQuery] = useState('')
-  const [filteredUnits, setFilteredUnits] = useState<Unit[]>([])
   const [error, setError] = useState<string | null>(null)
+  const [isDeleting, setIsDeleting] = useState<number | null>(null)
+  
+  // Estados para paginação
+  const [pagination, setPagination] = useState<PaginationData>({
+    currentPage: 1,
+    totalPages: 1,
+    totalItems: 0,
+    itemsPerPage: 10
+  })
+  
+  // Estados para estatísticas
+  const [stats, setStats] = useState({
+    total: 0,
+    active: 0,
+    withCourse: 0
+  })
 
-  // Mock data para teste
-  const mockUnits: Unit[] = [
-    {
-      id: '1',
-      name: 'Unidade Centro',
-      code: 'UC001',
-      address: 'Rua das Flores, 123',
-      city: 'São Paulo',
-      state: 'SP',
-      status: 'active',
-      course_id: 1
-    },
-    {
-      id: '2',
-      name: 'Unidade Norte',
-      code: 'UN002',
-      address: 'Av. Paulista, 456',
-      city: 'São Paulo',
-      state: 'SP',
-      status: 'active'
-    },
-    {
-      id: '3',
-      name: 'Unidade Sul',
-      code: 'US003',
-      address: 'Rua Augusta, 789',
-      city: 'São Paulo',
-      state: 'SP',
-      status: 'inactive',
-      course_id: 2
-    }
-  ]
-
-  // Função para carregar unidades
-  const loadUnits = async () => {
+  // Função para carregar unidades com paginação
+  const loadUnits = async (page: number = 1, search: string = '', showLoadingIndicator = true) => {
     try {
-      setLoading(true)
+      if (showLoadingIndicator) {
+        setLoading(true)
+      } else {
+        setRefreshing(true)
+      }
       setError(null)
       
-      // Simular uma chamada de API
-      await new Promise(resolve => setTimeout(resolve, 1000))
+      const params = {
+        page,
+        limit: pagination.itemsPerPage,
+        ...(search && { search })
+      }
       
-      // Por enquanto usando dados mock
-      setUnits(mockUnits)
-      setFilteredUnits(mockUnits)
+      const response = await unitService.getAll(params)
+      
+      // Assumindo que a resposta da API tenha o formato padrão de paginação
+      if (response && typeof response === 'object' && 'data' in response) {
+        const paginatedResponse = response as any
+        setUnits(paginatedResponse.data || [])
+        setPagination({
+          currentPage: paginatedResponse.current_page || 1,
+          totalPages: paginatedResponse.last_page || 1,
+          totalItems: paginatedResponse.total || 0,
+          itemsPerPage: paginatedResponse.per_page || 10
+        })
+      } else {
+        // Fallback se a resposta não for paginada
+        const unitsArray = Array.isArray(response) ? response : []
+        setUnits(unitsArray)
+        setPagination({
+          currentPage: 1,
+          totalPages: 1,
+          totalItems: unitsArray.length,
+          itemsPerPage: unitsArray.length
+        })
+      }
+      
+      if (!showLoadingIndicator) {
+        alert('Lista de unidades atualizada com sucesso!')
+      }
       
     } catch (err) {
       console.error('Erro ao carregar unidades:', err)
-      setError('Erro ao carregar unidades. Tente novamente.')
+      setError(err instanceof Error ? err.message : 'Erro ao carregar unidades. Tente novamente.')
     } finally {
       setLoading(false)
+      setRefreshing(false)
+    }
+  }
+
+  // Função para carregar estatísticas
+  const loadStats = async () => {
+    try {
+      const response = await unitService.getAll({ per_page: 1000 }) // Pegar todas para calcular stats
+      const unitsData = Array.isArray(response) ? response : 
+                       (response && typeof response === 'object' && 'data' in response) ? 
+                       (response as any).data : []
+      
+      setStats({
+        total: unitsData.length,
+        active: unitsData.filter((u: Unit) => u.status === 'active').length,
+        withCourse: unitsData.filter((u: Unit) => u.course_id).length
+      })
+    } catch (err) {
+      console.error('Erro ao carregar estatísticas:', err)
     }
   }
 
   // Função de busca
-  const handleSearch = (e: React.FormEvent) => {
+  const handleSearch = async (e: React.FormEvent) => {
     e.preventDefault()
-    if (!searchQuery.trim()) {
-      setFilteredUnits(units)
-    } else {
-      const filtered = units.filter(unit => 
-        unit.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        unit.code?.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        unit.city?.toLowerCase().includes(searchQuery.toLowerCase())
-      )
-      setFilteredUnits(filtered)
-    }
+    await loadUnits(1, searchQuery.trim())
+  }
+
+  // Função para mudar página
+  const handlePageChange = (page: number) => {
+    loadUnits(page, searchQuery.trim())
   }
 
   // Função para deletar unidade
@@ -174,25 +275,38 @@ export default function ManageUnits() {
     }
     
     try {
-      // Simular exclusão
-      const updatedUnits = units.filter(u => u.id !== unit.id)
-      setUnits(updatedUnits)
-      setFilteredUnits(updatedUnits.filter(u => 
-        !searchQuery.trim() || 
-        u.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        u.code?.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        u.city?.toLowerCase().includes(searchQuery.toLowerCase())
-      ))
+      setIsDeleting(unit.id)
+      await unitService.delete(unit.id)
+      
+      // Recarregar dados
+      await Promise.all([
+        loadUnits(pagination.currentPage, searchQuery.trim()),
+        loadStats()
+      ])
+      
       alert('Unidade excluída com sucesso!')
     } catch (err) {
       console.error('Erro ao excluir unidade:', err)
-      alert('Erro ao excluir unidade.')
+      alert(err instanceof Error ? err.message : 'Erro ao excluir unidade.')
+    } finally {
+      setIsDeleting(null)
     }
+  }
+
+  // Função para atualizar dados
+  const handleRefresh = async () => {
+    await Promise.all([
+      loadUnits(pagination.currentPage, searchQuery.trim(), false),
+      loadStats()
+    ])
   }
 
   // Carregar dados no mount
   useEffect(() => {
-    loadUnits()
+    Promise.all([
+      loadUnits(),
+      loadStats()
+    ])
   }, [])
 
   // Função para obter label do status
@@ -205,17 +319,27 @@ export default function ManageUnits() {
     return status === 'active' ? 'success' : 'danger'
   }
 
-  if (loading) {
+  // Função para formatar data
+  const formatDate = (dateString: string) => {
+    if (!dateString) return 'N/A'
+    try {
+      return new Date(dateString).toLocaleDateString('pt-BR')
+    } catch {
+      return 'Data inválida'
+    }
+  }
+
+  if (loading && units.length === 0) {
     return <SimpleLoading />
   }
 
-  if (error) {
+  if (error && units.length === 0) {
     return (
       <div className="container mx-auto px-4 py-6 max-w-7xl">
         <div className="bg-red-50 border border-red-200 rounded-lg p-6 text-center">
           <h2 className="text-xl font-bold text-red-800 mb-2">Erro</h2>
           <p className="text-red-600 mb-4">{error}</p>
-          <Button onClick={loadUnits} variant="danger">
+          <Button onClick={() => loadUnits()} variant="danger">
             Tentar Novamente
           </Button>
         </div>
@@ -234,11 +358,11 @@ export default function ManageUnits() {
               <p className="text-gray-600 mt-1">Gerencie as unidades de ensino do sistema</p>
             </div>
             <div className="flex gap-3">
-              <Button onClick={loadUnits} variant="ghost">
-                <RefreshCw className="w-4 h-4" />
+              <Button onClick={handleRefresh} variant="ghost" disabled={loading || refreshing}>
+                <RefreshCw className={`w-4 h-4 ${refreshing ? 'animate-spin' : ''}`} />
                 Atualizar
               </Button>
-              <Button onClick={() => alert('Funcionalidade em desenvolvimento')}>
+              <Button onClick={() => alert('Navegação desabilitada temporariamente')}>
                 <Plus className="w-4 h-4" />
                 Nova Unidade
               </Button>
@@ -252,7 +376,7 @@ export default function ManageUnits() {
                 <Building2 className="w-8 h-8 text-blue-600" />
                 <div className="ml-3">
                   <p className="text-blue-600 text-sm font-medium">Total</p>
-                  <p className="text-2xl font-bold text-blue-900">{units.length}</p>
+                  <p className="text-2xl font-bold text-blue-900">{stats.total}</p>
                 </div>
               </div>
             </div>
@@ -261,9 +385,7 @@ export default function ManageUnits() {
                 <CheckCircle className="w-8 h-8 text-green-600" />
                 <div className="ml-3">
                   <p className="text-green-600 text-sm font-medium">Ativas</p>
-                  <p className="text-2xl font-bold text-green-900">
-                    {units.filter(u => u.status === 'active').length}
-                  </p>
+                  <p className="text-2xl font-bold text-green-900">{stats.active}</p>
                 </div>
               </div>
             </div>
@@ -272,9 +394,7 @@ export default function ManageUnits() {
                 <Building2 className="w-8 h-8 text-purple-600" />
                 <div className="ml-3">
                   <p className="text-purple-600 text-sm font-medium">Com Curso</p>
-                  <p className="text-2xl font-bold text-purple-900">
-                    {units.filter(u => u.course_id).length}
-                  </p>
+                  <p className="text-2xl font-bold text-purple-900">{stats.withCourse}</p>
                 </div>
               </div>
             </div>
@@ -287,22 +407,22 @@ export default function ManageUnits() {
                 <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
                 <input
                   type="text"
-                  placeholder="Buscar unidade..."
+                  placeholder="Buscar unidade por nome ou descrição..."
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
                   className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                 />
               </div>
             </div>
-            <Button type="submit" variant="ghost">
+            <Button type="submit" variant="ghost" disabled={loading}>
               Buscar
             </Button>
           </form>
         </div>
 
         {/* Content */}
-        <div className="p-6">
-          {filteredUnits.length === 0 ? (
+        <div className="overflow-hidden">
+          {units.length === 0 ? (
             <div className="text-center py-12">
               <Building2 className="w-16 h-16 text-gray-300 mx-auto mb-4" />
               <p className="text-gray-500 text-lg mb-2">Nenhuma unidade encontrada</p>
@@ -311,87 +431,108 @@ export default function ManageUnits() {
               </p>
             </div>
           ) : (
-            <div className="overflow-x-auto">
-              <table className="w-full divide-y divide-gray-200">
-                <thead className="bg-gray-50">
-                  <tr>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                      Unidade
-                    </th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                      Localização
-                    </th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                      Tipo
-                    </th>
-                    <th className="px-6 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">
-                      Status
-                    </th>
-                    <th className="px-6 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">
-                      Ações
-                    </th>
-                  </tr>
-                </thead>
-                <tbody className="bg-white divide-y divide-gray-200">
-                  {filteredUnits.map((unit) => (
-                    <tr key={unit.id} className="hover:bg-gray-50">
-                      <td className="px-6 py-4">
-                        <div className="flex items-center">
-                          <div className="flex-shrink-0 w-10 h-10 bg-blue-100 rounded-full flex items-center justify-center">
-                            <Building2 className="w-5 h-5 text-blue-600" />
-                          </div>
-                          <div className="ml-4">
-                            <div className="text-sm font-medium text-gray-900">{unit.name}</div>
-                            <div className="text-xs text-gray-500">{unit.code || 'Sem código'}</div>
-                          </div>
-                        </div>
-                      </td>
-                      <td className="px-6 py-4">
-                        <div className="text-sm text-gray-900">
-                          {unit.city && unit.state ? `${unit.city}, ${unit.state}` : 'Não informado'}
-                        </div>
-                        {unit.address && (
-                          <div className="text-xs text-gray-500 flex items-center mt-1">
-                            <MapPin className="w-3 h-3 mr-1" />
-                            {unit.address}
-                          </div>
-                        )}
-                      </td>
-                      <td className="px-6 py-4 text-sm text-gray-900">
-                        {unit.course_id ? 'Com Curso' : 'Sem Curso'}
-                      </td>
-                      <td className="px-6 py-4 text-center">
-                        <Badge variant={getStatusVariant(unit.status)}>
-                          {getStatusLabel(unit.status)}
-                        </Badge>
-                      </td>
-                      <td className="px-6 py-4 text-center">
-                        <div className="flex items-center justify-center space-x-2">
-                          <button
-                            onClick={() => alert(`Visualizar ${unit.name}`)}
-                            className="text-blue-600 hover:text-blue-900 p-1"
-                          >
-                            <Eye className="w-4 h-4" />
-                          </button>
-                          <button
-                            onClick={() => alert(`Editar ${unit.name}`)}
-                            className="text-green-600 hover:text-green-900 p-1"
-                          >
-                            <Edit className="w-4 h-4" />
-                          </button>
-                          <button
-                            onClick={() => handleDelete(unit)}
-                            className="text-red-600 hover:text-red-900 p-1"
-                          >
-                            <Trash2 className="w-4 h-4" />
-                          </button>
-                        </div>
-                      </td>
+            <>
+              <div className="overflow-x-auto">
+                <table className="w-full divide-y divide-gray-200">
+                  <thead className="bg-gray-50">
+                    <tr>
+                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                        Unidade
+                      </th>
+                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                        Descrição
+                      </th>
+                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                        Curso
+                      </th>
+                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                        Ordem
+                      </th>
+                      <th className="px-6 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">
+                        Status
+                      </th>
+                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                        Atualizado
+                      </th>
+                      <th className="px-6 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">
+                        Ações
+                      </th>
                     </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
+                  </thead>
+                  <tbody className="bg-white divide-y divide-gray-200">
+                    {units.map((unit) => (
+                      <tr key={unit.id} className="hover:bg-gray-50">
+                        <td className="px-6 py-4">
+                          <div className="flex items-center">
+                            <div className="flex-shrink-0 w-10 h-10 bg-blue-100 rounded-full flex items-center justify-center">
+                              <Building2 className="w-5 h-5 text-blue-600" />
+                            </div>
+                            <div className="ml-4">
+                              <div className="text-sm font-medium text-gray-900">{unit.name}</div>
+                              <div className="text-xs text-gray-500">ID: {unit.id}</div>
+                            </div>
+                          </div>
+                        </td>
+                        <td className="px-6 py-4">
+                          <div className="text-sm text-gray-900 max-w-xs truncate">
+                            {unit.description || 'Sem descrição'}
+                          </div>
+                        </td>
+                        <td className="px-6 py-4 text-sm text-gray-900">
+                          {unit.course_id ? `Curso ${unit.course_id}` : 'Sem curso'}
+                        </td>
+                        <td className="px-6 py-4 text-sm text-gray-900">
+                          {unit.order || 'N/A'}
+                        </td>
+                        <td className="px-6 py-4 text-center">
+                          <Badge variant={getStatusVariant(unit.status)}>
+                            {getStatusLabel(unit.status)}
+                          </Badge>
+                        </td>
+                        <td className="px-6 py-4 text-sm text-gray-500">
+                          {formatDate(unit.updated_at)}
+                        </td>
+                        <td className="px-6 py-4 text-center">
+                          <div className="flex items-center justify-center space-x-2">
+                            <button
+                              onClick={() => alert('Navegação desabilitada temporariamente')}
+                              className="text-blue-600 hover:text-blue-900 p-1"
+                              title="Visualizar"
+                            >
+                              <Eye className="w-4 h-4" />
+                            </button>
+                            <button
+                              onClick={() => alert('Navegação desabilitada temporariamente')}
+                              className="text-green-600 hover:text-green-900 p-1"
+                              title="Editar"
+                            >
+                              <Edit className="w-4 h-4" />
+                            </button>
+                            <button
+                              onClick={() => handleDelete(unit)}
+                              disabled={isDeleting === unit.id}
+                              className="text-red-600 hover:text-red-900 p-1 disabled:opacity-50"
+                              title="Excluir"
+                            >
+                              {isDeleting === unit.id ? (
+                                <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-red-600"></div>
+                              ) : (
+                                <Trash2 className="w-4 h-4" />
+                              )}
+                            </button>
+                          </div>
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+              
+              {/* Paginação */}
+              {pagination.totalPages > 1 && (
+                <Pagination pagination={pagination} onPageChange={handlePageChange} />
+              )}
+            </>
           )}
         </div>
       </div>

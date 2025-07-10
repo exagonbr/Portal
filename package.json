@@ -101,6 +101,7 @@
     "recharts": "^2.15.3",
     "rimraf": "^5.0.5",
     "screenfull": "^6.0.2",
+    "swr": "^2.3.4",
     "tailwind-merge": "^3.3.1",
     "tailwindcss-animate": "^1.0.7",
     "ua-parser-js": "^2.0.4",
@@ -116,6 +117,7 @@
     "zod": "^3.25.53"
   },
   "devDependencies": {
+    "@next/bundle-analyzer": "^15.3.5",
     "@prisma/client": "^6.9.0",
     "@types/compression": "^1.8.1",
     "@types/cors": "^2.8.19",
@@ -154,6 +156,7 @@
     "tailwindcss": "^3.4.0",
     "ts-node": "^10.9.2",
     "typescript": "^5.8.3",
+    "webpack-bundle-analyzer": "^4.10.2",
     "webpack-cli": "^6.0.1",
     "webpack-dev-server": "^5.2.2"
   },

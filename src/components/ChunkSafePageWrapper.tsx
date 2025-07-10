@@ -35,25 +35,7 @@ const ChunkErrorFallback = ({ title }: { title: string }) => (
   </div>
 )
 
-// Função para tentar carregar o componente com diferentes extensões
-const tryImportComponent = async (basePath: string) => {
-  const possibleExtensions = ['', '.tsx', '.ts', '.jsx', '.js'];
-  
-  for (const ext of possibleExtensions) {
-    try {
-      const fullPath = basePath + ext;
-      console.log(`🔄 Tentando carregar: ${fullPath}`);
-      const module = await import(fullPath);
-      console.log(`✅ Sucesso ao carregar: ${fullPath}`);
-      return module;
-    } catch (error) {
-      console.log(`❌ Falha ao carregar: ${basePath + ext}`, error);
-      continue;
-    }
-  }
-  
-  throw new Error(`Não foi possível carregar o componente: ${basePath}`);
-};
+
 
 export default function ChunkSafePageWrapper({ 
   componentPath, 
@@ -65,10 +47,17 @@ export default function ChunkSafePageWrapper({
 
   // Criar o componente dinâmico com retry automático
   const DynamicComponent = dynamic(
-    () => tryImportComponent(componentPath).catch((error) => {
-      console.error(`Erro ao importar ${componentPath}:`, error)
-      return { default: () => <ChunkErrorFallback title={errorTitle} /> }
-    }),
+    async () => {
+      try {
+        console.log(`🔄 Tentando carregar componente: ${componentPath}`);
+        const module = await import(componentPath);
+        console.log(`✅ Componente carregado com sucesso: ${componentPath}`);
+        return module;
+      } catch (error) {
+        console.error(`❌ Erro ao importar ${componentPath}:`, error);
+        return { default: () => <ChunkErrorFallback title={errorTitle} /> };
+      }
+    },
     {
       loading: () => <LoadingFallback message={loadingMessage} />,
       ssr: false

@@ -3,7 +3,7 @@ import { PaginatedResponse } from '@/types/api';
 import { UnifiedAuthService } from '@/services/unifiedAuthService';
 import { AuthHeaderService } from './authHeaderService';
 
-const API_BASE_URL = '';
+const API_BASE_URL = '/api';
 
 // Configurações de timeout e retry
 const API_CONFIG = {
@@ -138,32 +138,8 @@ async function handleResponse<T>(response: Response): Promise<T> {
     if (response.status === 401) {
       console.error('❌ [API] Erro de autenticação: Token inválido ou expirado');
       
-      // Verificar se estamos no navegador
-      if (typeof window !== 'undefined' && typeof localStorage !== 'undefined') {
-        try {
-          localStorage.removeItem('accessToken');
-          localStorage.removeItem('authToken');
-          localStorage.removeItem('token');
-          localStorage.removeItem('refreshToken');
-          localStorage.removeItem('user');
-          
-          // Redirecionar apenas se estamos no navegador e não em um ambiente de servidor
-          if (typeof document !== 'undefined' && !document.URL.includes('/api/')) {
-            console.log('🔄 [API] Redirecionando para página de login após erro 401');
-            window.location.href = '/auth/login?error=session_expired';
-            return { success: false, redirected: true } as unknown as T;
-          }
-        } catch (error) {
-          console.error('❌ [API] Erro ao limpar tokens:', error);
-        }
-      }
-      
-      // Retornar um erro JSON em vez de redirecionar
-      return {
-        success: false,
-        message: 'Sessão expirada ou usuário não autenticado',
-        data: null
-      } as unknown as T;
+      // NÃO remover tokens nem redirecionar - apenas retornar erro
+      throw new Error('Sessão expirada ou usuário não autenticado');
     }
     
     // Tentar obter a mensagem de erro do corpo da resposta

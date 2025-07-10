@@ -85,6 +85,7 @@ router.use('/security-policies', securitypoliciesRouter);
 router.use('/system-settings', systemsettingsRouter);
 router.use('/target-audience', targetaudienceRouter);
 router.use('/teacher-subject', teachersubjectRouter);
+router.use('/teacher-subjects', teachersubjectRouter); // Alias para compatibilidade com frontend
 router.use('/tv-show', tvshowRouter);
 router.use('/viewing-status', viewingStatusRouter);
 router.use('/watchlist-entry', watchlistentryRouter);

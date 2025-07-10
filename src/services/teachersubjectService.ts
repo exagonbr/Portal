@@ -41,9 +41,9 @@ export interface PaginatedTeacherSubjectResponse {
 // Função para mapear resposta da API para o formato esperado
 const mapToTeacherSubject = (data: any): TeacherSubject => ({
   id: String(data.id),
-  name: data.name,
-  description: data.description,
-  isActive: data.isActive || data.is_active || false,
+  name: data.name || 'Nome não informado',
+  description: data.description || '',
+  isActive: data.isActive !== undefined ? data.isActive : (data.is_active !== undefined ? data.is_active : true),
   createdAt: data.createdAt || data.created_at || new Date().toISOString(),
   updatedAt: data.updatedAt || data.updated_at || new Date().toISOString(),
 });
@@ -66,7 +66,27 @@ class TeacherSubjectService extends BaseApiService<TeacherSubject> {
       let limit = params.limit || 10;
       let totalPages = 0;
 
-      if (response && response.items && Array.isArray(response.items)) {
+      // Formato da API real conforme teste: { success: true, data: { data: [...], total: X, page: X, limit: X } }
+      if (response && response.success && response.data) {
+        if (response.data.data && Array.isArray(response.data.data)) {
+          items = response.data.data;
+          total = response.data.total || response.data.data.length;
+          page = response.data.page || page;
+          limit = response.data.limit || limit;
+          totalPages = Math.ceil(total / limit);
+        } else if (Array.isArray(response.data)) {
+          items = response.data;
+          total = response.data.length;
+          totalPages = Math.ceil(total / limit);
+        }
+      } else if (response && response.data && response.data.data && Array.isArray(response.data.data)) {
+        // Caso onde não tem success mas tem data.data (fallback)
+        items = response.data.data;
+        total = response.data.total || response.data.data.length;
+        page = response.data.page || page;
+        limit = response.data.limit || limit;
+        totalPages = Math.ceil(total / limit);
+      } else if (response && response.items && Array.isArray(response.items)) {
         items = response.items;
         total = response.total || 0;
         page = response.page || page;

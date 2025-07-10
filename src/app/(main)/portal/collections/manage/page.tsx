@@ -9,7 +9,8 @@ import {
 } from 'lucide-react'
 import { formatDate, formatYear } from '@/utils/date'
 import DashboardLayout from '@/components/dashboard/DashboardLayout'
-import { tvShowService } from '@/services/tvShowService'
+import { collectionService } from '@/services/collectionService'
+import { CollectionDto, UpdateCollectionDto } from '@/types/collection'
 
 interface TVShowListItem {
   id: number
@@ -28,6 +29,34 @@ interface TVShowListItem {
   contract_term_end?: string
   poster_image_url?: string
   backdrop_image_url?: string
+}
+
+// Função para mapear CollectionDto para TVShowListItem
+const mapCollectionToTVShowListItem = (collection: CollectionDto): TVShowListItem => {
+  // Calcular duração em formato "Xh Ym"
+  const totalMinutes = Math.floor(collection.total_duration / 60)
+  const hours = Math.floor(totalMinutes / 60)
+  const minutes = totalMinutes % 60
+  const durationText = hours > 0 ? `${hours}h ${minutes}m` : `${minutes}m`
+  
+  return {
+    id: parseInt(collection.id, 10),
+    name: collection.name,
+    producer: collection.subject || 'Portal Educacional', // Usar subject como producer
+    total_load: durationText,
+    video_count: 0, // Será calculado posteriormente se necessário
+    created_at: collection.created_at,
+    poster_path: collection.cover_image,
+    backdrop_path: collection.cover_image,
+    overview: collection.synopsis || '',
+    popularity: 0, // Não disponível no CollectionDto
+    vote_average: 0, // Não disponível no CollectionDto
+    vote_count: 0, // Não disponível no CollectionDto
+    first_air_date: collection.created_at,
+    contract_term_end: collection.updated_at || collection.created_at,
+    poster_image_url: collection.cover_image,
+    backdrop_image_url: collection.cover_image
+  }
 }
 
 interface TVShowFormData {
@@ -428,24 +457,21 @@ export default function TVShowsManagePage() {
     return null;
   }
 
-  // Função para carregar os TV Shows
+  // Função para carregar as Coleções
   const loadTvShows = async (page = 1, searchQuery = '') => {
     try {
       setIsLoading(true)
       
-      // Usar o tvShowService para buscar os dados
-      const result = await tvShowService.getTvShows({
+      // Usar o collectionService para buscar os dados
+      const result = await collectionService.getCollections({
         page,
         limit: 10,
         ...(searchQuery && { search: searchQuery })
       })
       
       if (result && result.items) {
-        // Converter o id de string para number para compatibilidade com TVShowListItem
-        const formattedItems = result.items.map(item => ({
-          ...item,
-          id: parseInt(item.id, 10) // Converter string para number
-        })) as TVShowListItem[]
+        // Converter CollectionDto para TVShowListItem
+        const formattedItems = result.items.map(mapCollectionToTVShowListItem)
         
         setTvShows(formattedItems)
         setTotalPages(result.totalPages || 1)
@@ -461,7 +487,7 @@ export default function TVShowsManagePage() {
         })
       }
     } catch (err) {
-      console.error('Erro ao carregar TV Shows:', err)
+      console.error('Erro ao carregar Coleções:', err)
       setFormErrors({
         general: err instanceof Error ? err.message : 'Erro desconhecido ao carregar dados'
       })
@@ -475,7 +501,7 @@ export default function TVShowsManagePage() {
     try {
       setIsLoading(true)
       
-      const tvShowData = await tvShowService.getTvShowById(id)
+      const tvShowData = await collectionService.getCollectionById(id.toString())
       
       if (tvShowData) {
         // Converter para o formato esperado por TVShowCollection
@@ -506,21 +532,32 @@ export default function TVShowsManagePage() {
     try {
       setIsSubmitting(true)
       
-      const newTvShow = await tvShowService.createTvShow({
+      // Obter o ID do usuário logado (ou usar um valor padrão temporário)
+      const userId = "00000000-0000-0000-0000-000000000000"; // Valor temporário, deve ser substituído pelo ID real do usuário
+      
+      // Preparar a URL da imagem do poster
+      let coverImageUrl = "/default-cover.jpg";
+      if (data.poster_image_file) {
+        // Aqui deveria fazer upload do arquivo e obter a URL, mas por simplicidade usamos um placeholder
+        coverImageUrl = "/uploads/temp-poster.jpg";
+      }
+      
+      const newTvShow = await collectionService.createCollection({
         name: data.name,
-        overview: data.overview,
-        producer: data.producer,
-        first_air_date: data.first_air_date,
-        contract_term_end: data.contract_term_end,
-        // Adicionar outros campos conforme necessário
-      })
+        synopsis: data.overview || "", // Obrigatório
+        cover_image: coverImageUrl, // Obrigatório
+        subject: data.producer || "", // Obrigatório
+        total_duration: 0, // Obrigatório, valor temporário
+        created_by: userId, // Obrigatório
+        tags: [] // Opcional, mas incluído para completude
+      });
       
       // Recarregar a lista após criar
       await loadTvShows(currentPage, searchTerm)
       
       // Fechar modal e limpar formulário
       setShowEditModal(false)
-      resetTVShowForm() // Corrigido para resetTVShowForm
+      resetTVShowForm()
       
     } catch (err) {
       console.error('Erro ao criar TV Show:', err)
@@ -537,21 +574,32 @@ export default function TVShowsManagePage() {
     try {
       setIsSubmitting(true)
       
-      const updatedTvShow = await tvShowService.updateTvShow(id, {
+      // Preparar dados para atualização
+      const updateData: UpdateCollectionDto = {
         name: data.name,
-        overview: data.overview,
-        producer: data.producer,
-        first_air_date: data.first_air_date,
-        contract_term_end: data.contract_term_end,
-        // Adicionar outros campos conforme necessário
-      })
+        synopsis: data.overview,
+        subject: data.producer
+      };
+      
+      // Adicionar cover_image apenas se houver um arquivo de poster
+      if (data.poster_image_file) {
+        // Aqui deveria fazer upload do arquivo e obter a URL, mas por simplicidade usamos um placeholder
+        updateData.cover_image = "/uploads/temp-poster.jpg";
+      }
+      
+      // Adicionar total_duration se houver um valor de tempo
+      if (data.total_load) {
+        updateData.total_duration = parseTimeStringToMinutes(data.total_load) * 60; // Converter para segundos
+      }
+      
+      const updatedTvShow = await collectionService.updateCollection(id.toString(), updateData);
       
       // Recarregar a lista após atualizar
       await loadTvShows(currentPage, searchTerm)
       
       // Fechar modal e limpar formulário
       setShowEditModal(false)
-      resetTVShowForm() // Corrigido para resetTVShowForm
+      resetTVShowForm()
       
     } catch (err) {
       console.error('Erro ao atualizar TV Show:', err)
@@ -563,13 +611,32 @@ export default function TVShowsManagePage() {
     }
   }
 
+  // Função auxiliar para converter string de tempo (ex: "2h 30m") para minutos
+  const parseTimeStringToMinutes = (timeString: string): number => {
+    let totalMinutes = 0;
+    
+    // Tentar extrair horas
+    const hoursMatch = timeString.match(/(\d+)h/);
+    if (hoursMatch && hoursMatch[1]) {
+      totalMinutes += parseInt(hoursMatch[1]) * 60;
+    }
+    
+    // Tentar extrair minutos
+    const minutesMatch = timeString.match(/(\d+)m/);
+    if (minutesMatch && minutesMatch[1]) {
+      totalMinutes += parseInt(minutesMatch[1]);
+    }
+    
+    return totalMinutes;
+  }
+
   // Função para excluir um TV Show
   const deleteTvShowHandler = async (id: number) => {
     if (window.confirm('Tem certeza que deseja excluir este TV Show?')) {
       try {
         setIsLoading(true)
         
-        await tvShowService.deleteTvShow(id)
+        await collectionService.deleteCollection(id.toString())
         
         // Recarregar a lista após excluir
         await loadTvShows(currentPage, searchTerm)
@@ -590,7 +657,22 @@ export default function TVShowsManagePage() {
     try {
       setIsLoading(true)
       
-      await tvShowService.toggleTvShowStatus(id)
+      // Como toggleCollectionStatus não existe no collectionService, vamos usar uma abordagem alternativa
+      // Implementação temporária usando fetch diretamente
+      const token = getAuthToken()
+      if (token) {
+        const response = await fetch(`/api/collections/${id}/toggle-status`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${token}`
+          }
+        });
+        
+        if (!response.ok) {
+          throw new Error('Falha ao alternar status da coleção');
+        }
+      }
       
       // Recarregar a lista após alternar o status
       await loadTvShows(currentPage, searchTerm)

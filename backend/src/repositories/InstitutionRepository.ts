@@ -196,6 +196,30 @@ export class InstitutionRepository extends ExtendedRepository<Institution> {
     }
   }
 
+  async getInstitutionsWithStats(
+    filters: InstitutionFilters,
+    options: PaginationOptions
+  ): Promise<{ items: Institution[]; total: number; stats: any }> {
+    const { items, total } = await this.findWithFilters(filters, options);
+
+    const statsQuery = this.db(this.tableName)
+      .select(
+        this.db.raw('COUNT(*) as "totalInstitutions"'),
+        this.db.raw('SUM(CASE WHEN deleted = false THEN 1 ELSE 0 END) as "activeInstitutions"'),
+        this.db.raw('SUM(schools_count) as "totalSchools"'),
+        this.db.raw('SUM(users_count) as "totalUsers"')
+      )
+      .first();
+
+    const stats = await statsQuery;
+
+    return {
+      items,
+      total,
+      stats,
+    };
+  }
+
   async toggleStatus(id: string): Promise<Institution | null> {
     const institution = await this.findById(id);
     if (!institution) return null;

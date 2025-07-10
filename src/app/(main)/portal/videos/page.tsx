@@ -16,6 +16,9 @@ import { suppressHydrationWarnings } from '@/utils/suppressHydrationWarnings';
 import { UnifiedAuthService } from '@/services/unifiedAuthService';
 import { unitService } from '@/services/unitService';
 import { UnitDto, UnitFilter } from '@/types/unit';
+// Importar collectionService em vez de usar fetch direto
+import { collectionService } from '@/services/collectionService';
+import { CollectionDto } from '@/types/collection';
 
 // Interface para os dados de visualização
 interface ViewingStatus {
@@ -494,64 +497,65 @@ export default function VideoPortalPage() {
 
       console.log('🔍 Carregando coleções de vídeos...');
       
-      const response = await fetch('/api/tv-shows?limit=50', {
-        headers: {
-          'Authorization': `Bearer ${token}`,
-          'Content-Type': 'application/json'
-        }
-      });
+      const response = await collectionService.getCollections({ limit: 50 });
 
-      if (response.ok) {
-        const data = await response.json();
-        if (data.success && data.data?.tvShows) {
-          console.log(`✅ ${data.data.tvShows.length} coleções carregadas com sucesso`);
-          
-          // Processar coleções para garantir URLs de imagens
-          const processedShows = data.data.tvShows.map((show: TVShowCollection) => {
-            // Verificar e ajustar URLs de imagens
-            if (!show.poster_image_url && show.poster_path) {
-              show.poster_image_url = show.poster_path.startsWith('http') 
-                ? show.poster_path 
-                : `/api/images/${show.poster_path}`;
-            }
-            
-            if (!show.backdrop_image_url && show.backdrop_path) {
-              show.backdrop_image_url = show.backdrop_path.startsWith('http') 
-                ? show.backdrop_path 
-                : `/api/images/${show.backdrop_path}`;
-            }
-            
-            return show;
-          });
-          
-          setTvShows(processedShows);
-          
-          // Ordenar por popularidade para os shows populares
-          const popular = [...processedShows]
-            .sort((a, b) => (b.popularity || 0) - (a.popularity || 0))
-            .slice(0, 10);
-          setPopularShows(popular);
-          
-          // Ordenar por data para lançamentos recentes
-          const recent = [...processedShows]
-            .sort((a, b) => new Date(b.first_air_date || '').getTime() - new Date(a.first_air_date || '').getTime())
-            .slice(0, 10);
-          setRecentReleases(recent);
-          
-          // Calcular estatísticas
-          updateStats(processedShows);
-          
-          console.log('📊 Dados processados: ', {
-            total: processedShows.length,
-            popular: popular.length,
-            recent: recent.length
-          });
-          
-          return processedShows;
-        }
-      } else {
-        console.error('❌ Erro ao carregar coleções:', response.status);
-        throw new Error(`Erro ${response.status} ao carregar coleções`);
+             if (response && response.items) {
+         console.log(`✅ ${response.items.length} coleções carregadas com sucesso`);
+         
+         // Processar coleções para garantir URLs de imagens e mapear para formato TVShowCollection
+         const processedShows = response.items.map((collection: CollectionDto) => {
+           // Mapear CollectionDto para TVShowCollection
+           const show: TVShowCollection = {
+             id: parseInt(collection.id, 10),
+             name: collection.name,
+             overview: collection.synopsis || '',
+             poster_image_url: collection.cover_image,
+             backdrop_image_url: collection.cover_image,
+             poster_path: collection.cover_image,
+             backdrop_path: collection.cover_image,
+             producer: collection.subject || 'Portal Educacional',
+             popularity: 0, // Não disponível no CollectionDto
+             vote_average: 0, // Não disponível no CollectionDto
+             vote_count: 0, // Não disponível no CollectionDto
+             first_air_date: collection.created_at,
+             total_load: `${Math.floor(collection.total_duration / 60)}m`,
+             // Campos obrigatórios para TVShowCollection
+             video_count: 0,
+             created_at: collection.created_at,
+             updated_at: collection.updated_at,
+             deleted: collection.deleted,
+             modules: {}
+           }
+           
+           return show;
+         });
+        
+        setTvShows(processedShows);
+        
+                 setTvShows(processedShows);
+         
+         // Ordenar por popularidade para os shows populares
+         const popular = [...processedShows]
+           .sort((a, b) => (b.popularity || 0) - (a.popularity || 0))
+           .slice(0, 10);
+         setPopularShows(popular);
+         
+         // Ordenar por data para lançamentos recentes
+         const recent = [...processedShows]
+           .sort((a, b) => new Date(b.first_air_date || '').getTime() - new Date(a.first_air_date || '').getTime())
+           .slice(0, 10);
+         setRecentReleases(recent);
+         
+         // Calcular estatísticas
+         updateStats(processedShows);
+         
+         console.log('📊 Dados processados: ', {
+           total: processedShows.length,
+           popular: popular.length,
+           recent: recent.length
+         });
+         
+         return processedShows;
       }
     } catch (error) {
       console.error('❌ Erro ao carregar coleções:', error);
@@ -591,7 +595,7 @@ export default function VideoPortalPage() {
   }, []);
 
   // Atualizar estatísticas
-  const updateStats = useCallback((collections: TVShowCollection[]) => {
+  const updateStats = useCallback((collections: CollectionDto[]) => {
     const totalCollections = collections.length;
     // Estimar número total de vídeos (assumindo média de 10 vídeos por coleção)
     const totalVideos = totalCollections * 10; // Estimativa simples
@@ -1019,10 +1023,10 @@ export default function VideoPortalPage() {
   }, []);
 
   // Agrupar coleções por categoria
-  const groupByCategory = useCallback((collections: TVShowCollection[]) => {
-    const categories: Record<string, TVShowCollection[]> = {};
+  const groupByCategory = useCallback((collections: CollectionDto[]) => {
+    const categories: Record<string, CollectionDto[]> = {};
     
-    collections.forEach((show: TVShowCollection) => {
+    collections.forEach((show: CollectionDto) => {
       // Usar o produtor como categoria, ou "Geral" se não houver
       const category = show.producer || 'Geral';
       
@@ -1203,7 +1207,7 @@ export default function VideoPortalPage() {
           )}
 
           {/* Categorized Collections */}
-          {tvShows && tvShows.length > 0 && groupByCategory(tvShows).map(([category, shows]: [string, TVShowCollection[]]) => (
+          {tvShows && tvShows.length > 0 && groupByCategory(tvShows).map(([category, shows]: [string, CollectionDto[]]) => (
             <CarouselRow
               key={category}
               title={category}

@@ -4,12 +4,11 @@ import {
   Column,
   BeforeInsert,
   BeforeUpdate,
-  ManyToOne,
-  JoinColumn
+  OneToMany
 } from 'typeorm';
 import * as bcrypt from 'bcryptjs';
 import { UserRole } from './UserRole.enum';
-import { Role } from './Role';
+import { UserRoleMapping } from './UserRoleMapping';
 
 @Entity('users')
 export class User {
@@ -24,26 +23,8 @@ export class User {
   @PrimaryGeneratedColumn('increment')
   id!: number;
 
-  // @Column({ type: 'bigint', nullable: true })
-  // version?: number;
-
-  // @Column({ name: 'account_expired', type: 'boolean', nullable: true })
-  // accountExpired?: boolean;
-
-  // @Column({ name: 'account_locked', type: 'boolean', nullable: true })
-  // accountLocked?: boolean;
-
   @Column({ type: 'varchar', length: 255, nullable: true })
   address?: string;
-
-  // @Column({ name: 'amount_of_media_entries', type: 'int', nullable: true })
-  // amountOfMediaEntries?: number;
-
-  // @Column({ name: 'date_created', type: 'timestamp', nullable: true })
-  // dateCreated?: Date;
-
-  // @Column({ type: 'boolean', nullable: true })
-  // deleted?: boolean;
 
   @Column({ type: 'varchar', length: 255 })
   email!: string;
@@ -66,50 +47,20 @@ export class User {
     this.fullName = value;
   }
 
-  // @Column({ name: 'invitation_sent', type: 'boolean', nullable: true })
-  // invitationSent?: boolean;
-
   @Column({ name: 'is_admin', type: 'boolean' })
   isAdmin!: boolean;
-
-  // @Column({ type: 'varchar', length: 255, nullable: true })
-  // language?: string;
-
-  // @Column({ name: 'last_updated', type: 'timestamp', nullable: true })
-  // lastUpdated?: Date;
 
   @Column({ type: 'varchar', length: 255, nullable: true })
   password?: string;
 
-  // @Column({ name: 'password_expired', type: 'boolean', nullable: true })
-  // passwordExpired?: boolean;
-
-  // @Column({ name: 'pause_video_on_click', type: 'boolean', nullable: true })
-  // pauseVideoOnClick?: boolean;
-
   @Column({ type: 'varchar', length: 255, nullable: true })
   phone?: string;
-
-  // @Column({ name: 'reset_password', type: 'boolean', default: true })
-  // resetPassword!: boolean;
 
   @Column({ type: 'varchar', length: 255, nullable: true, unique: true })
   username?: string;
 
-  // @Column({ type: 'varchar', length: 255, nullable: true })
-  // uuid?: string;
-
   @Column({ name: 'is_manager', type: 'boolean' })
   isManager!: boolean;
-
-  // @Column({ type: 'int', nullable: true })
-  // type?: number;
-
-  // @Column({ name: 'certificate_path', type: 'varchar', length: 255, nullable: true })
-  // certificatePath?: string;
-
-  // @Column({ name: 'is_certified', type: 'boolean', default: false })
-  // isCertified!: boolean;
 
   @Column({ name: 'is_student', type: 'boolean' })
   isStudent!: boolean;
@@ -129,20 +80,12 @@ export class User {
     this.institutionId = value ?? undefined;
   }
 
-  // @Column({ type: 'varchar', length: 255, nullable: true })
-  // subject?: string;
-
   @Column({ name: 'subject_data_id', type: 'bigint', nullable: true })
   subjectDataId?: number;
 
-  // Adicionando a coluna role_id que está faltando
-  @Column({ name: 'role_id', type: 'bigint', nullable: true })
-  roleId?: number;
-
-  // Definindo a relação com a entidade Role
-  @ManyToOne(() => Role)
-  @JoinColumn({ name: 'role_id' })
-  role?: Role;
+  // Relacionamento com UserRoleMapping
+  @OneToMany(() => UserRoleMapping, mapping => mapping.user)
+  roleMappings?: UserRoleMapping[];
 
   // Métodos para hash de senha
   @BeforeInsert()
@@ -162,7 +105,7 @@ export class User {
   }
 
   hasValidRole(): boolean {
-    return !!this.roleId;
+    return this.roleMappings !== undefined && this.roleMappings.length > 0;
   }
 
   determineRoleFromFlags(): UserRole {

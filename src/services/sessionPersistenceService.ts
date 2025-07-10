@@ -132,9 +132,11 @@ export class SessionPersistenceService {
     const now = Date.now();
     
     // Verificar se refresh token ainda é válido
-    return session.refreshExpiresAt > now && 
-           session.accessToken && 
-           session.refreshToken;
+    const isRefreshValid = session.refreshExpiresAt > now;
+    const hasAccessToken = Boolean(session.accessToken);
+    const hasRefreshToken = Boolean(session.refreshToken);
+    
+    return isRefreshValid && hasAccessToken && hasRefreshToken;
   }
 
   /**
@@ -174,16 +176,17 @@ export class SessionPersistenceService {
       
       if (!response.ok) {
         const errorData = await response.json();
-        console.error('❌ Erro ao renovar token:', errorData);
+        const errorMessage = errorData.message || JSON.stringify(errorData);
+        console.error('❌ Erro ao renovar token:', errorMessage);
         
         // Se refresh token é inválido, limpar sessão
         if (response.status === 401) {
           this.clearSession();
         }
         
-        return { 
-          success: false, 
-          message: errorData.message || 'Erro ao renovar token' 
+        return {
+          success: false,
+          message: errorMessage
         };
       }
       

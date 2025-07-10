@@ -150,17 +150,11 @@ export default function AdminUsersPage() {
       
       console.log('✅ [USERS] Dados auxiliares carregados:', {
         roles: rolesResponse?.items?.length || 0,
-        institutions: Array.isArray(institutionsResponse) 
-          ? institutionsResponse.length 
-          : (institutionsResponse as any)?.items?.length || 0
+        institutions: institutionsResponse?.items?.length || 0
       })
       
       const rolesData = rolesResponse.items || []
-      const institutionsData = Array.isArray(institutionsResponse) 
-        ? institutionsResponse 
-        : (institutionsResponse as any).items || []
-      
-
+      const institutionsData = institutionsResponse.items || []
       
       updateState({
         roles: rolesData,
@@ -168,8 +162,8 @@ export default function AdminUsersPage() {
       })
       
       return {
-        roles: rolesResponse.items || [],
-        institutions: (institutionsResponse as any).items || institutionsResponse || []
+        roles: rolesData,
+        institutions: institutionsData
       }
     } catch (error: any) {
       console.error('❌ [USERS] Erro ao carregar dados auxiliares:', error)
@@ -211,23 +205,26 @@ export default function AdminUsersPage() {
       console.log('✅ [USERS] Usuários carregados:', {
         items: response.items?.length || 0,
         total: response.total,
-        page: response.page
+        page: response.page,
+        totalPages: response.totalPages
       })
-      
-
       
       // Verificar se a resposta tem o formato esperado
       if (!response || !Array.isArray(response.items)) {
         throw new Error('Formato de resposta inválido do servidor')
       }
       
+      // Calcular estatísticas
+      const stats = calculateStats(response.items, state.roles)
+      
       updateState({
         users: response.items,
+        stats: stats,
         pagination: {
-          ...state.pagination,
-          currentPage: page,
+          currentPage: response.page || page,
           totalItems: response.total || 0,
-          totalPages: response.totalPages || Math.ceil((response.total || 0) / state.pagination.itemsPerPage)
+          totalPages: response.totalPages || Math.ceil((response.total || 0) / (response.limit || state.pagination.itemsPerPage)),
+          itemsPerPage: response.limit || state.pagination.itemsPerPage
         },
         searchQuery: search,
         filters: filters,
@@ -235,12 +232,6 @@ export default function AdminUsersPage() {
         refreshing: false,
         error: null
       })
-
-      // Calcular estatísticas
-      if (state.roles && Array.isArray(state.roles) && state.roles.length > 0) {
-        const stats = calculateStats(response.items, state.roles)
-        updateState({ stats })
-      }
 
       if (!showLoading) {
         showSuccess("Lista de usuários atualizada com sucesso!")

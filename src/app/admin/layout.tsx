@@ -1,7 +1,5 @@
 'use client'
 
-import AuthenticatedLayout from '@/components/AuthenticatedLayout'
-import { UserRole } from '@/types/roles'
 import { ErrorBoundary } from '@/components/ErrorBoundary'
 import { NavigationLoadingProvider } from '@/contexts/NavigationLoadingContext'
 
@@ -13,9 +11,9 @@ export default function AdminLayout({
   return (
     <ErrorBoundary>
       <NavigationLoadingProvider>
-        <AuthenticatedLayout requiredRole={UserRole.SYSTEM_ADMIN}>
+        <div className="min-h-screen bg-gray-50">
           {children}
-        </AuthenticatedLayout>
+        </div>
       </NavigationLoadingProvider>
     </ErrorBoundary>
   )

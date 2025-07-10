@@ -4,7 +4,7 @@ import {
   Column,
   OneToMany
 } from 'typeorm';
-import { User } from './User';
+import { UserRoleMapping } from './UserRoleMapping';
 
 @Entity('roles')
 export class Role {
@@ -26,9 +26,9 @@ export class Role {
   @Column({ name: 'updated_at', type: 'timestamp', default: () => 'CURRENT_TIMESTAMP' })
   updatedAt!: Date;
 
-  // Adicionar a relação inversa com User
-  @OneToMany(() => User, user => user.role)
-  users?: User[];
+  // Relacionamento com UserRoleMapping
+  @OneToMany(() => UserRoleMapping, mapping => mapping.role)
+  userMappings?: UserRoleMapping[];
 
   get displayName(): string {
     return this.description || this.name;

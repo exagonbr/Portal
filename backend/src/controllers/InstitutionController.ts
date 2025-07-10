@@ -44,7 +44,7 @@ class InstitutionController extends BaseController<Institution> {
    // Adicionar log para debug
    console.log(`[API] Buscando instituições com filtros: ${JSON.stringify(filters)} e paginação: ${JSON.stringify(paginationOptions)}`);
    
-   const institutionsPromise = this.institutionRepository.findWithFilters(filters, paginationOptions);
+   const institutionsPromise = this.institutionRepository.getInstitutionsWithStats(filters, paginationOptions);
    
    // Usar Promise.race para aplicar timeout
    const result = await Promise.race([institutionsPromise, timeoutPromise]) as any;
@@ -60,6 +60,7 @@ class InstitutionController extends BaseController<Institution> {
     success: true,
     data: {
       items: result.items,
+      stats: result.stats,
       pagination: {
         total: result.total,
         page: paginationOptions.page,

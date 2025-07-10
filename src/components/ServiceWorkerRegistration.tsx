@@ -13,18 +13,44 @@ export default function ServiceWorkerRegistration() {
       return new Promise<void>((resolve) => {
         // Verificar se já está carregado
         if (window.swUtils) {
+          console.log('sw-utils.js já está carregado');
           resolve();
           return;
         }
 
-        const script = document.createElement('script');
-        script.src = '/sw-utils.js';
-        script.onload = () => resolve();
-        script.onerror = () => {
-          console.error('Erro ao carregar sw-utils.js');
-          resolve();
+        const maxRetries = 3;
+        let retryCount = 0;
+
+        const tryLoadScript = () => {
+          const script = document.createElement('script');
+          script.src = `/sw-utils.js?v=${Date.now()}`; // Adicionar parâmetro de cache-busting
+          
+          script.onload = () => {
+console.log('Tentando carregar sw-utils.js...');
+            console.log('sw-utils.js carregado com sucesso');
+            resolve();
+          };
+          
+          script.onerror = (error) => {
+            console.error(`Erro ao carregar sw-utils.js (tentativa ${retryCount + 1}/${maxRetries}):`, error);
+            
+            if (retryCount < maxRetries - 1) {
+              retryCount++;
+              setTimeout(() => {
+                console.log(`Tentando carregar sw-utils.js novamente (${retryCount}/${maxRetries})...`);
+                tryLoadScript();
+              }, 1000); // Esperar 1 segundo antes de tentar novamente
+            } else {
+              console.error('Falha ao carregar sw-utils.js após várias tentativas');
+              // Continuar mesmo com erro
+              resolve();
+            }
+          };
+          
+          document.head.appendChild(script);
         };
-        document.head.appendChild(script);
+
+        tryLoadScript();
       });
     };
 
