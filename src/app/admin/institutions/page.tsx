@@ -221,11 +221,7 @@ export default function ManageInstitutions() {
     fetchInstitutions(currentPage, searchQuery, false)
   }
 
-  // Adicionar um botão de força de atualização
-  const handleForceRefresh = () => {
-    showSuccess("Atualizando", "Buscando todos os dados da tabela institution...");
-    fetchInstitutions(1, '', true);
-  };
+
 
   const handleDeleteInstitution = async (institution: InstitutionDto) => {
     // Verificar se a instituição pode ser excluída
@@ -418,15 +414,6 @@ export default function ManageInstitutions() {
                   <RefreshCw className={`w-4 h-4 ${refreshing ? 'animate-spin' : ''}`} />
                   Atualizar
                 </Button>
-                <Button 
-                  onClick={handleForceRefresh}
-                  variant="outline" 
-                  disabled={refreshing}
-                  className="flex items-center gap-2 bg-amber-100 hover:bg-amber-200 text-amber-800"
-                >
-                  <RefreshCw className={`w-4 h-4 ${refreshing ? 'animate-spin' : ''}`} />
-                  Forçar Atualização
-                </Button>
                 <Button onClick={() => openModal('create')} className="flex items-center gap-2">
                   <Plus className="w-4 h-4" />
                   Nova Instituição
@@ -497,7 +484,7 @@ export default function ManageInstitutions() {
               <div className="text-center py-12">
                 <AlertTriangle className="w-16 h-16 text-red-300 mx-auto mb-4" />
                 <p className="text-red-500 text-lg mb-2">{loadingError}</p>
-                <Button onClick={handleForceRefresh} variant="outline" className="mt-4">
+                <Button onClick={handleRefresh} variant="outline" className="mt-4">
                   Tentar novamente
                 </Button>
               </div>

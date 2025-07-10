@@ -81,7 +81,7 @@ export class NotificationTemplateRepository extends ExtendedRepository<Notificat
   }
 
   async findByUserId(userId: string): Promise<NotificationTemplate[]> {
-    return this.findAll({ userId } as Partial<NotificationTemplate>);
+    return this.findAll({ userId: parseInt(userId, 10) } as Partial<NotificationTemplate>);
   }
 
   async createTemplate(data: CreateNotificationTemplateData): Promise<NotificationTemplate> {

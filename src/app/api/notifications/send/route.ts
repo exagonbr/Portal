@@ -1,8 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { getServerSession } from 'next-auth'
-import { authOptions } from '@/lib/auth'
 import { createCorsOptionsResponse, getCorsHeaders } from '@/config/cors'
 import { getSafeConnection } from '@/lib/database-safe'
+import { getAuthentication } from '@/lib/auth-utils'
 import nodemailer from 'nodemailer'
 
 export async function OPTIONS(request: NextRequest) {
@@ -146,26 +145,20 @@ async function sendTestEmail(emailConfig: any, testEmail: string = 'noreply@sabe
 
 export async function POST(request: NextRequest) {
   try {
-    // Verificar autenticação via NextAuth
-    const session = await getServerSession(authOptions)
+    // Verificar autenticação usando o padrão da aplicação
+    const session = await getAuthentication(request);
     
-    // Se não houver sessão, tentar verificar pelo token de autorização
     if (!session) {
-      const authHeader = request.headers.get('authorization');
-      if (!authHeader || !authHeader.startsWith('Bearer ')) {
-        return NextResponse.json({ 
-          success: false,
-          message: 'Não autorizado - Token não fornecido' 
-        }, { 
-          status: 401,
-          headers: getCorsHeaders(request.headers.get('origin') || undefined)
-        })
-      }
-      
-      // Aqui você poderia validar o token JWT
-      // Por enquanto, vamos apenas permitir a requisição continuar
-      console.log('🔑 Usando token de autorização para autenticar requisição');
+      return NextResponse.json({ 
+        success: false,
+        message: 'Não autorizado - Token de autenticação necessário' 
+      }, { 
+        status: 401,
+        headers: getCorsHeaders(request.headers.get('origin') || undefined)
+      });
     }
+
+    console.log('🔑 [Notification API] Usuário autenticado:', session.user?.email);
 
     const body = await request.json()
     console.log('🔍 [Notification API] Dados recebidos:', JSON.stringify(body, null, 2))
@@ -375,8 +368,8 @@ export async function POST(request: NextRequest) {
       type: body.type || 'info',
       category: body.category || channel.toLowerCase(),
       priority: body.priority || 'medium',
-      sender_id: session?.user?.email || null,
-      sender_name: session?.user?.name || null,
+      sender_id: session.user?.id || null,
+      sender_name: session.user?.name || session.user?.email || null,
       recipients,
       recipient_count: recipients.length,
       channels: [channel],

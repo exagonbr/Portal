@@ -335,164 +335,107 @@ export function LoginPage() {
       {/* Demo Credentials - Flutuante na lateral esquerda */}
       <DemoCredentials onCredentialSelect={handleCredentialSelect} />
 
-      {/* Content */}
-      <MotionDiv 
-        initial={{ opacity: 0, y: 30, scale: 0.95 }}
-        animate={{ opacity: 1, y: 0, scale: 1 }}
-        transition={{ duration: 0.8, ease: "easeOut" }}
-        className="relative z-10 max-w-lg w-full mx-4 space-y-8 p-8 sm:p-10 rounded-3xl shadow-2xl"
-        style={{ 
-          background: theme.type === 'modern' 
-            ? `linear-gradient(145deg, rgba(26, 26, 26, 0.95), rgba(18, 18, 18, 0.98))`
-            : `linear-gradient(145deg, rgba(255, 255, 255, 0.95), rgba(248, 250, 252, 0.98))`,
-          backdropFilter: 'blur(20px)',
-          border: `1px solid ${theme.colors.border.DEFAULT}40`,
-          boxShadow: `
-            0 25px 50px -12px rgba(0, 0, 0, 0.25),
-            0 0 0 1px ${theme.colors.border.DEFAULT}20,
-            inset 0 1px 0 0 ${theme.type === 'modern' ? 'rgba(255, 255, 255, 0.05)' : 'rgba(255, 255, 255, 0.8)'}
-          `
-        }}
-      >
-        {/* Logo Section */}
+      {/* Content - Container centralizado */}
+      <div className="min-h-screen flex items-center justify-center p-2 sm:p-4 md:p-6 lg:p-8">
+        {/* Box de login com todo o conteúdo */}
         <MotionDiv 
-          className="text-center"
-          initial={{ scale: 0.8, opacity: 0 }}
-          animate={{ scale: 1, opacity: 1 }}
-          transition={{ duration: 0.6, delay: 0.2, ease: "easeOut" }}
+          initial={{ opacity: 0, y: 20, scale: 0.98 }}
+          animate={{ opacity: 1, y: 0, scale: 1 }}
+          transition={{ duration: 0.6, ease: "easeOut", delay: 0.1 }}
+          className="relative z-10 bg-white rounded-xl shadow-xl border border-gray-200/50 flex flex-col w-full max-w-sm sm:max-w-md md:max-w-lg lg:max-w-xl xl:max-w-2xl"
+          style={{ 
+            minHeight: '500px',
+            maxHeight: '95vh',
+            boxShadow: '0 10px 40px rgba(0, 0, 0, 0.1), 0 4px 20px rgba(0, 0, 0, 0.05)'
+          }}
         >
-          <MotionDiv
-            whileHover={{ scale: 1.05, rotate: 1 }}
-            transition={{ type: "spring", stiffness: 300 }}
-            className="relative w-40 sm:w-52 h-14 sm:h-18 mx-auto mb-6 rounded-xl p-2"
-            style={{
-              background: `linear-gradient(135deg, ${theme.colors.background.primary}80, ${theme.colors.background.primary}60)`,
-              backdropFilter: 'blur(10px)',
-              border: `1px solid ${theme.colors.border.DEFAULT}30`
-            }}
-          >
-            <Image
-              src="/sabercon-logo.png"
-              alt="Sabercon Logo"
-              fill
-              className="object-contain p-2"
-              priority
-              sizes="(max-width: 640px) 160px, 208px"
-            />
-          </MotionDiv>
-          
-          <MotionH1 
-            className="text-2xl sm:text-3xl font-bold mb-2"
-            style={{ 
-              color: theme.colors.text.primary,
-              background: `linear-gradient(135deg, ${theme.colors.text.primary}, ${theme.colors.primary.DEFAULT})`,
-              backgroundClip: 'text',
-              WebkitBackgroundClip: 'text',
-              WebkitTextFillColor: 'transparent'
-            }}
-            initial={{ opacity: 0, y: 10 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.6, delay: 0.4 }}
-          >
-            Portal Educacional
-          </MotionH1>
-          
-          <MotionP 
-            className="text-base sm:text-lg font-medium"
-            style={{ color: theme.colors.text.secondary }}
-            initial={{ opacity: 0, y: 10 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.6, delay: 0.6 }}
-          >
-            Acesse sua conta para continuar
-          </MotionP>
-          
-          {/* Linha decorativa */}
-          <MotionDiv
-            initial={{ width: 0 }}
-            animate={{ width: '60%' }}
-            transition={{ duration: 0.8, delay: 0.8 }}
-            className="h-0.5 mx-auto mt-4 rounded-full"
-            style={{
-              background: `linear-gradient(90deg, transparent, ${theme.colors.primary.DEFAULT}60, transparent)`
-            }}
-          />
-        </MotionDiv>
-
-        {/* Mensagens de feedback aprimoradas */}
-        {showUnauthorizedMessage && (
-          <MotionDiv 
-            initial={{ opacity: 0, scale: 0.9, y: -10 }}
-            animate={{ opacity: 1, scale: 1, y: 0 }}
-            transition={{ duration: 0.4 }}
-            className="rounded-xl p-5 border backdrop-blur-sm" 
-            style={{
-              background: 'linear-gradient(135deg, rgba(239, 68, 68, 0.1), rgba(220, 38, 38, 0.05))',
-              borderColor: 'rgba(239, 68, 68, 0.3)',
-              boxShadow: '0 4px 20px rgba(239, 68, 68, 0.2)'
-            }}
-            role="alert"
-          >
-            <div className="flex items-start gap-4">
-              <MotionDiv
-                initial={{ scale: 0 }}
-                animate={{ scale: 1 }}
-                transition={{ delay: 0.1, type: "spring", stiffness: 300 }}
-                className="flex-shrink-0 w-10 h-10 rounded-full flex items-center justify-center bg-red-100"
-              >
-                <span className="material-symbols-outlined text-red-600" aria-hidden="true">error</span>
-              </MotionDiv>
-              <div className="flex-1">
-                <h3 className="text-base font-semibold text-red-800 mb-1">Acesso não autorizado</h3>
-                <p className="text-sm text-red-700">
-                  Você precisa fazer login para acessar esta área.
-                </p>
+          {/* Header com logo dentro da div branca */}
+          <div className="text-center pt-8 sm:pt-10 pb-6 sm:pb-8 px-4 sm:px-6 md:px-8">
+            <MotionDiv
+              initial={{ opacity: 0, y: -20, scale: 0.9 }}
+              animate={{ opacity: 1, y: 0, scale: 1 }}
+              transition={{ duration: 0.6, ease: "easeOut" }}
+            >
+              <div className="relative w-40 h-12 sm:w-48 sm:h-16 md:w-56 md:h-18 mx-auto mb-3">
+                <Image
+                  src="/sabercon-logo.png"
+                  alt="Sabercon Logo"
+                  fill
+                  className="object-contain"
+                  priority
+                  sizes="(max-width: 640px) 160px, (max-width: 768px) 192px, 224px"
+                />
               </div>
-            </div>
-          </MotionDiv>
-        )}
-
-        {showExpiredMessage && (
-          <MotionDiv 
-            initial={{ opacity: 0, scale: 0.9, y: -10 }}
-            animate={{ opacity: 1, scale: 1, y: 0 }}
-            transition={{ duration: 0.4 }}
-            className="rounded-xl p-5 border backdrop-blur-sm" 
-            style={{
-              background: 'linear-gradient(135deg, rgba(245, 158, 11, 0.1), rgba(217, 119, 6, 0.05))',
-              borderColor: 'rgba(245, 158, 11, 0.3)',
-              boxShadow: '0 4px 20px rgba(245, 158, 11, 0.2)'
-            }}
-            role="alert"
-          >
-            <div className="flex items-start gap-4">
-              <MotionDiv
-                initial={{ scale: 0 }}
-                animate={{ scale: 1 }}
-                transition={{ delay: 0.1, type: "spring", stiffness: 300 }}
-                className="flex-shrink-0 w-10 h-10 rounded-full flex items-center justify-center bg-amber-100"
+              
+              <MotionH1 
+                className="text-lg sm:text-xl md:text-2xl font-bold text-gray-800 mb-1"
+                initial={{ opacity: 0, y: 10 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.5, delay: 0.2 }}
               >
-                <span className="material-symbols-outlined text-amber-600" aria-hidden="true">schedule</span>
-              </MotionDiv>
-              <div className="flex-1">
-                <h3 className="text-base font-semibold text-amber-800 mb-1">Sessão expirada</h3>
-                <p className="text-sm text-amber-700">
-                  Sua sessão expirou. Por favor, faça login novamente.
-                </p>
-              </div>
-            </div>
-          </MotionDiv>
-        )}
+                Portal Educacional
+              </MotionH1>
+              
+              <MotionP 
+                className="text-xs sm:text-sm text-gray-600"
+                initial={{ opacity: 0, y: 10 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.5, delay: 0.3 }}
+              >
+                Faça login para continuar
+              </MotionP>
+            </MotionDiv>
+          </div>
 
-        {/* Form Section */}
-        <MotionDiv
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.6, delay: 1.0 }}
-        >
-          <LoginForm ref={loginFormRef} />
+          {/* Mensagens de feedback */}
+          {showUnauthorizedMessage && (
+            <MotionDiv 
+              initial={{ opacity: 0, y: -10 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.4 }}
+              className="mx-4 sm:mx-6 md:mx-8 mb-4 p-3 sm:p-4 bg-red-50 border border-red-200 rounded-lg"
+              role="alert"
+            >
+              <div className="flex items-center gap-2">
+                <span className="material-symbols-outlined text-red-500 text-sm">error</span>
+                <div>
+                  <p className="text-sm font-medium text-red-800">Acesso não autorizado</p>
+                  <p className="text-xs text-red-600">Você precisa fazer login para acessar esta área.</p>
+                </div>
+              </div>
+            </MotionDiv>
+          )}
+
+          {showExpiredMessage && (
+            <MotionDiv 
+              initial={{ opacity: 0, y: -10 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.4 }}
+              className="mx-4 sm:mx-6 md:mx-8 mb-4 p-3 sm:p-4 bg-amber-50 border border-amber-200 rounded-lg"
+              role="alert"
+            >
+              <div className="flex items-center gap-2">
+                <span className="material-symbols-outlined text-amber-500 text-sm">schedule</span>
+                <div>
+                  <p className="text-sm font-medium text-amber-800">Sessão expirada</p>
+                  <p className="text-xs text-amber-600">Sua sessão expirou. Por favor, faça login novamente.</p>
+                </div>
+              </div>
+            </MotionDiv>
+          )}
+
+          {/* Form Section */}
+          <div className="flex-1 flex flex-col justify-center px-4 sm:px-6 md:px-8 pb-6 sm:pb-8">
+            <MotionDiv
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.6, delay: 0.4 }}
+            >
+              <LoginForm />
+            </MotionDiv>
+          </div>
         </MotionDiv>
-      </MotionDiv>
+      </div>
     </LoginBackground>
   );
 }

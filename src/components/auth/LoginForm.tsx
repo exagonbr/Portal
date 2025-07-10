@@ -32,7 +32,7 @@ export function LoginForm() {
       setIsMobile(isMobileDevice || isTouchDevice || isSmallScreen);
     };
     
-    // Escutar evento de seleção de credenciais demo
+    // Escutar evento de seleção de credenciais
     const handleDemoCredentialSelected = (event: CustomEvent) => {
       const { email, password } = event.detail;
       setEmail(email);
@@ -99,14 +99,14 @@ export function LoginForm() {
 
   return (
     <>
-      <form onSubmit={handleLogin} className="space-y-6 sm:space-y-7 mt-8" role="form" aria-label="Formulário de login">
+      <form onSubmit={handleLogin} className="space-y-4 sm:space-y-5" role="form" aria-label="Formulário de login">
         {submitError && (
           <MotionDiv
             initial={{ opacity: 0, scale: 0.9, y: -10 }}
             animate={{ opacity: 1, scale: 1, y: 0 }}
             exit={{ opacity: 0, scale: 0.9, y: -10 }}
             transition={{ duration: 0.3, ease: "easeOut" }}
-            className="rounded-xl p-4 sm:p-5 flex items-start gap-3 backdrop-blur-sm border"
+            className="rounded-xl p-3 sm:p-4 md:p-5 flex items-start gap-2 sm:gap-3 backdrop-blur-sm border"
             style={{
               background: `linear-gradient(135deg, ${theme.colors.status.error}15, ${theme.colors.status.error}08)`,
               borderColor: `${theme.colors.status.error}30`,
@@ -153,7 +153,7 @@ export function LoginForm() {
         >
           <label 
             htmlFor="email" 
-            className="block text-sm font-semibold mb-3 transition-colors duration-300" 
+            className="block text-sm font-semibold mb-2 sm:mb-3 transition-colors duration-300" 
             style={{ 
               color: emailFocused ? theme.colors.primary.DEFAULT : theme.colors.text.primary 
             }}
@@ -171,7 +171,7 @@ export function LoginForm() {
               placeholder="seu@email.com"
               required
               disabled={isSubmitting}
-              className={`w-full px-5 py-4 pl-12 pr-4 rounded-xl border-2 transition-all duration-300 ease-out focus:outline-none backdrop-blur-sm
+              className={`w-full px-5 py-4 pl-14 pr-4 rounded-xl border-2 transition-all duration-300 ease-out focus:outline-none backdrop-blur-sm
                 ${emailFocused ? 'transform scale-[1.02]' : ''}
                 ${isSubmitting ? 'opacity-50 cursor-not-allowed' : 'hover:border-opacity-80'}
               `}
@@ -179,8 +179,8 @@ export function LoginForm() {
                 background: `linear-gradient(135deg, ${theme.colors.background.primary}90, ${theme.colors.background.primary}70)`,
                 borderColor: emailFocused ? theme.colors.primary.DEFAULT : theme.colors.border.DEFAULT,
                 color: theme.colors.text.primary,
-                fontSize: isMobile ? '16px' : '15px',
-                minHeight: '52px',
+                fontSize: isMobile ? '16px' : '14px',
+                minHeight: '44px',
                 boxShadow: emailFocused 
                   ? `0 8px 25px ${theme.colors.primary.DEFAULT}20, 0 0 0 3px ${theme.colors.primary.DEFAULT}10`
                   : `0 2px 10px ${theme.colors.border.DEFAULT}20`
@@ -193,9 +193,10 @@ export function LoginForm() {
                 color: emailFocused ? theme.colors.primary.DEFAULT : theme.colors.text.tertiary
               }}
               transition={{ duration: 0.2 }}
-              className="absolute left-4 top-1/2 transform -translate-y-1/2"
+              className="absolute left-4 top-0 bottom-0 flex items-center justify-center"
+              style={{ width: '32px' }}
             >
-              <span className="material-symbols-outlined text-xl">mail</span>
+              <span className="material-symbols-outlined text-lg sm:text-xl leading-none">mail</span>
             </MotionDiv>
             {/* Indicador de foco */}
             <MotionDiv
@@ -217,7 +218,7 @@ export function LoginForm() {
         >
           <label 
             htmlFor="password" 
-            className="block text-sm font-semibold mb-3 transition-colors duration-300" 
+            className="block text-sm font-semibold mb-2 sm:mb-3 transition-colors duration-300" 
             style={{ 
               color: passwordFocused ? theme.colors.primary.DEFAULT : theme.colors.text.primary 
             }}
@@ -235,7 +236,7 @@ export function LoginForm() {
               placeholder="••••••••"
               required
               disabled={isSubmitting}
-              className={`w-full px-5 py-4 pl-12 pr-12 rounded-xl border-2 transition-all duration-300 ease-out focus:outline-none backdrop-blur-sm
+              className={`w-full px-5 py-4 pl-14 pr-14 rounded-xl border-2 transition-all duration-300 ease-out focus:outline-none backdrop-blur-sm
                 ${passwordFocused ? 'transform scale-[1.02]' : ''}
                 ${isSubmitting ? 'opacity-50 cursor-not-allowed' : 'hover:border-opacity-80'}
               `}
@@ -243,8 +244,8 @@ export function LoginForm() {
                 background: `linear-gradient(135deg, ${theme.colors.background.primary}90, ${theme.colors.background.primary}70)`,
                 borderColor: passwordFocused ? theme.colors.primary.DEFAULT : theme.colors.border.DEFAULT,
                 color: theme.colors.text.primary,
-                fontSize: isMobile ? '16px' : '15px',
-                minHeight: '52px',
+                fontSize: isMobile ? '16px' : '14px',
+                minHeight: '44px',
                 boxShadow: passwordFocused 
                   ? `0 8px 25px ${theme.colors.primary.DEFAULT}20, 0 0 0 3px ${theme.colors.primary.DEFAULT}10`
                   : `0 2px 10px ${theme.colors.border.DEFAULT}20`
@@ -257,24 +258,27 @@ export function LoginForm() {
                 color: passwordFocused ? theme.colors.primary.DEFAULT : theme.colors.text.tertiary
               }}
               transition={{ duration: 0.2 }}
-              className="absolute left-4 top-1/2 transform -translate-y-1/2"
+              className="absolute left-4 top-0 bottom-0 flex items-center justify-center"
+              style={{ width: '32px' }}
             >
-              <span className="material-symbols-outlined text-xl">lock</span>
+              <span className="material-symbols-outlined text-lg sm:text-xl leading-none">lock</span>
             </MotionDiv>
             <button
               type="button"
               onClick={() => setShowPassword(!showPassword)}
-              className="absolute right-4 top-1/2 transform -translate-y-1/2 p-1 rounded-lg transition-all duration-200 hover:scale-110 active:scale-95"
+              className="absolute right-4 top-0 bottom-0 p-1 rounded-lg transition-all duration-200 hover:scale-110 active:scale-95 flex items-center justify-center"
               style={{ 
+                width: '32px',
                 color: theme.colors.text.tertiary,
-                backgroundColor: showPassword ? `${theme.colors.primary.DEFAULT}15` : 'transparent'
+                backgroundColor: showPassword ? `${theme.colors.primary.DEFAULT}15` : 'transparent',
+                marginTop: '6px'
               }}
             >
               <MotionDiv
                 animate={{ rotateY: showPassword ? 180 : 0 }}
                 transition={{ duration: 0.3 }}
               >
-                <span className="material-symbols-outlined text-xl">
+                <span className="material-symbols-outlined text-lg sm:text-xl leading-none">
                   {showPassword ? 'visibility_off' : 'visibility'}
                 </span>
               </MotionDiv>
@@ -290,17 +294,38 @@ export function LoginForm() {
           </div>
         </MotionDiv>
 
+        {/* Link "Esqueci minha senha" */}
+        <MotionDiv
+          initial={{ opacity: 0, y: 10 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.25, duration: 0.4 }}
+          className="text-right"
+        >
+          <button
+            type="button"
+            className="text-sm font-medium transition-colors duration-200 hover:underline"
+            style={{ 
+              color: theme.colors.primary.DEFAULT,
+            }}
+            onClick={() => {
+              // TODO: Implementar funcionalidade de esqueci minha senha
+              console.log('Esqueci minha senha clicado');
+            }}
+          >
+            Esqueci minha senha
+          </button>
+        </MotionDiv>
+
         {/* Botão de Login */}
         <MotionDiv
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.3, duration: 0.4 }}
-          className="pt-2"
         >
           <button
             type="submit"
             disabled={isSubmitting}
-            className="group relative w-full flex justify-center items-center gap-3 rounded-xl shadow-xl text-base font-semibold transition-all duration-300 transform overflow-hidden py-4 px-6"
+            className="group relative w-full flex justify-center items-center gap-2 rounded-xl shadow-xl text-sm font-semibold transition-all duration-300 transform overflow-hidden py-3 px-3 sm:px-4"
             style={{
               background: isSubmitting 
                 ? `linear-gradient(135deg, ${theme.colors.primary.DEFAULT}60, ${theme.colors.primary.DEFAULT}40)`
@@ -309,8 +334,8 @@ export function LoginForm() {
               boxShadow: isSubmitting 
                 ? `0 4px 15px ${theme.colors.primary.DEFAULT}30`
                 : `0 8px 25px ${theme.colors.primary.DEFAULT}40, 0 0 0 1px ${theme.colors.primary.DEFAULT}20`,
-              minHeight: '56px',
-              fontSize: isMobile ? '16px' : '15px'
+              minHeight: '44px',
+              fontSize: '14px'
             }}
             onMouseEnter={(e) => {
               if (!isSubmitting) {
@@ -364,7 +389,7 @@ export function LoginForm() {
           initial={{ opacity: 0, scale: 0.8 }}
           animate={{ opacity: 1, scale: 1 }}
           transition={{ delay: 0.4, duration: 0.4 }}
-          className="relative py-4"
+          className="relative py-3 sm:py-4"
         >
           <div className="absolute inset-0 flex items-center">
             <div 
@@ -376,7 +401,7 @@ export function LoginForm() {
           </div>
           <div className="relative flex justify-center">
             <span 
-              className="px-4 py-2 text-sm font-medium rounded-full backdrop-blur-sm border"
+              className="px-3 sm:px-4 py-1 sm:py-2 text-xs sm:text-sm font-medium rounded-full backdrop-blur-sm border"
               style={{ 
                 backgroundColor: `${theme.colors.background.primary}95`,
                 color: theme.colors.text.secondary,
@@ -405,42 +430,22 @@ export function LoginForm() {
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.6, duration: 0.4 }}
-          className="pt-2"
         >
           <button
             type="button"
             onClick={() => setIsModalOpen(true)}
-            className="group w-full flex items-center justify-center gap-3 py-4 px-6 rounded-xl text-sm font-semibold transition-all duration-300 transform hover:scale-[1.02] active:scale-98 backdrop-blur-sm border"
+            className="w-full flex items-center justify-center gap-2 py-3 px-3 sm:px-4 rounded-xl text-sm font-semibold backdrop-blur-sm border"
             style={{
-              background: `linear-gradient(135deg, ${theme.colors.secondary.DEFAULT}95, ${theme.colors.secondary.DEFAULT}80)`,
+              background: `linear-gradient(135deg, ${theme.colors.secondary.DEFAULT}, ${theme.colors.secondary.DEFAULT}E0)`,
               color: theme.colors.secondary.contrast,
-              borderColor: `${theme.colors.secondary.DEFAULT}30`,
-              boxShadow: `0 4px 15px ${theme.colors.secondary.DEFAULT}25`,
-              minHeight: '52px'
-            }}
-            onMouseEnter={(e) => {
-              e.currentTarget.style.boxShadow = `0 8px 25px ${theme.colors.secondary.DEFAULT}35`;
-            }}
-            onMouseLeave={(e) => {
-              e.currentTarget.style.boxShadow = `0 4px 15px ${theme.colors.secondary.DEFAULT}25`;
+              borderColor: `${theme.colors.secondary.DEFAULT}60`,
+              boxShadow: `0 4px 15px ${theme.colors.secondary.DEFAULT}40`,
+              minHeight: '44px',
+              fontSize: '14px'
             }}
           >
-            <MotionDiv
-              whileHover={{ scale: 1.1, rotate: 360 }}
-              transition={{ duration: 0.5 }}
-            >
-              <span className="material-symbols-outlined" aria-hidden="true">verified</span>
-            </MotionDiv>
+            <span className="material-symbols-outlined" aria-hidden="true">verified</span>
             <span>Validar Licença</span>
-            
-            {/* Efeito de shimmer */}
-            <div 
-              className="absolute inset-0 opacity-0 group-hover:opacity-100 transition-opacity duration-500"
-              style={{
-                background: `linear-gradient(45deg, transparent 30%, ${theme.colors.secondary.contrast}15 50%, transparent 70%)`,
-                animation: 'shimmer 2s infinite'
-              }}
-            />
           </button>
         </MotionDiv>
       </form>
@@ -449,13 +454,6 @@ export function LoginForm() {
         isOpen={isModalOpen}
         onClose={() => setIsModalOpen(false)}
       />
-
-      <style jsx>{`
-        @keyframes shimmer {
-          0% { transform: translateX(-100%); }
-          100% { transform: translateX(100%); }
-        }
-      `}</style>
     </>
   );
 }

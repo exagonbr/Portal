@@ -52,8 +52,8 @@ export class SessionService {
         method: 'POST',
         headers: await this.getHeaders(token),
         body: JSON.stringify({
-          sessionData,
-          expirationTime
+          userId: sessionData.userId,
+          email: sessionData.email
         }),
       });
 
