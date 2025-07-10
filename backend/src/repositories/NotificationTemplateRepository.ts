@@ -9,7 +9,7 @@ export interface NotificationTemplateFilter {
   name?: string;
   category?: string;
   isPublic?: boolean;
-  userId?: string;
+  userId?: number;
   createdBy?: string;
 }
 
@@ -85,7 +85,28 @@ export class NotificationTemplateRepository extends ExtendedRepository<Notificat
   }
 
   async createTemplate(data: CreateNotificationTemplateData): Promise<NotificationTemplate> {
-    return this.create(data);
+    console.log('🔍 [Template Repository] Dados recebidos:', data);
+    
+    // Mapear os dados para o formato do banco
+    const insertData = {
+      name: data.name,
+      subject: data.subject,
+      message: data.message,
+      html: data.html,
+      category: data.category,
+      is_public: data.isPublic,
+      user_id: data.userId,
+      created_by: data.createdBy,
+      created_at: new Date(),
+      updated_at: new Date()
+    };
+    
+    console.log('🔍 [Template Repository] Dados para INSERT:', insertData);
+    
+    const result = await this.create(insertData);
+    console.log('✅ [Template Repository] Template criado:', result);
+    
+    return result;
   }
 
   async updateTemplate(id: string, data: UpdateNotificationTemplateData): Promise<NotificationTemplate | null> {

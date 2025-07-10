@@ -51,13 +51,19 @@ export class NotificationTemplateService {
   }
 
   async createTemplate(data: CreateNotificationTemplateData): Promise<NotificationTemplate> {
+    console.log('🔍 [Template Service] Dados recebidos:', data);
+    
     // Validar se o nome não está em uso
     const existingTemplate = await this.notificationTemplateRepository.findByName(data.name);
     if (existingTemplate) {
       throw new Error('Template com este nome já existe');
     }
 
-    return this.notificationTemplateRepository.createTemplate(data);
+    console.log('🔍 [Template Service] Chamando repository.createTemplate com:', data);
+    const result = await this.notificationTemplateRepository.createTemplate(data);
+    console.log('✅ [Template Service] Template criado no repository:', result);
+    
+    return result;
   }
 
   async updateTemplate(id: string, data: UpdateNotificationTemplateData): Promise<NotificationTemplate | null> {

@@ -22,13 +22,14 @@ async function extractUserId(request: NextRequest): Promise<string | null> {
       return session.user.id.toString();
     }
     
-    // 2. Tentar obter dos cookies
+    // 2. Tentar obter dos cookies - user_data
     const cookies = request.cookies;
     const userDataCookie = cookies.get('user_data');
     if (userDataCookie) {
       try {
         const userData = JSON.parse(decodeURIComponent(userDataCookie.value));
         if (userData && userData.id) {
+          console.log('✅ user_id obtido do cookie user_data:', userData.id);
           return userData.id.toString();
         }
       } catch (error) {
@@ -36,19 +37,67 @@ async function extractUserId(request: NextRequest): Promise<string | null> {
       }
     }
     
-    // 3. Tentar obter de headers personalizados
+    // 3. Tentar obter do cookie session_data
+    const sessionDataCookie = cookies.get('session_data');
+    if (sessionDataCookie) {
+      try {
+        const sessionData = JSON.parse(decodeURIComponent(sessionDataCookie.value));
+        if (sessionData && sessionData.user_id) {
+          console.log('✅ user_id obtido do cookie session_data (user_id):', sessionData.user_id);
+          return sessionData.user_id.toString();
+        }
+        if (sessionData && sessionData.userId) {
+          console.log('✅ user_id obtido do cookie session_data (userId):', sessionData.userId);
+          return sessionData.userId.toString();
+        }
+      } catch (error) {
+        console.error('❌ Erro ao parsear cookie session_data:', error);
+      }
+    }
+    
+    // 4. Tentar obter do cookie user
+    const userCookie = cookies.get('user');
+    if (userCookie) {
+      try {
+        const userData = JSON.parse(decodeURIComponent(userCookie.value));
+        if (userData && userData.id) {
+          console.log('✅ user_id obtido do cookie user:', userData.id);
+          return userData.id.toString();
+        }
+      } catch (error) {
+        console.error('❌ Erro ao parsear cookie user:', error);
+      }
+    }
+    
+    // 5. Tentar obter de headers personalizados
     const userId = request.headers.get('x-user-id');
     if (userId) {
+      console.log('✅ user_id obtido do header x-user-id:', userId);
       return userId;
     }
     
-    // 4. Tentar obter da URL
+    // 6. Tentar obter da URL
     const url = new URL(request.url);
     const userIdParam = url.searchParams.get('userId');
     if (userIdParam) {
+      console.log('✅ user_id obtido do query parameter userId:', userIdParam);
       return userIdParam;
     }
     
+    // 7. Tentar obter do body (se for POST/PUT/PATCH)
+    if (request.method !== 'GET') {
+      try {
+        const body = await request.clone().json();
+        if (body && body.user_id) {
+          console.log('✅ user_id obtido do body:', body.user_id);
+          return body.user_id.toString();
+        }
+      } catch (error) {
+        // Ignore errors when trying to parse body
+      }
+    }
+    
+    console.log('❌ user_id não encontrado em nenhuma fonte');
     return null;
   } catch (error) {
     console.error('❌ Erro ao extrair user_id:', error);

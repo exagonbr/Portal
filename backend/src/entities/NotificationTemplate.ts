@@ -32,8 +32,8 @@ export class NotificationTemplate {
   @Column({ name: 'is_public', type: 'boolean', default: false })
   isPublic!: boolean;
 
-  @Column({ name: 'user_id', type: 'varchar' })
-  userId!: string;
+  @Column({ name: 'user_id', type: 'integer' })
+  userId!: number;
 
   @ManyToOne(() => User)
   @JoinColumn({ name: 'user_id' })

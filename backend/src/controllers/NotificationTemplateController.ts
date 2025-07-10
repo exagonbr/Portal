@@ -47,7 +47,7 @@ export class NotificationTemplateController {
       if (req.query.name) filters.name = req.query.name as string;
       if (req.query.category) filters.category = req.query.category as string;
       if (req.query.isPublic !== undefined) filters.isPublic = req.query.isPublic === 'true';
-      if (req.query.userId) filters.userId = req.query.userId as string;
+      if (req.query.userId) filters.userId = parseInt(req.query.userId as string);
       if (req.query.createdBy) filters.createdBy = req.query.createdBy as string;
 
       const result = await NotificationTemplateService.getTemplatesPaginated(page, limit, filters);
@@ -177,6 +177,37 @@ export class NotificationTemplateController {
     try {
       const templateData: CreateNotificationTemplateData = req.body;
 
+      console.log('🔍 [Template Controller] Dados recebidos iniciais:', templateData);
+      console.log('🔍 [Template Controller] Usuário autenticado:', req.user);
+
+      // Adicionar dados do usuário autenticado
+      if (req.user) {
+        // Tentar obter de outros cookies comuns
+        let sessionData: any = null;
+        const sessionCookie = req.cookies?.session_data;
+        if (sessionCookie) {
+          try {
+            sessionData = typeof sessionCookie === 'string' 
+              ? JSON.parse(decodeURIComponent(sessionCookie))
+              : sessionCookie;
+          } catch (error) {
+            console.log('❌ Erro ao parsear cookie session_data:', error);
+          }
+        }
+    
+        templateData.userId = sessionData?.user_id || (req.user as any).id || 1;
+        templateData.createdBy = (req.user as any).fullName || (req.user as any).email || (req.user as any).id?.toString() || 'Sistema';
+        console.log('✅ [Template Controller] user_id definido:', templateData.userId);
+        console.log('✅ [Template Controller] created_by definido:', templateData.createdBy);
+      } else {
+        console.log('❌ [Template Controller] req.user não existe!');
+        // Fallback para garantir que sempre tem um user_id
+        templateData.userId = 1;
+        templateData.createdBy = 'Sistema';
+      }
+
+      console.log('🔍 [Template Controller] Dados finais para criação:', templateData);
+
       // Validar dados
       const validationErrors = await NotificationTemplateService.validateTemplate(templateData);
       if (validationErrors.length > 0) {
@@ -188,7 +219,9 @@ export class NotificationTemplateController {
         return;
       }
 
+      console.log('🔍 [Template Controller] Chamando createTemplate com:', templateData);
       const template = await NotificationTemplateService.createTemplate(templateData);
+      console.log('✅ [Template Controller] Template criado:', template);
 
       res.status(201).json({
         success: true,

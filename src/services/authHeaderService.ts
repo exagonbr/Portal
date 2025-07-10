@@ -19,10 +19,22 @@ export class AuthHeaderService {
       headers.set('Content-Type', 'application/json');
     }
 
-    // Usar token fixo para bypass de autenticação
-    // Adicionar um token de acesso direto para o frontend
-    headers.set('Authorization', 'Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6IjEiLCJlbWFpbCI6ImFkbWluQHNhYmVyY29uLmNvbS5iciIsInJvbGUiOiJTWVNURU1fQURNSU4iLCJpYXQiOjE3MjA1NDA1MDAsImV4cCI6MjcyMDU0MDUwMH0.qwerty123456');
-    console.log("⚠️ [AUTH] Usando token fixo para bypass de autenticação");
+    // Tentar obter token do localStorage se estivermos no cliente
+    if (typeof window !== 'undefined') {
+      const token = localStorage.getItem('accessToken') || 
+                    localStorage.getItem('auth_token') || 
+                    localStorage.getItem('token') ||
+                    localStorage.getItem('authToken');
+      
+      if (token) {
+        headers.set('Authorization', `Bearer ${token}`);
+        console.log('✅ [AUTH] Token encontrado no localStorage');
+      } else {
+        console.log('⚠️ [AUTH] Nenhum token encontrado no localStorage');
+      }
+    } else {
+      console.log('⚠️ [AUTH] Executando no servidor - sem acesso ao localStorage');
+    }
     
     return headers;
   }

@@ -3,7 +3,7 @@ import { PaginatedResponse } from '@/types/api';
 import { UnifiedAuthService } from '@/services/unifiedAuthService';
 import { AuthHeaderService } from './authHeaderService';
 
-const API_BASE_URL = '/api';
+const API_BASE_URL = '';
 
 // Configurações de timeout e retry
 const API_CONFIG = {
@@ -194,7 +194,15 @@ async function handleResponse<T>(response: Response): Promise<T> {
  * Faz uma requisição GET à API.
  */
 export const apiGet = async <T>(endpoint: string, params?: Record<string, any>): Promise<T> => {
-  const url = new URL(`${API_BASE_URL}${endpoint}`, window.location.origin);
+  // Construir URL de forma segura para SSR
+  let url: URL;
+  if (typeof window !== 'undefined') {
+    url = new URL(`${API_BASE_URL}${endpoint}`, window.location.origin);
+  } else {
+    // No servidor, usar URL absoluta
+    url = new URL(`${API_BASE_URL}${endpoint}`, 'https://portal.sabercon.com.br');
+  }
+  
   if (params) {
     Object.entries(params).forEach(([key, value]) => {
       if (value !== undefined && value !== null) {

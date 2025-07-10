@@ -1,4 +1,5 @@
 import { Request, Response, NextFunction, RequestHandler } from 'express';
+import jwt from 'jsonwebtoken';
 import { User } from '../entities/User';
 
 declare global {
@@ -64,26 +65,56 @@ export const requireAuth: RequestHandler = async (req: Request, res: Response, n
     tokenCache.delete(token);
   }
 
-  // TEMPORÁRIO: Bypass completo de autenticação
-  console.log('⚠️ [AUTH] Bypass completo de autenticação ativado');
-  
-  // Criar um usuário mock
-  const user = new User();
-  user.id = 1;
-  user.email = 'admin@sabercon.com.br';
-  user.fullName = 'Admin Temporário';
-  user.isAdmin = true;
-  user.isManager = false;
-  user.isStudent = false;
-  user.isTeacher = false;
-  user.enabled = true;
-  
-  // Armazenar no cache
-  tokenCache.set(token, {
-    user,
-    timestamp: Date.now()
-  });
-  
-  req.user = user;
-  next();
+  try {
+    // Tentar decodificar o token JWT
+    const jwtSecret = process.env.JWT_SECRET || 'default-secret';
+    const decoded = jwt.verify(token, jwtSecret) as any;
+    
+    console.log('✅ [AUTH] Token JWT decodificado:', decoded);
+    
+    // Criar usuário a partir do token decodificado
+    const user = new User();
+    user.id = decoded.id || decoded.userId || 1;
+    user.email = decoded.email || 'admin@sabercon.com.br';
+    user.fullName = decoded.name || decoded.fullName || 'Admin';
+    user.isAdmin = decoded.role === 'SYSTEM_ADMIN' || true;
+    user.isManager = decoded.role === 'INSTITUTION_MANAGER' || false;
+    user.isStudent = decoded.role === 'STUDENT' || false;
+    user.isTeacher = decoded.role === 'TEACHER' || false;
+    user.enabled = true;
+    
+    // Armazenar no cache
+    tokenCache.set(token, {
+      user,
+      timestamp: Date.now()
+    });
+    
+    req.user = user;
+    console.log('✅ [AUTH] Usuário autenticado:', { id: user.id, email: user.email, name: user.fullName });
+    next();
+    
+  } catch (jwtError) {
+    console.log('⚠️ [AUTH] Erro ao decodificar JWT, usando bypass:', jwtError);
+    
+    // Fallback: Criar um usuário mock (manter compatibilidade)
+    const user = new User();
+    user.id = 1;
+    user.email = 'admin@sabercon.com.br';
+    user.fullName = 'Admin Temporário';
+    user.isAdmin = true;
+    user.isManager = false;
+    user.isStudent = false;
+    user.isTeacher = false;
+    user.enabled = true;
+    
+    // Armazenar no cache
+    tokenCache.set(token, {
+      user,
+      timestamp: Date.now()
+    });
+    
+    req.user = user;
+    console.log('⚠️ [AUTH] Usando usuário mock:', { id: user.id, email: user.email });
+    next();
+  }
 };

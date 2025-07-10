@@ -41,7 +41,7 @@ export class NotificationTemplateService {
     if (filters.userId) params.append('userId', filters.userId);
     if (filters.createdBy) params.append('createdBy', filters.createdBy);
 
-    const url = `${this.baseUrl}/paginated?${params.toString()}`;
+    const url = `${this.baseUrl}?${params.toString()}`;
     return apiGet<NotificationTemplateResponseDto>(url);
   }
 
@@ -51,23 +51,33 @@ export class NotificationTemplateService {
   }
 
   async getTemplatesByCategory(category: string): Promise<NotificationTemplateDto[]> {
-    const response = await apiGet<{ success: boolean; data: NotificationTemplateDto[] }>(`${this.baseUrl}/category/${category}`);
+    const params = new URLSearchParams();
+    params.append('category', category);
+    
+    const response = await apiGet<{ success: boolean; data: NotificationTemplateDto[] }>(`${this.baseUrl}?${params.toString()}`);
     return response.data;
   }
 
   async getPublicTemplates(): Promise<NotificationTemplateDto[]> {
-    const response = await apiGet<{ success: boolean; data: NotificationTemplateDto[] }>(`${this.baseUrl}/public`);
+    const params = new URLSearchParams();
+    params.append('isPublic', 'true');
+    
+    const response = await apiGet<{ success: boolean; data: NotificationTemplateDto[] }>(`${this.baseUrl}?${params.toString()}`);
     return response.data;
   }
 
   async getTemplatesByUserId(userId: string): Promise<NotificationTemplateDto[]> {
-    const response = await apiGet<{ success: boolean; data: NotificationTemplateDto[] }>(`${this.baseUrl}/user/${userId}`);
+    const params = new URLSearchParams();
+    params.append('userId', userId);
+    
+    const response = await apiGet<{ success: boolean; data: NotificationTemplateDto[] }>(`${this.baseUrl}?${params.toString()}`);
     return response.data;
   }
 
   async getCategories(): Promise<string[]> {
-    const response = await apiGet<{ success: boolean; data: string[] }>(`${this.baseUrl}/categories`);
-    return response.data;
+    // Implementar endpoint específico para categorias se necessário
+    // Por enquanto, retornar categorias padrão
+    return ['custom', 'system', 'notification', 'email', 'sms'];
   }
 
   async createTemplate(data: CreateNotificationTemplateDto): Promise<NotificationTemplateDto> {
@@ -95,7 +105,14 @@ export class NotificationTemplateService {
       errors.push('Assunto é obrigatório');
     }
 
-    if ('message' in data && (!data.message || data.message.trim().length === 0)) {
+    // Validar mensagem apenas se não for HTML ou se for HTML mas não tiver conteúdo
+    if ('message' in data && 'html' in data) {
+      // Se não for HTML, mensagem é obrigatória
+      if (!data.html && (!data.message || data.message.trim().length === 0)) {
+        errors.push('Mensagem é obrigatória');
+      }
+      // Se for HTML, pode ter mensagem vazia (será preenchida pelo editor visual)
+    } else if ('message' in data && (!data.message || data.message.trim().length === 0)) {
       errors.push('Mensagem é obrigatória');
     }
 
