@@ -1,7 +1,7 @@
 import { Request, Response } from 'express';
 import { BaseRepository } from '../repositories/BaseRepository';
 
-export class BaseController<T extends { id: string | number }> {
+class BaseController<T extends { id: string | number }> {
   protected repository: BaseRepository<T>;
 
   constructor(repository: BaseRepository<T>) {
@@ -84,3 +84,4 @@ export class BaseController<T extends { id: string | number }> {
     res.status(404).json({ success: false, message });
   }
 }
+export default BaseController;

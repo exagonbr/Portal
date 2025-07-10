@@ -1,8 +1,8 @@
-import { Repository } from "typeorm";
+import { Repository, DeleteResult } from 'typeorm';
 import { AppDataSource } from "../config/typeorm.config";
 import { ExtendedRepository, PaginatedResult } from './ExtendedRepository';
 import { WatchlistEntry } from '../entities/WatchlistEntry';
-import { BaseRepository } from './BaseRepository';
+import { ExtendedRepository, PaginatedResult } from './ExtendedRepository';
 
 export class WatchlistEntryRepository extends ExtendedRepository<WatchlistEntry> {
   private repository: Repository<WatchlistEntry>;
@@ -80,4 +80,45 @@ export class WatchlistEntryRepository extends ExtendedRepository<WatchlistEntry>
   async delete(id: string | number): Promise<boolean> {
     return super.delete(id);
   }
+
+  async findActive(limit: number = 100): Promise<any[]> {
+    return this.find({
+      where: { deleted: false },
+      take: limit,
+      order: { id: 'DESC' }
+    });
+  }
+
+  async findByIdActive(id: string | number): Promise<any | null> {
+    return this.findOne({
+      where: { id: id as any, deleted: false }
+    });
+  }
+
+  async findWithPagination(page: number = 1, limit: number = 10): Promise<{ data: any[], total: number }> {
+    const [data, total] = await this.findAndCount({
+      where: { deleted: false },
+      skip: (page - 1) * limit,
+      take: limit,
+      order: { id: 'DESC' }
+    });
+    return { data, total };
+  }
+
+  async searchByName(name: string): Promise<any[]> {
+    return this.createQueryBuilder()
+      .where("LOWER(name) LIKE LOWER(:name)", { name: `%${name}%` })
+      .andWhere("deleted = :deleted", { deleted: false })
+      .getMany();
+  }
+
+  async softDelete(id: string | number): Promise<void> {
+    await this.update(id as any, { deleted: true });
+  }
+
+
+  async save(entity: any): Promise<any> {
+    return await this.manager.save(entity);
+  }
+
 }

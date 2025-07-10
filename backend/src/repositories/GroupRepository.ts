@@ -1,5 +1,5 @@
+import { ExtendedRepository, PaginatedResult } from "./ExtendedRepository";
 import { Repository } from "typeorm";
-import { ExtendedRepository, PaginatedResult } from './ExtendedRepository';
 // Supondo que as entidades UserGroup, GroupMember, GroupPermission existam
 // import { UserGroup, GroupMember, GroupPermission } from '../entities/UserGroup';
 
@@ -41,7 +41,7 @@ export interface UpdateUserGroupData extends Partial<CreateUserGroupData> {}
 
 export interface CreateGroupMemberData extends Omit<GroupMember, 'id' | 'joined_at'> {}
 
-export class GroupRepository extends BaseRepository<UserGroup> {
+export class GroupRepository extends Repository<UserGroup> {
   private repository: Repository<Group>;
   constructor() {
     this.repository = AppDataSource.getRepository(Group);
@@ -215,4 +215,40 @@ export class GroupRepository extends BaseRepository<UserGroup> {
       by_school: bySchoolMap
     };
   }
+
+  async findActive(limit: number = 100): Promise<any[]> {
+    return this.find({
+      where: { deleted: false },
+      take: limit,
+      order: { id: 'DESC' }
+    });
+  }
+
+  async findByIdActive(id: string | number): Promise<any | null> {
+    return this.findOne({
+      where: { id: id as any, deleted: false }
+    });
+  }
+
+  async findWithPagination(page: number = 1, limit: number = 10): Promise<{ data: any[], total: number }> {
+    const [data, total] = await this.findAndCount({
+      where: { deleted: false },
+      skip: (page - 1) * limit,
+      take: limit,
+      order: { id: 'DESC' }
+    });
+    return { data, total };
+  }
+
+  async searchByName(name: string): Promise<any[]> {
+    return this.createQueryBuilder()
+      .where("LOWER(name) LIKE LOWER(:name)", { name: `%${name}%` })
+      .andWhere("deleted = :deleted", { deleted: false })
+      .getMany();
+  }
+
+  async softDelete(id: string | number): Promise<void> {
+    await this.update(id as any, { deleted: true });
+  }
+
 }

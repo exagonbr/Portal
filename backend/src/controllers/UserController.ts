@@ -1,5 +1,5 @@
 import { Request, Response } from 'express';
-import { BaseController } from './BaseController';
+import BaseController from './BaseController';
 import { User } from '../entities/User';
 import { UserRepository } from '../repositories/UserRepository';
 import { AppDataSource } from '../config/typeorm.config';

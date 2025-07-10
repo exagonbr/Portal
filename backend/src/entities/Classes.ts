@@ -1,3 +1,5 @@
+import { EducationCycle } from "./EducationCycle";
+import { Unit } from "./Unit";
 import { Entity, Column, PrimaryGeneratedColumn, CreateDateColumn, UpdateDateColumn, ManyToOne, JoinColumn } from 'typeorm';
 
 @Entity('classes')

@@ -1,9 +1,9 @@
 import { Request, Response } from 'express';
 import { EducationCyclesRepository } from '../repositories/EducationCyclesRepository'
 import { EducationCycles } from '../entities/EducationCycles';;
-import { BaseController } from './BaseController';
+import BaseController from './BaseController';
 
-export class EducationCyclesController extends BaseController<EducationCycles> {
+class EducationCyclesController extends BaseController<EducationCycles> {
   private educationCyclesRepository: EducationCyclesRepository;
 
  private education_cyclesRepository: EducationCyclesRepository;
@@ -90,3 +90,5 @@ export class EducationCyclesController extends BaseController<EducationCycles> {
   }
  }
 }
+
+export default EducationCyclesController;

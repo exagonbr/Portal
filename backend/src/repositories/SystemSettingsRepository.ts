@@ -1,9 +1,9 @@
 import { Repository } from 'typeorm';
 import { AppDataSource } from '../config/typeorm.config';
-import { BaseRepository, PaginatedResult } from './BaseRepository';
+import { ExtendedRepository, PaginatedResult } from './ExtendedRepository';
 import { SystemSettings } from '../entities/SystemSettings';
 
-export class SystemSettingsRepository extends BaseRepository<SystemSettings> {
+export class SystemSettingsRepository extends ExtendedRepository<SystemSettings> {
   constructor() {
     super("system_settings");
   }

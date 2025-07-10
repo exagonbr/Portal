@@ -1,5 +1,5 @@
 import { Request, Response } from 'express';
-import { BaseController } from './BaseController';
+import BaseController from './BaseController';
 import { Quiz } from '../entities/Quiz';
 import { QuizRepository } from '../repositories/QuizRepository';
 

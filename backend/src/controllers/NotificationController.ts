@@ -1,11 +1,14 @@
 import { Request, Response } from 'express';
-import { NotificationRepository } from '../repositories/NotificationRepository';
+import { NotificationRepository } from '../repositories/NotificationRepository'
+import { Notification } from '../entities/Notification';;
 import { Notification, NotificationCategory, NotificationStatus, NotificationType } from '../entities/Notification';
 
 class NotificationController {
   private notificationRepository: NotificationRepository;
 
   constructor() {
+    const repository = new NotificationRepository();
+    super(repository);
     this.notificationRepository = new NotificationRepository();
   }
 

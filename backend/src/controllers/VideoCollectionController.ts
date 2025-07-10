@@ -1,4 +1,4 @@
-import { BaseController } from './BaseController';
+import BaseController from './BaseController';
 import { VideoCollection } from '../entities/VideoCollection';
 import { VideoCollectionRepository } from '../repositories/VideoCollectionRepository';
 

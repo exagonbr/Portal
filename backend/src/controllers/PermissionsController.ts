@@ -1,9 +1,9 @@
 import { Request, Response } from 'express';
 import { PermissionsRepository } from '../repositories/PermissionsRepository'
 import { Permissions } from '../entities/Permissions';;
-import { BaseController } from './BaseController';
+import BaseController from './BaseController';
 
-export class PermissionsController extends BaseController<Permissions> {
+class PermissionsController extends BaseController<Permissions> {
  private permissionsRepository: PermissionsRepository;
 
  constructor() {
@@ -88,3 +88,5 @@ export class PermissionsController extends BaseController<Permissions> {
   }
  }
 }
+
+export default PermissionsController;

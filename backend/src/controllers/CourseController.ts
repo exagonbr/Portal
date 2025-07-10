@@ -1,7 +1,7 @@
 import { Request, Response } from 'express';
 import { CourseRepository } from '../repositories/CourseRepository';
 import { Course } from '../entities/Course';
-import { BaseController } from './BaseController';
+import BaseController from './BaseController';
 
 class CourseController extends BaseController<Course> {
   private courseRepository: CourseRepository;

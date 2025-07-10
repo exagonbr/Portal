@@ -1,9 +1,9 @@
 import { Request, Response } from 'express';
 import { InstitutionsRepository } from '../repositories/InstitutionsRepository'
 import { Institutions } from '../entities/Institutions';;
-import { BaseController } from './BaseController';
+import BaseController from './BaseController';
 
-export class InstitutionsController extends BaseController<Institutions> {
+class InstitutionsController extends BaseController<Institutions> {
  private institutionsRepository: InstitutionsRepository;
 
  constructor() {
@@ -88,3 +88,5 @@ export class InstitutionsController extends BaseController<Institutions> {
   }
  }
 }
+
+export default InstitutionsController;

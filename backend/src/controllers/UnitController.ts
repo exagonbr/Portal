@@ -1,6 +1,6 @@
 import { Request, Response } from 'express';
 import { UnitRepository } from '../repositories/UnitRepository';
-import { BaseController } from './BaseController';
+import BaseController from './BaseController';
 import { Unit } from '../entities/Unit';
 import { CreateUnitDto, UpdateUnitDto, UnitResponseDto } from '../dto/UnitDto';
 

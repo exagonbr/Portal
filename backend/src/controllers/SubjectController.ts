@@ -1,6 +1,6 @@
 import { Request, Response } from 'express';
 import { SubjectRepository } from '../repositories/SubjectRepository';
-import { BaseController } from './BaseController';
+import BaseController from './BaseController';
 import { Subject } from '../entities/Subject';
 
 class SubjectController extends BaseController<Subject> {

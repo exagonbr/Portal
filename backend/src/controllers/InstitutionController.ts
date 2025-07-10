@@ -1,5 +1,5 @@
 import { Request, Response } from 'express';
-import { BaseController } from './BaseController';
+import BaseController from './BaseController';
 import { InstitutionRepository, InstitutionFilters } from '../repositories/InstitutionRepository';
 import { Institution } from '../entities';
 import { PaginationOptions } from '../types/pagination';

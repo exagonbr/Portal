@@ -1,9 +1,9 @@
 import { Request, Response } from 'express';
 import { UnitsRepository } from '../repositories/UnitsRepository'
 import { Units } from '../entities/Units';;
-import { BaseController } from './BaseController';
+import BaseController from './BaseController';
 
-export class UnitsController extends BaseController<Units> {
+class UnitsController extends BaseController<Units> {
   private unitsRepository: UnitsRepository;
 
   constructor() {
@@ -88,3 +88,5 @@ export class UnitsController extends BaseController<Units> {
   }
  }
 }
+
+export default UnitsController;

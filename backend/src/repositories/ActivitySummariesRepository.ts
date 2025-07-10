@@ -1,9 +1,9 @@
 import { DeleteResult } from 'typeorm';
-import { BaseRepository, PaginatedResult } from './BaseRepository';
+import { ExtendedRepository, PaginatedResult } from './ExtendedRepository';
 import { ActivitySummaries } from '../entities/ActivitySummaries';
 import { Knex } from 'knex';
 
-export class ActivitySummariesRepository extends BaseRepository<ActivitySummaries> {
+export class ActivitySummariesRepository extends ExtendedRepository<ActivitySummaries> {
   constructor() {
     super("activity_summaries");
   }

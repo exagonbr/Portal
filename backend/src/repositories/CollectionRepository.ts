@@ -2,8 +2,9 @@ import { AppDataSource } from "../config/typeorm.config";
 import { Repository } from "typeorm";
 import { ExtendedRepository, PaginatedResult } from './ExtendedRepository';
 
+
 // Interface para desacoplar (tabela collections original)
-export interface Collection {
+export interface ICollection {
     id: string;
     name: string;
     synopsis: string;
@@ -18,18 +19,16 @@ export interface Collection {
 }
 
 // Repository para a tabela collections original (não tv_show)
-export class ContentCollectionRepository extends ExtendedRepository<Collection> {
-  private repository: Repository<Collection>;
+export class ContentCollectionRepository extends ExtendedRepository<ICollection> {
   constructor() {
     super("collections");
-    this.repository = AppDataSource.getRepository(Collection);
   }
   // Implementação do método abstrato findAllPaginated
   async findAllPaginated(options: {
     page?: number;
     limit?: number;
     search?: string;
-  } = {}): Promise<PaginatedResult<Collection>> {
+  } = {}): Promise<PaginatedResult<ICollection>> {
     const { page = 1, limit = 10, search } = options;
     
     try {
@@ -66,5 +65,9 @@ export class ContentCollectionRepository extends ExtendedRepository<Collection> 
         page,
         limit
       };
+    } catch (error) {
+      console.error("Error in findAllPaginated:", error);
+      throw error;
+    }
   }
 }

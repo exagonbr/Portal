@@ -1,12 +1,12 @@
+import { ExtendedRepository, PaginatedResult } from "./ExtendedRepository";
 import { Repository } from "typeorm";
 import { AppDataSource } from '../config/typeorm.config';
 import { Repository, DeleteResult } from 'typeorm';
-import { ExtendedRepository, PaginatedResult } from './ExtendedRepository';
 
 // Nota: Você precisa criar/importar a entidade correspondente
 // import { File } from '../entities/File';
 
-export class FileRepository extends BaseRepository {
+export class FileRepository extends Repository {
   private repository: Repository<any>;
 
   constructor() {

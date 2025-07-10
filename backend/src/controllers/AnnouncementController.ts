@@ -1,7 +1,7 @@
 import { Request, Response } from 'express';
 import { AnnouncementRepository } from '../repositories/AnnouncementRepository';
 import { Announcement } from '../entities/Announcement';
-import { BaseController } from './BaseController';
+import BaseController from './BaseController';
 
 class AnnouncementController extends BaseController<Announcement> {
   private announcementRepository: AnnouncementRepository;

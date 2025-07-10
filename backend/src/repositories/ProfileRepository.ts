@@ -1,5 +1,5 @@
 import { AppDataSource } from "../config/typeorm.config";
-import { Repository } from "typeorm";
+import { Repository, DeleteResult } from 'typeorm';
 import { ExtendedRepository, PaginatedResult } from './ExtendedRepository';
 import { Profile } from '../entities/Profile';
 

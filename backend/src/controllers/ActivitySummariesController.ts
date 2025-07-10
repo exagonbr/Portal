@@ -1,9 +1,9 @@
 import { Request, Response } from 'express';
 import { ActivitySummariesRepository } from '../repositories/ActivitySummariesRepository'
 import { ActivitySummaries } from '../entities/ActivitySummaries';
-import { BaseController } from './BaseController';
+import BaseController from './BaseController';
 
-export class ActivitySummariesController extends BaseController<ActivitySummaries> {
+class ActivitySummariesController extends BaseController<ActivitySummaries> {
   private activitySummariesRepository: ActivitySummariesRepository;
 
   constructor() {
@@ -88,3 +88,5 @@ export class ActivitySummariesController extends BaseController<ActivitySummarie
     }
   }
 }
+
+export default ActivitySummariesController;

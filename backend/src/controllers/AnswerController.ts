@@ -1,11 +1,18 @@
 import { Request, Response } from 'express';
 import { AnswerService } from '../services/AnswerService';
 import { CreateAnswerDto, UpdateAnswerDto, AnswerFilterDto } from '../dto/AnswerDto';
+import { AnswerRepository } from '../repositories/AnswerRepository';
+import BaseController from './BaseController';
+import { Answer } from '../entities/Answer';
 
-export class AnswerController {
+export class AnswerController extends BaseController<Answer> {
   private answerService: AnswerService;
+  private answerRepository: AnswerRepository;
 
   constructor() {
+    const repository = new AnswerRepository();
+    super(repository);
+    this.answerRepository = repository;
     this.answerService = new AnswerService();
   }
 
@@ -143,3 +150,5 @@ export class AnswerController {
     }
   }
 }
+
+export default new AnswerController();

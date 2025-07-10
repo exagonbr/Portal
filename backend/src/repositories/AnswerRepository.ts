@@ -1,16 +1,110 @@
-import { Repository } from 'typeorm';
+import { Repository, DeleteResult } from 'typeorm';
 import { AppDataSource } from '../config/typeorm.config';
 import { Answer } from '../entities/Answer';
 import { AnswerFilterDto } from '../dto/AnswerDto';
+import { ExtendedRepository, PaginatedResult } from './ExtendedRepository';
 
-export class AnswerRepository {
+export class AnswerRepository extends ExtendedRepository<Answer> {
   private repository: Repository<Answer>;
 
   constructor() {
+    super("answers"); // Nome da tabela
     this.repository = AppDataSource.getRepository(Answer);
   }
+  
+  
+  // Implementação do método abstrato findAllPaginated
+  async findAllPaginated(options: {
+    page?: number;
+    limit?: number;
+    search?: string;
+  } = {}): Promise<PaginatedResult<Answer>> {
+    const { page = 1, limit = 10, search } = options;
+    
+    try {
+      if (this.repository) {
+        let queryBuilder = this.repository.createQueryBuilder('answer');
+        
+        // Adicione condições de pesquisa específicas para esta entidade
+        if (search) {
+          queryBuilder = queryBuilder
+            .where('answer.name ILIKE :search', { search: `%${search}%` });
+        }
+        
+        const [data, total] = await queryBuilder
+          .skip((page - 1) * limit)
+          .take(limit)
+          .orderBy('answer.id', 'DESC')
+          .getManyAndCount();
+          
+        return {
+          data,
+          total,
+          page,
+          limit
+        };
+      } else {
+        // Fallback para query raw
+        const query = `
+          SELECT * FROM answer
+          ${search ? `WHERE name ILIKE '%${search}%'` : ''}
+          ORDER BY id DESC
+          LIMIT ${limit} OFFSET ${(page - 1) * limit}
+        `;
+        
+        const countQuery = `
+          SELECT COUNT(*) as total FROM answer
+          ${search ? `WHERE name ILIKE '%${search}%'` : ''}
+        `;
 
-  async findAll(filters: AnswerFilterDto = {}) {
+        const [data, countResult] = await Promise.all([
+          AppDataSource.query(query),
+          AppDataSource.query(countQuery)
+        ]);
+
+        const total = parseInt(countResult[0].total);
+
+        return {
+          data,
+          total,
+          page,
+          limit
+        };
+      }
+    } catch (error) {
+      console.error(`Erro ao buscar registros de answer:`, error);
+      throw error;
+    }
+  }
+
+  // Implementação compatível com a classe base
+  async findAll(filters?: Partial<Answer>, pagination?: { page: number; limit: number }): Promise<Answer[]> {
+    const queryBuilder = this.repository.createQueryBuilder('answer');
+    
+    // Aplicar filtros se fornecidos
+    if (filters) {
+      Object.entries(filters).forEach(([key, value]) => {
+        if (value !== undefined) {
+          queryBuilder.andWhere(`answer.${key} = :${key}`, { [key]: value });
+        }
+      });
+    }
+    
+    // Aplicar paginação se fornecida
+    if (pagination) {
+      const { page, limit } = pagination;
+      queryBuilder
+        .skip((page - 1) * limit)
+        .take(limit);
+    }
+    
+    return await queryBuilder
+      .orderBy('answer.dateCreated', 'DESC')
+      .getMany();
+  }
+  
+  // Método personalizado para busca com filtros específicos
+  async findAllWithFilters(filters: AnswerFilterDto = {}) {
     const { 
       page = 1, 
       limit = 10, 

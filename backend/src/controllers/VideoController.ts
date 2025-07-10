@@ -6,6 +6,8 @@ export class VideoController {
   private videoRepository: VideoRepository;
 
   constructor() {
+    const repository = new VideoRepository();
+    super(repository);
     this.videoRepository = new VideoRepository();
   }
 

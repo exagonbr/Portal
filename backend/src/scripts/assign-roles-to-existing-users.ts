@@ -1,16 +1,16 @@
 import { AppDataSource } from '../config/typeorm.config';
-import { Users } from '../entities/Users';
+import { User } from '../entities/User';
 import { Role } from '../entities/Role';
 import { IsNull } from 'typeorm';
 
-async function assignRolesToExistingUsers() {
+async function assignRolesToExistingUser() {
   try {
     // Initialize database connection
     if (!AppDataSource.isInitialized) {
       await AppDataSource.initialize();
     }
 
-    const userRepository = AppDataSource.getRepository(Users);
+    const userRepository = AppDataSource.getRepository(User);
     const roleRepository = AppDataSource.getRepository(Role);
 
     // Get all users without roles but with boolean flags
@@ -59,4 +59,4 @@ async function assignRolesToExistingUsers() {
 }
 
 // Run the script
-assignRolesToExistingUsers();
+assignRolesToExistingUser();

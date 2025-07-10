@@ -1,39 +1,39 @@
 export class CreateFileDto {
-  version?: string;
-  contentType?: string;
-  extension?: string;
-  externalLink?: string;
-  isDefault?: string;
-  isPublic?: string;
-  label?: string;
-  localFile?: string;
-  name?: string;
-  originalFilename?: string;
-  quality?: string;
-  sha256hex?: string;
-  size?: string;
-  subtitleLabel?: string;
-  subtitleSrcLang?: string;
-  isSubtitled?: string;
+  version?: string = "";
+  contentType?: string = "";
+  extension?: string = "";
+  externalLink?: string = "";
+  isDefault?: string = "";
+  isPublic?: string = "";
+  label?: string = "";
+  localFile?: string = "";
+  name?: string = "";
+  originalFilename?: string = "";
+  quality?: string = "";
+  sha256hex?: string = "";
+  size?: string = "";
+  subtitleLabel?: string = "";
+  subtitleSrcLang?: string = "";
+  isSubtitled?: string = "";
 }
 
 export class UpdateFileDto {
-  version?: string;
-  contentType?: string;
-  extension?: string;
-  externalLink?: string;
-  isDefault?: string;
-  isPublic?: string;
-  label?: string;
-  localFile?: string;
-  name?: string;
-  originalFilename?: string;
-  quality?: string;
-  sha256hex?: string;
-  size?: string;
-  subtitleLabel?: string;
-  subtitleSrcLang?: string;
-  isSubtitled?: string;
+  version?: string = "";
+  contentType?: string = "";
+  extension?: string = "";
+  externalLink?: string = "";
+  isDefault?: string = "";
+  isPublic?: string = "";
+  label?: string = "";
+  localFile?: string = "";
+  name?: string = "";
+  originalFilename?: string = "";
+  quality?: string = "";
+  sha256hex?: string = "";
+  size?: string = "";
+  subtitleLabel?: string = "";
+  subtitleSrcLang?: string = "";
+  isSubtitled?: string = "";
 }
 
 export class FileResponseDto {

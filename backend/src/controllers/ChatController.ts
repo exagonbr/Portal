@@ -1,5 +1,6 @@
 import { Request, Response } from 'express';
-import { ChatRepository } from '../repositories/ChatRepository';
+import { ChatRepository } from '../repositories/ChatRepository'
+import { Chat } from '../entities/Chat';;
 import { ChatMessage } from '../entities/ChatMessage';
 
 const chatRepository = new ChatRepository();

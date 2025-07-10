@@ -1,7 +1,7 @@
 import { Request, Response } from 'express';
 import { CertificateRepository, CertificateFilter } from '../repositories/CertificateRepository';
 import { Certificate } from '../entities/Certificate';
-import { BaseController } from './BaseController';
+import BaseController from './BaseController';
 
 class CertificateController extends BaseController<Certificate> {
   private certificateRepository: CertificateRepository;

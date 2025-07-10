@@ -2,10 +2,13 @@ import { Request, Response } from 'express';
 import { QuestionService } from '../services/QuestionService';
 import { CreateQuestionDto, UpdateQuestionDto, QuestionFilterDto } from '../dto/QuestionDto';
 
-export class QuestionController {
+class QuestionController {
   private questionService: QuestionService;
 
   constructor() {
+    const repository = new QuestionRepository();
+    super(repository);
+    this.questionRepository = repository;
     this.questionService = new QuestionService();
   }
 
@@ -275,3 +278,5 @@ export class QuestionController {
     }
   }
 }
+
+export default QuestionController;

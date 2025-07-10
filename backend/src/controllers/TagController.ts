@@ -1,6 +1,6 @@
 import { Request, Response } from 'express';
 import { TagRepository } from '../repositories/TagRepository';
-import { BaseController } from './BaseController';
+import BaseController from './BaseController';
 import { Tag } from '../entities/Tag';
 
 class TagController extends BaseController<Tag> {

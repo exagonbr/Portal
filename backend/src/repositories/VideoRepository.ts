@@ -1,4 +1,4 @@
-import { Repository } from 'typeorm';
+import { Repository, DeleteResult } from 'typeorm';
 import { AppDataSource } from '../config/typeorm.config';
 import { Video } from '../entities/Video';
 import { VideoFilterDto } from '../dto/VideoDto';
@@ -8,6 +8,69 @@ export class VideoRepository {
 
   constructor() {
     this.repository = AppDataSource.getRepository(Video);
+  }
+  // Implementação do método abstrato findAllPaginated
+  async findAllPaginated(options: {
+    page?: number;
+    limit?: number;
+    search?: string;
+  } = {}): Promise<PaginatedResult<Video>> {
+    const { page = 1, limit = 10, search } = options;
+    
+    try {
+      if (this.repository) {
+        let queryBuilder = this.repository.createQueryBuilder('video');
+        
+        // Adicione condições de pesquisa específicas para esta entidade
+        if (search) {
+          queryBuilder = queryBuilder
+            .where('video.name ILIKE :search', { search: `%${search}%` });
+        }
+        
+        const [data, total] = await queryBuilder
+          .skip((page - 1) * limit)
+          .take(limit)
+          .orderBy('video.id', 'DESC')
+          .getManyAndCount();
+          
+        return {
+          data,
+          total,
+          page,
+          limit
+        };
+      } else {
+        // Fallback para query raw
+        const query = `
+          SELECT * FROM video
+          ${search ? `WHERE name ILIKE '%${search}%'` : ''}
+          ORDER BY id DESC
+          LIMIT ${limit} OFFSET ${(page - 1) * limit}
+        `;
+        
+        const countQuery = `
+          SELECT COUNT(*) as total FROM video
+          ${search ? `WHERE name ILIKE '%${search}%'` : ''}
+        `;
+
+        const [data, countResult] = await Promise.all([
+          AppDataSource.query(query),
+          AppDataSource.query(countQuery)
+        ]);
+
+        const total = parseInt(countResult[0].total);
+
+        return {
+          data,
+          total,
+          page,
+          limit
+        };
+      }
+    } catch (error) {
+      console.error(`Erro ao buscar registros de video:`, error);
+      throw error;
+    }
   }
 
   async findAll(filters: VideoFilterDto = {}) {
@@ -153,4 +216,45 @@ export class VideoRepository {
       }, {} as Record<string, number>)
     };
   }
+
+  async findActive(limit: number = 100): Promise<any[]> {
+    return this.find({
+      where: { deleted: false },
+      take: limit,
+      order: { id: 'DESC' }
+    });
+  }
+
+  async findByIdActive(id: string | number): Promise<any | null> {
+    return this.findOne({
+      where: { id: id as any, deleted: false }
+    });
+  }
+
+  async findWithPagination(page: number = 1, limit: number = 10): Promise<{ data: any[], total: number }> {
+    const [data, total] = await this.findAndCount({
+      where: { deleted: false },
+      skip: (page - 1) * limit,
+      take: limit,
+      order: { id: 'DESC' }
+    });
+    return { data, total };
+  }
+
+  async searchByName(name: string): Promise<any[]> {
+    return this.createQueryBuilder()
+      .where("LOWER(name) LIKE LOWER(:name)", { name: `%${name}%` })
+      .andWhere("deleted = :deleted", { deleted: false })
+      .getMany();
+  }
+
+  async softDelete(id: string | number): Promise<void> {
+    await this.update(id as any, { deleted: true });
+  }
+
+
+  async save(entity: any): Promise<any> {
+    return await this.manager.save(entity);
+  }
+
 }

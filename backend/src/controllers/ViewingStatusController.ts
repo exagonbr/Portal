@@ -2,12 +2,12 @@ import { Request, Response } from 'express';
 import { ViewingStatusService, UpdateViewingStatusDTO, ViewingInteractionDTO } from '../services/ViewingStatusService';
 import { AppDataSource } from '../config/typeorm';
 import { getUserFromRequest } from '../utils/auth';
-import { BaseController } from './BaseController';
+import BaseController from './BaseController';
 import { ViewingStatus } from '../entities/ViewingStatus';
 import { ViewingStatusRepository } from '../repositories/ViewingStatusRepository';
 import db from '../config/database';
 
-export class ViewingStatusController extends BaseController<ViewingStatus> {
+class ViewingStatusController extends BaseController<ViewingStatus> {
   private viewingStatusRepository: ViewingStatusRepository;
   private service: ViewingStatusService;
 
@@ -410,3 +410,5 @@ export class ViewingStatusController extends BaseController<ViewingStatus> {
   }
  }
 } 
+
+export default ViewingStatusController;

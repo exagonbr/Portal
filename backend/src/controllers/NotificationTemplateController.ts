@@ -1,11 +1,12 @@
 import { Request, Response } from 'express';
 import NotificationTemplateService from '../services/NotificationTemplateService';
-import { CreateNotificationTemplateData, UpdateNotificationTemplateData, NotificationTemplateFilter } from '../repositories/NotificationTemplateRepository';
+import { CreateNotificationTemplateData, UpdateNotificationTemplateData, NotificationTemplateFilter } from '../repositories/NotificationTemplateRepository'
+import { NotificationTemplate } from '../entities/NotificationTemplate';;
 
 export class NotificationTemplateController {
   
   // GET /api/notifications/templates
-  async getAllTemplates(req: Request, res: Response): Promise<void> {
+  async getAllTemplates(req: Request, res: Response): Promise<Response> {
     try {
       const page = parseInt(req.query.page as string) || 1;
       const limit = parseInt(req.query.limit as string) || 10;
@@ -37,7 +38,7 @@ export class NotificationTemplateController {
   }
 
   // GET /api/notifications/templates/paginated
-  async getTemplatesPaginated(req: Request, res: Response): Promise<void> {
+  async getTemplatesPaginated(req: Request, res: Response): Promise<Response> {
     try {
       const page = parseInt(req.query.page as string) || 1;
       const limit = parseInt(req.query.limit as string) || 10;
@@ -72,7 +73,7 @@ export class NotificationTemplateController {
   }
 
   // GET /api/notifications/templates/:id
-  async getTemplateById(req: Request, res: Response): Promise<void> {
+  async getTemplateById(req: Request, res: Response): Promise<Response> {
     try {
       const { id } = req.params;
       const template = await NotificationTemplateService.getTemplateById(id);
@@ -99,7 +100,7 @@ export class NotificationTemplateController {
   }
 
   // GET /api/notifications/templates/category/:category
-  async getTemplatesByCategory(req: Request, res: Response): Promise<void> {
+  async getTemplatesByCategory(req: Request, res: Response): Promise<Response> {
     try {
       const { category } = req.params;
       const templates = await NotificationTemplateService.getTemplatesByCategory(category);
@@ -118,7 +119,7 @@ export class NotificationTemplateController {
   }
 
   // GET /api/notifications/templates/public
-  async getPublicTemplates(req: Request, res: Response): Promise<void> {
+  async getPublicTemplates(req: Request, res: Response): Promise<Response> {
     try {
       const templates = await NotificationTemplateService.getPublicTemplates();
 
@@ -136,7 +137,7 @@ export class NotificationTemplateController {
   }
 
   // GET /api/notifications/templates/user/:userId
-  async getTemplatesByUserId(req: Request, res: Response): Promise<void> {
+  async getTemplatesByUserId(req: Request, res: Response): Promise<Response> {
     try {
       const { userId } = req.params;
       const templates = await NotificationTemplateService.getTemplatesByUserId(userId);
@@ -155,7 +156,7 @@ export class NotificationTemplateController {
   }
 
   // GET /api/notifications/templates/categories
-  async getCategories(req: Request, res: Response): Promise<void> {
+  async getCategories(req: Request, res: Response): Promise<Response> {
     try {
       const categories = await NotificationTemplateService.getCategories();
 
@@ -173,7 +174,7 @@ export class NotificationTemplateController {
   }
 
   // POST /api/notifications/templates
-  async createTemplate(req: Request, res: Response): Promise<void> {
+  async createTemplate(req: Request, res: Response): Promise<Response> {
     try {
       const templateData: CreateNotificationTemplateData = req.body;
 
@@ -238,7 +239,7 @@ export class NotificationTemplateController {
   }
 
   // PUT /api/notifications/templates/:id
-  async updateTemplate(req: Request, res: Response): Promise<void> {
+  async updateTemplate(req: Request, res: Response): Promise<Response> {
     try {
       const { id } = req.params;
       const updateData: UpdateNotificationTemplateData = req.body;
@@ -279,7 +280,7 @@ export class NotificationTemplateController {
   }
 
   // DELETE /api/notifications/templates/:id
-  async deleteTemplate(req: Request, res: Response): Promise<void> {
+  async deleteTemplate(req: Request, res: Response): Promise<Response> {
     try {
       const { id } = req.params;
       const deleted = await NotificationTemplateService.deleteTemplate(id);

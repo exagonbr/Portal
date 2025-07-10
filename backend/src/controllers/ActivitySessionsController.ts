@@ -1,9 +1,9 @@
 import { Request, Response } from 'express';
 import { ActivitySessionsRepository } from '../repositories/ActivitySessionsRepository';
-import { BaseController } from './BaseController';
+import BaseController from './BaseController';
 import { ActivitySessions } from '../entities/ActivitySessions';
 
-export class ActivitySessionsController extends BaseController<ActivitySessions> {
+class ActivitySessionsController extends BaseController<ActivitySessions> {
   private activitySessionsRepository: ActivitySessionsRepository;
 
   constructor() {
@@ -132,3 +132,5 @@ export class ActivitySessionsController extends BaseController<ActivitySessions>
   return this.delete(req, res);
  }
 }
+
+export default ActivitySessionsController;

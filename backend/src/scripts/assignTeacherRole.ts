@@ -1,7 +1,8 @@
 #!/usr/bin/env node
 
 import { RoleService } from '../services/RoleService';
-import { testDatabaseConnection, closeDatabaseConnection } from '../config/database';
+import testDatabaseConnection from '../config/database';
+import closeDatabaseConnection from '../config/database';
 import { Logger } from '../utils/Logger';
 
 const logger = new Logger('AssignTeacherRoleScript');

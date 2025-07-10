@@ -30,8 +30,8 @@ class EmailService {
           rejectUnauthorized: false,
         },
         auth: {
-          user: emailSettings.email_smtp_user || env.SMTP_USER,
-          pass: emailSettings.email_smtp_password || env.SMTP_PASS,
+          user: emailSettings.email_smtp_user || '',
+          pass: emailSettings.email_smtp_password || '',
         },
       };
 

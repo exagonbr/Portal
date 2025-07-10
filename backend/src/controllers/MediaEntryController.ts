@@ -1,6 +1,6 @@
 import { Request, Response } from 'express';
 import { MediaEntryRepository } from '../repositories/MediaEntryRepository';
-import { BaseController } from './BaseController';
+import BaseController from './BaseController';
 import { MediaEntry } from '../entities/MediaEntry';
 
 class MediaEntryController extends BaseController<MediaEntry> {

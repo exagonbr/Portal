@@ -1,17 +1,17 @@
 export class CreateAnswerDto {
-  version?: string;
-  deleted?: string;
-  isCorrect?: string;
-  questionId?: string;
-  reply?: string;
+  version?: string = "";
+  deleted?: string = "";
+  isCorrect?: string = "";
+  questionId?: string = "";
+  reply?: string = "";
 }
 
 export class UpdateAnswerDto {
-  version?: string;
-  deleted?: string;
-  isCorrect?: string;
-  questionId?: string;
-  reply?: string;
+  version?: string = "";
+  deleted?: string = "";
+  isCorrect?: string = "";
+  questionId?: string = "";
+  reply?: string = "";
 }
 
 export class AnswerResponseDto {

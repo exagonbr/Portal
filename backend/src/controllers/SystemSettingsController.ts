@@ -1,7 +1,7 @@
 import { Request, Response } from 'express';
 import { SystemSettingsRepository } from '../repositories/SystemSettingsRepository'
 import { SystemSettings } from '../entities/SystemSettings';
-import { BaseController } from './BaseController';
+import BaseController from './BaseController';
 
 class SystemSettingsController extends BaseController<SystemSettings> {
   private systemSettingsRepository: SystemSettingsRepository;

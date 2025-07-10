@@ -64,6 +64,9 @@ export class EducationCycleRepository extends ExtendedRepository<EducationCycle>
         page,
         limit
       };
+    } catch (error) {
+      throw error;
+    }
   }
 
   async createCycle(data: CreateEducationCycleData): Promise<EducationCycle> {

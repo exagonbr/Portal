@@ -4,8 +4,9 @@ const nextConfig = {
   experimental: {
     optimizeCss: true,
     workerThreads: true,
-    serverComponentsExternalPackages: ['knex', 'pg'],
+    cpus: 2,
   },
+  serverExternalPackages: ['knex', 'pg'],
   distDir: 'build',
   
   webpack: (config, { isServer, dev }) => {

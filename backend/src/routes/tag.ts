@@ -1,5 +1,5 @@
 import { Router } from 'express';
-import { TagController } from '../controllers/TagController';
+import TagController from '../controllers/TagController';
 import { requireAuth } from '../middleware/requireAuth';
 
 const router = Router();

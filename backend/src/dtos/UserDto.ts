@@ -1,25 +1,25 @@
 export class CreateUserDto {
-  version?: string;
-  username?: string;
-  email?: string;
-  passwordHash?: string;
-  firstName?: string;
-  lastName?: string;
-  isActive?: string;
-  lastLogin?: string;
-  roleId?: string;
+  version?: string = "";
+  username?: string = "";
+  email?: string = "";
+  passwordHash?: string = "";
+  firstName?: string = "";
+  lastName?: string = "";
+  isActive?: string = "";
+  lastLogin?: string = "";
+  roleId?: string = "";
 }
 
 export class UpdateUserDto {
-  version?: string;
-  username?: string;
-  email?: string;
-  passwordHash?: string;
-  firstName?: string;
-  lastName?: string;
-  isActive?: string;
-  lastLogin?: string;
-  roleId?: string;
+  version?: string = "";
+  username?: string = "";
+  email?: string = "";
+  passwordHash?: string = "";
+  firstName?: string = "";
+  lastName?: string = "";
+  isActive?: string = "";
+  lastLogin?: string = "";
+  roleId?: string = "";
 }
 
 export class UserResponseDto {

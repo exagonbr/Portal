@@ -1,5 +1,5 @@
 import { Router } from 'express';
-import { GenreController } from '../controllers/GenreController';
+import GenreController from '../controllers/GenreController';
 import { requireAuth } from '../middleware/requireAuth';
 
 const router = Router();

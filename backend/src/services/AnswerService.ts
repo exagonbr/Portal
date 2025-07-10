@@ -10,7 +10,7 @@ export class AnswerService {
 
   async getAllAnswers(filters: AnswerFilterDto): Promise<AnswerResponseDto> {
     try {
-      const result = await this.answerRepository.findAll(filters);
+      const result = await this.answerRepository.findAllWithFilters(filters);
       
       return {
         success: true,

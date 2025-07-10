@@ -1,9 +1,8 @@
+import { ExtendedRepository, PaginatedResult } from "./ExtendedRepository";
 import { Repository } from "typeorm";
-import { BaseRepository } from './BaseRepository';
-import { ExtendedRepository, PaginatedResult } from './ExtendedRepository';
 import { ChatMessage } from '../entities/ChatMessage';
 
-export class ChatRepository extends BaseRepository<ChatMessage> {
+export class ChatRepository extends Repository<ChatMessage> {
   constructor() {
     super('chat_messages');
   }

@@ -1,6 +1,6 @@
 import { Request, Response } from 'express';
 import { TargetAudienceRepository } from '../repositories/TargetAudienceRepository';
-import { BaseController } from './BaseController';
+import BaseController from './BaseController';
 import { TargetAudience } from '../entities/TargetAudience';
 
 class TargetAudienceController extends BaseController<TargetAudience> {

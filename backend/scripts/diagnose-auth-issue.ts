@@ -2,6 +2,7 @@ import { AppDataSource } from '../src/config/typeorm.config';
 import { User } from '../src/entities/User';
 import { Role } from '../src/entities/Role';
 import * as bcrypt from 'bcryptjs';
+import { IsNull } from 'typeorm';
 
 async function diagnoseAuthIssue() {
   try {
@@ -27,7 +28,7 @@ async function diagnoseAuthIssue() {
     // 2. Verificar usuários com diferentes status
     const activeUsers = await userRepository.count({ where: { enabled: true } });
     const inactiveUsers = await userRepository.count({ where: { enabled: false } });
-    const nullEnabledUsers = await userRepository.count({ where: { enabled: null } });
+    const nullEnabledUsers = await userRepository.count({ where: { enabled: IsNull() } });
     
     console.log(`\n📈 Status dos usuários:`);
     console.log(`   - Ativos (enabled = true): ${activeUsers}`);

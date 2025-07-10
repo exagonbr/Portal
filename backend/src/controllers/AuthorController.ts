@@ -1,7 +1,7 @@
 import { Request, Response } from 'express';
 import { AuthorRepository } from '../repositories/AuthorRepository';
 import { Author } from '../entities/Author';
-import { BaseController } from './BaseController';
+import BaseController from './BaseController';
 
 class AuthorController extends BaseController<Author> {
   private authorRepository: AuthorRepository;

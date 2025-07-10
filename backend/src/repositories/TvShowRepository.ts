@@ -812,4 +812,9 @@ export class TvShowRepository extends ExtendedRepository<TvShow> {
       throw error;
     }
   }
+
+  async save(entity: any): Promise<any> {
+    return await this.manager.save(entity);
+  }
+
 }

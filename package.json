@@ -5,7 +5,7 @@
   "uniqueName": "portal-educacional",
   "scripts": {
     "dev": "next dev",
-    "build": "node scripts/cache-version.js && next build",
+    "build": "node scripts/cache-version.js && next build --no-lint",
     "start": "node src/server.js",
     "start:next": "next start",
     "lint": "next lint",

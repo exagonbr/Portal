@@ -1,9 +1,9 @@
 import { Repository } from 'typeorm';
 import { AppDataSource } from '../config/typeorm.config';
-import { BaseRepository, PaginatedResult } from './BaseRepository';
+import { ExtendedRepository, PaginatedResult } from './ExtendedRepository';
 import { TeacherSubject } from '../entities/TeacherSubject';
 
-export class TeacherSubjectRepository extends BaseRepository<TeacherSubject> {
+export class TeacherSubjectRepository extends ExtendedRepository<TeacherSubject> {
   constructor() {
     super("teacher_subject");
   }

@@ -1,5 +1,13 @@
 import { AppDataSource } from '../config/typeorm.config';
-import { Role, UserRole } from '../entities/Role';
+import { Role } from '../entities/Role';
+enum UserRole {
+  ADMIN = "ADMIN",
+  TEACHER = "TEACHER",
+  STUDENT = "STUDENT",
+  PARENT = "PARENT",
+  PRINCIPAL = "PRINCIPAL",
+  LIBRARIAN = "LIBRARIAN"
+}
 
 async function seedRoles() {
   try {

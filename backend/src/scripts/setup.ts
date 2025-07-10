@@ -2,7 +2,8 @@
 
 import { AppDataSource } from '../config/typeorm.config';
 import AuthService from '../services/AuthService';
-import { getRedisClient, testRedisConnection } from '../config/redis';
+import { testRedisConnection } from '../config/redis';
+import getRedisClient from '../config/redis';
 import * as dotenv from 'dotenv';
 
 // Carrega variáveis de ambiente

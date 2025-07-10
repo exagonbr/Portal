@@ -168,4 +168,41 @@ export class UnitRepository extends ExtendedRepository<Unit> {
     const { data, total } = await this.findWithFilters({ page, limit, search });
     return { data, total, page, limit };
   }
+
+  async save(entity: any): Promise<any> {
+    return await this.manager.save(entity);
+  }
+
+
+  async findByIdActive(id: string | number): Promise<Unit | null> {
+    return this.findOne({
+      where: { id: Number(id), deleted: false }
+    });
+  }
+
+  async findWithPagination(page: number = 1, limit: number = 10): Promise<{ data: Unit[], total: number }> {
+    const [data, total] = await this.findAndCount({
+      where: { deleted: false },
+      skip: (page - 1) * limit,
+      take: limit,
+      order: { id: 'DESC' }
+    });
+    return { data, total };
+  }
+
+  async searchByName(name: string): Promise<Unit[]> {
+    return this.createQueryBuilder('unit')
+      .where("LOWER(unit.name) LIKE LOWER(:name)", { name: `%${name}%` })
+      .andWhere("unit.deleted = :deleted", { deleted: false })
+      .getMany();
+  }
+
+  async softDelete(id: string | number): Promise<void> {
+    await this.update(Number(id), { deleted: true });
+  }
+
+  async save(entity: Unit): Promise<Unit> {
+    return await this.manager.save(entity);
+  }
+
 } 

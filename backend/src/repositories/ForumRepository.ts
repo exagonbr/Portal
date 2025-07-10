@@ -1,5 +1,5 @@
+import { ExtendedRepository, PaginatedResult } from "./ExtendedRepository";
 import { Repository } from "typeorm";
-import { ExtendedRepository, PaginatedResult } from './ExtendedRepository';
 import { ForumThread } from '../entities/ForumThread';
 import { ForumReply } from '../entities/ForumReply';
 
@@ -9,7 +9,7 @@ export interface UpdateForumThreadData extends Partial<Omit<CreateForumThreadDat
 export interface CreateForumReplyData extends Omit<ForumReply, 'id' | 'created_at' | 'updated_at' | 'author' | 'thread'> {}
 export interface UpdateForumReplyData extends Partial<Omit<CreateForumReplyData, 'thread_id' | 'author_id' | 'parent_reply_id'>> {}
 
-export class ForumThreadRepository extends BaseRepository<ForumThread> {
+export class ForumThreadRepository extends Repository<ForumThread> {
   private repository: Repository<Forum>;
   constructor() {
     this.repository = AppDataSource.getRepository(Forum);
@@ -120,7 +120,7 @@ export class ForumThreadRepository extends BaseRepository<ForumThread> {
   }
 }
 
-export class ForumReplyRepository extends BaseRepository<ForumReply> {
+export class ForumReplyRepository extends Repository<ForumReply> {
   private repository: Repository<Forum>;
   constructor() {
     this.repository = AppDataSource.getRepository(Forum);

@@ -1,3 +1,5 @@
+import { Video } from "./Video";
+import { User } from "./User";
 import { Entity, Column, PrimaryGeneratedColumn, CreateDateColumn, UpdateDateColumn, ManyToOne, JoinColumn } from 'typeorm';
 
 @Entity('report')
@@ -26,9 +28,9 @@ export class Report {
   @Column({ nullable: true })
   videoId?: string;
 
-  @ManyToOne(() => CreatedBy)
+  @ManyToOne(() => User)
   @JoinColumn({ name: 'created_by_id' })
-  createdBy?: CreatedBy;
+  createdBy?: User;
 
   @ManyToOne(() => Video)
   @JoinColumn({ name: 'video_id' })

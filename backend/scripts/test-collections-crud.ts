@@ -38,8 +38,7 @@ async function testCollectionsCRUD() {
     
     // 2. Criar vídeos de teste
     console.log('\n🎥 Criando vídeos de teste...');
-    const video1 = await collectionService.createVideo({
-      collection_id: testCollection.id,
+    const video1 = await collectionService.createVideo(String(testCollection.id), {
       module_number: 1,
       title: 'Introdução aos Números',
       synopsis: 'Aprenda os conceitos básicos sobre números naturais e suas operações.',
@@ -51,8 +50,7 @@ async function testCollectionsCRUD() {
       order_in_module: 1
     });
     
-    const video2 = await collectionService.createVideo({
-      collection_id: testCollection.id,
+    const video2 = await collectionService.createVideo(String(testCollection.id), {
       module_number: 1,
       title: 'Operações Básicas',
       synopsis: 'Adição, subtração, multiplicação e divisão explicadas de forma simples.',

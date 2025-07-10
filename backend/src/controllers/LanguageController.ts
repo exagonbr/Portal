@@ -1,6 +1,6 @@
 import { Request, Response } from 'express';
 import { LanguageRepository } from '../repositories/LanguageRepository';
-import { BaseController } from './BaseController';
+import BaseController from './BaseController';
 import { Language } from '../entities/Language';
 
 class LanguageController extends BaseController<Language> {

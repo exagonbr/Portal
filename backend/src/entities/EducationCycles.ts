@@ -1,3 +1,4 @@
+import { Institution } from "./Institution";
 import { Entity, Column, PrimaryGeneratedColumn, CreateDateColumn, UpdateDateColumn, ManyToOne, JoinColumn } from 'typeorm';
 
 @Entity('education_cycles')

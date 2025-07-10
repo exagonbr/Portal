@@ -1,9 +1,9 @@
 import { Request, Response } from 'express';
 import { ProfileRepository } from '../repositories/ProfileRepository'
 import { Profile } from '../entities/Profile';;
-import { BaseController } from './BaseController';
+import BaseController from './BaseController';
 
-export class ProfileController extends BaseController<Profile> {
+class ProfileController extends BaseController<Profile> {
  private profileRepository: ProfileRepository;
 
  constructor() {
@@ -88,3 +88,5 @@ export class ProfileController extends BaseController<Profile> {
   }
  }
 }
+
+export default ProfileController;
