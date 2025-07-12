@@ -12,8 +12,10 @@ export interface CreateSubjectData {
 export interface UpdateSubjectData extends Partial<CreateSubjectData> {}
 
 export class SubjectRepository extends ExtendedRepository<Subject> {
+  private repository: Repository<Subject>;
   constructor() {
     super("subjects");
+    this.repository = AppDataSource.getRepository(Subject);
   }
   
   // Implementação do método abstrato findAllPaginated

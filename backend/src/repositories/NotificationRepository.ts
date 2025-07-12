@@ -13,8 +13,10 @@ export interface NotificationFilters {
 }
 
 export class NotificationRepository extends ExtendedRepository<Notification> {
+  private repository: Repository<Notification>;
   constructor() {
     super("notifications");
+    this.repository = AppDataSource.getRepository(Notification);
   }
   // Implementação do método abstrato findAllPaginated
   async findAllPaginated(options: {

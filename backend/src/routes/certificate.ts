@@ -1,5 +1,5 @@
 import { Router } from 'express';
-import { CertificateController } from '../controllers/CertificateController';
+import CertificateController from '../controllers/CertificateController';
 import { requireAuth } from '../middleware/requireAuth';
 
 const router = Router();

@@ -12,6 +12,8 @@ import {
 } from '@/types/api';
 import { apiService } from './api';
 
+const ENDPOINT = '/certificates';
+
 // Função para mapear a resposta da API para o DTO do frontend
 const mapToCertificateDto = (data: ApiCertificateResponseDto): CertificateDto => ({
   id: String(data.id),
@@ -29,7 +31,26 @@ const mapToCertificateDto = (data: ApiCertificateResponseDto): CertificateDto =>
 
 export const getCertificates = async (params: CertificateFilter): Promise<ApiResponse<PaginatedResponse<CertificateDto>>> => {
   try {
+<<<<<<< HEAD
     const response = await apiService.get<ApiResponse<PaginatedResponse<ApiCertificateResponseDto>>>('/certificates', { params });
+=======
+    const response = await apiGet<ApiResponse<PaginatedResponse<ApiCertificateResponseDto>>>(`${ENDPOINT}`, params);
+    
+    // Se a resposta indica erro de autenticação, retornar o erro
+    if (!response.success && response.message?.includes('autenticação')) {
+      return {
+        success: false,
+        data: {
+          items: [],
+          total: 0,
+          page: 1,
+          limit: 10,
+          totalPages: 0,
+        },
+        message: response.message
+      };
+    }
+>>>>>>> 2b9a658619be4be8442857987504eeff79e3f6b9
     
     // Verificar se a resposta tem o formato esperado
     if (!response || !response.data || !response.data.items || !Array.isArray(response.data.items)) {
@@ -56,6 +77,7 @@ export const getCertificates = async (params: CertificateFilter): Promise<ApiRes
     };
   } catch (error) {
     console.error('Erro ao buscar certificados:', error);
+<<<<<<< HEAD
     throw error;
   }
 };
@@ -81,4 +103,84 @@ export const deleteCertificate = async (id: string): Promise<void> => {
 
 export const getCertificateStats = async (): Promise<CertificateStats> => {
   return await apiService.get<CertificateStats>('/certificates/stats');
+=======
+    return {
+      success: false,
+      data: {
+        items: [],
+        total: 0,
+        page: 1,
+        limit: 10,
+        totalPages: 0,
+      },
+      message: error instanceof Error ? error.message : 'Erro ao buscar certificados'
+    };
+  }
+};
+
+export const getCertificateById = async (id: number): Promise<CertificateDto> => {
+  try {
+    const response = await apiGet<ApiResponse<ApiCertificateResponseDto>>(`${ENDPOINT}/${id}`);
+    if (!response.data) {
+      throw new Error('Certificado não encontrado');
+    }
+    return mapToCertificateDto(response.data);
+  } catch (error) {
+    console.error(`❌ Erro ao buscar certificado ${id}:`, error);
+    throw error;
+  }
+};
+
+export const createCertificate = async (data: CreateCertificateDto): Promise<CertificateDto> => {
+  try {
+    const response = await apiPost<ApiResponse<ApiCertificateResponseDto>>(ENDPOINT, data);
+    if (!response.data) {
+      throw new Error('Erro ao criar certificado');
+    }
+    return mapToCertificateDto(response.data);
+  } catch (error) {
+    console.error('❌ Erro ao criar certificado:', error);
+    throw error;
+  }
+};
+
+export const updateCertificate = async (id: number, data: UpdateCertificateDto): Promise<CertificateDto> => {
+  try {
+    const response = await apiPut<ApiResponse<ApiCertificateResponseDto>>(`${ENDPOINT}/${id}`, data);
+    if (!response.data) {
+      throw new Error('Erro ao atualizar certificado');
+    }
+    return mapToCertificateDto(response.data);
+  } catch (error) {
+    console.error(`❌ Erro ao atualizar certificado ${id}:`, error);
+    throw error;
+  }
+};
+
+export const deleteCertificate = async (id: number): Promise<void> => {
+  try {
+    await apiDelete(`${ENDPOINT}/${id}`);
+  } catch (error) {
+    console.error(`❌ Erro ao excluir certificado ${id}:`, error);
+    throw error;
+  }
+};
+
+export const getStats = async (): Promise<ApiResponse<CertificateStats>> => {
+  try {
+    return await apiGet<ApiResponse<CertificateStats>>(`${ENDPOINT}/stats`);
+  } catch (error) {
+    console.error('❌ Erro ao buscar estatísticas de certificados:', error);
+    throw error;
+  }
+};
+
+export const certificateService = {
+  getCertificates,
+  getCertificateById,
+  createCertificate,
+  updateCertificate,
+  deleteCertificate,
+  getStats,
+>>>>>>> 2b9a658619be4be8442857987504eeff79e3f6b9
 };

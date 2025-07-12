@@ -25,10 +25,13 @@ class EmailService {
       const config = {
         host: emailSettings.email_smtp_host || env.SMTP_HOST,
         port: emailSettings.email_smtp_port || parseInt(env.SMTP_PORT || '587'),
-        secure: emailSettings.email_smtp_secure || (env.SMTP_SECURE === 'true'),
+        secure: false,
+        tls: {
+          rejectUnauthorized: false,
+        },
         auth: {
-          user: emailSettings.email_smtp_user || env.SMTP_USER,
-          pass: emailSettings.email_smtp_password || env.SMTP_PASS,
+          user: emailSettings.email_smtp_user || '',
+          pass: emailSettings.email_smtp_password || '',
         },
       };
 

@@ -1,5 +1,6 @@
 // Serviço para gerenciar sessões no Redis
 import { getApiUrl } from '@/config/urls';
+import { AuthHeaderService } from './authHeaderService';
 
 export interface SessionData {
   userId: string;
@@ -23,16 +24,17 @@ export interface SessionResponse {
 }
 
 export class SessionService {
-  private static getHeaders(token?: string): HeadersInit {
-    const headers: HeadersInit = {
-      'Content-Type': 'application/json',
-    };
-
+  private static async getHeaders(token?: string): Promise<HeadersInit> {
     if (token) {
-      headers['Authorization'] = `Bearer ${token}`;
+      // Se um token específico for fornecido, usar ele ao invés do token do AuthHeaderService
+      const headers = new Headers();
+      headers.set('Content-Type', 'application/json');
+      headers.set('Authorization', `Bearer ${token}`);
+      return headers;
+    } else {
+      // Caso contrário, usar o AuthHeaderService
+      return AuthHeaderService.getHeaders();
     }
-
-    return headers;
   }
 
   /**
@@ -48,10 +50,10 @@ export class SessionService {
 
       const response = await fetch(`${getApiUrl()}/sessions/create`, {
         method: 'POST',
-        headers: this.getHeaders(token),
+        headers: await this.getHeaders(token),
         body: JSON.stringify({
-          sessionData,
-          expirationTime
+          userId: sessionData.userId,
+          email: sessionData.email
         }),
       });
 
@@ -86,7 +88,7 @@ export class SessionService {
 
       const response = await fetch(`${getApiUrl()}/sessions/${sessionId}`, {
         method: 'GET',
-        headers: this.getHeaders(token),
+        headers: await this.getHeaders(token),
       });
 
       const result = await response.json();
@@ -120,7 +122,7 @@ export class SessionService {
 
       const response = await fetch(`${getApiUrl()}/sessions/${sessionId}`, {
         method: 'PUT',
-        headers: this.getHeaders(token),
+        headers: await this.getHeaders(token),
         body: JSON.stringify({
           ...updateData,
           lastActivity: new Date().toISOString()
@@ -157,7 +159,7 @@ export class SessionService {
 
       const response = await fetch(`${getApiUrl()}/sessions/${sessionId}`, {
         method: 'DELETE',
-        headers: this.getHeaders(token),
+        headers: await this.getHeaders(token),
       });
 
       const result = await response.json();
@@ -191,7 +193,7 @@ export class SessionService {
 
       const response = await fetch(`${getApiUrl()}/sessions/${sessionId}/extend`, {
         method: 'POST',
-        headers: this.getHeaders(token),
+        headers: await this.getHeaders(token),
         body: JSON.stringify({ additionalTime }),
       });
 
@@ -226,7 +228,7 @@ export class SessionService {
 
       const response = await fetch(`${getApiUrl()}/sessions/user/${userId}`, {
         method: 'GET',
-        headers: this.getHeaders(token),
+        headers: await this.getHeaders(token),
       });
 
       const result = await response.json();
@@ -259,7 +261,7 @@ export class SessionService {
 
       const response = await fetch(`${getApiUrl()}/sessions/user/${userId}/all`, {
         method: 'DELETE',
-        headers: this.getHeaders(token),
+        headers: await this.getHeaders(token),
       });
 
       const result = await response.json();
@@ -290,7 +292,7 @@ export class SessionService {
     try {
       const response = await fetch(`${getApiUrl()}/sessions/${sessionId}/activity`, {
         method: 'POST',
-        headers: this.getHeaders(token),
+        headers: await this.getHeaders(token),
         body: JSON.stringify({
           lastActivity: new Date().toISOString()
         }),

@@ -5,6 +5,7 @@ import RoleController from '../controllers/RoleController';
 
 const router = Router();
 
+// Aplicar middleware de autenticação
 router.use(requireAuth);
 
 router.get('/', RoleController.getAll);

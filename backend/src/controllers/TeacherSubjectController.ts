@@ -1,7 +1,7 @@
 import { Request, Response } from 'express';
 import { TeacherSubjectRepository } from '../repositories/TeacherSubjectRepository'
 import { TeacherSubject } from '../entities/TeacherSubject';
-import { BaseController } from './BaseController';
+import BaseController from './BaseController';
 
 class TeacherSubjectController extends BaseController<TeacherSubject> {
   private teacherSubjectRepository: TeacherSubjectRepository;

@@ -1,7 +1,7 @@
 import { Request, Response } from 'express';
 import { CertificateRepository, CertificateFilter } from '../repositories/CertificateRepository';
 import { Certificate } from '../entities/Certificate';
-import { BaseController } from './BaseController';
+import BaseController from './BaseController';
 
 class CertificateController extends BaseController<Certificate> {
   private certificateRepository: CertificateRepository;
@@ -105,15 +105,16 @@ class CertificateController extends BaseController<Certificate> {
       } else if (cpf_last_digits) {
         // Buscar pelos últimos 4 dígitos do CPF, considerando diferentes formatos
         // 1. Busca removendo formatação (pontos, hífens, espaços)
-        // 2. Busca também com formatação (ex: -90 para 6890)
+        // 2. Busca também com formatação (ex: -6890 para 6890)
         const digits = cpf_last_digits as string;
         const lastTwoDigits = digits.slice(-2); // Últimos 2 dígitos (ex: 90)
         
         whereClause = `(
           RIGHT(REPLACE(REPLACE(REPLACE(document, '.', ''), '-', ''), ' ', ''), 4) = ? 
           OR document LIKE ?
+          OR document LIKE ?
         )`;
-        params = [digits, `%-${lastTwoDigits}`];
+        params = [digits, `%-${lastTwoDigits}`, `%-${digits}`];
       }
 
       const certificates = await this.certificateRepository.findByCondition(whereClause, params);

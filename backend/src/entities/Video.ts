@@ -1,8 +1,12 @@
 import {
   Entity,
   PrimaryGeneratedColumn,
-  Column
+  Column,
+  CreateDateColumn,
+  UpdateDateColumn,
+  OneToMany
 } from 'typeorm';
+import { VideoFile } from './VideoFile';
 
 @Entity('video')
 export class Video {
@@ -15,8 +19,8 @@ export class Video {
   @Column({ name: 'api_id', type: 'varchar', length: 255, nullable: true })
   apiId?: string;
 
-  @Column({ name: 'date_created', type: 'timestamp', nullable: true })
-  dateCreated?: Date;
+  @CreateDateColumn({ name: 'date_created' })
+  dateCreated!: Date;
 
   @Column({ type: 'boolean', nullable: true })
   deleted?: boolean;
@@ -30,8 +34,8 @@ export class Video {
   @Column({ name: 'intro_start', type: 'int', nullable: true })
   introStart?: number;
 
-  @Column({ name: 'last_updated', type: 'timestamp', nullable: true })
-  lastUpdated?: Date;
+  @UpdateDateColumn({ name: 'last_updated' })
+  lastUpdated!: Date;
 
   @Column({ name: 'original_language', type: 'varchar', length: 255, nullable: true })
   originalLanguage?: string;
@@ -108,6 +112,7 @@ export class Video {
   @Column({ type: 'varchar', length: 255, nullable: true })
   duration?: string;
 
-  @Column({ nullable: true })
-  module_id?: number;
+  // Relacionamentos
+  @OneToMany(() => VideoFile, videoFile => videoFile.video)
+  videoFiles?: VideoFile[];
 }

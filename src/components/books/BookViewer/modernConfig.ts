@@ -184,12 +184,12 @@ export const configUtils = {
     const isMobile = window.innerWidth < 768;
     const isTablet = window.innerWidth >= 768 && window.innerWidth < 1024;
     const prefersReducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
-    const prefersDarkMode = window.matchMedia('(prefers-color-scheme: dark)').matches;
+    const prefersDarkMode = window.matchMedia('(prefers-color-scheme: default)').matches;
 
     let baseConfig = isMobile ? modernConfigPresets.mobile : modernConfigPresets.default;
 
     if (prefersDarkMode) {
-      baseConfig = modernConfigPresets.dark;
+      baseConfig = modernConfigPresets.default;
     }
 
     // Ajustes para acessibilidade

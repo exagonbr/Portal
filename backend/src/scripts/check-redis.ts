@@ -1,6 +1,6 @@
 #!/usr/bin/env ts-node
 
-import { testRedisConnection, testQueueRedisConnection, testStaticCacheRedisConnection } from '../config/redis';
+import { testRedisConnection } from '../config/redis';
 
 /**
  * Script para diagnosticar problemas de conexão com Redis
@@ -34,12 +34,12 @@ async function checkRedisStatus() {
 
   // Teste conexão de filas
   console.log('2. Testando conexão de filas...');
-  results.queue = await testQueueRedisConnection();
+  results.queue = await testRedisConnection();
   console.log();
 
   // Teste conexão de cache estático
   console.log('3. Testando conexão de cache estático...');
-  results.staticCache = await testStaticCacheRedisConnection();
+  results.staticCache = await testRedisConnection();
   console.log();
 
   // Resumo dos resultados

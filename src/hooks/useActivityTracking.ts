@@ -116,26 +116,104 @@ export function useActivityTracking(options: UseActivityTrackingOptions = {}): A
     }
   }, [trackErrors, user])
 
-  // Função para obter ID do usuário do localStorage se não estiver disponível no contexto
+  // Função para obter ID do usuário do localStorage, sessionStorage ou cookies se não estiver disponível no contexto
   const getUserId = useCallback((): string | null => {
     // Primeiro tenta obter do contexto de autenticação
     if (user?.id) {
+      console.log('✅ user_id obtido do contexto de autenticação:', user.id);
       return user.id.toString()
     }
     
     // Se não estiver disponível, tenta obter do localStorage
     try {
+      // Verificar localStorage - user
       const userStr = localStorage.getItem('user')
       if (userStr) {
         const userData = JSON.parse(userStr)
         if (userData && userData.id) {
+          console.log('✅ user_id obtido do localStorage (user):', userData.id);
           return userData.id.toString()
         }
       }
+      
+      // Verificar sessionStorage - user
+      const userStrSession = sessionStorage.getItem('user')
+      if (userStrSession) {
+        const userData = JSON.parse(userStrSession)
+        if (userData && userData.id) {
+          console.log('✅ user_id obtido do sessionStorage (user):', userData.id);
+          return userData.id.toString()
+        }
+      }
+      
+      // Verificar localStorage - session_data
+      const sessionDataStr = localStorage.getItem('session_data')
+      if (sessionDataStr) {
+        const sessionData = JSON.parse(sessionDataStr)
+        if (sessionData && sessionData.user_id) {
+          console.log('✅ user_id obtido do localStorage (session_data.user_id):', sessionData.user_id);
+          return sessionData.user_id.toString()
+        }
+        if (sessionData && sessionData.userId) {
+          console.log('✅ user_id obtido do localStorage (session_data.userId):', sessionData.userId);
+          return sessionData.userId.toString()
+        }
+      }
+      
+      // Verificar sessionStorage - session_data
+      const sessionDataStrSession = sessionStorage.getItem('session_data')
+      if (sessionDataStrSession) {
+        const sessionData = JSON.parse(sessionDataStrSession)
+        if (sessionData && sessionData.user_id) {
+          console.log('✅ user_id obtido do sessionStorage (session_data.user_id):', sessionData.user_id);
+          return sessionData.user_id.toString()
+        }
+        if (sessionData && sessionData.userId) {
+          console.log('✅ user_id obtido do sessionStorage (session_data.userId):', sessionData.userId);
+          return sessionData.userId.toString()
+        }
+      }
+      
+      // Verificar cookies - user_data
+      const cookies = document.cookie.split('; ')
+      const userDataCookie = cookies.find(c => c.startsWith('user_data='))
+      if (userDataCookie) {
+        const userData = JSON.parse(decodeURIComponent(userDataCookie.split('=')[1]))
+        if (userData && userData.id) {
+          console.log('✅ user_id obtido do cookie user_data:', userData.id);
+          return userData.id.toString()
+        }
+      }
+      
+      // Verificar cookies - session_data
+      const sessionDataCookie = cookies.find(c => c.startsWith('session_data='))
+      if (sessionDataCookie) {
+        const sessionData = JSON.parse(decodeURIComponent(sessionDataCookie.split('=')[1]))
+        if (sessionData && sessionData.user_id) {
+          console.log('✅ user_id obtido do cookie session_data (user_id):', sessionData.user_id);
+          return sessionData.user_id.toString()
+        }
+        if (sessionData && sessionData.userId) {
+          console.log('✅ user_id obtido do cookie session_data (userId):', sessionData.userId);
+          return sessionData.userId.toString()
+        }
+      }
+      
+      // Verificar cookies - user
+      const userCookie = cookies.find(c => c.startsWith('user='))
+      if (userCookie) {
+        const userData = JSON.parse(decodeURIComponent(userCookie.split('=')[1]))
+        if (userData && userData.id) {
+          console.log('✅ user_id obtido do cookie user:', userData.id);
+          return userData.id.toString()
+        }
+      }
+      
     } catch (error) {
-      console.log('❌ Erro ao obter user_id do localStorage:', error)
+      console.log('❌ Erro ao obter user_id do armazenamento:', error)
     }
     
+    console.log('❌ user_id não encontrado em nenhuma fonte')
     return null
   }, [user])
 

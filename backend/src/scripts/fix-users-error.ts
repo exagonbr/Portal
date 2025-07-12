@@ -93,8 +93,8 @@ async function testUserService(): Promise<boolean> {
     console.log('✅ Serviço instanciado com sucesso');
 
     // Testar consulta com filtros básicos
-    console.log('🔍 Testando findUsersWithFilters...');
-    const result = await userService.findUsersWithFilters({
+    console.log('🔍 Testando findAll...');
+    const result = await userService.findAll({
       page: 1,
       limit: 5
     });

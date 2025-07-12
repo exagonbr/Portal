@@ -49,8 +49,10 @@ export interface CreateMediaEntryData {
 export interface UpdateMediaEntryData extends Partial<CreateMediaEntryData> {}
 
 export class MediaEntryRepository extends ExtendedRepository<MediaEntry> {
+  private repository: Repository<MediaEntry>;
   constructor() {
     super("mediaentrys");
+    this.repository = AppDataSource.getRepository(MediaEntry);
   }
   // Implementação do método abstrato findAllPaginated
   async findAllPaginated(options: {

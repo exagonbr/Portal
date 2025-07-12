@@ -12,8 +12,10 @@ export interface CreateThemeData {
 export interface UpdateThemeData extends Partial<CreateThemeData> {}
 
 export class ThemeRepository extends ExtendedRepository<Theme> {
+  private repository: Repository<Theme>;
   constructor() {
     super("themes");
+    this.repository = AppDataSource.getRepository(Theme);
   }
   
   // Implementação do método abstrato findAllPaginated

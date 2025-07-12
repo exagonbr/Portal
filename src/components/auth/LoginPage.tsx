@@ -197,11 +197,53 @@ export function LoginPage() {
   // Aguardar contexto estar pronto
   if (!mounted || contextLoading) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-blue-900 to-indigo-900">
-        <div className="text-white text-center">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-white mx-auto mb-4"></div>
-          <p>Carregando...</p>
-        </div>
+      <div className="min-h-screen flex items-center justify-center relative overflow-hidden">
+        {/* Background com gradiente animado */}
+        <div 
+          className="absolute inset-0"
+          style={{
+            background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
+            backgroundSize: '400% 400%',
+            animation: 'gradientShift 8s ease infinite'
+          }}
+        />
+        
+        {/* Overlay com pattern */}
+        <div 
+          className="absolute inset-0 opacity-20"
+          style={{
+            backgroundImage: `url("data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' fill-rule='evenodd'%3E%3Cg fill='%23ffffff' fill-opacity='0.1'%3E%3Ccircle cx='30' cy='30' r='2'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E")`,
+          }}
+        />
+        
+        <MotionDiv
+          initial={{ opacity: 0, scale: 0.8 }}
+          animate={{ opacity: 1, scale: 1 }}
+          transition={{ duration: 0.6 }}
+          className="relative z-10 text-white text-center backdrop-blur-sm bg-white/10 p-8 rounded-2xl border border-white/20"
+        >
+          <MotionDiv
+            animate={{ rotate: 360 }}
+            transition={{ duration: 2, repeat: Infinity, ease: "linear" }}
+            className="w-16 h-16 border-4 border-t-transparent border-white/80 rounded-full mx-auto mb-6"
+          />
+          <MotionP
+            initial={{ opacity: 0, y: 10 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.3 }}
+            className="text-lg font-medium"
+          >
+            Carregando Portal...
+          </MotionP>
+        </MotionDiv>
+        
+        <style jsx>{`
+          @keyframes gradientShift {
+            0% { background-position: 0% 50%; }
+            50% { background-position: 100% 50%; }
+            100% { background-position: 0% 50%; }
+          }
+        `}</style>
       </div>
     );
   }
@@ -210,119 +252,190 @@ export function LoginPage() {
 
   if (user) {
     return (
-      <div className="min-h-screen flex items-center justify-center" style={{ backgroundColor: theme.colors.background.primary }}>
-        <div className="max-w-md w-full space-y-8">
-          <div className="text-center">
-            <MotionDiv 
-              animate={{ rotate: 360 }}
-              transition={{ duration: 1, repeat: Infinity, ease: "linear" }}
-              className="w-8 h-8 border-2 border-t-transparent rounded-full mx-auto"
-              style={{ borderColor: theme.colors.primary.DEFAULT }}
-            />
-            <p className="mt-2" style={{ color: theme.colors.text.secondary }}>Redirecionando...</p>
-          </div>
-        </div>
+      <div 
+        className="min-h-screen flex items-center justify-center relative overflow-hidden" 
+        style={{ 
+          background: `linear-gradient(135deg, ${theme.colors.primary.DEFAULT}20, ${theme.colors.secondary.DEFAULT}20)`
+        }}
+      >
+        {/* Padrão de fundo animado */}
+        <div 
+          className="absolute inset-0 opacity-30"
+          style={{
+            backgroundImage: `url("data:image/svg+xml,%3Csvg width='100' height='100' viewBox='0 0 100 100' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='${encodeURIComponent(theme.colors.primary.DEFAULT)}' fill-opacity='0.1'%3E%3Cpath d='M50 30a20 20 0 1 1 0 40 20 20 0 0 1 0-40z'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E")`,
+            animation: 'float 6s ease-in-out infinite'
+          }}
+        />
+        
+        <MotionDiv
+          initial={{ opacity: 0, scale: 0.9 }}
+          animate={{ opacity: 1, scale: 1 }}
+          transition={{ duration: 0.5 }}
+          className="relative z-10 max-w-md w-full mx-4 text-center backdrop-blur-xl bg-white/10 p-8 rounded-2xl border border-white/20"
+          style={{ backgroundColor: `${theme.colors.background.primary}95` }}
+        >
+          <MotionDiv 
+            animate={{ rotate: 360, scale: [1, 1.1, 1] }}
+            transition={{ 
+              rotate: { duration: 2, repeat: Infinity, ease: "linear" },
+              scale: { duration: 1.5, repeat: Infinity, ease: "easeInOut" }
+            }}
+            className="w-12 h-12 border-3 border-t-transparent rounded-full mx-auto mb-4"
+            style={{ borderColor: theme.colors.primary.DEFAULT }}
+          />
+          <MotionP 
+            initial={{ opacity: 0, y: 10 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.2 }}
+            className="text-lg font-semibold" 
+            style={{ color: theme.colors.text.primary }}
+          >
+            Redirecionando para o Portal...
+          </MotionP>
+          <MotionP 
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            transition={{ delay: 0.4 }}
+            className="text-sm mt-2" 
+            style={{ color: theme.colors.text.secondary }}
+          >
+            Aguarde um momento
+          </MotionP>
+        </MotionDiv>
+        
+        <style jsx>{`
+          @keyframes float {
+            0%, 100% { transform: translateY(0px) rotate(0deg); }
+            50% { transform: translateY(-20px) rotate(180deg); }
+          }
+        `}</style>
       </div>
     );
   }
 
   return (
-    <LoginBackground className="overflow-hidden">
+    <LoginBackground className="overflow-hidden relative">
+      {/* Overlay adicional para mais profundidade */}
+      <div 
+        className="absolute inset-0 z-5"
+        style={{
+          background: `radial-gradient(circle at 30% 20%, ${theme.colors.primary.DEFAULT}15 0%, transparent 50%), 
+                       radial-gradient(circle at 70% 80%, ${theme.colors.secondary.DEFAULT}10 0%, transparent 50%)`,
+        }}
+      />
+      
+      {/* Padrão geométrico sutil */}
+      <div 
+        className="absolute inset-0 z-5 opacity-5"
+        style={{
+          backgroundImage: `url("data:image/svg+xml,%3Csvg width='120' height='120' viewBox='0 0 120 120' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' fill-rule='evenodd'%3E%3Cg fill='${encodeURIComponent(theme.colors.text.primary)}' fill-opacity='0.8'%3E%3Cpath d='M60 60l30-30v60l-30-30zm30 0l30-30v60l-30-30z'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E")`,
+        }}
+      />
+
       {/* Demo Credentials - Flutuante na lateral esquerda */}
       <DemoCredentials onCredentialSelect={handleCredentialSelect} />
 
-      {/* Content */}
-      <MotionDiv 
-        initial={{ opacity: 0, y: 20 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.5 }}
-        className="relative z-10 max-w-lg w-full mx-4 space-y-8 p-6 sm:p-8 rounded-2xl shadow-2xl backdrop-blur-xl"
-        style={{ 
-          backgroundColor: theme.type === 'modern' 
-            ? 'rgba(26, 26, 26, 0.95)' 
-            : 'rgba(255, 255, 255, 0.95)',
-          border: `1px solid ${theme.colors.border.DEFAULT}`
-        }}
-      >
-        {/* Logo Section */}
+      {/* Content - Container centralizado */}
+      <div className="min-h-screen flex items-center justify-center p-2 sm:p-4 md:p-6 lg:p-8">
+        {/* Box de login com todo o conteúdo */}
         <MotionDiv 
-          className="text-center"
-          initial={{ scale: 0.8 }}
-          animate={{ scale: 1 }}
-          transition={{ duration: 0.5, delay: 0.2 }}
+          initial={{ opacity: 0, y: 20, scale: 0.98 }}
+          animate={{ opacity: 1, y: 0, scale: 1 }}
+          transition={{ duration: 0.6, ease: "easeOut", delay: 0.1 }}
+          className="relative z-10 bg-white rounded-xl shadow-xl border border-gray-200/50 flex flex-col w-full max-w-sm sm:max-w-md md:max-w-lg lg:max-w-xl xl:max-w-2xl"
+          style={{ 
+            minHeight: '500px',
+            maxHeight: '95vh',
+            boxShadow: '0 10px 40px rgba(0, 0, 0, 0.1), 0 4px 20px rgba(0, 0, 0, 0.05)'
+          }}
         >
-          <div className="relative w-36 sm:w-48 h-12 sm:h-16 mx-auto mb-3 sm:mb-4">
-            <Image
-              src="/sabercon-logo.png"
-              alt="Sabercon Logo"
-              fill
-              className="object-contain"
-              priority
-              sizes="(max-width: 640px) 144px, 192px"
-            />
+          {/* Header com logo dentro da div branca */}
+          <div className="text-center pt-8 sm:pt-10 pb-6 sm:pb-8 px-4 sm:px-6 md:px-8">
+            <MotionDiv
+              initial={{ opacity: 0, y: -20, scale: 0.9 }}
+              animate={{ opacity: 1, y: 0, scale: 1 }}
+              transition={{ duration: 0.6, ease: "easeOut" }}
+            >
+              <div className="relative w-40 h-12 sm:w-48 sm:h-16 md:w-56 md:h-18 mx-auto mb-3">
+                <Image
+                  src="/sabercon-logo.png"
+                  alt="Sabercon Logo"
+                  fill
+                  className="object-contain"
+                  priority
+                  sizes="(max-width: 640px) 160px, (max-width: 768px) 192px, 224px"
+                />
+              </div>
+              
+              <MotionH1 
+                className="text-lg sm:text-xl md:text-2xl font-bold text-gray-800 mb-1"
+                initial={{ opacity: 0, y: 10 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.5, delay: 0.2 }}
+              >
+                Portal Educacional
+              </MotionH1>
+              
+              <MotionP 
+                className="text-xs sm:text-sm text-gray-600"
+                initial={{ opacity: 0, y: 10 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.5, delay: 0.3 }}
+              >
+                Faça login para continuar
+              </MotionP>
+            </MotionDiv>
           </div>
-          <MotionH1 
-            className="text-xl sm:text-2xl font-bold"
-            style={{ color: theme.colors.text.primary }}
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            transition={{ duration: 0.5, delay: 0.4 }}
-          >
-            Portal Educacional
-          </MotionH1>
-          <MotionP 
-            className="text-sm sm:text-base"
-            style={{ color: theme.colors.text.secondary }}
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            transition={{ duration: 0.5, delay: 0.6 }}
-          >
-            Acesse sua conta para continuar
-          </MotionP>
+
+          {/* Mensagens de feedback */}
+          {showUnauthorizedMessage && (
+            <MotionDiv 
+              initial={{ opacity: 0, y: -10 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.4 }}
+              className="mx-4 sm:mx-6 md:mx-8 mb-4 p-3 sm:p-4 bg-red-50 border border-red-200 rounded-lg"
+              role="alert"
+            >
+              <div className="flex items-center gap-2">
+                <span className="material-symbols-outlined text-red-500 text-sm">error</span>
+                <div>
+                  <p className="text-sm font-medium text-red-800">Acesso não autorizado</p>
+                  <p className="text-xs text-red-600">Você precisa fazer login para acessar esta área.</p>
+                </div>
+              </div>
+            </MotionDiv>
+          )}
+
+          {showExpiredMessage && (
+            <MotionDiv 
+              initial={{ opacity: 0, y: -10 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.4 }}
+              className="mx-4 sm:mx-6 md:mx-8 mb-4 p-3 sm:p-4 bg-amber-50 border border-amber-200 rounded-lg"
+              role="alert"
+            >
+              <div className="flex items-center gap-2">
+                <span className="material-symbols-outlined text-amber-500 text-sm">schedule</span>
+                <div>
+                  <p className="text-sm font-medium text-amber-800">Sessão expirada</p>
+                  <p className="text-xs text-amber-600">Sua sessão expirou. Por favor, faça login novamente.</p>
+                </div>
+              </div>
+            </MotionDiv>
+          )}
+
+          {/* Form Section */}
+          <div className="flex-1 flex flex-col justify-center px-4 sm:px-6 md:px-8 pb-6 sm:pb-8">
+            <MotionDiv
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.6, delay: 0.4 }}
+            >
+              <LoginForm />
+            </MotionDiv>
+          </div>
         </MotionDiv>
-
-        {/* Mensagens de feedback */}
-        {showUnauthorizedMessage && (
-          <div className="rounded-md bg-red-50 p-4 border border-red-200" role="alert">
-            <div className="flex">
-              <div className="flex-shrink-0">
-                <span className="material-symbols-outlined text-red-400" aria-hidden="true">error</span>
-              </div>
-              <div className="ml-3">
-                <h3 className="text-sm font-medium text-red-800">Acesso não autorizado</h3>
-                <p className="text-sm text-red-700 mt-1">
-                  Você precisa fazer login para acessar esta área.
-                </p>
-              </div>
-            </div>
-          </div>
-        )}
-
-        {showExpiredMessage && (
-          <div className="rounded-md bg-amber-50 p-4 border border-amber-200" role="alert">
-            <div className="flex">
-              <div className="flex-shrink-0">
-                <span className="material-symbols-outlined text-amber-400" aria-hidden="true">schedule</span>
-              </div>
-              <div className="ml-3">
-                <h3 className="text-sm font-medium text-amber-800">Sessão expirada</h3>
-                <p className="text-sm text-amber-700 mt-1">
-                  Sua sessão expirou. Por favor, faça login novamente.
-                </p>
-              </div>
-            </div>
-          </div>
-        )}
-
-        {/* Form Section */}
-        <MotionDiv
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.5, delay: 0.8 }}
-        >
-          <LoginForm ref={loginFormRef} />
-        </MotionDiv>
-      </MotionDiv>
+      </div>
     </LoginBackground>
   );
 }

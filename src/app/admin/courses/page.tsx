@@ -1,73 +1,87 @@
 'use client'
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import GenericCRUD from '@/components/crud/GenericCRUD';
 import { Button } from '@/components/ui/Button';
 import Input from '@/components/ui/Input';
 import { Select } from '@/components/ui/Select';
 import { CourseEditModal } from '@/components/CourseEditModal';
 import { useToast } from '@/components/ToastManager';
-import { courseService } from '@/services/courseService';
+import { courseService, Course } from '@/services/courseService';
 import { institutionService } from '@/services/institutionService';
-import { CourseResponseDto } from '@/types/api';
 import DashboardLayout from '@/components/dashboard/DashboardLayout';
+
+// Interface para resposta paginada
+interface PaginatedResponse<T> {
+  items: T[];
+  total: number;
+}
 
 export default function CoursesPage() {
   const { showError, showSuccess } = useToast();
   const [isModalOpen, setIsModalOpen] = useState(false);
-  const [selectedCourse, setSelectedCourse] = useState<CourseResponseDto | undefined>();
+  const [selectedCourse, setSelectedCourse] = useState<Course | undefined>();
   const [currentPage, setCurrentPage] = useState(1);
   const [filters, setFilters] = useState({
     search: '',
-    institution_id: '',
-    level: '',
-    type: '',
-    active: ''
+    status: '' as 'active' | 'inactive' | '',
+    category: ''
   });
-  const [courses, setCourses] = useState<CourseResponseDto[]>([]);
+  const [courses, setCourses] = useState<Course[]>([]);
   const [totalItems, setTotalItems] = useState(0);
   const [isLoading, setIsLoading] = useState(false);
   const [institutions, setInstitutions] = useState<{ id: string; name: string }[]>([]);
+  const [itemsPerPage] = useState(10);
 
   useEffect(() => {
     loadInstitutions();
   }, []);
 
-  useEffect(() => {
-    loadCourses();
-  }, [currentPage, filters]);
-
-  const loadInstitutions = async () => {
-    try {
-      const response = await institutionService.getAll();
-      setInstitutions(response.map(inst => ({
-        id: inst.id,
-        name: inst.name
-      })));
-    } catch (error) {
-      showError('Erro ao carregar instituições');
-    }
-  };
-
-  const loadCourses = async () => {
+  const loadCourses = useCallback(async () => {
     setIsLoading(true);
     try {
-      const response = await courseService.getCourses({
+      const queryParams: any = {
         page: currentPage,
-        filters: {
-          search: filters.search || undefined,
-          institution_id: filters.institution_id || undefined,
-          level: filters.level || undefined,
-          type: filters.type || undefined,
-          active: filters.active ? filters.active === 'true' : undefined
-        }
-      });
-      setCourses(response.items);
-      setTotalItems(response.pagination.total);
+        limit: itemsPerPage
+      };
+      
+      if (filters.search) {
+        queryParams.search = filters.search;
+      }
+      
+      if (filters.status) {
+        queryParams.status = filters.status;
+      }
+      
+      if (filters.category) {
+        queryParams.category = filters.category;
+      }
+      
+      const response = await courseService.getAll(queryParams) as PaginatedResponse<Course>;
+      setCourses(response.items || []);
+      setTotalItems(response.total || 0);
     } catch (error) {
+      console.error('Erro ao carregar cursos:', error);
       showError('Erro ao carregar cursos');
     } finally {
       setIsLoading(false);
+    }
+  }, [currentPage, itemsPerPage, filters, showError]);
+
+  useEffect(() => {
+    loadCourses();
+  }, [currentPage, filters, loadCourses]);
+
+  const loadInstitutions = async () => {
+    try {
+      const response = await institutionService.getAll() as PaginatedResponse<{id: string | number, name: string}>;
+      setInstitutions(response.items?.map(inst => ({
+        id: String(inst.id),
+        name: inst.name
+      })) || []);
+    } catch (error) {
+      console.error('Erro ao carregar instituições:', error);
+      showError('Erro ao carregar instituições');
     }
   };
 
@@ -77,7 +91,7 @@ export default function CoursesPage() {
   };
 
   const handleEdit = (item: { id: string | number }) => {
-    const course = courses.find(c => c.id === item.id);
+    const course = courses.find(c => c.id === Number(item.id));
     if (course) {
       setSelectedCourse(course);
       setIsModalOpen(true);
@@ -85,14 +99,15 @@ export default function CoursesPage() {
   };
 
   const handleDelete = async (item: { id: string | number }) => {
-    const id = String(item.id);
+    const id = Number(item.id);
     if (!confirm('Tem certeza que deseja excluir este curso?')) return;
 
     try {
-      await courseService.deleteCourse(id);
+      await courseService.delete(id);
       showSuccess('Curso excluído com sucesso!');
       loadCourses();
     } catch (error) {
+      console.error('Erro ao excluir curso:', error);
       showError('Erro ao excluir curso');
     }
   };
@@ -100,17 +115,24 @@ export default function CoursesPage() {
   const handleSave = async (data: any) => {
     try {
       if (selectedCourse) {
-        await courseService.updateCourse(selectedCourse.id, data);
+        await courseService.update(selectedCourse.id, data);
         showSuccess('Curso atualizado com sucesso!');
       } else {
-        await courseService.createCourse(data);
+        await courseService.create(data);
         showSuccess('Curso criado com sucesso!');
       }
+      setIsModalOpen(false);
       loadCourses();
     } catch (error) {
+      console.error('Erro ao salvar curso:', error);
       showError('Erro ao salvar curso');
       throw error;
     }
+  };
+
+  const handleFilterChange = (key: string, value: string) => {
+    setFilters(prev => ({ ...prev, [key]: value }));
+    setCurrentPage(1);
   };
 
   const columns = [
@@ -120,28 +142,23 @@ export default function CoursesPage() {
       render: (item: any) => item.name
     },
     { 
-      key: 'level',
-      label: 'Nível',
-      render: (item: any) => item.level
+      key: 'category',
+      label: 'Categoria',
+      render: (item: any) => item.category || '-'
     },
     { 
-      key: 'type',
-      label: 'Tipo',
-      render: (item: any) => item.type
+      key: 'duration',
+      label: 'Duração',
+      render: (item: any) => `${item.duration || 0} horas`
     },
     {
-      key: 'institution',
-      label: 'Instituição',
-      render: (item: any) => item.institution?.name || '-'
-    },
-    {
-      key: 'active',
+      key: 'status',
       label: 'Status',
       render: (item: any) => (
         <span className={`px-2 py-1 rounded-full text-xs ${
-          item.active ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'
+          item.status === 'active' ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'
         }`}>
-          {item.active ? 'Ativo' : 'Inativo'}
+          {item.status === 'active' ? 'Ativo' : 'Inativo'}
         </span>
       )
     }
@@ -155,44 +172,30 @@ export default function CoursesPage() {
         <Button onClick={handleAdd}>Novo Curso</Button>
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
         <Input
           placeholder="Buscar cursos..."
           value={filters.search}
-          onChange={(e) => setFilters({ ...filters, search: e.target.value })}
+          onChange={(e) => handleFilterChange('search', e.target.value)}
         />
         <Select
-          value={filters.institution_id}
-          onChange={(value) => setFilters({ ...filters, institution_id: value as string })}
+          value={filters.status}
+          onChange={(value) => handleFilterChange('status', value as string)}
           options={[
-            { value: '', label: 'Todas as instituições' },
-            ...institutions.map((inst) => ({
-              value: inst.id,
-              label: inst.name
-            }))
+            { value: '', label: 'Todos os status' },
+            { value: 'active', label: 'Ativo' },
+            { value: 'inactive', label: 'Inativo' }
           ]}
         />
         <Select
-          value={filters.level}
-          onChange={(value) => setFilters({ ...filters, level: value as string })}
+          value={filters.category}
+          onChange={(value) => handleFilterChange('category', value as string)}
           options={[
-            { value: '', label: 'Todos os níveis' },
-            { value: 'FUNDAMENTAL', label: 'Ensino Fundamental' },
-            { value: 'MEDIO', label: 'Ensino Médio' },
-            { value: 'SUPERIOR', label: 'Ensino Superior' },
-            { value: 'POS_GRADUACAO', label: 'Pós-Graduação' },
-            { value: 'MESTRADO', label: 'Mestrado' },
-            { value: 'DOUTORADO', label: 'Doutorado' }
-          ]}
-        />
-        <Select
-          value={filters.type}
-          onChange={(value) => setFilters({ ...filters, type: value as string })}
-          options={[
-            { value: '', label: 'Todos os tipos' },
-            { value: 'PRESENCIAL', label: 'Presencial' },
-            { value: 'EAD', label: 'EAD' },
-            { value: 'HIBRIDO', label: 'Híbrido' }
+            { value: '', label: 'Todas as categorias' },
+            { value: 'TECNOLOGIA', label: 'Tecnologia' },
+            { value: 'SAUDE', label: 'Saúde' },
+            { value: 'EDUCACAO', label: 'Educação' },
+            { value: 'NEGOCIOS', label: 'Negócios' }
           ]}
         />
       </div>
@@ -208,6 +211,7 @@ export default function CoursesPage() {
         totalItems={totalItems}
         currentPage={currentPage}
         onPageChange={setCurrentPage}
+        itemsPerPage={itemsPerPage}
       />
 
       {isModalOpen && (

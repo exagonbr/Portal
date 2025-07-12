@@ -5,8 +5,8 @@ export interface Unit {
   name: string;
   description: string;
   status: 'active' | 'inactive';
-  course_id: number;
-  order: number;
+  course_id?: number;
+  order?: number;
   created_at: string;
   updated_at: string;
 }

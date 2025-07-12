@@ -1,63 +1,108 @@
-import { NextRequest, NextResponse } from 'next/server'
-import { activityTracker } from '@/services/activityTrackingService'
-import { ActivityType } from '@/types/activity'
-import { z } from 'zod'
-import { validateJWTToken } from '@/lib/auth-utils'
+import { NextRequest, NextResponse } from 'next/server';
+import { authenticate } from '@/app/api/lib/auth';
+import { z } from 'zod';
 
-// Função para criar headers CORS
-function getCorsHeaders(origin?: string) {
-  return {
-    'Access-Control-Allow-Origin': origin || '*',
-    'Access-Control-Allow-Methods': 'GET, POST, PUT, DELETE, OPTIONS',
-    'Access-Control-Allow-Headers': 'Content-Type, Authorization',
-    'Access-Control-Allow-Credentials': 'true',
-  }
-}
-
-// Função para resposta OPTIONS
-function createCorsOptionsResponse(origin?: string) {
-  return new NextResponse(null, {
-    status: 200,
-    headers: getCorsHeaders(origin)
-  })
-}
-
-// Schema de validação para rastreamento de atividade
+// Schema para validação dos dados de atividade
 const trackActivitySchema = z.object({
-  user_id: z.string().min(1, { message: "user_id não pode ser vazio" }),
-  activity_type: z.enum([
-    'login', 'logout', 'login_failed', 'page_view', 'video_start', 'video_play', 
-    'video_pause', 'video_stop', 'video_complete', 'video_seek', 'content_access',
-    'quiz_start', 'quiz_attempt', 'quiz_complete', 'assignment_start', 
-    'assignment_submit', 'assignment_complete', 'book_open', 'book_read', 
-    'book_bookmark', 'course_enroll', 'course_complete', 'lesson_start', 
-    'lesson_complete', 'forum_post', 'forum_reply', 'chat_message', 
-    'file_download', 'file_upload', 'search', 'profile_update', 'settings_change',
-    'notification_read', 'session_timeout', 'error', 'system_action'
-  ]),
-  entity_type: z.string().optional(),
-  entity_id: z.string().optional(),
+  user_id: z.string().optional(),
+  activity_type: z.string(),
   action: z.string(),
-  details: z.record(z.any()).optional(),
-  duration_seconds: z.number().optional(),
-  session_id: z.string().optional()
-})
+  session_id: z.string().optional(),
+  details: z.record(z.any()).optional()
+});
 
-
-// Handler para requisições OPTIONS (preflight)
-export async function OPTIONS(request: NextRequest) {
-  const origin = request.headers.get('origin') || undefined;
-  return createCorsOptionsResponse(origin);
-}
-
-async function authenticate(request: NextRequest) {
-  const authHeader = request.headers.get('authorization');
-  if (!authHeader || !authHeader.startsWith('Bearer ')) {
+/**
+ * Extrai o user_id de várias fontes possíveis
+ */
+async function extractUserId(request: NextRequest): Promise<string | null> {
+  try {
+    // 1. Tentar obter do token de autenticação
+    const session = await authenticate(request);
+    if (session?.user?.id) {
+      return session.user.id.toString();
+    }
+    
+    // 2. Tentar obter dos cookies - user_data
+    const cookies = request.cookies;
+    const userDataCookie = cookies.get('user_data');
+    if (userDataCookie) {
+      try {
+        const userData = JSON.parse(decodeURIComponent(userDataCookie.value));
+        if (userData && userData.id) {
+          console.log('✅ user_id obtido do cookie user_data:', userData.id);
+          return userData.id.toString();
+        }
+      } catch (error) {
+        console.error('❌ Erro ao parsear cookie user_data:', error);
+      }
+    }
+    
+    // 3. Tentar obter do cookie session_data
+    const sessionDataCookie = cookies.get('session_data');
+    if (sessionDataCookie) {
+      try {
+        const sessionData = JSON.parse(decodeURIComponent(sessionDataCookie.value));
+        if (sessionData && sessionData.user_id) {
+          console.log('✅ user_id obtido do cookie session_data (user_id):', sessionData.user_id);
+          return sessionData.user_id.toString();
+        }
+        if (sessionData && sessionData.userId) {
+          console.log('✅ user_id obtido do cookie session_data (userId):', sessionData.userId);
+          return sessionData.userId.toString();
+        }
+      } catch (error) {
+        console.error('❌ Erro ao parsear cookie session_data:', error);
+      }
+    }
+    
+    // 4. Tentar obter do cookie user
+    const userCookie = cookies.get('user');
+    if (userCookie) {
+      try {
+        const userData = JSON.parse(decodeURIComponent(userCookie.value));
+        if (userData && userData.id) {
+          console.log('✅ user_id obtido do cookie user:', userData.id);
+          return userData.id.toString();
+        }
+      } catch (error) {
+        console.error('❌ Erro ao parsear cookie user:', error);
+      }
+    }
+    
+    // 5. Tentar obter de headers personalizados
+    const userId = request.headers.get('x-user-id');
+    if (userId) {
+      console.log('✅ user_id obtido do header x-user-id:', userId);
+      return userId;
+    }
+    
+    // 6. Tentar obter da URL
+    const url = new URL(request.url);
+    const userIdParam = url.searchParams.get('userId');
+    if (userIdParam) {
+      console.log('✅ user_id obtido do query parameter userId:', userIdParam);
+      return userIdParam;
+    }
+    
+    // 7. Tentar obter do body (se for POST/PUT/PATCH)
+    if (request.method !== 'GET') {
+      try {
+        const body = await request.clone().json();
+        if (body && body.user_id) {
+          console.log('✅ user_id obtido do body:', body.user_id);
+          return body.user_id.toString();
+        }
+      } catch (error) {
+        // Ignore errors when trying to parse body
+      }
+    }
+    
+    console.log('❌ user_id não encontrado em nenhuma fonte');
+    return null;
+  } catch (error) {
+    console.error('❌ Erro ao extrair user_id:', error);
     return null;
   }
-  const token = authHeader.substring(7).trim();
-  const session = await validateJWTToken(token);
-  return session;
 }
 
 export async function POST(request: NextRequest) {
@@ -74,13 +119,20 @@ export async function POST(request: NextRequest) {
     // Parsear e validar dados
     const body = await request.json()
     
-    // Verificar se user_id existe e não é vazio
+    // Se não há user_id no body, tentar obter de outras fontes
     if (!body.user_id || body.user_id === '') {
-      console.log('❌ Ignorando log de atividade: user_id é nulo ou vazio')
-      return NextResponse.json(
-        { success: false, error: 'user_id é obrigatório e não pode ser vazio' },
-        { status: 400 }
-      )
+      const userId = await extractUserId(request);
+      
+      if (userId) {
+        console.log('✅ user_id obtido de fontes alternativas:', userId);
+        body.user_id = userId;
+      } else {
+        console.log('❌ Ignorando log de atividade: user_id é nulo ou vazio e não foi possível obtê-lo de outras fontes');
+        return NextResponse.json(
+          { success: false, error: 'user_id é obrigatório e não pode ser vazio' },
+          { status: 400 }
+        )
+      }
     }
     
     const validatedData = trackActivitySchema.parse(body)
@@ -104,54 +156,38 @@ export async function POST(request: NextRequest) {
 
     // Mapear tipo de conteúdo
     let contentType: 'video' | 'book' | 'course' | 'tvshow' = 'video';
-    if (validatedData.entity_type === 'book' || validatedData.activity_type.includes('book')) {
+    if (validatedData.activity_type.includes('book')) {
       contentType = 'book';
-    } else if (validatedData.entity_type === 'course' || validatedData.activity_type.includes('course')) {
+    } else if (validatedData.activity_type.includes('course')) {
       contentType = 'course';
-    } else if (validatedData.entity_type === 'tvshow' || validatedData.activity_type.includes('tv')) {
+    } else if (validatedData.activity_type.includes('tvshow')) {
       contentType = 'tvshow';
     }
 
-    // Preparar dados de atividade no formato esperado pelo serviço
-    const activityData = {
-      userId: validatedData.user_id,
-      contentId: validatedData.entity_id || 'unknown',
-      contentType,
-      action,
-      progress: validatedData.details?.progress,
-      duration: validatedData.duration_seconds,
-      timestamp: new Date()
-    }
-
-    // Rastrear atividade
-    await activityTracker.trackActivity(activityData)
-
-    return NextResponse.json({
-      success: true,
-      message: 'Atividade registrada com sucesso'
-    }, {
-      headers: getCorsHeaders(request.headers.get('origin') || undefined)
+    // Enviar para o backend
+    const backendUrl = process.env.BACKEND_URL || 'http://localhost:3001';
+    const response = await fetch(`${backendUrl}/activity/track`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': session.accessToken ? `Bearer ${session.accessToken}` : ''
+      },
+      body: JSON.stringify({
+        ...validatedData,
+        ip_address: ip,
+        user_agent: userAgent,
+        content_type: contentType,
+        action
+      })
     })
 
-  } catch (error) {
-    console.log('❌ Erro ao rastrear atividade:', error)
-    
-    if (error instanceof z.ZodError) {
-      return NextResponse.json(
-        { 
-          success: false, 
-          error: 'Dados inválidos',
-          details: error.errors 
-        },
-        { status: 400 }
-      )
-    }
+    const data = await response.json()
 
+    return NextResponse.json(data)
+  } catch (error) {
+    console.error('❌ Erro ao rastrear atividade:', error)
     return NextResponse.json(
-      { 
-        success: false, 
-        error: 'Erro interno do servidor' 
-      },
+      { success: false, error: 'Erro interno ao rastrear atividade' },
       { status: 500 }
     )
   }
@@ -171,27 +207,34 @@ export async function GET(request: NextRequest) {
 
     // Obter parâmetros da query
     const { searchParams } = new URL(request.url)
-    const userId = searchParams.get('user_id') || session.user.id
+    const userId = searchParams.get('user_id') || session.user?.id || ''
     const limit = parseInt(searchParams.get('limit') || '50')
 
     // Verificar se o usuário pode acessar as atividades
-    const isAdmin = session.user.role === 'SYSTEM_ADMIN'
-    if (!isAdmin && userId !== session.user.id) {
+    const isAdmin = session.user?.role === 'SYSTEM_ADMIN'
+    if (!isAdmin && userId !== session.user?.id) {
       return NextResponse.json(
         { success: false, error: 'Acesso negado' },
         { status: 403 }
       )
     }
 
-    // Obter atividades
-    const result = await activityTracker.getUserActivity(userId, limit)
+    // Buscar atividades do backend
+    const backendUrl = process.env.BACKEND_URL || 'http://localhost:3001';
+    const response = await fetch(`${backendUrl}/activity/user/${userId}?limit=${limit}`, {
+      method: 'GET',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': session.accessToken ? `Bearer ${session.accessToken}` : ''
+      }
+    });
+
+    const data = await response.json();
 
     return NextResponse.json({
       success: true,
-      data: result
-    }, {
-      headers: getCorsHeaders(request.headers.get('origin') || undefined)
-    })
+      data: data.data || []
+    });
 
   } catch (error) {
     console.log('❌ Erro ao obter atividades:', error)

@@ -1,13 +1,59 @@
+import { AppDataSource } from "../config/typeorm.config";
 import { Repository } from "typeorm";
 import { ExtendedRepository, PaginatedResult } from './ExtendedRepository';
 import { AwsSettings } from '../types/aws'; // Supondo que os tipos AWS estejam definidos
+import { Entity, PrimaryGeneratedColumn, Column, CreateDateColumn, UpdateDateColumn } from "typeorm";
+
+@Entity('awssettingss')
+class AwsSettingsEntity implements AwsSettings {
+  @PrimaryGeneratedColumn('increment')
+  id!: number;
+
+  @Column()
+  access_key_id!: string;
+
+  @Column()
+  secret_access_key!: string;
+
+  @Column()
+  region!: string;
+
+  @Column({ nullable: true })
+  s3_bucket_name?: string;
+
+  @Column()
+  cloudwatch_namespace!: string;
+
+  @Column()
+  update_interval!: number;
+
+  @Column()
+  enable_real_time_updates!: boolean;
+
+  @Column()
+  is_active!: boolean;
+
+  @Column({ nullable: true })
+  created_by?: string;
+
+  @Column({ nullable: true })
+  updated_by?: string;
+
+  @CreateDateColumn()
+  created_at!: Date;
+
+  @UpdateDateColumn()
+  updated_at!: Date;
+}
 
 export interface CreateAwsSettingsDto extends Omit<AwsSettings, 'id' | 'created_at' | 'updated_at' | 'created_by' | 'updated_by'> {}
 export interface UpdateAwsSettingsDto extends Partial<CreateAwsSettingsDto> {}
 
 export class AwsSettingsRepository extends ExtendedRepository<AwsSettings> {
+  private repository: Repository<AwsSettingsEntity>;
   constructor() {
     super("awssettingss");
+    this.repository = AppDataSource.getRepository(AwsSettingsEntity);
   }
   // Implementação do método abstrato findAllPaginated
   async findAllPaginated(options: {
@@ -51,6 +97,9 @@ export class AwsSettingsRepository extends ExtendedRepository<AwsSettings> {
         page,
         limit
       };
+    } catch (error) {
+      throw error;
+    }
   }
 
   async findActive(): Promise<AwsSettings | null> {
@@ -70,7 +119,7 @@ export class AwsSettingsRepository extends ExtendedRepository<AwsSettings> {
     return this.create(settingsData);
   }
 
-  async updateSettings(id: string, data: UpdateAwsSettingsDto, userId: string): Promise<AwsSettings | null> {
+  async updateSettings(id: number, data: UpdateAwsSettingsDto, userId: string): Promise<AwsSettings | null> {
     const updateData = {
         ...data,
         updated_by: userId,
@@ -78,7 +127,7 @@ export class AwsSettingsRepository extends ExtendedRepository<AwsSettings> {
     return this.update(id, updateData);
   }
 
-  async setActive(id: string, userId: string): Promise<AwsSettings | null> {
+  async setActive(id: number, userId: string): Promise<AwsSettings | null> {
     await this.db(this.tableName).where({ is_active: true }).update({ is_active: false, updated_by: userId });
     return this.update(id, { is_active: true, updated_by: userId } as Partial<AwsSettings>);
   }

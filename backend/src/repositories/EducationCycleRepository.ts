@@ -1,3 +1,4 @@
+import { AppDataSource } from "../config/typeorm.config";
 import { Repository } from "typeorm";
 import { ExtendedRepository, PaginatedResult } from './ExtendedRepository';
 import { EducationCycle, EducationLevel } from '../entities/EducationCycle';
@@ -16,8 +17,10 @@ export interface EducationCycleFilters {
 }
 
 export class EducationCycleRepository extends ExtendedRepository<EducationCycle> {
+  private repository: Repository<EducationCycle>;
   constructor() {
     super("educationcycles");
+    this.repository = AppDataSource.getRepository(EducationCycle);
   }
   // Implementação do método abstrato findAllPaginated
   async findAllPaginated(options: {
@@ -61,6 +64,9 @@ export class EducationCycleRepository extends ExtendedRepository<EducationCycle>
         page,
         limit
       };
+    } catch (error) {
+      throw error;
+    }
   }
 
   async createCycle(data: CreateEducationCycleData): Promise<EducationCycle> {

@@ -1,13 +1,13 @@
 export class CreateEducationPeriodDto {
-  version?: string;
-  description?: string;
-  isActive?: string;
+  version?: string = "";
+  description?: string = "";
+  isActive?: string = "";
 }
 
 export class UpdateEducationPeriodDto {
-  version?: string;
-  description?: string;
-  isActive?: string;
+  version?: string = "";
+  description?: string = "";
+  isActive?: string = "";
 }
 
 export class EducationPeriodResponseDto {

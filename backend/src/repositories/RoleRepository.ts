@@ -14,18 +14,28 @@ export interface CreateRoleData extends Omit<Role, 'id' | 'users'> {}
 export interface UpdateRoleData extends Partial<CreateRoleData> {}
 
 export class RoleRepository extends ExtendedRepository<Role> {
+  private repository: Repository<Role>;
   constructor() {
     super("roles");
+    this.repository = AppDataSource.getRepository(Role);
   }
   // Implementação do método abstrato findAllPaginated
   async findAllPaginated(options: {
     page?: number;
     limit?: number;
     search?: string;
+    sortBy?: string;
+    sortOrder?: 'asc' | 'desc';
   } = {}): Promise<PaginatedResult<Role>> {
-    const { page = 1, limit = 10, search } = options;
+    const { page = 1, limit = 10, search, sortBy = 'id', sortOrder = 'DESC' } = options;
     
     try {
+      // Verificar se o banco de dados está disponível
+      if (!this.db) {
+        console.error('Conexão com banco de dados não disponível');
+        throw new Error('Database connection not available');
+      }
+
       // Usar diretamente o db e tableName herdados da classe base
       let query = this.db(this.tableName).select("*");
 
@@ -34,10 +44,12 @@ export class RoleRepository extends ExtendedRepository<Role> {
         query = query.whereILike("name", `%${search}%`);
       }
 
+      // Aplicar ordenação
+      query = query.orderBy(sortBy, sortOrder);
+
       // Executar a consulta paginada
       const offset = (page - 1) * limit;
       const data = await query
-        .orderBy("id", "DESC")
         .limit(limit)
         .offset(offset);
 
@@ -61,7 +73,14 @@ export class RoleRepository extends ExtendedRepository<Role> {
       };
     } catch (error) {
       console.error(`Erro ao buscar registros de role:`, error);
-      throw error;
+      
+      // Em caso de erro, retornar um resultado vazio em vez de propagar o erro
+      return {
+        data: [],
+        total: 0,
+        page,
+        limit
+      };
     }
   }
 
@@ -74,13 +93,18 @@ export class RoleRepository extends ExtendedRepository<Role> {
   }
 
   async deleteRole(id: number): Promise<boolean> {
-    const userCount = await this.db('users').where('role_id', id).count('* as count').first();
-    if (parseInt(userCount?.count as string, 10) > 0) {
-      throw new Error('Não é possível deletar um papel que está sendo utilizado por usuários.');
+    try {
+      const userCount = await this.db('users').where('role_id', id).count('* as count').first();
+      if (parseInt(userCount?.count as string, 10) > 0) {
+        throw new Error('Não é possível deletar um papel que está sendo utilizado por usuários.');
+      }
+      // Também seria necessário remover as permissões associadas na tabela 'role_permissions'
+      await this.db('role_permissions').where('role_id', id).del();
+      return this.delete(id);
+    } catch (error) {
+      console.error(`Erro ao deletar role ${id}:`, error);
+      throw error;
     }
-    // Também seria necessário remover as permissões associadas na tabela 'role_permissions'
-    await this.db('role_permissions').where('role_id', id).del();
-    return this.delete(id);
   }
 
   async findByAuthority(authority: string): Promise<Role | null> {

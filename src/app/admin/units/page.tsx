@@ -1,220 +1,351 @@
 'use client'
 
-import { useState, useEffect } from 'react'
-import { useRouter } from 'next/navigation'
-import { unitService, UnitDto, UnitFilters } from '@/services/unitService'
-import { institutionService } from '@/services/institutionService'
-import { useToast } from '@/components/ToastManager'
-import { UnitEditModal } from '@/components/UnitEditModal'
-import { Badge } from '@/components/ui/Badge'
-import { Button } from '@/components/ui/Button'
-import { Plus, Search, Edit, Trash2, Eye, Building2, School, Users, CheckCircle, XCircle, MapPin, Phone, Mail, RefreshCw } from 'lucide-react'
-import { StatCard } from '@/components/ui/StandardCard'
+import React, { useState, useEffect } from 'react'
+// import { useRouter } from 'next/navigation' // TEMPORARIAMENTE DESABILITADO
+import { Plus, Search, Edit, Trash2, Eye, Building2, CheckCircle, XCircle, MapPin, RefreshCw, ChevronLeft, ChevronRight } from 'lucide-react'
+import { unitService, Unit } from '@/services/unitService'
 
-// Interface para estatísticas das unidades
-interface UnitStats {
-  totalUnits: number
-  activeUnits: number
-  totalByType: {
-    [key: string]: number
+// Interface para paginação
+interface PaginationData {
+  currentPage: number
+  totalPages: number
+  totalItems: number
+  itemsPerPage: number
+}
+
+// Componente de Loading simples
+const SimpleLoading = () => (
+  <div className="flex items-center justify-center min-h-[400px]">
+    <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
+    <span className="ml-2 text-gray-600">Carregando unidades...</span>
+  </div>
+)
+
+// Componente de Badge simples
+const Badge = ({ children, variant = 'default' }: { children: React.ReactNode, variant?: 'default' | 'success' | 'danger' }) => {
+  const variants = {
+    default: 'bg-gray-100 text-gray-800',
+    success: 'bg-green-100 text-green-800',
+    danger: 'bg-red-100 text-red-800'
   }
+  
+  return (
+    <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${variants[variant]}`}>
+      {children}
+    </span>
+  )
+}
+
+// Componente de Button simples
+const Button = ({ 
+  children, 
+  onClick, 
+  variant = 'primary', 
+  size = 'md',
+  disabled = false,
+  className = '',
+  type = 'button'
+}: {
+  children: React.ReactNode
+  onClick?: () => void
+  variant?: 'primary' | 'secondary' | 'danger' | 'ghost'
+  size?: 'sm' | 'md' | 'lg'
+  disabled?: boolean
+  className?: string
+  type?: 'button' | 'submit'
+}) => {
+  const variants = {
+    primary: 'bg-blue-600 hover:bg-blue-700 text-white',
+    secondary: 'bg-gray-600 hover:bg-gray-700 text-white',
+    danger: 'bg-red-600 hover:bg-red-700 text-white',
+    ghost: 'bg-transparent hover:bg-gray-100 text-gray-700 border border-gray-300'
+  }
+  
+  const sizes = {
+    sm: 'px-3 py-1.5 text-sm',
+    md: 'px-4 py-2 text-sm',
+    lg: 'px-6 py-3 text-base'
+  }
+  
+  return (
+    <button
+      type={type}
+      onClick={onClick}
+      disabled={disabled}
+      className={`
+        ${variants[variant]} ${sizes[size]} 
+        rounded-lg font-medium transition-colors duration-200
+        disabled:opacity-50 disabled:cursor-not-allowed
+        flex items-center gap-2
+        ${className}
+      `}
+    >
+      {children}
+    </button>
+  )
+}
+
+// Componente de Paginação
+const Pagination = ({ 
+  pagination, 
+  onPageChange 
+}: { 
+  pagination: PaginationData
+  onPageChange: (page: number) => void 
+}) => {
+  const { currentPage, totalPages, totalItems, itemsPerPage } = pagination
+  
+  const startItem = (currentPage - 1) * itemsPerPage + 1
+  const endItem = Math.min(currentPage * itemsPerPage, totalItems)
+  
+  return (
+    <div className="flex items-center justify-between px-6 py-3 bg-gray-50 border-t border-gray-200">
+      <div className="flex items-center text-sm text-gray-700">
+        <span>
+          Mostrando {startItem} a {endItem} de {totalItems} resultados
+        </span>
+      </div>
+      
+      <div className="flex items-center space-x-2">
+        <Button
+          onClick={() => onPageChange(currentPage - 1)}
+          disabled={currentPage <= 1}
+          variant="ghost"
+          size="sm"
+        >
+          <ChevronLeft className="w-4 h-4" />
+          Anterior
+        </Button>
+        
+        <div className="flex space-x-1">
+          {Array.from({ length: Math.min(5, totalPages) }, (_, i) => {
+            let pageNum
+            if (totalPages <= 5) {
+              pageNum = i + 1
+            } else {
+              if (currentPage <= 3) {
+                pageNum = i + 1
+              } else if (currentPage >= totalPages - 2) {
+                pageNum = totalPages - 4 + i
+              } else {
+                pageNum = currentPage - 2 + i
+              }
+            }
+            
+            return (
+              <button
+                key={pageNum}
+                onClick={() => onPageChange(pageNum)}
+                className={`px-3 py-1 text-sm rounded ${
+                  pageNum === currentPage
+                    ? 'bg-blue-600 text-white'
+                    : 'bg-white text-gray-700 hover:bg-gray-100 border border-gray-300'
+                }`}
+              >
+                {pageNum}
+              </button>
+            )
+          })}
+        </div>
+        
+        <Button
+          onClick={() => onPageChange(currentPage + 1)}
+          disabled={currentPage >= totalPages}
+          variant="ghost"
+          size="sm"
+        >
+          Próxima
+          <ChevronRight className="w-4 h-4" />
+        </Button>
+      </div>
+    </div>
+  )
 }
 
 export default function ManageUnits() {
-  const router = useRouter()
-  const { showSuccess, showError, showWarning } = useToast()
+  // const router = useRouter() // TEMPORARIAMENTE DESABILITADO
   const [loading, setLoading] = useState(true)
   const [refreshing, setRefreshing] = useState(false)
-  const [units, setUnits] = useState<UnitDto[]>([])
-  const [institutions, setInstitutions] = useState<{ id: string; name: string }[]>([])
-  const [totalItems, setTotalItems] = useState(0)
-  const [currentPage, setCurrentPage] = useState(1)
-  const [itemsPerPage] = useState(10)
+  const [units, setUnits] = useState<Unit[]>([])
   const [searchQuery, setSearchQuery] = useState('')
-  const [typeFilter, setTypeFilter] = useState('')
-  const [institutionFilter, setInstitutionFilter] = useState('')
-  const [statusFilter, setStatusFilter] = useState('')
+  const [error, setError] = useState<string | null>(null)
+  const [isDeleting, setIsDeleting] = useState<number | null>(null)
   
-  // Estados para o modal
-  const [modalOpen, setModalOpen] = useState(false)
-  const [modalMode, setModalMode] = useState<'view' | 'create' | 'edit'>('view')
-  const [modalUnit, setModalUnit] = useState<UnitDto | null>(null)
-  const [stats, setStats] = useState<UnitStats>({
-    totalUnits: 0,
-    activeUnits: 0,
-    totalByType: {}
+  // Estados para paginação
+  const [pagination, setPagination] = useState<PaginationData>({
+    currentPage: 1,
+    totalPages: 1,
+    totalItems: 0,
+    itemsPerPage: 10
+  })
+  
+  // Estados para estatísticas
+  const [stats, setStats] = useState({
+    total: 0,
+    active: 0,
+    withCourse: 0
   })
 
-  const fetchUnits = async (page = 1, search = '', showLoadingIndicator = true) => {
-    if (showLoadingIndicator) {
-      setLoading(true);
-    } else {
-      setRefreshing(true);
-    }
-
+  // Função para carregar unidades com paginação
+  const loadUnits = async (page: number = 1, search: string = '', showLoadingIndicator = true) => {
     try {
-      const filters: UnitFilters = {
+      if (showLoadingIndicator) {
+        setLoading(true)
+      } else {
+        setRefreshing(true)
+      }
+      setError(null)
+      
+      const params = {
         page,
-        limit: itemsPerPage
-      };
-      
-      if (search && search.trim()) {
-        filters.search = search.trim();
+        limit: pagination.itemsPerPage,
+        ...(search && { search })
       }
       
-      if (typeFilter) {
-        filters.type = typeFilter;
+      const response = await unitService.getAll(params)
+      
+      // Assumindo que a resposta da API tenha o formato padrão de paginação
+      if (response && typeof response === 'object' && 'data' in response) {
+        const paginatedResponse = response as any
+        setUnits(paginatedResponse.data || [])
+        setPagination({
+          currentPage: paginatedResponse.current_page || 1,
+          totalPages: paginatedResponse.last_page || 1,
+          totalItems: paginatedResponse.total || 0,
+          itemsPerPage: paginatedResponse.per_page || 10
+        })
+      } else {
+        // Fallback se a resposta não for paginada
+        const unitsArray = Array.isArray(response) ? response : []
+        setUnits(unitsArray)
+        setPagination({
+          currentPage: 1,
+          totalPages: 1,
+          totalItems: unitsArray.length,
+          itemsPerPage: unitsArray.length
+        })
       }
-      
-      if (institutionFilter) {
-        filters.institution_id = institutionFilter;
-      }
-      
-      if (statusFilter) {
-        filters.active = statusFilter === 'true' ? true : statusFilter === 'false' ? false : undefined;
-      }
-      
-      const response = await unitService.getAll(filters);
-      
-      console.log('📊 API response:', response);
-      
-      setUnits(response.items || []);
-      setTotalItems(response.pagination.total || 0);
-      setCurrentPage(page);
-
-      // Calcular estatísticas
-      calculateStats(response.items || []);
       
       if (!showLoadingIndicator) {
-        showSuccess("Atualizado", "Lista de unidades atualizada com sucesso!");
+        alert('Lista de unidades atualizada com sucesso!')
       }
-    } catch (error) {
-      console.error('❌ Erro ao carregar unidades:', error);
-      showError("Erro ao carregar unidades", "Não foi possível carregar a lista de unidades.");
+      
+    } catch (err) {
+      console.error('Erro ao carregar unidades:', err)
+      setError(err instanceof Error ? err.message : 'Erro ao carregar unidades. Tente novamente.')
     } finally {
-      setLoading(false);
-      setRefreshing(false);
+      setLoading(false)
+      setRefreshing(false)
     }
-  };
+  }
 
-  const fetchInstitutions = async () => {
+  // Função para carregar estatísticas
+  const loadStats = async () => {
     try {
-      const response = await institutionService.getAll();
-      setInstitutions(response.map(inst => ({
-        id: inst.id,
-        name: inst.name
-      })));
-    } catch (error) {
-      console.warn('⚠️ Erro ao carregar instituições:', error);
+      const response = await unitService.getAll({ per_page: 1000 }) // Pegar todas para calcular stats
+      const unitsData = Array.isArray(response) ? response : 
+                       (response && typeof response === 'object' && 'data' in response) ? 
+                       (response as any).data : []
+      
+      setStats({
+        total: unitsData.length,
+        active: unitsData.filter((u: Unit) => u.status === 'active').length,
+        withCourse: unitsData.filter((u: Unit) => u.course_id).length
+      })
+    } catch (err) {
+      console.error('Erro ao carregar estatísticas:', err)
     }
-  };
+  }
 
-  const calculateStats = (unitList: UnitDto[]) => {
-    const totalUnits = totalItems || unitList.length;
-    const activeUnits = unitList.filter(unit => unit.active).length;
-    
-    const totalByType: { [key: string]: number } = {};
-    unitList.forEach(unit => {
-      if (unit.type) {
-        totalByType[unit.type] = (totalByType[unit.type] || 0) + 1;
-      }
-    });
-    
-    setStats({
-      totalUnits,
-      activeUnits,
-      totalByType
-    });
-  };
-
-  useEffect(() => {
-    fetchInstitutions();
-    fetchUnits(currentPage, searchQuery);
-  }, [currentPage, typeFilter, institutionFilter, statusFilter])
-
-  useEffect(() => {
-    if (units.length > 0) {
-      calculateStats(units);
-    }
-  }, [units, totalItems])
-
-  const handleSearch = (e: React.FormEvent) => {
+  // Função de busca
+  const handleSearch = async (e: React.FormEvent) => {
     e.preventDefault()
-    setCurrentPage(1)
-    fetchUnits(1, searchQuery)
+    await loadUnits(1, searchQuery.trim())
   }
 
-  const handleRefresh = () => {
-    fetchUnits(currentPage, searchQuery, false)
+  // Função para mudar página
+  const handlePageChange = (page: number) => {
+    loadUnits(page, searchQuery.trim())
   }
 
-  const handleDeleteUnit = async (unit: UnitDto) => {
-    const confirmMessage = `Tem certeza que deseja excluir a unidade "${unit.name}"?\n\nEsta ação não pode ser desfeita.`
-    
-    if (!confirm(confirmMessage)) {
+  // Função para deletar unidade
+  const handleDelete = async (unit: Unit) => {
+    if (!confirm(`Tem certeza que deseja excluir a unidade "${unit.name}"?`)) {
       return
     }
-
+    
     try {
-      setLoading(true)
+      setIsDeleting(unit.id)
       await unitService.delete(unit.id)
-      showSuccess("Unidade excluída", "A unidade foi excluída com sucesso.")
       
-      await fetchUnits(currentPage, searchQuery, false)
-    } catch (error) {
-      console.error('❌ Erro ao excluir unidade:', error)
-      showError("Erro ao excluir unidade", "Não foi possível excluir a unidade.")
+      // Recarregar dados
+      await Promise.all([
+        loadUnits(pagination.currentPage, searchQuery.trim()),
+        loadStats()
+      ])
+      
+      alert('Unidade excluída com sucesso!')
+    } catch (err) {
+      console.error('Erro ao excluir unidade:', err)
+      alert(err instanceof Error ? err.message : 'Erro ao excluir unidade.')
     } finally {
-      setLoading(false)
+      setIsDeleting(null)
     }
   }
 
-  // Funções para o modal
-  const openModal = (mode: 'view' | 'create' | 'edit', unit?: UnitDto) => {
-    setModalMode(mode)
-    setModalUnit(unit || null)
-    setModalOpen(true)
+  // Função para atualizar dados
+  const handleRefresh = async () => {
+    await Promise.all([
+      loadUnits(pagination.currentPage, searchQuery.trim(), false),
+      loadStats()
+    ])
   }
 
-  const closeModal = () => {
-    setModalOpen(false)
-    setModalUnit(null)
+  // Carregar dados no mount
+  useEffect(() => {
+    Promise.all([
+      loadUnits(),
+      loadStats()
+    ])
+  }, [])
+
+  // Função para obter label do status
+  const getStatusLabel = (status: string) => {
+    return status === 'active' ? 'Ativo' : 'Inativo'
   }
 
-  const handleModalSave = async (data: any) => {
+  // Função para obter variante do badge do status
+  const getStatusVariant = (status: string): 'success' | 'danger' => {
+    return status === 'active' ? 'success' : 'danger'
+  }
+
+  // Função para formatar data
+  const formatDate = (dateString: string) => {
+    if (!dateString) return 'N/A'
     try {
-      setLoading(true)
-      
-      if (modalMode === 'create') {
-        await unitService.create(data)
-        showSuccess("Sucesso", "Unidade criada com sucesso!")
-        
-      } else if (modalMode === 'edit' && modalUnit) {
-        await unitService.update(modalUnit.id, data)
-        showSuccess("Sucesso", "Unidade atualizada com sucesso!")
-      }
-      
-      closeModal()
-      await fetchUnits(currentPage, searchQuery, false)
-    } catch (error) {
-      console.error('❌ Erro ao salvar unidade:', error)
-      showError("Erro ao salvar unidade", "Não foi possível salvar a unidade.")
-    } finally {
-      setLoading(false)
+      return new Date(dateString).toLocaleDateString('pt-BR')
+    } catch {
+      return 'Data inválida'
     }
   }
 
-  const getUnitTypeLabel = (type: string) => {
-    switch (type) {
-      case 'ESCOLA': return 'Escola'
-      case 'FACULDADE': return 'Faculdade'
-      case 'UNIVERSIDADE': return 'Universidade'
-      case 'CENTRO_EDUCACIONAL': return 'Centro Educacional'
-      default: return type || 'Não definido'
-    }
+  if (loading && units.length === 0) {
+    return <SimpleLoading />
   }
 
-  const totalPages = Math.ceil(totalItems / itemsPerPage)
+  if (error && units.length === 0) {
+    return (
+      <div className="container mx-auto px-4 py-6 max-w-7xl">
+        <div className="bg-red-50 border border-red-200 rounded-lg p-6 text-center">
+          <h2 className="text-xl font-bold text-red-800 mb-2">Erro</h2>
+          <p className="text-red-600 mb-4">{error}</p>
+          <Button onClick={() => loadUnits()} variant="danger">
+            Tentar Novamente
+          </Button>
+        </div>
+      </div>
+    )
+  }
 
   return (
     <div className="container mx-auto px-4 py-6 max-w-7xl">
@@ -223,131 +354,85 @@ export default function ManageUnits() {
         <div className="p-6 border-b border-gray-200">
           <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4 mb-6">
             <div>
-              <h1 className="text-2xl font-bold text-gray-900">Unidades</h1>
-              <p className="text-gray-600 mt-1">Gerencie as unidades do sistema</p>
+              <h1 className="text-2xl font-bold text-gray-900">Unidades de Ensino</h1>
+              <p className="text-gray-600 mt-1">Gerencie as unidades de ensino do sistema</p>
             </div>
             <div className="flex gap-3">
-              <Button 
-                onClick={handleRefresh} 
-                variant="outline" 
-                disabled={refreshing}
-                className="flex items-center gap-2"
-              >
+              <Button onClick={handleRefresh} variant="ghost" disabled={loading || refreshing}>
                 <RefreshCw className={`w-4 h-4 ${refreshing ? 'animate-spin' : ''}`} />
                 Atualizar
               </Button>
-              <Button onClick={() => openModal('create')} className="flex items-center gap-2">
+              <Button onClick={() => alert('Navegação desabilitada temporariamente')}>
                 <Plus className="w-4 h-4" />
                 Nova Unidade
               </Button>
             </div>
           </div>
 
-          {/* Stats Cards */}
-          <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
-            <StatCard
-              icon={Building2}
-              title="Total"
-              value={stats.totalUnits}
-              subtitle="Unidades"
-              color="blue"
-            />
-            <StatCard
-              icon={CheckCircle}
-              title="Ativas"
-              value={stats.activeUnits}
-              subtitle="Funcionando"
-              color="green"
-            />
-            <StatCard
-              icon={School}
-              title="Escolas"
-              value={stats.totalByType['ESCOLA'] || 0}
-              subtitle="Básicas"
-              color="purple"
-            />
-            <StatCard
-              icon={Users}
-              title="Superiores"
-              value={(stats.totalByType['UNIVERSIDADE'] || 0) + (stats.totalByType['FACULDADE'] || 0)}
-              subtitle="Ensino Superior"
-              color="amber"
-            />
+          {/* Stats */}
+          <div className="grid grid-cols-2 lg:grid-cols-3 gap-4 mb-6">
+            <div className="bg-blue-50 p-4 rounded-lg">
+              <div className="flex items-center">
+                <Building2 className="w-8 h-8 text-blue-600" />
+                <div className="ml-3">
+                  <p className="text-blue-600 text-sm font-medium">Total</p>
+                  <p className="text-2xl font-bold text-blue-900">{stats.total}</p>
+                </div>
+              </div>
+            </div>
+            <div className="bg-green-50 p-4 rounded-lg">
+              <div className="flex items-center">
+                <CheckCircle className="w-8 h-8 text-green-600" />
+                <div className="ml-3">
+                  <p className="text-green-600 text-sm font-medium">Ativas</p>
+                  <p className="text-2xl font-bold text-green-900">{stats.active}</p>
+                </div>
+              </div>
+            </div>
+            <div className="bg-purple-50 p-4 rounded-lg">
+              <div className="flex items-center">
+                <Building2 className="w-8 h-8 text-purple-600" />
+                <div className="ml-3">
+                  <p className="text-purple-600 text-sm font-medium">Com Curso</p>
+                  <p className="text-2xl font-bold text-purple-900">{stats.withCourse}</p>
+                </div>
+              </div>
+            </div>
           </div>
 
-          {/* Filtros */}
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4 mb-4">
-            <form onSubmit={handleSearch} className="lg:col-span-2">
+          {/* Search */}
+          <form onSubmit={handleSearch} className="flex gap-3">
+            <div className="flex-1">
               <div className="relative">
                 <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
                 <input
                   type="text"
-                  placeholder="Buscar unidade..."
+                  placeholder="Buscar unidade por nome ou descrição..."
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
                   className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                 />
               </div>
-            </form>
-            
-            <select
-              value={typeFilter}
-              onChange={(e) => setTypeFilter(e.target.value)}
-              className="px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-            >
-              <option value="">Todos os tipos</option>
-              <option value="ESCOLA">Escola</option>
-              <option value="FACULDADE">Faculdade</option>
-              <option value="UNIVERSIDADE">Universidade</option>
-              <option value="CENTRO_EDUCACIONAL">Centro Educacional</option>
-            </select>
-
-            <select
-              value={institutionFilter}
-              onChange={(e) => setInstitutionFilter(e.target.value)}
-              className="px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-            >
-              <option value="">Todas as instituições</option>
-              {institutions.map((inst) => (
-                <option key={inst.id} value={inst.id}>
-                  {inst.name}
-                </option>
-              ))}
-            </select>
-
-            <select
-              value={statusFilter}
-              onChange={(e) => setStatusFilter(e.target.value)}
-              className="px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-            >
-              <option value="">Todos os status</option>
-              <option value="true">Ativas</option>
-              <option value="false">Inativas</option>
-            </select>
-          </div>
-
-          <Button type="submit" onClick={handleSearch} variant="outline">
-            Buscar
-          </Button>
+            </div>
+            <Button type="submit" variant="ghost" disabled={loading}>
+              Buscar
+            </Button>
+          </form>
         </div>
 
         {/* Content */}
-        <div>
-          {loading ? (
-            <div className="flex items-center justify-center py-12">
-              <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
-              <span className="ml-2 text-gray-600">Carregando...</span>
-            </div>
-          ) : units.length === 0 ? (
+        <div className="overflow-hidden">
+          {units.length === 0 ? (
             <div className="text-center py-12">
-              <School className="w-16 h-16 text-gray-300 mx-auto mb-4" />
+              <Building2 className="w-16 h-16 text-gray-300 mx-auto mb-4" />
               <p className="text-gray-500 text-lg mb-2">Nenhuma unidade encontrada</p>
-              <p className="text-gray-400 text-sm">Clique em "Nova Unidade" para adicionar a primeira</p>
+              <p className="text-gray-400 text-sm">
+                {searchQuery ? "Tente ajustar sua busca." : "Clique em \"Nova Unidade\" para adicionar a primeira"}
+              </p>
             </div>
           ) : (
             <>
-              {/* Desktop Table */}
-              <div className="hidden lg:block overflow-x-auto">
+              <div className="overflow-x-auto">
                 <table className="w-full divide-y divide-gray-200">
                   <thead className="bg-gray-50">
                     <tr>
@@ -355,13 +440,19 @@ export default function ManageUnits() {
                         Unidade
                       </th>
                       <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                        Tipo
+                        Descrição
                       </th>
                       <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                        Instituição
+                        Curso
+                      </th>
+                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                        Ordem
                       </th>
                       <th className="px-6 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">
                         Status
+                      </th>
+                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                        Atualizado
                       </th>
                       <th className="px-6 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">
                         Ações
@@ -373,58 +464,62 @@ export default function ManageUnits() {
                       <tr key={unit.id} className="hover:bg-gray-50">
                         <td className="px-6 py-4">
                           <div className="flex items-center">
-                            <div className="flex-shrink-0 w-10 h-10 bg-blue-100 rounded-lg flex items-center justify-center">
-                              <School className="w-5 h-5 text-blue-600" />
+                            <div className="flex-shrink-0 w-10 h-10 bg-blue-100 rounded-full flex items-center justify-center">
+                              <Building2 className="w-5 h-5 text-blue-600" />
                             </div>
                             <div className="ml-4">
                               <div className="text-sm font-medium text-gray-900">{unit.name}</div>
-                              {unit.description && (
-                                <div className="text-xs text-gray-500">{unit.description}</div>
-                              )}
+                              <div className="text-xs text-gray-500">ID: {unit.id}</div>
                             </div>
                           </div>
                         </td>
-                        <td className="px-6 py-4 text-sm text-gray-900">
-                          {getUnitTypeLabel(unit.type || '')}
+                        <td className="px-6 py-4">
+                          <div className="text-sm text-gray-900 max-w-xs truncate">
+                            {unit.description || 'Sem descrição'}
+                          </div>
                         </td>
                         <td className="px-6 py-4 text-sm text-gray-900">
-                          {unit.institution_name || 'N/A'}
+                          {unit.course_id ? `Curso ${unit.course_id}` : 'Sem curso'}
+                        </td>
+                        <td className="px-6 py-4 text-sm text-gray-900">
+                          {unit.order || 'N/A'}
                         </td>
                         <td className="px-6 py-4 text-center">
-                          <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
-                            unit.active 
-                              ? 'bg-green-100 text-green-800' 
-                              : 'bg-red-100 text-red-800'
-                          }`}>
-                            {unit.active ? 'Ativa' : 'Inativa'}
-                          </span>
+                          <Badge variant={getStatusVariant(unit.status)}>
+                            {getStatusLabel(unit.status)}
+                          </Badge>
+                        </td>
+                        <td className="px-6 py-4 text-sm text-gray-500">
+                          {formatDate(unit.updated_at)}
                         </td>
                         <td className="px-6 py-4 text-center">
                           <div className="flex items-center justify-center space-x-2">
-                            <Button
-                              variant="ghost"
-                              size="sm"
-                              onClick={() => openModal('view', unit)}
-                              className="text-blue-600 hover:text-blue-900"
+                            <button
+                              onClick={() => alert('Navegação desabilitada temporariamente')}
+                              className="text-blue-600 hover:text-blue-900 p-1"
+                              title="Visualizar"
                             >
                               <Eye className="w-4 h-4" />
-                            </Button>
-                            <Button
-                              variant="ghost"
-                              size="sm"
-                              onClick={() => openModal('edit', unit)}
-                              className="text-green-600 hover:text-green-900"
+                            </button>
+                            <button
+                              onClick={() => alert('Navegação desabilitada temporariamente')}
+                              className="text-green-600 hover:text-green-900 p-1"
+                              title="Editar"
                             >
                               <Edit className="w-4 h-4" />
-                            </Button>
-                            <Button
-                              variant="ghost"
-                              size="sm"
-                              onClick={() => handleDeleteUnit(unit)}
-                              className="text-red-600 hover:text-red-900"
+                            </button>
+                            <button
+                              onClick={() => handleDelete(unit)}
+                              disabled={isDeleting === unit.id}
+                              className="text-red-600 hover:text-red-900 p-1 disabled:opacity-50"
+                              title="Excluir"
                             >
-                              <Trash2 className="w-4 h-4" />
-                            </Button>
+                              {isDeleting === unit.id ? (
+                                <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-red-600"></div>
+                              ) : (
+                                <Trash2 className="w-4 h-4" />
+                              )}
+                            </button>
                           </div>
                         </td>
                       </tr>
@@ -432,128 +527,15 @@ export default function ManageUnits() {
                   </tbody>
                 </table>
               </div>
-
-              {/* Cards para Mobile/Tablet */}
-              <div className="lg:hidden">
-                <div className="space-y-4 p-4">
-                  {units.map((unit) => (
-                    <div key={unit.id} className="bg-white border border-gray-200 rounded-lg shadow-sm hover:shadow-md transition-shadow">
-                      <div className="p-4 border-b border-gray-100">
-                        <div className="flex items-start justify-between">
-                          <div className="flex items-center flex-1">
-                            <div className="flex-shrink-0 w-12 h-12 bg-blue-100 rounded-lg flex items-center justify-center">
-                              <School className="w-6 h-6 text-blue-600" />
-                            </div>
-                            <div className="ml-3 flex-1 min-w-0">
-                              <h3 className="text-sm font-medium text-gray-900 truncate">{unit.name}</h3>
-                              <div className="flex items-center gap-2 mt-1">
-                                <span className="text-xs text-gray-500">{getUnitTypeLabel(unit.type || '')}</span>
-                              </div>
-                            </div>
-                          </div>
-                          <span className={`ml-2 inline-flex items-center px-2 py-1 rounded-full text-xs font-medium ${
-                            unit.active 
-                              ? 'bg-green-100 text-green-800' 
-                              : 'bg-red-100 text-red-800'
-                          }`}>
-                            {unit.active ? 'Ativa' : 'Inativa'}
-                          </span>
-                        </div>
-                      </div>
-
-                      <div className="p-4">
-                        {unit.description && (
-                          <div className="mb-4">
-                            <p className="text-sm text-gray-600">{unit.description}</p>
-                          </div>
-                        )}
-                        
-                        {unit.institution_name && (
-                          <div className="flex items-center mb-4">
-                            <Building2 className="w-4 h-4 text-gray-400 mr-2" />
-                            <span className="text-sm text-gray-600">{unit.institution_name}</span>
-                          </div>
-                        )}
-
-                        <div className="flex justify-end space-x-2">
-                          <Button
-                            variant="outline"
-                            size="sm"
-                            onClick={() => openModal('view', unit)}
-                            className="flex items-center gap-1"
-                          >
-                            <Eye className="w-4 h-4" />
-                            Ver
-                          </Button>
-                          <Button
-                            variant="outline"
-                            size="sm"
-                            onClick={() => openModal('edit', unit)}
-                            className="flex items-center gap-1"
-                          >
-                            <Edit className="w-4 h-4" />
-                            Editar
-                          </Button>
-                          <Button
-                            variant="outline"
-                            size="sm"
-                            onClick={() => handleDeleteUnit(unit)}
-                            className="flex items-center gap-1 text-red-600 hover:text-red-700 hover:border-red-300"
-                          >
-                            <Trash2 className="w-4 h-4" />
-                            Excluir
-                          </Button>
-                        </div>
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              </div>
+              
+              {/* Paginação */}
+              {pagination.totalPages > 1 && (
+                <Pagination pagination={pagination} onPageChange={handlePageChange} />
+              )}
             </>
           )}
         </div>
-
-        {/* Pagination */}
-        {totalPages > 1 && (
-          <div className="px-6 py-4 border-t border-gray-200">
-            <div className="flex items-center justify-between">
-              <div className="text-sm text-gray-700">
-                Mostrando {((currentPage - 1) * itemsPerPage) + 1} a {Math.min(currentPage * itemsPerPage, totalItems)} de {totalItems} resultados
-              </div>
-              <div className="flex items-center space-x-2">
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={() => setCurrentPage(prev => Math.max(prev - 1, 1))}
-                  disabled={currentPage === 1}
-                >
-                  Anterior
-                </Button>
-                <span className="text-sm text-gray-700">
-                  {currentPage} de {totalPages}
-                </span>
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={() => setCurrentPage(prev => Math.min(prev + 1, totalPages))}
-                  disabled={currentPage === totalPages}
-                >
-                  Próxima
-                </Button>
-              </div>
-            </div>
-          </div>
-        )}
       </div>
-
-      {/* Modal */}
-      {modalOpen && (
-        <UnitEditModal
-          unit={modalUnit || undefined}
-          onSave={handleModalSave}
-          onClose={closeModal}
-        />
-      )}
     </div>
   )
 }

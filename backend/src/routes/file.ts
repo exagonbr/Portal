@@ -1,5 +1,5 @@
 import { Router } from 'express';
-import { FileController } from '../controllers/FileController';
+import FileController from '../controllers/FileController';
 import { requireAuth } from '../middleware/requireAuth';
 
 const router = Router();

@@ -1,3 +1,8 @@
+import { apiGet, apiPost, apiPut, apiDelete } from './apiService';
+import { BaseApiService } from './base-api-service';
+import { UnifiedAuthService } from './unifiedAuthService';
+import { AuthHeaderService } from './authHeaderService';
+
 /**
  * Interface para representar uma configuração do sistema
  */
@@ -25,129 +30,38 @@ export interface SystemSettingsStats {
   encryptedCount: number;
 }
 
-/**
- * Uma função helper para fazer requisições fetch e tratar erros.
- */
-const fetcher = async <T>(url: string, options?: RequestInit): Promise<T> => {
-  const token = localStorage.getItem('accessToken');
-  const headers = new Headers(options?.headers);
-  headers.set('Content-Type', 'application/json');
-
-  if (token) {
-    headers.set('Authorization', `Bearer ${token}`);
+class SystemSettingsService extends BaseApiService<SystemSettingItem> {
+  constructor() {
+    super('/api/system-settings');
   }
 
-  const res = await fetch(url, {
-    ...options,
-    headers,
-    credentials: 'omit',
-  });
-
-  if (!res.ok) {
-    const error = new Error('Ocorreu um erro ao buscar os dados de configurações.');
-    try {
-        const errorData = await res.json();
-        (error as any).info = errorData;
-    } catch (e) {
-        (error as any).info = { message: 'Não foi possível analisar a resposta de erro.' };
-    }
-    (error as any).status = res.status;
-    throw error;
+  async getAllWithPagination(page: number = 1, limit: number = 10): Promise<{ data: SystemSettingItem[]; total: number }> {
+    return apiGet<{ data: SystemSettingItem[]; total: number }>(`${this.basePath}?page=${page}&limit=${limit}`);
   }
-  return res.json();
-};
 
-/**
- * O objeto de serviço para gerenciar configurações do sistema
- */
-export const systemSettingsService = {
-  /**
-   * Busca todas as configurações do sistema
-   */
-  getAllSettings: async (): Promise<SystemSettingItem[]> => {
-    return fetcher<SystemSettingItem[]>('/api/admin/system/settings/all');
-  },
+  async getByCategory(category: string): Promise<SystemSettingItem[]> {
+    return apiGet<SystemSettingItem[]>(`${this.basePath}/category/${category}`);
+  }
 
-  /**
-   * Busca uma configuração específica pelo ID
-   */
-  getSettingById: async (id: string): Promise<SystemSettingItem> => {
-    return fetcher<SystemSettingItem>(`/api/admin/system/settings/${id}`);
-  },
+  async getPublicSettings(): Promise<SystemSettingItem[]> {
+    return apiGet<SystemSettingItem[]>(`${this.basePath}/public`);
+  }
 
-  /**
-   * Busca configurações por categoria
-   */
-  getSettingsByCategory: async (category: string): Promise<SystemSettingItem[]> => {
-    return fetcher<SystemSettingItem[]>(`/api/admin/system/settings/category/${category}`);
-  },
+  async updateSetting(key: string, value: string): Promise<SystemSettingItem> {
+    return apiPut<SystemSettingItem>(`${this.basePath}/${key}`, { value });
+  }
 
-  /**
-   * Atualiza uma configuração do sistema
-   */
-  updateSetting: async (id: string, data: Partial<SystemSettingItem>): Promise<SystemSettingItem> => {
-    return fetcher<SystemSettingItem>(`/api/admin/system/settings/${id}`, {
-      method: 'PUT',
-      body: JSON.stringify(data),
-    });
-  },
+  async getStats(): Promise<SystemSettingsStats> {
+    return apiGet<SystemSettingsStats>(`${this.basePath}/stats`);
+  }
 
-  /**
-   * Cria uma nova configuração do sistema
-   */
-  createSetting: async (data: Omit<SystemSettingItem, 'id'>): Promise<SystemSettingItem> => {
-    return fetcher<SystemSettingItem>('/api/admin/system/settings', {
-      method: 'POST',
-      body: JSON.stringify(data),
-    });
-  },
-
-  /**
-   * Exclui uma configuração do sistema
-   */
-  deleteSetting: async (id: string): Promise<{ success: boolean }> => {
-    return fetcher<{ success: boolean }>(`/api/admin/system/settings/${id}`, {
-      method: 'DELETE',
-    });
-  },
-
-  /**
-   * Obtém estatísticas sobre as configurações do sistema
-   */
-  getSettingsStats: async (): Promise<SystemSettingsStats> => {
-    return fetcher<SystemSettingsStats>('/api/admin/system/settings/stats');
-  },
-
-  /**
-   * Exporta todas as configurações do sistema em formato JSON
-   */
-  exportSettings: async (): Promise<Blob> => {
-    const response = await fetch('/api/admin/system/settings/export', {
-      method: 'GET',
-      headers: {
-        'Authorization': `Bearer ${localStorage.getItem('accessToken')}`,
-      },
-    });
-
-    if (!response.ok) {
-      throw new Error('Falha ao exportar configurações');
-    }
-
-    return response.blob();
-  },
-
-  /**
-   * Importa configurações do sistema a partir de um arquivo JSON
-   */
-  importSettings: async (file: File): Promise<{ success: boolean; count: number }> => {
+  async importSettings(file: File): Promise<{ success: boolean; imported: number }> {
     const formData = new FormData();
     formData.append('file', file);
 
-    const response = await fetch('/api/admin/system/settings/import', {
+    const response = await fetch(`${this.basePath}/import`, {
       method: 'POST',
-      headers: {
-        'Authorization': `Bearer ${localStorage.getItem('accessToken')}`,
-      },
+      headers: await this.getHeaders(false),
       body: formData,
     });
 
@@ -156,5 +70,23 @@ export const systemSettingsService = {
     }
 
     return response.json();
-  },
-}; 
+  }
+
+  async exportSettings(): Promise<Blob> {
+    const response = await fetch(`${this.basePath}/export`, {
+      headers: await this.getHeaders(),
+    });
+
+    if (!response.ok) {
+      throw new Error('Falha ao exportar configurações');
+    }
+
+    return response.blob();
+  }
+
+  private async getHeaders(includeContentType: boolean = true): Promise<HeadersInit> {
+    return AuthHeaderService.getHeaders(includeContentType);
+  }
+}
+
+export const systemSettingsService = new SystemSettingsService(); 

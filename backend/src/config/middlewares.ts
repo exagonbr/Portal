@@ -37,6 +37,12 @@ const allowedOrigins = [
   process.env.FRONTEND_URL || ''
 ].filter(Boolean);
 
+// Middleware para garantir que o Content-Type seja sempre respeitado
+app.use((req, res, next) => {
+  res.setHeader('Content-Type', 'application/json');
+  next();
+});
+
 app.use(cors({
   origin: '*', // PERMITE TODAS AS ORIGENS para rotas públicas como login
   credentials: false, // Deve ser false quando origin é '*'
@@ -62,7 +68,8 @@ app.use(cors({
     'Access-Control-Allow-Origin',
     'Access-Control-Allow-Headers',
     'Access-Control-Allow-Methods',
-    'Set-Cookie'
+    'Set-Cookie',
+    'Content-Type'
   ],
   preflightContinue: false,
   optionsSuccessStatus: 200

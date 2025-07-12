@@ -44,7 +44,11 @@ const isChunkLoadError = (error: Error): boolean => {
     error.message.includes('Loading chunk') ||
     error.message.includes('Failed to fetch dynamically imported module') ||
     error.message.includes('Unexpected token') ||
-    error.message.includes('ChunkLoadError')
+    error.message.includes('ChunkLoadError') ||
+    error.message.includes('originalFactory is undefined') ||
+    error.message.includes("can't access property \"call\"") ||
+    error.message.includes("Cannot read properties of undefined (reading 'call')") ||
+    error.message.includes("reading 'call'")
   );
 };
 
@@ -52,8 +56,21 @@ const isChunkLoadError = (error: Error): boolean => {
  * Extrai o ID do chunk do erro
  */
 const getChunkId = (error: Error): string | null => {
-  const match = error.message.match(/Loading chunk (\d+) failed/);
-  return match ? match[1] : null;
+  // Tentar extrair ID do chunk de diferentes formatos de erro
+  const chunkMatch = error.message.match(/Loading chunk (\d+) failed/);
+  if (chunkMatch) return chunkMatch[1];
+  
+  // Tentar extrair do URL se disponível
+  const urlMatch = error.message.match(/(\/|_next\/static\/chunks\/|webpack-)[^\/\s]+\.js/);
+  if (urlMatch) return urlMatch[0];
+  
+  // Para erros de 'reading call', usar um ID genérico
+  if (error.message.includes("reading 'call'") || 
+      error.message.includes("originalFactory")) {
+    return 'factory-call-error';
+  }
+  
+  return null;
 };
 
 /**
@@ -137,6 +154,53 @@ export const handleChunkError = async (error: Error): Promise<boolean> => {
   // Verificar se é um erro de chunk
   if (!isChunkLoadError(error)) {
     return false;
+  }
+
+  // Detectar se é dispositivo móvel
+  const isMobile = /Mobile|Android|iPhone|iPad|iPod|BlackBerry|Windows Phone/i.test(
+    navigator.userAgent
+  );
+
+  // Para erros de "reading 'call'" em dispositivos móveis, recarregar imediatamente
+  if (isMobile && (
+    error.message.includes("reading 'call'") || 
+    error.message.includes("originalFactory") ||
+    error.message.includes("can't access property \"call\"")
+  )) {
+    console.log('📱 Erro de chunk crítico em dispositivo móvel, recarregando imediatamente...');
+    
+    try {
+      // Limpar cache de service worker se disponível
+      if ('serviceWorker' in navigator) {
+        const registrations = await navigator.serviceWorker.getRegistrations();
+        for (const registration of registrations) {
+          await registration.update();
+        }
+      }
+      
+      // Limpar cache de aplicação
+      if (window.localStorage) {
+        const keysToRemove = [];
+        for (let i = 0; i < localStorage.length; i++) {
+          const key = localStorage.key(i);
+          if (key && (key.includes('next-') || key.includes('chunk-'))) {
+            keysToRemove.push(key);
+          }
+        }
+        keysToRemove.forEach(key => localStorage.removeItem(key));
+      }
+      
+      // Recarregar a página com parâmetro de cache bust
+      window.location.href = window.location.href + 
+        (window.location.href.includes('?') ? '&' : '?') + 
+        'cache_bust=' + Date.now();
+      
+      return true;
+    } catch (error) {
+      console.error('❌ Erro ao tentar recarregar página:', error);
+      window.location.reload();
+      return true;
+    }
   }
 
   // Extrair ID do chunk

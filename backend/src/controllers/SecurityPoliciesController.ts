@@ -1,7 +1,7 @@
 import { Request, Response } from 'express';
 import { SecurityPoliciesRepository } from '../repositories/SecurityPoliciesRepository'
 import { SecurityPolicies } from '../entities/SecurityPolicies';
-import { BaseController } from './BaseController';
+import BaseController from './BaseController';
 
 class SecurityPoliciesController extends BaseController<SecurityPolicies> {
   private securityPoliciesRepository: SecurityPoliciesRepository;

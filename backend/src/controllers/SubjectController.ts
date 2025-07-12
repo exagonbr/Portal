@@ -1,6 +1,6 @@
 import { Request, Response } from 'express';
 import { SubjectRepository } from '../repositories/SubjectRepository';
-import { BaseController } from './BaseController';
+import BaseController from './BaseController';
 import { Subject } from '../entities/Subject';
 
 class SubjectController extends BaseController<Subject> {
@@ -10,6 +10,75 @@ class SubjectController extends BaseController<Subject> {
     const repository = new SubjectRepository();
     super(repository);
     this.subjectRepository = repository;
+  }
+
+  public async getAll(req: Request, res: Response): Promise<Response> {
+    try {
+      // Adicionar timeout para evitar travamentos
+      const timeoutPromise = new Promise((_, reject) => {
+        setTimeout(() => reject(new Error('Timeout na busca de Disciplinas')), 25000); // 25 segundos
+      });
+
+      const { 
+        page = '1', 
+        limit = '10', 
+        search, 
+        sortBy, 
+        sortOrder 
+      } = req.query;
+
+      const options = {
+        page: parseInt(page as string, 10),
+        limit: parseInt(limit as string, 10),
+        search: search as string,
+      };
+
+      const filters: any = {};
+      if (sortBy) filters.sortBy = sortBy as string;
+      if (sortOrder) filters.sortOrder = sortOrder as 'asc' | 'desc';
+
+      const subjectsPromise = this.subjectRepository.findAllPaginated({
+        ...options,
+        ...filters
+      });
+
+      // Usar Promise.race para aplicar timeout
+      const result = await Promise.race([subjectsPromise, timeoutPromise]) as any;
+
+      if (!result) {
+        return res.status(404).json({ success: false, message: 'Disciplinas não encontradas' });
+      }
+
+      return res.status(200).json({
+        success: true,
+        data: {
+          items: result.data || [],
+          pagination: {
+            page: result.page || 1,
+            limit: result.limit || 10,
+            total: result.total || 0,
+            totalPages: Math.ceil(result.total / result.limit) || 1
+          }
+        }
+      });
+    } catch (error) {
+      console.error('Erro ao buscar disciplinas:', error);
+
+      // Se for timeout, retornar erro específico
+      if (error instanceof Error && error.message.includes('Timeout')) {
+        return res.status(504).json({ 
+          success: false, 
+          message: 'Timeout na busca de Disciplinas - operação demorou muito',
+          code: 'TIMEOUT_ERROR'
+        });
+      }
+      
+      return res.status(500).json({ 
+        success: false, 
+        message: 'Erro interno do servidor: ' + error,
+        code: 'INTERNAL_ERROR'
+      });
+    }
   }
 
   async toggleStatus(req: Request, res: Response) {

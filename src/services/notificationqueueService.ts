@@ -1,5 +1,5 @@
-import { apiClient } from '@/lib/api-client';
 import { BaseApiService } from './base-api-service';
+import { apiGet, apiPost, apiPut, apiDelete } from './apiService';
 
 export interface NotificationQueue {
   id: string;
@@ -41,13 +41,13 @@ class NotificationQueueService extends BaseApiService<NotificationQueue> {
   }
 
   async getAllWithPagination(page: number = 1, limit: number = 10): Promise<NotificationQueueResponse> {
-    const response = await apiClient.put<any>(`${this.basePath}?page=${page}&limit=${limit}`);
-    return response.data;
+    const response = await apiGet<NotificationQueueResponse>(`${this.basePath}?page=${page}&limit=${limit}`);
+    return response;
   }
 
   async processQueue(): Promise<{ processed: number; errors: number }> {
-    const response = await apiClient.delete<any>(`${this.basePath}/process`);
-    return response.data;
+    const response = await apiPost<{ processed: number; errors: number }>(`${this.basePath}/process`, {});
+    return response;
   }
 }
 

@@ -1,36 +1,29 @@
-import api from './api';
+import { apiGet, apiPost, apiPut, apiDelete } from './apiService';
 
 export class CrudService<T> {
   constructor(private endpoint: string) {}
 
   async getAll(params?: any) {
-    const response = await api.get<T[]>(this.endpoint, { params });
-    return response.data;
+    return apiGet<T[]>(this.endpoint, params);
   }
 
   async getById(id: string | number) {
-    const response = await api.get<T>(`${this.endpoint}/${id}`);
-    return response.data;
+    return apiGet<T>(`${this.endpoint}/${id}`);
   }
 
   async create(data: Partial<T>) {
-    const response = await api.post<T>(this.endpoint, data);
-    return response.data;
+    return apiPost<T>(this.endpoint, data);
   }
 
   async update(id: string | number, data: Partial<T>) {
-    const response = await api.put<T>(`${this.endpoint}/${id}`, data);
-    return response.data;
+    return apiPut<T>(`${this.endpoint}/${id}`, data);
   }
 
   async delete(id: string | number) {
-    await api.delete(`${this.endpoint}/${id}`);
+    return apiDelete(`${this.endpoint}/${id}`);
   }
 
   async search(query: string) {
-    const response = await api.get<T[]>(`${this.endpoint}/search`, {
-      params: { query },
-    });
-    return response.data;
+    return apiGet<T[]>(`${this.endpoint}/search`, { query });
   }
 } 

@@ -5,5 +5,5 @@ export default function NotificationsLayout({
 }: {
   children: React.ReactNode
 }) {
-  return <DashboardLayout>{children}</DashboardLayout>
+  return <div className="bg-white text-color-black">{children}</div>
 }

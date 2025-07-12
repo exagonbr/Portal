@@ -1,9 +1,9 @@
 import { Request, Response } from 'express';
 import { UsersRepository } from '../repositories/UsersRepository'
 import { Users } from '../entities/Users';;
-import { BaseController } from './BaseController';
+import BaseController from './BaseController';
 
-export class UsersController extends BaseController<Users> {
+class UsersController extends BaseController<Users> {
   private usersRepository: UsersRepository;
 
   constructor() {
@@ -88,3 +88,5 @@ export class UsersController extends BaseController<Users> {
   }
  }
 }
+
+export default UsersController;

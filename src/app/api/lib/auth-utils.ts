@@ -56,14 +56,16 @@ export async function validateJWTToken(token: string) {
     try {
       const decoded = jwt.verify(token, secret) as any;
       
-      if (typeof decoded !== 'object' || !decoded.userId) {
+      // Aceitar tanto 'userId' quanto 'id' como identificador
+      const userId = decoded.userId || decoded.id;
+      if (typeof decoded !== 'object' || !userId) {
         console.warn('JWT payload missing required fields');
         return null;
       }
 
       return {
         user: {
-          id: decoded.userId,
+          id: userId,
           email: decoded.email,
           name: decoded.name,
           role: decoded.role,

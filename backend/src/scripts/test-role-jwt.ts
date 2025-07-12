@@ -1,5 +1,5 @@
 import { AppDataSource } from '../config/typeorm.config';
-import { Users } from '../entities/Users';
+import { User } from '../entities/User';
 import AuthService from '../services/AuthService';
 
 async function testRoleJWT() {
@@ -9,7 +9,7 @@ async function testRoleJWT() {
       await AppDataSource.initialize();
     }
 
-    const userRepository = AppDataSource.getRepository(Users);
+    const userRepository = AppDataSource.getRepository(User);
 
     // Test cases for different role combinations
     const testCases = [

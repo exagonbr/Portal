@@ -8,11 +8,11 @@ import { getInternalApiUrl } from '@/config/env';
 // Simulação de banco de dados
 let emailSettingsData = {
   id: '1',
-  smtpServer: '',
+  smtpServer: 'smtp.gmail.com',
   smtpPort: 587,
   encryption: 'tls',
   senderEmail: '',
-  senderPassword: ''
+  senderPassword: 'wcba xeda vopf nbwh'
 }
 
 

@@ -1,9 +1,9 @@
 import { Repository } from 'typeorm';
 import { AppDataSource } from '../config/typeorm.config';
-import { BaseRepository, PaginatedResult } from './BaseRepository';
+import { ExtendedRepository, PaginatedResult } from './ExtendedRepository';
 import { SecurityPolicies } from '../entities/SecurityPolicies';
 
-export class SecurityPoliciesRepository extends BaseRepository<SecurityPolicies> {
+export class SecurityPoliciesRepository extends ExtendedRepository<SecurityPolicies> {
   constructor() {
     super("security_policies");
   }

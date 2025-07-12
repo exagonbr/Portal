@@ -1,17 +1,15 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useCallback } from 'react'
 import { useRouter } from 'next/navigation'
-import { institutionService, Institution } from '@/services/institutionService'
-import { dashboardService } from '@/services/dashboardService'
-import schoolService from '@/services/schoolService'
+import useSWR from 'swr'
+import { institutionService } from '../../../services/institutionService'
+import { InstitutionDto } from '../../../types/institution'
 import { useToast } from '@/components/ToastManager'
 import { InstitutionModalWithSchools } from '@/components/modals/InstitutionModalWithSchools'
-import { Badge } from '@/components/ui/Badge'
 import { Button } from '@/components/ui/Button'
-import AuthenticatedLayout from '@/components/AuthenticatedLayout'
-import { Plus, Search, Edit, Trash2, Eye, Building2, School, Users, UserCheck, GraduationCap, UserCog, CheckCircle, XCircle, MapPin, Phone, Mail, Globe, AlertTriangle, RefreshCw, Download, Upload } from 'lucide-react'
-import { StatCard, ContentCard } from '@/components/ui/StandardCard'
+import { Plus, Search, Edit, Trash2, Eye, Building2, School, Users, CheckCircle, AlertTriangle, RefreshCw, MapPin, Mail, Phone } from 'lucide-react'
+import { StatCard } from '@/components/ui/StandardCard'
 
 // Interface para estatísticas das instituições
 interface InstitutionStats {
@@ -19,236 +17,72 @@ interface InstitutionStats {
   activeInstitutions: number
   totalSchools: number
   totalUsers: number
-  usersByRole: {
-    STUDENT: number
-    TEACHER: number
-    COORDINATOR: number
-    ADMIN: number
-    PARENT: number
-  }
 }
 
 export default function ManageInstitutions() {
   const router = useRouter()
   const { showSuccess, showError, showWarning } = useToast()
-  const [loading, setLoading] = useState(true)
-  const [refreshing, setRefreshing] = useState(false)
-  const [institutions, setInstitutions] = useState<Institution[]>([])
-  const [totalItems, setTotalItems] = useState(0)
   const [currentPage, setCurrentPage] = useState(1)
-  const [itemsPerPage] = useState(10)
+  const [itemsPerPage] = useState(100)
   const [searchQuery, setSearchQuery] = useState('')
+  const [loading, setLoading] = useState(false)
   
-  // Estados para o modal unificado
   const [modalOpen, setModalOpen] = useState(false)
   const [modalMode, setModalMode] = useState<'view' | 'create' | 'edit'>('view')
-  const [modalInstitution, setModalInstitution] = useState<Institution | null>(null)
-  const [stats, setStats] = useState<InstitutionStats>({
-    totalInstitutions: 0,
-    activeInstitutions: 0,
-    totalSchools: 0,
-    totalUsers: 0,
-    usersByRole: {
-      STUDENT: 0,
-      TEACHER: 0,
-      COORDINATOR: 0,
-      ADMIN: 0,
-      PARENT: 0
-    }
-  })
+  const [modalInstitution, setModalInstitution] = useState<InstitutionDto | null>(null)
 
-  const enrichInstitutionsWithSchoolData = async (institutions: Institution[]): Promise<Institution[]> => {
-    // Por enquanto, vamos comentar o enriquecimento para evitar erros
-    // e usar os dados básicos das instituições
-    console.log('📝 Usando dados básicos das instituições (sem enriquecimento por enquanto)');
-    return institutions;
+  const handleAuthError = useCallback(() => {
+    showError("Sessão expirada. Por favor, faça login novamente.")
     
-    /* TODO: Implementar enriquecimento quando a API de escolas estiver funcionando
-    try {
-      const enrichedInstitutions = await Promise.all(
-        institutions.map(async (institution) => {
-          try {
-            // Buscar escolas da instituição
-            const schoolsResponse = await schoolService.getSchools({
-              institution_id: institution.id,
-              page: 1,
-              limit: 1000 // Buscar todas as escolas da instituição
-            });
-            
-            // Calcular totais de estudantes e professores
-            const totalStudents = schoolsResponse.items.reduce((sum, school) => sum + (school.students_count || 0), 0);
-            const totalTeachers = schoolsResponse.items.reduce((sum, school) => sum + (school.teachers_count || 0), 0);
-            
-            return {
-              ...institution,
-              schools_count: schoolsResponse.total || 0,
-              users_count: totalStudents + totalTeachers
-            };
-          } catch (error) {
-            console.warn(`⚠️ Erro ao buscar dados da instituição ${institution.name}:`, error);
-            return institution; // Retornar instituição original se houver erro
-          }
-        })
-      );
-      
-      return enrichedInstitutions;
-    } catch (error) {
-      console.warn('⚠️ Erro ao enriquecer dados das instituições:', error);
-      return institutions; // Retornar instituições originais se houver erro
+    // Limpar tokens inválidos
+    if (typeof window !== 'undefined') {
+      localStorage.removeItem('accessToken')
+      localStorage.removeItem('authToken')
+      localStorage.removeItem('token')
+      localStorage.removeItem('refreshToken')
+      localStorage.removeItem('user')
     }
-    */
-  };
+    
+    // Redirecionar para a página de login
+    setTimeout(() => {
+      router.push('/auth/login?auth_error=expired')
+    }, 1000)
+  }, [showError, router])
 
-  const fetchInstitutions = async (page = 1, search = '', showLoadingIndicator = true) => {
-    if (showLoadingIndicator) {
-      setLoading(true);
-    } else {
-      setRefreshing(true);
-    }
-
-    try {
-      const params: any = {
-        page,
-        limit: itemsPerPage
-      };
-      
-      // Só adicionar parâmetros se eles tiverem valor
-      if (search && search.trim()) {
-        params.search = search.trim();
-      }
-      
-      const response = await institutionService.getInstitutions(params);
-      
-      console.log('📊 API response:', response);
-      
-      // Enriquecer instituições com dados de escolas
-      const enrichedInstitutions = await enrichInstitutionsWithSchoolData(response.items || []);
-      
-      setInstitutions(enrichedInstitutions);
-      setTotalItems(response.total || 0);
-      setCurrentPage(page);
-
-      // Buscar estatísticas do dashboard
-      await fetchDashboardStats();
-      
-      if (!showLoadingIndicator) {
-        showSuccess("Atualizado", "Lista de instituições atualizada com sucesso!");
-      }
-    } catch (error) {
-      console.error('❌ Erro ao carregar instituições:', error);
-      showError("Erro ao carregar instituições", "Não foi possível carregar a lista de instituições.");
-    } finally {
-      setLoading(false);
-      setRefreshing(false);
-    }
-  };
-
-  const fetchDashboardStats = async () => {
-    try {
-      const response = await dashboardService.getSystemDashboardData();
-      
-      console.log('📊 Resposta completa da API:', response);
-      
-      // A API retorna a estrutura: { success: true, data: { institutions: { total: 3 }, ... } }
-      // Precisamos acessar response.data para obter os dados reais
-      const dashboardData = response.data || response;
-      
-      // IMPORTANTE: O total correto de instituições vem da paginação (totalItems)
-      // que é setado em fetchInstitutions, não da API do dashboard
-      const totalInstitutions = totalItems || dashboardData.institutions?.total || 0;
-      const totalSchools = dashboardData.schools?.total || 0;
-      const totalUsers = dashboardData.users?.total || 0;
-
-      // Calcular instituições ativas com base nos dados atuais carregados
-      const activeInstitutions = institutions.filter(inst => inst.is_active).length;
-      
-      setStats({
-        totalInstitutions,
-        activeInstitutions,
-        totalSchools,
-        totalUsers,
-        usersByRole: {
-          STUDENT: dashboardData.users_by_role?.STUDENT || 0,
-          TEACHER: dashboardData.users_by_role?.TEACHER || 0,
-          COORDINATOR: dashboardData.users_by_role?.COORDINATOR || 0,
-          ADMIN: dashboardData.users_by_role?.ADMIN || 0,
-          PARENT: dashboardData.users_by_role?.PARENT || 0
+  const fetcher = () => institutionService.getInstitutions({ page: currentPage, limit: itemsPerPage, search: searchQuery })
+  const { data, error, isLoading, mutate, isValidating } = useSWR(
+    `/api/institutions?page=${currentPage}&limit=${itemsPerPage}&search=${searchQuery}`,
+    fetcher,
+    {
+      onError: (err: any) => {
+        console.error('❌ [INSTITUTIONS] Erro ao carregar instituições:', err)
+        
+        // Verificar se é erro de autenticação
+        if (err.message?.includes('Sessão expirada') || err.message?.includes('não autenticado')) {
+          handleAuthError()
+          return
         }
-      });
-      
-      console.log('📊 Estatísticas do dashboard carregadas:', {
-        totalInstitutions: `${totalInstitutions} (fonte: ${totalItems ? 'paginação' : 'dashboard'})`,
-        activeInstitutions,
-        totalSchools,
-        totalUsers,
-        totalItemsFromPagination: totalItems,
-        dashboardTotal: dashboardData.institutions?.total,
-        rawData: dashboardData
-      });
-    } catch (error) {
-      console.warn('⚠️ Erro ao carregar estatísticas do dashboard:', error);
-      // Manter estatísticas baseadas apenas nos dados das instituições carregadas
-      calculateStatsFromInstitutions();
-    }
-  };
-
-  const calculateStatsFromInstitutions = () => {
-    // Use totalItems (total real da paginação) se disponível, senão institutions.length (dados da página atual)
-    const totalInstitutions = totalItems || institutions.length;
-    const activeInstitutions = institutions.filter(inst => inst.is_active).length;
-    
-    // Somar escolas das instituições
-    const totalSchools = institutions.reduce((total, inst) => {
-      return total + (inst.schools_count || 0);
-    }, 0);
-
-    // Somar usuários das instituições
-    const totalUsers = institutions.reduce((total, inst) => total + (inst.users_count || 0), 0);
-    
-    setStats({
-      totalInstitutions,
-      activeInstitutions,
-      totalSchools,
-      totalUsers,
-      usersByRole: {
-        STUDENT: 0,
-        TEACHER: 0,
-        COORDINATOR: 0,
-        ADMIN: 0,
-        PARENT: 0
       }
-    });
-    
-    console.log('📊 Stats calculados localmente:', {
-      totalInstitutions: `${totalInstitutions} (fonte: ${totalItems ? 'totalItems' : 'institutions.length'})`,
-      totalItemsAvailable: totalItems,
-      institutionsLength: institutions.length,
-      activeInstitutions
-    });
-  };
-
-  useEffect(() => {
-    fetchInstitutions(currentPage, searchQuery)
-  }, [currentPage])
-
-  // Recalcular estatísticas quando as instituições mudarem
-  useEffect(() => {
-    if (institutions.length > 0) {
-      calculateStatsFromInstitutions()
     }
-  }, [institutions])
+  )
+
+  const institutions = data?.items || []
+  const totalItems = data?.total || 0
+  const stats: InstitutionStats = data?.stats || { totalInstitutions: 0, activeInstitutions: 0, totalSchools: 0, totalUsers: 0 }
 
   const handleSearch = (e: React.FormEvent) => {
     e.preventDefault()
     setCurrentPage(1)
-    fetchInstitutions(1, searchQuery)
+    mutate()
   }
 
   const handleRefresh = () => {
-    fetchInstitutions(currentPage, searchQuery, false)
+    mutate()
   }
 
-  const handleDeleteInstitution = async (institution: Institution) => {
+
+
+  const handleDeleteInstitution = async (institution: InstitutionDto) => {
     // Verificar se a instituição pode ser excluída
     try {
       const canDelete = await institutionService.canDeleteInstitution(Number(institution.id))
@@ -272,11 +106,11 @@ export default function ManageInstitutions() {
 
     try {
       setLoading(true)
-      await institutionService.deleteInstitution(Number(institution.id))
+      await institutionService.delete(Number(institution.id))
       showSuccess("Instituição excluída", "A instituição foi excluída com sucesso.")
       
       // Recarregar a lista
-      await fetchInstitutions(currentPage, searchQuery, false)
+      await mutate()
     } catch (error) {
       console.error('❌ Erro ao excluir instituição:', error)
       showError("Erro ao excluir instituição", "Não foi possível excluir a instituição.")
@@ -285,12 +119,12 @@ export default function ManageInstitutions() {
     }
   }
 
-  const handleViewInstitution = (institution: Institution) => {
+  const handleViewInstitution = (institution: InstitutionDto) => {
     router.push(`/admin/institutions/${institution.id}`)
   }
 
   // Funções para o modal unificado
-  const openModal = (mode: 'view' | 'create' | 'edit', institution?: Institution) => {
+  const openModal = (mode: 'view' | 'create' | 'edit', institution?: InstitutionDto) => {
     setModalMode(mode)
     setModalInstitution(institution || null)
     setModalOpen(true)
@@ -309,7 +143,7 @@ export default function ManageInstitutions() {
         // Extrair escolas atribuídas dos dados
         const { assignedSchools, ...institutionData } = data
         
-        const newInstitution = await institutionService.createInstitution(institutionData)
+        const newInstitution = await institutionService.create(institutionData)
         showSuccess("Sucesso", "Instituição criada com sucesso!")
         console.log('✅ Nova instituição criada:', newInstitution)
         
@@ -330,29 +164,16 @@ export default function ManageInstitutions() {
           }
         }
         
-        // Adicionar a nova instituição à lista local se estivermos na primeira página
-        if (currentPage === 1) {
-          setInstitutions(prevInstitutions => [newInstitution, ...prevInstitutions.slice(0, itemsPerPage - 1)])
-          setTotalItems(prev => prev + 1)
-        }
-        
       } else if (modalMode === 'edit' && modalInstitution) {
-        const updatedInstitution = await institutionService.updateInstitution(Number(modalInstitution.id), data)
+        const updatedInstitution = await institutionService.update(Number(modalInstitution.id), data)
         showSuccess("Sucesso", "Instituição atualizada com sucesso!")
         console.log('✅ Instituição atualizada:', updatedInstitution)
-        
-        // Atualizar a instituição na lista local
-        setInstitutions(prevInstitutions =>
-          prevInstitutions.map(inst =>
-            inst.id === modalInstitution.id ? updatedInstitution : inst
-          )
-        )
       }
       
       closeModal()
       
       // Recarregar a lista para garantir sincronização completa
-      await fetchInstitutions(currentPage, searchQuery, false)
+      await mutate()
     } catch (error) {
       console.error('❌ Erro ao salvar instituição:', error)
       showError("Erro ao salvar instituição", "Não foi possível salvar a instituição.")
@@ -361,46 +182,37 @@ export default function ManageInstitutions() {
     }
   }
 
-  const handleToggleStatus = async (institution: Institution) => {
+  const handleToggleStatus = async (institution: InstitutionDto) => {
     try {
-      setLoading(true)
-      const updatedInstitution = await institutionService.toggleInstitutionStatus(Number(institution.id))
+      setLoading(true);
+      const response = await institutionService.toggleInstitutionStatus(Number(institution.id));
       
-      const statusText = updatedInstitution.is_active ? 'ativada' : 'desativada'
-      showSuccess("Status alterado", `Instituição ${statusText} com sucesso!`)
+      // Converter a resposta para o tipo esperado
+      const updatedInstitution = response as unknown as InstitutionDto;
       
-      // Atualizar o estado local imediatamente para feedback visual rápido
-      setInstitutions(prevInstitutions =>
-        prevInstitutions.map(inst =>
-          inst.id === institution.id
-            ? { ...inst, is_active: updatedInstitution.is_active }
-            : inst
-        )
-      )
+      // Verificar se temos a propriedade is_active na resposta
+      const isActive = updatedInstitution.is_active !== undefined ? 
+        updatedInstitution.is_active : 
+        updatedInstitution.hasOwnProperty('deleted') ? !(updatedInstitution as any).deleted : true;
       
-      // Recalcular estatísticas com os dados atualizados
-      const updatedInstitutions = institutions.map(inst =>
-        inst.id === institution.id
-          ? { ...inst, is_active: updatedInstitution.is_active }
-          : inst
-      )
+      const statusText = isActive ? 'ativada' : 'desativada';
+      showSuccess("Status alterado", `Instituição ${statusText} com sucesso!`);
       
-      // Atualizar stats baseado nos dados atualizados
-      const activeInstitutions = updatedInstitutions.filter(inst => inst.is_active).length
-      setStats(prevStats => ({
-        ...prevStats,
-        activeInstitutions
-      }))
+      // Recarregar dados
+      await mutate();
       
     } catch (error) {
-      console.error('❌ Erro ao alterar status da instituição:', error)
-      showError("Erro ao alterar status", "Não foi possível alterar o status da instituição.")
+      console.error('❌ Erro ao alterar status da instituição:', error);
+      showError("Erro ao alterar status", "Não foi possível alterar o status da instituição.");
     } finally {
-      setLoading(false)
+      setLoading(false);
     }
-  }
+  };
 
   const getInstitutionTypeLabel = (type: string) => {
+    // Se o tipo não estiver definido, retornar um valor padrão
+    if (!type) return 'Escola';
+    
     switch (type) {
       case 'SCHOOL': return 'Escola'
       case 'COLLEGE': return 'Faculdade'
@@ -429,10 +241,10 @@ export default function ManageInstitutions() {
                 <Button 
                   onClick={handleRefresh} 
                   variant="outline" 
-                  disabled={refreshing}
+                  disabled={isValidating}
                   className="flex items-center gap-2"
                 >
-                  <RefreshCw className={`w-4 h-4 ${refreshing ? 'animate-spin' : ''}`} />
+                  <RefreshCw className={`w-4 h-4 ${isValidating ? 'animate-spin' : ''}`} />
                   Atualizar
                 </Button>
                 <Button onClick={() => openModal('create')} className="flex items-center gap-2">
@@ -496,10 +308,18 @@ export default function ManageInstitutions() {
 
           {/* Content */}
           <div>
-            {loading ? (
+            {loading || isLoading ? (
               <div className="flex items-center justify-center py-12">
                 <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
                 <span className="ml-2 text-gray-600">Carregando...</span>
+              </div>
+            ) : error ? (
+              <div className="text-center py-12">
+                <AlertTriangle className="w-16 h-16 text-red-300 mx-auto mb-4" />
+                <p className="text-red-500 text-lg mb-2">Erro ao carregar dados</p>
+                <Button onClick={handleRefresh} variant="outline" className="mt-4">
+                  Tentar novamente
+                </Button>
               </div>
             ) : institutions.length === 0 ? (
               <div className="text-center py-12">
@@ -549,6 +369,12 @@ export default function ManageInstitutions() {
                                 <div className="text-sm font-medium text-gray-900">{institution.name}</div>
                                 {institution.code && (
                                   <div className="text-xs text-gray-500 font-mono">{institution.code}</div>
+                                )}
+                                {institution.company_name && institution.company_name !== institution.name && (
+                                  <div className="text-xs text-gray-500">{institution.company_name}</div>
+                                )}
+                                {institution.document && (
+                                  <div className="text-xs text-gray-500">{institution.document}</div>
                                 )}
                               </div>
                             </div>
@@ -646,6 +472,12 @@ export default function ManageInstitutions() {
                                   )}
                                   <span className="text-xs text-gray-500">{getInstitutionTypeLabel(institution.type)}</span>
                                 </div>
+                                {institution.company_name && institution.company_name !== institution.name && (
+                                  <div className="text-xs text-gray-500">{institution.company_name}</div>
+                                )}
+                                {institution.document && (
+                                  <div className="text-xs text-gray-500">{institution.document}</div>
+                                )}
                               </div>
                             </div>
                             <button

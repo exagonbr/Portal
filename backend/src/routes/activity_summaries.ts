@@ -1,5 +1,5 @@
 import { Router } from 'express';
-import { ActivitySummariesController } from '../controllers/ActivitySummariesController';
+import ActivitySummariesController from '../controllers/ActivitySummariesController';
 import { requireAuth } from '../middleware/requireAuth';
 
 const router = Router();

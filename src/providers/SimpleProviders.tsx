@@ -11,13 +11,20 @@ import { ThemeProvider } from '@/contexts/ThemeContext'
 import { PersistentAuthWrapper } from '@/components/auth/PersistentAuthWrapper'
 import dynamic from 'next/dynamic'
 import { GamificationProvider } from '@/contexts/GamificationContext'
+import { SessionInitializer } from '@/components/auth/SessionInitializer'
+
+// Componente de fallback para o ToastManager
+const ToastManagerFallback = ({ children }: { children: ReactNode }) => {
+  return <>{children}</>
+}
 
 // Carregamento dinâmico dos providers menos críticos
 const NavigationLoadingProvider = dynamic(() => import('@/contexts/NavigationLoadingContext').then(mod => mod.NavigationLoadingProvider), {
   ssr: false
 })
 const ToastManager = dynamic(() => import('@/components/ToastManager').then(mod => mod.ToastManager), {
-  ssr: false
+  ssr: false,
+  loading: () => <ToastManagerFallback><></></ToastManagerFallback>
 })
 const UpdateProvider = dynamic(() => import('@/components/PWAUpdateManager').then(mod => mod.UpdateProvider), {
   ssr: false
@@ -173,6 +180,7 @@ export default function SimpleProviders({ children }: { children: ReactNode }) {
                     <NavigationLoadingProvider>
                       <UpdateProvider>
                         <ToastManager>
+                          <SessionInitializer />
                           {children}
                         </ToastManager>
                       </UpdateProvider>

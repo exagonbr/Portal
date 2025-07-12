@@ -1,11 +1,11 @@
 export class CreateRolePermissionsDto {
-  roleId?: string;
-  permissionId?: string;
+  roleId?: string = "";
+  permissionId?: string = "";
 }
 
 export class UpdateRolePermissionsDto {
-  roleId?: string;
-  permissionId?: string;
+  roleId?: string = "";
+  permissionId?: string = "";
 }
 
 export class RolePermissionsResponseDto {

@@ -1,32 +1,54 @@
 import { BaseEntity } from '../types/common';
 
-export interface CreateQuestionDto {
-  date_created: Date;
+export interface QuestionDto {
+  id: number;
+  version?: number;
+  dateCreated: Date;
   deleted?: boolean;
-  file_id?: string | null;
-  last_updated?: Date;
+  fileId?: number;
+  lastUpdated: Date;
   test?: string;
-  tv_show_id?: string | null;
-  episode_id?: string | null;
+  tvShowId?: number;
+  episodeId?: number;
+}
+
+export interface CreateQuestionDto {
+  version?: number;
+  deleted?: boolean;
+  fileId?: number;
+  test?: string;
+  tvShowId?: number;
+  episodeId?: number;
 }
 
 export interface UpdateQuestionDto {
-  last_updated?: Date;
+  version?: number;
   deleted?: boolean;
-  file_id?: string | null;
+  fileId?: number;
   test?: string;
-  tv_show_id?: string | null;
-  episode_id?: string | null;
+  tvShowId?: number;
+  episodeId?: number;
 }
 
-export interface QuestionResponseDto extends BaseEntity {
-  id: string;
-  version?: number;
-  date_created: string;
+export interface QuestionFilterDto {
+  page?: number;
+  limit?: number;
+  search?: string;
   deleted?: boolean;
-  file_id?: string | null;
-  last_updated?: string;
-  test?: string;
-  tv_show_id?: string | null;
-  episode_id?: string | null;
+  tvShowId?: number;
+  episodeId?: number;
+  fileId?: number;
+}
+
+export interface QuestionResponseDto {
+  success: boolean;
+  data?: QuestionDto | QuestionDto[];
+  message?: string;
+  pagination?: {
+    page: number;
+    limit: number;
+    total: number;
+    totalPages: number;
+  };
+  error?: string;
 }

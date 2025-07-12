@@ -19,6 +19,85 @@ declare global {
   }
 }
 
+// Função para extrair user_id de várias fontes
+function extractUserId(req: Request): string | null {
+  try {
+    // 1. Primeiro tentar obter do req.user (padrão)
+    if ((req.user as any)?.id) {
+      return String((req.user as any).id);
+    }
+    
+    // 2. Tentar obter de headers personalizados
+    const userIdHeader = req.headers['x-user-id'] as string;
+    if (userIdHeader) {
+      return userIdHeader;
+    }
+    
+    // 3. Tentar obter dos cookies - user_data
+    const userDataCookie = req.cookies?.user_data;
+    if (userDataCookie) {
+      try {
+        const userData = typeof userDataCookie === 'string' 
+          ? JSON.parse(decodeURIComponent(userDataCookie))
+          : userDataCookie;
+        if (userData && userData.id) {
+          return String(userData.id);
+        }
+      } catch (error) {
+        console.log('❌ Erro ao parsear cookie user_data:', error);
+      }
+    }
+    
+    // 4. Tentar obter de outros cookies comuns
+    const sessionCookie = req.cookies?.session_data;
+    if (sessionCookie) {
+      try {
+        const sessionData = typeof sessionCookie === 'string' 
+          ? JSON.parse(decodeURIComponent(sessionCookie))
+          : sessionCookie;
+        if (sessionData && sessionData.user_id) {
+          return String(sessionData.user_id);
+        }
+        if (sessionData && sessionData.userId) {
+          return String(sessionData.userId);
+        }
+      } catch (error) {
+        console.log('❌ Erro ao parsear cookie session_data:', error);
+      }
+    }
+    
+    // 5. Tentar obter do cookie user
+    const userCookie = req.cookies?.user;
+    if (userCookie) {
+      try {
+        const userData = typeof userCookie === 'string' 
+          ? JSON.parse(decodeURIComponent(userCookie))
+          : userCookie;
+        if (userData && userData.id) {
+          return String(userData.id);
+        }
+      } catch (error) {
+        console.log('❌ Erro ao parsear cookie user:', error);
+      }
+    }
+    
+    // 6. Tentar obter do body da requisição (para casos específicos)
+    if (req.body && req.body.user_id) {
+      return String(req.body.user_id);
+    }
+    
+    // 7. Tentar obter dos query parameters
+    if (req.query && req.query.user_id) {
+      return String(req.query.user_id);
+    }
+    
+    return null;
+  } catch (error) {
+    console.error('❌ Erro ao extrair user_id:', error);
+    return null;
+  }
+}
+
 // Mapeamento de rotas para tipos de atividade
 const ROUTE_ACTIVITY_MAP: Record<string, ActivityType> = {
   // Auth
@@ -167,7 +246,7 @@ export const activityTrackingMiddleware = async (
   
   // Preparar dados da atividade
   req.activityData = {
-    user_id: (req.user as any)?.id ? String((req.user as any)?.id) : '',
+    user_id: extractUserId(req) || '',
     session_id: req.sessionId,
     activity_type: activityType,
     entity_type: entityType,
@@ -271,7 +350,7 @@ async function handleResponse(req: Request, res: Response, responseData: any): P
   await createActivityLog(activityData);
   
   // Atualizar sessão ativa
-  const userId = (req.user as any)?.id ? String((req.user as any)?.id) : '';
+  const userId = extractUserId(req) || '';
   await updateActiveSession(req.sessionId!, userId, duration);
 }
 

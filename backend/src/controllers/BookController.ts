@@ -1,6 +1,6 @@
 import { BookRepository } from '../repositories/BookRepository';
 import { Book } from '../entities/Book';
-import { BaseController } from './BaseController';
+import BaseController from './BaseController';
 
 class BookController extends BaseController<Book> {
   private bookRepository: BookRepository;

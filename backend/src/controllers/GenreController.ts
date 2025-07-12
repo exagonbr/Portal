@@ -1,6 +1,6 @@
 import { Request, Response } from 'express';
 import { GenreRepository } from '../repositories/GenreRepository';
-import { BaseController } from './BaseController';
+import BaseController from './BaseController';
 import { Genre } from '../entities/Genre';
 
 class GenreController extends BaseController<Genre> {

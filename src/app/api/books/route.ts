@@ -2,23 +2,8 @@ import { NextRequest, NextResponse } from 'next/server'
 import { z } from 'zod'
 import { getAuthentication, hasRequiredRole } from '@/lib/auth-utils'
 import { createCorsOptionsResponse, getCorsHeaders } from '@/config/cors'
-
-// Funções CORS
-function getCorsHeaders(origin?: string) {
-  return {
-    'Access-Control-Allow-Origin': origin || '*',
-    'Access-Control-Allow-Methods': 'GET, POST, PUT, DELETE, OPTIONS',
-    'Access-Control-Allow-Headers': 'Content-Type, Authorization',
-    'Access-Control-Allow-Credentials': 'true',
-  }
-}
-
-function createCorsOptionsResponse(origin?: string) {
-  return new NextResponse(null, {
-    status: 200,
-    headers: getCorsHeaders(origin)
-  })
-}
+import { bookService } from '@/services/bookService'
+import { createStandardApiRoute } from '../lib/api-route-template'
 
 // Schema de validação para criação de livro
 const createBookSchema = z.object({
@@ -48,140 +33,84 @@ const createBookSchema = z.object({
   }).optional()
 })
 
-// Mock database - substituir por Prisma/banco real
-const mockBooks = new Map()
-
-// GET - Listar livros
-
-// Handler para requisições OPTIONS (preflight)
-export async function OPTIONS(request: NextRequest) {
-  const origin = request.headers.get('origin') || undefined;
-  return createCorsOptionsResponse(origin);
-}
-
-export async function GET(request: NextRequest) {
-  try {
-    const session = await getAuthentication(request)
-    
-    if (!session) {
-      return NextResponse.json({ error: 'Não autorizado' }, { 
-      status: 401,
-      headers: getCorsHeaders(request.headers.get('origin') || undefined)
-    })
-    }
-
-    // Parâmetros de query
-    const { searchParams } = new URL(request.url)
-    const page = parseInt(searchParams.get('page') || '1')
-    const limit = parseInt(searchParams.get('limit') || '10')
-    const search = searchParams.get('search') || ''
-    const category = searchParams.get('category')
-    const subject = searchParams.get('subject')
-    const language = searchParams.get('language')
-    const course_id = searchParams.get('course_id')
-    const is_digital = searchParams.get('is_digital')
-    const access_type = searchParams.get('access_type')
-    const is_active = searchParams.get('is_active')
-
-    // Buscar livros (substituir por query real)
-    let books = Array.from(mockBooks.values())
-
-    // Aplicar filtros baseados no role do usuário
-    const userRole = session.user?.role
-    if (userRole === 'STUDENT') {
-      // Aluno vê apenas livros ativos e com acesso permitido
-      books = books.filter(book => 
-        book.is_active && 
-        (book.access_type === 'FREE' || 
-         (book.course_ids && book.course_ids.some((courseId: string) => 
-           // Verificar se o aluno está matriculado no curso
-           true // Implementar lógica real
-         )))
-      )
-    }
-
-    // Aplicar filtros de busca
-    if (search) {
-      const searchLower = search.toLowerCase()
-      books = books.filter(book => 
-        book.title.toLowerCase().includes(searchLower) ||
-        book.author.toLowerCase().includes(searchLower) ||
-        (book.isbn && book.isbn.includes(search)) ||
-        (book.publisher && book.publisher.toLowerCase().includes(searchLower)) ||
-        (book.tags && book.tags.some((tag: string) => tag.toLowerCase().includes(searchLower)))
-      )
-    }
-
-    if (category) {
-      books = books.filter(book => book.category === category)
-    }
-
-    if (subject) {
-      books = books.filter(book => book.subject === subject)
-    }
-
-    if (language) {
-      books = books.filter(book => book.language === language)
-    }
-
-    if (course_id) {
-      books = books.filter(book => 
-        book.course_ids && book.course_ids.includes(course_id)
-      )
-    }
-
-    if (is_digital !== null) {
-      books = books.filter(book => book.is_digital === (is_digital === 'true'))
-    }
-
-    if (access_type) {
-      books = books.filter(book => book.access_type === access_type)
-    }
-
-    if (is_active !== null) {
-      books = books.filter(book => book.is_active === (is_active === 'true'))
-    }
-
-    // Ordenar por título
-    books.sort((a, b) => a.title.localeCompare(b.title))
-
-    // Paginação
-    const startIndex = (page - 1) * limit
-    const endIndex = page * limit
-    const paginatedBooks = books.slice(startIndex, endIndex)
-
-    // Adicionar informações extras
-    const booksWithInfo = paginatedBooks.map(book => ({
-      ...book,
-      views_count: book.views_count || 0,
-      downloads_count: book.downloads_count || 0,
-      rating: book.rating || 0,
-      reviews_count: book.reviews_count || 0
-    }))
-
-    return NextResponse.json({
-      success: true,
-      data: {
-        items: booksWithInfo,
-        pagination: {
-          page,
-          limit,
-          total: books.length,
-          totalPages: Math.ceil(books.length / limit)
-        }
+// Usar o template padronizado para a rota GET
+export const { GET, OPTIONS } = createStandardApiRoute({
+  endpoint: '/api/books',
+  name: 'books',
+  fallbackFunction: async (req: NextRequest) => {
+    try {
+      const session = await getAuthentication(req)
+      
+      if (!session) {
+        return NextResponse.json({ error: 'Não autorizado' }, { 
+          status: 401,
+          headers: getCorsHeaders(req.headers.get('origin') || undefined)
+        })
       }
-    }, {
-      headers: getCorsHeaders(request.headers.get('origin') || undefined)
-    })
 
-  } catch (error) {
-    console.log('Erro ao listar livros:', error)
-    return NextResponse.json({ error: 'Erro interno do servidor' }, { 
-      status: 500,
-      headers: getCorsHeaders(request.headers.get('origin') || undefined)
-    })
+      // Parâmetros de query
+      const { searchParams } = new URL(req.url)
+      const page = parseInt(searchParams.get('page') || '1')
+      const limit = parseInt(searchParams.get('limit') || '10')
+      const search = searchParams.get('search') || ''
+      const category = searchParams.get('category')
+      const subject = searchParams.get('subject')
+      const language = searchParams.get('language')
+      const course_id = searchParams.get('course_id')
+      const is_digital = searchParams.get('is_digital')
+      const access_type = searchParams.get('access_type')
+      const is_active = searchParams.get('is_active')
+
+      console.log('📚 [API-BOOKS] Buscando livros com serviço');
+      
+      // Construir objeto de filtros
+      const filters = {
+        page,
+        limit,
+        search,
+        category,
+        subject,
+        language,
+        course_id,
+        is_digital: is_digital ? is_digital === 'true' : undefined,
+        access_type,
+        is_active: is_active ? is_active === 'true' : undefined,
+        userRole: session.user?.role,
+        userId: session.user?.id
+      };
+      
+      // Usar o serviço de livros
+      const result = await bookService.getBooks(filters);
+      
+      console.log('✅ [API-BOOKS] Livros encontrados:', result.data?.items?.length);
+
+      return NextResponse.json(result, {
+        headers: getCorsHeaders(req.headers.get('origin') || undefined)
+      })
+    } catch (error) {
+      console.error('❌ [API-BOOKS] Erro ao buscar livros:', error);
+      return NextResponse.json(
+        { 
+          success: false,
+          data: {
+            items: [],
+            pagination: {
+              page: 1,
+              limit: 10,
+              total: 0,
+              totalPages: 0
+            }
+          },
+          message: 'Erro interno do servidor'
+        },
+        { 
+          status: 500,
+          headers: getCorsHeaders(req.headers.get('origin') || undefined)
+        }
+      );
+    }
   }
-}
+});
 
 // POST - Criar livro
 export async function POST(request: NextRequest) {
@@ -190,18 +119,18 @@ export async function POST(request: NextRequest) {
     
     if (!session) {
       return NextResponse.json({ error: 'Não autorizado' }, { 
-      status: 401,
-      headers: getCorsHeaders(request.headers.get('origin') || undefined)
-    })
+        status: 401,
+        headers: getCorsHeaders(request.headers.get('origin') || undefined)
+      })
     }
 
     // Verificar permissões
     const userRole = session.user?.role
     if (!hasRequiredRole(userRole, ['SYSTEM_ADMIN', 'INSTITUTION_MANAGER', 'TEACHER', 'LIBRARIAN'])) {
       return NextResponse.json({ error: 'Sem permissão para criar livros' }, { 
-      status: 403,
-      headers: getCorsHeaders(request.headers.get('origin') || undefined)
-    })
+        status: 403,
+        headers: getCorsHeaders(request.headers.get('origin') || undefined)
+      })
     }
 
     const body = await request.json()
@@ -222,41 +151,182 @@ export async function POST(request: NextRequest) {
 
     const bookData = validationResult.data
 
-    // Verificar se ISBN já existe (se fornecido)
-    if (bookData.isbn) {
-      const existingISBN = Array.from(mockBooks.values()).find(
-        book => book.isbn === bookData.isbn
-      )
-
-      if (existingISBN) {
-        return NextResponse.json({ error: 'Já existe um livro com este ISBN' }, { 
-      status: 409,
-      headers: getCorsHeaders(request.headers.get('origin') || undefined)
-    })
-      }
-    }
-
-    // Criar livro
-    const newBook = {
-      id: `book_${Date.now()}`,
+    console.log('📝 [API-BOOKS] Criando livro com serviço');
+    
+    // Usar o serviço para criar o livro
+    const newBook = await bookService.createBook({
       ...bookData,
       institution_id: session.user.institution_id,
-      created_at: new Date().toISOString(),
-      updated_at: new Date().toISOString(),
       created_by: session.user?.id
-    }
-
-    mockBooks.set(newBook.id, newBook)
+    });
+    
+    console.log('✅ [API-BOOKS] Livro criado com sucesso');
 
     return NextResponse.json({
       success: true,
       data: newBook,
       message: 'Livro criado com sucesso'
-    }, { status: 201 })
-
+    }, {
+      status: 201,
+      headers: getCorsHeaders(request.headers.get('origin') || undefined)
+    })
   } catch (error) {
-    console.log('Erro ao criar livro:', error)
-    return NextResponse.json({ error: 'Erro interno do servidor' }, { 
+    console.error('❌ [API-BOOKS] Erro ao criar livro:', error);
+    
+    // Verificar se é erro de ISBN duplicado
+    if (error instanceof Error && error.message.includes('ISBN')) {
+      return NextResponse.json({ 
+        success: false,
+        message: 'Já existe um livro com este ISBN'
+      }, { 
+        status: 409,
+        headers: getCorsHeaders(request.headers.get('origin') || undefined)
+      })
+    }
+    
+    return NextResponse.json({ 
+      success: false,
+      message: 'Erro interno do servidor'
+    }, { 
+      status: 500,
+      headers: getCorsHeaders(request.headers.get('origin') || undefined)
+    })
+  }
+}
+
+// PUT - Atualizar livro
+export async function PUT(request: NextRequest) {
+  try {
+    const session = await getAuthentication(request)
+    
+    if (!session) {
+      return NextResponse.json({ 
+        success: false,
+        message: 'Não autorizado'
+      }, { 
+        status: 401,
+        headers: getCorsHeaders(request.headers.get('origin') || undefined)
+      })
+    }
+
+    // Verificar permissões
+    const userRole = session.user?.role
+    if (!hasRequiredRole(userRole, ['SYSTEM_ADMIN', 'INSTITUTION_MANAGER', 'TEACHER', 'LIBRARIAN'])) {
+      return NextResponse.json({ 
+        success: false,
+        message: 'Sem permissão para atualizar livros'
+      }, { 
+        status: 403,
+        headers: getCorsHeaders(request.headers.get('origin') || undefined)
+      })
+    }
+
+    // Obter ID do livro da URL
+    const url = new URL(request.url)
+    const id = url.pathname.split('/').pop()
+    
+    if (!id) {
+      return NextResponse.json({ 
+        success: false,
+        message: 'ID do livro não fornecido'
+      }, { 
+        status: 400,
+        headers: getCorsHeaders(request.headers.get('origin') || undefined)
+      })
+    }
+
+    const body = await request.json()
+    
+    console.log('✏️ [API-BOOKS] Atualizando livro com serviço:', id);
+    
+    // Usar o serviço para atualizar o livro
+    const updatedBook = await bookService.updateBook(id, {
+      ...body,
+      updated_by: session.user?.id,
+      updated_at: new Date().toISOString()
+    });
+    
+    console.log('✅ [API-BOOKS] Livro atualizado com sucesso');
+
+    return NextResponse.json({
+      success: true,
+      data: updatedBook,
+      message: 'Livro atualizado com sucesso'
+    }, {
+      headers: getCorsHeaders(request.headers.get('origin') || undefined)
+    })
+  } catch (error) {
+    console.error('❌ [API-BOOKS] Erro ao atualizar livro:', error);
+    return NextResponse.json({ 
+      success: false,
+      message: 'Erro interno do servidor'
+    }, { 
+      status: 500,
+      headers: getCorsHeaders(request.headers.get('origin') || undefined)
+    })
+  }
+}
+
+// DELETE - Remover livro
+export async function DELETE(request: NextRequest) {
+  try {
+    const session = await getAuthentication(request)
+    
+    if (!session) {
+      return NextResponse.json({ 
+        success: false,
+        message: 'Não autorizado'
+      }, { 
+        status: 401,
+        headers: getCorsHeaders(request.headers.get('origin') || undefined)
+      })
+    }
+
+    // Verificar permissões
+    const userRole = session.user?.role
+    if (!hasRequiredRole(userRole, ['SYSTEM_ADMIN', 'INSTITUTION_MANAGER'])) {
+      return NextResponse.json({ 
+        success: false,
+        message: 'Sem permissão para remover livros'
+      }, { 
+        status: 403,
+        headers: getCorsHeaders(request.headers.get('origin') || undefined)
+      })
+    }
+
+    // Obter ID do livro da URL
+    const url = new URL(request.url)
+    const id = url.pathname.split('/').pop()
+    
+    if (!id) {
+      return NextResponse.json({ 
+        success: false,
+        message: 'ID do livro não fornecido'
+      }, { 
+        status: 400,
+        headers: getCorsHeaders(request.headers.get('origin') || undefined)
+      })
+    }
+    
+    console.log('🗑️ [API-BOOKS] Excluindo livro com serviço:', id);
+    
+    // Usar o serviço para excluir o livro
+    await bookService.deleteBook(id);
+    
+    console.log('✅ [API-BOOKS] Livro excluído com sucesso');
+
+    return NextResponse.json({
+      success: true,
+      message: 'Livro excluído com sucesso'
+    }, {
+      headers: getCorsHeaders(request.headers.get('origin') || undefined)
+    })
+  } catch (error) {
+    console.error('❌ [API-BOOKS] Erro ao excluir livro:', error);
+    return NextResponse.json({ 
+      success: false,
+      message: 'Erro interno do servidor'
+    }, { 
       status: 500,
       headers: getCorsHeaders(request.headers.get('origin') || undefined)
     })

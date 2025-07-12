@@ -1,5 +1,5 @@
 import { Router } from 'express';
-import { InstitutionController } from '../controllers/InstitutionController';
+import InstitutionController from '../controllers/InstitutionController';
 import { requireAuth } from '../middleware/requireAuth';
 
 const router = Router();

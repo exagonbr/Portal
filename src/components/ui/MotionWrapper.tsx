@@ -3,7 +3,7 @@
 import dynamic from 'next/dynamic';
 import { ComponentProps, useState, useEffect } from 'react';
 
-// CORREÇÃO: Wrapper mais robusto com fallbacks
+// CORREÇÃO: Wrapper mais robusto com fallbacks e tratamento de erro
 const MotionDiv = dynamic(
   () => import('framer-motion').then((mod) => {
     if (!mod.motion) {
@@ -11,6 +11,9 @@ const MotionDiv = dynamic(
       return { default: ({ children, ...props }: any) => <div {...props}>{children}</div> };
     }
     return mod.motion.div;
+  }).catch(error => {
+    console.error('❌ Erro ao carregar framer-motion:', error);
+    return { default: ({ children, ...props }: any) => <div {...props}>{children}</div> };
   }),
   { 
     ssr: false,
@@ -25,6 +28,9 @@ const MotionSpan = dynamic(
       return { default: ({ children, ...props }: any) => <span {...props}>{children}</span> };
     }
     return mod.motion.span;
+  }).catch(error => {
+    console.error('❌ Erro ao carregar framer-motion:', error);
+    return { default: ({ children, ...props }: any) => <span {...props}>{children}</span> };
   }),
   { 
     ssr: false,
@@ -38,6 +44,9 @@ const MotionButton = dynamic(
       return { default: ({ children, ...props }: any) => <button {...props}>{children}</button> };
     }
     return mod.motion.button;
+  }).catch(error => {
+    console.error('❌ Erro ao carregar framer-motion:', error);
+    return { default: ({ children, ...props }: any) => <button {...props}>{children}</button> };
   }),
   { 
     ssr: false,
@@ -51,6 +60,9 @@ const MotionH1 = dynamic(
       return { default: ({ children, ...props }: any) => <h1 {...props}>{children}</h1> };
     }
     return mod.motion.h1;
+  }).catch(error => {
+    console.error('❌ Erro ao carregar framer-motion:', error);
+    return { default: ({ children, ...props }: any) => <h1 {...props}>{children}</h1> };
   }),
   { 
     ssr: false,
@@ -64,6 +76,9 @@ const MotionP = dynamic(
       return { default: ({ children, ...props }: any) => <p {...props}>{children}</p> };
     }
     return mod.motion.p;
+  }).catch(error => {
+    console.error('❌ Erro ao carregar framer-motion:', error);
+    return { default: ({ children, ...props }: any) => <p {...props}>{children}</p> };
   }),
   { 
     ssr: false,
@@ -77,6 +92,9 @@ const AnimatePresence = dynamic(
       return { default: ({ children }: any) => <>{children}</> };
     }
     return { default: mod.AnimatePresence };
+  }).catch(error => {
+    console.error('❌ Erro ao carregar framer-motion:', error);
+    return { default: ({ children }: any) => <>{children}</> };
   }),
   { 
     ssr: false,
@@ -132,6 +150,22 @@ const MotionWrapper: React.FC<MotionWrapperProps> = ({ children, fallback = null
     };
     
     checkFramerMotion();
+    
+    // Adicionar listener para erros de carregamento de chunks
+    const handleChunkError = (event: ErrorEvent) => {
+      if (event.message?.includes('framer-motion') || 
+          event.error?.message?.includes('framer-motion') ||
+          event.filename?.includes('framer-motion')) {
+        console.warn('⚠️ Erro de carregamento de chunk do framer-motion detectado');
+        setHasError(true);
+      }
+    };
+    
+    window.addEventListener('error', handleChunkError);
+    
+    return () => {
+      window.removeEventListener('error', handleChunkError);
+    };
   }, []);
   
   if (hasError) {

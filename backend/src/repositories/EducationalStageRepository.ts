@@ -1,3 +1,4 @@
+import { AppDataSource } from "../config/typeorm.config";
 import { Repository } from "typeorm";
 import { ExtendedRepository, PaginatedResult } from './ExtendedRepository';
 import { EducationalStage } from '../entities/EducationalStage';
@@ -20,8 +21,10 @@ export interface CreateEducationalStageData {
 export interface UpdateEducationalStageData extends Partial<CreateEducationalStageData> {}
 
 export class EducationalStageRepository extends ExtendedRepository<EducationalStage> {
+  private repository: Repository<EducationalStage>;
   constructor() {
     super("educationalstages");
+    this.repository = AppDataSource.getRepository(EducationalStage);
   }
   // Implementação do método abstrato findAllPaginated
   async findAllPaginated(options: {

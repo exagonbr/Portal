@@ -6,6 +6,8 @@ class SettingsController {
   private settingsRepository: SettingsRepository;
 
   constructor() {
+    const repository = new SettingsRepository();
+    super(repository);
     this.settingsRepository = new SettingsRepository();
   }
 

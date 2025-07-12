@@ -1,16 +1,14 @@
 'use client'
 
-import { useState, useEffect } from 'react'
-import { Button } from '@/components/ui/Button'
-import Input from '@/components/ui/Input'
-import { Switch } from '@/components/ui/Switch'
-import { SubjectDto } from '@/types/subject'
+import React, { useState, useEffect } from 'react';
+import { Button } from '@/components/ui/Button';
+import { SubjectDto } from '@/types/subject';
 
 interface SubjectFormProps {
-  subject: SubjectDto | null
-  mode: 'create' | 'edit' | 'view'
-  onSubmit: (data: any) => void
-  onCancel: () => void
+  subject?: SubjectDto | null;
+  mode: 'create' | 'edit' | 'view';
+  onSubmit: (data: any) => void;
+  onCancel: () => void;
 }
 
 export default function SubjectForm({ subject, mode, onSubmit, onCancel }: SubjectFormProps) {
@@ -18,130 +16,132 @@ export default function SubjectForm({ subject, mode, onSubmit, onCancel }: Subje
     name: '',
     description: '',
     is_active: true
-  })
-  const [errors, setErrors] = useState<Record<string, string>>({})
-
+  });
+  
+  const [errors, setErrors] = useState<Record<string, string>>({});
+  
+  // Carregar dados da disciplina se estiver em modo de edição ou visualização
   useEffect(() => {
     if (subject) {
       setFormData({
-        name: subject.name,
-        description: subject.description,
-        is_active: subject.is_active
-      })
-    } else {
-      setFormData({
-        name: '',
-        description: '',
-        is_active: true
-      })
+        name: subject.name || '',
+        description: subject.description || '',
+        is_active: subject.is_active !== undefined ? subject.is_active : true
+      });
     }
-  }, [subject])
-
-  const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
-    const { name, value } = e.target
-    setFormData(prev => ({ ...prev, [name]: value }))
+  }, [subject]);
+  
+  const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
+    const { name, value, type } = e.target;
     
-    // Limpa o erro quando o campo é alterado
+    setFormData(prev => ({
+      ...prev,
+      [name]: type === 'checkbox' ? (e.target as HTMLInputElement).checked : value
+    }));
+    
+    // Limpar erro do campo quando o usuário digitar
     if (errors[name]) {
-      setErrors(prev => {
-        const newErrors = { ...prev }
-        delete newErrors[name]
-        return newErrors
-      })
+      setErrors(prev => ({ ...prev, [name]: '' }));
     }
-  }
-
-  const handleSwitchChange = (checked: boolean) => {
-    setFormData(prev => ({ ...prev, is_active: checked }))
-  }
-
-  const validate = () => {
-    const newErrors: Record<string, string> = {}
+  };
+  
+  const validateForm = () => {
+    const newErrors: Record<string, string> = {};
     
     if (!formData.name.trim()) {
-      newErrors.name = 'O nome é obrigatório'
+      newErrors.name = 'O nome é obrigatório';
     }
     
-    if (!formData.description.trim()) {
-      newErrors.description = 'A descrição é obrigatória'
-    }
-    
-    setErrors(newErrors)
-    return Object.keys(newErrors).length === 0
-  }
-
+    setErrors(newErrors);
+    return Object.keys(newErrors).length === 0;
+  };
+  
   const handleSubmit = (e: React.FormEvent) => {
-    e.preventDefault()
+    e.preventDefault();
     
     if (mode === 'view') {
-      onCancel()
-      return
+      onCancel();
+      return;
     }
     
-    if (validate()) {
-      onSubmit(formData)
+    if (!validateForm()) {
+      return;
     }
-  }
-
-  const isReadOnly = mode === 'view'
-
+    
+    onSubmit(formData);
+  };
+  
+  const isReadOnly = mode === 'view';
+  
   return (
-    <form onSubmit={handleSubmit} className="space-y-6">
-      <div className="space-y-4">
-        <div>
-          <Input
-            label="Nome"
-            name="name"
-            value={formData.name}
-            onChange={handleChange}
-            error={errors.name}
-            disabled={isReadOnly}
-            required
-          />
-        </div>
-        
-        <div>
-          <Input
-            label="Descrição"
-            name="description"
-            value={formData.description}
-            onChange={handleChange}
-            error={errors.description}
-            disabled={isReadOnly}
-            required
-            multiline
-            rows={3}
-          />
-        </div>
-        
-        <div className="flex items-center justify-between">
-          <label className="text-sm font-medium">Status</label>
-          <Switch
-            checked={formData.is_active}
-            onCheckedChange={handleSwitchChange}
-            disabled={isReadOnly}
-          />
-        </div>
+    <form onSubmit={handleSubmit} className="space-y-4">
+      <div>
+        <label htmlFor="name" className="block text-sm font-medium text-gray-700 mb-1">
+          Nome
+        </label>
+        <input
+          type="text"
+          id="name"
+          name="name"
+          value={formData.name}
+          onChange={handleChange}
+          disabled={isReadOnly}
+          className={`w-full px-3 py-2 border rounded-md shadow-sm ${
+            errors.name ? 'border-red-500' : 'border-gray-300'
+          } focus:outline-none focus:ring-2 focus:ring-blue-500 ${
+            isReadOnly ? 'bg-gray-100' : ''
+          }`}
+        />
+        {errors.name && <p className="mt-1 text-sm text-red-600">{errors.name}</p>}
       </div>
       
-      <div className="flex justify-end gap-3">
+      <div>
+        <label htmlFor="description" className="block text-sm font-medium text-gray-700 mb-1">
+          Descrição
+        </label>
+        <textarea
+          id="description"
+          name="description"
+          rows={4}
+          value={formData.description}
+          onChange={handleChange}
+          disabled={isReadOnly}
+          className={`w-full px-3 py-2 border rounded-md shadow-sm border-gray-300 focus:outline-none focus:ring-2 focus:ring-blue-500 ${
+            isReadOnly ? 'bg-gray-100' : ''
+          }`}
+        />
+      </div>
+      
+      <div className="flex items-center">
+        <input
+          type="checkbox"
+          id="is_active"
+          name="is_active"
+          checked={formData.is_active}
+          onChange={(e) => setFormData(prev => ({ ...prev, is_active: e.target.checked }))}
+          disabled={isReadOnly}
+          className="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
+        />
+        <label htmlFor="is_active" className="ml-2 block text-sm text-gray-700">
+          Ativo
+        </label>
+      </div>
+      
+      <div className="flex justify-end space-x-3 pt-4">
         <Button
           type="button"
-          variant="secondary"
+          variant="outline"
           onClick={onCancel}
         >
-          {isReadOnly ? 'Fechar' : 'Cancelar'}
+          {mode === 'view' ? 'Fechar' : 'Cancelar'}
         </Button>
         
-        {!isReadOnly && (
-          <Button
-            type="submit"
-            variant="default"
-          >
-            {mode === 'create' ? 'Criar' : 'Salvar'}
+        {mode !== 'view' && (
+          <Button type="submit">
+            {mode === 'create' ? 'Criar' : 'Atualizar'}
           </Button>
         )}
       </div>
     </form>
-  )
+  );
 } 

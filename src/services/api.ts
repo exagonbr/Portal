@@ -1,3 +1,4 @@
+<<<<<<< HEAD
 import axios, { AxiosRequestConfig } from 'axios';
 
 export const API_URL = process.env.NEXT_PUBLIC_API_URL || process.env.BACKEND_URL || 'http://localhost:3001/api';
@@ -5,6 +6,11 @@ export const API_URL = process.env.NEXT_PUBLIC_API_URL || process.env.BACKEND_UR
 if (!API_URL) {
   console.warn('API_URL não está definido no ambiente!');
 }
+=======
+import axios from 'axios';
+import { UnifiedAuthService } from './unifiedAuthService';
+import { AuthHeaderService } from './authHeaderService';
+>>>>>>> 2b9a658619be4be8442857987504eeff79e3f6b9
 
 const api = axios.create({
   baseURL: API_URL,
@@ -14,6 +20,7 @@ const api = axios.create({
   },
 });
 
+<<<<<<< HEAD
 api.interceptors.request.use((config) => {
   // Tenta pegar o token do localStorage (cliente) ou do cookie (servidor)
   let token;
@@ -23,7 +30,20 @@ api.interceptors.request.use((config) => {
 
   if (token) {
     config.headers.Authorization = `Bearer ${token}`;
+=======
+api.interceptors.request.use(async (config) => {
+  const headers = await AuthHeaderService.getHeadersObject();
+  
+  // Adicionar headers de forma segura para tipagem do Axios
+  if (headers.Authorization) {
+    config.headers.Authorization = headers.Authorization;
+>>>>>>> 2b9a658619be4be8442857987504eeff79e3f6b9
   }
+  
+  if (headers['Content-Type']) {
+    config.headers['Content-Type'] = headers['Content-Type'];
+  }
+  
   return config;
 });
 
@@ -31,10 +51,15 @@ api.interceptors.response.use(
   (response) => response,
   async (error) => {
     if (error.response?.status === 401) {
+<<<<<<< HEAD
       if (typeof window !== 'undefined') {
         localStorage.removeItem('token');
         window.location.href = '/login';
       }
+=======
+      await UnifiedAuthService.clearAuthData();
+      window.location.href = '/login';
+>>>>>>> 2b9a658619be4be8442857987504eeff79e3f6b9
     }
     return Promise.reject(error);
   }

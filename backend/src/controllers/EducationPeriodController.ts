@@ -1,6 +1,6 @@
 import { Request, Response } from 'express';
 import { EducationPeriodRepository } from '../repositories/EducationPeriodRepository';
-import { BaseController } from './BaseController';
+import BaseController from './BaseController';
 import { EducationPeriod } from '../entities/EducationPeriod';
 
 class EducationPeriodController extends BaseController<EducationPeriod> {

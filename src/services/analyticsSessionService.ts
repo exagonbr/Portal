@@ -5,20 +5,15 @@ import {
   SystemUsageData,
   ResourceDistribution,
 } from '@/types/analytics';
+import { AuthHeaderService } from './authHeaderService';
 
 /**
  * Uma função helper para fazer requisições fetch e tratar erros.
  * Idealmente, isso seria compartilhado em toda a aplicação.
  */
 const fetcher = async <T>(url: string, options?: RequestInit): Promise<T> => {
-  const token = localStorage.getItem('authToken');
-  const headers = new Headers(options?.headers);
-  headers.set('Content-Type', 'application/json');
-
-  if (token) {
-    headers.set('Authorization', `Bearer ${token}`);
-  }
-
+  const headers = await AuthHeaderService.getHeaders();
+  
   const res = await fetch(url, {
     ...options,
     headers,

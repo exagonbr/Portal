@@ -11,8 +11,10 @@ export interface CreateTagData {
 export interface UpdateTagData extends Partial<CreateTagData> {}
 
 export class TagRepository extends ExtendedRepository<Tag> {
+  private repository: Repository<Tag>;
   constructor() {
     super("tags");
+    this.repository = AppDataSource.getRepository(Tag);
   }
   
   // Implementação do método abstrato findAllPaginated

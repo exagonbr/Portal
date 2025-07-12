@@ -1,0 +1,99 @@
+import { Request, Response } from 'express';
+import { BaseController } from './BaseController';
+import { Role } from '../entities/Role';
+import { RoleRepository } from '../repositories/RoleRepository';
+
+class RoleController extends BaseController<Role> {
+  private roleRepository: RoleRepository;
+
+  constructor() {
+    const repository = new RoleRepository();
+    super(repository);
+    this.roleRepository = repository;
+  }
+
+  public async getAll(req: Request, res: Response): Promise<Response> {
+    try {
+      // Adicionar timeout para evitar travamentos
+      const timeoutPromise = new Promise((_, reject) => {
+        setTimeout(() => reject(new Error('Timeout na busca de Roles')), 25000); // 25 segundos
+      });
+
+      const { 
+        page = '1', 
+        limit = '10', 
+        search, 
+        sortBy, 
+        sortOrder 
+      } = req.query;
+
+      const options = {
+        page: parseInt(page as string, 10),
+        limit: parseInt(limit as string, 10),
+        search: search as string,
+      };
+
+      const filters: any = {};
+      if (sortBy) filters.sortBy = sortBy as string;
+      if (sortOrder) filters.sortOrder = sortOrder as 'asc' | 'desc';
+
+      const rolesPromise = this.roleRepository.findAllPaginated({
+        ...options,
+        ...filters
+      });
+
+      // Usar Promise.race para aplicar timeout
+      const result = await Promise.race([rolesPromise, timeoutPromise]) as any;
+
+      if (!result) {
+        return res.status(404).json({ success: false, message: 'Roles não encontradas' });
+      }
+
+      return res.status(200).json({
+        success: true,
+        data: {
+          items: result.data || [],
+          pagination: {
+            page: result.page || 1,
+            limit: result.limit || 10,
+            total: result.total || 0,
+            totalPages: Math.ceil(result.total / result.limit) || 1
+          }
+        }
+      });
+    } catch (error) {
+      console.error('Erro ao buscar roles:', error);
+
+      // Se for timeout, retornar erro específico
+      if (error instanceof Error && error.message.includes('Timeout')) {
+        return res.status(504).json({ 
+          success: false, 
+          message: 'Timeout na busca de Roles - operação demorou muito',
+          code: 'TIMEOUT_ERROR'
+        });
+      }
+      
+      return res.status(500).json({ 
+        success: false, 
+        message: 'Erro interno do servidor: ' + error,
+        code: 'INTERNAL_ERROR'
+      });
+    }
+  }
+
+  async toggleStatus(req: Request, res: Response) {
+    try {
+      const { id } = req.params;
+      const role = await this.roleRepository.toggleStatus(id);
+      if (!role) {
+        return res.status(404).json({ success: false, message: 'Role not found' });
+      }
+      return res.status(200).json({ success: true, data: role });
+    } catch (error) {
+      console.error(`Error in toggleStatus: ${error}`);
+      return res.status(500).json({ success: false, message: 'Internal Server Error' });
+    }
+  }
+}
+
+export default new RoleController();

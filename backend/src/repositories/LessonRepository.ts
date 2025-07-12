@@ -20,9 +20,11 @@ export interface CreateLessonData extends Omit<Lesson, 'id' | 'created_at' | 'up
 export interface UpdateLessonData extends Partial<CreateLessonData> {}
 
 export class LessonRepository extends ExtendedRepository<Lesson> {
+  // Removendo a propriedade repository já que não estamos usando TypeORM diretamente
 
   constructor() {
     super("lessons");
+    // Estamos usando Knex através da classe base, não TypeORM
   }
   // Implementação do método abstrato findAllPaginated
   async findAllPaginated(options: {
@@ -66,41 +68,64 @@ export class LessonRepository extends ExtendedRepository<Lesson> {
         page,
         limit
       };
+    } catch (error) {
+      throw error;
+    }
   }
 
   async findByModule(moduleId: string): Promise<Lesson[]> {
-    return this.db(this.tableName)
-      .where('module_id', moduleId)
-      .orderBy('order', 'asc');
+    try {
+      return this.db(this.tableName)
+        .where('module_id', moduleId)
+        .orderBy('order', 'asc');
+    } catch (error) {
+      throw error;
+    }
   }
 
   async findByType(type: 'video' | 'text' | 'quiz'): Promise<Lesson[]> {
-    return this.findAll({ type } as Partial<Lesson>);
+    try {
+      return this.findAll({ type } as Partial<Lesson>);
+    } catch (error) {
+      throw error;
+    }
   }
 
   async getNextOrder(moduleId: string): Promise<number> {
-    const result = await this.db(this.tableName)
-      .where('module_id', moduleId)
-      .max('order as max_order')
-      .first();
+    try {
+      const result = await this.db(this.tableName)
+        .where('module_id', moduleId)
+        .max('order as max_order')
+        .first();
 
-    return (result?.max_order || 0) + 1;
+      return (result?.max_order || 0) + 1;
+    } catch (error) {
+      throw error;
+    }
   }
 
   async reorderLessons(moduleId: string, lessonOrders: { id: string; order: number }[]): Promise<void> {
-    await this.executeTransaction(async (trx) => {
-      for (const lessonOrder of lessonOrders) {
-        await trx(this.tableName)
-          .where({ id: lessonOrder.id, module_id: moduleId })
-          .update({ order: lessonOrder.order });
-      }
-    });
+    try {
+      await this.executeTransaction(async (trx) => {
+        for (const lessonOrder of lessonOrders) {
+          await trx(this.tableName)
+            .where({ id: lessonOrder.id, module_id: moduleId })
+            .update({ order: lessonOrder.order });
+        }
+      });
+    } catch (error) {
+      throw error;
+    }
   }
 
   // A lógica de progresso do usuário geralmente fica em uma tabela separada (ex: user_lesson_progress)
   async markAsCompleted(userId: string, lessonId: string): Promise<void> {
-    // Exemplo:
-    // await this.db('user_lesson_progress').insert({ user_id: userId, lesson_id: lessonId, completed: true }).onConflict().merge();
-    console.log(`Lição ${lessonId} marcada como completa para o usuário ${userId}`);
+    try {
+      // Exemplo:
+      // await this.db('user_lesson_progress').insert({ user_id: userId, lesson_id: lessonId, completed: true }).onConflict().merge();
+      console.log(`Lição ${lessonId} marcada como completa para o usuário ${userId}`);
+    } catch (error) {
+      throw error;
+    }
   }
 }

@@ -1,5 +1,5 @@
 import { Router } from 'express';
-import { TargetAudienceController } from '../controllers/TargetAudienceController';
+import TargetAudienceController from '../controllers/TargetAudienceController';
 import { requireAuth } from '../middleware/requireAuth';
 
 const router = Router();

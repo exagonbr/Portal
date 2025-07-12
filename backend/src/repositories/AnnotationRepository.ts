@@ -1,3 +1,4 @@
+import { AppDataSource } from "../config/typeorm.config";
 import { Repository } from "typeorm";
 import { ExtendedRepository, PaginatedResult } from './ExtendedRepository';
 // Supondo que as entidades Annotation e Highlight existam
@@ -33,8 +34,10 @@ export interface UpdateHighlightData extends Partial<CreateHighlightData> {}
 
 
 export class AnnotationRepository extends ExtendedRepository<Annotation> {
+  private repository: Repository<any>;
   constructor() {
     super("annotations");
+    this.repository = AppDataSource.getRepository("Annotation");
   }
   // Implementação do método abstrato findAllPaginated
   async findAllPaginated(options: {
@@ -78,6 +81,10 @@ export class AnnotationRepository extends ExtendedRepository<Annotation> {
         page,
         limit
       };
+    } catch (error) {
+      console.error("Error in findAllPaginated:", error);
+      throw error;
+    }
   }
 
   async findByBook(bookId: string, userId?: string): Promise<Annotation[]> {
@@ -107,9 +114,59 @@ export class AnnotationRepository extends ExtendedRepository<Annotation> {
   }
 }
 
-export class HighlightRepository extends BaseRepository<Highlight> {
+export class HighlightRepository extends ExtendedRepository<Highlight> {
+  private repository: Repository<any>;
   constructor() {
-    super("annotations");
+    super("highlights");
+    this.repository = AppDataSource.getRepository("Highlight");
+  }
+
+  // Implementação do método abstrato findAllPaginated
+  async findAllPaginated(options: {
+    page?: number;
+    limit?: number;
+    search?: string;
+  } = {}): Promise<PaginatedResult<Highlight>> {
+    const { page = 1, limit = 10, search } = options;
+    
+    try {
+      // Usar diretamente o db e tableName herdados da classe base
+      let query = this.db(this.tableName).select("*");
+
+      // Adicione condições de pesquisa específicas para esta entidade
+      if (search) {
+        query = query.whereILike("content", `%${search}%`);
+      }
+
+      // Executar a consulta paginada
+      const offset = (page - 1) * limit;
+      const data = await query
+        .orderBy("id", "DESC")
+        .limit(limit)
+        .offset(offset);
+
+      // Contar o total de registros
+      const countResult = await this.db(this.tableName)
+        .count("* as total")
+        .modify(qb => {
+          if (search) {
+            qb.whereILike("content", `%${search}%`);
+          }
+        })
+        .first();
+
+      const total = parseInt(countResult?.total as string, 10) || 0;
+
+      return {
+        data,
+        total,
+        page,
+        limit
+      };
+    } catch (error) {
+      console.error("Error in findAllPaginated:", error);
+      throw error;
+    }
   }
 
   async findByBook(bookId: string, userId?: string): Promise<Highlight[]> {

@@ -10,10 +10,12 @@ export interface CreateQuizData extends Omit<Quiz, 'id' | 'created_at' | 'update
 export interface UpdateQuizData extends Partial<CreateQuizData> {}
 
 export class QuizRepository extends ExtendedRepository<Quiz> {
+  private repository: Repository<Quiz>;
   private attemptRepository: QuizAttemptRepository;
 
   constructor() {
     super("quizs");
+    this.repository = AppDataSource.getRepository(Quiz);
     this.attemptRepository = new QuizAttemptRepository();
   }
   // Implementação do método abstrato findAllPaginated

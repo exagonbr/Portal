@@ -1,6 +1,7 @@
 'use client'
 
 import { usePathname } from 'next/navigation'
+import Providers from './providers'
 
 // Rotas que não devem usar o layout de dashboard (completamente públicas)
 const publicRoutes = [
@@ -35,7 +36,11 @@ export default function Template({ children }: { children: React.ReactNode }) {
 
   // Por enquanto, renderizar apenas o children sem layout complexo
   // para evitar problemas de carregamento de chunks
-  return <div className="h-full w-full">{children}</div>
+  return (
+    <Providers>
+      <div className="h-full w-full">{children}</div>
+    </Providers>
+  )
   
   // Código comentado temporariamente:
   /*

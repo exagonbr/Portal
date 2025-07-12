@@ -1,8 +1,25 @@
 import { NextRequest, NextResponse } from 'next/server'
-import db from '../../../../../backend/src/config/database'
+import { getSafeConnection } from '../../../lib/database-safe'
 import bcrypt from 'bcryptjs'
 import { v4 as uuidv4 } from 'uuid'
-import { createCorsOptionsResponse, getCorsHeaders } from '@/config/cors'
+
+// Função para criar headers CORS
+function getCorsHeaders(origin?: string) {
+  return {
+    'Access-Control-Allow-Origin': origin || '*',
+    'Access-Control-Allow-Methods': 'GET, POST, PUT, DELETE, OPTIONS',
+    'Access-Control-Allow-Headers': 'Content-Type, Authorization',
+    'Access-Control-Allow-Credentials': 'true',
+  }
+}
+
+// Função para resposta OPTIONS
+function createCorsOptionsResponse(origin?: string) {
+  return new NextResponse(null, {
+    status: 200,
+    headers: getCorsHeaders(origin)
+  })
+}
 
 interface SeedConfig {
   users?: boolean
@@ -25,6 +42,9 @@ export async function OPTIONS(request: NextRequest) {
 export async function POST(request: NextRequest) {
   try {
     const { selectedTables, seedConfig }: SeedRequest = await request.json()
+    
+    // Obter conexão segura
+    const db = await getSafeConnection()
     
     let recordsGenerated = 0
     const details: Array<{ table: string; records: number }> = []

@@ -1,135 +1,158 @@
-// Script para limpar cache do Service Worker e resolver problemas de carregamento
+// Script para limpar o cache do Service Worker
+// Versão: 2.0.0
 
-async function clearServiceWorkerCache() {
-  console.log('🧹 Iniciando limpeza do cache do Service Worker...');
+(function() {
+  const STATUS_ELEMENT_ID = 'sw-status';
+  const BUTTON_ELEMENT_ID = 'clear-sw-button';
+  const RELOAD_BUTTON_ID = 'reload-page-button';
+  const VERSION_ELEMENT_ID = 'sw-version';
   
-  try {
-    // 1. Limpar todos os caches
-    const cacheNames = await caches.keys();
-    console.log('📦 Caches encontrados:', cacheNames);
-    
-    await Promise.all(
-      cacheNames.map(cacheName => {
-        console.log('🗑️ Removendo cache:', cacheName);
-        return caches.delete(cacheName);
-      })
-    );
-    
-    // 2. Desregistrar service workers existentes
-    if ('serviceWorker' in navigator) {
-      const registrations = await navigator.serviceWorker.getRegistrations();
-      console.log('🔧 Service Workers encontrados:', registrations.length);
-      
-      await Promise.all(
-        registrations.map(registration => {
-          console.log('🗑️ Desregistrando SW:', registration.scope);
-          return registration.unregister();
-        })
-      );
+  // Função para mostrar status
+  function showStatus(message, isError = false) {
+    const statusElement = document.getElementById(STATUS_ELEMENT_ID);
+    if (statusElement) {
+      statusElement.textContent = message;
+      statusElement.className = isError ? 'error' : 'success';
+    } else {
+      console.log(message);
+    }
+  }
+  
+  // Função para mostrar versão do SW
+  function showVersion(version) {
+    const versionElement = document.getElementById(VERSION_ELEMENT_ID);
+    if (versionElement) {
+      versionElement.textContent = version || 'N/A';
+    }
+  }
+  
+  // Função para verificar a versão do SW
+  async function checkServiceWorkerVersion() {
+    if (!('serviceWorker' in navigator)) {
+      showVersion('Service Worker não suportado');
+      return;
     }
     
-    console.log('✅ Limpeza concluída com sucesso!');
-    console.log('🔄 Recarregue a página para aplicar as mudanças.');
-    
-    return true;
-  } catch (error) {
-    console.log('❌ Erro durante a limpeza:', error);
-    return false;
-  }
-}
-
-// Função para recarregar assets problemáticos
-async function reloadProblematicAssets() {
-  console.log('🔄 Recarregando assets problemáticos...');
-  
-  const problematicUrls = [
-    '/_next/static/css/vendors-node_modules_g.css',
-    // Adicione outros URLs problemáticos aqui
-  ];
-  
-  for (const url of problematicUrls) {
     try {
-      console.log('🔄 Recarregando:', url);
-      const response = await fetch(url, { 
-        cache: 'no-cache',
-        mode: 'cors'
+      const registration = await navigator.serviceWorker.ready;
+      
+      if (!registration.active) {
+        showVersion('Sem SW ativo');
+        return;
+      }
+      
+      // Usar MessageChannel para comunicação
+      const messageChannel = new MessageChannel();
+      
+      // Criar uma Promise para aguardar a resposta
+      const versionPromise = new Promise((resolve) => {
+        messageChannel.port1.onmessage = (event) => {
+          resolve(event.data.version);
+        };
       });
       
-      if (response.ok) {
-        console.log('✅ Asset recarregado com sucesso:', url);
+      // Enviar mensagem para o SW
+      registration.active.postMessage({
+        type: 'GET_VERSION'
+      }, [messageChannel.port2]);
+      
+      // Aguardar resposta com timeout
+      const timeoutPromise = new Promise((resolve) => {
+        setTimeout(() => resolve('Timeout'), 2000);
+      });
+      
+      const version = await Promise.race([versionPromise, timeoutPromise]);
+      showVersion(version);
+    } catch (error) {
+      showVersion('Erro ao verificar versão');
+      console.error('Erro ao verificar versão do SW:', error);
+    }
+  }
+  
+  // Função para limpar todos os caches
+  async function clearAllCaches() {
+    try {
+      const cacheNames = await caches.keys();
+      await Promise.all(cacheNames.map(name => caches.delete(name)));
+      return true;
+    } catch (error) {
+      console.error('Erro ao limpar caches:', error);
+      return false;
+    }
+  }
+  
+  // Função para desregistrar todos os Service Workers
+  async function unregisterAllServiceWorkers() {
+    try {
+      const registrations = await navigator.serviceWorker.getRegistrations();
+      await Promise.all(registrations.map(reg => reg.unregister()));
+      return registrations.length > 0;
+    } catch (error) {
+      console.error('Erro ao desregistrar Service Workers:', error);
+      return false;
+    }
+  }
+  
+  // Função para limpar o cache do Service Worker
+  async function clearServiceWorkerCache() {
+    if (!('serviceWorker' in navigator)) {
+      showStatus('Service Worker não suportado neste navegador', true);
+      return;
+    }
+    
+    const button = document.getElementById(BUTTON_ELEMENT_ID);
+    if (button) button.disabled = true;
+    
+    try {
+      showStatus('Limpando caches...');
+      await clearAllCaches();
+      
+      showStatus('Desregistrando Service Workers...');
+      const hadServiceWorkers = await unregisterAllServiceWorkers();
+      
+      if (hadServiceWorkers) {
+        showStatus('Service Worker desregistrado com sucesso! Recarregue a página para aplicar as mudanças.');
       } else {
-        console.warn('⚠️ Falha ao recarregar asset:', url, response.status);
+        showStatus('Nenhum Service Worker encontrado para desregistrar. Caches limpos com sucesso.');
+      }
+      
+      // Mostrar botão de recarregar
+      const reloadButton = document.getElementById(RELOAD_BUTTON_ID);
+      if (reloadButton) {
+        reloadButton.style.display = 'inline-block';
       }
     } catch (error) {
-      console.log('❌ Erro ao recarregar asset:', url, error);
+      console.error('Erro ao limpar cache do Service Worker:', error);
+      showStatus(`Erro: ${error.message}`, true);
+    } finally {
+      if (button) button.disabled = false;
     }
   }
-}
-
-// Função para diagnosticar problemas do Service Worker
-async function diagnoseSWProblems() {
-  console.log('🔍 Diagnosticando problemas do Service Worker...');
   
-  const diagnosis = {
-    swSupported: 'serviceWorker' in navigator,
-    swRegistered: false,
-    swActive: false,
-    cacheCount: 0,
-    problematicUrls: []
-  };
-  
-  try {
-    if (diagnosis.swSupported) {
-      const registrations = await navigator.serviceWorker.getRegistrations();
-      diagnosis.swRegistered = registrations.length > 0;
-      
-      if (registrations.length > 0) {
-        diagnosis.swActive = registrations.some(reg => reg.active);
-      }
+  // Inicializar quando o documento estiver pronto
+  function init() {
+    // Verificar versão do SW
+    checkServiceWorkerVersion();
+    
+    // Configurar botão de limpar cache
+    const button = document.getElementById(BUTTON_ELEMENT_ID);
+    if (button) {
+      button.addEventListener('click', clearServiceWorkerCache);
     }
     
-    const cacheNames = await caches.keys();
-    diagnosis.cacheCount = cacheNames.length;
-    
-    // Testar URLs problemáticos
-    const testUrls = [
-      '/_next/static/css/vendors-node_modules_g.css'
-    ];
-    
-    for (const url of testUrls) {
-      try {
-        const response = await fetch(url, { cache: 'no-cache' });
-        if (!response.ok) {
-          diagnosis.problematicUrls.push({ url, status: response.status });
-        }
-      } catch (error) {
-        diagnosis.problematicUrls.push({ url, error: error.message });
-      }
+    // Configurar botão de recarregar
+    const reloadButton = document.getElementById(RELOAD_BUTTON_ID);
+    if (reloadButton) {
+      reloadButton.addEventListener('click', () => {
+        window.location.reload(true);
+      });
     }
-    
-    console.log('📊 Diagnóstico completo:', diagnosis);
-    return diagnosis;
-  } catch (error) {
-    console.log('❌ Erro no diagnóstico:', error);
-    return diagnosis;
   }
-}
-
-// Executar automaticamente se este script for carregado diretamente
-if (typeof window !== 'undefined') {
-  window.clearServiceWorkerCache = clearServiceWorkerCache;
-  window.reloadProblematicAssets = reloadProblematicAssets;
-  window.diagnoseSWProblems = diagnoseSWProblems;
   
-  console.log('🛠️ Ferramentas de diagnóstico do Service Worker carregadas!');
-  console.log('💡 Use: clearServiceWorkerCache(), reloadProblematicAssets(), ou diagnoseSWProblems()');
-}
-
-// Exportar para uso em módulos
-if (typeof module !== 'undefined' && module.exports) {
-  module.exports = {
-    clearServiceWorkerCache,
-    reloadProblematicAssets,
-    diagnoseSWProblems
-  };
-} 
+  // Inicializar quando o documento estiver pronto
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', init);
+  } else {
+    init();
+  }
+})(); 

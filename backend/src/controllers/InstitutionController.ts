@@ -1,5 +1,5 @@
 import { Request, Response } from 'express';
-import { BaseController } from './BaseController';
+import BaseController from './BaseController';
 import { InstitutionRepository, InstitutionFilters } from '../repositories/InstitutionRepository';
 import { Institution } from '../entities';
 import { PaginationOptions } from '../types/pagination';
@@ -15,11 +15,21 @@ class InstitutionController extends BaseController<Institution> {
 
  public async getAll(req: Request, res: Response): Promise<Response> {
   try {
-   const { page = '1', limit = '10', search, state, is_active, has_student_platform, has_principal_platform, has_library_platform } = req.query;
+   // Aumentar o timeout para evitar problemas com grandes conjuntos de dados
+   const timeoutPromise = new Promise((_, reject) => {
+     setTimeout(() => reject(new Error('Timeout na busca de Instituições')), 60000); // 60 segundos
+   });
+
+   const { page = '1', limit = '1000', search, state, is_active, has_student_platform, has_principal_platform, has_library_platform } = req.query;
+   
+   // Remover limite máximo para permitir buscar todos os registros
+   let limitValue = parseInt(limit as string, 10);
+   
+   console.log(`[API] Buscando instituições com limite: ${limitValue}, página: ${page}`);
    
    const paginationOptions: PaginationOptions = {
     page: parseInt(page as string, 10),
-    limit: parseInt(limit as string, 10)
+    limit: limitValue
    };
    
    const filters: InstitutionFilters = {};
@@ -31,18 +41,51 @@ class InstitutionController extends BaseController<Institution> {
    if (has_principal_platform !== undefined) filters.has_principal_platform = has_principal_platform === 'true';
    if (has_library_platform !== undefined) filters.has_library_platform = has_library_platform === 'true';
    
-   const result = await this.institutionRepository.findWithFilters(filters, paginationOptions);
+   // Adicionar log para debug
+   console.log(`[API] Buscando instituições com filtros: ${JSON.stringify(filters)} e paginação: ${JSON.stringify(paginationOptions)}`);
+   
+   const institutionsPromise = this.institutionRepository.getInstitutionsWithStats(filters, paginationOptions);
+   
+   // Usar Promise.race para aplicar timeout
+   const result = await Promise.race([institutionsPromise, timeoutPromise]) as any;
+   
+   if (!result) {
+     return res.status(404).json({ success: false, message: 'Instituições não encontradas' });
+   }
+   
+   // Log para debug
+   console.log(`[API] Encontradas ${result.total} instituições, retornando ${result.items.length} itens`);
    
    return res.json({
-    items: result.items,
-    total: result.total,
-    page: paginationOptions.page,
-    limit: paginationOptions.limit,
-    totalPages: Math.ceil(result.total / paginationOptions.limit!)
+    success: true,
+    data: {
+      items: result.items,
+      stats: result.stats,
+      pagination: {
+        total: result.total,
+        page: paginationOptions.page,
+        limit: paginationOptions.limit,
+        totalPages: Math.ceil(result.total / paginationOptions.limit!)
+      }
+    }
    });
   } catch (error) {
    console.error('Erro ao buscar instituições:', error);
-   return res.status(500).json({ message: 'Erro interno do servidor' });
+   
+   // Se for timeout, retornar erro específico
+   if (error instanceof Error && error.message.includes('Timeout')) {
+     return res.status(504).json({ 
+       success: false, 
+       message: 'Timeout na busca de Instituições - operação demorou muito',
+       code: 'TIMEOUT_ERROR'
+     });
+   }
+   
+   return res.status(500).json({ 
+     success: false, 
+     message: 'Erro interno do servidor: ' + error,
+     code: 'INTERNAL_ERROR'
+   });
   }
  }
 

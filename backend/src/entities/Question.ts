@@ -5,43 +5,49 @@ import {
   CreateDateColumn,
   UpdateDateColumn,
   ManyToOne,
-  JoinColumn
+  JoinColumn,
+  OneToMany
 } from 'typeorm';
+import { Answer } from './Answer';
 import { Quiz } from './Quiz';
 
-@Entity('questions')
+@Entity('question')
 export class Question {
   @PrimaryGeneratedColumn('increment')
   id!: number;
 
-  @Column()
-  quiz_id!: number;
+  @Column({ type: 'bigint', nullable: true })
+  version?: number;
 
-  @ManyToOne(() => Quiz, quiz => quiz.questions)
-  @JoinColumn({ name: 'quiz_id' })
-  quiz!: Quiz;
+  @CreateDateColumn({ name: 'date_created' })
+  dateCreated!: Date;
 
-  @Column()
-  type!: string; // multiple-choice, true-false, short-answer
+  @Column({ type: 'boolean', nullable: true })
+  deleted?: boolean;
 
-  @Column({ type: 'text' })
-  text!: string;
+  @Column({ name: 'file_id', type: 'bigint', nullable: true })
+  fileId?: number;
 
-  @Column({ type: 'jsonb', nullable: true })
-  options?: string[];
-
-  @Column({ type: 'jsonb' })
-  correct_answer!: string | string[];
-
-  @Column({ type: 'int' })
-  points!: number;
+  @UpdateDateColumn({ name: 'last_updated' })
+  lastUpdated!: Date;
 
   @Column({ type: 'text', nullable: true })
-  explanation?: string;
+  test?: string;
 
-  @CreateDateColumn()
-  created_at!: Date;
+  @Column({ name: 'tv_show_id', type: 'bigint', nullable: true })
+  tvShowId?: number;
 
-  @UpdateDateColumn()
-  updated_at!: Date;
+  @Column({ name: 'episode_id', type: 'bigint', nullable: true })
+  episodeId?: number;
+
+  @Column({ name: 'quiz_id', type: 'int', nullable: true })
+  quizId?: number;
+
+  // Relacionamentos
+  @ManyToOne(() => Quiz, quiz => quiz.questions)
+  @JoinColumn({ name: 'quiz_id' })
+  quiz?: Quiz;
+
+  @OneToMany(() => Answer, answer => answer.question)
+  answers?: Answer[];
 }

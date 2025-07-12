@@ -1,29 +1,50 @@
 import { BaseEntity } from '../types/common';
 
-export interface CreateAnswerDto {
-  date_created: Date;
+export interface AnswerDto {
+  id: number;
+  version?: number;
+  dateCreated: Date;
   deleted?: boolean;
-  is_correct?: boolean;
-  last_updated?: Date;
-  question_id?: string | null;
+  isCorrect?: boolean;
+  lastUpdated: Date;
+  questionId?: number;
+  reply?: string;
+}
+
+export interface CreateAnswerDto {
+  version?: number;
+  deleted?: boolean;
+  isCorrect?: boolean;
+  questionId?: number;
   reply?: string;
 }
 
 export interface UpdateAnswerDto {
-  last_updated?: Date;
+  version?: number;
   deleted?: boolean;
-  is_correct?: boolean;
-  question_id?: string | null;
+  isCorrect?: boolean;
+  questionId?: number;
   reply?: string;
 }
 
-export interface AnswerResponseDto extends BaseEntity {
-  id: string;
-  version?: number;
-  date_created: string;
+export interface AnswerFilterDto {
+  page?: number;
+  limit?: number;
+  search?: string;
   deleted?: boolean;
-  is_correct?: boolean;
-  last_updated?: string;
-  question_id?: string | null;
-  reply?: string;
+  isCorrect?: boolean;
+  questionId?: number;
+}
+
+export interface AnswerResponseDto {
+  success: boolean;
+  data?: AnswerDto | AnswerDto[];
+  message?: string;
+  pagination?: {
+    page: number;
+    limit: number;
+    total: number;
+    totalPages: number;
+  };
+  error?: string;
 }

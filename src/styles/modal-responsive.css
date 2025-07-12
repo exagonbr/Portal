@@ -19,7 +19,7 @@
   max-width: 72rem; /* max-w-6xl */
   background-color: white;
   border-radius: 0.75rem; /* rounded-xl */
-  box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
+  box-shadow: 0 25px 50px -12px rgba(102, 99, 99, 0.25);
 }
 
 /* Telas muito pequenas (< 640px) */

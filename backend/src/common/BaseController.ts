@@ -94,9 +94,7 @@ export abstract class BaseController {
   protected getPaginationParams(req: Request): PaginationParams {
     const page = Math.max(1, parseInt(req.query.page as string) || 1);
     const limit = Math.min(100, Math.max(1, parseInt(req.query.limit as string) || 10));
-    const offset = (page - 1) * limit;
-
-    return { page, limit, offset };
+    return { page, limit };
   }
 
   /**

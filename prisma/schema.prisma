@@ -909,34 +909,6 @@ model institution_user {
   @@ignore
 }
 
-model institution {
-  id                     BigInt    @id @default(autoincrement())
-  version                BigInt?
-  accountable_contact    String    @db.VarChar(255)
-  accountable_name       String    @db.VarChar(255)
-  company_name           String    @db.VarChar(255)
-  complement             String?   @db.VarChar(255)
-  contract_disabled      Boolean
-  contract_invoice_num   String?   @db.VarChar(255)
-  contract_num           BigInt?
-  contract_term_end      DateTime  @db.Timestamp(6)
-  contract_term_start    DateTime  @db.Timestamp(6)
-  date_created           DateTime? @db.Timestamp(6)
-  deleted                Boolean
-  district               String    @db.VarChar(255)
-  document               String    @db.VarChar(255)
-  invoice_date           DateTime? @db.Timestamp(6)
-  last_updated           DateTime? @db.Timestamp(6)
-  name                   String    @db.VarChar(255)
-  postal_code            String    @db.VarChar(255)
-  state                  String    @db.VarChar(255)
-  street                 String    @db.VarChar(255)
-  score                  BigInt?
-  has_library_platform   Boolean
-  has_principal_platform Boolean
-  has_student_platform   Boolean
-}
-
 model knex_migrations {
   id             Int       @id @default(autoincrement())
   name           String?   @db.VarChar(255)

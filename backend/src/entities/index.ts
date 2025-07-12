@@ -36,8 +36,10 @@ export { EducationCycle } from './EducationCycle';
 export { ForgotPassword } from './ForgotPassword';
 export { Module } from './Module';
 export { NotificationLog } from './NotificationLog';
+export { NotificationTemplate } from './NotificationTemplate';
 export { Profile } from './Profile';
 export { Public } from './Public';
+export { Answer } from './Answer';
 export { Question } from './Question';
 export { Quiz } from './Quiz';
 export { QuizAttempt } from './QuizAttempt';
@@ -51,5 +53,10 @@ export { Unit } from './Unit';
 export { UnitClass } from './UnitClass';
 export { Video } from './Video';
 export { VideoCollection } from './VideoCollection';
+<<<<<<< HEAD
 export { VideoModule } from './VideoModule';
 export { ActivitySession } from './ActivitySession';
+=======
+export { VideoFile } from './VideoFile';
+export { VideoModule } from './VideoModule';
+>>>>>>> 2b9a658619be4be8442857987504eeff79e3f6b9

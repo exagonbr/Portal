@@ -43,12 +43,6 @@ export const getSystemAdminMenuItems = (): AdminMenuSection[] => {
           permission: 'canManageSystem'
         },
         {
-          href: '/admin/schools',
-          icon: 'school',
-          label: 'Escolas',
-          permission: 'canManageSystem'
-        },
-        {
           href: '/admin/users',
           icon: 'manage_accounts',
           label: 'Usuários Globais',
@@ -88,29 +82,6 @@ export const getSystemAdminMenuItems = (): AdminMenuSection[] => {
       ]
     },
     {
-      section: 'Comunicação',
-      items: [
-        {
-          href: '/notifications',
-          icon: 'notifications',
-          label: 'Central de Notificações',
-          permission: 'canManageSystem'
-        },
-        {
-          href: '/notifications/send',
-          icon: 'send',
-          label: 'Enviar Notificação',
-          permission: 'canManageSystem'
-        },
-        {
-          href: '/notifications/sent',
-          icon: 'history',
-          label: 'Histórico de Envios',
-          permission: 'canManageSystem'
-        }
-      ]
-    },
-    {
       section: 'Gestão de Conteúdo',
       items: [
         {
@@ -141,6 +112,70 @@ export const getSystemAdminMenuItems = (): AdminMenuSection[] => {
           href: '/admin/content/subjects',
           icon: 'book',
           label: 'Disciplinas',
+          permission: 'canManageSystem'
+        },
+        {
+          href: '/admin/themes',
+          icon: 'palette',
+          label: 'Temas',
+          permission: 'canManageSystem'
+        },
+        {
+          href: '/admin/videos',
+          icon: 'movie',
+          label: 'Gerenciar Vídeos',
+          permission: 'canManageSystem'
+        },
+        {
+          href: '/admin/files',
+          icon: 'folder',
+          label: 'Gerenciar Arquivos',
+          permission: 'canManageSystem'
+        }
+      ]
+    },
+    {
+      section: 'Sistema de Perguntas e Respostas',
+      items: [
+        {
+          href: '/admin/questions',
+          icon: 'quiz',
+          label: 'Gerenciar Perguntas',
+          permission: 'canManageSystem'
+        },
+        {
+          href: '/admin/answers',
+          icon: 'psychology',
+          label: 'Gerenciar Respostas',
+          permission: 'canManageSystem'
+        },
+        {
+          href: '/admin/video-files',
+          icon: 'video_file',
+          label: 'Relacionamento Vídeo-Arquivo',
+          permission: 'canManageSystem'
+        }
+      ]
+    },
+    {
+      section: 'Comunicação',
+      items: [
+        {
+          href: '/notifications',
+          icon: 'notifications',
+          label: 'Central de Notificações',
+          permission: 'canManageSystem'
+        },
+        {
+          href: '/notifications/send',
+          icon: 'send',
+          label: 'Enviar Notificação',
+          permission: 'canManageSystem'
+        },
+        {
+          href: '/notifications/sent',
+          icon: 'history',
+          label: 'Histórico de Envios',
           permission: 'canManageSystem'
         }
       ]

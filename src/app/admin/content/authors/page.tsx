@@ -1,11 +1,20 @@
-'use client';
+'use client'
 
-import { useState } from 'react';
-import AuthorManager from '@/components/content/AuthorManager';
-import { Breadcrumb, BreadcrumbItem, BreadcrumbLink } from '@/components/ui/breadcrumb';
-import { ChevronRight, Home } from 'lucide-react';
+import dynamic from 'next/dynamic'
+
+// Importar o componente diretamente usando dynamic import
+const AuthorsPageContent = dynamic(() => import('./AuthorsPageContent'), {
+  loading: () => (
+    <div className="flex items-center justify-center min-h-screen">
+      <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
+      <span className="ml-2 text-gray-600">Carregando autores...</span>
+    </div>
+  ),
+  ssr: false
+})
 
 export default function AuthorsPage() {
+<<<<<<< HEAD
   return (
     <div className="space-y-6 p-6">
       <Breadcrumb>
@@ -31,4 +40,7 @@ export default function AuthorsPage() {
       <AuthorManager />
     </div>
   );
+=======
+  return <AuthorsPageContent />
+>>>>>>> 2b9a658619be4be8442857987504eeff79e3f6b9
 } 

@@ -1,13 +1,13 @@
 export class CreateTagDto {
-  version?: string;
-  deleted?: string;
-  name?: string;
+  version?: string = "";
+  deleted?: string = "";
+  name?: string = "";
 }
 
 export class UpdateTagDto {
-  version?: string;
-  deleted?: string;
-  name?: string;
+  version?: string = "";
+  deleted?: string = "";
+  name?: string = "";
 }
 
 export class TagResponseDto {

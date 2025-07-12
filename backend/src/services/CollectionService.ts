@@ -166,6 +166,15 @@ class CollectionRepository extends BaseRepository<any> {
 }
 
 export class CollectionService {
+  createCollection(body: any) {
+    return this.repository.create(body);
+  }
+  updateCollection(id: string, body: any) {
+    return this.repository.update(id, body);
+  }
+  deleteCollection(id: string) {
+    return this.repository.delete(id);
+  }
   private repository: CollectionRepository;
 
   constructor() {

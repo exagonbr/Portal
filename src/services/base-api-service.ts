@@ -1,5 +1,6 @@
-import { apiClient } from '@/lib/api-client';
+import { apiGet, apiPost, apiPut, apiDelete } from './apiService';
 import { getApiUrl } from '@/config/env';
+import { AuthHeaderService } from './authHeaderService';
 
 interface ApiResponse<T> {
   data: T;
@@ -16,35 +17,40 @@ export class BaseApiService<T> {
   }
 
   async getAll(): Promise<T[]> {
-    const response = await apiClient.get<T[]>(this.basePath);
-    if (!response.data) throw new Error('No data received');
-    return response.data;
+    const response = await apiGet<T[]>(this.basePath);
+    return response;
   }
 
   async getById(id: string | number): Promise<T> {
-    const response = await apiClient.get<T>(`${this.basePath}/${id}`);
-    if (!response.data) throw new Error('No data received');
-    return response.data;
+    const response = await apiGet<T>(`${this.basePath}/${id}`);
+    return response;
   }
 
   async create(data: Partial<T>): Promise<T> {
-    const response = await apiClient.post<T>(this.basePath, data);
-    if (!response.data) throw new Error('No data received');
-    return response.data;
+    const response = await apiPost<T>(this.basePath, data);
+    return response;
   }
 
   async update(id: string | number, data: Partial<T>): Promise<T> {
-    const response = await apiClient.put<T>(`${this.basePath}/${id}`, data);
-    if (!response.data) throw new Error('No data received');
-    return response.data;
+    const response = await apiPut<T>(`${this.basePath}/${id}`, data);
+    return response;
   }
 
   async delete(id: string | number): Promise<void> {
-    await apiClient.delete(`${this.basePath}/${id}`);
+    return apiDelete(`${this.basePath}/${id}`);
   }
 
   protected getFullUrl(path: string = ''): string {
     const cleanPath = path.startsWith('/') ? path : `/${path}`;
     return getApiUrl(this.basePath + cleanPath);
+  }
+  
+  /**
+   * Retorna os headers para requisições HTTP, incluindo o token de autorização
+   * @param includeContentType - Se deve incluir o header Content-Type: application/json
+   * @returns Headers para uso em requisições fetch
+   */
+  protected async getHeaders(includeContentType: boolean = true): Promise<Headers> {
+    return AuthHeaderService.getHeaders(includeContentType);
   }
 } 

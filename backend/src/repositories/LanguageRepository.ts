@@ -12,8 +12,10 @@ export interface CreateLanguageData {
 export interface UpdateLanguageData extends Partial<CreateLanguageData> {}
 
 export class LanguageRepository extends ExtendedRepository<Language> {
+  private repository: Repository<Language>;
   constructor() {
     super("languages");
+    this.repository = AppDataSource.getRepository(Language);
   }
   // Implementação do método abstrato findAllPaginated
   async findAllPaginated(options: {

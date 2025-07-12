@@ -137,8 +137,17 @@ export class UnifiedAuthService {
       }
 
       // Fallback para métodos legados
-      return this.getAccessTokenSync();
+      const token = this.getAccessTokenSync();
+      if (token) {
+        return token;
+      }
+
+      // Se não encontrou token, limpar dados de autenticação
+      await this.clearAuthData();
+      return null;
     } catch {
+      // Se houver erro, limpar dados de autenticação
+      await this.clearAuthData();
       return null;
     }
   }
@@ -149,18 +158,41 @@ export class UnifiedAuthService {
   static getAccessTokenSync(): string | null {
     try {
       if (typeof window !== 'undefined' && typeof localStorage !== 'undefined') {
-        return localStorage.getItem('accessToken') || 
-               localStorage.getItem('auth_token') || 
-               localStorage.getItem('token') ||
-               CookieManager.get('access_token');
-      } else {
-        // Em ambiente de servidor, tenta apenas o CookieManager
-        return CookieManager.get('access_token');
+        const token = localStorage.getItem('accessToken') || 
+                   localStorage.getItem('auth_token') || 
+                   localStorage.getItem('token') ||
+                   CookieManager.get('access_token');
+      
+      // Se encontrou token, verificar se é válido
+      if (token) {
+        try {
+          // Verificar se o token é um JWT válido
+          const base64Url = token.split('.')[1];
+          const base64 = base64Url.replace(/-/g, '+').replace(/_/g, '/');
+          const jsonPayload = decodeURIComponent(atob(base64).split('').map(function(c) {
+            return '%' + ('00' + c.charCodeAt(0).toString(16)).slice(-2);
+          }).join(''));
+          
+          const payload = JSON.parse(jsonPayload);
+          const expirationTime = payload.exp * 1000; // Converter para milissegundos
+          
+          // Se o token expirou, retornar null
+          if (Date.now() >= expirationTime) {
+            return null;
+          }
+          
+          return token;
+        } catch {
+          // Se houver erro ao decodificar o token, retornar null
+          return null;
+        }
       }
-    } catch {
-      return null;
     }
+    return CookieManager.get('access_token');
+  } catch {
+    return null;
   }
+}
 
   /**
    * Obtém usuário atual - SIMPLES

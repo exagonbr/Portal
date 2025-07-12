@@ -1,143 +1,197 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { cookies } from 'next/headers';
+import { createStandardApiRoute } from '../lib/api-route-template';
+import { getCorsHeaders } from '@/config/cors';
+import { certificateService } from '@/services/certificateService';
 
-const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'https://portal.sabercon.com.br/api';
-
-export async function GET(request: NextRequest) {
-  try {
-    const { searchParams } = new URL(request.url);
-    
-    // Obter token de autenticação
-    const cookieStore = await cookies();
-    const token = cookieStore.get('token')?.value ||
-                  request.headers.get('authorization')?.replace('Bearer ', '');
-    
-    if (!token) {
+// Usar o template padronizado para a rota GET
+export const { GET, OPTIONS } = createStandardApiRoute({
+  endpoint: '/api/certificates',
+  name: 'certificates',
+  fallbackFunction: async (req: NextRequest) => {
+    try {
+      const url = new URL(req.url);
+      const searchParams = url.searchParams;
+      
+      // Parâmetros de paginação
+      const page = parseInt(searchParams.get('page') || '1');
+      const limit = parseInt(searchParams.get('limit') || '10');
+      
+      // Filtros
+      const userId = searchParams.get('user_id');
+      const tvShowId = searchParams.get('tv_show_id');
+      const score = searchParams.get('score');
+      const document = searchParams.get('document');
+      const licenseCode = searchParams.get('license_code');
+      const tvShowName = searchParams.get('tv_show_name');
+      const search = searchParams.get('search');
+      
+      console.log('📚 [API-CERTIFICATES] Usando serviço para buscar certificados');
+      
+      // Construir objeto de filtros
+      const filters: any = {
+        page,
+        limit,
+        search
+      };
+      
+      if (userId) filters.user_id = userId;
+      if (tvShowId) filters.tv_show_id = tvShowId;
+      if (score) filters.score = parseInt(score);
+      if (document) filters.document = document;
+      if (licenseCode) filters.license_code = licenseCode;
+      if (tvShowName) filters.tv_show_name = tvShowName;
+      
+      // Usar o serviço de certificados
+      const result = await certificateService.getCertificates(filters);
+      
+      return NextResponse.json(result, {
+        headers: getCorsHeaders(req.headers.get('origin') || undefined)
+      });
+    } catch (error) {
+      console.error('Error in certificates service:', error);
       return NextResponse.json(
-        {
-          success: false,
-          message: 'Token de autenticação não encontrado'
+        { 
+          success: false, 
+          message: 'Erro ao buscar certificados',
+          data: {
+            items: [],
+            total: 0,
+            page: 1,
+            limit: 10,
+            totalPages: 0
+          }
         },
-        { status: 401 }
+        { 
+          status: 500,
+          headers: getCorsHeaders(req.headers.get('origin') || undefined)
+        }
       );
     }
-    
-    // Construir URL com parâmetros de query
-    const params = new URLSearchParams();
-    
-    // Paginação
-    params.set('page', searchParams.get('page') || '1');
-    params.set('limit', searchParams.get('limit') || '10');
-    
-    // Filtros
-    if (searchParams.get('user_id')) {
-      params.set('user_id', searchParams.get('user_id')!);
-    }
-    if (searchParams.get('tv_show_id')) {
-      params.set('tv_show_id', searchParams.get('tv_show_id')!);
-    }
-    if (searchParams.get('score')) {
-      params.set('score', searchParams.get('score')!);
-    }
-    if (searchParams.get('document')) {
-      params.set('document', searchParams.get('document')!);
-    }
-    if (searchParams.get('license_code')) {
-      params.set('license_code', searchParams.get('license_code')!);
-    }
-    if (searchParams.get('tv_show_name')) {
-      params.set('tv_show_name', searchParams.get('tv_show_name')!);
-    }
-    if (searchParams.get('recreate')) {
-      params.set('recreate', searchParams.get('recreate')!);
-    }
-    if (searchParams.get('search')) {
-      params.set('search', searchParams.get('search')!);
-    }
-    
-    // Ordenação
-    if (searchParams.get('sort_by')) {
-      params.set('sort_by', searchParams.get('sort_by')!);
-    }
-    if (searchParams.get('sort_order')) {
-      params.set('sort_order', searchParams.get('sort_order')!);
-    }
-
-    // Fazer a chamada real para a API
-    const response = await fetch(`${API_BASE_URL}/certificates?${params.toString()}`, {
-      method: 'GET',
-      headers: {
-        'Content-Type': 'application/json',
-        'Authorization': `Bearer ${token}`,
-      },
-    });
-
-    if (!response.ok) {
-      const errorData = await response.json();
-      throw new Error(errorData.message || `HTTP error! status: ${response.status}`);
-    }
-
-    const data = await response.json();
-    return NextResponse.json(data);
-
-  } catch (error) {
-    console.log('Erro ao buscar certificados:', error);
-    return NextResponse.json(
-      { 
-        success: false, 
-        message: 'Erro ao buscar certificados',
-        error: error instanceof Error ? error.message : 'Erro desconhecido'
-      },
-      { status: 500 }
-    );
   }
-}
+});
 
+// POST handler para criar certificado
 export async function POST(request: NextRequest) {
   try {
     const body = await request.json();
     
-    // Obter token de autenticação
-    const cookieStore = await cookies();
-    const token = cookieStore.get('token')?.value ||
-                  request.headers.get('authorization')?.replace('Bearer ', '');
+    console.log('📝 [API-CERTIFICATES] Criando certificado com serviço');
     
-    if (!token) {
-      return NextResponse.json(
-        {
-          success: false,
-          message: 'Token de autenticação não encontrado'
-        },
-        { status: 401 }
-      );
-    }
-
-    const response = await fetch(`${API_BASE_URL}/certificates`, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'Authorization': `Bearer ${token}`,
-      },
-      body: JSON.stringify(body),
+    // Usar o serviço para criar o certificado
+    const newCertificate = await certificateService.createCertificate(body);
+    
+    return NextResponse.json({
+      success: true,
+      data: newCertificate,
+      message: 'Certificado criado com sucesso'
+    }, { 
+      status: 201,
+      headers: getCorsHeaders(request.headers.get('origin') || undefined)
     });
 
-    if (!response.ok) {
-      const errorData = await response.json();
-      throw new Error(errorData.message || `HTTP error! status: ${response.status}`);
-    }
-
-    const data = await response.json();
-    return NextResponse.json(data, { status: 201 });
-
   } catch (error) {
-    console.log('Erro ao criar certificado:', error);
+    console.error('Erro ao criar certificado:', error);
     return NextResponse.json(
       { 
         success: false, 
         message: 'Erro ao criar certificado',
         error: error instanceof Error ? error.message : 'Erro desconhecido'
       },
-      { status: 500 }
+      { 
+        status: 500,
+        headers: getCorsHeaders(request.headers.get('origin') || undefined)
+      }
+    );
+  }
+}
+
+// PUT handler para atualizar certificado
+export async function PUT(request: NextRequest) {
+  try {
+    const url = new URL(request.url);
+    const id = url.pathname.split('/').pop();
+    
+    if (!id) {
+      return NextResponse.json(
+        { success: false, message: 'ID do certificado não fornecido' },
+        { 
+          status: 400,
+          headers: getCorsHeaders(request.headers.get('origin') || undefined)
+        }
+      );
+    }
+    
+    const body = await request.json();
+    
+    console.log('✏️ [API-CERTIFICATES] Atualizando certificado com serviço:', id);
+    
+    // Usar o serviço para atualizar o certificado
+    const updatedCertificate = await certificateService.updateCertificate(parseInt(id), body);
+    
+    return NextResponse.json({
+      success: true,
+      data: updatedCertificate,
+      message: 'Certificado atualizado com sucesso'
+    }, {
+      headers: getCorsHeaders(request.headers.get('origin') || undefined)
+    });
+
+  } catch (error) {
+    console.error('Erro ao atualizar certificado:', error);
+    return NextResponse.json(
+      { 
+        success: false, 
+        message: 'Erro ao atualizar certificado',
+        error: error instanceof Error ? error.message : 'Erro desconhecido'
+      },
+      { 
+        status: 500,
+        headers: getCorsHeaders(request.headers.get('origin') || undefined)
+      }
+    );
+  }
+}
+
+// DELETE handler para excluir certificado
+export async function DELETE(request: NextRequest) {
+  try {
+    const url = new URL(request.url);
+    const id = url.pathname.split('/').pop();
+    
+    if (!id) {
+      return NextResponse.json(
+        { success: false, message: 'ID do certificado não fornecido' },
+        { 
+          status: 400,
+          headers: getCorsHeaders(request.headers.get('origin') || undefined)
+        }
+      );
+    }
+    
+    console.log('🗑️ [API-CERTIFICATES] Excluindo certificado com serviço:', id);
+    
+    // Usar o serviço para excluir o certificado
+    await certificateService.deleteCertificate(parseInt(id));
+    
+    return NextResponse.json({
+      success: true,
+      message: 'Certificado excluído com sucesso'
+    }, {
+      headers: getCorsHeaders(request.headers.get('origin') || undefined)
+    });
+
+  } catch (error) {
+    console.error('Erro ao excluir certificado:', error);
+    return NextResponse.json(
+      { 
+        success: false, 
+        message: 'Erro ao excluir certificado',
+        error: error instanceof Error ? error.message : 'Erro desconhecido'
+      },
+      { 
+        status: 500,
+        headers: getCorsHeaders(request.headers.get('origin') || undefined)
+      }
     );
   }
 }

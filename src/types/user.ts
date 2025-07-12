@@ -115,7 +115,7 @@ export interface UserWithRole extends User {
 export interface UserFilter extends BaseFilter {
   role_id?: UUID;
   institution_id?: UUID;
-  sortBy?: keyof User;
+  sortBy?: 'name' | 'email' | 'created_at' | 'updated_at';
 }
 
 export interface UserLoginData {

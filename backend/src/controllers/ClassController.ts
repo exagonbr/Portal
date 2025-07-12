@@ -1,5 +1,5 @@
 import { Request, Response } from 'express';
-import { BaseController } from './BaseController';
+import BaseController from './BaseController';
 import { Class } from '../entities/Class';
 import { ClassRepository } from '../repositories/ClassRepository';
 

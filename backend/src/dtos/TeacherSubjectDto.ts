@@ -1,13 +1,13 @@
 export class CreateTeacherSubjectDto {
-  version?: string;
-  deleted?: string;
-  name?: string;
+  version?: string = "";
+  deleted?: string = "";
+  name?: string = "";
 }
 
 export class UpdateTeacherSubjectDto {
-  version?: string;
-  deleted?: string;
-  name?: string;
+  version?: string = "";
+  deleted?: string = "";
+  name?: string = "";
 }
 
 export class TeacherSubjectResponseDto {

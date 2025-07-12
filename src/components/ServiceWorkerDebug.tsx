@@ -1,8 +1,8 @@
 'use client';
 
-// Componente de debug removido conforme solicitado
-// Este componente foi desabilitado para remover o botão de debug do devtools
+import ServiceWorkerRegistration from './ServiceWorkerRegistration';
 
+// Componente de debug que apenas renderiza o componente de registro
 export default function ServiceWorkerDebug() {
-  return null;
+  return <ServiceWorkerRegistration />;
 }

@@ -1,6 +1,6 @@
 import { Request, Response } from 'express';
 import { PublicRepository } from '../repositories/PublicRepository';
-import { BaseController } from './BaseController';
+import BaseController from './BaseController';
 import { Public } from '../entities/Public';
 
 class PublicController extends BaseController<Public> {

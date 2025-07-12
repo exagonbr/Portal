@@ -4,10 +4,9 @@ import React, { useState, useEffect, useCallback } from 'react'
 import Modal from '@/components/ui/Modal'
 import { Button } from '@/components/ui/Button'
 import { Badge } from '@/components/ui/Badge'
-import { UserResponseDto, RoleResponseDto, InstitutionResponseDto } from '@/types/api'
+import { UserResponseDto, RoleResponseDto, InstitutionResponseDto, CreateUserDto, UpdateUserDto } from '@/types/api'
 import { useToast } from '@/components/ToastManager';
 import { useRouter } from 'next/navigation'
-import { CreateUserDto, UpdateUserDto } from '@/types/user'
 
 // Importar o serviço real de usuários
 import { userService } from '@/services/userService'
@@ -128,11 +127,11 @@ export default function UserFormModal({
     try {
       if (user) {
         const updateData: UpdateUserDto = {
-          name: formData.name,
+          full_name: formData.name,
           email: formData.email,
           role_id: formData.role_id,
           institution_id: formData.institution_id || undefined,
-          is_active: formData.is_active
+          enabled: formData.is_active
         }
         
         // Incluir senha apenas se foi preenchida
@@ -140,17 +139,17 @@ export default function UserFormModal({
           updateData.password = formData.password
         }
         
-        await userService.updateUser(user.id, updateData)
+        await userService.updateUser(String(user.id), updateData)
         showSuccess('Usuário atualizado com sucesso!')
       } else {
         // Criar um objeto que corresponda à definição de CreateUserDto do frontend
         const createData: CreateUserDto = {
-          name: formData.name,
+          full_name: formData.name,
           email: formData.email,
           password: formData.password,
           role_id: formData.role_id,
           institution_id: formData.institution_id || undefined,
-          is_active: formData.is_active
+          enabled: formData.is_active
         }
         await userService.createUser(createData)
         showSuccess('Usuário criado com sucesso!')

@@ -1,6 +1,6 @@
 import { Request, Response } from 'express';
 import { PublisherRepository } from '../repositories/PublisherRepository';
-import { BaseController } from './BaseController';
+import BaseController from './BaseController';
 import { Publisher } from '../entities/Publisher';
 
 class PublisherController extends BaseController<Publisher> {

@@ -28,6 +28,19 @@ export default function DynamicBackground({
   const [randomVideo, setRandomVideo] = useState<string | null>(null)
   const [availableVideos, setAvailableVideos] = useState<string[]>([])
 
+  // Pré-carregar vídeo padrão imediatamente
+  useEffect(() => {
+    const preloadDefaultVideo = () => {
+      const video = document.createElement('video')
+      video.preload = 'auto'
+      video.src = '/back_video4.mp4'
+      video.load()
+      console.log('🎥 Pré-carregando vídeo padrão')
+    }
+    
+    preloadDefaultVideo()
+  }, [])
+
   useEffect(() => {
     if (loading || !settings) return
 
@@ -152,34 +165,28 @@ export default function DynamicBackground({
   // Forçar nova seleção aleatória a cada vez que o componente é montado (nova página/reload)
   useEffect(() => {
     if (settings?.random_video_enabled && settings?.background_type === 'video' && availableVideos.length > 0) {
-      // Adicionar um pequeno delay para garantir que é uma nova montagem
-      const timeoutId = setTimeout(() => {
-        selectRandomVideo(availableVideos);
-      }, 100);
-      
-      return () => clearTimeout(timeoutId);
+      // Remover delay para carregamento mais rápido
+      selectRandomVideo(availableVideos);
     }
   }, [availableVideos.length]); // Depende apenas do comprimento para evitar loops
 
   const renderVideoBackground = () => {
-    if (!settings?.background_type || settings?.background_type !== 'video') {
+    // Sempre renderizar vídeo se não há configuração específica contra
+    if (settings?.background_type && settings?.background_type !== 'video') {
       return null
     }
 
     // Determinar a fonte do vídeo baseado no tipo e configurações
-    let videoSource = settings.main_background;
+    let videoSource = settings?.main_background || '/back_video4.mp4'; // Fallback imediato
     
     // Se o modo aleatório estiver ativado, usar o vídeo aleatório
-    if (settings.random_video_enabled && randomVideo) {
+    if (settings?.random_video_enabled && randomVideo) {
       videoSource = randomVideo;
       console.log('🎥 Usando vídeo aleatório:', videoSource);
-    } else if (settings.main_background) {
+    } else if (settings?.main_background) {
       console.log('🎥 Usando vídeo configurado:', videoSource);
-    }
-
-    if (!videoSource) {
-      videoSource = '/back_video4.mp4'; // Fallback final
-      console.log('🎥 Usando vídeo padrão fallback:', videoSource);
+    } else {
+      console.log('🎥 Usando vídeo padrão:', videoSource);
     }
 
     return (
@@ -189,8 +196,12 @@ export default function DynamicBackground({
         muted
         loop
         playsInline
+        preload="auto"
         className="absolute inset-0 w-full h-full object-cover z-0"
         style={{ minWidth: '100%', minHeight: '100%' }}
+        onLoadStart={() => console.log('🎥 Vídeo começou a carregar:', videoSource)}
+        onCanPlay={() => console.log('🎥 Vídeo pronto para reproduzir:', videoSource)}
+        onError={(e) => console.error('🎥 Erro ao carregar vídeo:', videoSource, e)}
       >
         <source src={videoSource} type="video/mp4" />
         {/* Fallback para navegadores que não suportam o vídeo */}
@@ -218,9 +229,22 @@ export default function DynamicBackground({
     )
   }
 
+  // Não bloquear renderização durante loading - mostrar vídeo padrão
   if (loading) {
     return (
       <div className={`relative ${className}`} style={{ backgroundColor: '#1e3a8a' }}>
+        {/* Renderizar vídeo padrão mesmo durante loading */}
+        <video
+          autoPlay
+          muted
+          loop
+          playsInline
+          preload="auto"
+          className="absolute inset-0 w-full h-full object-cover z-0"
+          style={{ minWidth: '100%', minHeight: '100%' }}
+        >
+          <source src="/back_video4.mp4" type="video/mp4" />
+        </video>
         {overlay && renderOverlay()}
         <div className="relative z-20">
           {children}

@@ -1,6 +1,6 @@
 import { Request, Response } from 'express';
 import { ThemeRepository } from '../repositories/ThemeRepository';
-import { BaseController } from './BaseController';
+import BaseController from './BaseController';
 import { Theme } from '../entities/Theme';
 
 export class ThemeController extends BaseController<Theme> {

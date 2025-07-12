@@ -1,8 +1,8 @@
 import React from 'react'
 import { LucideIcon } from 'lucide-react'
 
-// Importar as classes CSS padrão
-import '@/styles/cards-standard.css'
+// Não precisamos importar o CSS diretamente, pois já está sendo importado no globals.css
+// import '@/styles/cards-standard.css'
 
 interface StatCardProps {
   icon: LucideIcon

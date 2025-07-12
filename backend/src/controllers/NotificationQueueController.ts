@@ -1,7 +1,7 @@
 import { Request, Response } from 'express';
 import { NotificationQueueRepository } from '../repositories/NotificationQueueRepository'
 import { NotificationQueue } from '../entities/NotificationQueue';
-import { BaseController } from './BaseController';
+import BaseController from './BaseController';
 
 class NotificationQueueController extends BaseController<NotificationQueue> {
   private notificationQueueRepository: NotificationQueueRepository;

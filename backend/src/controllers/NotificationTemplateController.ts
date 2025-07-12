@@ -1,0 +1,310 @@
+import { Request, Response } from 'express';
+import NotificationTemplateService from '../services/NotificationTemplateService';
+import { CreateNotificationTemplateData, UpdateNotificationTemplateData, NotificationTemplateFilter } from '../repositories/NotificationTemplateRepository'
+import { NotificationTemplate } from '../entities/NotificationTemplate';;
+
+export class NotificationTemplateController {
+  
+  // GET /api/notifications/templates
+  async getAllTemplates(req: Request, res: Response): Promise<Response> {
+    try {
+      const page = parseInt(req.query.page as string) || 1;
+      const limit = parseInt(req.query.limit as string) || 10;
+      const search = req.query.search as string;
+
+      const result = await NotificationTemplateService.getAllTemplates({
+        page,
+        limit,
+        search
+      });
+
+      res.json({
+        success: true,
+        data: result.data,
+        pagination: {
+          page: result.page,
+          limit: result.limit,
+          total: result.total,
+          totalPages: Math.ceil(result.total / result.limit)
+        }
+      });
+    } catch (error: any) {
+      res.status(500).json({
+        success: false,
+        message: 'Erro ao buscar templates de notificação',
+        error: error.message
+      });
+    }
+  }
+
+  // GET /api/notifications/templates/paginated
+  async getTemplatesPaginated(req: Request, res: Response): Promise<Response> {
+    try {
+      const page = parseInt(req.query.page as string) || 1;
+      const limit = parseInt(req.query.limit as string) || 10;
+      
+      const filters: NotificationTemplateFilter = {};
+      
+      if (req.query.name) filters.name = req.query.name as string;
+      if (req.query.category) filters.category = req.query.category as string;
+      if (req.query.isPublic !== undefined) filters.isPublic = req.query.isPublic === 'true';
+      if (req.query.userId) filters.userId = parseInt(req.query.userId as string);
+      if (req.query.createdBy) filters.createdBy = req.query.createdBy as string;
+
+      const result = await NotificationTemplateService.getTemplatesPaginated(page, limit, filters);
+
+      res.json({
+        success: true,
+        data: result.data,
+        pagination: {
+          page: result.page,
+          limit: result.limit,
+          total: result.total,
+          totalPages: Math.ceil(result.total / result.limit)
+        }
+      });
+    } catch (error: any) {
+      res.status(500).json({
+        success: false,
+        message: 'Erro ao buscar templates de notificação',
+        error: error.message
+      });
+    }
+  }
+
+  // GET /api/notifications/templates/:id
+  async getTemplateById(req: Request, res: Response): Promise<Response> {
+    try {
+      const { id } = req.params;
+      const template = await NotificationTemplateService.getTemplateById(id);
+
+      if (!template) {
+        res.status(404).json({
+          success: false,
+          message: 'Template de notificação não encontrado'
+        });
+        return;
+      }
+
+      res.json({
+        success: true,
+        data: template
+      });
+    } catch (error: any) {
+      res.status(500).json({
+        success: false,
+        message: 'Erro ao buscar template de notificação',
+        error: error.message
+      });
+    }
+  }
+
+  // GET /api/notifications/templates/category/:category
+  async getTemplatesByCategory(req: Request, res: Response): Promise<Response> {
+    try {
+      const { category } = req.params;
+      const templates = await NotificationTemplateService.getTemplatesByCategory(category);
+
+      res.json({
+        success: true,
+        data: templates
+      });
+    } catch (error: any) {
+      res.status(500).json({
+        success: false,
+        message: 'Erro ao buscar templates por categoria',
+        error: error.message
+      });
+    }
+  }
+
+  // GET /api/notifications/templates/public
+  async getPublicTemplates(req: Request, res: Response): Promise<Response> {
+    try {
+      const templates = await NotificationTemplateService.getPublicTemplates();
+
+      res.json({
+        success: true,
+        data: templates
+      });
+    } catch (error: any) {
+      res.status(500).json({
+        success: false,
+        message: 'Erro ao buscar templates públicos',
+        error: error.message
+      });
+    }
+  }
+
+  // GET /api/notifications/templates/user/:userId
+  async getTemplatesByUserId(req: Request, res: Response): Promise<Response> {
+    try {
+      const { userId } = req.params;
+      const templates = await NotificationTemplateService.getTemplatesByUserId(userId);
+
+      res.json({
+        success: true,
+        data: templates
+      });
+    } catch (error: any) {
+      res.status(500).json({
+        success: false,
+        message: 'Erro ao buscar templates do usuário',
+        error: error.message
+      });
+    }
+  }
+
+  // GET /api/notifications/templates/categories
+  async getCategories(req: Request, res: Response): Promise<Response> {
+    try {
+      const categories = await NotificationTemplateService.getCategories();
+
+      res.json({
+        success: true,
+        data: categories
+      });
+    } catch (error: any) {
+      res.status(500).json({
+        success: false,
+        message: 'Erro ao buscar categorias',
+        error: error.message
+      });
+    }
+  }
+
+  // POST /api/notifications/templates
+  async createTemplate(req: Request, res: Response): Promise<Response> {
+    try {
+      const templateData: CreateNotificationTemplateData = req.body;
+
+      console.log('🔍 [Template Controller] Dados recebidos iniciais:', templateData);
+      console.log('🔍 [Template Controller] Usuário autenticado:', req.user);
+
+      // Adicionar dados do usuário autenticado
+      if (req.user) {
+        // Tentar obter de outros cookies comuns
+        let sessionData: any = null;
+        const sessionCookie = req.cookies?.session_data;
+        if (sessionCookie) {
+          try {
+            sessionData = typeof sessionCookie === 'string' 
+              ? JSON.parse(decodeURIComponent(sessionCookie))
+              : sessionCookie;
+          } catch (error) {
+            console.log('❌ Erro ao parsear cookie session_data:', error);
+          }
+        }
+    
+        templateData.userId = sessionData?.user_id || (req.user as any).id || 1;
+        templateData.createdBy = (req.user as any).fullName || (req.user as any).email || (req.user as any).id?.toString() || 'Sistema';
+        console.log('✅ [Template Controller] user_id definido:', templateData.userId);
+        console.log('✅ [Template Controller] created_by definido:', templateData.createdBy);
+      } else {
+        console.log('❌ [Template Controller] req.user não existe!');
+        // Fallback para garantir que sempre tem um user_id
+        templateData.userId = 1;
+        templateData.createdBy = 'Sistema';
+      }
+
+      console.log('🔍 [Template Controller] Dados finais para criação:', templateData);
+
+      // Validar dados
+      const validationErrors = await NotificationTemplateService.validateTemplate(templateData);
+      if (validationErrors.length > 0) {
+        res.status(400).json({
+          success: false,
+          message: 'Dados inválidos',
+          errors: validationErrors
+        });
+        return;
+      }
+
+      console.log('🔍 [Template Controller] Chamando createTemplate com:', templateData);
+      const template = await NotificationTemplateService.createTemplate(templateData);
+      console.log('✅ [Template Controller] Template criado:', template);
+
+      res.status(201).json({
+        success: true,
+        data: template,
+        message: 'Template de notificação criado com sucesso'
+      });
+    } catch (error: any) {
+      res.status(500).json({
+        success: false,
+        message: 'Erro ao criar template de notificação',
+        error: error.message
+      });
+    }
+  }
+
+  // PUT /api/notifications/templates/:id
+  async updateTemplate(req: Request, res: Response): Promise<Response> {
+    try {
+      const { id } = req.params;
+      const updateData: UpdateNotificationTemplateData = req.body;
+
+      // Validar dados
+      const validationErrors = await NotificationTemplateService.validateTemplate(updateData);
+      if (validationErrors.length > 0) {
+        res.status(400).json({
+          success: false,
+          message: 'Dados inválidos',
+          errors: validationErrors
+        });
+        return;
+      }
+
+      const template = await NotificationTemplateService.updateTemplate(id, updateData);
+
+      if (!template) {
+        res.status(404).json({
+          success: false,
+          message: 'Template de notificação não encontrado'
+        });
+        return;
+      }
+
+      res.json({
+        success: true,
+        data: template,
+        message: 'Template de notificação atualizado com sucesso'
+      });
+    } catch (error: any) {
+      res.status(500).json({
+        success: false,
+        message: 'Erro ao atualizar template de notificação',
+        error: error.message
+      });
+    }
+  }
+
+  // DELETE /api/notifications/templates/:id
+  async deleteTemplate(req: Request, res: Response): Promise<Response> {
+    try {
+      const { id } = req.params;
+      const deleted = await NotificationTemplateService.deleteTemplate(id);
+
+      if (!deleted) {
+        res.status(404).json({
+          success: false,
+          message: 'Template de notificação não encontrado'
+        });
+        return;
+      }
+
+      res.json({
+        success: true,
+        message: 'Template de notificação excluído com sucesso'
+      });
+    } catch (error: any) {
+      res.status(500).json({
+        success: false,
+        message: 'Erro ao excluir template de notificação',
+        error: error.message
+      });
+    }
+  }
+}
+
+export default new NotificationTemplateController(); 

@@ -2,7 +2,11 @@ import { DataSource } from 'typeorm';
 import * as dotenv from 'dotenv';
 import {
   Announcement,
+<<<<<<< HEAD
   ActivitySession,
+=======
+  Answer,
+>>>>>>> 2b9a658619be4be8442857987504eeff79e3f6b9
   Author,
   Book,
   Certificate,
@@ -26,6 +30,7 @@ import {
   Module,
   Notification,
   NotificationLog,
+  NotificationTemplate,
   Profile,
   Public,
   Publisher,
@@ -48,6 +53,7 @@ import {
   UserRoleMapping,
   Video,
   VideoCollection,
+  VideoFile,
   VideoModule
 } from '../entities';
 
@@ -72,7 +78,11 @@ export const AppDataSource = new DataSource({
   },
   entities: [
     Announcement,
+<<<<<<< HEAD
     ActivitySession,
+=======
+    Answer,
+>>>>>>> 2b9a658619be4be8442857987504eeff79e3f6b9
     Author,
     Book,
     Certificate,
@@ -118,6 +128,7 @@ export const AppDataSource = new DataSource({
     UserRoleMapping,
     Video,
     VideoCollection,
+    VideoFile,
     VideoModule
   ],
   migrations: ['src/database/migrations/*.ts'],

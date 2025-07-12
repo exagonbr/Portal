@@ -12,8 +12,10 @@ export interface CreatePublisherData {
 export interface UpdatePublisherData extends Partial<CreatePublisherData> {}
 
 export class PublisherRepository extends ExtendedRepository<Publisher> {
+  private repository: Repository<Publisher>;
   constructor() {
     super("publishers");
+    this.repository = AppDataSource.getRepository(Publisher);
   }
   // Implementação do método abstrato findAllPaginated
   async findAllPaginated(options: {

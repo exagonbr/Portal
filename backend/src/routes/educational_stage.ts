@@ -1,5 +1,5 @@
 import { Router } from 'express';
-import { EducationalStageController } from '../controllers/EducationalStageController';
+import EducationalStageController from '../controllers/EducationalStageController';
 import { requireAuth } from '../middleware/requireAuth';
 
 const router = Router();

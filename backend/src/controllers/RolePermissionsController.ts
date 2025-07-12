@@ -1,7 +1,7 @@
 import { Request, Response } from 'express';
 import { RolePermissionsRepository } from '../repositories/RolePermissionsRepository';
 import { RolePermissions } from '../entities/RolePermissions';
-import { BaseController } from './BaseController';
+import BaseController from './BaseController';
 
 class RolePermissionsController extends BaseController<RolePermissions> {
   private rolePermissionsRepository: RolePermissionsRepository;

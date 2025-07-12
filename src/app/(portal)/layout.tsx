@@ -1,4 +1,5 @@
 import AuthenticatedLayout from '@/components/AuthenticatedLayout'
+import { NavigationLoadingProvider } from '@/contexts/NavigationLoadingContext'
 import React from 'react'
 
 export default function PortalLayout({
@@ -6,5 +7,9 @@ export default function PortalLayout({
 }: {
   children: React.ReactNode
 }) {
-  return <AuthenticatedLayout>{children}</AuthenticatedLayout>
+  return (
+    <NavigationLoadingProvider>
+      <AuthenticatedLayout>{children}</AuthenticatedLayout>
+    </NavigationLoadingProvider>
+  )
 }

@@ -1,3 +1,4 @@
+import { AppDataSource } from "../config/typeorm.config";
 import { Repository } from "typeorm";
 import { ExtendedRepository, PaginatedResult } from './ExtendedRepository';
 import { Author } from '../entities/Author';
@@ -12,8 +13,10 @@ export interface CreateAuthorData {
 export interface UpdateAuthorData extends Partial<CreateAuthorData> {}
 
 export class AuthorRepository extends ExtendedRepository<Author> {
+  private repository: Repository<Author>;
   constructor() {
     super("authors");
+    this.repository = AppDataSource.getRepository(Author);
   }
   // Implementação do método abstrato findAllPaginated
   async findAllPaginated(options: {

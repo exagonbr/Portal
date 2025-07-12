@@ -1,6 +1,5 @@
-import { Repository } from "typeorm";
 import { ExtendedRepository, PaginatedResult } from './ExtendedRepository';
-import { AwsConnectionLog } from '../types/aws'; // Supondo que os tipos AWS estejam definidos
+import { AwsConnectionLog } from '../types/aws'; // Importando apenas a interface
 
 export interface CreateAwsConnectionLogDto extends Omit<AwsConnectionLog, 'id' | 'created_at' | 'updated_at'> {}
 
@@ -8,6 +7,7 @@ export class AwsConnectionLogRepository extends ExtendedRepository<AwsConnection
   constructor() {
     super("awsconnectionlogs");
   }
+  
   // Implementação do método abstrato findAllPaginated
   async findAllPaginated(options: {
     page?: number;
@@ -50,6 +50,10 @@ export class AwsConnectionLogRepository extends ExtendedRepository<AwsConnection
         page,
         limit
       };
+    } catch (error) {
+      console.error("Erro ao buscar logs de conexão AWS paginados:", error);
+      throw error;
+    }
   }
 
   async createLog(data: CreateAwsConnectionLogDto): Promise<AwsConnectionLog> {

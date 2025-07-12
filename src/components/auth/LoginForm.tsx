@@ -20,6 +20,8 @@ export function LoginForm() {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [isMobile, setIsMobile] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
+  const [emailFocused, setEmailFocused] = useState(false);
+  const [passwordFocused, setPasswordFocused] = useState(false);
 
   useEffect(() => {
     const checkMobile = () => {
@@ -30,7 +32,7 @@ export function LoginForm() {
       setIsMobile(isMobileDevice || isTouchDevice || isSmallScreen);
     };
     
-    // Escutar evento de seleção de credenciais demo
+    // Escutar evento de seleção de credenciais
     const handleDemoCredentialSelected = (event: CustomEvent) => {
       const { email, password } = event.detail;
       setEmail(email);
@@ -97,27 +99,45 @@ export function LoginForm() {
 
   return (
     <>
-      <form onSubmit={handleLogin} className="space-y-5 sm:space-y-6 mt-6 sm:mt-8" role="form" aria-label="Formulário de login">
+      <form onSubmit={handleLogin} className="space-y-4 sm:space-y-5" role="form" aria-label="Formulário de login">
         {submitError && (
           <MotionDiv
-            initial={{ opacity: 0, scale: 0.95 }}
-            animate={{ opacity: 1, scale: 1 }}
-            className="rounded-lg p-3 sm:p-4 flex items-start gap-2 sm:gap-3"
+            initial={{ opacity: 0, scale: 0.9, y: -10 }}
+            animate={{ opacity: 1, scale: 1, y: 0 }}
+            exit={{ opacity: 0, scale: 0.9, y: -10 }}
+            transition={{ duration: 0.3, ease: "easeOut" }}
+            className="rounded-xl p-3 sm:p-4 md:p-5 flex items-start gap-2 sm:gap-3 backdrop-blur-sm border"
             style={{
-              backgroundColor: `${theme.colors.status.error}20`,
-              border: `1px solid ${theme.colors.status.error}40`
+              background: `linear-gradient(135deg, ${theme.colors.status.error}15, ${theme.colors.status.error}08)`,
+              borderColor: `${theme.colors.status.error}30`,
+              boxShadow: `0 4px 20px ${theme.colors.status.error}20`
             }}
             role="alert"
           >
-            <span
-              className="material-symbols-outlined text-lg sm:text-xl mt-0.5"
-              style={{ color: theme.colors.status.error }}
-              aria-hidden="true"
+            <MotionDiv
+              initial={{ scale: 0 }}
+              animate={{ scale: 1 }}
+              transition={{ delay: 0.1, type: "spring", stiffness: 300 }}
+              className="flex-shrink-0"
             >
-              error
-            </span>
-            <div className="flex-1">
-              <h3 className="text-xs sm:text-sm font-medium" style={{ color: theme.colors.status.error }}>
+              <div 
+                className="w-8 h-8 rounded-full flex items-center justify-center"
+                style={{ backgroundColor: `${theme.colors.status.error}20` }}
+              >
+                <span
+                  className="material-symbols-outlined text-lg"
+                  style={{ color: theme.colors.status.error }}
+                  aria-hidden="true"
+                >
+                  error
+                </span>
+              </div>
+            </MotionDiv>
+            <div className="flex-1 pt-0.5">
+              <h3 
+                className="text-sm sm:text-base font-semibold leading-tight" 
+                style={{ color: theme.colors.status.error }}
+              >
                 {submitError}
               </h3>
             </div>
@@ -126,11 +146,18 @@ export function LoginForm() {
 
         {/* Campo de Email */}
         <MotionDiv
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.2 }}
+          initial={{ opacity: 0, x: -20 }}
+          animate={{ opacity: 1, x: 0 }}
+          transition={{ delay: 0.1, duration: 0.4 }}
+          className="group"
         >
-          <label htmlFor="email" className="block text-xs sm:text-sm font-medium mb-1.5 sm:mb-2" style={{ color: theme.colors.text.primary }}>
+          <label 
+            htmlFor="email" 
+            className="block text-sm font-semibold mb-2 sm:mb-3 transition-colors duration-300" 
+            style={{ 
+              color: emailFocused ? theme.colors.primary.DEFAULT : theme.colors.text.primary 
+            }}
+          >
             Email
           </label>
           <div className="relative">
@@ -139,34 +166,63 @@ export function LoginForm() {
               type="email"
               value={email}
               onChange={(e) => setEmail(e.target.value)}
+              onFocus={() => setEmailFocused(true)}
+              onBlur={() => setEmailFocused(false)}
               placeholder="seu@email.com"
               required
               disabled={isSubmitting}
-              className={`w-full px-4 py-3 pl-10 rounded-lg border transition-all duration-200 focus:outline-none focus:ring-2`}
+              className={`w-full px-5 py-4 pl-14 pr-4 rounded-xl border-2 transition-all duration-300 ease-out focus:outline-none backdrop-blur-sm
+                ${emailFocused ? 'transform scale-[1.02]' : ''}
+                ${isSubmitting ? 'opacity-50 cursor-not-allowed' : 'hover:border-opacity-80'}
+              `}
               style={{
-                backgroundColor: theme.colors.background.primary,
-                borderColor: theme.colors.border.DEFAULT,
+                background: `linear-gradient(135deg, ${theme.colors.background.primary}90, ${theme.colors.background.primary}70)`,
+                borderColor: emailFocused ? theme.colors.primary.DEFAULT : theme.colors.border.DEFAULT,
                 color: theme.colors.text.primary,
                 fontSize: isMobile ? '16px' : '14px',
-                minHeight: '48px'
+                minHeight: '44px',
+                boxShadow: emailFocused 
+                  ? `0 8px 25px ${theme.colors.primary.DEFAULT}20, 0 0 0 3px ${theme.colors.primary.DEFAULT}10`
+                  : `0 2px 10px ${theme.colors.border.DEFAULT}20`
               }}
             />
-            <span
-              className="material-symbols-outlined absolute left-3 top-1/2 transform -translate-y-1/2 text-xl"
-              style={{ color: theme.colors.text.tertiary }}
+            <MotionDiv
+              initial={{ scale: 1 }}
+              animate={{ 
+                scale: emailFocused ? 1.1 : 1,
+                color: emailFocused ? theme.colors.primary.DEFAULT : theme.colors.text.tertiary
+              }}
+              transition={{ duration: 0.2 }}
+              className="absolute left-4 top-0 bottom-0 flex items-center justify-center"
+              style={{ width: '32px' }}
             >
-              mail
-            </span>
+              <span className="material-symbols-outlined text-lg sm:text-xl leading-none">mail</span>
+            </MotionDiv>
+            {/* Indicador de foco */}
+            <MotionDiv
+              initial={{ width: 0 }}
+              animate={{ width: emailFocused ? '100%' : '0%' }}
+              transition={{ duration: 0.3 }}
+              className="absolute bottom-0 left-0 h-0.5 rounded-full"
+              style={{ backgroundColor: theme.colors.primary.DEFAULT }}
+            />
           </div>
         </MotionDiv>
 
         {/* Campo de Senha */}
         <MotionDiv
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.3 }}
+          initial={{ opacity: 0, x: -20 }}
+          animate={{ opacity: 1, x: 0 }}
+          transition={{ delay: 0.2, duration: 0.4 }}
+          className="group"
         >
-          <label htmlFor="password" className="block text-xs sm:text-sm font-medium mb-1.5 sm:mb-2" style={{ color: theme.colors.text.primary }}>
+          <label 
+            htmlFor="password" 
+            className="block text-sm font-semibold mb-2 sm:mb-3 transition-colors duration-300" 
+            style={{ 
+              color: passwordFocused ? theme.colors.primary.DEFAULT : theme.colors.text.primary 
+            }}
+          >
             Senha
           </label>
           <div className="relative">
@@ -175,121 +231,221 @@ export function LoginForm() {
               type={showPassword ? 'text' : 'password'}
               value={password}
               onChange={(e) => setPassword(e.target.value)}
+              onFocus={() => setPasswordFocused(true)}
+              onBlur={() => setPasswordFocused(false)}
               placeholder="••••••••"
               required
               disabled={isSubmitting}
-              className={`w-full px-4 py-3 pl-10 pr-10 rounded-lg border transition-all duration-200 focus:outline-none focus:ring-2`}
+              className={`w-full px-5 py-4 pl-14 pr-14 rounded-xl border-2 transition-all duration-300 ease-out focus:outline-none backdrop-blur-sm
+                ${passwordFocused ? 'transform scale-[1.02]' : ''}
+                ${isSubmitting ? 'opacity-50 cursor-not-allowed' : 'hover:border-opacity-80'}
+              `}
               style={{
-                backgroundColor: theme.colors.background.primary,
-                borderColor: theme.colors.border.DEFAULT,
+                background: `linear-gradient(135deg, ${theme.colors.background.primary}90, ${theme.colors.background.primary}70)`,
+                borderColor: passwordFocused ? theme.colors.primary.DEFAULT : theme.colors.border.DEFAULT,
                 color: theme.colors.text.primary,
                 fontSize: isMobile ? '16px' : '14px',
-                minHeight: '48px'
+                minHeight: '44px',
+                boxShadow: passwordFocused 
+                  ? `0 8px 25px ${theme.colors.primary.DEFAULT}20, 0 0 0 3px ${theme.colors.primary.DEFAULT}10`
+                  : `0 2px 10px ${theme.colors.border.DEFAULT}20`
               }}
             />
-            <span
-              className="material-symbols-outlined absolute left-3 top-1/2 transform -translate-y-1/2 text-xl"
-              style={{ color: theme.colors.text.tertiary }}
+            <MotionDiv
+              initial={{ scale: 1 }}
+              animate={{ 
+                scale: passwordFocused ? 1.1 : 1,
+                color: passwordFocused ? theme.colors.primary.DEFAULT : theme.colors.text.tertiary
+              }}
+              transition={{ duration: 0.2 }}
+              className="absolute left-4 top-0 bottom-0 flex items-center justify-center"
+              style={{ width: '32px' }}
             >
-              lock
-            </span>
+              <span className="material-symbols-outlined text-lg sm:text-xl leading-none">lock</span>
+            </MotionDiv>
             <button
               type="button"
               onClick={() => setShowPassword(!showPassword)}
-              className="absolute right-3 top-1/2 transform -translate-y-1/2 text-xl hover:opacity-70 transition-opacity"
-              style={{ color: theme.colors.text.tertiary }}
+              className="absolute right-4 top-0 bottom-0 p-1 rounded-lg transition-all duration-200 hover:scale-110 active:scale-95 flex items-center justify-center"
+              style={{ 
+                width: '32px',
+                color: theme.colors.text.tertiary,
+                backgroundColor: showPassword ? `${theme.colors.primary.DEFAULT}15` : 'transparent',
+                marginTop: '6px'
+              }}
             >
-              <span className="material-symbols-outlined">
-                {showPassword ? 'visibility_off' : 'visibility'}
-              </span>
+              <MotionDiv
+                animate={{ rotateY: showPassword ? 180 : 0 }}
+                transition={{ duration: 0.3 }}
+              >
+                <span className="material-symbols-outlined text-lg sm:text-xl leading-none">
+                  {showPassword ? 'visibility_off' : 'visibility'}
+                </span>
+              </MotionDiv>
             </button>
+            {/* Indicador de foco */}
+            <MotionDiv
+              initial={{ width: 0 }}
+              animate={{ width: passwordFocused ? '100%' : '0%' }}
+              transition={{ duration: 0.3 }}
+              className="absolute bottom-0 left-0 h-0.5 rounded-full"
+              style={{ backgroundColor: theme.colors.primary.DEFAULT }}
+            />
           </div>
+        </MotionDiv>
+
+        {/* Link "Esqueci minha senha" */}
+        <MotionDiv
+          initial={{ opacity: 0, y: 10 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.25, duration: 0.4 }}
+          className="text-right"
+        >
+          <button
+            type="button"
+            className="text-sm font-medium transition-colors duration-200 hover:underline"
+            style={{ 
+              color: theme.colors.primary.DEFAULT,
+            }}
+            onClick={() => {
+              // TODO: Implementar funcionalidade de esqueci minha senha
+              console.log('Esqueci minha senha clicado');
+            }}
+          >
+            Esqueci minha senha
+          </button>
         </MotionDiv>
 
         {/* Botão de Login */}
         <MotionDiv
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.4 }}
+          transition={{ delay: 0.3, duration: 0.4 }}
         >
           <button
             type="submit"
             disabled={isSubmitting}
-            className="w-full flex justify-center items-center gap-2 rounded-lg shadow-lg text-sm font-medium transition-all duration-200 transform hover:scale-105 active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed disabled:transform-none py-3 sm:py-4 px-4"
+            className="group relative w-full flex justify-center items-center gap-2 rounded-xl shadow-xl text-sm font-semibold transition-all duration-300 transform overflow-hidden py-3 px-3 sm:px-4"
             style={{
-              backgroundColor: theme.colors.primary.DEFAULT,
+              background: isSubmitting 
+                ? `linear-gradient(135deg, ${theme.colors.primary.DEFAULT}60, ${theme.colors.primary.DEFAULT}40)`
+                : `linear-gradient(135deg, ${theme.colors.primary.DEFAULT}, ${theme.colors.primary.DEFAULT}E0)`,
               color: theme.colors.primary.contrast,
-              boxShadow: theme.shadows.md,
-              minHeight: '48px',
-              fontSize: isMobile ? '16px' : '14px'
+              boxShadow: isSubmitting 
+                ? `0 4px 15px ${theme.colors.primary.DEFAULT}30`
+                : `0 8px 25px ${theme.colors.primary.DEFAULT}40, 0 0 0 1px ${theme.colors.primary.DEFAULT}20`,
+              minHeight: '44px',
+              fontSize: '14px'
+            }}
+            onMouseEnter={(e) => {
+              if (!isSubmitting) {
+                e.currentTarget.style.transform = 'translateY(-2px) scale(1.02)';
+                e.currentTarget.style.boxShadow = `0 12px 35px ${theme.colors.primary.DEFAULT}50, 0 0 0 1px ${theme.colors.primary.DEFAULT}30`;
+              }
+            }}
+            onMouseLeave={(e) => {
+              if (!isSubmitting) {
+                e.currentTarget.style.transform = 'translateY(0) scale(1)';
+                e.currentTarget.style.boxShadow = `0 8px 25px ${theme.colors.primary.DEFAULT}40, 0 0 0 1px ${theme.colors.primary.DEFAULT}20`;
+              }
             }}
           >
+            {/* Efeito de brilho animado */}
+            <div 
+              className="absolute inset-0 opacity-0 group-hover:opacity-100 transition-opacity duration-300"
+              style={{
+                background: `linear-gradient(45deg, transparent 30%, ${theme.colors.primary.contrast}20 50%, transparent 70%)`
+              }}
+            />
+            
             {isSubmitting ? (
               <>
                 <MotionSpan
                   animate={{ rotate: 360 }}
                   transition={{ duration: 1, repeat: Infinity, ease: "linear" }}
-                  className="material-symbols-outlined"
+                  className="material-symbols-outlined relative z-10"
                 >
                   progress_activity
                 </MotionSpan>
-                Acessando...
+                <span className="relative z-10">Acessando...</span>
               </>
             ) : (
               <>
-                <span className="material-symbols-outlined">login</span>
-                Acessar
+                <MotionDiv
+                  whileHover={{ scale: 1.1, rotate: 5 }}
+                  whileTap={{ scale: 0.9 }}
+                  transition={{ type: "spring", stiffness: 400 }}
+                >
+                  <span className="material-symbols-outlined relative z-10">login</span>
+                </MotionDiv>
+                <span className="relative z-10">Acessar Portal</span>
               </>
             )}
           </button>
         </MotionDiv>
 
-        {/* Divisor "ou" */}
+        {/* Divisor "ou" aprimorado */}
         <MotionDiv
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.5 }}
-          className="relative"
+          initial={{ opacity: 0, scale: 0.8 }}
+          animate={{ opacity: 1, scale: 1 }}
+          transition={{ delay: 0.4, duration: 0.4 }}
+          className="relative py-3 sm:py-4"
         >
           <div className="absolute inset-0 flex items-center">
-            <div className="w-full border-t" style={{ borderColor: theme.colors.border.DEFAULT }}></div>
+            <div 
+              className="w-full h-px"
+              style={{ 
+                background: `linear-gradient(90deg, transparent, ${theme.colors.border.DEFAULT}60, transparent)`
+              }}
+            />
           </div>
-          <div className="relative flex justify-center text-sm">
-            <span className="px-2" style={{ 
-              backgroundColor: theme.colors.background.primary,
-              color: theme.colors.text.secondary 
-            }}>
-              ou
+          <div className="relative flex justify-center">
+            <span 
+              className="px-3 sm:px-4 py-1 sm:py-2 text-xs sm:text-sm font-medium rounded-full backdrop-blur-sm border"
+              style={{ 
+                backgroundColor: `${theme.colors.background.primary}95`,
+                color: theme.colors.text.secondary,
+                borderColor: `${theme.colors.border.DEFAULT}40`
+              }}
+            >
+              ou continue com
             </span>
           </div>
         </MotionDiv>
 
         {/* Botão Entrar com Google */}
-        <GoogleLoginButton 
-          disabled={isSubmitting}
-          onLoginStart={() => setIsSubmitting(true)}
-        />
+        <MotionDiv
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.5, duration: 0.4 }}
+        >
+          <GoogleLoginButton 
+            disabled={isSubmitting}
+            onLoginStart={() => setIsSubmitting(true)}
+          />
+        </MotionDiv>
 
         {/* Botão de Validação de Licença */}
         <MotionDiv
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.7 }}
-          className="mt-2 sm:mt-0"
+          transition={{ delay: 0.6, duration: 0.4 }}
         >
           <button
             type="button"
             onClick={() => setIsModalOpen(true)}
-            className="w-full flex items-center justify-center gap-3 py-3 px-4 rounded-lg shadow-sm text-sm font-medium transition-all duration-200 transform hover:scale-105 active:scale-95"
+            className="w-full flex items-center justify-center gap-2 py-3 px-3 sm:px-4 rounded-xl text-sm font-semibold backdrop-blur-sm border"
             style={{
-              backgroundColor: theme.colors.secondary.DEFAULT,
+              background: `linear-gradient(135deg, ${theme.colors.secondary.DEFAULT}, ${theme.colors.secondary.DEFAULT}E0)`,
               color: theme.colors.secondary.contrast,
-              boxShadow: theme.shadows.md,
-              minHeight: '48px'
+              borderColor: `${theme.colors.secondary.DEFAULT}60`,
+              boxShadow: `0 4px 15px ${theme.colors.secondary.DEFAULT}40`,
+              minHeight: '44px',
+              fontSize: '14px'
             }}
           >
             <span className="material-symbols-outlined" aria-hidden="true">verified</span>
-            Validar Licença
+            <span>Validar Licença</span>
           </button>
         </MotionDiv>
       </form>

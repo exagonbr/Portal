@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import { apiClient } from '@/lib/api-client'
-import { isAuthenticated, getCurrentToken, syncTokenWithApiClient, clearAllTokens } from '@/utils/token-validator'
+import { validateStoredToken } from '@/utils/token-validator'
 import { EmailData } from '@/components/communications/EmailComposer'
 
 interface UseEmailSenderReturn {
@@ -26,16 +26,10 @@ export function useEmailSender(): UseEmailSenderReturn {
       console.log('🔍 [useEmailSender] Enviando e-mail...')
 
       // Verificar autenticação
-      const authStatus = isAuthenticated()
-      if (!authStatus.authenticated) {
-        console.warn('⚠️ [useEmailSender] Usuário não autenticado')
+      const tokenValidation = validateStoredToken()
+      if (!tokenValidation.isValid) {
+        console.warn('⚠️ [useEmailSender] Token inválido:', tokenValidation.errors)
         throw new Error('Sessão expirada. Faça login novamente.')
-      }
-
-      // Sincronizar token
-      const token = getCurrentToken()
-      if (token) {
-        await syncTokenWithApiClient(token)
       }
 
       // Validar dados antes do envio
@@ -59,14 +53,14 @@ export function useEmailSender(): UseEmailSenderReturn {
 
       // Preparar dados para envio
       const notificationData = {
-        title: emailData.subject,
+        subject: emailData.subject,
         message: emailData.message,
+        channel: 'EMAIL',
         type: 'info',
         category: 'administrative',
         priority: 'medium',
-        sendEmail: true,
-        sendPush: false,
-        iconType: emailData.iconType,
+        html: emailData.useHtml || false,
+        htmlContent: emailData.htmlContent || '',
         recipients: {
           emails: emailData.recipients
         }

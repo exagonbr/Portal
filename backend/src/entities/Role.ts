@@ -1,8 +1,10 @@
 import {
   Entity,
   PrimaryGeneratedColumn,
-  Column
+  Column,
+  OneToMany
 } from 'typeorm';
+import { UserRoleMapping } from './UserRoleMapping';
 
 @Entity('roles')
 export class Role {
@@ -23,6 +25,10 @@ export class Role {
 
   @Column({ name: 'updated_at', type: 'timestamp', default: () => 'CURRENT_TIMESTAMP' })
   updatedAt!: Date;
+
+  // Relacionamento com UserRoleMapping
+  @OneToMany(() => UserRoleMapping, mapping => mapping.role)
+  userMappings?: UserRoleMapping[];
 
   get displayName(): string {
     return this.description || this.name;

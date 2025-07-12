@@ -1,15 +1,13 @@
-import { ExtendedRepository, PaginatedResult } from './ExtendedRepository';
-import { Repository } from 'typeorm';
+import { Repository, DeleteResult } from 'typeorm';
 import { AppDataSource } from '../config/typeorm.config';
 import { Question } from '../entities/Question';
+import { QuestionFilterDto } from '../dto/QuestionDto';
 
-export interface CreateQuestionData extends Omit<Question, 'id' | 'created_at' | 'updated_at' | 'quiz'> {}
-export interface UpdateQuestionData extends Partial<CreateQuestionData> {}
-
-export class QuestionRepository extends ExtendedRepository<Question> {
+export class QuestionRepository {
+  private repository: Repository<Question>;
 
   constructor() {
-    super("questions");
+    this.repository = AppDataSource.getRepository(Question);
   }
   // Implementação do método abstrato findAllPaginated
   async findAllPaginated(options: {
@@ -20,58 +18,159 @@ export class QuestionRepository extends ExtendedRepository<Question> {
     const { page = 1, limit = 10, search } = options;
     
     try {
-      // Usar diretamente o db e tableName herdados da classe base
-      let query = this.db(this.tableName).select("*");
+      if (this.repository) {
+        let queryBuilder = this.repository.createQueryBuilder('question');
+        
+        // Adicione condições de pesquisa específicas para esta entidade
+        if (search) {
+          queryBuilder = queryBuilder
+            .where('question.name ILIKE :search', { search: `%${search}%` });
+        }
+        
+        const [data, total] = await queryBuilder
+          .skip((page - 1) * limit)
+          .take(limit)
+          .orderBy('question.id', 'DESC')
+          .getManyAndCount();
+          
+        return {
+          data,
+          total,
+          page,
+          limit
+        };
+      } else {
+        // Fallback para query raw
+        const query = `
+          SELECT * FROM question
+          ${search ? `WHERE name ILIKE '%${search}%'` : ''}
+          ORDER BY id DESC
+          LIMIT ${limit} OFFSET ${(page - 1) * limit}
+        `;
+        
+        const countQuery = `
+          SELECT COUNT(*) as total FROM question
+          ${search ? `WHERE name ILIKE '%${search}%'` : ''}
+        `;
 
-      // Adicione condições de pesquisa específicas para esta entidade
-      if (search) {
-        query = query.whereILike("name", `%${search}%`);
+        const [data, countResult] = await Promise.all([
+          AppDataSource.query(query),
+          AppDataSource.query(countQuery)
+        ]);
+
+        const total = parseInt(countResult[0].total);
+
+        return {
+          data,
+          total,
+          page,
+          limit
+        };
       }
+    } catch (error) {
+      console.error(`Erro ao buscar registros de question:`, error);
+      throw error;
+    }
+  }
 
-      // Executar a consulta paginada
-      const offset = (page - 1) * limit;
-      const data = await query
-        .orderBy("id", "DESC")
-        .limit(limit)
-        .offset(offset);
-
-      // Contar o total de registros
-      const countResult = await this.db(this.tableName)
-        .count("* as total")
-        .modify(qb => {
-          if (search) {
-            qb.whereILike("name", `%${search}%`);
-          }
-        })
-        .first();
-
-      const total = parseInt(countResult?.total as string, 10) || 0;
-
-      return {
-        data,
-        total,
+  async findAll(filters: QuestionFilterDto = {}) {
+    const { 
+      page = 1, 
+      limit = 10, 
+      search, 
+      deleted, 
+      tvShowId, 
+      episodeId, 
+      fileId 
+    } = filters;
+    
+    const queryBuilder = this.repository.createQueryBuilder('question');
+    
+    // Aplicar filtros
+    if (search) {
+      queryBuilder.andWhere('question.test ILIKE :search', { search: `%${search}%` });
+    }
+    
+    if (deleted !== undefined) {
+      queryBuilder.andWhere('question.deleted = :deleted', { deleted });
+    }
+    
+    if (tvShowId) {
+      queryBuilder.andWhere('question.tvShowId = :tvShowId', { tvShowId });
+    }
+    
+    if (episodeId) {
+      queryBuilder.andWhere('question.episodeId = :episodeId', { episodeId });
+    }
+    
+    if (fileId) {
+      queryBuilder.andWhere('question.fileId = :fileId', { fileId });
+    }
+    
+    // Paginação
+    const total = await queryBuilder.getCount();
+    const questions = await queryBuilder
+      .skip((page - 1) * limit)
+      .take(limit)
+      .orderBy('question.dateCreated', 'DESC')
+      .getMany();
+    
+    return {
+      data: questions,
+      pagination: {
         page,
-        limit
-      };
+        limit,
+        total,
+        totalPages: Math.ceil(total / limit)
+      }
+    };
   }
 
-  async createQuestion(data: CreateQuestionData): Promise<Question> {
-    return this.create(data);
+  async findById(id: number): Promise<Question | null> {
+    return await this.repository.findOne({
+      where: { id },
+      relations: ['answers']
+    });
   }
 
-  async updateQuestion(id: string, data: UpdateQuestionData): Promise<Question | null> {
-    return this.update(id, data);
+  async create(questionData: Partial<Question>): Promise<Question> {
+    const question = this.repository.create(questionData);
+    return await this.repository.save(question);
   }
 
-  async deleteQuestion(id: string): Promise<boolean> {
-    return this.delete(id);
+  async update(id: number, questionData: Partial<Question>): Promise<Question | null> {
+    await this.repository.update(id, questionData);
+    return await this.findById(id);
   }
 
-  async findByQuiz(quizId: string): Promise<Question[]> {
-    return this.findAll({ quiz_id: parseInt(quizId) } as Partial<Question>);
+  async delete(id: number): Promise<boolean> {
+    const result = await this.repository.delete(id);
+    return (result.affected ?? 0) > 0;
   }
 
-  async findByType(type: string): Promise<Question[]> {
-    return this.findAll({ type } as Partial<Question>);
+  async softDelete(id: number): Promise<boolean> {
+    const result = await this.repository.update(id, { deleted: true });
+    return (result.affected ?? 0) > 0;
+  }
+
+  async restore(id: number): Promise<boolean> {
+    const result = await this.repository.update(id, { deleted: false });
+    return (result.affected ?? 0) > 0;
+  }
+
+  async findByTvShow(tvShowId: number): Promise<Question[]> {
+    return await this.repository.find({
+      where: { tvShowId, deleted: false }
+    });
+  }
+
+  async findByEpisode(episodeId: number): Promise<Question[]> {
+    return await this.repository.find({
+      where: { episodeId, deleted: false }
+    });
+  }
+
+  async count(): Promise<number> {
+    return await this.repository.count();
   }
 }

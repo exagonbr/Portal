@@ -36,7 +36,11 @@ export function PersistentAuthWrapper({ children }: PersistentAuthWrapperProps) 
             permissions: persistentSession.user.permissions,
           };
           
+          // Salvar em localStorage
           localStorage.setItem('user', JSON.stringify(userData));
+          
+          // Salvar em sessionStorage também para redundância
+          sessionStorage.setItem('user', JSON.stringify(userData));
           
           // Obter token atual
           persistentSession.getCurrentToken().then(token => {
@@ -44,116 +48,86 @@ export function PersistentAuthWrapper({ children }: PersistentAuthWrapperProps) 
               localStorage.setItem('accessToken', token);
               localStorage.setItem('auth_token', token);
               localStorage.setItem('token', token);
+              
+              // Salvar em sessionStorage também
+              sessionStorage.setItem('accessToken', token);
+              sessionStorage.setItem('auth_token', token);
+              sessionStorage.setItem('token', token);
+              
+              // Definir cookie de autenticação para compatibilidade com backend
+              document.cookie = `auth_token=${token}; path=/; max-age=86400; SameSite=Lax`;
+              
+              console.log('✅ Token sincronizado em todos os storages');
             }
           }).catch(error => {
             console.warn('⚠️ Erro ao obter token atual:', error);
           });
+          
+          // Verificar se já existe um session_id
+          const sessionId = persistentSession.user.id + '_' + Date.now();
+          localStorage.setItem('session_id', sessionId);
+          sessionStorage.setItem('session_id', sessionId);
+          document.cookie = `session_id=${sessionId}; path=/; max-age=86400; SameSite=Lax`;
         }
       } else if (!persistentSession.isLoading) {
         console.log('ℹ️ Nenhuma sessão persistente encontrada');
+        
+        // Verificar se existe user no localStorage mas não na sessão persistente
+        try {
+          const userStr = localStorage.getItem('user');
+          if (userStr) {
+            const userData = JSON.parse(userStr);
+            if (userData && userData.id) {
+              console.log('🔄 Encontrado user no localStorage, sincronizando com sessão persistente');
+              
+              // Obter token
+              const token = localStorage.getItem('accessToken') || 
+                          localStorage.getItem('auth_token') || 
+                          localStorage.getItem('token');
+              
+              if (token) {
+                // Tentar salvar na sessão persistente
+                UnifiedAuthService.saveAuthData({
+                  user: userData,
+                  accessToken: token,
+                  refreshToken: localStorage.getItem('refreshToken') || token,
+                  expiresIn: 3600 // 1 hora
+                }).then(() => {
+                  console.log('✅ Dados sincronizados do localStorage para sessão persistente');
+                  // Recarregar a página para aplicar as mudanças
+                  window.location.reload();
+                }).catch(error => {
+                  console.error('❌ Erro ao sincronizar dados:', error);
+                });
+              }
+            }
+          }
+        } catch (error) {
+          console.error('❌ Erro ao verificar localStorage:', error);
+        }
       }
       
       setIsInitialized(true);
     }
   }, [isInitialized, persistentSession.isAuthenticated, persistentSession.user, persistentSession.isLoading]);
 
-  // Monitorar erros de sessão
+  // Monitorar mudanças no localStorage para manter sincronização
   useEffect(() => {
-    if (persistentSession.error) {
-      console.error('❌ Erro no sistema de sessão persistente:', persistentSession.error);
-      
-      // Mostrar toast apenas para erros críticos
-      if (persistentSession.error.includes('Erro ao carregar sessão')) {
-        toast.error('Erro ao carregar sua sessão. Faça login novamente.');
-      }
-    }
-  }, [persistentSession.error]);
-
-  // Interceptar tentativas de limpeza do localStorage
-  useEffect(() => {
-    if (typeof window === 'undefined') return;
-
-    const originalClear = localStorage.clear;
-    const originalRemoveItem = localStorage.removeItem;
-
-    // Interceptar localStorage.clear()
-    localStorage.clear = function() {
-      console.log('🛡️ Interceptando localStorage.clear() - mantendo sessão persistente');
-      
-      // Salvar dados importantes antes da limpeza
-      const sessionData = localStorage.getItem('session_data');
-      const lastActivity = localStorage.getItem('last_activity');
-      
-      // Executar limpeza original
-      originalClear.call(this);
-      
-      // Restaurar dados da sessão persistente
-      if (sessionData) {
-        localStorage.setItem('session_data', sessionData);
-      }
-      if (lastActivity) {
-        localStorage.setItem('last_activity', lastActivity);
-      }
-      
-      // Atualizar atividade para indicar que a sessão ainda está ativa
-      persistentSession.updateActivity();
-    };
-
-    // Interceptar remoção de itens críticos
-    localStorage.removeItem = function(key: string) {
-      if (key === 'session_data' || key === 'last_activity') {
-        console.log(`🛡️ Interceptando tentativa de remover ${key} - mantendo sessão persistente`);
-        return; // Não permitir remoção
-      }
-      
-      originalRemoveItem.call(this, key);
-    };
-
-    // Cleanup
-    return () => {
-      localStorage.clear = originalClear;
-      localStorage.removeItem = originalRemoveItem;
-    };
-  }, [persistentSession.updateActivity]);
-
-  // Configurar listener para eventos de beforeunload
-  useEffect(() => {
-    if (typeof window === 'undefined') return;
-
-    const handleBeforeUnload = () => {
-      // Atualizar atividade antes de fechar/recarregar a página
-      if (persistentSession.isAuthenticated) {
-        persistentSession.updateActivity();
-      }
-    };
-
-    window.addEventListener('beforeunload', handleBeforeUnload);
+    if (!isInitialized) return;
     
-    return () => {
-      window.removeEventListener('beforeunload', handleBeforeUnload);
-    };
-  }, [persistentSession.isAuthenticated, persistentSession.updateActivity]);
-
-  // Função global para logout forçado (para compatibilidade)
-  useEffect(() => {
-    if (typeof window !== 'undefined') {
-      (window as any).forceLogout = async () => {
-        console.log('🔓 Logout forçado solicitado via global function');
-        await persistentSession.logout();
+    const handleStorageChange = (event: StorageEvent) => {
+      if (event.key === 'user' || event.key === 'accessToken' || 
+          event.key === 'auth_token' || event.key === 'token') {
+        console.log('🔄 Detectada mudança no storage:', event.key);
         
-        // Garantir que a página seja recarregada
-        setTimeout(() => {
-          window.location.href = '/auth/login?logout=forced';
-        }, 100);
-      };
-    }
-    
-    return () => {
-      if (typeof window !== 'undefined') {
-        delete (window as any).forceLogout;
+        // Recarregar sessão persistente
+        persistentSession.loadSession();
       }
     };
-  }, [persistentSession.logout]);
+    
+    window.addEventListener('storage', handleStorageChange);
+    return () => window.removeEventListener('storage', handleStorageChange);
+  }, [isInitialized, persistentSession]);
 
   return <>{children}</>;
 } 

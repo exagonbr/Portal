@@ -6,7 +6,7 @@ import { institutionService } from '@/services/institutionService';
 // Usar o template padronizado para a rota GET
 export const { GET, OPTIONS } = createStandardApiRoute({
   endpoint: '/api/institutions',
-  name: 'institutions',
+  name: 'institution',
   fallbackFunction: async (req: NextRequest) => {
     try {
       const url = new URL(req.url);
@@ -14,17 +14,20 @@ export const { GET, OPTIONS } = createStandardApiRoute({
       const page = parseInt(url.searchParams.get('page') || '1');
       const limit = parseInt(url.searchParams.get('limit') || '10');
 
-      const response = await institutionService.getInstitutions({
+      console.log('📚 [API-INSTITUTIONS] Usando serviço para buscar instituições');
+      
+      // Usar o serviço de instituições
+      const result = await institutionService.getInstitutions({
         page,
         limit,
         search
       });
-
-      return NextResponse.json(response);
+      
+      return NextResponse.json(result);
     } catch (error) {
-      console.error('Error fetching institutions:', error);
+      console.error('Error in institutions fallback:', error);
       return NextResponse.json(
-        { error: 'Failed to fetch institutions' },
+        { error: 'Failed to fetch institutions', items: [] },
         { status: 500 }
       );
     }
@@ -35,6 +38,10 @@ export const { GET, OPTIONS } = createStandardApiRoute({
 export async function POST(req: NextRequest) {
   try {
     const data = await req.json();
+    
+    console.log('📝 [API-INSTITUTIONS] Criando instituição com serviço');
+    
+    // Usar o serviço para criar a instituição
     const newInstitution = await institutionService.createInstitution(data);
     
     return NextResponse.json(newInstitution, { status: 201 });
@@ -60,6 +67,10 @@ export async function PUT(req: NextRequest) {
     }
 
     const data = await req.json();
+    
+    console.log('✏️ [API-INSTITUTIONS] Atualizando instituição com serviço:', id);
+    
+    // Usar o serviço para atualizar a instituição
     const updatedInstitution = await institutionService.updateInstitution(Number(id), data);
     
     return NextResponse.json(updatedInstitution);
@@ -84,6 +95,19 @@ export async function DELETE(req: NextRequest) {
       );
     }
 
+    console.log('🗑️ [API-INSTITUTIONS] Excluindo instituição com serviço:', id);
+    
+    // Verificar se a instituição pode ser excluída
+    const canDelete = await institutionService.canDeleteInstitution(Number(id));
+    
+    if (!canDelete) {
+      return NextResponse.json(
+        { error: 'Institution cannot be deleted' },
+        { status: 400 }
+      );
+    }
+    
+    // Usar o serviço para excluir a instituição
     await institutionService.deleteInstitution(Number(id));
     
     return NextResponse.json({ success: true });
@@ -108,6 +132,9 @@ export async function PATCH(req: NextRequest) {
       );
     }
 
+    console.log('🔄 [API-INSTITUTIONS] Alternando status da instituição com serviço:', id);
+    
+    // Usar o serviço para alternar o status da instituição
     const updatedInstitution = await institutionService.toggleInstitutionStatus(Number(id));
     
     return NextResponse.json(updatedInstitution);

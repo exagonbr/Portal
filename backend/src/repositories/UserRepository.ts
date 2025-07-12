@@ -14,9 +14,11 @@ export interface UpdateUserData extends Partial<Omit<CreateUserData, 'password'>
 }
 
 export class UserRepository extends ExtendedRepository<User> {
+  private repository: Repository<User>;
 
   constructor() {
     super("users");
+    this.repository = AppDataSource.getRepository(User);
   }
   // Implementação do método abstrato findAllPaginated
   async findAllPaginated(options: {

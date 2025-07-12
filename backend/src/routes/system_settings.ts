@@ -1,5 +1,5 @@
 import { Router } from 'express';
-import { SystemSettingsController } from '../controllers/SystemSettingsController';
+import SystemSettingsController from '../controllers/SystemSettingsController';
 import { requireAuth } from '../middleware/requireAuth';
 
 const router = Router();

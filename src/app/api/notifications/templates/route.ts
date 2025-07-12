@@ -1,125 +1,119 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { getServerSession } from 'next-auth'
-import { authOptions } from '@/lib/auth'
-import { createCorsOptionsResponse, getCorsHeaders } from '@/config/cors'
-
-// Simulação de banco de dados para templates
-const templatesDB = {
-  'welcome': {
-    id: 'welcome',
-    name: 'Boas-vindas',
-    content: 'Olá {{name}}, bem-vindo ao nosso sistema!',
-    description: 'Template para mensagem de boas-vindas',
-    isHtml: false,
-    channel: 'EMAIL',
-    variables: ['name'],
-    created_at: '2023-01-01T00:00:00.000Z',
-    updated_at: '2023-01-01T00:00:00.000Z'
-  },
-  'password_reset': {
-    id: 'password_reset',
-    name: 'Redefinição de Senha',
-    content: '<h1>Redefinição de Senha</h1><p>Olá {{name}},</p><p>Clique <a href="{{resetLink}}">aqui</a> para redefinir sua senha.</p>',
-    description: 'Template para redefinição de senha',
-    isHtml: true,
-    channel: 'EMAIL',
-    variables: ['name', 'resetLink'],
-    created_at: '2023-01-02T00:00:00.000Z',
-    updated_at: '2023-01-02T00:00:00.000Z'
-  },
-  'notification': {
-    id: 'notification',
-    name: 'Notificação Geral',
-    content: '{{message}}',
-    description: 'Template genérico para notificações',
-    isHtml: false,
-    channel: 'ALL',
-    variables: ['message'],
-    created_at: '2023-01-03T00:00:00.000Z',
-    updated_at: '2023-01-03T00:00:00.000Z'
-  },
-  'appointment_reminder': {
-    id: 'appointment_reminder',
-    name: 'Lembrete de Compromisso',
-    content: 'Olá {{name}}, você tem um compromisso marcado para {{date}} às {{time}}.',
-    description: 'Template para lembrete de compromissos',
-    isHtml: false,
-    channel: 'SMS',
-    variables: ['name', 'date', 'time'],
-    created_at: '2023-01-04T00:00:00.000Z',
-    updated_at: '2023-01-04T00:00:00.000Z'
-  },
-  'new_message': {
-    id: 'new_message',
-    name: 'Nova Mensagem',
-    content: '{"title": "Nova mensagem", "body": "Você recebeu uma nova mensagem de {{sender}}", "data": {"messageId": "{{messageId}}"}}',
-    description: 'Template para notificação de nova mensagem',
-    isHtml: false,
-    channel: 'PUSH',
-    variables: ['sender', 'messageId'],
-    created_at: '2023-01-05T00:00:00.000Z',
-    updated_at: '2023-01-05T00:00:00.000Z'
-  }
-};
+import { createCorsOptionsResponse, getCorsHeaders } from '@/config/cors';
+import { getAuthentication } from '@/lib/auth-utils';
+import { getSafeConnection } from '@/lib/database-safe';
 
 export async function OPTIONS(request: NextRequest) {
-  const origin = request.headers.get('origin') || undefined;
-  return createCorsOptionsResponse(origin);
+  return createCorsOptionsResponse(request.headers.get('origin') || undefined);
 }
 
-// Listar todos os templates ou filtrar por canal
 export async function GET(request: NextRequest) {
   try {
-    const session = await getServerSession(authOptions);
+    const session = await getAuthentication(request);
     
     if (!session) {
       return NextResponse.json({ 
-        success: false,
-        message: 'Não autorizado' 
+        success: false, 
+        message: 'Token de autorização necessário' 
       }, { 
         status: 401,
         headers: getCorsHeaders(request.headers.get('origin') || undefined)
       });
     }
 
-    // Obter parâmetros de consulta
-    const url = new URL(request.url);
-    const channel = url.searchParams.get('channel')?.toUpperCase();
+    const { searchParams } = new URL(request.url);
+    const page = parseInt(searchParams.get('page') || '1');
+    const limit = parseInt(searchParams.get('limit') || '10');
+    const search = searchParams.get('search') || '';
+    const category = searchParams.get('category') || '';
+    const isPublic = searchParams.get('isPublic');
+    const userId = searchParams.get('userId') || '';
+    const createdBy = searchParams.get('createdBy') || '';
+
+    console.log('🔍 [Templates API] Buscando templates com parâmetros:', {
+      page, limit, search, category, isPublic, userId, createdBy
+    });
+
+    const db = await getSafeConnection();
     
-    // Filtrar templates pelo canal, se especificado
-    const templates = Object.values(templatesDB).filter(template => 
-      !channel || template.channel === channel || template.channel === 'ALL'
-    );
+    // Construir query base
+    let query = db('notification_templates').select('*');
+    
+    // Aplicar filtros
+    if (search) {
+      query = query.where(function() {
+        this.where('name', 'like', `%${search}%`)
+            .orWhere('subject', 'like', `%${search}%`)
+            .orWhere('message', 'like', `%${search}%`);
+      });
+    }
+    
+    if (category) {
+      query = query.where('category', category);
+    }
+    
+    if (isPublic !== null && isPublic !== undefined) {
+      query = query.where('is_public', isPublic === 'true');
+    }
+    
+    if (userId) {
+      query = query.where('user_id', userId);
+    }
+    
+    if (createdBy) {
+      query = query.where('created_by', createdBy);
+    }
+
+    // Contar total
+    const totalQuery = query.clone().count('* as total');
+    const totalResult = await totalQuery.first();
+    const total = totalResult ? Number(totalResult.total) : 0;
+
+    // Aplicar paginação
+    const offset = (page - 1) * limit;
+    const templates = await query
+      .orderBy('created_at', 'desc')
+      .limit(limit)
+      .offset(offset);
+
+    console.log('✅ [Templates API] Templates encontrados:', templates.length);
 
     return NextResponse.json({
       success: true,
-      data: templates
+      data: templates,
+      pagination: {
+        page,
+        limit,
+        total,
+        totalPages: Math.ceil(total / limit)
+      }
     }, {
-      status: 200,
       headers: getCorsHeaders(request.headers.get('origin') || undefined)
     });
-    
+
   } catch (error) {
-    console.error('❌ [Templates API] Erro ao listar templates:', error);
-    return NextResponse.json({ 
-      success: false,
-      message: 'Erro interno do servidor' 
-    }, { 
-      status: 500,
-      headers: getCorsHeaders(request.headers.get('origin') || undefined)
-    });
+    console.error('❌ [Templates API] Erro ao buscar templates:', error);
+    return NextResponse.json(
+      { 
+        success: false, 
+        message: 'Erro interno do servidor' 
+      },
+      { 
+        status: 500,
+        headers: getCorsHeaders(request.headers.get('origin') || undefined)
+      }
+    );
   }
 }
 
-// Obter um template específico por ID
 export async function POST(request: NextRequest) {
   try {
-    const session = await getServerSession(authOptions);
+    const session = await getAuthentication(request);
     
     if (!session) {
       return NextResponse.json({ 
-        success: false,
-        message: 'Não autorizado' 
+        success: false, 
+        message: 'Token de autorização necessário' 
       }, { 
         status: 401,
         headers: getCorsHeaders(request.headers.get('origin') || undefined)
@@ -127,142 +121,73 @@ export async function POST(request: NextRequest) {
     }
 
     const body = await request.json();
-    console.log('📑 [Templates API] Buscando template por ID:', body.id);
-    
-    if (!body.id) {
+    const { name, subject, message, html, category, is_public, user_id, created_by, created_at, updated_at } = body;
+
+    console.log('🔍 [Templates API] Criando template:', { name, subject, category, is_public, user_id, created_by });
+
+    // Validação básica
+    if (!name || !subject || !message) {
       return NextResponse.json({
         success: false,
-        message: 'ID do template é obrigatório'
-      }, {
-        status: 400,
-        headers: getCorsHeaders(request.headers.get('origin') || undefined)
-      });
-    }
-
-    // @ts-ignore - Simulação
-    const template = templatesDB[body.id];
-    
-    if (!template) {
-      return NextResponse.json({
-        success: false,
-        message: `Template com ID ${body.id} não encontrado`
-      }, {
-        status: 404,
-        headers: getCorsHeaders(request.headers.get('origin') || undefined)
-      });
-    }
-
-    return NextResponse.json({
-      success: true,
-      data: template
-    }, {
-      status: 200,
-      headers: getCorsHeaders(request.headers.get('origin') || undefined)
-    });
-    
-  } catch (error) {
-    console.error('❌ [Templates API] Erro ao buscar template:', error);
-    return NextResponse.json({ 
-      success: false,
-      message: 'Erro interno do servidor' 
-    }, { 
-      status: 500,
-      headers: getCorsHeaders(request.headers.get('origin') || undefined)
-    });
-  }
-}
-
-// Criar um novo template
-export async function PUT(request: NextRequest) {
-  try {
-    const session = await getServerSession(authOptions);
-    
-    if (!session) {
-      return NextResponse.json({ 
-        success: false,
-        message: 'Não autorizado' 
+        message: 'Nome, assunto e mensagem são obrigatórios'
       }, { 
-        status: 401,
-        headers: getCorsHeaders(request.headers.get('origin') || undefined)
-      });
-    }
-
-    const body = await request.json();
-    console.log('📑 [Templates API] Criando novo template:', body);
-    
-    // Validar dados obrigatórios
-    if (!body.id || !body.name || !body.content) {
-      return NextResponse.json({
-        success: false,
-        message: 'ID, nome e conteúdo são obrigatórios'
-      }, {
         status: 400,
         headers: getCorsHeaders(request.headers.get('origin') || undefined)
       });
     }
 
-    // Verificar se o ID já existe
-    // @ts-ignore - Simulação
-    if (templatesDB[body.id]) {
-      return NextResponse.json({
-        success: false,
-        message: `Template com ID ${body.id} já existe`
-      }, {
-        status: 409,
-        headers: getCorsHeaders(request.headers.get('origin') || undefined)
-      });
-    }
-
-    // Extrair variáveis do template
-    const variables = extractVariables(body.content);
-
-    // Criar novo template
-    const newTemplate = {
-      id: body.id,
-      name: body.name,
-      content: body.content,
-      description: body.description || '',
-      isHtml: body.isHtml || false,
-      channel: body.channel?.toUpperCase() || 'ALL',
-      variables,
-      created_at: new Date().toISOString(),
-      updated_at: new Date().toISOString()
+    const db = await getSafeConnection();
+    
+    const templateData = {
+      name,
+      subject,
+      message,
+      html: html || false,
+      category: category || 'custom',
+      is_public: is_public || false,
+      user_id: user_id || session.user.id,
+      created_by: created_by || session.user.name || session.user.email,
+      created_at: created_at ? new Date(created_at) : new Date(),
+      updated_at: updated_at ? new Date(updated_at) : new Date()
     };
 
-    // Aqui você salvaria no banco de dados
-    // @ts-ignore - Simulação
-    templatesDB[body.id] = newTemplate;
+    const [newTemplate] = await db('notification_templates')
+      .insert(templateData)
+      .returning('*');
+
+    console.log('✅ [Templates API] Template criado com sucesso:', newTemplate.id);
 
     return NextResponse.json({
       success: true,
-      message: 'Template criado com sucesso',
-      data: newTemplate
+      data: newTemplate,
+      message: 'Template criado com sucesso'
     }, {
-      status: 201,
       headers: getCorsHeaders(request.headers.get('origin') || undefined)
     });
-    
+
   } catch (error) {
     console.error('❌ [Templates API] Erro ao criar template:', error);
-    return NextResponse.json({ 
-      success: false,
-      message: 'Erro interno do servidor' 
-    }, { 
-      status: 500,
-      headers: getCorsHeaders(request.headers.get('origin') || undefined)
-    });
+    return NextResponse.json(
+      { 
+        success: false, 
+        message: 'Erro interno do servidor' 
+      },
+      { 
+        status: 500,
+        headers: getCorsHeaders(request.headers.get('origin') || undefined)
+      }
+    );
   }
 }
 
-// Atualizar um template existente
-export async function PATCH(request: NextRequest) {
+export async function PUT(request: NextRequest) {
   try {
-    const session = await getServerSession(authOptions);
+    const session = await getAuthentication(request);
     
     if (!session) {
       return NextResponse.json({ 
-        success: false,
-        message: 'Não autorizado' 
+        success: false, 
+        message: 'Token de autorização necessário' 
       }, { 
         status: 401,
         headers: getCorsHeaders(request.headers.get('origin') || undefined)
@@ -270,143 +195,137 @@ export async function PATCH(request: NextRequest) {
     }
 
     const body = await request.json();
-    console.log('📑 [Templates API] Atualizando template:', body);
-    
-    if (!body.id) {
-      return NextResponse.json({
-        success: false,
-        message: 'ID do template é obrigatório'
-      }, {
-        status: 400,
-        headers: getCorsHeaders(request.headers.get('origin') || undefined)
-      });
-    }
+    const { id, name, subject, message, html, category, is_public } = body;
 
-    // @ts-ignore - Simulação
-    const existingTemplate = templatesDB[body.id];
-    
-    if (!existingTemplate) {
-      return NextResponse.json({
-        success: false,
-        message: `Template com ID ${body.id} não encontrado`
-      }, {
-        status: 404,
-        headers: getCorsHeaders(request.headers.get('origin') || undefined)
-      });
-    }
+    console.log('🔍 [Templates API] Atualizando template:', id);
 
-    // Extrair variáveis se o conteúdo foi atualizado
-    const variables = body.content 
-      ? extractVariables(body.content) 
-      : existingTemplate.variables;
-
-    // Atualizar template
-    const updatedTemplate = {
-      ...existingTemplate,
-      name: body.name || existingTemplate.name,
-      content: body.content || existingTemplate.content,
-      description: body.description !== undefined ? body.description : existingTemplate.description,
-      isHtml: body.isHtml !== undefined ? body.isHtml : existingTemplate.isHtml,
-      channel: body.channel ? body.channel.toUpperCase() : existingTemplate.channel,
-      variables,
-      updated_at: new Date().toISOString()
-    };
-
-    // Aqui você atualizaria no banco de dados
-    // @ts-ignore - Simulação
-    templatesDB[body.id] = updatedTemplate;
-
-    return NextResponse.json({
-      success: true,
-      message: 'Template atualizado com sucesso',
-      data: updatedTemplate
-    }, {
-      status: 200,
-      headers: getCorsHeaders(request.headers.get('origin') || undefined)
-    });
-    
-  } catch (error) {
-    console.error('❌ [Templates API] Erro ao atualizar template:', error);
-    return NextResponse.json({ 
-      success: false,
-      message: 'Erro interno do servidor' 
-    }, { 
-      status: 500,
-      headers: getCorsHeaders(request.headers.get('origin') || undefined)
-    });
-  }
-}
-
-// Excluir um template
-export async function DELETE(request: NextRequest) {
-  try {
-    const session = await getServerSession(authOptions);
-    
-    if (!session) {
-      return NextResponse.json({ 
-        success: false,
-        message: 'Não autorizado' 
-      }, { 
-        status: 401,
-        headers: getCorsHeaders(request.headers.get('origin') || undefined)
-      });
-    }
-
-    // Obter ID do template da URL
-    const url = new URL(request.url);
-    const id = url.searchParams.get('id');
-    
     if (!id) {
       return NextResponse.json({
         success: false,
         message: 'ID do template é obrigatório'
-      }, {
+      }, { 
         status: 400,
         headers: getCorsHeaders(request.headers.get('origin') || undefined)
       });
     }
 
-    // @ts-ignore - Simulação
-    const template = templatesDB[id];
+    const db = await getSafeConnection();
     
-    if (!template) {
+    const updateData = {
+      name,
+      subject,
+      message,
+      html: html || false,
+      category: category || 'custom',
+      is_public: is_public || false,
+      updated_at: new Date()
+    };
+
+    const [updatedTemplate] = await db('notification_templates')
+      .where('id', id)
+      .update(updateData)
+      .returning('*');
+
+    if (!updatedTemplate) {
       return NextResponse.json({
         success: false,
-        message: `Template com ID ${id} não encontrado`
-      }, {
+        message: 'Template não encontrado'
+      }, { 
         status: 404,
         headers: getCorsHeaders(request.headers.get('origin') || undefined)
       });
     }
 
-    // Aqui você excluiria do banco de dados
-    // @ts-ignore - Simulação
-    delete templatesDB[id];
+    console.log('✅ [Templates API] Template atualizado com sucesso:', id);
 
     return NextResponse.json({
       success: true,
-      message: 'Template excluído com sucesso'
+      data: updatedTemplate,
+      message: 'Template atualizado com sucesso'
     }, {
-      status: 200,
       headers: getCorsHeaders(request.headers.get('origin') || undefined)
     });
-    
+
   } catch (error) {
-    console.error('❌ [Templates API] Erro ao excluir template:', error);
-    return NextResponse.json({ 
-      success: false,
-      message: 'Erro interno do servidor' 
-    }, { 
-      status: 500,
-      headers: getCorsHeaders(request.headers.get('origin') || undefined)
-    });
+    console.error('❌ [Templates API] Erro ao atualizar template:', error);
+    return NextResponse.json(
+      { 
+        success: false, 
+        message: 'Erro interno do servidor' 
+      },
+      { 
+        status: 500,
+        headers: getCorsHeaders(request.headers.get('origin') || undefined)
+      }
+    );
   }
 }
 
-// Função auxiliar para extrair variáveis de um template
-function extractVariables(content: string): string[] {
-  const matches = content.match(/\{\{([^}]+)\}\}/g) || [];
-  return Array.from(new Set(
-    matches.map(match => match.replace(/\{\{|\}\}/g, '').trim())
-  ));
+export async function DELETE(request: NextRequest) {
+  try {
+    const session = await getAuthentication(request);
+    
+    if (!session) {
+      return NextResponse.json({ 
+        success: false, 
+        message: 'Token de autorização necessário' 
+      }, { 
+        status: 401,
+        headers: getCorsHeaders(request.headers.get('origin') || undefined)
+      });
+    }
+
+    const { searchParams } = new URL(request.url);
+    const id = searchParams.get('id');
+
+    console.log('🔍 [Templates API] Deletando template:', id);
+
+    if (!id) {
+      return NextResponse.json({
+        success: false,
+        message: 'ID do template é obrigatório'
+      }, { 
+        status: 400,
+        headers: getCorsHeaders(request.headers.get('origin') || undefined)
+      });
+    }
+
+    const db = await getSafeConnection();
+    
+    const deletedCount = await db('notification_templates')
+      .where('id', id)
+      .del();
+
+    if (deletedCount === 0) {
+      return NextResponse.json({
+        success: false,
+        message: 'Template não encontrado'
+      }, { 
+        status: 404,
+        headers: getCorsHeaders(request.headers.get('origin') || undefined)
+      });
+    }
+
+    console.log('✅ [Templates API] Template deletado com sucesso:', id);
+
+    return NextResponse.json({
+      success: true,
+      message: 'Template deletado com sucesso'
+    }, {
+      headers: getCorsHeaders(request.headers.get('origin') || undefined)
+    });
+
+  } catch (error) {
+    console.error('❌ [Templates API] Erro ao deletar template:', error);
+    return NextResponse.json(
+      { 
+        success: false, 
+        message: 'Erro interno do servidor' 
+      },
+      { 
+        status: 500,
+        headers: getCorsHeaders(request.headers.get('origin') || undefined)
+      }
+    );
+  }
 }

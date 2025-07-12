@@ -1,6 +1,6 @@
 import { Request, Response } from 'express';
 import { TvShowRepository } from '../repositories/TvShowRepository';
-import { BaseController } from './BaseController';
+import BaseController from './BaseController';
 import { TvShow } from '../entities/TvShow';
 
 export class TvShowController extends BaseController<TvShow> {

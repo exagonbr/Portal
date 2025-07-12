@@ -1,5 +1,5 @@
 import { Router } from 'express';
-import { ActivitySessionsController } from '../controllers/ActivitySessionsController';
+import ActivitySessionsController from '../controllers/ActivitySessionsController';
 import { requireAuth } from '../middleware/requireAuth';
 
 const router = Router();

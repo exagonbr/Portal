@@ -1,5 +1,5 @@
 export interface AwsSettings {
-  id: string;
+  id: number;
   access_key_id: string;
   secret_access_key: string;
   region: string;
