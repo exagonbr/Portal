@@ -3,11 +3,11 @@ generator client {
 }
 
 datasource db {
-  provider = "postgresql"
+  provider = "mysql"
   url      = env("DATABASE_URL")
 }
 
-model TVShow {
+model TvShow {
   id                  BigInt        @id @default(autoincrement())
   version             BigInt?
   api_id              String?       @db.VarChar(255)
@@ -1783,7 +1783,7 @@ model videos {
   api_id                String?   @db.VarChar(255)
   date_created          DateTime? @db.Timestamp(6)
   deleted               Boolean?
-  imdb_id               String?   @db.VarChar(255)
+  imdb_id                             String?   @db.VarChar(255)
   intro_end             Int?
   intro_start           Int?
   last_updated          DateTime? @db.Timestamp(6)

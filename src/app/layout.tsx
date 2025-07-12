@@ -1,10 +1,6 @@
-import dynamic from 'next/dynamic'
 import { Inter } from 'next/font/google'
-
-// Importar o ClientWrapper dinamicamente para evitar problemas de SSR
-const ClientWrapperDynamic = dynamic(
-  () => import('../components/ClientComponents').then(mod => mod.ClientWrapper)
-)
+import { ClientWrapper } from '../components/ClientComponents'
+import { HydrationProvider } from '../components/HydrationProvider'
 
 const inter = Inter({ 
   subsets: ['latin'],
@@ -17,10 +13,11 @@ export default function RootLayout({
 }) {
   return (
     <html lang="en">
-      <body className={inter.className}>
-        <ClientWrapperDynamic>
+      <body className={inter.className} suppressHydrationWarning={true}>
+        <ClientWrapper />
+        <HydrationProvider>
           {children}
-        </ClientWrapperDynamic>
+        </HydrationProvider>
       </body>
     </html>
   )

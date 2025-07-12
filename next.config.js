@@ -1,11 +1,6 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
   reactStrictMode: true,
-  experimental: {
-    optimizeCss: true,
-    workerThreads: true,
-    cpus: 2,
-  },
   serverExternalPackages: ['knex', 'pg'],
   distDir: 'build',
   
@@ -148,7 +143,6 @@ const nextConfig = {
     
     return config;
   },
-<<<<<<< HEAD
   
   // Headers customizados para melhor controle de cache
   async headers() {
@@ -285,23 +279,6 @@ const nextConfig = {
   basePath: '',
   assetPrefix: '',
   productionBrowserSourceMaps: false,
-
-  // Configurações experimentais para melhor performance
-  experimental: {
-    optimizeCss: true,
-    scrollRestoration: true,
-    workerThreads: true,
-    cpus: 4,
-    optimizePackageImports: [
-      'react',
-      'react-dom',
-      'next',
-      '@heroicons/react',
-      'lucide-react',
-      'framer-motion'
-    ],
-    optimisticClientCache: true,
-  },
 };
 
 // Configuração para carregar variáveis de ambiente
@@ -320,8 +297,3 @@ const withEnv = (nextConfig) => {
 };
 
 module.exports = withEnv(nextConfig);
-=======
-}
-
-module.exports = nextConfig 
->>>>>>> 2b9a658619be4be8442857987504eeff79e3f6b9

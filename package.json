@@ -5,12 +5,8 @@
   "uniqueName": "portal-educacional",
   "scripts": {
     "dev": "next dev",
-<<<<<<< HEAD
     "dev:server": "cross-env NODE_ENV=development node src/server.js",
-    "build": "node scripts/cache-version.js && next build",
-=======
     "build": "node scripts/cache-version.js && next build --no-lint",
->>>>>>> 2b9a658619be4be8442857987504eeff79e3f6b9
     "start": "node src/server.js",
     "start:next": "next start",
     "lint": "next lint",

@@ -2,11 +2,8 @@ import { DataSource } from 'typeorm';
 import * as dotenv from 'dotenv';
 import {
   Announcement,
-<<<<<<< HEAD
   ActivitySession,
-=======
   Answer,
->>>>>>> 2b9a658619be4be8442857987504eeff79e3f6b9
   Author,
   Book,
   Certificate,
@@ -53,7 +50,6 @@ import {
   UserRoleMapping,
   Video,
   VideoCollection,
-  VideoFile,
   VideoModule
 } from '../entities';
 
@@ -78,11 +74,8 @@ export const AppDataSource = new DataSource({
   },
   entities: [
     Announcement,
-<<<<<<< HEAD
     ActivitySession,
-=======
     Answer,
->>>>>>> 2b9a658619be4be8442857987504eeff79e3f6b9
     Author,
     Book,
     Certificate,
@@ -105,12 +98,13 @@ export const AppDataSource = new DataSource({
     MediaFile,
     Module,
     Notification,
-    NotificationLog,
-    Profile,
-    Public,
-    Publisher,
-    Question,
-    Quiz,
+  NotificationLog,
+  NotificationTemplate,
+  Profile,
+  Public,
+  Publisher,
+  Question,
+  Quiz,
     Role,
     School,
     SchoolManager,
@@ -128,8 +122,8 @@ export const AppDataSource = new DataSource({
     UserRoleMapping,
     Video,
     VideoCollection,
-    VideoFile,
-    VideoModule
+    VideoModule,
+    VideoFile
   ],
   migrations: ['src/database/migrations/*.ts'],
   subscribers: [],

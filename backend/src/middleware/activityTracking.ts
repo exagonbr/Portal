@@ -5,10 +5,9 @@ import { getClientInfo } from '../utils/clientInfo';
 import { UserActivity, ActivityType } from '../types/activity';
 import { errorTrackingMiddleware } from './errorTrackingMiddleware';
 
-// Int  try {
-    const inactiveSessions = await db('activity_sessions')
-      .where('isActive', true)
-      .where('lastActivity', '<', new Date(Date.now() - INACTIVE_THRESHOLD));ce estendida para Request com informações de tracking
+// Define inactive threshold
+const INACTIVE_THRESHOLD = 30 * 60 * 1000; // 30 minutes
+
 declare global {
   namespace Express {
     interface Request {
@@ -411,8 +410,7 @@ async function updateActiveSession(
 
 // Middleware para finalizar sessões inativas
 export const sessionCleanupMiddleware = async (): Promise<void> => {
-  const INACTIVE_THRESHOLD = 30 * 60 * 1000; // 30 minutos
-  
+  // INACTIVE_THRESHOLD is already defined at the top of the file
   try {
     const inactiveSessions = await db('activity_sessions')
       .where('isActive', true)

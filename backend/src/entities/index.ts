@@ -53,10 +53,6 @@ export { Unit } from './Unit';
 export { UnitClass } from './UnitClass';
 export { Video } from './Video';
 export { VideoCollection } from './VideoCollection';
-<<<<<<< HEAD
-export { VideoModule } from './VideoModule';
-export { ActivitySession } from './ActivitySession';
-=======
 export { VideoFile } from './VideoFile';
 export { VideoModule } from './VideoModule';
->>>>>>> 2b9a658619be4be8442857987504eeff79e3f6b9
+export { ActivitySession } from './ActivitySession';

@@ -121,13 +121,13 @@ export const getSchoolsData = unstable_cache(
       const data = await cachedFetch(url)
       
       // Transform data for UI
-      return data.items.map((unit: any) => ({
+      return data.items.map((unit: any, index: number) => ({
         ...unit,
         principal: 'Diretor', // Default value
-        studentsCount: Math.floor(Math.random() * 500),
-        teachersCount: Math.floor(Math.random() * 50),
-        classesCount: Math.floor(Math.random() * 30),
-        type: ['elementary', 'middle', 'high', 'technical'][Math.floor(Math.random() * 4)],
+        studentsCount: ((unit.id || index) * 17) % 500 + 100, // Deterministic based on ID
+        teachersCount: ((unit.id || index) * 7) % 50 + 10, // Deterministic based on ID  
+        classesCount: ((unit.id || index) * 3) % 30 + 5, // Deterministic based on ID
+        type: ['elementary', 'middle', 'high', 'technical'][((unit.id || index) * 2) % 4],
         status: unit.active ? 'active' : 'inactive',
         address: {
           street: '',
