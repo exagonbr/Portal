@@ -1,8 +1,7 @@
 import { ExtendedRepository, PaginatedResult } from "./ExtendedRepository";
-import { Repository } from "typeorm";
 import { ChatMessage } from '../entities/ChatMessage';
 
-export class ChatRepository extends Repository<ChatMessage> {
+export class ChatRepository extends ExtendedRepository<ChatMessage> {
   constructor() {
     super('chat_messages');
   }
@@ -21,30 +20,28 @@ export class ChatRepository extends Repository<ChatMessage> {
       
       // Adicione condições de pesquisa específicas para esta entidade
       if (search) {
-        query = query.whereILike('content', `%${search}%`);
+        query = query.where('content', 'ilike', `%${search}%`);
       }
       
       // Executar a consulta paginada
       const offset = (page - 1) * limit;
       const data = await query
-        .orderBy('timestamp', 'DESC')
+        .orderBy('timestamp', 'desc')
         .limit(limit)
         .offset(offset);
       
       // Contar o total de registros
-      const countResult = await this.db(this.tableName)
-        .count('* as total')
-        .modify(qb => {
-          if (search) {
-            qb.whereILike('content', `%${search}%`);
-          }
-        })
-        .first();
+      let countQuery = this.db(this.tableName).count('* as total');
       
-      const total = parseInt(countResult?.total as string, 10) || 0;
+      if (search) {
+        countQuery = countQuery.where('content', 'ilike', `%${search}%`);
+      }
+      
+      const countResult = await countQuery.first();
+      const total = parseInt(String(countResult?.total || '0'), 10);
       
       return {
-        data,
+        data: data as ChatMessage[],
         total,
         page,
         limit

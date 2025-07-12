@@ -50,7 +50,8 @@ import {
   UserRoleMapping,
   Video,
   VideoCollection,
-  VideoModule
+  VideoModule,
+  VideoFile
 } from '../entities';
 
 dotenv.config();
