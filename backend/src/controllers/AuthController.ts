@@ -219,7 +219,7 @@ class AuthController {
       console.log('❌ Erro durante autenticação Google:', error);
       
       // Redirecionar para página de erro em caso de falha
-      const frontendUrl = 'https://portal.sabercon.com.br';
+      const frontendUrl = process.env.FRONTEND_URL || 'https://portal.sabercon.com.br';
       res.redirect(`${frontendUrl}/auth/login?error=google_auth_failed`);
       return res.end();
     }

@@ -1,7 +1,11 @@
+'use client';
+
 import React from 'react';
 import { RolePermissionsManager } from '@/components/admin/RolePermissionsManager';
-import { useRouter } from 'next/router';
+import { useRouter } from 'next/navigation';
 import { useSession } from 'next-auth/react';
+
+export const dynamic = 'force-dynamic';
 
 const RolePermissionsPage: React.FC = () => {
   const { data: session, status } = useSession();
@@ -30,4 +34,4 @@ const RolePermissionsPage: React.FC = () => {
   );
 };
 
-export default RolePermissionsPage; 
+export default RolePermissionsPage;

@@ -17,6 +17,7 @@ const config: { [key: string]: Knex.Config } = {
     pool: {
       min: 2,
       max: 10,
+      
     },
     migrations: {
       tableName: 'knex_migrations',
@@ -34,9 +35,12 @@ const config: { [key: string]: Knex.Config } = {
       port: parseInt(process.env.DB_PORT || '5432'),
       database: process.env.DB_NAME || 'portal_sabercon',
       user: process.env.DB_USER || 'postgres',
-      password: process.env.DB_PASSWORD || '',
-      ssl: process.env.DB_SSL === 'true' ? { rejectUnauthorized: false } : false,
-    },
+      password: "wR*p4,JVbBG?]e#",
+      // If you are using a self-signed certificate, you might need to set rejectUnauthorized to false
+      // ssl: process.env.DB_SSL === 'true' ? { rejectUnauthorized: false } : false,
+      // If you are using a self-signed certificate, you might need to set rejectUnauthorized to false
+    ssl: true,    
+  },
     pool: {
       min: 2,
       max: 10,
@@ -57,9 +61,12 @@ const config: { [key: string]: Knex.Config } = {
       port: parseInt(process.env.DB_PORT || '5432'),
       database: process.env.DB_NAME || 'portal_sabercon',
       user: process.env.DB_USER || 'postgres',
-      password: process.env.DB_PASSWORD || '',
-      ssl: process.env.DB_SSL === 'true' ? { rejectUnauthorized: false } : false,
-    },
+      password: "wR*p4,JVbBG?]e#",
+      // If you are using a self-signed certificate, you might need to set rejectUnauthorized to false
+      // ssl: process.env.DB_SSL === 'true' ? { rejectUnauthorized: false } : false,
+      // If you are using a self-signed certificate, you might need to set rejectUnauthorized to false
+    ssl: true,    
+  },
     pool: {
       min: 2,
       max: 20,

@@ -195,7 +195,7 @@ export default function SystemNavigationPage() {
           🎭 Testar Modais CRUD
         </Link>
         <Link 
-          href="/dashboard/admin"
+          href="/admin"
           className="px-6 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors font-medium"
         >
           🏠 Dashboard Admin

@@ -10,7 +10,7 @@ import {
   CertificateResponseDto as ApiCertificateResponseDto,
   ApiResponse,
 } from '@/types/api';
-import { apiGet, apiPost, apiPut, apiDelete } from './apiService';
+import { apiService } from './api';
 
 // Função para mapear a resposta da API para o DTO do frontend
 const mapToCertificateDto = (data: ApiCertificateResponseDto): CertificateDto => ({
@@ -28,70 +28,57 @@ const mapToCertificateDto = (data: ApiCertificateResponseDto): CertificateDto =>
 });
 
 export const getCertificates = async (params: CertificateFilter): Promise<ApiResponse<PaginatedResponse<CertificateDto>>> => {
-  const response = await apiGet<ApiResponse<PaginatedResponse<ApiCertificateResponseDto>>>('/certificates', params);
-  
-  // Verificar se a resposta tem o formato esperado
-  if (!response || !response.data || !response.data.items || !Array.isArray(response.data.items)) {
-    console.warn('Resposta da API de certificados não tem o formato esperado:', response);
-    return {
-      success: false,
-      data: {
-        items: [],
-        total: 0,
-        page: 1,
-        limit: 10,
-        totalPages: 0,
-      },
-      message: 'Formato de resposta inválido'
-    };
-  }
-  
-  return {
-    ...response,
-    data: {
-      ...response.data,
-      items: response.data.items.map(mapToCertificateDto),
+  try {
+    const response = await apiService.get<ApiResponse<PaginatedResponse<ApiCertificateResponseDto>>>('/certificates', { params });
+    
+    // Verificar se a resposta tem o formato esperado
+    if (!response || !response.data || !response.data.items || !Array.isArray(response.data.items)) {
+      console.warn('Resposta da API de certificados não tem o formato esperado:', response);
+      return {
+        success: false,
+        data: {
+          items: [],
+          total: 0,
+          page: 1,
+          limit: 10,
+          totalPages: 0,
+        },
+        message: 'Formato de resposta inválido'
+      };
     }
-  };
+    
+    return {
+      ...response,
+      data: {
+        ...response.data,
+        items: response.data.items.map(mapToCertificateDto),
+      }
+    };
+  } catch (error) {
+    console.error('Erro ao buscar certificados:', error);
+    throw error;
+  }
 };
 
-export const getCertificateById = async (id: number): Promise<CertificateDto> => {
-  const response = await apiGet<ApiResponse<ApiCertificateResponseDto>>(`/certificates/${id}`);
-  if (!response.data) {
-    throw new Error('Certificado não encontrado');
-  }
-  return mapToCertificateDto(response.data);
+export const getCertificateById = async (id: string): Promise<CertificateDto> => {
+  const response = await apiService.get<ApiCertificateResponseDto>(`/certificates/${id}`);
+  return mapToCertificateDto(response);
 };
 
 export const createCertificate = async (data: CreateCertificateDto): Promise<CertificateDto> => {
-  const response = await apiPost<ApiResponse<ApiCertificateResponseDto>>('/certificates', data);
-  if (!response.data) {
-    throw new Error('Erro ao criar certificado');
-  }
-  return mapToCertificateDto(response.data);
+  const response = await apiService.post<ApiCertificateResponseDto>('/certificates', data);
+  return mapToCertificateDto(response);
 };
 
-export const updateCertificate = async (id: number, data: UpdateCertificateDto): Promise<CertificateDto> => {
-  const response = await apiPut<ApiResponse<ApiCertificateResponseDto>>(`/certificates/${id}`, data);
-  if (!response.data) {
-    throw new Error('Erro ao atualizar certificado');
-  }
-  return mapToCertificateDto(response.data);
+export const updateCertificate = async (id: string, data: UpdateCertificateDto): Promise<CertificateDto> => {
+  const response = await apiService.put<ApiCertificateResponseDto>(`/certificates/${id}`, data);
+  return mapToCertificateDto(response);
 };
 
-export const deleteCertificate = async (id: number): Promise<void> => {
-  return apiDelete(`/certificates/${id}`);
+export const deleteCertificate = async (id: string): Promise<void> => {
+  await apiService.delete(`/certificates/${id}`);
 };
 
-export const getStats = async (): Promise<ApiResponse<CertificateStats>> => {
-  return apiGet<ApiResponse<CertificateStats>>('/certificates/stats');
-};
-
-export const certificateService = {
-  getCertificates,
-  getCertificateById,
-  createCertificate,
-  updateCertificate,
-  deleteCertificate,
-  getStats,
+export const getCertificateStats = async (): Promise<CertificateStats> => {
+  return await apiService.get<CertificateStats>('/certificates/stats');
 };

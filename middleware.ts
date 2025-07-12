@@ -28,6 +28,14 @@ const DEV_ROUTES = [
 export function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl
   
+  // Handle CORS for static files
+  if (pathname.includes('/favicon.ico') || pathname.startsWith('/_next/') || pathname.startsWith('/public/')) {
+    const response = NextResponse.next()
+    response.headers.set('Cross-Origin-Resource-Policy', 'cross-origin')
+    response.headers.set('Access-Control-Allow-Origin', '*')
+    return response
+  }
+
   // FIXED: Skip middleware for all public routes and dev routes
   const isPublicRoute = PUBLIC_ROUTES.some(route => pathname.startsWith(route))
   const isDevRoute = process.env.NODE_ENV === 'development' && 

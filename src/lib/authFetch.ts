@@ -3,7 +3,7 @@ import { toast } from 'react-hot-toast';
 
 // 1. Configuração da Instância Axios
 const apiClient = axios.create({
-  baseURL: 'https://portal.sabercon.com.br/api',
+  baseURL: process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001/api',
   withCredentials: true,
   timeout: 60000, // 60 segundos
 });

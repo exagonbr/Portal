@@ -5,6 +5,7 @@
   "uniqueName": "portal-educacional",
   "scripts": {
     "dev": "next dev",
+    "dev:server": "cross-env NODE_ENV=development node src/server.js",
     "build": "node scripts/cache-version.js && next build",
     "start": "node src/server.js",
     "start:next": "next start",
@@ -26,7 +27,13 @@
     "clean": "node scripts/clear-cache.js",
     "clean:build": "npm run clean && npm run build",
     "dev:custom": "node src/server.js",
-    "check:cookies": "node scripts/check-cookies.js"
+    "check:cookies": "node scripts/check-cookies.js",
+    "migrate:to-postgres": "bash scripts/migrate-to-postgres.sh",
+    "db:check": "bash scripts/check-db-connections.sh",
+    "db:migrate": "bash scripts/migrate-to-postgres.sh",
+    "db:migrate-safe": "npm run db:check && npm run db:migrate",
+    "db:verify": "bash scripts/verify-db-structure.sh",
+    "db:migrate-verify": "npm run db:migrate && npm run db:verify"
   },
   "dependencies": {
     "@aws-sdk/client-s3": "^3.825.0",

@@ -27,6 +27,19 @@ const handle = app.getRequestHandler();
 app.prepare().then(() => {
   createServer(async (req, res) => {
     try {
+      // CORS Headers for localhost
+      res.setHeader('Access-Control-Allow-Origin', 'http://localhost:3000');
+      res.setHeader('Access-Control-Allow-Methods', 'GET,HEAD,PUT,PATCH,POST,DELETE,OPTIONS');
+      res.setHeader('Access-Control-Allow-Headers', 'Content-Type,Authorization,X-Requested-With,Accept');
+      res.setHeader('Access-Control-Allow-Credentials', 'true');
+      
+      // Handle OPTIONS request
+      if (req.method === 'OPTIONS') {
+        res.writeHead(200);
+        res.end();
+        return;
+      }
+
       // Configurar para confiar em headers de proxy
       if (process.env.TRUST_PROXY === 'true' || process.env.NODE_ENV === 'production') {
         // Verificar se estamos atrás de um proxy HTTPS

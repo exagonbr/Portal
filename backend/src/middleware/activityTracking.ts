@@ -5,7 +5,10 @@ import { getClientInfo } from '../utils/clientInfo';
 import { UserActivity, ActivityType } from '../types/activity';
 import { errorTrackingMiddleware } from './errorTrackingMiddleware';
 
-// Interface estendida para Request com informações de tracking
+// Int  try {
+    const inactiveSessions = await db('activity_sessions')
+      .where('isActive', true)
+      .where('lastActivity', '<', new Date(Date.now() - INACTIVE_THRESHOLD));ce estendida para Request com informações de tracking
 declare global {
   namespace Express {
     interface Request {
@@ -297,21 +300,21 @@ async function updateActiveSession(
     // Usar padrão upsert (INSERT ... ON CONFLICT DO UPDATE ...)
     await db.raw(`
       INSERT INTO activity_sessions (
-        id, session_id, user_id, start_time, duration_seconds, 
-        actions_count, ip_address, user_agent, device_info, 
-        is_active, last_activity, created_at, updated_at
+        id, "sessionId", "userId", "startTime", "durationSeconds", 
+        "actionsCount", "ipAddress", "userAgent", "deviceInfo", 
+        "isActive", "lastActivity", "createdAt", "updatedAt"
       ) 
       VALUES (
         ?, ?, ?, ?, ?,
         ?, ?, ?, ?,
         ?, ?, ?, ?
       )
-      ON CONFLICT (session_id) 
+      ON CONFLICT ("sessionId") 
       DO UPDATE SET 
-        last_activity = EXCLUDED.last_activity,
-        duration_seconds = COALESCE(activity_sessions.duration_seconds, 0) + ?,
-        actions_count = COALESCE(activity_sessions.actions_count, 0) + 1,
-        updated_at = EXCLUDED.updated_at
+        "lastActivity" = EXCLUDED."lastActivity",
+        "durationSeconds" = COALESCE(activity_sessions."durationSeconds", 0) + ?,
+        "actionsCount" = COALESCE(activity_sessions."actionsCount", 0) + 1,
+        "updatedAt" = EXCLUDED."updatedAt"
     `, [
       uuidv4(), sessionId, userId, new Date(), additionalDuration,
       1, clientInfo.ip, clientInfo.userAgent, JSON.stringify({
@@ -333,35 +336,35 @@ export const sessionCleanupMiddleware = async (): Promise<void> => {
   
   try {
     const inactiveSessions = await db('activity_sessions')
-      .where('is_active', true)
-      .where('last_activity', '<', new Date(Date.now() - INACTIVE_THRESHOLD));
+      .where('isActive', true)
+      .where('lastActivity', '<', new Date(Date.now() - INACTIVE_THRESHOLD));
     
     for (const session of inactiveSessions) {
       // Calcular duração final
       const duration = Math.round(
-        (new Date(session.last_activity).getTime() - new Date(session.start_time).getTime()) / 1000
+        (new Date(session.lastActivity).getTime() - new Date(session.startTime).getTime()) / 1000
       );
       
       // Atualizar sessão como inativa
       await db('activity_sessions')
         .where({ id: session.id })
         .update({
-          is_active: false,
-          end_time: session.last_activity,
-          duration_seconds: duration,
-          updated_at: new Date()
+          isActive: false,
+          endTime: session.lastActivity,
+          durationSeconds: duration,
+          updatedAt: new Date()
         });
       
       // Criar log de timeout de sessão
       await createActivityLog({
-        user_id: session.user_id,
-        session_id: session.session_id,
+        user_id: session.userId,
+        session_id: session.sessionId,
         activity_type: 'session_timeout',
         action: 'timeout',
         details: {
           total_duration_seconds: duration,
-          total_actions: session.actions_count,
-          last_activity: session.last_activity
+          total_actions: session.actionsCount,
+          last_activity: session.lastActivity
         }
       });
     }

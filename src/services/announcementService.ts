@@ -10,7 +10,7 @@ import {
   PaginatedResponse,
   AnnouncementResponseDto as ApiAnnouncementResponseDto,
 } from '@/types/api';
-import { apiGet, apiPost, apiPut, apiDelete, apiPatch } from './apiService';
+import { apiService } from './api';
 
 // Função para mapear a resposta da API para o DTO do frontend
 const mapToAnnouncementDto = (data: ApiAnnouncementResponseDto): AnnouncementDto => ({
@@ -30,7 +30,7 @@ const mapToAnnouncementDto = (data: ApiAnnouncementResponseDto): AnnouncementDto
 });
 
 export const getAnnouncements = async (params: AnnouncementFilter): Promise<PaginatedResponse<AnnouncementDto>> => {
-  const response = await apiGet<PaginatedResponse<ApiAnnouncementResponseDto>>('/announcements', params);
+  const response = await apiService.get<PaginatedResponse<ApiAnnouncementResponseDto>>('/announcements', { params });
   return {
     ...response,
     items: response.items.map(mapToAnnouncementDto),
@@ -38,28 +38,27 @@ export const getAnnouncements = async (params: AnnouncementFilter): Promise<Pagi
 };
 
 export const getAnnouncementById = async (id: string): Promise<AnnouncementDto> => {
-  const response = await apiGet<ApiAnnouncementResponseDto>(`/announcements/${id}`);
+  const response = await apiService.get<ApiAnnouncementResponseDto>(`/announcements/${id}`);
   return mapToAnnouncementDto(response);
 };
 
 export const createAnnouncement = async (data: CreateAnnouncementDto): Promise<AnnouncementDto> => {
-  const response = await apiPost<ApiAnnouncementResponseDto>('/announcements', data);
+  const response = await apiService.post<ApiAnnouncementResponseDto>('/announcements', data);
   return mapToAnnouncementDto(response);
 };
 
 export const updateAnnouncement = async (id: string, data: UpdateAnnouncementDto): Promise<AnnouncementDto> => {
-  const response = await apiPut<ApiAnnouncementResponseDto>(`/announcements/${id}`, data);
+  const response = await apiService.put<ApiAnnouncementResponseDto>(`/announcements/${id}`, data);
   return mapToAnnouncementDto(response);
 };
 
 export const deleteAnnouncement = async (id: string): Promise<void> => {
-  return apiDelete(`/announcements/${id}`);
+  await apiService.delete(`/announcements/${id}`);
 };
 
-export const toggleAnnouncementStatus = async (id: string): Promise<AnnouncementDto> => {
-    const announcement = await getAnnouncementById(id);
-    const response = await apiPatch<ApiAnnouncementResponseDto>(`/announcements/${id}/status`, { active: !announcement.is_active });
-    return mapToAnnouncementDto(response);
+export const toggleAnnouncementStatus = async (id: string, isActive: boolean): Promise<AnnouncementDto> => {
+  const response = await apiService.patch<ApiAnnouncementResponseDto>(`/announcements/${id}/status`, { isActive });
+  return mapToAnnouncementDto(response);
 };
 
 export const announcementService = {

@@ -8,6 +8,9 @@ import {
 } from 'lucide-react'
 import DashboardLayout from '@/components/dashboard/DashboardLayout'
 
+  const baseUrl = process.env.API_URL || 'https://portal.sabercon.com.br/api';
+
+
 interface TVShow {
   id: number
   name: string
@@ -118,7 +121,7 @@ export default function TVShowAdminPage() {
         headers['Authorization'] = `Bearer ${token}`
       }
 
-      const response = await fetch(`https://portal.sabercon.com.br/api/tv-shows?${params}`, { headers })
+      const response = await fetch(baseUrl + `/tv-shows?${params}`, { headers })
 
       if (response.ok) {
         const data = await response.json()
@@ -161,7 +164,7 @@ export default function TVShowAdminPage() {
         formData.append('backdrop_image', tvShowForm.backdrop_image_file)
       }
 
-      const response = await fetch('https://portal.sabercon.com.br/api/tv-shows', {
+      const response = await fetch(baseUrl + '/tv-shows', {
         method: 'POST',
         headers: { 'Authorization': `Bearer ${token}` },
         body: formData
@@ -214,7 +217,7 @@ export default function TVShowAdminPage() {
         formData.append('backdrop_image', tvShowForm.backdrop_image_file)
       }
 
-      const response = await fetch(`https://portal.sabercon.com.br/api/tv-shows/${selectedTvShow.id}`, {
+      const response = await fetch(`${baseUrl}/tv-shows/${selectedTvShow.id}`, {
         method: 'PUT',
         headers: { 'Authorization': `Bearer ${token}` },
         body: formData
@@ -254,7 +257,7 @@ export default function TVShowAdminPage() {
         return false
       }
 
-      const response = await fetch(`https://portal.sabercon.com.br/api/tv-shows/${id}`, {
+      const response = await fetch(`${baseUrl}/tv-shows/${id}`, {
         method: 'DELETE',
         headers: { 
           'Authorization': `Bearer ${token}`,

@@ -1,7 +1,7 @@
 import axios from 'axios';
 
 async function diagnoseTvShowProd() {
-  const baseUrl = 'https://portal.sabercon.com.br/api';
+  const baseUrl = process.env.API_URL || 'https://portal.sabercon.com.br/api';
   
   console.log('🔍 Diagnosticando problema com TV Shows em produção...\n');
 

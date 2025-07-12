@@ -1,5 +1,3 @@
-#!/usr/bin/env ts-node
-
 import * as knex from 'knex';
 import config from '../knexfile';
 
@@ -23,4 +21,4 @@ async function run() {
   }
 }
 
-run().catch(console.log);
+run().catch(console.error);

@@ -13,7 +13,7 @@ import { clearAllDataForUnauthorized } from '@/utils/clearAllData';
 import { debugToken, cleanupTokens } from '@/utils/token-debug';
 import { UnifiedAuthService } from '@/services/unifiedAuthService';
 import { usePersistentSession } from '@/hooks/usePersistentSession';
-
+import { AuthService, type User, type NetworkError } from '@/services/authService';
 
 // Variável de ambiente para controlar o uso do token de teste
 const useTestToken = process.env.NEXT_PUBLIC_USE_TEST_TOKEN === 'true' && isDevelopment();
@@ -60,13 +60,9 @@ interface AuthContextType {
   user: User | null;
   isAuthenticated: boolean;
   isLoading: boolean;
-  loading: boolean;
   error: string | null;
-  isLoggingOut: boolean;
   login: (email: string, password: string) => Promise<void>;
-  logout: () => void;
-  handleGoogleLogin: (token: string) => Promise<void>;
-  refreshUser: () => Promise<void>;
+  logout: () => Promise<void>;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -660,7 +656,6 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     user,
     isAuthenticated,
     isLoading,
-    loading: isLoading,
     error: null, // Placeholder, será implementado no futuro
     isLoggingOut,
     login,

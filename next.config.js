@@ -188,6 +188,36 @@ const nextConfig = {
             value: 'application/javascript; charset=utf-8',
           },
         ],
+      },
+      {
+        source: '/:path*',
+        headers: [
+          {
+            key: 'Cross-Origin-Resource-Policy',
+            value: 'cross-origin'
+          },
+          {
+            key: 'Access-Control-Allow-Origin',
+            value: '*'
+          }
+        ]
+      },
+      {
+        source: '/favicon.ico',
+        headers: [
+          {
+            key: 'Cross-Origin-Resource-Policy',
+            value: 'cross-origin'
+          },
+          {
+            key: 'Access-Control-Allow-Origin',
+            value: '*'
+          },
+          {
+            key: 'Cache-Control',
+            value: 'public, max-age=31536000, immutable'
+          }
+        ]
       }
     ];
   },
@@ -275,4 +305,4 @@ const withEnv = (nextConfig) => {
   };
 };
 
-module.exports = withEnv(nextConfig); 
+module.exports = withEnv(nextConfig);

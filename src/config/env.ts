@@ -29,9 +29,13 @@ const getBaseUrls = () => {
       INTERNAL_API_URL: 'https://portal.sabercon.com.br/api'
     };
   }
+
+  const API_URL = process.env.BACKEND_URL;
   
   // Para desenvolvimento local (tanto servidor quanto browser)
   console.log('💻 [ENV] Usando configuração de desenvolvimento local');
+  console.log('💻 [ENV] ', API_URL);
+
   
   // Verificar se temos variáveis de ambiente específicas
   const backendUrl = (typeof process !== 'undefined' && process.env.BACKEND_URL) || 'http://localhost:3001/api';

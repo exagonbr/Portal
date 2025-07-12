@@ -1,51 +1,29 @@
-// NextAuth types desabilitados - usando sistema de autenticação customizado
-// Este arquivo foi desabilitado para evitar conflitos com o AuthContext customizado
+import NextAuth, { DefaultSession } from "next-auth"
 
-/*
-import { DefaultSession } from 'next-auth'
-
-declare module 'next-auth' {
+declare module "next-auth" {
+  /**
+   * Returned by `useSession`, `getSession` and received as a prop on the `SessionProvider` React Context
+   */
   interface Session {
+    accessToken?: string
     user: {
-      id: string
-      role: 'SYSTEM_ADMIN' | 'INSTITUTION_MANAGER' | 'COORDINATOR' | 'TEACHER' | 'STUDENT' | 'GUARDIAN'
-      institution_id?: string
-      school_id?: string
-      dependents?: string[]
-    } & DefaultSession['user']
+      /** The user's postal address. */
+      role?: string
+    } & DefaultSession["user"]
   }
 
   interface User {
-    id: string
-    role: 'SYSTEM_ADMIN' | 'INSTITUTION_MANAGER' | 'COORDINATOR' | 'TEACHER' | 'STUDENT' | 'GUARDIAN'
-    institution_id?: string
-    school_id?: string
-    dependents?: string[]
+    role?: string,
+    accessToken?: string
   }
 }
 
-declare module 'next-auth/jwt' {
+import { JWT } from "next-auth/jwt"
+
+declare module "next-auth/jwt" {
+  /** Returned by the `jwt` callback and `getToken`, when signed, also verified) */
   interface JWT {
-    id: string
-    role: 'SYSTEM_ADMIN' | 'INSTITUTION_MANAGER' | 'COORDINATOR' | 'TEACHER' | 'STUDENT' | 'GUARDIAN'
-    institution_id?: string
-    school_id?: string
-    dependents?: string[]
-  }
-}
-*/
-
-import 'next-auth';
-
-declare module 'next-auth' {
-  interface Session {
-    user: {
-      id?: string;
-      name?: string | null;
-      email?: string | null;
-      image?: string | null;
-      role?: string;
-      permissions?: string[];
-    }
+    role?: string,
+    accessToken?: string
   }
 }

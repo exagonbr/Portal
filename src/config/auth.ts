@@ -1,6 +1,9 @@
 import { AuthOptions } from 'next-auth';
 import CredentialsProvider from 'next-auth/providers/credentials';
 
+  const baseUrl = process.env.API_URL || 'https://portal.sabercon.com.br/api';
+
+
 export const authOptions: AuthOptions = {
   providers: [
     CredentialsProvider({
@@ -15,7 +18,7 @@ export const authOptions: AuthOptions = {
         }
 
         try {
-          const response = await fetch('https://portal.sabercon.com.br/api/auth/login', {
+          const response = await fetch(baseUrl + '/auth/login', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({
@@ -68,4 +71,4 @@ export const authOptions: AuthOptions = {
     signIn: '/auth/login',
     error: '/auth/error',
   }
-}; 
+};

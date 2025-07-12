@@ -2,6 +2,7 @@ import { DataSource } from 'typeorm';
 import * as dotenv from 'dotenv';
 import {
   Announcement,
+  ActivitySession,
   Author,
   Book,
   Certificate,
@@ -59,10 +60,19 @@ export const AppDataSource = new DataSource({
   username: process.env.DB_USER || 'postgres',
   password: process.env.DB_PASSWORD || 'root',
   database: process.env.DB_NAME || 'portal_sabercon',
-  synchronize: false, // Não sincronizar automaticamente em produção
+  synchronize: true, // Não sincronizar automaticamente em produção
   logging: process.env.NODE_ENV === 'development',
+  ssl: process.env.DB_SSL === 'true' ? {
+    rejectUnauthorized: false
+  } : false,
+  extra: {
+    ssl: process.env.DB_SSL === 'true' ? {
+      rejectUnauthorized: false
+    } : false
+  },
   entities: [
     Announcement,
+    ActivitySession,
     Author,
     Book,
     Certificate,

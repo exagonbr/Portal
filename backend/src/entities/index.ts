@@ -52,3 +52,4 @@ export { UnitClass } from './UnitClass';
 export { Video } from './Video';
 export { VideoCollection } from './VideoCollection';
 export { VideoModule } from './VideoModule';
+export { ActivitySession } from './ActivitySession';

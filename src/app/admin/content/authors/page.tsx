@@ -10,7 +10,7 @@ export default function AuthorsPage() {
     <div className="space-y-6 p-6">
       <Breadcrumb>
         <BreadcrumbItem>
-          <BreadcrumbLink href="/dashboard/admin">
+          <BreadcrumbLink href="/admin">
             <Home className="h-4 w-4" />
           </BreadcrumbLink>
         </BreadcrumbItem>
